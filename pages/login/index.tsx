@@ -1,3 +1,4 @@
+// pages/login/index.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -186,16 +187,18 @@ export default function LoginOptions() {
           <SectionLabel>Sign in</SectionLabel>
 
           <div className="grid gap-3">
-            {/* Email = main CTA */}
+            {/* Email = main CTA (fix: wrap Link via asChild) */}
             <Button
-              href={`/login/email${selectedRole ? `?role=${selectedRole}` : ''}`}
+              asChild
               variant="primary"
               size="lg"
               shape="rounded"
               fullWidth
               leadingIcon={<MailIcon className="h-5 w-5" />}
             >
-              Email &amp; Password
+              <Link href={`/login/email${selectedRole ? `?role=${selectedRole}` : ''}`}>
+                Email &amp; Password
+              </Link>
             </Button>
 
             {/* Google (soft primary) */}

@@ -7,24 +7,16 @@ import { Container } from '@/components/design-system/Container';
 import { DesktopNav } from '@/components/navigation/DesktopNav';
 import { MobileNav } from '@/components/navigation/MobileNav';
 import { useHeaderState } from '@/components/hooks/useHeaderState';
+import { Button } from '@/components/design-system/Button'; // ⬅️ added
 
-/**
- * Header
- * - Non-sticky glass surface with gradient underline and soft glow on scroll
- * - Uses DS tokens/classes only (no inline hex)
- * - DesktopNav/MobileNav receive `showAdmin={false}`
- * - Preserves mega menu & streak chip (rendered inside DesktopNav/MobileNav)
- */
 export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [openDesktopModules, setOpenDesktopModules] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileModulesOpen, setMobileModulesOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Canonical source of truth for auth/role/streak/signOut
   const { user, role, streak: streakState, ready, signOut } = useHeaderState(streak);
 
-  // Solidify header when scrolled or any menu is open
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
     onScroll();
@@ -33,7 +25,6 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   }, []);
   const solidHeader = scrolled || openDesktopModules || mobileOpen;
 
-  // Refs & global handlers (click-outside / escape to close)
   const modulesRef = useRef<HTMLLIElement>(null);
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -57,7 +48,6 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     };
   }, []);
 
-  // Prevent background scroll when mobile menu is open
   useEffect(() => {
     const preventTouch = (e: TouchEvent) => e.preventDefault();
     if (mobileOpen) {
@@ -110,35 +100,44 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
             </p>
           </Link>
 
-          {/* Desktop Navigation */}
-          <DesktopNav
-            user={user}
-            role={role}
-            ready={ready}
-            streak={streakState}
-            openModules={openDesktopModules}
-            setOpenModules={setOpenDesktopModules}
-            modulesRef={modulesRef}
-            signOut={signOut}
-            showAdmin={false}
-            className="hidden lg:flex items-center gap-2 will-change-transform transition-[opacity,transform] duration-200 data-[solid=true]:opacity-100 data-[solid=false]:opacity-95"
-            data-solid={solidHeader}
-          />
+          <div className="flex items-center gap-3">
+            {/* Desktop Navigation */}
+            <DesktopNav
+              user={user}
+              role={role}
+              ready={ready}
+              streak={streakState}
+              openModules={openDesktopModules}
+              setOpenModules={setOpenDesktopModules}
+              modulesRef={modulesRef}
+              signOut={signOut}
+              showAdmin={false}
+              className="hidden lg:flex items-center gap-2 will-change-transform transition-[opacity,transform] duration-200 data-[solid=true]:opacity-100 data-[solid=false]:opacity-95"
+              data-solid={solidHeader}
+            />
 
-          {/* Mobile Navigation */}
-          <MobileNav
-            user={user}
-            role={role}
-            ready={ready}
-            streak={streakState}
-            mobileOpen={mobileOpen}
-            setMobileOpen={setMobileOpen}
-            mobileModulesOpen={mobileModulesOpen}
-            setMobileModulesOpen={setMobileModulesOpen}
-            signOut={signOut}
-            showAdmin={false}
-            className="lg:hidden"
-          />
+            {/* New Header Button – only visible if logged in */}
+            {user?.id && (
+              <Button asChild>
+                <Link href="/premium-pin">Premium PIN</Link>
+              </Button>
+            )}
+
+            {/* Mobile Navigation */}
+            <MobileNav
+              user={user}
+              role={role}
+              ready={ready}
+              streak={streakState}
+              mobileOpen={mobileOpen}
+              setMobileOpen={setMobileOpen}
+              mobileModulesOpen={mobileModulesOpen}
+              setMobileModulesOpen={setMobileModulesOpen}
+              signOut={signOut}
+              showAdmin={false}
+              className="lg:hidden"
+            />
+          </div>
         </div>
       </Container>
 
