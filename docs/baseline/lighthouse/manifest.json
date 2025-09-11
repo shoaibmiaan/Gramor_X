@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://gramorx.com/",
+    "isRepresentativeRun": false,
+    "htmlPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com--2025_09_11_15_03_17.report.html",
+    "jsonPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com--2025_09_11_15_03_17.report.json",
+    "summary": {
+      "performance": 0.98,
+      "accessibility": 0.87,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "https://gramorx.com/",
+    "isRepresentativeRun": false,
+    "htmlPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com--2025_09_11_15_03_36.report.html",
+    "jsonPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com--2025_09_11_15_03_36.report.json",
+    "summary": {
+      "performance": null,
+      "accessibility": 0.87,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "https://gramorx.com/pricing",
+    "isRepresentativeRun": false,
+    "htmlPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com-pricing-2025_09_11_15_04_09.report.html",
+    "jsonPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com-pricing-2025_09_11_15_04_09.report.json",
+    "summary": {
+      "performance": null,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  },
+  {
+    "url": "https://gramorx.com/pricing",
+    "isRepresentativeRun": false,
+    "htmlPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com-pricing-2025_09_11_15_04_24.report.html",
+    "jsonPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com-pricing-2025_09_11_15_04_24.report.json",
+    "summary": {
+      "performance": null,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  },
+  {
+    "url": "https://gramorx.com/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com--2025_09_11_15_03_53.report.html",
+    "jsonPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com--2025_09_11_15_03_53.report.json",
+    "summary": {
+      "performance": null,
+      "accessibility": 0.87,
+      "best-practices": 1,
+      "seo": 1
+    }
+  },
+  {
+    "url": "https://gramorx.com/pricing",
+    "isRepresentativeRun": true,
+    "htmlPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com-pricing-2025_09_11_15_04_39.report.html",
+    "jsonPath": "/workspaces/Gramor_X/docs/baseline/lighthouse/gramorx_com-pricing-2025_09_11_15_04_39.report.json",
+    "summary": {
+      "performance": null,
+      "accessibility": 1,
+      "best-practices": 0.96,
+      "seo": 1
+    }
+  }
+]

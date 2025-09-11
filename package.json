@@ -25,7 +25,13 @@
     "ci:lighthouse": "CHROME_PATH=\"$(node -p \"require('playwright-core').chromium.executablePath()\")\" lhci autorun --config=./lighthouserc.json",
     "ci:a11y": "playwright test -c ./playwright.config.ts",
     "ci:all": "start-server-and-test start http://localhost:3000 \"npm run ci:lighthouse && npm run ci:a11y\"",
-    "ds:guard": "bash scripts/ds_guard.sh"
+    "ds:guard": "bash scripts/ds_guard.sh",
+    "inventory": "tsx scripts/inventory.ts",
+    "screens": "BASE_URL=https://gramorx.com node scripts/capture-screens.mjs",
+    "screens:readme": "node scripts/build-screens-readme.mjs",
+    "lh:ci": "lhci autorun --config=lighthouserc.json",
+    "axe": "node scripts/axe-scan.mjs",
+    "lh:summary": "node scripts/lh-extract.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -97,8 +103,10 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.2.1",
     "lighthouse": "^12.8.2",
+    "playwright": "^1.55.0",
     "postcss": "^8.4.41",
     "prettier": "^3.3.3",
+    "puppeteer": "^24.20.0",
     "start-server-and-test": "^2.1.0",
     "tailwindcss": "^3.4.10",
     "ts-node": "^10.9.2",

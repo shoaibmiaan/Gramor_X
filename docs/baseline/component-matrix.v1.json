@@ -1,0 +1,1642 @@
+[
+  {
+    "type": "page",
+    "name_or_route": "pages/403.tsx",
+    "components_used_guess": "Props, Head, Container, Card, Link, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/_app.tsx",
+    "components_used_guess": "GuardSkeleton, PremiumThemeProvider, Component, Layout, AdminLayout, InstitutionsLayout, DashboardLayout, MarketplaceLayout, LearningLayout, CommunityLayout, ReportsLayout, ExamLayout, PublicMarketingLayout, AuthLayout, ProctoringLayout, ThemeProvider, ImpersonationBanner, AuthAssistant, SidebarAI, LanguageProvider"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/_document.tsx",
+    "components_used_guess": "Html, Head, Main, NextScript"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/accessibility.tsx",
+    "components_used_guess": "HTMLDivElement, Head, Container, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/account/billing.tsx",
+    "components_used_guess": "SubscriptionSummary, Invoice, Head, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/account/index.tsx",
+    "components_used_guess": "Head, Container, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/account/referrals.tsx",
+    "components_used_guess": "Head"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/content/reading.tsx",
+    "components_used_guess": "ReadingTest, AdminGuard, Head, Container"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/imp-as.tsx",
+    "components_used_guess": "Head"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/index.tsx",
+    "components_used_guess": "AppRole, RoleGuard, Head, Container, Link, SkeletonRows, StatusDot"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/partners/index.tsx",
+    "components_used_guess": "PartnerSummary, ReferralStats, Head"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/premium/pin.tsx",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/reviews/[attemptId].tsx",
+    "components_used_guess": "AttemptDetail, Head, Container, Link, Button, Alert, Card, Badge"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/reviews/index.tsx",
+    "components_used_guess": "AttemptRow, Head, Container, Alert, Card, Badge, Link, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/stop-impersonation.tsx",
+    "components_used_guess": "Head"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/students/index.tsx",
+    "components_used_guess": "Profile, AdminGuard, Head, Container"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/users.tsx",
+    "components_used_guess": "Row, Container, Card, Badge, Input, Button, Modal, RoleGuard, AdminUsers"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/ai/index.tsx",
+    "components_used_guess": "Msg, Provider, HTMLDivElement, HTMLTextAreaElement, WireMsg, Head, SidebarHeader, MessageList"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/ai/writing/[id].tsx",
+    "components_used_guess": "Container, Card, Badge, Button, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/account/delete.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/account/export.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/dashboard.ts",
+    "components_used_guess": "Module, Signup, Series, ModuleRow, StudentsBlock, Payload"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/premium/clear-pin.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/premium/generate-pin.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/premium/set-pin.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/reviews/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/set-pin.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/stop-impersonation.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/students/actions.ts",
+    "components_used_guess": "ApiOk"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/students/export.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/students/list.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/users/list.ts",
+    "components_used_guess": "Row"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/users/set-role.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/chat.ts",
+    "components_used_guess": "Uint8Array"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/explain.ts",
+    "components_used_guess": "Resp, Explanation"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/health.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/profile-suggest.ts",
+    "components_used_guess": "EnglishLevel, TimeCommitment"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/re-evaluate.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/reading/explanations.ts",
+    "components_used_guess": "ReadingExplainResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/evaluate.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/grade.ts",
+    "components_used_guess": "Resp, AIFeedback"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/score-audio-groq.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/score-v2.ts",
+    "components_used_guess": "SpeakingResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/score.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/test-drive.ts",
+    "components_used_guess": "Ok"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/writing/grade.ts",
+    "components_used_guess": "Resp, AIFeedback"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/writing/score-v2.ts",
+    "components_used_guess": "WritingResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/forgot-password.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/login-event.ts",
+    "components_used_guess": "RespBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/login-events.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/login.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/sessions/[id].ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/sessions/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/set-session.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/signout.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/signup.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/[slug].ts",
+    "components_used_guess": "BlogPostResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/index.ts",
+    "components_used_guess": "BlogCreateRequest, BlogListResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/moderate.ts",
+    "components_used_guess": "ModerateRequest, ModerateResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/modqueue.ts",
+    "components_used_guess": "ModQueueResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/submit.ts",
+    "components_used_guess": "BlogSubmitRequest, BlogSubmitResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/availability.ts",
+    "components_used_guess": "AvailabilityResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/cancel.ts",
+    "components_used_guess": "CancelResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/create.ts",
+    "components_used_guess": "CreateBookingResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/reschedule.ts",
+    "components_used_guess": "RescheduleResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/buddy/match.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/certificates/create.ts",
+    "components_used_guess": "CertificateCreateResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/certificates/sign.ts",
+    "components_used_guess": "CertificateSignResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/challenge/enroll.ts",
+    "components_used_guess": "ChallengeEnrollResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/challenge/leaderboard.ts",
+    "components_used_guess": "ChallengeLeaderboardResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/challenge/progress.ts",
+    "components_used_guess": "ChallengeProgressResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/check-otp.ts",
+    "components_used_guess": "CheckOtpResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/attendance.ts",
+    "components_used_guess": "AttendanceResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/cancel.ts",
+    "components_used_guess": "CancelClassResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/create.ts",
+    "components_used_guess": "CreateClassResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/join-token.ts",
+    "components_used_guess": "JoinTokenResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/coach/mood.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/content/delete.ts",
+    "components_used_guess": "DeleteResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/content/publish.ts",
+    "components_used_guess": "PublishResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/content/upload.ts",
+    "components_used_guess": "UploadInitResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/counters/increment.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/dev/grant-role.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/drills/generate.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/[attemptId]/event.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/[attemptId]/score.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/[attemptId]/submit.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/schedule.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/healthz.ts",
+    "components_used_guess": "HealthResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/bulk-enroll.ts",
+    "components_used_guess": "BulkEnrollResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/invite.ts",
+    "components_used_guess": "InviteResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/orgs.ts",
+    "components_used_guess": "OrgsResponse, OrgRow"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/reports.ts",
+    "components_used_guess": "ReportsResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/students.ts",
+    "components_used_guess": "StudentsResponse, StudentRow"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/review/[attemptId].ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/submit.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/test/[slug].ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/tests.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/marketplace/apply.ts",
+    "components_used_guess": "ApplyResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/marketplace/approve.ts",
+    "components_used_guess": "ApproveResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/marketplace/coaches.ts",
+    "components_used_guess": "CoachesResponse, CoachRow"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/metrics.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/mistakes/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/notifications/[id].ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/notifications/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/notifications/nudge.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/onboarding/complete.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/partners/summary.ts",
+    "components_used_guess": "ResBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/create-checkout-session.ts",
+    "components_used_guess": "PlanKey, Cycle, ResBody, CreateCheckoutBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/create-easypaisa-session.ts",
+    "components_used_guess": "ResBody, ReqBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/create-jazzcash-session.ts",
+    "components_used_guess": "ResBody, ReqBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/initiate.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/webhook.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/placement/score.ts",
+    "components_used_guess": "Skill, ScoreResult"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/placement/start.ts",
+    "components_used_guess": "Skill, Item"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/placement/submit.ts",
+    "components_used_guess": "Skill"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/predictor/score.ts",
+    "components_used_guess": "ResBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/eligibility.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/pin-status.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/session.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/set-pin.ts",
+    "components_used_guess": "Resp"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/signout.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/status.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/verify-pin.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/verify.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/proctoring/flags.ts",
+    "components_used_guess": "FlagsResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/proctoring/start.ts",
+    "components_used_guess": "StartResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/proctoring/verify.ts",
+    "components_used_guess": "VerifyResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/progress/share.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/quick-drill.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/explain.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/recompute.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/submit.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/test/[slug].ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals/create.ts",
+    "components_used_guess": "ResBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals/redeem.ts",
+    "components_used_guess": "ResBody, RedeemBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals/stats.ts",
+    "components_used_guess": "ResBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/saved/[category].ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/saved/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/scores/challenge.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/send-otp.ts",
+    "components_used_guess": "SendOtpResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/accent-mirror.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/attempts/[id].ts",
+    "components_used_guess": "Data"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/attempts/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/evaluate.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/file.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/limits/today.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner/review/[attemptId].ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner/summary.ts",
+    "components_used_guess": "Ok"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner-summary.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/prompts.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score-audio-groq.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score-groq.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score-save.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/signed-url.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/start-attempt.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/upload.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/strategies/toggle-save.ts",
+    "components_used_guess": "Json"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/strategies/vote.ts",
+    "components_used_guess": "Json"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/streak.ts",
+    "components_used_guess": "StreakResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/subscriptions/portal.ts",
+    "components_used_guess": "ResBody"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/support.ts",
+    "components_used_guess": "SupportRequest, SupportResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/teacher/apply.ts",
+    "components_used_guess": "ApplyResponse, ApplyPayload"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/teacher/assignments.ts",
+    "components_used_guess": "TeacherAssignTaskResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/teacher/cohorts.ts",
+    "components_used_guess": "TeacherCohortsResponse"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/twilio-status.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/upload/audio.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/upload/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/user/dashboard.ts",
+    "components_used_guess": "DashboardPayload"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/waitlist/submit.ts",
+    "components_used_guess": "WaitlistOut"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/waitlist.ts",
+    "components_used_guess": "Out"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/webhooks/payment.ts",
+    "components_used_guess": "Ok"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/whatsapp/subscribe.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/whatsapp/webhook.ts",
+    "components_used_guess": "Response"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/words/learn.ts",
+    "components_used_guess": "LearnOut"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/words/today.ts",
+    "components_used_guess": "TodayOut"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/writing/reeval-history.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/writing/reevaluate.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/writing/restore-reeval.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/callback.tsx",
+    "components_used_guess": "AuthLayout, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/forgot.tsx",
+    "components_used_guess": "React, Link, SectionLabel, Alert, Badge, Input, Button, MailIcon"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/mfa.tsx",
+    "components_used_guess": "AuthLayout, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/reset.tsx",
+    "components_used_guess": "SectionLabel, Alert, Badge, Input, Button, SmsIcon, Link, MailIcon"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/verify.tsx",
+    "components_used_guess": "SectionLabel, Card, Alert, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/blog/[slug].tsx",
+    "components_used_guess": "Props, Head, Container, Card, Link, Image"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/blog/index.tsx",
+    "components_used_guess": "CategoryFilter, Sort, Post, Head, Container, Button, Card, Input, Alert, Image, Link, NavLink"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/bookings/[id].tsx",
+    "components_used_guess": "BookingPageProps, Link, Head, Image, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/bookings/index.tsx",
+    "components_used_guess": "ListResp, Head, Input, Button, Skeleton, EmptyState, Link, BookingRow, Pagination"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/cert/[id].tsx",
+    "components_used_guess": "CertRow, Head, Container, Link, CertificateCanvas"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/challenge/[cohort].tsx",
+    "components_used_guess": "EnrollmentLite, ChallengeTask, Head, Container, Link, TaskList, Leaderboard"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/challenge/index.tsx",
+    "components_used_guess": "EnrollmentRow, Head, Container, Link, ChallengeCohortCard"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/checkout/cancel.tsx",
+    "components_used_guess": "Head, Section, Container, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/checkout/index.tsx",
+    "components_used_guess": "PlanKey, PlanPickerProps, Head, Container, SocialProofStrip, Link, Card, PlanPicker, Badge, CheckoutForm, RedeemBox, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/checkout/success.tsx",
+    "components_used_guess": "Head, Section, Container, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/classes/[id].tsx",
+    "components_used_guess": "ClassPageProps, Link, Head, Button, Skeleton, Input"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/classes/index.tsx",
+    "components_used_guess": "Head, Input, Button, Skeleton, EmptyState, Link, ClassRow, Pagination"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/coach/[id].tsx",
+    "components_used_guess": "CoachPageProps, Array, Link, Head, Image, BookCard"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/chat.tsx",
+    "components_used_guess": "Message, Section, Container, Card, Input, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/index.tsx",
+    "components_used_guess": "Thread, Section, Container, Card, Input, Textarea, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/questions.tsx",
+    "components_used_guess": "QA, Section, Container, Card, Input, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/review/index.tsx",
+    "components_used_guess": "Review, Record, Section, Container, Card, Textarea, Button, Input"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/content/studio/[id].tsx",
+    "components_used_guess": "StudioDetailProps, Link, Head, Button, Input"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/content/studio/index.tsx",
+    "components_used_guess": "StudioIndexProps, Head, Link, Button, Input"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/dashboard/index.tsx",
+    "components_used_guess": "Profile, Container, Card, Alert, Link, Button, HeaderStreakChip, StreakIndicator, Badge, Image, WordOfTheDayCard, GapToGoal, StudyCalendar, GoalRoadmap, QuickDrillButton, ReadingStatsCard, ShareLinkCard, WhatsAppOptIn, SavedItems, MotivationCoach"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/data-deletion.tsx",
+    "components_used_guess": "Head, Container, Link, Button, Card"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/exam/rehearsal.tsx",
+    "components_used_guess": "ExamLayout, DeviceCheck, TimingRehearsal, AnxietyScripts, ExamChecklist"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/faq.tsx",
+    "components_used_guess": "Cat, Head, Container, Link, Card, Input, Alert, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/forgot-password.tsx",
+    "components_used_guess": "HTMLFormElement, Head, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/index.tsx",
+    "components_used_guess": "SectionSkeleton, HTMLAnchorElement, Head, Hero, Modules, Testimonials, Pricing, Waitlist"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/[orgId]/index.tsx",
+    "components_used_guess": "OrgHomeProps, Link, Head, Button, KpiCard"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/[orgId]/reports.tsx",
+    "components_used_guess": "ReportsPageProps, Link, Head, Button, Kpi, Skeleton, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, AreaChart, Area"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/[orgId]/students.tsx",
+    "components_used_guess": "StudentsPageProps, Array, Link, Head, Button, Input, Skeleton"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/index.tsx",
+    "components_used_guess": "OrgsResp, Head, Input, Button, Link, Skeleton, EmptyState"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/labs/ai-tutor.tsx",
+    "components_used_guess": "Msg, MediaRecorder, Blob, Head, Link, Button, Skeleton, Input"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/leaderboard/index.tsx",
+    "components_used_guess": "Entry, Container, Card"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/[slug].tsx",
+    "components_used_guess": "Course, Lesson, Progress, Container, Card, Alert, Image, Badge, Link, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/drills.tsx",
+    "components_used_guess": "Drill, Container, Card, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/[skill].tsx",
+    "components_used_guess": "Profile, Container, Card, Skeleton, StreakIndicator, Image, Badge, Button, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/lessons/[slug].tsx",
+    "components_used_guess": "Container, Card, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/lessons/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/strategies/[tipSlug].tsx",
+    "components_used_guess": "DrillResult, Container, Card, Button, Badge, Head, AreaBadge, DiffBadge, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/strategies/index.tsx",
+    "components_used_guess": "Area, Difficulty, StrategyTip, Set, Record, Badge, Container, Card, Input, Alert, Button, AreaBadge, DiffBadge"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/legal/privacy.tsx",
+    "components_used_guess": "Head, Container, Link, Button, Card"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/legal/terms.tsx",
+    "components_used_guess": "Head, Container, Link, Button, Card"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/listening/[slug]/review.tsx",
+    "components_used_guess": "Container, ReviewScreen"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/listening/[slug].tsx",
+    "components_used_guess": "ListeningTest, Record, Container, Card, FocusGuard, SaveItemButton, Timer, Badge, Button, Alert, AudioSectionsPlayer, Input"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/listening/index.tsx",
+    "components_used_guess": "ListItem, Record, Container, Badge, Alert, Card, Skeleton, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/email.tsx",
+    "components_used_guess": "Alert, Input, PasswordInput, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/index.tsx",
+    "components_used_guess": "Alert, SectionLabel, Button, Link, MailIcon, GoogleIcon, FacebookIcon, AppleIcon, Badge, SmsIcon"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/password.tsx",
+    "components_used_guess": "Alert, Input, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/phone.tsx",
+    "components_used_guess": "Alert, Input, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/marketplace/index.tsx",
+    "components_used_guess": "CoachesResp, Head, Link, CoachCard, Pagination, Image"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mistakes/index.tsx",
+    "components_used_guess": "Mistake, Container, Input, Textarea, Select, Button, MistakeCard"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/listening/[id].tsx",
+    "components_used_guess": "ListeningPaper, AnswerMap, Shell, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/reading/[id].tsx",
+    "components_used_guess": "ReadingPaper, AnswerMap, Shell, Link, Options"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/speaking/[id].tsx",
+    "components_used_guess": "SpeakingScript, MediaRecorder, Blob, Shell, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/writing/[id].tsx",
+    "components_used_guess": "WritingPaper, Shell, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/[section].tsx",
+    "components_used_guess": "SectionTestHandle, Container, Card, ExamLayout, SectionTest"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/analytics.tsx",
+    "components_used_guess": "ResultRow, Container, Card, BandChart, TimeChart, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/full.tsx",
+    "components_used_guess": "Progress, SectionTestHandle, Container, Card, ExamLayout, SectionTest"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/index.tsx",
+    "components_used_guess": "Container, Card, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/notifications/index.tsx",
+    "components_used_guess": "Container, Card, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/date.tsx",
+    "components_used_guess": "StepShell, Input"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/goal.tsx",
+    "components_used_guess": "StepShell, Input, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/index.tsx",
+    "components_used_guess": "StepShell, Card"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/schedule.tsx",
+    "components_used_guess": "StepShell, Input, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/skills.tsx",
+    "components_used_guess": "Record, Skill, StepShell, Checkbox"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/teacher/index.tsx",
+    "components_used_guess": "Module, Alert, Input, Select, Textarea, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/teacher/status.tsx",
+    "components_used_guess": "Alert, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/partners/index.tsx",
+    "components_used_guess": "Head, Link, PartnerSummary"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/index.tsx",
+    "components_used_guess": "Head, Container, GradientText, Link, Button, Badge, Card, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/result.tsx",
+    "components_used_guess": "Head, Container, GradientText, Card, Link, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/run.tsx",
+    "components_used_guess": "Record, Card, Image, SpeakingRecorder, Head, Container, GradientText, Badge, Alert, Button, Link, MediaRecorder, Blob"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/start.tsx",
+    "components_used_guess": "Container, Card, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/predictor/index.tsx",
+    "components_used_guess": "Head, BandPredictorForm"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/predictor/result.tsx",
+    "components_used_guess": "Result, Head, Link, BandBreakdown"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/index.tsx",
+    "components_used_guess": "Props, ThemeSwitcherPremium, PrCard, PrButton, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/listening/[slug].tsx",
+    "components_used_guess": "ExamGate, PinGate, ExamShell, PrAudioPlayer, PrButton"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/pin.tsx",
+    "components_used_guess": "HTMLInputElement, PremiumThemeProvider, Head, ThemeSwitcherPremium, PrCard, PrButton, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/reading/[slug].tsx",
+    "components_used_guess": "ReadingTest, Record, HTMLElement, ExamGate, PinGate, ExamShell, PrButton, ResultPanel"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium-pin.tsx",
+    "components_used_guess": "HTMLInputElement, Head"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/pricing/index.tsx",
+    "components_used_guess": "Currency, Record, Cycle, Head, Section, Container, SocialProofStrip, Card, Badge, Ribbon, Button, Link, CardShell"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/proctoring/check.tsx",
+    "components_used_guess": "Head, Input, Button, Skeleton"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/proctoring/exam/[id].tsx",
+    "components_used_guess": "ExamPageProps, HTMLVideoElement, HTMLCanvasElement, Head, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/profile/index.tsx",
+    "components_used_guess": "Profile, HTMLInputElement, BadgeType, Container, Card, StreakIndicator, Badge, Image, Button, Toggle, SavedItems"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/profile/setup.tsx",
+    "components_used_guess": "FieldErrors, Container, ProgressBar, Alert, Card, SkeletonLine, Section, Input, Select, Button, Badge, AvatarUploader, Image"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/progress/[token].tsx",
+    "components_used_guess": "Props, Container, Card"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/progress/index.tsx",
+    "components_used_guess": "Record, Skill, BandDay, AccuracyRow, TimeRow, Container, Card, Button, EmptyState, BandChart, Link, AccuracyChart, TimeChart"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/pwa/app.tsx",
+    "components_used_guess": "Head, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/quick/[skill].tsx",
+    "components_used_guess": "Container, Card, QuickDrillButton"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/r/[code].tsx",
+    "components_used_guess": ""
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/[slug].tsx",
+    "components_used_guess": "ReadingTest, Record, StatusFilter, TypeFilter, HTMLElement, FocusGuard, Container, Alert, Card, Badge, SaveItemButton, Button, QuestionBlock, QuestionNav"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/index.tsx",
+    "components_used_guess": "ReadingListItem, Container, ReadingFilterBar, Alert, Card, Badge, Link, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/passage/[slug].tsx",
+    "components_used_guess": "Props, Container, Badge, Card, ReadingFilterBar, QuestionRenderer, Link, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/review/[attemptId].tsx",
+    "components_used_guess": "ReviewPayload, Container, Alert, Card, Badge, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/review/index.tsx",
+    "components_used_guess": "Props, Record, Kind, Container, Card, TimerProgress, Badge, Alert, ReadingFilterBar, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/stats.tsx",
+    "components_used_guess": "ReadingStats, Container, Card, Badge"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reports/band-analytics.tsx",
+    "components_used_guess": "Resp, Head, Link, Button, Input, Skeleton, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, AreaChart, Area"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/listening/[id].tsx",
+    "components_used_guess": "ListeningPaper, Attempt, Shell, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/reading/[id].tsx",
+    "components_used_guess": "ReadingPaper, Attempt, Shell, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/speaking/[id].tsx",
+    "components_used_guess": "AIFeedback, Shell, Badge, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/writing/[id].tsx",
+    "components_used_guess": "Attempt, AIFeedback, Shell, Badge, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/saved/index.tsx",
+    "components_used_guess": "Container, SavedItems"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/billing.tsx",
+    "components_used_guess": "BillingState, Shell, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/index.tsx",
+    "components_used_guess": "Profile, Container, Card, Alert, Button, HeaderStreakChip, StreakIndicator, Badge, Image, WordOfTheDayCard, GapToGoal, StudyCalendar, GoalRoadmap, QuickDrillButton, ReadingStatsCard, ShareLinkCard, WhatsAppOptIn, SavedItems, MotivationCoach"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/language.tsx",
+    "components_used_guess": "SupportedLocale, Head, Container, LocaleSwitcher"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/security.tsx",
+    "components_used_guess": "SessionInfo, LoginEvent, Container, Card, Input, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/email.tsx",
+    "components_used_guess": "SectionLabel, Card, Alert, Link, Input, PasswordInput, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/index.tsx",
+    "components_used_guess": "Alert, SectionLabel, Button, Link, MailIcon, GoogleIcon, FacebookIcon, AppleIcon, Badge, SmsIcon"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/password.tsx",
+    "components_used_guess": "Alert, Input, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/phone.tsx",
+    "components_used_guess": "Alert, Input, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/attempts/index.tsx",
+    "components_used_guess": "AttemptRow, Head, Container, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/buddy.tsx",
+    "components_used_guess": "Container, StudyBuddyMatch"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/index.tsx",
+    "components_used_guess": "Container, Badge, Card, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/partner/history.tsx",
+    "components_used_guess": "Props, Container, Link, Button, Card, Input, Badge, Stat"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/partner/review/[attemptId].tsx",
+    "components_used_guess": "ReviewPayload, Container, Card, Badge, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/partner.tsx",
+    "components_used_guess": "Msg, Blob, Accent, SpeechRecognition, AttemptRow, Container, Card, Input, Button, Badge, Recorder, AccentPicker"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/practice.tsx",
+    "components_used_guess": "Focus, ScoreResult, Mode, RecorderHandle, Accent, Stage, Head, Container, Link, Recorder, AccentPicker, AccentMirror"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/report.tsx",
+    "components_used_guess": "Attempt, Container, Card, Badge"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/review/[id].tsx",
+    "components_used_guess": "TranscriptProps, SpeechSynthesisUtterance, Button, Props, Attempt, Container, Card, Badge, ChallengeScore, Transcript"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/roleplay/[scenario].tsx",
+    "components_used_guess": "MediaRecorder, Blob, Msg, HTMLDivElement, Container, Badge, Card, SidebarHeader, MessageList, Input, Button, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/roleplay/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/settings.tsx",
+    "components_used_guess": "Accent, Container, Card, AccentPicker, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/index.tsx",
+    "components_used_guess": "Blob, PartKey, RunState, Array, Head, Container, GradientText, Badge, Card, Button, Alert, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/part1.tsx",
+    "components_used_guess": "Accent, Step, MediaStream, MediaRecorder, BlobPart, Container, Link, Button, Card, Badge, AccentPicker, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/part2.tsx",
+    "components_used_guess": "ScoreResult, Stage, Head, Container, Recorder, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/part3.tsx",
+    "components_used_guess": "ScoreResult, Stage, RecorderHandle, Head, Container, Link, Recorder"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/study-plan/index.tsx",
+    "components_used_guess": "StudyPlan, PlanDay, Shell, Link"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/teacher/cohorts/[id].tsx",
+    "components_used_guess": "Cohort, CohortRow, Head, Container, Link, CohortTable, AssignTaskModal"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/teacher/index.tsx",
+    "components_used_guess": "Container, TabKey, Cohort, Head, Button, SectionCard"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/tools/mark-sections/[slug].tsx",
+    "components_used_guess": "Mark, HTMLAudioElement, Container, Card, Input, AudioBar, Button, Alert"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/update-password.tsx",
+    "components_used_guess": "React, Link, Container, Card, Image, Alert, Input, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/visa/index.tsx",
+    "components_used_guess": "Container, GapToGoal, TargetScoreForm"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/waitlist.tsx",
+    "components_used_guess": "Head, Section, WaitlistForm"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/welcome/index.tsx",
+    "components_used_guess": "Link, Badge, Button, WordOfDay, Container, StreakIndicator, ModuleCard"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/writing/index.tsx",
+    "components_used_guess": "TaskType, React, Mode, Container, AiTestDrive, Badge, Card, HTMLSelectElement, Input, Alert, Button"
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/writing/review/[attemptId].tsx",
+    "components_used_guess": "Props, ReevalRow, Container, Card, Badge, ChallengeScore, ReevalPanel, ReevalHistory"
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Checkbox.tsx",
+    "components_used_guess": ""
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Radio.tsx",
+    "components_used_guess": ""
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Select.tsx",
+    "components_used_guess": ""
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Toggle.tsx",
+    "components_used_guess": ""
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/index.ts",
+    "components_used_guess": ""
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/tokens/colors.js",
+    "components_used_guess": ""
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/tokens/scale.js",
+    "components_used_guess": ""
+  }
+]
