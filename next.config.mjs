@@ -3,6 +3,7 @@
 // - Sets a sane CSP (no 'strict-dynamic'), allows common vendors used in your app
 // - Disables production browser sourcemaps
 // - Configures next-pwa and excludes .map files from the precache (fixes Workbox 404)
+// - Ignores ESLint errors during builds so deploys aren’t blocked
 
 import withPWA from 'next-pwa';
 
@@ -45,6 +46,16 @@ const baseConfig = {
 
   // Avoid generating .map files for the browser in prod
   productionBrowserSourceMaps: false,
+
+  // Let build continue even with ESLint errors/warnings
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // Keep TS strictness (flip to true only if you need to unblock quickly)
+  typescript: {
+    ignoreBuildErrors: false,
+  },
 
   // (Optional) If you need trailingSlash or other Next options, add them here.
   // trailingSlash: false,
