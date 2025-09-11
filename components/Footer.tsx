@@ -6,6 +6,7 @@ import { Container } from '@/components/design-system/Container';
 import { NavLink } from '@/components/design-system/NavLink';
 import { SocialIconLink } from '@/components/design-system/SocialIconLink';
 import { Icon } from '@/components/design-system/Icon';
+import { Twitter, Facebook, Instagram, Youtube } from 'lucide-react';
 
 const year = new Date().getFullYear();
 
@@ -90,10 +91,26 @@ export const Footer: React.FC = () => {
 
             {/* Socials */}
             <div className="mt-5 flex items-center gap-3">
-              <SocialIconLink platform="x" href="https://x.com/gramorx" />
-              <SocialIconLink platform="facebook" href="https://facebook.com/gramorx" />
-              <SocialIconLink platform="instagram" href="https://instagram.com/gramorx" />
-              <SocialIconLink platform="youtube" href="https://youtube.com/@gramorx" />
+              <SocialIconLink
+                href="https://x.com/gramorx"
+                icon={<Twitter aria-hidden className="h-5 w-5" />}
+                label="X (Twitter)"
+              />
+              <SocialIconLink
+                href="https://facebook.com/gramorx"
+                icon={<Facebook aria-hidden className="h-5 w-5" />}
+                label="Facebook"
+              />
+              <SocialIconLink
+                href="https://instagram.com/gramorx"
+                icon={<Instagram aria-hidden className="h-5 w-5" />}
+                label="Instagram"
+              />
+              <SocialIconLink
+                href="https://youtube.com/@gramorx"
+                icon={<Youtube aria-hidden className="h-5 w-5" />}
+                label="YouTube"
+              />
             </div>
           </div>
 
@@ -136,15 +153,15 @@ export const Footer: React.FC = () => {
             <h3 className="mb-3 font-slab text-lg">Contact</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
-                <Icon name="map-pin" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden={true} />
+                <Icon name="map-pin" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden />
                 <span>Gulberg, Lahore, Pakistan</span>
               </li>
               <li className="flex items-start gap-2">
-                <Icon name="phone" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden={true} />
+                <Icon name="phone" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden />
                 <span>+92 300 0000000</span>
               </li>
               <li className="flex items-start gap-2">
-                <Icon name="mail" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden={true} />
+                <Icon name="mail" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden />
                 <span>support@gramorx.com</span>
               </li>
             </ul>
