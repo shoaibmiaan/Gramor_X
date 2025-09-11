@@ -45,3 +45,6 @@ public/sw.js
 
 # Lock file (keep this one if using npm, remove if not)
 !package-lock.json
+
+# Sentry Config File
+.env.sentry-build-plugin
