@@ -148,7 +148,7 @@ const t = (s: string) => s;
     }
   };
 
-  const handleLanguageChange = async (lang: string) => {
+  const handleLanguageChange = async (lang: Locale) => {
     setLocale(lang);
     // FIX: use a real supabase client instance
     const supabase = supabaseBrowser();
