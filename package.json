@@ -25,7 +25,8 @@
     "ci:lighthouse": "CHROME_PATH=\"$(node -p \"require('playwright-core').chromium.executablePath()\")\" lhci autorun --config=./lighthouserc.json",
     "ci:a11y": "playwright test -c ./playwright.config.ts",
     "ci:all": "start-server-and-test start http://localhost:3000 \"npm run ci:lighthouse && npm run ci:a11y\"",
-    "ds:guard": "bash scripts/ds_guard.sh"
+    "ds:guard": "bash scripts/ds_guard.sh",
+    "lint:hex": "bash -lc 'rg -n --pcre2 \"#[0-9A-Fa-f]{6}\\b\" components pages | grep -v \"components/certificates/CertificateCanvas.tsx\" && echo \"❌ Hex found (block new hex). See Step-6 tokens.\" && exit 1 || echo \"✅ No new hex\"'"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
