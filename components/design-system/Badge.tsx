@@ -101,6 +101,7 @@ export const Badge = React.forwardRef(
   props: PolymorphicProps<C, OwnProps> & { role?: React.AriaRole } & { ref?: React.Ref<Element> }
 ) => React.ReactElement | null;
 
-Badge.displayName = 'Badge';
+(Badge as any).displayName = 'Badge';
 
 export default Badge;
+
