@@ -1,9 +1,11 @@
-import '@/styles/semantic.css';
 import type { AppProps } from 'next/app';
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 
+import '@/styles/tokens.css';         // Day-5 tokens (must be first so vars exist)
+import '@/styles/premium.css';        // Premium theme variables/utilities
+import '@/styles/semantic.css';
 import '@/styles/globals.css';
 import '@/styles/themes/index.css';
 
@@ -66,7 +68,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const pathname = router.pathname;
 
-  // Treat both /premium and /pricing as premium-themed surfaces (scoped CSS)
   const needPremium = useMemo(
     () => pathname.startsWith('/premium') || pathname.startsWith('/pricing'),
     [pathname]
@@ -87,7 +88,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   const showLayout = !needPremium && !isNoChromeRoute;
 
-  // Route groups
   const isDashboardRoute =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/account') ||
@@ -138,26 +138,20 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/premium/reading') ||
     pathname.startsWith('/proctoring/exam');
 
-  // ⏲️ Idle timeout — skip in CI
   useEffect(() => {
     if (IS_CI) return;
     const cleanup = initIdleTimeout(env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES);
     return cleanup;
   }, []);
 
-  // 🔄 Sync session → cookies — attach only if a session exists; skip in CI
   useEffect(() => {
     if (IS_CI) return;
-
     let unsub: (() => void) | undefined;
-
     (async () => {
       const {
         data: { session },
       } = await supabaseBrowser.auth.getSession();
-
-      if (!session) return; // no stored session yet → stay quiet
-
+      if (!session) return;
       const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (event, sessionNow) => {
         try {
           await fetch('/api/auth/set-session', {
@@ -166,23 +160,17 @@ function InnerApp({ Component, pageProps }: AppProps) {
             credentials: 'same-origin',
             body: JSON.stringify({ event, session: sessionNow }),
           });
-        } catch {
-          /* silent */
-        }
+        } catch { /* silent */ }
       });
-
       unsub = () => sub?.subscription?.unsubscribe();
     })();
-
     return () => unsub?.();
   }, []);
 
   const { isChecking } = useRouteGuard();
 
-  // 🚪 Sign-out on expiry (but not on pricing/public) — skip in CI
   useEffect(() => {
     if (IS_CI) return;
-
     const interval = setInterval(async () => {
       const {
         data: { session },
@@ -202,33 +190,17 @@ function InnerApp({ Component, pageProps }: AppProps) {
     return () => clearInterval(interval);
   }, [router]);
 
-  // 🎨 Load premium.css only on premium/pricing
-  useEffect(() => {
-    let linkEl: HTMLLinkElement | null = null;
-    if (needPremium) {
-      linkEl = document.createElement('link');
-      linkEl.rel = 'stylesheet';
-      linkEl.href = '/premium.css';
-      linkEl.media = 'all';
-      document.head.appendChild(linkEl);
-    }
-    return () => {
-      if (linkEl) document.head.removeChild(linkEl);
-    };
-  }, [needPremium]);
-
   if (isChecking) return <GuardSkeleton />;
 
-  // Premium routes get their own theme provider
+  // Base page (no extra font wrappers here; fonts applied once at the top-level div)
   const basePage = needPremium ? (
     <PremiumThemeProvider>
-      <div className={`${fontSans.variable} ${fontDisplay.variable}`}><Component {...pageProps} /></div>
+      <Component {...pageProps} />
     </PremiumThemeProvider>
   ) : (
     <Component {...pageProps} />
   );
 
-  // When global chrome is visible, wrap inside <Layout> and choose section layout
   let content = basePage;
   if (showLayout) {
     if (isAdminRoute) content = <AdminLayout>{basePage}</AdminLayout>;
@@ -242,7 +214,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     else if (isMarketingRoute) content = <PublicMarketingLayout>{basePage}</PublicMarketingLayout>;
   }
 
-  // When chrome is hidden (auth/proctoring/exam/focus), still apply correct wrappers
   const nakedContent = isAuthPage ? (
     <AuthLayout>{basePage}</AuthLayout>
   ) : isProctoringRoute ? (
@@ -261,7 +232,8 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      <div className={`${poppins.variable} ${slab.variable} ${poppins.className} min-h-[100dvh]`}>
+      {/* Fonts applied once here */}
+      <div className={`${poppins.variable} ${slab.variable} ${poppins.className} min-h-[100dvh] bg-background text-foreground`}>
         {showLayout ? (
           <Layout>
             <ImpersonationBanner />
