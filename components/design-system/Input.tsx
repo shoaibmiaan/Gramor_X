@@ -23,7 +23,21 @@ const sizes: Record<NonNullable<InputProps["size"]>, string> = {
 };
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ id, label, error, hint, className, size = "md", leftSlot, rightSlot, required, ...props }, ref) => {
+  (
+    {
+      id,
+      label,
+      error,
+      hint,
+      className,
+      size = "md",
+      leftSlot,
+      rightSlot,
+      required,
+      ...props
+    },
+    ref
+  ) => {
     const inputId = id ?? React.useId();
     const hintId = hint ? `${inputId}-hint` : undefined;
     const errorId = error ? `${inputId}-error` : undefined;
@@ -35,16 +49,22 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             htmlFor={inputId}
             className="mb-1 block text-sm font-medium text-muted-foreground"
           >
-            {label} {required && <span aria-hidden="true" className="text-sunsetOrange">*</span>}
+            {label}{" "}
+            {required && (
+              <span aria-hidden="true" className="text-sunsetOrange">
+                *
+              </span>
+            )}
           </label>
         )}
         <div
           className={cn(
-            "relative flex items-center",
-            "rounded-ds-2xl border bg-input text-foreground",
-            error ? "border-sunsetOrange" : "border-border",
-            "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background"
-          )}
+    "w-full bg-transparent outline-none text-[16px]",
+    sizes[size],
+    leftSlot ? "pl-0" : undefined,
+    rightSlot ? "pr-0" : undefined,
+    className
+  )}
         >
           {leftSlot && <span className="pl-3 pr-2 inline-flex">{leftSlot}</span>}
           <input
@@ -53,12 +73,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={!!error || undefined}
             aria-describedby={error ? errorId : hint ? hintId : undefined}
             className={cn(
-              "peer w-full bg-transparent placeholder:text-muted-foreground/70 outline-none",
-              // iOS zoom guard
-              "text-[16px]",
+              "w-full bg-transparent outline-none text-[16px]",
               sizes[size],
-              !!leftSlot               (!!leftSlot ? "pl-0" : false)              leftSlot && "pl-0" "pl-0",
-              !!rightSlot               (!!rightSlot ? "pr-0" : false)              rightSlot && "pr-0" "pr-0",
+              leftSlot ? "pl-0" : undefined,
+              rightSlot ? "pr-0" : undefined,
               className
             )}
             {...props}
@@ -79,4 +97,4 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     );
   }
 );
-Input.displayName = "Input";
+(Input as any).displayName = "Input";
