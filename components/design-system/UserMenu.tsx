@@ -1,12 +1,15 @@
 'use client';
-import { Icon } from "@/components/design-system/Icon";
-// components/design-system/UserMenu.tsx
 
+// components/design-system/UserMenu.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+
+import { Icon } from "@/components/design-system/Icon";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import { useLocale } from "@/lib/locale";
+import type { Locale } from "@/lib/locale";
 import { signOutAndRedirect } from "@/lib/auth/signOut";
 
 type MenuItem = {
@@ -15,6 +18,13 @@ type MenuItem = {
   onClick?: () => void | Promise<void>;
   icon?: React.ReactNode;
 };
+
+// only allow the locales your `lib/locale.ts` supports
+const SUPPORTED_LOCALES = ["en", "ur", "ar", "fr"] as const;
+function toLocale(l: string): Locale {
+  const lc = (l || "").toLowerCase();
+  return ((SUPPORTED_LOCALES as readonly string[]).includes(lc) ? lc : "en") as Locale;
+}
 
 export const UserMenu: React.FC<{
   userId: string;
@@ -37,19 +47,14 @@ export const UserMenu: React.FC<{
 }) => {
   const router = useRouter();
   const [locale, setLocale] = useLocale();
-const t = (s: string) => s;
-
+  const t = (s: string) => s;
 
   const [open, setOpen] = useState(false);
-  const [localAvatar, setLocalAvatar] = useState<string | null>(
-    avatarUrl ?? null,
-  );
+  const [localAvatar, setLocalAvatar] = useState<string | null>(avatarUrl ?? null);
 
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef<Array<HTMLAnchorElement | HTMLButtonElement | null>>(
-    [],
-  );
+  const itemRefs = useRef<Array<HTMLAnchorElement | HTMLButtonElement | null>>([]);
 
   useEffect(() => setLocalAvatar(avatarUrl ?? null), [avatarUrl]);
 
@@ -62,26 +67,10 @@ const t = (s: string) => s;
 
   const defaultItems: MenuItem[] = useMemo(() => {
     const base: MenuItem[] = [
-      {
-        label: "Dashboard",
-        href: "/dashboard",
-        icon: <Icon name="gauge" />,
-      },
-      {
-        label: "Profile",
-        href: "/profile",
-        icon: <Icon name="id-badge" />,
-      },
-      {
-        label: "Account",
-        href: "/account",
-        icon: <Icon name="user" />,
-      },
-      {
-        label: "Sign out",
-        onClick: onSignOut ?? defaultSignOut,
-        icon: <Icon name="sign-out-alt" />,
-      },
+      { label: "Dashboard", href: "/dashboard", icon: <Icon name="gauge" /> },
+      { label: "Profile", href: "/profile", icon: <Icon name="id-badge" /> },
+      { label: "Account", href: "/account", icon: <Icon name="user" /> },
+      { label: "Sign out", onClick: onSignOut ?? defaultSignOut, icon: <Icon name="sign-out-alt" /> },
     ];
     return base;
   }, [onSignOut]);
@@ -130,9 +119,7 @@ const t = (s: string) => s;
   };
 
   const onMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const currentIndex = itemRefs.current.findIndex(
-      (n) => n === document.activeElement,
-    );
+    const currentIndex = itemRefs.current.findIndex((n) => n === document.activeElement);
     if (e.key === "ArrowDown") {
       e.preventDefault();
       focusItem((currentIndex + 1) % _items.length);
@@ -148,14 +135,13 @@ const t = (s: string) => s;
     }
   };
 
-  const handleLanguageChange = async (lang: Locale) => {
+  // accept string from <select>, clamp to Locale
+  const handleLanguageChange = async (langStr: string) => {
+    const lang = toLocale(langStr);
     setLocale(lang);
     // FIX: use a real supabase client instance
     const supabase = supabaseBrowser();
-    await supabase
-      .from("user_profiles")
-      .update({ preferred_language: lang })
-      .eq("user_id", userId);
+    await supabase.from("user_profiles").update({ preferred_language: lang }).eq("user_id", userId);
   };
 
   return (
@@ -168,16 +154,19 @@ const t = (s: string) => s;
         aria-controls="user-menu"
         onClick={() => setOpen((v) => !v)}
         onKeyDown={onButtonKeyDown}
-        className="h-9 w-9 rounded-full bg-vibrantPurple/15 text-vibrantPurple font-semibold flex items-center justify-center hover:bg-vibrantPurple/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background "
+        className="h-9 w-9 rounded-full bg-vibrantPurple/15 text-vibrantPurple font-semibold flex items-center justify-center hover:bg-vibrantPurple/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         title={email ?? name ?? "User"}
       >
         {localAvatar ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <Image src={localAvatar}
+          <Image
+            src={localAvatar}
             alt=""
             className="h-9 w-9 rounded-full object-cover"
             decoding="async"
-           width={40} height={40} />
+            width={40}
+            height={40}
+          />
         ) : (
           fallbackInitial
         )}
@@ -198,21 +187,20 @@ const t = (s: string) => s;
                 <div className="h-9 w-9 rounded-full bg-vibrantPurple/15 flex items-center justify-center overflow-hidden">
                   {localAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <Image src={localAvatar}
+                    <Image
+                      src={localAvatar}
                       alt=""
                       className="h-9 w-9 object-cover"
                       decoding="async"
-                     width={40} height={40} />
+                      width={40}
+                      height={40}
+                    />
                   ) : (
-                    <span className="text-vibrantPurple font-semibold">
-                      {fallbackInitial}
-                    </span>
+                    <span className="text-vibrantPurple font-semibold">{fallbackInitial}</span>
                   )}
                 </div>
                 <div>
-                  <div className="font-medium text-foreground dark:text-foreground">
-                    {name ?? email}
-                  </div>
+                  <div className="font-medium text-foreground dark:text-foreground">{name ?? email}</div>
                   {email && name && <div className="opacity-80">{email}</div>}
                 </div>
               </div>
@@ -220,9 +208,7 @@ const t = (s: string) => s;
           )}
 
           <div className="px-4 py-3 border-b border-vibrantPurple/15">
-            <label className="block text-small mb-1">
-              {t("userMenu.language")}
-            </label>
+            <label className="block text-small mb-1">{t("userMenu.language")}</label>
             <select
               className="w-full rounded-md bg-background dark:bg-dark border border-vibrantPurple/20 px-2 py-1"
               value={locale}
@@ -231,8 +217,7 @@ const t = (s: string) => s;
               <option value="en">English</option>
               <option value="ur">Urdu</option>
               <option value="ar">Arabic</option>
-              <option value="hi">Hindi</option>
-              <option value="es">Spanish</option>
+              <option value="fr">French</option>
             </select>
           </div>
 
@@ -241,8 +226,7 @@ const t = (s: string) => s;
               const common =
                 "w-full text-left px-4 py-3 flex items-center gap-2 hover:bg-vibrantPurple/10 focus:bg-vibrantPurple/10 focus:outline-none";
               if (it.href) {
-                const isInternal =
-                  it.href.startsWith("/") || it.href.startsWith("#");
+                const isInternal = it.href.startsWith("/") || it.href.startsWith("#");
                 return isInternal ? (
                   <Link
                     key={it.label}
@@ -291,4 +275,3 @@ const t = (s: string) => s;
     </div>
   );
 };
-import Image from 'next/image';
