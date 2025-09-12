@@ -79,3 +79,15 @@
   .bg-warning     { background-color: rgb(var(--color-warning)); }
   .text-warning   { color: rgb(var(--color-warning)); }
 }
+
+/* —— aliases for existing usages —— */
+:root{
+  /* error alias maps to danger so existing code works */
+  --color-error: var(--color-danger);
+
+  /* canvas-friendly fallbacks (hex tokens are OK when centralized) */
+  --color-background: #0b0c10;
+  --color-foreground: #e8eaed;
+  --color-border: #232733;
+  --color-primary-hex: #2563eb; /* matches blue-600 used in UI */
+}
