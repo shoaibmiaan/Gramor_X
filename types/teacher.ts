@@ -1,5 +1,6 @@
 // types/teacher.ts
 // Teacher–cohort management types
+import type { ApiResult } from "./api";
 
 export interface TeacherCohort {
   id: string;
@@ -25,21 +26,13 @@ export interface TeacherAssignment {
   createdAt: string;
 }
 
-//
 // API contracts
-//
 
 // Cohorts
-export interface TeacherCohortsResponse {
-  ok: true;
-  cohorts: TeacherCohort[];
-} | { ok: false; error: string };
+export type TeacherCohortsResponse = ApiResult<{ cohorts: TeacherCohort[] }>;
 
 // Cohort members
-export interface TeacherCohortMembersResponse {
-  ok: true;
-  members: TeacherCohortMember[];
-} | { ok: false; error: string };
+export type TeacherCohortMembersResponse = ApiResult<{ members: TeacherCohortMember[] }>;
 
 // Assignments
 export interface TeacherAssignTaskRequest {
@@ -48,7 +41,4 @@ export interface TeacherAssignTaskRequest {
   description?: string;
   dueDate: string;
 }
-export interface TeacherAssignTaskResponse {
-  ok: true;
-  assignment: TeacherAssignment;
-} | { ok: false; error: string };
+export type TeacherAssignTaskResponse = ApiResult<{ assignment: TeacherAssignment }>;

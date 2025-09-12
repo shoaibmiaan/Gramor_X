@@ -1,8 +1,8 @@
 // types/challenge.ts
 // Domain types for Challenge enrollment, progress, leaderboard
+import type { ApiResult } from "./api";
 
 export type ChallengeCohortId = string; // e.g. "BandBoost-Sept2025"
-
 export type ChallengeTaskStatus = "pending" | "done" | "skipped";
 
 export interface ChallengeTask {
@@ -46,18 +46,13 @@ export interface ChallengeCohort {
   tasks: ChallengeTask[];
 }
 
-//
 // API contracts
-//
 
 // Enroll
 export interface ChallengeEnrollRequest {
   cohort: ChallengeCohortId;
 }
-export interface ChallengeEnrollResponse {
-  ok: true;
-  enrollment: ChallengeEnrollment;
-} | { ok: false; error: string };
+export type ChallengeEnrollResponse = ApiResult<{ enrollment: ChallengeEnrollment }>;
 
 // Progress
 export interface ChallengeProgressUpdateRequest {
@@ -65,14 +60,10 @@ export interface ChallengeProgressUpdateRequest {
   day: number;
   status: ChallengeTaskStatus;
 }
-export interface ChallengeProgressResponse {
-  ok: true;
-  progress: ChallengeProgress;
-} | { ok: false; error: string };
+export type ChallengeProgressResponse = ApiResult<{ progress: ChallengeProgress }>;
 
 // Leaderboard
-export interface ChallengeLeaderboardResponse {
-  ok: true;
+export type ChallengeLeaderboardResponse = ApiResult<{
   cohort: ChallengeCohortId;
   leaderboard: ChallengeLeaderboardEntry[];
-} | { ok: false; error: string };
+}>;
