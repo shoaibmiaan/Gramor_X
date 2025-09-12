@@ -232,7 +232,7 @@ export const UserMenu: React.FC<{
                     key={it.label}
                     href={it.href}
                     role="menuitem"
-                    ref={(el) => (itemRefs.current[idx] = el)}
+                    ref={(el) => { itemRefs.current[idx] = el; }}
                     className={common}
                     onClick={() => setOpen(false)}
                   >
@@ -245,7 +245,7 @@ export const UserMenu: React.FC<{
                     target="_blank"
                     rel="noopener noreferrer"
                     role="menuitem"
-                    ref={(el) => (itemRefs.current[idx] = el)}
+                    ref={(el) => { itemRefs.current[idx] = el; }}
                     className={common}
                     onClick={() => setOpen(false)}
                   >
@@ -258,7 +258,7 @@ export const UserMenu: React.FC<{
                   key={it.label}
                   type="button"
                   role="menuitem"
-                  ref={(el) => (itemRefs.current[idx] = el)}
+                  ref={(el) => { itemRefs.current[idx] = el; }}
                   className={common}
                   onClick={async () => {
                     await it.onClick?.();
