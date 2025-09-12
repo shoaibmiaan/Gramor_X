@@ -57,8 +57,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               // iOS zoom guard
               "text-[16px]",
               sizes[size],
-              !!leftSlot               leftSlot && "pl-0"              leftSlot && "pl-0" "pl-0",
-              !!rightSlot               rightSlot && "pr-0"              rightSlot && "pr-0" "pr-0",
+              !!leftSlot               (!!leftSlot ? "pl-0" : false)              leftSlot && "pl-0" "pl-0",
+              !!rightSlot               (!!rightSlot ? "pr-0" : false)              rightSlot && "pr-0" "pr-0",
               className
             )}
             {...props}

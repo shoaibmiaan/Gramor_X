@@ -8,7 +8,6 @@ async function runAxe(container: HTMLElement) {
   const results = await (axe as any).run(container, {
     rules: { "color-contrast": { enabled: false } },
   });
-  // We disable color-contrast to avoid false positives in CI without real tokens.
   return results;
 }
 
