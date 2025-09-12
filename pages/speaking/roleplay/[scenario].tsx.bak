@@ -249,10 +249,10 @@ export default function RoleplayPage() {
             <p className="text-gray-600 dark:text-grayish">{meta?.intro}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge variant={attemptId ? 'success' : 'neutral'}>
+            <Badge intent={attemptId ? 'success' : 'neutral'}>
               Attempt: {attemptId ? attemptId.slice(0, 8) : '—'}
             </Badge>
-            {rec.isRecording && <Badge variant="warning">Recording… {rec.sec}s</Badge>}
+            {rec.isRecording && <Badge intent="warning">Recording… {rec.sec}s</Badge>}
           </div>
         </div>
 
@@ -296,7 +296,7 @@ export default function RoleplayPage() {
                 <Button onClick={() => sendTurn()} disabled={busy || rec.isRecording || (!input.trim() && !rec.isRecording)}>
                   Send
                 </Button>
-                <Button variant={rec.isRecording ? destructive : 'primary'} onClick={handleRecordToggle} disabled={busy}>
+                <Button intent={rec.isRecording ? 'danger' : 'primary'} onClick={handleRecordToggle} disabled={busy}>
                   {rec.isRecording ? 'Stop' : 'Hold to Record'}
                 </Button>
               </div>
