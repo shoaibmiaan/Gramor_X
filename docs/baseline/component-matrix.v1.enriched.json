@@ -1,0 +1,5250 @@
+[
+  {
+    "type": "page",
+    "name_or_route": "pages/403.tsx",
+    "components_used_guess": "Props, Head, Container, Card, Link, Button",
+    "severity": "P2",
+    "fix_type": "layout",
+    "owner": "Ali",
+    "due_window": "Phase-2 W3",
+    "evidence": [
+      "docs/baseline/screens/403_sm.png",
+      "docs/baseline/screens/403_md.png",
+      "docs/baseline/screens/403_lg.png",
+      "docs/baseline/axe/gramorx_com_403.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/_app.tsx",
+    "components_used_guess": "GuardSkeleton, PremiumThemeProvider, Component, Layout, AdminLayout, InstitutionsLayout, DashboardLayout, MarketplaceLayout, LearningLayout, CommunityLayout, ReportsLayout, ExamLayout, PublicMarketingLayout, AuthLayout, ProctoringLayout, ThemeProvider, ImpersonationBanner, AuthAssistant, SidebarAI, LanguageProvider",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/_app_sm.png",
+      "docs/baseline/screens/_app_md.png",
+      "docs/baseline/screens/_app_lg.png",
+      "docs/baseline/axe/gramorx_com__app.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/_document.tsx",
+    "components_used_guess": "Html, Head, Main, NextScript",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/_document_sm.png",
+      "docs/baseline/screens/_document_md.png",
+      "docs/baseline/screens/_document_lg.png",
+      "docs/baseline/axe/gramorx_com__document.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/accessibility.tsx",
+    "components_used_guess": "HTMLDivElement, Head, Container, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/accessibility_sm.png",
+      "docs/baseline/screens/accessibility_md.png",
+      "docs/baseline/screens/accessibility_lg.png",
+      "docs/baseline/axe/gramorx_com_accessibility.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/account/billing.tsx",
+    "components_used_guess": "SubscriptionSummary, Invoice, Head, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/account_billing_sm.png",
+      "docs/baseline/screens/account_billing_md.png",
+      "docs/baseline/screens/account_billing_lg.png",
+      "docs/baseline/axe/gramorx_com_account_billing.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/account/index.tsx",
+    "components_used_guess": "Head, Container, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/account_index_sm.png",
+      "docs/baseline/screens/account_index_md.png",
+      "docs/baseline/screens/account_index_lg.png",
+      "docs/baseline/axe/gramorx_com_account_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/account/referrals.tsx",
+    "components_used_guess": "Head",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/account_referrals_sm.png",
+      "docs/baseline/screens/account_referrals_md.png",
+      "docs/baseline/screens/account_referrals_lg.png",
+      "docs/baseline/axe/gramorx_com_account_referrals.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/content/reading.tsx",
+    "components_used_guess": "ReadingTest, AdminGuard, Head, Container",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_content_reading_sm.png",
+      "docs/baseline/screens/admin_content_reading_md.png",
+      "docs/baseline/screens/admin_content_reading_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_content_reading.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/imp-as.tsx",
+    "components_used_guess": "Head",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_imp-as_sm.png",
+      "docs/baseline/screens/admin_imp-as_md.png",
+      "docs/baseline/screens/admin_imp-as_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_imp-as.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/index.tsx",
+    "components_used_guess": "AppRole, RoleGuard, Head, Container, Link, SkeletonRows, StatusDot",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_index_sm.png",
+      "docs/baseline/screens/admin_index_md.png",
+      "docs/baseline/screens/admin_index_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/partners/index.tsx",
+    "components_used_guess": "PartnerSummary, ReferralStats, Head",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_partners_index_sm.png",
+      "docs/baseline/screens/admin_partners_index_md.png",
+      "docs/baseline/screens/admin_partners_index_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_partners_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/premium/pin.tsx",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_premium_pin_sm.png",
+      "docs/baseline/screens/admin_premium_pin_md.png",
+      "docs/baseline/screens/admin_premium_pin_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_premium_pin.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/reviews/[attemptId].tsx",
+    "components_used_guess": "AttemptDetail, Head, Container, Link, Button, Alert, Card, Badge",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_reviews_attemptId_sm.png",
+      "docs/baseline/screens/admin_reviews_attemptId_md.png",
+      "docs/baseline/screens/admin_reviews_attemptId_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_reviews_attemptId.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/reviews/index.tsx",
+    "components_used_guess": "AttemptRow, Head, Container, Alert, Card, Badge, Link, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_reviews_index_sm.png",
+      "docs/baseline/screens/admin_reviews_index_md.png",
+      "docs/baseline/screens/admin_reviews_index_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_reviews_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/stop-impersonation.tsx",
+    "components_used_guess": "Head",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_stop-impersonation_sm.png",
+      "docs/baseline/screens/admin_stop-impersonation_md.png",
+      "docs/baseline/screens/admin_stop-impersonation_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_stop-impersonation.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/students/index.tsx",
+    "components_used_guess": "Profile, AdminGuard, Head, Container",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_students_index_sm.png",
+      "docs/baseline/screens/admin_students_index_md.png",
+      "docs/baseline/screens/admin_students_index_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_students_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/admin/users.tsx",
+    "components_used_guess": "Row, Container, Card, Badge, Input, Button, Modal, RoleGuard, AdminUsers",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/admin_users_sm.png",
+      "docs/baseline/screens/admin_users_md.png",
+      "docs/baseline/screens/admin_users_lg.png",
+      "docs/baseline/axe/gramorx_com_admin_users.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/ai/index.tsx",
+    "components_used_guess": "Msg, Provider, HTMLDivElement, HTMLTextAreaElement, WireMsg, Head, SidebarHeader, MessageList",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/ai_index_sm.png",
+      "docs/baseline/screens/ai_index_md.png",
+      "docs/baseline/screens/ai_index_lg.png",
+      "docs/baseline/axe/gramorx_com_ai_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/ai/writing/[id].tsx",
+    "components_used_guess": "Container, Card, Badge, Button, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/ai_writing_id_sm.png",
+      "docs/baseline/screens/ai_writing_id_md.png",
+      "docs/baseline/screens/ai_writing_id_lg.png",
+      "docs/baseline/axe/gramorx_com_ai_writing_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/account/delete.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_account_delete_sm.png",
+      "docs/baseline/screens/api_account_delete_md.png",
+      "docs/baseline/screens/api_account_delete_lg.png",
+      "docs/baseline/axe/gramorx_com_api_account_delete.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/account/export.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_account_export_sm.png",
+      "docs/baseline/screens/api_account_export_md.png",
+      "docs/baseline/screens/api_account_export_lg.png",
+      "docs/baseline/axe/gramorx_com_api_account_export.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/dashboard.ts",
+    "components_used_guess": "Module, Signup, Series, ModuleRow, StudentsBlock, Payload",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_dashboard_sm.png",
+      "docs/baseline/screens/api_admin_dashboard_md.png",
+      "docs/baseline/screens/api_admin_dashboard_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_dashboard.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/premium/clear-pin.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_premium_clear-pin_sm.png",
+      "docs/baseline/screens/api_admin_premium_clear-pin_md.png",
+      "docs/baseline/screens/api_admin_premium_clear-pin_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_premium_clear-pin.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/premium/generate-pin.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_premium_generate-pin_sm.png",
+      "docs/baseline/screens/api_admin_premium_generate-pin_md.png",
+      "docs/baseline/screens/api_admin_premium_generate-pin_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_premium_generate-pin.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/premium/set-pin.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_premium_set-pin_sm.png",
+      "docs/baseline/screens/api_admin_premium_set-pin_md.png",
+      "docs/baseline/screens/api_admin_premium_set-pin_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_premium_set-pin.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/reviews/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_reviews_index_sm.png",
+      "docs/baseline/screens/api_admin_reviews_index_md.png",
+      "docs/baseline/screens/api_admin_reviews_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_reviews_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/set-pin.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_set-pin_sm.png",
+      "docs/baseline/screens/api_admin_set-pin_md.png",
+      "docs/baseline/screens/api_admin_set-pin_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_set-pin.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/stop-impersonation.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_stop-impersonation_sm.png",
+      "docs/baseline/screens/api_admin_stop-impersonation_md.png",
+      "docs/baseline/screens/api_admin_stop-impersonation_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_stop-impersonation.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/students/actions.ts",
+    "components_used_guess": "ApiOk",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_students_actions_sm.png",
+      "docs/baseline/screens/api_admin_students_actions_md.png",
+      "docs/baseline/screens/api_admin_students_actions_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_students_actions.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/students/export.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_students_export_sm.png",
+      "docs/baseline/screens/api_admin_students_export_md.png",
+      "docs/baseline/screens/api_admin_students_export_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_students_export.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/students/list.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_students_list_sm.png",
+      "docs/baseline/screens/api_admin_students_list_md.png",
+      "docs/baseline/screens/api_admin_students_list_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_students_list.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/users/list.ts",
+    "components_used_guess": "Row",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_users_list_sm.png",
+      "docs/baseline/screens/api_admin_users_list_md.png",
+      "docs/baseline/screens/api_admin_users_list_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_users_list.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/admin/users/set-role.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_admin_users_set-role_sm.png",
+      "docs/baseline/screens/api_admin_users_set-role_md.png",
+      "docs/baseline/screens/api_admin_users_set-role_lg.png",
+      "docs/baseline/axe/gramorx_com_api_admin_users_set-role.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/chat.ts",
+    "components_used_guess": "Uint8Array",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_chat_sm.png",
+      "docs/baseline/screens/api_ai_chat_md.png",
+      "docs/baseline/screens/api_ai_chat_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_chat.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/explain.ts",
+    "components_used_guess": "Resp, Explanation",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_explain_sm.png",
+      "docs/baseline/screens/api_ai_explain_md.png",
+      "docs/baseline/screens/api_ai_explain_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_explain.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/health.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_health_sm.png",
+      "docs/baseline/screens/api_ai_health_md.png",
+      "docs/baseline/screens/api_ai_health_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_health.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/profile-suggest.ts",
+    "components_used_guess": "EnglishLevel, TimeCommitment",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_profile-suggest_sm.png",
+      "docs/baseline/screens/api_ai_profile-suggest_md.png",
+      "docs/baseline/screens/api_ai_profile-suggest_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_profile-suggest.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/re-evaluate.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_re-evaluate_sm.png",
+      "docs/baseline/screens/api_ai_re-evaluate_md.png",
+      "docs/baseline/screens/api_ai_re-evaluate_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_re-evaluate.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/reading/explanations.ts",
+    "components_used_guess": "ReadingExplainResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_reading_explanations_sm.png",
+      "docs/baseline/screens/api_ai_reading_explanations_md.png",
+      "docs/baseline/screens/api_ai_reading_explanations_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_reading_explanations.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/evaluate.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_speaking_evaluate_sm.png",
+      "docs/baseline/screens/api_ai_speaking_evaluate_md.png",
+      "docs/baseline/screens/api_ai_speaking_evaluate_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_speaking_evaluate.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/grade.ts",
+    "components_used_guess": "Resp, AIFeedback",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_speaking_grade_sm.png",
+      "docs/baseline/screens/api_ai_speaking_grade_md.png",
+      "docs/baseline/screens/api_ai_speaking_grade_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_speaking_grade.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/score-audio-groq.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_speaking_score-audio-groq_sm.png",
+      "docs/baseline/screens/api_ai_speaking_score-audio-groq_md.png",
+      "docs/baseline/screens/api_ai_speaking_score-audio-groq_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_speaking_score-audio-groq.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/score-v2.ts",
+    "components_used_guess": "SpeakingResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_speaking_score-v2_sm.png",
+      "docs/baseline/screens/api_ai_speaking_score-v2_md.png",
+      "docs/baseline/screens/api_ai_speaking_score-v2_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_speaking_score-v2.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/speaking/score.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_speaking_score_sm.png",
+      "docs/baseline/screens/api_ai_speaking_score_md.png",
+      "docs/baseline/screens/api_ai_speaking_score_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_speaking_score.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/test-drive.ts",
+    "components_used_guess": "Ok",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_test-drive_sm.png",
+      "docs/baseline/screens/api_ai_test-drive_md.png",
+      "docs/baseline/screens/api_ai_test-drive_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_test-drive.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/writing/grade.ts",
+    "components_used_guess": "Resp, AIFeedback",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_writing_grade_sm.png",
+      "docs/baseline/screens/api_ai_writing_grade_md.png",
+      "docs/baseline/screens/api_ai_writing_grade_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_writing_grade.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/ai/writing/score-v2.ts",
+    "components_used_guess": "WritingResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_ai_writing_score-v2_sm.png",
+      "docs/baseline/screens/api_ai_writing_score-v2_md.png",
+      "docs/baseline/screens/api_ai_writing_score-v2_lg.png",
+      "docs/baseline/axe/gramorx_com_api_ai_writing_score-v2.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/forgot-password.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_forgot-password_sm.png",
+      "docs/baseline/screens/api_auth_forgot-password_md.png",
+      "docs/baseline/screens/api_auth_forgot-password_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_forgot-password.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/login-event.ts",
+    "components_used_guess": "RespBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_login-event_sm.png",
+      "docs/baseline/screens/api_auth_login-event_md.png",
+      "docs/baseline/screens/api_auth_login-event_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_login-event.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/login-events.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_login-events_sm.png",
+      "docs/baseline/screens/api_auth_login-events_md.png",
+      "docs/baseline/screens/api_auth_login-events_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_login-events.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/login.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_login_sm.png",
+      "docs/baseline/screens/api_auth_login_md.png",
+      "docs/baseline/screens/api_auth_login_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_login.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/sessions/[id].ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_sessions_id_sm.png",
+      "docs/baseline/screens/api_auth_sessions_id_md.png",
+      "docs/baseline/screens/api_auth_sessions_id_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_sessions_id.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/sessions/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_sessions_index_sm.png",
+      "docs/baseline/screens/api_auth_sessions_index_md.png",
+      "docs/baseline/screens/api_auth_sessions_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_sessions_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/set-session.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_set-session_sm.png",
+      "docs/baseline/screens/api_auth_set-session_md.png",
+      "docs/baseline/screens/api_auth_set-session_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_set-session.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/signout.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_signout_sm.png",
+      "docs/baseline/screens/api_auth_signout_md.png",
+      "docs/baseline/screens/api_auth_signout_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_signout.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/auth/signup.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_auth_signup_sm.png",
+      "docs/baseline/screens/api_auth_signup_md.png",
+      "docs/baseline/screens/api_auth_signup_lg.png",
+      "docs/baseline/axe/gramorx_com_api_auth_signup.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/[slug].ts",
+    "components_used_guess": "BlogPostResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_blog_slug_sm.png",
+      "docs/baseline/screens/api_blog_slug_md.png",
+      "docs/baseline/screens/api_blog_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_api_blog_slug.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/index.ts",
+    "components_used_guess": "BlogCreateRequest, BlogListResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_blog_index_sm.png",
+      "docs/baseline/screens/api_blog_index_md.png",
+      "docs/baseline/screens/api_blog_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_blog_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/moderate.ts",
+    "components_used_guess": "ModerateRequest, ModerateResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_blog_moderate_sm.png",
+      "docs/baseline/screens/api_blog_moderate_md.png",
+      "docs/baseline/screens/api_blog_moderate_lg.png",
+      "docs/baseline/axe/gramorx_com_api_blog_moderate.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/modqueue.ts",
+    "components_used_guess": "ModQueueResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_blog_modqueue_sm.png",
+      "docs/baseline/screens/api_blog_modqueue_md.png",
+      "docs/baseline/screens/api_blog_modqueue_lg.png",
+      "docs/baseline/axe/gramorx_com_api_blog_modqueue.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/blog/submit.ts",
+    "components_used_guess": "BlogSubmitRequest, BlogSubmitResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_blog_submit_sm.png",
+      "docs/baseline/screens/api_blog_submit_md.png",
+      "docs/baseline/screens/api_blog_submit_lg.png",
+      "docs/baseline/axe/gramorx_com_api_blog_submit.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/availability.ts",
+    "components_used_guess": "AvailabilityResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_bookings_availability_sm.png",
+      "docs/baseline/screens/api_bookings_availability_md.png",
+      "docs/baseline/screens/api_bookings_availability_lg.png",
+      "docs/baseline/axe/gramorx_com_api_bookings_availability.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/cancel.ts",
+    "components_used_guess": "CancelResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_bookings_cancel_sm.png",
+      "docs/baseline/screens/api_bookings_cancel_md.png",
+      "docs/baseline/screens/api_bookings_cancel_lg.png",
+      "docs/baseline/axe/gramorx_com_api_bookings_cancel.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/create.ts",
+    "components_used_guess": "CreateBookingResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_bookings_create_sm.png",
+      "docs/baseline/screens/api_bookings_create_md.png",
+      "docs/baseline/screens/api_bookings_create_lg.png",
+      "docs/baseline/axe/gramorx_com_api_bookings_create.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/bookings/reschedule.ts",
+    "components_used_guess": "RescheduleResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_bookings_reschedule_sm.png",
+      "docs/baseline/screens/api_bookings_reschedule_md.png",
+      "docs/baseline/screens/api_bookings_reschedule_lg.png",
+      "docs/baseline/axe/gramorx_com_api_bookings_reschedule.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/buddy/match.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_buddy_match_sm.png",
+      "docs/baseline/screens/api_buddy_match_md.png",
+      "docs/baseline/screens/api_buddy_match_lg.png",
+      "docs/baseline/axe/gramorx_com_api_buddy_match.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/certificates/create.ts",
+    "components_used_guess": "CertificateCreateResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_certificates_create_sm.png",
+      "docs/baseline/screens/api_certificates_create_md.png",
+      "docs/baseline/screens/api_certificates_create_lg.png",
+      "docs/baseline/axe/gramorx_com_api_certificates_create.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/certificates/sign.ts",
+    "components_used_guess": "CertificateSignResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_certificates_sign_sm.png",
+      "docs/baseline/screens/api_certificates_sign_md.png",
+      "docs/baseline/screens/api_certificates_sign_lg.png",
+      "docs/baseline/axe/gramorx_com_api_certificates_sign.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/challenge/enroll.ts",
+    "components_used_guess": "ChallengeEnrollResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_challenge_enroll_sm.png",
+      "docs/baseline/screens/api_challenge_enroll_md.png",
+      "docs/baseline/screens/api_challenge_enroll_lg.png",
+      "docs/baseline/axe/gramorx_com_api_challenge_enroll.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/challenge/leaderboard.ts",
+    "components_used_guess": "ChallengeLeaderboardResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_challenge_leaderboard_sm.png",
+      "docs/baseline/screens/api_challenge_leaderboard_md.png",
+      "docs/baseline/screens/api_challenge_leaderboard_lg.png",
+      "docs/baseline/axe/gramorx_com_api_challenge_leaderboard.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/challenge/progress.ts",
+    "components_used_guess": "ChallengeProgressResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_challenge_progress_sm.png",
+      "docs/baseline/screens/api_challenge_progress_md.png",
+      "docs/baseline/screens/api_challenge_progress_lg.png",
+      "docs/baseline/axe/gramorx_com_api_challenge_progress.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/check-otp.ts",
+    "components_used_guess": "CheckOtpResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_check-otp_sm.png",
+      "docs/baseline/screens/api_check-otp_md.png",
+      "docs/baseline/screens/api_check-otp_lg.png",
+      "docs/baseline/axe/gramorx_com_api_check-otp.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/attendance.ts",
+    "components_used_guess": "AttendanceResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_classes_attendance_sm.png",
+      "docs/baseline/screens/api_classes_attendance_md.png",
+      "docs/baseline/screens/api_classes_attendance_lg.png",
+      "docs/baseline/axe/gramorx_com_api_classes_attendance.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/cancel.ts",
+    "components_used_guess": "CancelClassResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_classes_cancel_sm.png",
+      "docs/baseline/screens/api_classes_cancel_md.png",
+      "docs/baseline/screens/api_classes_cancel_lg.png",
+      "docs/baseline/axe/gramorx_com_api_classes_cancel.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/create.ts",
+    "components_used_guess": "CreateClassResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_classes_create_sm.png",
+      "docs/baseline/screens/api_classes_create_md.png",
+      "docs/baseline/screens/api_classes_create_lg.png",
+      "docs/baseline/axe/gramorx_com_api_classes_create.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/classes/join-token.ts",
+    "components_used_guess": "JoinTokenResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_classes_join-token_sm.png",
+      "docs/baseline/screens/api_classes_join-token_md.png",
+      "docs/baseline/screens/api_classes_join-token_lg.png",
+      "docs/baseline/axe/gramorx_com_api_classes_join-token.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/coach/mood.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_coach_mood_sm.png",
+      "docs/baseline/screens/api_coach_mood_md.png",
+      "docs/baseline/screens/api_coach_mood_lg.png",
+      "docs/baseline/axe/gramorx_com_api_coach_mood.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/content/delete.ts",
+    "components_used_guess": "DeleteResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_content_delete_sm.png",
+      "docs/baseline/screens/api_content_delete_md.png",
+      "docs/baseline/screens/api_content_delete_lg.png",
+      "docs/baseline/axe/gramorx_com_api_content_delete.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/content/publish.ts",
+    "components_used_guess": "PublishResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_content_publish_sm.png",
+      "docs/baseline/screens/api_content_publish_md.png",
+      "docs/baseline/screens/api_content_publish_lg.png",
+      "docs/baseline/axe/gramorx_com_api_content_publish.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/content/upload.ts",
+    "components_used_guess": "UploadInitResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_content_upload_sm.png",
+      "docs/baseline/screens/api_content_upload_md.png",
+      "docs/baseline/screens/api_content_upload_lg.png",
+      "docs/baseline/axe/gramorx_com_api_content_upload.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/counters/increment.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_counters_increment_sm.png",
+      "docs/baseline/screens/api_counters_increment_md.png",
+      "docs/baseline/screens/api_counters_increment_lg.png",
+      "docs/baseline/axe/gramorx_com_api_counters_increment.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/dev/grant-role.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_dev_grant-role_sm.png",
+      "docs/baseline/screens/api_dev_grant-role_md.png",
+      "docs/baseline/screens/api_dev_grant-role_lg.png",
+      "docs/baseline/axe/gramorx_com_api_dev_grant-role.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/drills/generate.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_drills_generate_sm.png",
+      "docs/baseline/screens/api_drills_generate_md.png",
+      "docs/baseline/screens/api_drills_generate_lg.png",
+      "docs/baseline/axe/gramorx_com_api_drills_generate.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/[attemptId]/event.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_exam_attemptId_event_sm.png",
+      "docs/baseline/screens/api_exam_attemptId_event_md.png",
+      "docs/baseline/screens/api_exam_attemptId_event_lg.png",
+      "docs/baseline/axe/gramorx_com_api_exam_attemptId_event.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/[attemptId]/score.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_exam_attemptId_score_sm.png",
+      "docs/baseline/screens/api_exam_attemptId_score_md.png",
+      "docs/baseline/screens/api_exam_attemptId_score_lg.png",
+      "docs/baseline/axe/gramorx_com_api_exam_attemptId_score.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/[attemptId]/submit.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_exam_attemptId_submit_sm.png",
+      "docs/baseline/screens/api_exam_attemptId_submit_md.png",
+      "docs/baseline/screens/api_exam_attemptId_submit_lg.png",
+      "docs/baseline/axe/gramorx_com_api_exam_attemptId_submit.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/exam/schedule.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_exam_schedule_sm.png",
+      "docs/baseline/screens/api_exam_schedule_md.png",
+      "docs/baseline/screens/api_exam_schedule_lg.png",
+      "docs/baseline/axe/gramorx_com_api_exam_schedule.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/healthz.ts",
+    "components_used_guess": "HealthResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_healthz_sm.png",
+      "docs/baseline/screens/api_healthz_md.png",
+      "docs/baseline/screens/api_healthz_lg.png",
+      "docs/baseline/axe/gramorx_com_api_healthz.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/bulk-enroll.ts",
+    "components_used_guess": "BulkEnrollResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_institutions_bulk-enroll_sm.png",
+      "docs/baseline/screens/api_institutions_bulk-enroll_md.png",
+      "docs/baseline/screens/api_institutions_bulk-enroll_lg.png",
+      "docs/baseline/axe/gramorx_com_api_institutions_bulk-enroll.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/invite.ts",
+    "components_used_guess": "InviteResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_institutions_invite_sm.png",
+      "docs/baseline/screens/api_institutions_invite_md.png",
+      "docs/baseline/screens/api_institutions_invite_lg.png",
+      "docs/baseline/axe/gramorx_com_api_institutions_invite.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/orgs.ts",
+    "components_used_guess": "OrgsResponse, OrgRow",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_institutions_orgs_sm.png",
+      "docs/baseline/screens/api_institutions_orgs_md.png",
+      "docs/baseline/screens/api_institutions_orgs_lg.png",
+      "docs/baseline/axe/gramorx_com_api_institutions_orgs.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/reports.ts",
+    "components_used_guess": "ReportsResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_institutions_reports_sm.png",
+      "docs/baseline/screens/api_institutions_reports_md.png",
+      "docs/baseline/screens/api_institutions_reports_lg.png",
+      "docs/baseline/axe/gramorx_com_api_institutions_reports.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/institutions/students.ts",
+    "components_used_guess": "StudentsResponse, StudentRow",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_institutions_students_sm.png",
+      "docs/baseline/screens/api_institutions_students_md.png",
+      "docs/baseline/screens/api_institutions_students_lg.png",
+      "docs/baseline/axe/gramorx_com_api_institutions_students.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/review/[attemptId].ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_listening_review_attemptId_sm.png",
+      "docs/baseline/screens/api_listening_review_attemptId_md.png",
+      "docs/baseline/screens/api_listening_review_attemptId_lg.png",
+      "docs/baseline/axe/gramorx_com_api_listening_review_attemptId.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/submit.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_listening_submit_sm.png",
+      "docs/baseline/screens/api_listening_submit_md.png",
+      "docs/baseline/screens/api_listening_submit_lg.png",
+      "docs/baseline/axe/gramorx_com_api_listening_submit.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/test/[slug].ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_listening_test_slug_sm.png",
+      "docs/baseline/screens/api_listening_test_slug_md.png",
+      "docs/baseline/screens/api_listening_test_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_api_listening_test_slug.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/listening/tests.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_listening_tests_sm.png",
+      "docs/baseline/screens/api_listening_tests_md.png",
+      "docs/baseline/screens/api_listening_tests_lg.png",
+      "docs/baseline/axe/gramorx_com_api_listening_tests.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/marketplace/apply.ts",
+    "components_used_guess": "ApplyResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_marketplace_apply_sm.png",
+      "docs/baseline/screens/api_marketplace_apply_md.png",
+      "docs/baseline/screens/api_marketplace_apply_lg.png",
+      "docs/baseline/axe/gramorx_com_api_marketplace_apply.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/marketplace/approve.ts",
+    "components_used_guess": "ApproveResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_marketplace_approve_sm.png",
+      "docs/baseline/screens/api_marketplace_approve_md.png",
+      "docs/baseline/screens/api_marketplace_approve_lg.png",
+      "docs/baseline/axe/gramorx_com_api_marketplace_approve.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/marketplace/coaches.ts",
+    "components_used_guess": "CoachesResponse, CoachRow",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_marketplace_coaches_sm.png",
+      "docs/baseline/screens/api_marketplace_coaches_md.png",
+      "docs/baseline/screens/api_marketplace_coaches_lg.png",
+      "docs/baseline/axe/gramorx_com_api_marketplace_coaches.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/metrics.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_metrics_sm.png",
+      "docs/baseline/screens/api_metrics_md.png",
+      "docs/baseline/screens/api_metrics_lg.png",
+      "docs/baseline/axe/gramorx_com_api_metrics.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/mistakes/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_mistakes_index_sm.png",
+      "docs/baseline/screens/api_mistakes_index_md.png",
+      "docs/baseline/screens/api_mistakes_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_mistakes_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/notifications/[id].ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_notifications_id_sm.png",
+      "docs/baseline/screens/api_notifications_id_md.png",
+      "docs/baseline/screens/api_notifications_id_lg.png",
+      "docs/baseline/axe/gramorx_com_api_notifications_id.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/notifications/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_notifications_index_sm.png",
+      "docs/baseline/screens/api_notifications_index_md.png",
+      "docs/baseline/screens/api_notifications_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_notifications_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/notifications/nudge.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_notifications_nudge_sm.png",
+      "docs/baseline/screens/api_notifications_nudge_md.png",
+      "docs/baseline/screens/api_notifications_nudge_lg.png",
+      "docs/baseline/axe/gramorx_com_api_notifications_nudge.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/onboarding/complete.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_onboarding_complete_sm.png",
+      "docs/baseline/screens/api_onboarding_complete_md.png",
+      "docs/baseline/screens/api_onboarding_complete_lg.png",
+      "docs/baseline/axe/gramorx_com_api_onboarding_complete.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/partners/summary.ts",
+    "components_used_guess": "ResBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_partners_summary_sm.png",
+      "docs/baseline/screens/api_partners_summary_md.png",
+      "docs/baseline/screens/api_partners_summary_lg.png",
+      "docs/baseline/axe/gramorx_com_api_partners_summary.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/create-checkout-session.ts",
+    "components_used_guess": "PlanKey, Cycle, ResBody, CreateCheckoutBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_payments_create-checkout-session_sm.png",
+      "docs/baseline/screens/api_payments_create-checkout-session_md.png",
+      "docs/baseline/screens/api_payments_create-checkout-session_lg.png",
+      "docs/baseline/axe/gramorx_com_api_payments_create-checkout-session.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/create-easypaisa-session.ts",
+    "components_used_guess": "ResBody, ReqBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_payments_create-easypaisa-session_sm.png",
+      "docs/baseline/screens/api_payments_create-easypaisa-session_md.png",
+      "docs/baseline/screens/api_payments_create-easypaisa-session_lg.png",
+      "docs/baseline/axe/gramorx_com_api_payments_create-easypaisa-session.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/create-jazzcash-session.ts",
+    "components_used_guess": "ResBody, ReqBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_payments_create-jazzcash-session_sm.png",
+      "docs/baseline/screens/api_payments_create-jazzcash-session_md.png",
+      "docs/baseline/screens/api_payments_create-jazzcash-session_lg.png",
+      "docs/baseline/axe/gramorx_com_api_payments_create-jazzcash-session.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/initiate.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_payments_initiate_sm.png",
+      "docs/baseline/screens/api_payments_initiate_md.png",
+      "docs/baseline/screens/api_payments_initiate_lg.png",
+      "docs/baseline/axe/gramorx_com_api_payments_initiate.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/payments/webhook.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_payments_webhook_sm.png",
+      "docs/baseline/screens/api_payments_webhook_md.png",
+      "docs/baseline/screens/api_payments_webhook_lg.png",
+      "docs/baseline/axe/gramorx_com_api_payments_webhook.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/placement/score.ts",
+    "components_used_guess": "Skill, ScoreResult",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_placement_score_sm.png",
+      "docs/baseline/screens/api_placement_score_md.png",
+      "docs/baseline/screens/api_placement_score_lg.png",
+      "docs/baseline/axe/gramorx_com_api_placement_score.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/placement/start.ts",
+    "components_used_guess": "Skill, Item",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_placement_start_sm.png",
+      "docs/baseline/screens/api_placement_start_md.png",
+      "docs/baseline/screens/api_placement_start_lg.png",
+      "docs/baseline/axe/gramorx_com_api_placement_start.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/placement/submit.ts",
+    "components_used_guess": "Skill",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_placement_submit_sm.png",
+      "docs/baseline/screens/api_placement_submit_md.png",
+      "docs/baseline/screens/api_placement_submit_lg.png",
+      "docs/baseline/axe/gramorx_com_api_placement_submit.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/predictor/score.ts",
+    "components_used_guess": "ResBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_predictor_score_sm.png",
+      "docs/baseline/screens/api_predictor_score_md.png",
+      "docs/baseline/screens/api_predictor_score_lg.png",
+      "docs/baseline/axe/gramorx_com_api_predictor_score.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/eligibility.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_eligibility_sm.png",
+      "docs/baseline/screens/api_premium_eligibility_md.png",
+      "docs/baseline/screens/api_premium_eligibility_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_eligibility.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/pin-status.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_pin-status_sm.png",
+      "docs/baseline/screens/api_premium_pin-status_md.png",
+      "docs/baseline/screens/api_premium_pin-status_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_pin-status.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/session.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_session_sm.png",
+      "docs/baseline/screens/api_premium_session_md.png",
+      "docs/baseline/screens/api_premium_session_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_session.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/set-pin.ts",
+    "components_used_guess": "Resp",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_set-pin_sm.png",
+      "docs/baseline/screens/api_premium_set-pin_md.png",
+      "docs/baseline/screens/api_premium_set-pin_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_set-pin.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/signout.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_signout_sm.png",
+      "docs/baseline/screens/api_premium_signout_md.png",
+      "docs/baseline/screens/api_premium_signout_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_signout.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/status.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_status_sm.png",
+      "docs/baseline/screens/api_premium_status_md.png",
+      "docs/baseline/screens/api_premium_status_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_status.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/verify-pin.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_verify-pin_sm.png",
+      "docs/baseline/screens/api_premium_verify-pin_md.png",
+      "docs/baseline/screens/api_premium_verify-pin_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_verify-pin.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/premium/verify.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_premium_verify_sm.png",
+      "docs/baseline/screens/api_premium_verify_md.png",
+      "docs/baseline/screens/api_premium_verify_lg.png",
+      "docs/baseline/axe/gramorx_com_api_premium_verify.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/proctoring/flags.ts",
+    "components_used_guess": "FlagsResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_proctoring_flags_sm.png",
+      "docs/baseline/screens/api_proctoring_flags_md.png",
+      "docs/baseline/screens/api_proctoring_flags_lg.png",
+      "docs/baseline/axe/gramorx_com_api_proctoring_flags.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/proctoring/start.ts",
+    "components_used_guess": "StartResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_proctoring_start_sm.png",
+      "docs/baseline/screens/api_proctoring_start_md.png",
+      "docs/baseline/screens/api_proctoring_start_lg.png",
+      "docs/baseline/axe/gramorx_com_api_proctoring_start.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/proctoring/verify.ts",
+    "components_used_guess": "VerifyResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_proctoring_verify_sm.png",
+      "docs/baseline/screens/api_proctoring_verify_md.png",
+      "docs/baseline/screens/api_proctoring_verify_lg.png",
+      "docs/baseline/axe/gramorx_com_api_proctoring_verify.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/progress/share.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_progress_share_sm.png",
+      "docs/baseline/screens/api_progress_share_md.png",
+      "docs/baseline/screens/api_progress_share_lg.png",
+      "docs/baseline/axe/gramorx_com_api_progress_share.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/quick-drill.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_quick-drill_sm.png",
+      "docs/baseline/screens/api_quick-drill_md.png",
+      "docs/baseline/screens/api_quick-drill_lg.png",
+      "docs/baseline/axe/gramorx_com_api_quick-drill.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/explain.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_reading_explain_sm.png",
+      "docs/baseline/screens/api_reading_explain_md.png",
+      "docs/baseline/screens/api_reading_explain_lg.png",
+      "docs/baseline/axe/gramorx_com_api_reading_explain.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/recompute.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_reading_recompute_sm.png",
+      "docs/baseline/screens/api_reading_recompute_md.png",
+      "docs/baseline/screens/api_reading_recompute_lg.png",
+      "docs/baseline/axe/gramorx_com_api_reading_recompute.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/submit.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_reading_submit_sm.png",
+      "docs/baseline/screens/api_reading_submit_md.png",
+      "docs/baseline/screens/api_reading_submit_lg.png",
+      "docs/baseline/axe/gramorx_com_api_reading_submit.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/reading/test/[slug].ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_reading_test_slug_sm.png",
+      "docs/baseline/screens/api_reading_test_slug_md.png",
+      "docs/baseline/screens/api_reading_test_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_api_reading_test_slug.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals/create.ts",
+    "components_used_guess": "ResBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_referrals_create_sm.png",
+      "docs/baseline/screens/api_referrals_create_md.png",
+      "docs/baseline/screens/api_referrals_create_lg.png",
+      "docs/baseline/axe/gramorx_com_api_referrals_create.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals/redeem.ts",
+    "components_used_guess": "ResBody, RedeemBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_referrals_redeem_sm.png",
+      "docs/baseline/screens/api_referrals_redeem_md.png",
+      "docs/baseline/screens/api_referrals_redeem_lg.png",
+      "docs/baseline/axe/gramorx_com_api_referrals_redeem.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals/stats.ts",
+    "components_used_guess": "ResBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_referrals_stats_sm.png",
+      "docs/baseline/screens/api_referrals_stats_md.png",
+      "docs/baseline/screens/api_referrals_stats_lg.png",
+      "docs/baseline/axe/gramorx_com_api_referrals_stats.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/referrals.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_referrals_sm.png",
+      "docs/baseline/screens/api_referrals_md.png",
+      "docs/baseline/screens/api_referrals_lg.png",
+      "docs/baseline/axe/gramorx_com_api_referrals.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/saved/[category].ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_saved_category_sm.png",
+      "docs/baseline/screens/api_saved_category_md.png",
+      "docs/baseline/screens/api_saved_category_lg.png",
+      "docs/baseline/axe/gramorx_com_api_saved_category.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/saved/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_saved_index_sm.png",
+      "docs/baseline/screens/api_saved_index_md.png",
+      "docs/baseline/screens/api_saved_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_saved_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/scores/challenge.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_scores_challenge_sm.png",
+      "docs/baseline/screens/api_scores_challenge_md.png",
+      "docs/baseline/screens/api_scores_challenge_lg.png",
+      "docs/baseline/axe/gramorx_com_api_scores_challenge.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/send-otp.ts",
+    "components_used_guess": "SendOtpResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_send-otp_sm.png",
+      "docs/baseline/screens/api_send-otp_md.png",
+      "docs/baseline/screens/api_send-otp_lg.png",
+      "docs/baseline/axe/gramorx_com_api_send-otp.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/accent-mirror.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_accent-mirror_sm.png",
+      "docs/baseline/screens/api_speaking_accent-mirror_md.png",
+      "docs/baseline/screens/api_speaking_accent-mirror_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_accent-mirror.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/attempts/[id].ts",
+    "components_used_guess": "Data",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_attempts_id_sm.png",
+      "docs/baseline/screens/api_speaking_attempts_id_md.png",
+      "docs/baseline/screens/api_speaking_attempts_id_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_attempts_id.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/attempts/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_attempts_index_sm.png",
+      "docs/baseline/screens/api_speaking_attempts_index_md.png",
+      "docs/baseline/screens/api_speaking_attempts_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_attempts_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/evaluate.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_evaluate_sm.png",
+      "docs/baseline/screens/api_speaking_evaluate_md.png",
+      "docs/baseline/screens/api_speaking_evaluate_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_evaluate.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/file.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_file_sm.png",
+      "docs/baseline/screens/api_speaking_file_md.png",
+      "docs/baseline/screens/api_speaking_file_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_file.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/limits/today.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_limits_today_sm.png",
+      "docs/baseline/screens/api_speaking_limits_today_md.png",
+      "docs/baseline/screens/api_speaking_limits_today_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_limits_today.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner/review/[attemptId].ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_partner_review_attemptId_sm.png",
+      "docs/baseline/screens/api_speaking_partner_review_attemptId_md.png",
+      "docs/baseline/screens/api_speaking_partner_review_attemptId_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_partner_review_attemptId.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner/summary.ts",
+    "components_used_guess": "Ok",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_partner_summary_sm.png",
+      "docs/baseline/screens/api_speaking_partner_summary_md.png",
+      "docs/baseline/screens/api_speaking_partner_summary_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_partner_summary.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner-summary.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_partner-summary_sm.png",
+      "docs/baseline/screens/api_speaking_partner-summary_md.png",
+      "docs/baseline/screens/api_speaking_partner-summary_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_partner-summary.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/partner.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_partner_sm.png",
+      "docs/baseline/screens/api_speaking_partner_md.png",
+      "docs/baseline/screens/api_speaking_partner_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_partner.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/prompts.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_prompts_sm.png",
+      "docs/baseline/screens/api_speaking_prompts_md.png",
+      "docs/baseline/screens/api_speaking_prompts_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_prompts.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score-audio-groq.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_score-audio-groq_sm.png",
+      "docs/baseline/screens/api_speaking_score-audio-groq_md.png",
+      "docs/baseline/screens/api_speaking_score-audio-groq_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_score-audio-groq.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score-groq.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_score-groq_sm.png",
+      "docs/baseline/screens/api_speaking_score-groq_md.png",
+      "docs/baseline/screens/api_speaking_score-groq_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_score-groq.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score-save.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_score-save_sm.png",
+      "docs/baseline/screens/api_speaking_score-save_md.png",
+      "docs/baseline/screens/api_speaking_score-save_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_score-save.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/score.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_score_sm.png",
+      "docs/baseline/screens/api_speaking_score_md.png",
+      "docs/baseline/screens/api_speaking_score_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_score.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/signed-url.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_signed-url_sm.png",
+      "docs/baseline/screens/api_speaking_signed-url_md.png",
+      "docs/baseline/screens/api_speaking_signed-url_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_signed-url.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/start-attempt.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_start-attempt_sm.png",
+      "docs/baseline/screens/api_speaking_start-attempt_md.png",
+      "docs/baseline/screens/api_speaking_start-attempt_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_start-attempt.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/speaking/upload.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_speaking_upload_sm.png",
+      "docs/baseline/screens/api_speaking_upload_md.png",
+      "docs/baseline/screens/api_speaking_upload_lg.png",
+      "docs/baseline/axe/gramorx_com_api_speaking_upload.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/strategies/toggle-save.ts",
+    "components_used_guess": "Json",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_strategies_toggle-save_sm.png",
+      "docs/baseline/screens/api_strategies_toggle-save_md.png",
+      "docs/baseline/screens/api_strategies_toggle-save_lg.png",
+      "docs/baseline/axe/gramorx_com_api_strategies_toggle-save.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/strategies/vote.ts",
+    "components_used_guess": "Json",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_strategies_vote_sm.png",
+      "docs/baseline/screens/api_strategies_vote_md.png",
+      "docs/baseline/screens/api_strategies_vote_lg.png",
+      "docs/baseline/axe/gramorx_com_api_strategies_vote.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/streak.ts",
+    "components_used_guess": "StreakResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_streak_sm.png",
+      "docs/baseline/screens/api_streak_md.png",
+      "docs/baseline/screens/api_streak_lg.png",
+      "docs/baseline/axe/gramorx_com_api_streak.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/subscriptions/portal.ts",
+    "components_used_guess": "ResBody",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_subscriptions_portal_sm.png",
+      "docs/baseline/screens/api_subscriptions_portal_md.png",
+      "docs/baseline/screens/api_subscriptions_portal_lg.png",
+      "docs/baseline/axe/gramorx_com_api_subscriptions_portal.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/support.ts",
+    "components_used_guess": "SupportRequest, SupportResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_support_sm.png",
+      "docs/baseline/screens/api_support_md.png",
+      "docs/baseline/screens/api_support_lg.png",
+      "docs/baseline/axe/gramorx_com_api_support.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/teacher/apply.ts",
+    "components_used_guess": "ApplyResponse, ApplyPayload",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_teacher_apply_sm.png",
+      "docs/baseline/screens/api_teacher_apply_md.png",
+      "docs/baseline/screens/api_teacher_apply_lg.png",
+      "docs/baseline/axe/gramorx_com_api_teacher_apply.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/teacher/assignments.ts",
+    "components_used_guess": "TeacherAssignTaskResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_teacher_assignments_sm.png",
+      "docs/baseline/screens/api_teacher_assignments_md.png",
+      "docs/baseline/screens/api_teacher_assignments_lg.png",
+      "docs/baseline/axe/gramorx_com_api_teacher_assignments.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/teacher/cohorts.ts",
+    "components_used_guess": "TeacherCohortsResponse",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_teacher_cohorts_sm.png",
+      "docs/baseline/screens/api_teacher_cohorts_md.png",
+      "docs/baseline/screens/api_teacher_cohorts_lg.png",
+      "docs/baseline/axe/gramorx_com_api_teacher_cohorts.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/twilio-status.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_twilio-status_sm.png",
+      "docs/baseline/screens/api_twilio-status_md.png",
+      "docs/baseline/screens/api_twilio-status_lg.png",
+      "docs/baseline/axe/gramorx_com_api_twilio-status.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/upload/audio.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_upload_audio_sm.png",
+      "docs/baseline/screens/api_upload_audio_md.png",
+      "docs/baseline/screens/api_upload_audio_lg.png",
+      "docs/baseline/axe/gramorx_com_api_upload_audio.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/upload/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_upload_index_sm.png",
+      "docs/baseline/screens/api_upload_index_md.png",
+      "docs/baseline/screens/api_upload_index_lg.png",
+      "docs/baseline/axe/gramorx_com_api_upload_index.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/user/dashboard.ts",
+    "components_used_guess": "DashboardPayload",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_user_dashboard_sm.png",
+      "docs/baseline/screens/api_user_dashboard_md.png",
+      "docs/baseline/screens/api_user_dashboard_lg.png",
+      "docs/baseline/axe/gramorx_com_api_user_dashboard.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/waitlist/submit.ts",
+    "components_used_guess": "WaitlistOut",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_waitlist_submit_sm.png",
+      "docs/baseline/screens/api_waitlist_submit_md.png",
+      "docs/baseline/screens/api_waitlist_submit_lg.png",
+      "docs/baseline/axe/gramorx_com_api_waitlist_submit.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/waitlist.ts",
+    "components_used_guess": "Out",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_waitlist_sm.png",
+      "docs/baseline/screens/api_waitlist_md.png",
+      "docs/baseline/screens/api_waitlist_lg.png",
+      "docs/baseline/axe/gramorx_com_api_waitlist.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/webhooks/payment.ts",
+    "components_used_guess": "Ok",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_webhooks_payment_sm.png",
+      "docs/baseline/screens/api_webhooks_payment_md.png",
+      "docs/baseline/screens/api_webhooks_payment_lg.png",
+      "docs/baseline/axe/gramorx_com_api_webhooks_payment.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/whatsapp/subscribe.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_whatsapp_subscribe_sm.png",
+      "docs/baseline/screens/api_whatsapp_subscribe_md.png",
+      "docs/baseline/screens/api_whatsapp_subscribe_lg.png",
+      "docs/baseline/axe/gramorx_com_api_whatsapp_subscribe.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/whatsapp/webhook.ts",
+    "components_used_guess": "Response",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_whatsapp_webhook_sm.png",
+      "docs/baseline/screens/api_whatsapp_webhook_md.png",
+      "docs/baseline/screens/api_whatsapp_webhook_lg.png",
+      "docs/baseline/axe/gramorx_com_api_whatsapp_webhook.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/words/learn.ts",
+    "components_used_guess": "LearnOut",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_words_learn_sm.png",
+      "docs/baseline/screens/api_words_learn_md.png",
+      "docs/baseline/screens/api_words_learn_lg.png",
+      "docs/baseline/axe/gramorx_com_api_words_learn.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/words/today.ts",
+    "components_used_guess": "TodayOut",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_words_today_sm.png",
+      "docs/baseline/screens/api_words_today_md.png",
+      "docs/baseline/screens/api_words_today_lg.png",
+      "docs/baseline/axe/gramorx_com_api_words_today.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/writing/reeval-history.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_writing_reeval-history_sm.png",
+      "docs/baseline/screens/api_writing_reeval-history_md.png",
+      "docs/baseline/screens/api_writing_reeval-history_lg.png",
+      "docs/baseline/axe/gramorx_com_api_writing_reeval-history.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/writing/reevaluate.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_writing_reevaluate_sm.png",
+      "docs/baseline/screens/api_writing_reevaluate_md.png",
+      "docs/baseline/screens/api_writing_reevaluate_lg.png",
+      "docs/baseline/axe/gramorx_com_api_writing_reevaluate.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/api/writing/restore-reeval.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/api_writing_restore-reeval_sm.png",
+      "docs/baseline/screens/api_writing_restore-reeval_md.png",
+      "docs/baseline/screens/api_writing_restore-reeval_lg.png",
+      "docs/baseline/axe/gramorx_com_api_writing_restore-reeval.json"
+    ],
+    "internal": true
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/callback.tsx",
+    "components_used_guess": "AuthLayout, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/auth_callback_sm.png",
+      "docs/baseline/screens/auth_callback_md.png",
+      "docs/baseline/screens/auth_callback_lg.png",
+      "docs/baseline/axe/gramorx_com_auth_callback.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/forgot.tsx",
+    "components_used_guess": "React, Link, SectionLabel, Alert, Badge, Input, Button, MailIcon",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/auth_forgot_sm.png",
+      "docs/baseline/screens/auth_forgot_md.png",
+      "docs/baseline/screens/auth_forgot_lg.png",
+      "docs/baseline/axe/gramorx_com_auth_forgot.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/mfa.tsx",
+    "components_used_guess": "AuthLayout, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/auth_mfa_sm.png",
+      "docs/baseline/screens/auth_mfa_md.png",
+      "docs/baseline/screens/auth_mfa_lg.png",
+      "docs/baseline/axe/gramorx_com_auth_mfa.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/reset.tsx",
+    "components_used_guess": "SectionLabel, Alert, Badge, Input, Button, SmsIcon, Link, MailIcon",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/auth_reset_sm.png",
+      "docs/baseline/screens/auth_reset_md.png",
+      "docs/baseline/screens/auth_reset_lg.png",
+      "docs/baseline/axe/gramorx_com_auth_reset.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/auth/verify.tsx",
+    "components_used_guess": "SectionLabel, Card, Alert, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/auth_verify_sm.png",
+      "docs/baseline/screens/auth_verify_md.png",
+      "docs/baseline/screens/auth_verify_lg.png",
+      "docs/baseline/axe/gramorx_com_auth_verify.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/blog/[slug].tsx",
+    "components_used_guess": "Props, Head, Container, Card, Link, Image",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/blog_slug_sm.png",
+      "docs/baseline/screens/blog_slug_md.png",
+      "docs/baseline/screens/blog_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_blog_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/blog/index.tsx",
+    "components_used_guess": "CategoryFilter, Sort, Post, Head, Container, Button, Card, Input, Alert, Image, Link, NavLink",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/blog_index_sm.png",
+      "docs/baseline/screens/blog_index_md.png",
+      "docs/baseline/screens/blog_index_lg.png",
+      "docs/baseline/axe/gramorx_com_blog_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/bookings/[id].tsx",
+    "components_used_guess": "BookingPageProps, Link, Head, Image, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/bookings_id_sm.png",
+      "docs/baseline/screens/bookings_id_md.png",
+      "docs/baseline/screens/bookings_id_lg.png",
+      "docs/baseline/axe/gramorx_com_bookings_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/bookings/index.tsx",
+    "components_used_guess": "ListResp, Head, Input, Button, Skeleton, EmptyState, Link, BookingRow, Pagination",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/bookings_index_sm.png",
+      "docs/baseline/screens/bookings_index_md.png",
+      "docs/baseline/screens/bookings_index_lg.png",
+      "docs/baseline/axe/gramorx_com_bookings_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/cert/[id].tsx",
+    "components_used_guess": "CertRow, Head, Container, Link, CertificateCanvas",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/cert_id_sm.png",
+      "docs/baseline/screens/cert_id_md.png",
+      "docs/baseline/screens/cert_id_lg.png",
+      "docs/baseline/axe/gramorx_com_cert_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/challenge/[cohort].tsx",
+    "components_used_guess": "EnrollmentLite, ChallengeTask, Head, Container, Link, TaskList, Leaderboard",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/challenge_cohort_sm.png",
+      "docs/baseline/screens/challenge_cohort_md.png",
+      "docs/baseline/screens/challenge_cohort_lg.png",
+      "docs/baseline/axe/gramorx_com_challenge_cohort.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/challenge/index.tsx",
+    "components_used_guess": "EnrollmentRow, Head, Container, Link, ChallengeCohortCard",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/challenge_index_sm.png",
+      "docs/baseline/screens/challenge_index_md.png",
+      "docs/baseline/screens/challenge_index_lg.png",
+      "docs/baseline/axe/gramorx_com_challenge_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/checkout/cancel.tsx",
+    "components_used_guess": "Head, Section, Container, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/checkout_cancel_sm.png",
+      "docs/baseline/screens/checkout_cancel_md.png",
+      "docs/baseline/screens/checkout_cancel_lg.png",
+      "docs/baseline/axe/gramorx_com_checkout_cancel.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/checkout/index.tsx",
+    "components_used_guess": "PlanKey, PlanPickerProps, Head, Container, SocialProofStrip, Link, Card, PlanPicker, Badge, CheckoutForm, RedeemBox, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/checkout_index_sm.png",
+      "docs/baseline/screens/checkout_index_md.png",
+      "docs/baseline/screens/checkout_index_lg.png",
+      "docs/baseline/axe/gramorx_com_checkout_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/checkout/success.tsx",
+    "components_used_guess": "Head, Section, Container, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/checkout_success_sm.png",
+      "docs/baseline/screens/checkout_success_md.png",
+      "docs/baseline/screens/checkout_success_lg.png",
+      "docs/baseline/axe/gramorx_com_checkout_success.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/classes/[id].tsx",
+    "components_used_guess": "ClassPageProps, Link, Head, Button, Skeleton, Input",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/classes_id_sm.png",
+      "docs/baseline/screens/classes_id_md.png",
+      "docs/baseline/screens/classes_id_lg.png",
+      "docs/baseline/axe/gramorx_com_classes_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/classes/index.tsx",
+    "components_used_guess": "Head, Input, Button, Skeleton, EmptyState, Link, ClassRow, Pagination",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/classes_index_sm.png",
+      "docs/baseline/screens/classes_index_md.png",
+      "docs/baseline/screens/classes_index_lg.png",
+      "docs/baseline/axe/gramorx_com_classes_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/coach/[id].tsx",
+    "components_used_guess": "CoachPageProps, Array, Link, Head, Image, BookCard",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/coach_id_sm.png",
+      "docs/baseline/screens/coach_id_md.png",
+      "docs/baseline/screens/coach_id_lg.png",
+      "docs/baseline/axe/gramorx_com_coach_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/chat.tsx",
+    "components_used_guess": "Message, Section, Container, Card, Input, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/community_chat_sm.png",
+      "docs/baseline/screens/community_chat_md.png",
+      "docs/baseline/screens/community_chat_lg.png",
+      "docs/baseline/axe/gramorx_com_community_chat.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/index.tsx",
+    "components_used_guess": "Thread, Section, Container, Card, Input, Textarea, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/community_index_sm.png",
+      "docs/baseline/screens/community_index_md.png",
+      "docs/baseline/screens/community_index_lg.png",
+      "docs/baseline/axe/gramorx_com_community_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/questions.tsx",
+    "components_used_guess": "QA, Section, Container, Card, Input, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/community_questions_sm.png",
+      "docs/baseline/screens/community_questions_md.png",
+      "docs/baseline/screens/community_questions_lg.png",
+      "docs/baseline/axe/gramorx_com_community_questions.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/community/review/index.tsx",
+    "components_used_guess": "Review, Record, Section, Container, Card, Textarea, Button, Input",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/community_review_index_sm.png",
+      "docs/baseline/screens/community_review_index_md.png",
+      "docs/baseline/screens/community_review_index_lg.png",
+      "docs/baseline/axe/gramorx_com_community_review_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/content/studio/[id].tsx",
+    "components_used_guess": "StudioDetailProps, Link, Head, Button, Input",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/content_studio_id_sm.png",
+      "docs/baseline/screens/content_studio_id_md.png",
+      "docs/baseline/screens/content_studio_id_lg.png",
+      "docs/baseline/axe/gramorx_com_content_studio_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/content/studio/index.tsx",
+    "components_used_guess": "StudioIndexProps, Head, Link, Button, Input",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/content_studio_index_sm.png",
+      "docs/baseline/screens/content_studio_index_md.png",
+      "docs/baseline/screens/content_studio_index_lg.png",
+      "docs/baseline/axe/gramorx_com_content_studio_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/dashboard/index.tsx",
+    "components_used_guess": "Profile, Container, Card, Alert, Link, Button, HeaderStreakChip, StreakIndicator, Badge, Image, WordOfTheDayCard, GapToGoal, StudyCalendar, GoalRoadmap, QuickDrillButton, ReadingStatsCard, ShareLinkCard, WhatsAppOptIn, SavedItems, MotivationCoach",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/dashboard_index_sm.png",
+      "docs/baseline/screens/dashboard_index_md.png",
+      "docs/baseline/screens/dashboard_index_lg.png",
+      "docs/baseline/axe/gramorx_com_dashboard_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/data-deletion.tsx",
+    "components_used_guess": "Head, Container, Link, Button, Card",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/data-deletion_sm.png",
+      "docs/baseline/screens/data-deletion_md.png",
+      "docs/baseline/screens/data-deletion_lg.png",
+      "docs/baseline/axe/gramorx_com_data-deletion.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/exam/rehearsal.tsx",
+    "components_used_guess": "ExamLayout, DeviceCheck, TimingRehearsal, AnxietyScripts, ExamChecklist",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/exam_rehearsal_sm.png",
+      "docs/baseline/screens/exam_rehearsal_md.png",
+      "docs/baseline/screens/exam_rehearsal_lg.png",
+      "docs/baseline/axe/gramorx_com_exam_rehearsal.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/faq.tsx",
+    "components_used_guess": "Cat, Head, Container, Link, Card, Input, Alert, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/faq_sm.png",
+      "docs/baseline/screens/faq_md.png",
+      "docs/baseline/screens/faq_lg.png",
+      "docs/baseline/axe/gramorx_com_faq.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/forgot-password.tsx",
+    "components_used_guess": "HTMLFormElement, Head, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/forgot-password_sm.png",
+      "docs/baseline/screens/forgot-password_md.png",
+      "docs/baseline/screens/forgot-password_lg.png",
+      "docs/baseline/axe/gramorx_com_forgot-password.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/index.tsx",
+    "components_used_guess": "SectionSkeleton, HTMLAnchorElement, Head, Hero, Modules, Testimonials, Pricing, Waitlist",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/index_sm.png",
+      "docs/baseline/screens/index_md.png",
+      "docs/baseline/screens/index_lg.png",
+      "docs/baseline/axe/gramorx_com_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/[orgId]/index.tsx",
+    "components_used_guess": "OrgHomeProps, Link, Head, Button, KpiCard",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/institutions_orgId_index_sm.png",
+      "docs/baseline/screens/institutions_orgId_index_md.png",
+      "docs/baseline/screens/institutions_orgId_index_lg.png",
+      "docs/baseline/axe/gramorx_com_institutions_orgId_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/[orgId]/reports.tsx",
+    "components_used_guess": "ReportsPageProps, Link, Head, Button, Kpi, Skeleton, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, AreaChart, Area",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/institutions_orgId_reports_sm.png",
+      "docs/baseline/screens/institutions_orgId_reports_md.png",
+      "docs/baseline/screens/institutions_orgId_reports_lg.png",
+      "docs/baseline/axe/gramorx_com_institutions_orgId_reports.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/[orgId]/students.tsx",
+    "components_used_guess": "StudentsPageProps, Array, Link, Head, Button, Input, Skeleton",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/institutions_orgId_students_sm.png",
+      "docs/baseline/screens/institutions_orgId_students_md.png",
+      "docs/baseline/screens/institutions_orgId_students_lg.png",
+      "docs/baseline/axe/gramorx_com_institutions_orgId_students.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/institutions/index.tsx",
+    "components_used_guess": "OrgsResp, Head, Input, Button, Link, Skeleton, EmptyState",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/institutions_index_sm.png",
+      "docs/baseline/screens/institutions_index_md.png",
+      "docs/baseline/screens/institutions_index_lg.png",
+      "docs/baseline/axe/gramorx_com_institutions_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/labs/ai-tutor.tsx",
+    "components_used_guess": "Msg, MediaRecorder, Blob, Head, Link, Button, Skeleton, Input",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/labs_ai-tutor_sm.png",
+      "docs/baseline/screens/labs_ai-tutor_md.png",
+      "docs/baseline/screens/labs_ai-tutor_lg.png",
+      "docs/baseline/axe/gramorx_com_labs_ai-tutor.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/leaderboard/index.tsx",
+    "components_used_guess": "Entry, Container, Card",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/leaderboard_index_sm.png",
+      "docs/baseline/screens/leaderboard_index_md.png",
+      "docs/baseline/screens/leaderboard_index_lg.png",
+      "docs/baseline/axe/gramorx_com_leaderboard_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/[slug].tsx",
+    "components_used_guess": "Course, Lesson, Progress, Container, Card, Alert, Image, Badge, Link, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_slug_sm.png",
+      "docs/baseline/screens/learning_slug_md.png",
+      "docs/baseline/screens/learning_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/drills.tsx",
+    "components_used_guess": "Drill, Container, Card, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_drills_sm.png",
+      "docs/baseline/screens/learning_drills_md.png",
+      "docs/baseline/screens/learning_drills_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_drills.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_index_sm.png",
+      "docs/baseline/screens/learning_index_md.png",
+      "docs/baseline/screens/learning_index_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/[skill].tsx",
+    "components_used_guess": "Profile, Container, Card, Skeleton, StreakIndicator, Image, Badge, Button, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_skills_skill_sm.png",
+      "docs/baseline/screens/learning_skills_skill_md.png",
+      "docs/baseline/screens/learning_skills_skill_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_skills_skill.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_skills_index_sm.png",
+      "docs/baseline/screens/learning_skills_index_md.png",
+      "docs/baseline/screens/learning_skills_index_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_skills_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/lessons/[slug].tsx",
+    "components_used_guess": "Container, Card, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_skills_lessons_slug_sm.png",
+      "docs/baseline/screens/learning_skills_lessons_slug_md.png",
+      "docs/baseline/screens/learning_skills_lessons_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_skills_lessons_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/skills/lessons/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_skills_lessons_index_sm.png",
+      "docs/baseline/screens/learning_skills_lessons_index_md.png",
+      "docs/baseline/screens/learning_skills_lessons_index_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_skills_lessons_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/strategies/[tipSlug].tsx",
+    "components_used_guess": "DrillResult, Container, Card, Button, Badge, Head, AreaBadge, DiffBadge, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_strategies_tipSlug_sm.png",
+      "docs/baseline/screens/learning_strategies_tipSlug_md.png",
+      "docs/baseline/screens/learning_strategies_tipSlug_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_strategies_tipSlug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/learning/strategies/index.tsx",
+    "components_used_guess": "Area, Difficulty, StrategyTip, Set, Record, Badge, Container, Card, Input, Alert, Button, AreaBadge, DiffBadge",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/learning_strategies_index_sm.png",
+      "docs/baseline/screens/learning_strategies_index_md.png",
+      "docs/baseline/screens/learning_strategies_index_lg.png",
+      "docs/baseline/axe/gramorx_com_learning_strategies_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/legal/privacy.tsx",
+    "components_used_guess": "Head, Container, Link, Button, Card",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/legal_privacy_sm.png",
+      "docs/baseline/screens/legal_privacy_md.png",
+      "docs/baseline/screens/legal_privacy_lg.png",
+      "docs/baseline/axe/gramorx_com_legal_privacy.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/legal/terms.tsx",
+    "components_used_guess": "Head, Container, Link, Button, Card",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/legal_terms_sm.png",
+      "docs/baseline/screens/legal_terms_md.png",
+      "docs/baseline/screens/legal_terms_lg.png",
+      "docs/baseline/axe/gramorx_com_legal_terms.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/listening/[slug]/review.tsx",
+    "components_used_guess": "Container, ReviewScreen",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/listening_slug_review_sm.png",
+      "docs/baseline/screens/listening_slug_review_md.png",
+      "docs/baseline/screens/listening_slug_review_lg.png",
+      "docs/baseline/axe/gramorx_com_listening_slug_review.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/listening/[slug].tsx",
+    "components_used_guess": "ListeningTest, Record, Container, Card, FocusGuard, SaveItemButton, Timer, Badge, Button, Alert, AudioSectionsPlayer, Input",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/listening_slug_sm.png",
+      "docs/baseline/screens/listening_slug_md.png",
+      "docs/baseline/screens/listening_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_listening_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/listening/index.tsx",
+    "components_used_guess": "ListItem, Record, Container, Badge, Alert, Card, Skeleton, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/listening_index_sm.png",
+      "docs/baseline/screens/listening_index_md.png",
+      "docs/baseline/screens/listening_index_lg.png",
+      "docs/baseline/axe/gramorx_com_listening_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/email.tsx",
+    "components_used_guess": "Alert, Input, PasswordInput, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/login_email_sm.png",
+      "docs/baseline/screens/login_email_md.png",
+      "docs/baseline/screens/login_email_lg.png",
+      "docs/baseline/axe/gramorx_com_login_email.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/index.tsx",
+    "components_used_guess": "Alert, SectionLabel, Button, Link, MailIcon, GoogleIcon, FacebookIcon, AppleIcon, Badge, SmsIcon",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/login_index_sm.png",
+      "docs/baseline/screens/login_index_md.png",
+      "docs/baseline/screens/login_index_lg.png",
+      "docs/baseline/axe/gramorx_com_login_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/password.tsx",
+    "components_used_guess": "Alert, Input, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/login_password_sm.png",
+      "docs/baseline/screens/login_password_md.png",
+      "docs/baseline/screens/login_password_lg.png",
+      "docs/baseline/axe/gramorx_com_login_password.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/login/phone.tsx",
+    "components_used_guess": "Alert, Input, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/login_phone_sm.png",
+      "docs/baseline/screens/login_phone_md.png",
+      "docs/baseline/screens/login_phone_lg.png",
+      "docs/baseline/axe/gramorx_com_login_phone.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/marketplace/index.tsx",
+    "components_used_guess": "CoachesResp, Head, Link, CoachCard, Pagination, Image",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/marketplace_index_sm.png",
+      "docs/baseline/screens/marketplace_index_md.png",
+      "docs/baseline/screens/marketplace_index_lg.png",
+      "docs/baseline/axe/gramorx_com_marketplace_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mistakes/index.tsx",
+    "components_used_guess": "Mistake, Container, Input, Textarea, Select, Button, MistakeCard",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mistakes_index_sm.png",
+      "docs/baseline/screens/mistakes_index_md.png",
+      "docs/baseline/screens/mistakes_index_lg.png",
+      "docs/baseline/axe/gramorx_com_mistakes_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/listening/[id].tsx",
+    "components_used_guess": "ListeningPaper, AnswerMap, Shell, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock_listening_id_sm.png",
+      "docs/baseline/screens/mock_listening_id_md.png",
+      "docs/baseline/screens/mock_listening_id_lg.png",
+      "docs/baseline/axe/gramorx_com_mock_listening_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/reading/[id].tsx",
+    "components_used_guess": "ReadingPaper, AnswerMap, Shell, Link, Options",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock_reading_id_sm.png",
+      "docs/baseline/screens/mock_reading_id_md.png",
+      "docs/baseline/screens/mock_reading_id_lg.png",
+      "docs/baseline/axe/gramorx_com_mock_reading_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/speaking/[id].tsx",
+    "components_used_guess": "SpeakingScript, MediaRecorder, Blob, Shell, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock_speaking_id_sm.png",
+      "docs/baseline/screens/mock_speaking_id_md.png",
+      "docs/baseline/screens/mock_speaking_id_lg.png",
+      "docs/baseline/axe/gramorx_com_mock_speaking_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock/writing/[id].tsx",
+    "components_used_guess": "WritingPaper, Shell, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock_writing_id_sm.png",
+      "docs/baseline/screens/mock_writing_id_md.png",
+      "docs/baseline/screens/mock_writing_id_lg.png",
+      "docs/baseline/axe/gramorx_com_mock_writing_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/[section].tsx",
+    "components_used_guess": "SectionTestHandle, Container, Card, ExamLayout, SectionTest",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock-tests_section_sm.png",
+      "docs/baseline/screens/mock-tests_section_md.png",
+      "docs/baseline/screens/mock-tests_section_lg.png",
+      "docs/baseline/axe/gramorx_com_mock-tests_section.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/analytics.tsx",
+    "components_used_guess": "ResultRow, Container, Card, BandChart, TimeChart, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock-tests_analytics_sm.png",
+      "docs/baseline/screens/mock-tests_analytics_md.png",
+      "docs/baseline/screens/mock-tests_analytics_lg.png",
+      "docs/baseline/axe/gramorx_com_mock-tests_analytics.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/full.tsx",
+    "components_used_guess": "Progress, SectionTestHandle, Container, Card, ExamLayout, SectionTest",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock-tests_full_sm.png",
+      "docs/baseline/screens/mock-tests_full_md.png",
+      "docs/baseline/screens/mock-tests_full_lg.png",
+      "docs/baseline/axe/gramorx_com_mock-tests_full.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/mock-tests/index.tsx",
+    "components_used_guess": "Container, Card, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/mock-tests_index_sm.png",
+      "docs/baseline/screens/mock-tests_index_md.png",
+      "docs/baseline/screens/mock-tests_index_lg.png",
+      "docs/baseline/axe/gramorx_com_mock-tests_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/notifications/index.tsx",
+    "components_used_guess": "Container, Card, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/notifications_index_sm.png",
+      "docs/baseline/screens/notifications_index_md.png",
+      "docs/baseline/screens/notifications_index_lg.png",
+      "docs/baseline/axe/gramorx_com_notifications_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/date.tsx",
+    "components_used_guess": "StepShell, Input",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/onboarding_date_sm.png",
+      "docs/baseline/screens/onboarding_date_md.png",
+      "docs/baseline/screens/onboarding_date_lg.png",
+      "docs/baseline/axe/gramorx_com_onboarding_date.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/goal.tsx",
+    "components_used_guess": "StepShell, Input, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/onboarding_goal_sm.png",
+      "docs/baseline/screens/onboarding_goal_md.png",
+      "docs/baseline/screens/onboarding_goal_lg.png",
+      "docs/baseline/axe/gramorx_com_onboarding_goal.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/index.tsx",
+    "components_used_guess": "StepShell, Card",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/onboarding_index_sm.png",
+      "docs/baseline/screens/onboarding_index_md.png",
+      "docs/baseline/screens/onboarding_index_lg.png",
+      "docs/baseline/axe/gramorx_com_onboarding_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/schedule.tsx",
+    "components_used_guess": "StepShell, Input, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/onboarding_schedule_sm.png",
+      "docs/baseline/screens/onboarding_schedule_md.png",
+      "docs/baseline/screens/onboarding_schedule_lg.png",
+      "docs/baseline/axe/gramorx_com_onboarding_schedule.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/skills.tsx",
+    "components_used_guess": "Record, Skill, StepShell, Checkbox",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/onboarding_skills_sm.png",
+      "docs/baseline/screens/onboarding_skills_md.png",
+      "docs/baseline/screens/onboarding_skills_lg.png",
+      "docs/baseline/axe/gramorx_com_onboarding_skills.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/teacher/index.tsx",
+    "components_used_guess": "Module, Alert, Input, Select, Textarea, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/onboarding_teacher_index_sm.png",
+      "docs/baseline/screens/onboarding_teacher_index_md.png",
+      "docs/baseline/screens/onboarding_teacher_index_lg.png",
+      "docs/baseline/axe/gramorx_com_onboarding_teacher_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/onboarding/teacher/status.tsx",
+    "components_used_guess": "Alert, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/onboarding_teacher_status_sm.png",
+      "docs/baseline/screens/onboarding_teacher_status_md.png",
+      "docs/baseline/screens/onboarding_teacher_status_lg.png",
+      "docs/baseline/axe/gramorx_com_onboarding_teacher_status.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/partners/index.tsx",
+    "components_used_guess": "Head, Link, PartnerSummary",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/partners_index_sm.png",
+      "docs/baseline/screens/partners_index_md.png",
+      "docs/baseline/screens/partners_index_lg.png",
+      "docs/baseline/axe/gramorx_com_partners_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/index.tsx",
+    "components_used_guess": "Head, Container, GradientText, Link, Button, Badge, Card, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/placement_index_sm.png",
+      "docs/baseline/screens/placement_index_md.png",
+      "docs/baseline/screens/placement_index_lg.png",
+      "docs/baseline/axe/gramorx_com_placement_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/result.tsx",
+    "components_used_guess": "Head, Container, GradientText, Card, Link, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/placement_result_sm.png",
+      "docs/baseline/screens/placement_result_md.png",
+      "docs/baseline/screens/placement_result_lg.png",
+      "docs/baseline/axe/gramorx_com_placement_result.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/run.tsx",
+    "components_used_guess": "Record, Card, Image, SpeakingRecorder, Head, Container, GradientText, Badge, Alert, Button, Link, MediaRecorder, Blob",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/placement_run_sm.png",
+      "docs/baseline/screens/placement_run_md.png",
+      "docs/baseline/screens/placement_run_lg.png",
+      "docs/baseline/axe/gramorx_com_placement_run.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/placement/start.tsx",
+    "components_used_guess": "Container, Card, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/placement_start_sm.png",
+      "docs/baseline/screens/placement_start_md.png",
+      "docs/baseline/screens/placement_start_lg.png",
+      "docs/baseline/axe/gramorx_com_placement_start.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/predictor/index.tsx",
+    "components_used_guess": "Head, BandPredictorForm",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/predictor_index_sm.png",
+      "docs/baseline/screens/predictor_index_md.png",
+      "docs/baseline/screens/predictor_index_lg.png",
+      "docs/baseline/axe/gramorx_com_predictor_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/predictor/result.tsx",
+    "components_used_guess": "Result, Head, Link, BandBreakdown",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/predictor_result_sm.png",
+      "docs/baseline/screens/predictor_result_md.png",
+      "docs/baseline/screens/predictor_result_lg.png",
+      "docs/baseline/axe/gramorx_com_predictor_result.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/index.tsx",
+    "components_used_guess": "Props, ThemeSwitcherPremium, PrCard, PrButton, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/premium_index_sm.png",
+      "docs/baseline/screens/premium_index_md.png",
+      "docs/baseline/screens/premium_index_lg.png",
+      "docs/baseline/axe/gramorx_com_premium_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/listening/[slug].tsx",
+    "components_used_guess": "ExamGate, PinGate, ExamShell, PrAudioPlayer, PrButton",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/premium_listening_slug_sm.png",
+      "docs/baseline/screens/premium_listening_slug_md.png",
+      "docs/baseline/screens/premium_listening_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_premium_listening_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/pin.tsx",
+    "components_used_guess": "HTMLInputElement, PremiumThemeProvider, Head, ThemeSwitcherPremium, PrCard, PrButton, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/premium_pin_sm.png",
+      "docs/baseline/screens/premium_pin_md.png",
+      "docs/baseline/screens/premium_pin_lg.png",
+      "docs/baseline/axe/gramorx_com_premium_pin.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium/reading/[slug].tsx",
+    "components_used_guess": "ReadingTest, Record, HTMLElement, ExamGate, PinGate, ExamShell, PrButton, ResultPanel",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/premium_reading_slug_sm.png",
+      "docs/baseline/screens/premium_reading_slug_md.png",
+      "docs/baseline/screens/premium_reading_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_premium_reading_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/premium-pin.tsx",
+    "components_used_guess": "HTMLInputElement, Head",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/premium-pin_sm.png",
+      "docs/baseline/screens/premium-pin_md.png",
+      "docs/baseline/screens/premium-pin_lg.png",
+      "docs/baseline/axe/gramorx_com_premium-pin.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/pricing/index.tsx",
+    "components_used_guess": "Currency, Record, Cycle, Head, Section, Container, SocialProofStrip, Card, Badge, Ribbon, Button, Link, CardShell",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/pricing_index_sm.png",
+      "docs/baseline/screens/pricing_index_md.png",
+      "docs/baseline/screens/pricing_index_lg.png",
+      "docs/baseline/axe/gramorx_com_pricing_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/proctoring/check.tsx",
+    "components_used_guess": "Head, Input, Button, Skeleton",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/proctoring_check_sm.png",
+      "docs/baseline/screens/proctoring_check_md.png",
+      "docs/baseline/screens/proctoring_check_lg.png",
+      "docs/baseline/axe/gramorx_com_proctoring_check.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/proctoring/exam/[id].tsx",
+    "components_used_guess": "ExamPageProps, HTMLVideoElement, HTMLCanvasElement, Head, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/proctoring_exam_id_sm.png",
+      "docs/baseline/screens/proctoring_exam_id_md.png",
+      "docs/baseline/screens/proctoring_exam_id_lg.png",
+      "docs/baseline/axe/gramorx_com_proctoring_exam_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/profile/index.tsx",
+    "components_used_guess": "Profile, HTMLInputElement, BadgeType, Container, Card, StreakIndicator, Badge, Image, Button, Toggle, SavedItems",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/profile_index_sm.png",
+      "docs/baseline/screens/profile_index_md.png",
+      "docs/baseline/screens/profile_index_lg.png",
+      "docs/baseline/axe/gramorx_com_profile_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/profile/setup.tsx",
+    "components_used_guess": "FieldErrors, Container, ProgressBar, Alert, Card, SkeletonLine, Section, Input, Select, Button, Badge, AvatarUploader, Image",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/profile_setup_sm.png",
+      "docs/baseline/screens/profile_setup_md.png",
+      "docs/baseline/screens/profile_setup_lg.png",
+      "docs/baseline/axe/gramorx_com_profile_setup.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/progress/[token].tsx",
+    "components_used_guess": "Props, Container, Card",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/progress_token_sm.png",
+      "docs/baseline/screens/progress_token_md.png",
+      "docs/baseline/screens/progress_token_lg.png",
+      "docs/baseline/axe/gramorx_com_progress_token.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/progress/index.tsx",
+    "components_used_guess": "Record, Skill, BandDay, AccuracyRow, TimeRow, Container, Card, Button, EmptyState, BandChart, Link, AccuracyChart, TimeChart",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/progress_index_sm.png",
+      "docs/baseline/screens/progress_index_md.png",
+      "docs/baseline/screens/progress_index_lg.png",
+      "docs/baseline/axe/gramorx_com_progress_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/pwa/app.tsx",
+    "components_used_guess": "Head, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/pwa_app_sm.png",
+      "docs/baseline/screens/pwa_app_md.png",
+      "docs/baseline/screens/pwa_app_lg.png",
+      "docs/baseline/axe/gramorx_com_pwa_app.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/quick/[skill].tsx",
+    "components_used_guess": "Container, Card, QuickDrillButton",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/quick_skill_sm.png",
+      "docs/baseline/screens/quick_skill_md.png",
+      "docs/baseline/screens/quick_skill_lg.png",
+      "docs/baseline/axe/gramorx_com_quick_skill.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/r/[code].tsx",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/r_code_sm.png",
+      "docs/baseline/screens/r_code_md.png",
+      "docs/baseline/screens/r_code_lg.png",
+      "docs/baseline/axe/gramorx_com_r_code.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/[slug].tsx",
+    "components_used_guess": "ReadingTest, Record, StatusFilter, TypeFilter, HTMLElement, FocusGuard, Container, Alert, Card, Badge, SaveItemButton, Button, QuestionBlock, QuestionNav",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/reading_slug_sm.png",
+      "docs/baseline/screens/reading_slug_md.png",
+      "docs/baseline/screens/reading_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_reading_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/index.tsx",
+    "components_used_guess": "ReadingListItem, Container, ReadingFilterBar, Alert, Card, Badge, Link, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/reading_index_sm.png",
+      "docs/baseline/screens/reading_index_md.png",
+      "docs/baseline/screens/reading_index_lg.png",
+      "docs/baseline/axe/gramorx_com_reading_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/passage/[slug].tsx",
+    "components_used_guess": "Props, Container, Badge, Card, ReadingFilterBar, QuestionRenderer, Link, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/reading_passage_slug_sm.png",
+      "docs/baseline/screens/reading_passage_slug_md.png",
+      "docs/baseline/screens/reading_passage_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_reading_passage_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/review/[attemptId].tsx",
+    "components_used_guess": "ReviewPayload, Container, Alert, Card, Badge, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/reading_review_attemptId_sm.png",
+      "docs/baseline/screens/reading_review_attemptId_md.png",
+      "docs/baseline/screens/reading_review_attemptId_lg.png",
+      "docs/baseline/axe/gramorx_com_reading_review_attemptId.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/review/index.tsx",
+    "components_used_guess": "Props, Record, Kind, Container, Card, TimerProgress, Badge, Alert, ReadingFilterBar, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/reading_review_index_sm.png",
+      "docs/baseline/screens/reading_review_index_md.png",
+      "docs/baseline/screens/reading_review_index_lg.png",
+      "docs/baseline/axe/gramorx_com_reading_review_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reading/stats.tsx",
+    "components_used_guess": "ReadingStats, Container, Card, Badge",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/reading_stats_sm.png",
+      "docs/baseline/screens/reading_stats_md.png",
+      "docs/baseline/screens/reading_stats_lg.png",
+      "docs/baseline/axe/gramorx_com_reading_stats.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/reports/band-analytics.tsx",
+    "components_used_guess": "Resp, Head, Link, Button, Input, Skeleton, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, AreaChart, Area",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/reports_band-analytics_sm.png",
+      "docs/baseline/screens/reports_band-analytics_md.png",
+      "docs/baseline/screens/reports_band-analytics_lg.png",
+      "docs/baseline/axe/gramorx_com_reports_band-analytics.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/listening/[id].tsx",
+    "components_used_guess": "ListeningPaper, Attempt, Shell, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/review_listening_id_sm.png",
+      "docs/baseline/screens/review_listening_id_md.png",
+      "docs/baseline/screens/review_listening_id_lg.png",
+      "docs/baseline/axe/gramorx_com_review_listening_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/reading/[id].tsx",
+    "components_used_guess": "ReadingPaper, Attempt, Shell, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/review_reading_id_sm.png",
+      "docs/baseline/screens/review_reading_id_md.png",
+      "docs/baseline/screens/review_reading_id_lg.png",
+      "docs/baseline/axe/gramorx_com_review_reading_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/speaking/[id].tsx",
+    "components_used_guess": "AIFeedback, Shell, Badge, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/review_speaking_id_sm.png",
+      "docs/baseline/screens/review_speaking_id_md.png",
+      "docs/baseline/screens/review_speaking_id_lg.png",
+      "docs/baseline/axe/gramorx_com_review_speaking_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/review/writing/[id].tsx",
+    "components_used_guess": "Attempt, AIFeedback, Shell, Badge, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/review_writing_id_sm.png",
+      "docs/baseline/screens/review_writing_id_md.png",
+      "docs/baseline/screens/review_writing_id_lg.png",
+      "docs/baseline/axe/gramorx_com_review_writing_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/saved/index.tsx",
+    "components_used_guess": "Container, SavedItems",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/saved_index_sm.png",
+      "docs/baseline/screens/saved_index_md.png",
+      "docs/baseline/screens/saved_index_lg.png",
+      "docs/baseline/axe/gramorx_com_saved_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/billing.tsx",
+    "components_used_guess": "BillingState, Shell, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/settings_billing_sm.png",
+      "docs/baseline/screens/settings_billing_md.png",
+      "docs/baseline/screens/settings_billing_lg.png",
+      "docs/baseline/axe/gramorx_com_settings_billing.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/index.tsx",
+    "components_used_guess": "Profile, Container, Card, Alert, Button, HeaderStreakChip, StreakIndicator, Badge, Image, WordOfTheDayCard, GapToGoal, StudyCalendar, GoalRoadmap, QuickDrillButton, ReadingStatsCard, ShareLinkCard, WhatsAppOptIn, SavedItems, MotivationCoach",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/settings_index_sm.png",
+      "docs/baseline/screens/settings_index_md.png",
+      "docs/baseline/screens/settings_index_lg.png",
+      "docs/baseline/axe/gramorx_com_settings_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/language.tsx",
+    "components_used_guess": "SupportedLocale, Head, Container, LocaleSwitcher",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/settings_language_sm.png",
+      "docs/baseline/screens/settings_language_md.png",
+      "docs/baseline/screens/settings_language_lg.png",
+      "docs/baseline/axe/gramorx_com_settings_language.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/settings/security.tsx",
+    "components_used_guess": "SessionInfo, LoginEvent, Container, Card, Input, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/settings_security_sm.png",
+      "docs/baseline/screens/settings_security_md.png",
+      "docs/baseline/screens/settings_security_lg.png",
+      "docs/baseline/axe/gramorx_com_settings_security.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/email.tsx",
+    "components_used_guess": "SectionLabel, Card, Alert, Link, Input, PasswordInput, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/signup_email_sm.png",
+      "docs/baseline/screens/signup_email_md.png",
+      "docs/baseline/screens/signup_email_lg.png",
+      "docs/baseline/axe/gramorx_com_signup_email.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/index.tsx",
+    "components_used_guess": "Alert, SectionLabel, Button, Link, MailIcon, GoogleIcon, FacebookIcon, AppleIcon, Badge, SmsIcon",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/signup_index_sm.png",
+      "docs/baseline/screens/signup_index_md.png",
+      "docs/baseline/screens/signup_index_lg.png",
+      "docs/baseline/axe/gramorx_com_signup_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/password.tsx",
+    "components_used_guess": "Alert, Input, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/signup_password_sm.png",
+      "docs/baseline/screens/signup_password_md.png",
+      "docs/baseline/screens/signup_password_lg.png",
+      "docs/baseline/axe/gramorx_com_signup_password.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/signup/phone.tsx",
+    "components_used_guess": "Alert, Input, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/signup_phone_sm.png",
+      "docs/baseline/screens/signup_phone_md.png",
+      "docs/baseline/screens/signup_phone_lg.png",
+      "docs/baseline/axe/gramorx_com_signup_phone.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/attempts/index.tsx",
+    "components_used_guess": "AttemptRow, Head, Container, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_attempts_index_sm.png",
+      "docs/baseline/screens/speaking_attempts_index_md.png",
+      "docs/baseline/screens/speaking_attempts_index_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_attempts_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/buddy.tsx",
+    "components_used_guess": "Container, StudyBuddyMatch",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_buddy_sm.png",
+      "docs/baseline/screens/speaking_buddy_md.png",
+      "docs/baseline/screens/speaking_buddy_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_buddy.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/index.tsx",
+    "components_used_guess": "Container, Badge, Card, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_index_sm.png",
+      "docs/baseline/screens/speaking_index_md.png",
+      "docs/baseline/screens/speaking_index_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/partner/history.tsx",
+    "components_used_guess": "Props, Container, Link, Button, Card, Input, Badge, Stat",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_partner_history_sm.png",
+      "docs/baseline/screens/speaking_partner_history_md.png",
+      "docs/baseline/screens/speaking_partner_history_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_partner_history.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/partner/review/[attemptId].tsx",
+    "components_used_guess": "ReviewPayload, Container, Card, Badge, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_partner_review_attemptId_sm.png",
+      "docs/baseline/screens/speaking_partner_review_attemptId_md.png",
+      "docs/baseline/screens/speaking_partner_review_attemptId_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_partner_review_attemptId.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/partner.tsx",
+    "components_used_guess": "Msg, Blob, Accent, SpeechRecognition, AttemptRow, Container, Card, Input, Button, Badge, Recorder, AccentPicker",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_partner_sm.png",
+      "docs/baseline/screens/speaking_partner_md.png",
+      "docs/baseline/screens/speaking_partner_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_partner.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/practice.tsx",
+    "components_used_guess": "Focus, ScoreResult, Mode, RecorderHandle, Accent, Stage, Head, Container, Link, Recorder, AccentPicker, AccentMirror",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_practice_sm.png",
+      "docs/baseline/screens/speaking_practice_md.png",
+      "docs/baseline/screens/speaking_practice_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_practice.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/report.tsx",
+    "components_used_guess": "Attempt, Container, Card, Badge",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_report_sm.png",
+      "docs/baseline/screens/speaking_report_md.png",
+      "docs/baseline/screens/speaking_report_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_report.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/review/[id].tsx",
+    "components_used_guess": "TranscriptProps, SpeechSynthesisUtterance, Button, Props, Attempt, Container, Card, Badge, ChallengeScore, Transcript",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_review_id_sm.png",
+      "docs/baseline/screens/speaking_review_id_md.png",
+      "docs/baseline/screens/speaking_review_id_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_review_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/roleplay/[scenario].tsx",
+    "components_used_guess": "MediaRecorder, Blob, Msg, HTMLDivElement, Container, Badge, Card, SidebarHeader, MessageList, Input, Button, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_roleplay_scenario_sm.png",
+      "docs/baseline/screens/speaking_roleplay_scenario_md.png",
+      "docs/baseline/screens/speaking_roleplay_scenario_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_roleplay_scenario.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/roleplay/index.tsx",
+    "components_used_guess": "Container, Card, Badge, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_roleplay_index_sm.png",
+      "docs/baseline/screens/speaking_roleplay_index_md.png",
+      "docs/baseline/screens/speaking_roleplay_index_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_roleplay_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/settings.tsx",
+    "components_used_guess": "Accent, Container, Card, AccentPicker, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_settings_sm.png",
+      "docs/baseline/screens/speaking_settings_md.png",
+      "docs/baseline/screens/speaking_settings_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_settings.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/index.tsx",
+    "components_used_guess": "Blob, PartKey, RunState, Array, Head, Container, GradientText, Badge, Card, Button, Alert, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_simulator_index_sm.png",
+      "docs/baseline/screens/speaking_simulator_index_md.png",
+      "docs/baseline/screens/speaking_simulator_index_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_simulator_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/part1.tsx",
+    "components_used_guess": "Accent, Step, MediaStream, MediaRecorder, BlobPart, Container, Link, Button, Card, Badge, AccentPicker, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_simulator_part1_sm.png",
+      "docs/baseline/screens/speaking_simulator_part1_md.png",
+      "docs/baseline/screens/speaking_simulator_part1_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_simulator_part1.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/part2.tsx",
+    "components_used_guess": "ScoreResult, Stage, Head, Container, Recorder, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_simulator_part2_sm.png",
+      "docs/baseline/screens/speaking_simulator_part2_md.png",
+      "docs/baseline/screens/speaking_simulator_part2_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_simulator_part2.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/speaking/simulator/part3.tsx",
+    "components_used_guess": "ScoreResult, Stage, RecorderHandle, Head, Container, Link, Recorder",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/speaking_simulator_part3_sm.png",
+      "docs/baseline/screens/speaking_simulator_part3_md.png",
+      "docs/baseline/screens/speaking_simulator_part3_lg.png",
+      "docs/baseline/axe/gramorx_com_speaking_simulator_part3.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/study-plan/index.tsx",
+    "components_used_guess": "StudyPlan, PlanDay, Shell, Link",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/study-plan_index_sm.png",
+      "docs/baseline/screens/study-plan_index_md.png",
+      "docs/baseline/screens/study-plan_index_lg.png",
+      "docs/baseline/axe/gramorx_com_study-plan_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/teacher/cohorts/[id].tsx",
+    "components_used_guess": "Cohort, CohortRow, Head, Container, Link, CohortTable, AssignTaskModal",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/teacher_cohorts_id_sm.png",
+      "docs/baseline/screens/teacher_cohorts_id_md.png",
+      "docs/baseline/screens/teacher_cohorts_id_lg.png",
+      "docs/baseline/axe/gramorx_com_teacher_cohorts_id.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/teacher/index.tsx",
+    "components_used_guess": "Container, TabKey, Cohort, Head, Button, SectionCard",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/teacher_index_sm.png",
+      "docs/baseline/screens/teacher_index_md.png",
+      "docs/baseline/screens/teacher_index_lg.png",
+      "docs/baseline/axe/gramorx_com_teacher_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/tools/mark-sections/[slug].tsx",
+    "components_used_guess": "Mark, HTMLAudioElement, Container, Card, Input, AudioBar, Button, Alert",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/tools_mark-sections_slug_sm.png",
+      "docs/baseline/screens/tools_mark-sections_slug_md.png",
+      "docs/baseline/screens/tools_mark-sections_slug_lg.png",
+      "docs/baseline/axe/gramorx_com_tools_mark-sections_slug.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/update-password.tsx",
+    "components_used_guess": "React, Link, Container, Card, Image, Alert, Input, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/update-password_sm.png",
+      "docs/baseline/screens/update-password_md.png",
+      "docs/baseline/screens/update-password_lg.png",
+      "docs/baseline/axe/gramorx_com_update-password.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/visa/index.tsx",
+    "components_used_guess": "Container, GapToGoal, TargetScoreForm",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/visa_index_sm.png",
+      "docs/baseline/screens/visa_index_md.png",
+      "docs/baseline/screens/visa_index_lg.png",
+      "docs/baseline/axe/gramorx_com_visa_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/waitlist.tsx",
+    "components_used_guess": "Head, Section, WaitlistForm",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/waitlist_sm.png",
+      "docs/baseline/screens/waitlist_md.png",
+      "docs/baseline/screens/waitlist_lg.png",
+      "docs/baseline/axe/gramorx_com_waitlist.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/welcome/index.tsx",
+    "components_used_guess": "Link, Badge, Button, WordOfDay, Container, StreakIndicator, ModuleCard",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/welcome_index_sm.png",
+      "docs/baseline/screens/welcome_index_md.png",
+      "docs/baseline/screens/welcome_index_lg.png",
+      "docs/baseline/axe/gramorx_com_welcome_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/writing/index.tsx",
+    "components_used_guess": "TaskType, React, Mode, Container, AiTestDrive, Badge, Card, HTMLSelectElement, Input, Alert, Button",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/writing_index_sm.png",
+      "docs/baseline/screens/writing_index_md.png",
+      "docs/baseline/screens/writing_index_lg.png",
+      "docs/baseline/axe/gramorx_com_writing_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "page",
+    "name_or_route": "pages/writing/review/[attemptId].tsx",
+    "components_used_guess": "Props, ReevalRow, Container, Card, Badge, ChallengeScore, ReevalPanel, ReevalHistory",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/writing_review_attemptId_sm.png",
+      "docs/baseline/screens/writing_review_attemptId_md.png",
+      "docs/baseline/screens/writing_review_attemptId_lg.png",
+      "docs/baseline/axe/gramorx_com_writing_review_attemptId.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Checkbox.tsx",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/design-system_Checkbox_sm.png",
+      "docs/baseline/screens/design-system_Checkbox_md.png",
+      "docs/baseline/screens/design-system_Checkbox_lg.png",
+      "docs/baseline/axe/gramorx_com_design-system_Checkbox.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Radio.tsx",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/design-system_Radio_sm.png",
+      "docs/baseline/screens/design-system_Radio_md.png",
+      "docs/baseline/screens/design-system_Radio_lg.png",
+      "docs/baseline/axe/gramorx_com_design-system_Radio.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Select.tsx",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/design-system_Select_sm.png",
+      "docs/baseline/screens/design-system_Select_md.png",
+      "docs/baseline/screens/design-system_Select_lg.png",
+      "docs/baseline/axe/gramorx_com_design-system_Select.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/Toggle.tsx",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/design-system_Toggle_sm.png",
+      "docs/baseline/screens/design-system_Toggle_md.png",
+      "docs/baseline/screens/design-system_Toggle_lg.png",
+      "docs/baseline/axe/gramorx_com_design-system_Toggle.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/index.ts",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/design-system_index_sm.png",
+      "docs/baseline/screens/design-system_index_md.png",
+      "docs/baseline/screens/design-system_index_lg.png",
+      "docs/baseline/axe/gramorx_com_design-system_index.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/tokens/colors.js",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/design-system_tokens_colors_sm.png",
+      "docs/baseline/screens/design-system_tokens_colors_md.png",
+      "docs/baseline/screens/design-system_tokens_colors_lg.png",
+      "docs/baseline/axe/gramorx_com_design-system_tokens_colors.json"
+    ],
+    "internal": false
+  },
+  {
+    "type": "ds",
+    "name_or_route": "design-system/tokens/scale.js",
+    "components_used_guess": "",
+    "severity": "",
+    "fix_type": "",
+    "owner": "",
+    "due_window": "",
+    "evidence": [
+      "docs/baseline/screens/design-system_tokens_scale_sm.png",
+      "docs/baseline/screens/design-system_tokens_scale_md.png",
+      "docs/baseline/screens/design-system_tokens_scale_lg.png",
+      "docs/baseline/axe/gramorx_com_design-system_tokens_scale.json"
+    ],
+    "internal": false
+  }
+]
