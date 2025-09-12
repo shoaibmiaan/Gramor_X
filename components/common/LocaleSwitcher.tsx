@@ -1,6 +1,7 @@
 // components/common/LocaleSwitcher.tsx
 import React from 'react';
-import { loadTranslations, setLocale, getLocale, type Locale } from '@/lib/locale';
+import {  setLocale, getLocale, type Locale } from '@/lib/locale';
+import { loadTranslations } from "@/lib/i18n";
 
 type Props = {
   value?: Locale;
