@@ -140,7 +140,7 @@ export const UserMenu: React.FC<{
     const lang = toLocale(langStr);
     setLocale(lang);
     // FIX: use a real supabase client instance
-    const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser;
     await supabase.from("user_profiles").update({ preferred_language: lang }).eq("user_id", userId);
   };
 
