@@ -36,7 +36,9 @@ export const UserMenu: React.FC<{
   showEmail = true,
 }) => {
   const router = useRouter();
-  const { locale, setLocale, t } = useLocale();
+  const [locale, setLocale] = useLocale();
+const t = (s: string) => s;
+
 
   const [open, setOpen] = useState(false);
   const [localAvatar, setLocalAvatar] = useState<string | null>(
