@@ -86,7 +86,7 @@ export const Textarea: React.FC<TextareaProps> = ({
   onChange,
   ...props
 }) => {
-  const [uncontrolled, setUncontrolled] = React.useState<string | number | readonly string | undefined>(defaultValue)
+  const [uncontrolled, setUncontrolled] = React.useState<string | number | readonly string[] | undefined>(defaultValue)
   const controlled = value !== undefined
   const curr = (controlled ? value : uncontrolled) ?? ''
   const count = typeof curr === 'string' ? curr.length : String(curr).length
