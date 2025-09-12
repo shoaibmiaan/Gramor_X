@@ -1,3 +1,9 @@
+import type { SupportedLocale } from "@/lib/i18n/config";
+const SUPPORTED_LOCALES = ["en","ur"] as const;
+function toSupported(l: string): SupportedLocale {
+  return ((SUPPORTED_LOCALES as readonly string[]).includes(l) ? l : "en") as SupportedLocale;
+}
+
 // components/common/LocaleSwitcher.tsx
 import React from 'react';
 import {  setLocale, getLocale, type Locale } from '@/lib/locale';
@@ -24,7 +30,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
     const next = e.target.value as Locale;
     try {
       setBusy(true);
-      await loadTranslations(next);
+      await loadTranslations(toSupported(next));
       setLocale(next);
       setLocal(next);
       onChanged?.(next);
