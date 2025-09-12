@@ -1,7 +1,7 @@
 // lib/locale.ts
 // Minimal locale helper for Pages Router (SSR-safe)
 
-export type Locale = 'en' | 'ur' | 'ar' | 'fr'; // add/remove as needed
+export type Locale = 'en' | 'ur' | 'ar' | 'fr'; // adjust as needed
 const STORAGE_KEY = 'locale';
 
 let current: Locale | null = null;
@@ -34,9 +34,13 @@ export function detectLocale(defaultLocale: Locale = 'en'): Locale {
 
 // SSR-safe getter
 export function getLocale(defaultLocale: Locale = 'en'): Locale {
+<<<<<<< HEAD
   if (typeof window === 'undefined') return current ?? defaultLocale;
 
   // Prefer cached in-memory state, else saved, else detected
+=======
+  if (typeof window === 'undefined') return (current as Locale) ?? defaultLocale;
+>>>>>>> d319ad3 (chore: fix build (tsx rename), uniform Button named import, locale shim + LocaleSwitcher wiring)
   const saved = (localStorage.getItem(STORAGE_KEY) as Locale | null) ?? null;
   current = current ?? saved ?? detectLocale(defaultLocale);
 
@@ -51,15 +55,30 @@ export function getLocale(defaultLocale: Locale = 'en'): Locale {
 export function setLocale(next: Locale): void {
   current = next;
   if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, next);
     try {
+      localStorage.setItem(STORAGE_KEY, next);
       document.documentElement.setAttribute('lang', next);
-    } catch {}
+    } catch { /* noop */ }
   }
 }
 
-// (Optional) Load translation JSON into a global cache (client only).
-// Adjust the fetch path to your actual public JSON files.
+// Detect best locale from hint / browser (SSR-safe)
+export function detectLocale(hint?: string, fallback: Locale = 'en'): Locale {
+  if (hint && typeof hint === 'string') {
+    return (hint.split('-')[0] as Locale) || fallback;
+  }
+  if (typeof navigator !== 'undefined') {
+    const nav =
+      (navigator.languages && navigator.languages[0]) ||
+      navigator.language ||
+      (navigator as any).userLanguage ||
+      fallback;
+    return (String(nav).split('-')[0] as Locale) || fallback;
+  }
+  return (current as Locale) ?? fallback;
+}
+
+// (Optional) translation cache on client
 type Dict = Record<string, string>;
 declare global {
   interface Window { __i18n?: Record<Locale, Dict>; }

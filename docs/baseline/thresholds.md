@@ -1,8 +1,6 @@
-# Baseline Thresholds (Mobile)
+# Thresholds (locked from Day-1 baselines)
 
-- Performance ≥ **0.60**
-- Accessibility ≥ **0.80**
-- SEO: track-only (no gate yet)
-- PWA: track-only (no gate yet)
-
-> Mirrors lighthouserc.json. We’ll raise floors in Phase-3.
+- Accessibility ≥ 0.80 (mobile Lighthouse score)
+- Performance ≥ 0.60 (mobile Lighthouse score)
+- CLS ≤ 0.1
+- FCP ≤ 2.0s
