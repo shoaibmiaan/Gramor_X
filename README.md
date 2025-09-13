@@ -23,3 +23,16 @@ A Next.js (TypeScript) + Tailwind CSS portal with a separate **Premium “Exam E
 ### Install
 ```bash
 npm install
+
+```
+
+### Run
+
+Copy the example environment file and start the development server:
+
+```bash
+cp .env.example .env
+npm run dev
+```
+
+Update values in `.env` as needed before running the app.
