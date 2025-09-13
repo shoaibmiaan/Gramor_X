@@ -134,7 +134,7 @@ export default function SignupWithPhone() {
   return (
     <>
       {err && (
-        <Alert variant="error" title="Error" className="mb-4">
+        <Alert variant="warning" title="Error" className="mb-4">
           {err}
         </Alert>
       )}

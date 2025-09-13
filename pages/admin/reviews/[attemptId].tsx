@@ -152,7 +152,7 @@ export default function ReviewAttemptPage() {
           </div>
 
           {roleOk === false && (
-            <Alert variant="error" title="Access denied" className="mb-6">
+            <Alert variant="warning" title="Access denied" className="mb-6">
               You need a <b>teacher</b> or <b>admin</b> role to open this page.
             </Alert>
           )}
