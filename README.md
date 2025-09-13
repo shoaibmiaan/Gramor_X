@@ -16,7 +16,7 @@ A Next.js (TypeScript) + Tailwind CSS portal with a separate **Premium “Exam E
 ## Getting Started
 
 ### Prerequisites
-- **Node.js 18+** (LTS recommended)
+- **Node.js 20** (LTS)
 - **npm** (or pnpm/yarn)
 - A copy of `.env` created from `.env.example` (set values as needed)
 
