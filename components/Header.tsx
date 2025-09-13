@@ -86,8 +86,8 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               <Image
                 src="/brand/logo.png"
                 alt="GramorX logo"
-                width={44}
-                height={44}
+                width="44"
+                height="44"
                 className="h-10 w-10 md:h-11 md:w-11 rounded-lg object-contain"
                 priority
               />

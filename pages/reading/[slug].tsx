@@ -215,7 +215,7 @@ export default function ReadingRunnerPage() {
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <Container>
         {!test ? (
-          err ? <Alert variant="error" title="Error">{err}</Alert> : (
+          err ? <Alert variant="warning" title="Error">{err}</Alert> : (
             <Card className="p-6"><div className="animate-pulse h-6 w-40 bg-gray-200 dark:bg-white/10 rounded" /></Card>
           )
         ) : (

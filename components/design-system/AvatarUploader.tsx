@@ -108,8 +108,8 @@ export const AvatarUploader: React.FC<Props> = ({
           <Image
             src={preview}
             alt="Avatar preview"
-            width={112}
-            height={112}
+            width="112"
+            height="112"
             className="mx-auto h-28 w-28 rounded-full object-cover ring-2 ring-primary/40"
           />
         ) : (
@@ -137,7 +137,7 @@ export const AvatarUploader: React.FC<Props> = ({
       />
 
       {error && (
-        <Alert variant="error" className="mt-3">
+        <Alert variant="warning" className="mt-3">
           {error}
         </Alert>
       )}

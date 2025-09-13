@@ -17,8 +17,9 @@ interface UserInfo {
   avatarUrl: string | null;
 }
 
-interface DesktopNavProps extends React.HTMLAttributes<HTMLElement> {
+type DesktopNavProps = Omit<React.HTMLAttributes<HTMLElement>, 'role'> & {
   user: UserInfo;
+  /** app/user role, not ARIA role */
   role: string | null;
   ready: boolean;
   streak: number;
@@ -28,7 +29,7 @@ interface DesktopNavProps extends React.HTMLAttributes<HTMLElement> {
   signOut: () => Promise<void>;
   /** Force-hide admin links regardless of role (default true to keep current behavior explicit) */
   showAdmin?: boolean;
-}
+};
 
 export function DesktopNav({
   user,
@@ -98,7 +99,8 @@ export function DesktopNav({
                 name={user.name}
                 avatarUrl={user.avatarUrl}
                 onSignOut={signOut}
-                links={[
+                /** FIX: UserMenu expects `items`, not `links` */
+                items={[
                   { href: '/account/billing', label: 'Billing' },
                   { href: '/account/referrals', label: 'Referrals' },
                 ]}

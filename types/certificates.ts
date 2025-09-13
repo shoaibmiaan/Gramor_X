@@ -1,5 +1,6 @@
 // types/certificates.ts
 // Types for certificates issued after challenge completion
+import type { ApiResult } from "./api";
 
 export interface CertificateMeta {
   band?: number; // e.g. 7.5
@@ -18,25 +19,17 @@ export interface Certificate {
   createdAt: string; // ISO timestamp
 }
 
-//
 // API contracts
-//
 
 // Create certificate
 export interface CertificateCreateRequest {
   enrollmentId: string;
   band: number;
 }
-export interface CertificateCreateResponse {
-  ok: true;
-  certificate: Certificate;
-} | { ok: false; error: string };
+export type CertificateCreateResponse = ApiResult<{ certificate: Certificate }>;
 
 // Sign certificate
 export interface CertificateSignRequest {
   certId: string;
 }
-export interface CertificateSignResponse {
-  ok: true;
-  signedUrl: string;
-} | { ok: false; error: string };
+export type CertificateSignResponse = ApiResult<{ signedUrl: string }>;

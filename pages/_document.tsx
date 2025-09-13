@@ -1,3 +1,4 @@
+import { HEX, WHITE } from "@/lib/tokens"
 // pages/_document.tsx
 import { Html, Head, Main, NextScript } from 'next/document';
 
@@ -27,8 +28,8 @@ export default function Document() {
 
         {/* Color scheme & theme */}
         <meta name="color-scheme" content="dark light" />
-        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content={HEX.ink} media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content={WHITE} media="(prefers-color-scheme: light)" />
 
         {/* Open Graph / Twitter */}
         <meta property="og:type" content="website" />

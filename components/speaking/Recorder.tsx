@@ -176,5 +176,5 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
   }
 );
 
-Recorder.displayName = 'Recorder';
+(Recorder as any).displayName = 'Recorder';
 export default Recorder;

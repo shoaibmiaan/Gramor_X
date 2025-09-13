@@ -46,7 +46,7 @@ export const BottomNav: React.FC = () => {
               href={href}
               exact={exact}
               variant="plain"
-              onClick={gate(href)}
+
               className="
                 group flex flex-col items-center gap-1 py-2.5
                 text-xs text-muted-foreground transition

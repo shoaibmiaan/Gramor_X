@@ -49,7 +49,7 @@ export default function AuthCallback() {
   return (
     <AuthLayout title="Signing you in..." subtitle={err ? undefined : 'Please wait...'} showRightOnMobile>
       {err && (
-        <Alert variant="error" title="Error" className="mt-4">
+        <Alert variant="warning" title="Error" className="mt-4">
           {err}
         </Alert>
       )}

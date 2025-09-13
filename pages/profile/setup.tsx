@@ -394,7 +394,7 @@ export default function ProfileSetup() {
           {/* live regions for a11y */}
           <div aria-live="assertive" className="sr-only">{error ? `Error: ${error}` : ''}</div>
           <div aria-live="polite" className="sr-only">{notice ? `Notice: ${notice}` : ''}</div>
-          {error && <Alert variant="error" title="Unable to save" className="mt-3">{error}</Alert>}
+          {error && <Alert variant="warning" title="Unable to save" className="mt-3">{error}</Alert>}
           {notice && <Alert variant="success" title={notice} className="mt-3" />}
         </div>
 
@@ -457,7 +457,7 @@ export default function ProfileSetup() {
                         )}
                         {phoneStage === 'verified' && <Badge variant="success" className="mt-1">Verified</Badge>}
                       </div>
-                      {phoneErr && <Alert id="phone-error" variant="error" className="mt-2">{phoneErr}</Alert>}
+                      {phoneErr && <Alert id="phone-error" variant="warning" className="mt-2">{phoneErr}</Alert>}
                     </div>
 
                     <Select label={t('profileSetup.preferredLanguage')} value={lang} onChange={e => { setLang(e.target.value); setLocale(e.target.value); }}>
@@ -498,7 +498,7 @@ export default function ProfileSetup() {
                           <span className="text-body font-semibold tabular-nums">{goal.toFixed(1)}</span>
                         </div>
                       </label>
-                      {fieldErrors.goal && <Alert variant="error" className="mt-2">{fieldErrors.goal}</Alert>}
+                      {fieldErrors.goal && <Alert variant="warning" className="mt-2">{fieldErrors.goal}</Alert>}
                     </div>
 
                     <div className="grid gap-5 sm:grid-cols-2">
@@ -507,7 +507,7 @@ export default function ProfileSetup() {
                         {timezones.map(tz => <option key={tz} value={tz}>{tz}</option>)}
                       </Select>
                     </div>
-                    {fieldErrors.examDate && <Alert variant="error">{fieldErrors.examDate}</Alert>}
+                    {fieldErrors.examDate && <Alert variant="warning">{fieldErrors.examDate}</Alert>}
 
                     <div className="grid gap-5 sm:grid-cols-3">
                       <Input type="week" label="Travel week" value={travelWeek} onChange={e => { setTravelWeek(e.target.value); clearFieldError('travelWeek'); }} />
@@ -515,9 +515,9 @@ export default function ProfileSetup() {
                       <Input type="week" label="Exam week" value={examWeek} onChange={e => { setExamWeek(e.target.value); clearFieldError('examWeek'); }} />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-3">
-                      {fieldErrors.travelWeek && <Alert variant="error">{fieldErrors.travelWeek}</Alert>}
-                      {fieldErrors.festivalWeek && <Alert variant="error">{fieldErrors.festivalWeek}</Alert>}
-                      {fieldErrors.examWeek && <Alert variant="error">{fieldErrors.examWeek}</Alert>}
+                      {fieldErrors.travelWeek && <Alert variant="warning">{fieldErrors.travelWeek}</Alert>}
+                      {fieldErrors.festivalWeek && <Alert variant="warning">{fieldErrors.festivalWeek}</Alert>}
+                      {fieldErrors.examWeek && <Alert variant="warning">{fieldErrors.examWeek}</Alert>}
                     </div>
                   </div>
                 </Section>

@@ -95,7 +95,7 @@ export const ReevalPanel: React.FC<{
         </Button>
       </div>
 
-      {error && <Alert variant="error" title="Failed" className="mt-4">{error}</Alert>}
+      {error && <Alert variant="warning" title="Failed" className="mt-4">{error}</Alert>}
 
       {result && (
         <div className="mt-6 grid gap-4">

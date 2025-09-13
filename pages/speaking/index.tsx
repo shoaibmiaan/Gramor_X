@@ -49,7 +49,7 @@ export default function SpeakingHub({
                 {limitLeft} / {limit} attempts left today
               </Badge>
             ) : (
-              <Badge variant="danger" size="sm">Daily limit reached</Badge>
+              <Badge variant="warning" size="sm">Daily limit reached</Badge>
             )
           )}
         </div>

@@ -58,7 +58,7 @@ export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }
       </form>
 
       {error && (
-        <Alert variant="error" className="mt-4" title="Couldn’t get an answer">
+        <Alert variant="warning" className="mt-4" title="Couldn’t get an answer">
           {error}
         </Alert>
       )}

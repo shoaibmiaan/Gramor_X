@@ -66,7 +66,7 @@ export default function SignupEmailPage() {
       <SectionLabel>Sign up with Email</SectionLabel>
       <Card className="p-6 rounded-ds-2xl card-surface">
         {err && (
-          <Alert variant="error" title="Error" className="mb-3">
+          <Alert variant="warning" title="Error" className="mb-3">
             {err}{' '}
             {emailExists && (
               <span className="block mt-1">
