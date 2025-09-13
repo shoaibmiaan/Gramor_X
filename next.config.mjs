@@ -69,15 +69,18 @@ const baseConfig = {
 };
 
 // --- PWA wrapper (unchanged except for baseConfig.images above) ---
-export default withPWA({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
-  buildExcludes: [
-    /.*\.map$/,
-    /middleware-manifest\.json$/,
-    /server\/middleware-manifest\.json$/,
-  ],
-  publicExcludes: ['**/*.map'],
-})(baseConfig);
+  export default withPWA({
+    dest: 'public',
+    disable: process.env.NODE_ENV === 'development',
+    register: true,
+    skipWaiting: true,
+    buildExcludes: [
+      /.*\.map$/,
+      /middleware-manifest\.json$/,
+      /server\/middleware-manifest\.json$/,
+    ],
+    publicExcludes: ['**/*.map'],
+    fallbacks: {
+      document: '/_offline',
+    },
+  })(baseConfig);
