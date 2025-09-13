@@ -146,7 +146,7 @@ export function Waitlist() {
 
         <div ref={alertWrapRef} tabIndex={-1} aria-live="polite" aria-atomic="true" className="outline-none">
           {successMsg && <Alert variant="success" title="Success" className="mb-6 max-w-3xl mx-auto">{successMsg}</Alert>}
-          {errorMsg && <Alert variant="error" title="Hmm…" className="mb-6 max-w-3xl mx-auto">{errorMsg}</Alert>}
+          {errorMsg && <Alert variant="warning" title="Hmm…" className="mb-6 max-w-3xl mx-auto">{errorMsg}</Alert>}
         </div>
 
         <Card className="card-glass rounded-ds-xl p-6 md:p-8 max-w-4xl mx-auto">

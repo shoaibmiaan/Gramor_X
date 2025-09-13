@@ -63,4 +63,4 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
     );
   }
 );
-Radio.displayName = "Radio";
+(Radio as any).displayName = "Radio";

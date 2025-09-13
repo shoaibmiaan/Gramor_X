@@ -50,7 +50,7 @@ export default function SignupPassword() {
         <p className="text-mutedText mb-6">Use at least 8 characters.</p>
 
         {err && (
-          <Alert variant="danger" className="mb-4">
+          <Alert variant="warning" className="mb-4">
             {err}
           </Alert>
         )}

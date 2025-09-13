@@ -131,7 +131,7 @@ export default function LoginOptions() {
   return (
     <>
       {err && (
-        <Alert variant="error" title="Error" className="mb-4" role="status" aria-live="assertive">
+        <Alert variant="warning" title="Error" className="mb-4" role="status" aria-live="assertive">
           {err}
         </Alert>
       )}

@@ -352,7 +352,7 @@ export default function ListeningTestPage() {
 
           {/* Save status */}
           {saveError && (
-            <Alert variant="error" className="mt-6" title="Couldn’t save">
+            <Alert variant="warning" className="mt-6" title="Couldn’t save">
               {saveError}
             </Alert>
           )}
@@ -435,7 +435,7 @@ export default function ListeningTestPage() {
                         onChange={(e) => handleGap(q as GAP, (e.target as HTMLInputElement).value)}
                       />
                     ) : (
-                      <Alert variant={isCorrect(q) ? 'success' : 'error'}>
+                      <Alert variant={isCorrect(q) ? 'success' : 'warning'}>
                         <div className="flex flex-col">
                           <span>
                             <strong>Your answer:</strong> {answers[q.id] || <em>(blank)</em>}

@@ -90,7 +90,7 @@ export default function LoginWithEmail() {
   return (
     <>
       {(err || mfaErr) && (
-        <Alert variant="error" title="Error" className="mb-4">
+        <Alert variant="warning" title="Error" className="mb-4">
           {err || mfaErr}
         </Alert>
       )}

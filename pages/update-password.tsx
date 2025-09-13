@@ -61,7 +61,7 @@ export default function UpdatePassword() {
             <h1 className="font-slab text-h1 mb-2 text-primary dark:text-electricBlue">Set a new password</h1>
             <p className="text-grayish dark:text-white/75 mb-6">Enter your new password to continue.</p>
 
-            {err && <Alert variant="error" title="Couldn’t update" className="mb-4">{err}</Alert>}
+            {err && <Alert variant="warning" title="Couldn’t update" className="mb-4">{err}</Alert>}
             {ok && <Alert variant="success" title="Updated" className="mb-4">Redirecting to login…</Alert>}
 
             <form onSubmit={submit} className="space-y-4">

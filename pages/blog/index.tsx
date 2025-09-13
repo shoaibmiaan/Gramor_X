@@ -162,7 +162,7 @@ export default function BlogIndex() {
             )}
           </Card>
 
-          {error && <Alert className="mt-6" variant="error" title="Could not load">{error}</Alert>}
+          {error && <Alert className="mt-6" variant="warning" title="Could not load">{error}</Alert>}
 
           {/* Grid */}
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

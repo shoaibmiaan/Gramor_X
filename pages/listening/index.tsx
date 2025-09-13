@@ -171,7 +171,7 @@ export default function ListeningIndexPage() {
         </div>
 
         {err && (
-          <Alert className="mt-6" variant="error" title="Couldn’t load tests">
+          <Alert className="mt-6" variant="warning" title="Couldn’t load tests">
             {err}
           </Alert>
         )}

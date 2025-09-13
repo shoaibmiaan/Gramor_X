@@ -68,7 +68,7 @@ export default function ReadingListPage() {
 
         {error && (
           <div className="mt-6">
-            <Alert variant="error" title="Couldn’t load tests">
+            <Alert variant="warning" title="Couldn’t load tests">
               {error}
             </Alert>
           </div>

@@ -44,7 +44,7 @@ export default function MfaPage() {
         </button>
       </form>
       {error && (
-        <Alert variant="error" title="Verification error" className="mt-4">
+        <Alert variant="warning" title="Verification error" className="mt-4">
           {error}
         </Alert>
       )}

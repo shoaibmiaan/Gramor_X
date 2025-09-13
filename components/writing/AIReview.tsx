@@ -145,7 +145,7 @@ export const AIReview: React.FC<WritingAIReviewProps> = ({ attemptId }) => {
 
   if (error) {
     return (
-      <Alert variant="error" title="AI review failed">{error}</Alert>
+      <Alert variant="warning" title="AI review failed">{error}</Alert>
     );
   }
 
