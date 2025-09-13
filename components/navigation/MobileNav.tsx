@@ -17,7 +17,7 @@ interface UserInfo {
   avatarUrl: string | null;
 }
 
-interface MobileNavProps extends React.HTMLAttributes<HTMLDivElement> {
+type MobileNavProps = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {
   user: UserInfo;
   role: string | null;
   ready: boolean;
