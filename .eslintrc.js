@@ -3,9 +3,14 @@
  */
 module.exports = {
   root: true,
-  extends: ['next/core-web-vitals', 'plugin:@typescript-eslint/recommended', 'plugin:storybook/recommended'],
+  extends: [
+    'next/core-web-vitals',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:storybook/recommended',
+    'plugin:jsx-a11y/recommended',
+  ],
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'react'],
+  plugins: ['@typescript-eslint', 'react', 'jsx-a11y'],
   rules: {
     // 🚦 Make current blockers non-fatal
     '@typescript-eslint/no-explicit-any': 'off', // TEMP
