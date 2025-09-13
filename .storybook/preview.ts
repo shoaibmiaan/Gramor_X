@@ -1,4 +1,5 @@
 import type { Preview } from '@storybook/react';
+import { INITIAL_VIEWPORTS } from '@storybook/addon-viewport';
 
 // Load your globals so Tailwind + tokens apply inside SB
 import '../styles/globals.css';
@@ -12,7 +13,11 @@ const preview: Preview = {
         date: /Date$/
       }
     },
-    layout: 'padded'
+    layout: 'padded',
+    viewport: {
+      viewports: INITIAL_VIEWPORTS,
+      defaultViewport: 'iphone6'
+    }
   }
 };
 

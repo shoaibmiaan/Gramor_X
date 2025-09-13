@@ -9,6 +9,7 @@ const config: StorybookConfig = {
   addons: [
     '@storybook/addon-essentials',
     '@storybook/addon-actions',
+    '@storybook/addon-viewport',
   ],
   docs: {
     autodocs: true
