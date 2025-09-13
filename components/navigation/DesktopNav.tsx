@@ -17,7 +17,7 @@ interface UserInfo {
   avatarUrl: string | null;
 }
 
-interface DesktopNavProps extends React.HTMLAttributes<HTMLElement> {
+type DesktopNavProps = Omit<React.HTMLAttributes<HTMLElement>, "role"> & {
   user: UserInfo;
   role: string | null;
   ready: boolean;
