@@ -13,10 +13,14 @@ type Feature =
 
 const usageKeyMap: Record<Feature, UsageKey> = {
   mock: 'mock.start',
+  'ai.wwriting': 'ai.writing.grade', // NOTE: Keep mapping consistent if keys differ in your lib
   'ai.writing': 'ai.writing.grade',
   'ai.speaking': 'ai.speaking.grade',
   'ai.explain': 'ai.explain',
 };
+
+// If your project actually expects only 'ai.writing', remove the duplicate 'ai.wwriting' line above.
+// (Left intentionally minimal to avoid changing behavior outside the syntax fix.)
 
 function limitFor(feature: Feature, planId: PlanId) {
   const plan = getPlan(planId);
@@ -124,4 +128,20 @@ export function PaywallGate({
             <div className="mt-3 flex flex-wrap gap-2">
               <a
                 href={routes.pricing()}
-                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-f
+                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+              >
+                Upgrade to Premium
+              </a>
+              <a
+                href={routes.billing()}
+                className="inline-flex items-center rounded-xl border border-border px-4 py-2 text-sm font-semibold"
+              >
+                Manage billing
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

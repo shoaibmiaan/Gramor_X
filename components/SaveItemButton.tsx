@@ -26,7 +26,9 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
         if (active) setLoading(false);
       }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [resourceId, type, category]);
 
   const toggle = async () => {
@@ -52,12 +54,16 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
 
   return (
     <Button
-      variant={saved ? 'accent' : 'secondary'}
+      variant={saved ? 'primary' : 'secondary'}
       size="sm"
       onClick={toggle}
       disabled={loading}
-      className="rounded-ds"
-      leadingIcon={<i className={`${saved ? 'fas' : 'far'} fa-bookmark`} aria-hidden="true" />}
+      className={`rounded-ds ${
+        saved ? 'bg-accent/20 text-accent hover:bg-accent/30' : ''
+      }`}
+      leadingIcon={
+        <i className={`${saved ? 'fas' : 'far'} fa-bookmark`} aria-hidden="true" />
+      }
     >
       {saved ? 'Saved' : 'Save'}
     </Button>

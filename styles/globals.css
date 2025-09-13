@@ -1,3 +1,4 @@
+@import "../tokens/tokens.css";
 /* styles/globals.css */
 @import './semantic.css';
 
@@ -140,8 +141,16 @@ body { @apply font-sans text-lightText bg-lightBg overflow-x-hidden relative; }
 /* =========================
    Badges / chips
    ========================= */
-.streak-chip { @apply bg-primary/10 text-primary font-semibold rounded-ds px-4 py-2 flex items-center gap-2; }
-.dark .streak-chip { @apply bg-purpleVibe/15 text-neonGreen; }
+.streak-chip {
+  /* Use raw CSS for the translucent background */
+  background-color: rgb(var(--color-primary) / 0.10);
+  /* Keep the rest as Tailwind utilities */
+  @apply text-primary font-semibold rounded-ds px-4 py-2 flex items-center gap-2;
+}
+.dark .streak-chip {
+  background-color: rgb(var(--color-purpleVibe) / 0.15);
+  @apply text-neonGreen;
+}
 
 /* =========================
    Card surfaces

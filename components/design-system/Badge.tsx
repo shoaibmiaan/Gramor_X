@@ -1,116 +1,106 @@
 // components/design-system/Badge.tsx
-import * as React from 'react'
-const cx = (...xs: Array<string | false | null | undefined>) => xs.filter(Boolean).join(' ')
+'use client';
 
-type Variant = 'neutral' | 'success' | 'warning' | 'danger' | 'info'
-type Size = 'sm' | 'md'
-type Appearance = 'soft' | 'outline' | 'solid'
+import * as React from 'react';
+import clsx from 'clsx';
 
-export const Badge: React.FC<{
-  as?: keyof JSX.IntrinsicElements
-  variant?: Variant | string
-  size?: Size
-  appearance?: Appearance | string
-  icon?: React.ReactNode
-  dot?: boolean
-  shape?: 'pill' | 'rounded'
-  uppercase?: boolean
-  elevated?: boolean
-  interactive?: boolean
-  className?: string
-  children: React.ReactNode
-} & React.HTMLAttributes<HTMLElement>> = ({
-  as: Tag = 'span',
-  variant = 'neutral',
-  size = 'md',
-  appearance = 'soft',
-  icon,
-  dot = false,
-  shape = 'pill',
-  uppercase = false,
-  elevated = false,
-  interactive = false,
-  className = '',
-  children,
-  ...rest
-}) => {
-  const VARIANT_ALIAS: Record<string, Variant> = {
-    neutral: 'neutral', info: 'info', success: 'success', warning: 'warning', danger: 'danger',
-    default: 'neutral', primary: 'info', informative: 'info',
-    ok: 'success', positive: 'success', done: 'success',
-    warn: 'warning',
-    error: 'danger', negative: 'danger', failed: 'danger',
-  }
-  const APPEARANCE_ALIAS: Record<string, Appearance> = {
-    soft: 'soft', outline: 'outline', solid: 'solid',
-    default: 'soft', subtle: 'soft', bordered: 'outline', filled: 'solid',
-  }
-  const v = VARIANT_ALIAS[String(variant ?? '').toLowerCase().trim()] ?? 'neutral'
-  const a = APPEARANCE_ALIAS[String(appearance ?? '').toLowerCase().trim()] ?? 'soft'
+/**
+ * Design System — Badge
+ * - Polymorphic (via `as`), default <span>
+ * - Token classes only (no inline colors)
+ * - Variants + sizes aligned with DS
+ */
 
-  const sizes: Record<Size, string> = { sm: 'text-small px-2.5 py-1', md: 'text-body px-3.5 py-1.5' }
-  const iconSize: Record<Size, string> = { sm: '[&>svg]:h-3.5 [&>svg]:w-3.5', md: '[&>svg]:h-4 [&>svg]:w-4' }
-  const shapeCls = shape === 'pill' ? 'rounded-full' : 'rounded-ds'
+type Variant =
+  | 'neutral'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'accent'
+  | 'primary'
+  | 'secondary';
+type Size = 'sm' | 'md';
 
-  const tone = {
-    neutral: {
-      soft: 'bg-foreground/5 text-foreground border-border',
-      outline: 'bg-transparent text-foreground border-border',
-      solid: 'bg-foreground text-background border-foreground',
-      dot: 'bg-foreground',
-    },
-    success: {
-      soft: 'bg-success/10 text-success border-success/30',
-      outline: 'bg-transparent text-success border-success',
-      solid: 'bg-success text-foreground border-success',
-      dot: 'bg-success',
-    },
-    warning: {
-      soft: 'bg-goldenYellow/10 text-goldenYellow border-goldenYellow/30',
-      outline: 'bg-transparent text-goldenYellow border-goldenYellow',
-      solid: 'bg-goldenYellow text-dark border-goldenYellow',
-      dot: 'bg-goldenYellow',
-    },
-    danger: {
-      soft: 'bg-sunsetRed/10 text-sunsetRed border-sunsetRed/30',
-      outline: 'bg-transparent text-sunsetRed border-sunsetRed',
-      solid: 'bg-sunsetRed text-foreground border-sunsetRed',
-      dot: 'bg-sunsetRed',
-    },
-    info: {
-      soft: 'bg-electricBlue/10 text-electricBlue border-electricBlue/30',
-      outline: 'bg-transparent text-electricBlue border-electricBlue',
-      solid: 'bg-electricBlue text-foreground border-electricBlue',
-      dot: 'bg-electricBlue',
-    },
-  } as const
-  const t = tone[v] ?? tone.neutral
-  const appearanceCls = a === 'soft' ? cx(t.soft, 'border') : a === 'outline' ? cx(t.outline, 'border') : cx(t.solid, 'border')
+type OwnProps = {
+  variant?: Variant;
+  size?: Size;
+  className?: string;
+  children?: React.ReactNode;
+  /** Polymorphic tag (a, span, div, etc.) */
+  as?: React.ElementType;
+  /** Accessible live region utility for dynamic statuses */
+  ariaLive?: 'off' | 'polite' | 'assertive';
+};
 
-  return (
-    <Tag
-      role="status"
-      aria-live="polite"
-      data-variant={v}
-      data-size={size}
-      data-appearance={a}
-      className={cx(
-        'inline-flex items-center gap-2 leading-none whitespace-nowrap select-none',
-        sizes[size],
-        shapeCls,
-        appearanceCls,
-        uppercase && 'uppercase tracking-wide',
-        elevated && 'shadow-glow',
-        interactive && 'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer',
-        className
-      )}
-      {...rest}
-    >
-      {dot && <span className={cx('h-1.5 w-1.5 rounded-full shrink-0', t.dot)} aria-hidden="true" />}
-      {icon && <span className={cx('inline-flex shrink-0', iconSize[size])}>{icon}</span>}
-      <span className="truncate">{children}</span>
-    </Tag>
-  )
+type AsProp<C extends React.ElementType> = { as?: C };
+type PropsToOmit<C extends React.ElementType, P> = keyof (AsProp<C> & P);
+type PolymorphicProps<C extends React.ElementType, Props> = Props &
+  AsProp<C> &
+  Omit<React.ComponentPropsWithoutRef<C>, PropsToOmit<C, Props>>;
+
+const sizeClasses: Record<Size, string> = {
+  sm: 'text-2xs px-2 py-0.5 rounded-ds-md',
+  md: 'text-xs px-2.5 py-1 rounded-ds-lg',
+};
+
+// Map DS variants to tokenized classes. Adjust to your tokens if needed.
+const variantClasses: Record<Variant, string> = {
+  neutral: 'badge badge-neutral',
+  info: 'badge badge-info',
+  success: 'badge badge-success',
+  warning: 'badge badge-warning',
+  danger: 'badge badge-danger',
+  accent: 'badge badge-accent',
+  primary: 'badge badge-primary',
+  secondary: 'badge badge-secondary',
+};
+
+function baseClasses(variant: Variant, size: Size) {
+  return clsx(
+    'inline-flex items-center gap-1 font-medium whitespace-nowrap',
+    sizeClasses[size],
+    variantClasses[variant]
+  );
 }
 
-export default Badge
+/**
+ * Badge component
+ * - Defaults to <span>
+ * - If you pass `role="status"`, consider `ariaLive="polite"` for SRs
+ */
+export const Badge = React.forwardRef(
+  <C extends React.ElementType = 'span'>(
+    {
+      as,
+      variant = 'neutral',
+      size = 'sm',
+      className,
+      children,
+      ariaLive,
+      role,
+      ...rest
+    }: PolymorphicProps<C, OwnProps> & { role?: React.AriaRole },
+    ref: React.Ref<Element>
+  ) => {
+    const Tag = (as || 'span') as React.ElementType;
+    const classes = clsx(baseClasses(variant, size), className);
+
+    const ariaProps: Record<string, any> = {};
+    if (role === 'status' && ariaLive) {
+      ariaProps['aria-live'] = ariaLive;
+    }
+
+    return (
+      <Tag ref={ref as any} className={classes} role={role} {...ariaProps} {...(rest as any)}>
+        {children}
+      </Tag>
+    );
+  }
+) as <C extends React.ElementType = 'span'>(
+  props: PolymorphicProps<C, OwnProps> & { role?: React.AriaRole } & { ref?: React.Ref<Element> }
+) => React.ReactElement | null;
+
+Badge.displayName = 'Badge';
+
+export default Badge;

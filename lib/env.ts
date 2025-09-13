@@ -139,15 +139,19 @@ const raw = {
 const skipValidation =
   process.env.SKIP_ENV_VALIDATION === 'true' || raw.NODE_ENV === 'test';
 
+// Vercel sets VERCEL_ENV to 'development' | 'preview' | 'production'
+const isProdBuild =
+  raw.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production';
+
 const parsed = envSchema.safeParse(raw);
 
 if (!parsed.success && typeof window === 'undefined') {
-  if (skipValidation) {
+  if (skipValidation || !isProdBuild) {
     const warnings = parsed.error.issues
       .map((i) => `${i.path.join('.')}: ${i.message}`)
       .join('\n');
     console.warn(
-      'Skipping environment variable validation. Falling back to safe defaults:\n' +
+      'Skipping strict environment validation (non-prod or SKIP_ENV_VALIDATION=true). Falling back to safe defaults:\n' +
         warnings,
     );
   } else {

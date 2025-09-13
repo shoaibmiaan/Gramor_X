@@ -1,4 +1,4 @@
-// components/common/LocaleSwitcher.tsx
+// common/LocaleSwitcher.tsx
 import * as React from "react";
 import { loadTranslations, getLocale } from "@/lib/i18n";
 import { setLocale } from "@/lib/locale";

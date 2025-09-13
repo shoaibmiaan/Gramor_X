@@ -1,4 +1,3 @@
-// components/design-system/SocialIconLink.tsx
 import * as React from 'react'
 
 const cx = (...xs: Array<string | false | null | undefined>) => xs.filter(Boolean).join(' ')

@@ -36,21 +36,27 @@ type Props = {
 };
 
 export function PremiumThemeProvider({ children, initialTheme }: Props) {
-  const [theme, setTheme] = useState<PremiumThemeId>(() => normalizeTheme(initialTheme || (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : 'carbon')));
+  const [theme, setTheme] = useState<PremiumThemeId>(() =>
+    normalizeTheme(
+      initialTheme ||
+      (typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : 'carbon')
+    )
+  );
 
   // persist + reflect to DOM
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, theme); } catch {}
+    try { window.localStorage.setItem(STORAGE_KEY, theme); } catch {}
     if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-pr-theme', theme);
-      document.documentElement.classList.add('pr-themed');
+      const root = document.documentElement;
+      root.setAttribute('data-pr-theme', theme);
+      root.classList.add('pr-themed');
     }
   }, [theme]);
 
   // sync across tabs
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) setTheme(normalizeTheme(e.newValue));
+      if (e.key === STORAGE_KEY) setTheme(normalizeTheme(e.newValue));
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
