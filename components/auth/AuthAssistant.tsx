@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect, FormEvent } from 'react';
+// components/auth/AuthAssistant.tsx
+import React, { useState, useRef, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
@@ -109,7 +111,11 @@ export default function AuthAssistant() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 rounded-md border border-border bg-background shadow-lg flex flex-col" role="region" aria-label="Authentication assistant">
+    <div
+      className="fixed bottom-4 right-4 z-50 w-80 rounded-md border border-border bg-background shadow-lg flex flex-col"
+      role="region"
+      aria-label="Authentication assistant"
+    >
       <div className="flex items-center justify-between p-2 border-b border-border">
         <h2 className="text-small font-semibold">Assistant</h2>
         <button
@@ -131,7 +137,9 @@ export default function AuthAssistant() {
             }`}
           >
             {typeof m.content === 'string' ? (
-              <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">{m.content}</ReactMarkdown>
+              <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+                {m.content}
+              </ReactMarkdown>
             ) : (
               m.content
             )}

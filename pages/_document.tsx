@@ -11,7 +11,7 @@ export default function Document() {
   };
 
   return (
-    <Html lang="en" className="bg-background text-foreground">
+    <Html lang="en" dir="ltr" className="bg-background text-foreground">
       <Head>
         {/* DO NOT add viewport here; Next.js handles it per-page */}
 
@@ -57,6 +57,20 @@ export default function Document() {
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+
+        {/* Pre-paint locale->dir fixer (sets RTL for ur/ar/fa/he if a cookie `locale` is present) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{
+              var m=document.cookie.match(/(?:^|;)\\s*locale=([^;]+)/);
+              var loc=m?decodeURIComponent(m[1]):'en';
+              var isRTL=/^(ur|ar|fa|he)(-|$)/i.test(loc);
+              var html=document.documentElement;
+              html.setAttribute('lang', loc || 'en');
+              html.setAttribute('dir', isRTL?'rtl':'ltr');
+            }catch(e){}})();`,
+          }}
         />
       </Head>
       <body className="bg-background text-foreground antialiased">

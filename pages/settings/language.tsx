@@ -1,8 +1,8 @@
-// pages/settings/language.tsx
+// pages/settings/language.tsx 
 import * as React from "react";
 import Head from "next/head";
 import { Container } from "@/components/design-system/Container";
-import { LocaleSwitcher } from "@/components/common/LocaleSwitcher";
+import LocaleSwitcher from "@/components/common/LocaleSwitcher";
 import { detectLocale as _detectLocale, setLocale as persistLocale } from "@/lib/locale";
 import { loadTranslations, t, getLocale } from "@/lib/i18n";
 import type { SupportedLocale } from "@/lib/i18n/config";

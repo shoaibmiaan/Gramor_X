@@ -316,7 +316,7 @@ const CheckoutPage: NextPage = () => {
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-caption text-muted-foreground">
                   <Link href="/account/referrals" className="underline-offset-4 hover:underline flex items-center gap-1">
                     <i className="fas fa-ticket-alt text-xs" aria-hidden="true"></i>
-                    Don't have a code? Generate yours
+                    Don&apos;t have a code? Generate yours
                   </Link>
                   <span>•</span>
                   <Link href="/partners" className="underline-offset-4 hover:underline flex items-center gap-1">

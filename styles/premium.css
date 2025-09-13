@@ -1,5 +1,5 @@
 /* styles/premium.css */
-/* Tailwind build for premium should include this file. */
+/* Make sure this file is imported once (e.g., in _app.tsx). */
 
 :root, html {
   --pr-radius: 16px;
@@ -96,4 +96,14 @@ html[data-pr-theme="aurora"] {
   background: var(--pr-card);
   border: 1px solid var(--pr-border);
   box-shadow: var(--pr-shadow-md);
+}
+/* Bridge premium variables to the app's --color-* tokens so DS utilities stay in sync */
+.pr-themed,
+html[data-pr-theme] {
+  --color-background: var(--pr-bg);
+  --color-foreground: var(--pr-fg);
+  --color-primary:    color(from var(--pr-primary) srgb r g b); /* browsers without color() fallback to pr vars directly */
+  --color-danger:     color(from var(--pr-danger) srgb r g b);
+  --color-accent:     color(from var(--pr-accent) srgb r g b);
+  /* add more bridges if you use them in Tailwind (e.g., borders) */
 }

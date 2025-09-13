@@ -8,6 +8,7 @@ export type { AppRole } from './roles';
 const PUBLIC: string[] = [
   '/', '/pricing', '/community', '/about', '/contact',
   '/auth/verify', '/403', // keep these public to avoid loops
+  '/legal/privacy', '/legal/terms', '/faq', '/tokens-test',
 ];
 
 const GUEST_ONLY: string[] = [

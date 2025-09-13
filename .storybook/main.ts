@@ -1,19 +1,18 @@
-import type { StorybookConfig } from '@storybook/react';
+import type { StorybookConfig } from '@storybook/nextjs';
 
 const config: StorybookConfig = {
-  framework: { name: '@storybook/react', options: {} },
+  framework: '@storybook/nextjs',
   stories: [
-    '../design-system/**/*.stories.@(ts|tsx|mdx)',
-    '../components/**/*.stories.@(ts|tsx|mdx)',
+    '../stories/**/*.stories.@(js|jsx|ts|tsx|mdx)',
+    '../components/**/*.stories.@(js|jsx|ts|tsx|mdx)'
   ],
   addons: [
     '@storybook/addon-essentials',
-    '@storybook/addon-viewport',
     '@storybook/addon-actions',
-    '@storybook/addon-backgrounds',
-    '@storybook/addon-toolbars',
   ],
-  docs: { autodocs: 'tag' },
+  docs: {
+    autodocs: true
+  }
 };
 
 export default config;

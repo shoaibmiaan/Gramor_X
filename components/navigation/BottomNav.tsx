@@ -2,16 +2,16 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Home, BookOpen, PencilLine, User as UserIcon } from 'lucide-react';
+import { Icon, type IconName } from '@/components/design-system/Icon';
 import { NavLink } from '@/components/design-system/NavLink';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
-const NAV_ITEMS = [
-  { href: '/', label: 'Home', Icon: Home, exact: true },
-  { href: '/learning', label: 'Courses', Icon: BookOpen },
-  { href: '/mock-tests', label: 'Tests', Icon: PencilLine },
-  { href: '/profile', label: 'Profile', Icon: UserIcon },
-] as const;
+const NAV_ITEMS: ReadonlyArray<{ href: string; label: string; icon: IconName; exact?: boolean }> = [
+  { href: '/',            label: 'Home',    icon: 'Home',       exact: true },
+  { href: '/learning',    label: 'Courses', icon: 'BookOpen' },
+  { href: '/mock-tests',  label: 'Tests',   icon: 'PencilLine' },
+  { href: '/profile',     label: 'Profile', icon: 'User' },
+];
 
 export const BottomNav: React.FC = () => {
   const router = useRouter();
@@ -40,7 +40,7 @@ export const BottomNav: React.FC = () => {
       aria-label="Bottom navigation"
     >
       <ul className="grid grid-cols-4">
-        {NAV_ITEMS.map(({ href, label, Icon, exact }) => (
+        {NAV_ITEMS.map(({ href, label, icon, exact }) => (
           <li key={href} className="contents">
             <NavLink
               href={href}
@@ -62,7 +62,7 @@ export const BottomNav: React.FC = () => {
                 "
                 aria-hidden="true"
               >
-                <Icon className="h-[18px] w-[18px]" />
+                <Icon name={icon} className="h-[18px] w-[18px]" aria-hidden />
               </span>
               <span className="font-medium">{label}</span>
             </NavLink>

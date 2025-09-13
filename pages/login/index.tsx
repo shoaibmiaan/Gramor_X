@@ -1,3 +1,4 @@
+// pages/login/index.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -171,13 +172,13 @@ export default function LoginOptions() {
 
           <div className="mt-6 text-sm text-mutedText">
             By continuing, you agree to our{' '}
-            <Link href="/legal/terms" className="text-primary hover:underline hover:text-primary/80 transition">
-              Terms
-            </Link>{' '}
-            and{' '}
-            <Link href="/legal/privacy" className="text-primary hover:underline hover:text-primary/80 transition">
-              Privacy Policy
-            </Link>
+              <Link href="/legal/terms" className="text-primary hover:underline hover:text-primary/80 transition">
+                Terms
+              </Link>{' '}
+              and{' '}
+              <Link href="/legal/privacy" className="text-primary hover:underline hover:text-primary/80 transition">
+                Privacy Policy
+              </Link>
             .
           </div>
         </>
@@ -186,17 +187,14 @@ export default function LoginOptions() {
           <SectionLabel>Sign in</SectionLabel>
 
           <div className="grid gap-3">
-            {/* Email = main CTA */}
-            <Button
+            {/* Email = main CTA — use real Link (your DS Button doesn’t support href/asChild) */}
+            <Link
               href={`/login/email${selectedRole ? `?role=${selectedRole}` : ''}`}
-              variant="primary"
-              size="lg"
-              shape="rounded"
-              fullWidth
-              leadingIcon={<MailIcon className="h-5 w-5" />}
+              className="btn btn-primary rounded-ds-xl w-full inline-flex items-center justify-center gap-2"
             >
-              Email &amp; Password
-            </Button>
+              <MailIcon className="h-5 w-5" />
+              <span>Email &amp; Password</span>
+            </Link>
 
             {/* Google (soft primary) */}
             <Button
@@ -243,11 +241,7 @@ export default function LoginOptions() {
               aria-disabled="true"
             >
               <span>Sign in with Apple</span>
-              <Badge
-                variant="info"
-                size="sm"
-                className="absolute top-2 right-3 text-xs px-2 py-0.5"
-              >
+              <Badge variant="info" size="sm" className="absolute top-2 right-3 text-xs px-2 py-0.5">
                 Coming Soon
               </Badge>
             </Button>
@@ -265,11 +259,7 @@ export default function LoginOptions() {
               aria-disabled="true"
             >
               <span>Phone (OTP)</span>
-              <Badge
-                variant="info"
-                size="sm"
-                className="absolute top-2 right-3 text-xs px-2 py-0.5"
-              >
+              <Badge variant="info" size="sm" className="absolute top-2 right-3 text-xs px-2 py-0.5">
                 Coming Soon
               </Badge>
             </Button>
