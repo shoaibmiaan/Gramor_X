@@ -311,7 +311,7 @@ const ReviewPage: NextPage<Props> = ({ passage, questions, notFound, error }) =>
         )}
 
         {!answers && (
-          <Alert variant="error" title="Answers missing" className="mb-6">
+          <Alert variant="warning" title="Answers missing" className="mb-6">
             {loadErr ?? 'We could not find your answers. If you just finished the test, please try submitting again while logged in.'}
           </Alert>
         )}

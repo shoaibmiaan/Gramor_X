@@ -125,7 +125,7 @@ export const AIReview: React.FC<SpeakingAIReviewProps> = ({ attemptId }) => {
     return <Card className="card-surface p-6 rounded-ds-2xl">Scoring…</Card>;
   }
   if (error) {
-    return <Alert variant="error" title="AI review failed">{error}</Alert>;
+    return <Alert variant="warning" title="AI review failed">{error}</Alert>;
   }
   if (!data) return null;
 

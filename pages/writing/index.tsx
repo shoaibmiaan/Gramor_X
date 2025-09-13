@@ -478,7 +478,7 @@ export default function WritingHome() {
             </div>
 
             {err && (
-              <Alert variant="error" title="Failed" className="mt-4">
+              <Alert variant="warning" title="Failed" className="mt-4">
                 {err}
               </Alert>
             )}

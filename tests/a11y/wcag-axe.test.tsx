@@ -1,12 +1,13 @@
-// tests/a11y/wcag-axe.test.ts
+// tests/a11y/wcag-axe.test.tsx
 import React from "react";
 import { render } from "@testing-library/react";
-import { default as axe } from "axe-core";
+import * as axe from "axe-core";
 import { ChallengeCohortCard } from "@/components/challenge/ChallengeCohortCard";
 
 async function runAxe(container: HTMLElement) {
-  const results = await (axe as any).run(container, { rules: { "color-contrast": { enabled: false } } });
-  // We disable color-contrast to avoid false positives in CI without real tokens.
+  const results = await (axe as any).run(container, {
+    rules: { "color-contrast": { enabled: false } },
+  });
   return results;
 }
 

@@ -17,7 +17,7 @@ interface UserInfo {
   avatarUrl: string | null;
 }
 
-interface MobileNavProps extends React.HTMLAttributes<HTMLDivElement> {
+type MobileNavProps = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {
   user: UserInfo;
   role: string | null;
   ready: boolean;
@@ -102,7 +102,6 @@ export function MobileNav({
                 <NavLink
                   href="/dashboard"
                   className="block rounded-lg px-3 py-3 hover:bg-muted"
-                  onClick={() => setMobileOpen(false)}
                 >
                   Dashboard
                 </NavLink>
@@ -113,7 +112,6 @@ export function MobileNav({
               <NavLink
                 href="/learning"
                 className="block rounded-lg px-3 py-3 hover:bg-muted"
-                onClick={() => setMobileOpen(false)}
               >
                 Learning
               </NavLink>
@@ -146,7 +144,6 @@ export function MobileNav({
                       <NavLink
                         href={m.href}
                         className="block px-4 py-3 hover:bg-muted"
-                        onClick={() => setMobileOpen(false)}
                       >
                         {m.label}
                       </NavLink>
@@ -161,7 +158,6 @@ export function MobileNav({
                 <NavLink
                   href={n.href}
                   className="block rounded-lg px-3 py-3 hover:bg-muted"
-                  onClick={() => setMobileOpen(false)}
                 >
                   {n.label}
                 </NavLink>
@@ -173,7 +169,6 @@ export function MobileNav({
                 <NavLink
                   href="/partners"
                   className="block rounded-lg px-3 py-3 hover:bg-muted"
-                  onClick={() => setMobileOpen(false)}
                 >
                   Partners
                 </NavLink>
@@ -184,7 +179,6 @@ export function MobileNav({
                 <NavLink
                   href="/admin/partners"
                   className="block rounded-lg px-3 py-3 hover:bg-muted"
-                  onClick={() => setMobileOpen(false)}
                 >
                   Admin
                 </NavLink>
@@ -197,7 +191,6 @@ export function MobileNav({
                   <NavLink
                     href="/account/billing"
                     className="block rounded-lg px-3 py-3 hover:bg-muted"
-                    onClick={() => setMobileOpen(false)}
                   >
                     Billing
                   </NavLink>
@@ -206,7 +199,6 @@ export function MobileNav({
                   <NavLink
                     href="/account/referrals"
                     className="block rounded-lg px-3 py-3 hover:bg-muted"
-                    onClick={() => setMobileOpen(false)}
                   >
                     Referrals
                   </NavLink>

@@ -1,3 +1,4 @@
+import { Icon } from "@/components/design-system/Icon";
 'use client';
 
 import React from 'react';
@@ -46,9 +47,9 @@ export const FooterMini: React.FC<{
           <div className="flex items-center gap-3">
             {showSocials && (
               <div className="flex items-center gap-2">
-                <SocialIconLink platform="x" href="https://x.com/gramorx" />
-                <SocialIconLink platform="facebook" href="https://facebook.com/gramorx" />
-                <SocialIconLink platform="instagram" href="https://instagram.com/gramorx" />
+                <SocialIconLink href="https://x.com/gramorx" icon={<Icon name="twitter" />} label="X" />
+                <SocialIconLink href="https://facebook.com/gramorx" icon={<Icon name="facebook" />} label="Facebook" />
+                <SocialIconLink href="https://instagram.com/gramorx" icon={<Icon name="instagram" />} label="Instagram" />
               </div>
             )}
             <a

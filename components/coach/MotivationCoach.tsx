@@ -38,7 +38,7 @@ export default function MotivationCoach() {
       {loading ? (
         <p className="text-body">Loading...</p>
       ) : error ? (
-        <Alert variant="error" className="mt-2">{error}</Alert>
+        <Alert variant="warning" className="mt-2">{error}</Alert>
       ) : (
         <>
           {avgMood !== null ? (

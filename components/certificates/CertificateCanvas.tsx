@@ -1,3 +1,4 @@
+import { HEX } from "@/lib/tokens"
 // components/certificates/CertificateCanvas.tsx
 import * as React from "react";
 
@@ -59,10 +60,10 @@ export function CertificateCanvas({
     ctx.scale(dpr, dpr);
 
     // Colors from DS tokens
-    const bg = css("--color-background", "#0b0c10");
-    const fg = css("--color-foreground", "#e8eaed");
-    const border = css("--color-border", "#232733");
-    const primary = css("--color-primary", "#3b82f6");
+    const bg = css("--color-background", HEX.background);
+    const fg = css("--color-foreground", HEX.foreground);
+    const border = css("--color-border", HEX.border);
+    const primary = css("--color-primary", HEX.primary);
     const muted = css("--color-muted-foreground", "rgba(168,176,191,1)");
 
     // Background
@@ -115,7 +116,7 @@ export function CertificateCanvas({
     roundRect(ctx, badgeX, badgeY, badgeW, badgeH, r);
     ctx.fill();
 
-    ctx.fillStyle = "#000000"; // text over primary needs contrast; we assume primary is light in our DS
+    ctx.fillStyle = HEX.ink; // text over primary needs contrast; we assume primary is light in our DS
     ctx.font = "800 44px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial";
     ctx.textAlign = "center";
     ctx.fillText(`Predicted Band ${band.toFixed(1)}`, width / 2, badgeY + 56);

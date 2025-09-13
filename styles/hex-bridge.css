@@ -1,0 +1,27 @@
+@layer utilities {
+/* map common hexes (found in your grep) to tokens — add !important to beat inline */
+.bg-\[\#ef4444\]{ background-color: rgb(var(--color-danger)) !important; }
+.text-\[\#ef4444\]{ color: rgb(var(--color-danger)) !important; }
+.bg-\[\#dc2626\]{ background-color: rgb(var(--color-danger)) !important; }
+.text-\[\#dc2626\]{ color: rgb(var(--color-danger)) !important; }
+
+.bg-\[\#22c55e\]{ background-color: rgb(var(--color-success)) !important; }
+.text-\[\#22c55e\]{ color: rgb(var(--color-success)) !important; }
+
+.bg-\[\#f59e0b\]{ background-color: rgb(var(--color-warning)) !important; }
+.text-\[\#f59e0b\]{ color: rgb(var(--color-warning)) !important; }
+
+.bg-\[\#2563eb\]{ background-color: rgb(var(--color-primary)) !important; }
+.text-\[\#2563eb\]{ color: rgb(var(--color-primary)) !important; }
+
+/* inline-style fallbacks (common patterns) */
+[style*="color:#ef4444"], [style*="color: #ef4444"] { color: rgb(var(--color-danger)) !important; }
+[style*="background-color:#ef4444"], [style*="background-color: #ef4444"] { background-color: rgb(var(--color-danger)) !important; }
+
+[style*="color:#2563eb"], [style*="color: #2563eb"] { color: rgb(var(--color-primary)) !important; }
+[style*="background-color:#2563eb"], [style*="background-color: #2563eb"] { background-color: rgb(var(--color-primary)) !important; }
+
+/* canvas/fg basics (centralized tokens you added) */
+[style*="color:#000000"] { color: rgb(var(--color-fg)) !important; }
+[style*="color:#ffffff"] { color: rgb(var(--color-bg)) !important; }
+}
