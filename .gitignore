@@ -53,3 +53,5 @@ public/sw.js
 *storybook.log
 storybook-static
 >>>>>>> d319ad3 (chore: fix build (tsx rename), uniform Button named import, locale shim + LocaleSwitcher wiring)
+
+*.bak

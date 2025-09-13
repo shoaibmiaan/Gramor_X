@@ -339,7 +339,7 @@ export default function Strategies() {
 
         {!loading && err && (
           <div className="mt-10">
-            <Alert variant="error" title="Couldn’t load tips">
+            <Alert variant="warning" title="Couldn’t load tips">
               {err} <br />
               <Button variant="secondary" className="mt-3" onClick={() => router.replace(router.asPath)}>Retry</Button>
             </Alert>

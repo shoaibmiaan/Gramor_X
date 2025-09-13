@@ -140,7 +140,7 @@ export default function ReviewScreen({ slug, attemptId }: { slug: string; attemp
   }
 
   if (err) {
-    return <Alert variant="error" title="Couldn’t load your review">{err}</Alert>;
+    return <Alert variant="warning" title="Couldn’t load your review">{err}</Alert>;
   }
 
   if (!questions.length) {

@@ -57,7 +57,7 @@ export const CourseCatalog: React.FC = () => {
         )}
 
         {error && (
-          <Alert className="mt-6" variant="error" title="Couldn’t load courses">
+          <Alert className="mt-6" variant="warning" title="Couldn’t load courses">
             {error}
           </Alert>
         )}

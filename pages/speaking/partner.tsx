@@ -386,7 +386,7 @@ export default function AIPartnerPage() {
             <div className="mt-3 flex flex-wrap items-center gap-2 text-small">
               {saving && <Badge variant="info" size="sm">Processing…</Badge>}
               {!saving && lastSavePath && <Badge variant="success" size="sm">Audio saved</Badge>}
-              {!saving && saveError && <Badge variant="danger" size="sm">{saveError}</Badge>}
+              {!saving && saveError && <Badge variant="warning" size="sm">{saveError}</Badge>}
               {attemptId && <span className="opacity-70">Attempt: <code>{attemptId}</code></span>}
               <div className="ml-auto flex gap-2">
                 {attemptId ? (
@@ -408,7 +408,7 @@ export default function AIPartnerPage() {
                   {metaSaving ? 'Saving…' : 'Save chat transcript'}
                 </Button>
                 {metaMsg.kind === 'ok' && <Badge variant="success" size="sm">{metaMsg.text}</Badge>}
-                {metaMsg.kind === 'err' && <Badge variant="danger" size="sm">{metaMsg.text}</Badge>}
+                {metaMsg.kind === 'err' && <Badge variant="warning" size="sm">{metaMsg.text}</Badge>}
               </div>
             </div>
           </Card>

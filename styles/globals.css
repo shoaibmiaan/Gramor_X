@@ -215,3 +215,4 @@ html.gx-ai-open #__next { padding-right: var(--gx-ai-right); box-sizing: border-
 }
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 .pb-safe { padding-bottom: max(var(--safe-bottom), 1rem); }
+@import './hex-bridge.css';

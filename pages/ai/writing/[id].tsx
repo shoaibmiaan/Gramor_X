@@ -96,7 +96,7 @@ export default function WritingReview({ attempt }: { attempt: Attempt }) {
               <Button onClick={reeval} disabled={loading} variant="primary" className="mt-4 rounded-ds-xl">
                 {loading ? 'Re-evaluating…' : 'Re-evaluate'}
               </Button>
-              {err && <Alert variant="error" title="Failed" className="mt-4">{err}</Alert>}
+              {err && <Alert variant="warning" title="Failed" className="mt-4">{err}</Alert>}
               {result && (
                 <div className="mt-6 grid gap-4">
                   <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">

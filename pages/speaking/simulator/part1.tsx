@@ -322,7 +322,7 @@ export default function SpeakingSimPart1() {
             )}
 
             {banner && <Alert variant="info">{banner}</Alert>}
-            {error && <Alert variant="error" title="Something went wrong">{error}</Alert>}
+            {error && <Alert variant="warning" title="Something went wrong">{error}</Alert>}
             {busy && !error && <div className="mt-3 text-small text-grayish">Saving…</div>}
           </Card>
         </div>

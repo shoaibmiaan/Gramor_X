@@ -63,7 +63,7 @@ export default function TeacherOnboarding() {
     <div className="mx-auto max-w-2xl p-6 text-foreground">
       <h1 className="mb-6 text-2xl font-semibold">Teacher Application</h1>
 
-      {err && <Alert variant="error" className="mb-4">{err}</Alert>}
+      {err && <Alert variant="warning" className="mb-4">{err}</Alert>}
 
       <form onSubmit={submit} className="space-y-4">
         <Input label="Full name" value={fullName} onChange={e => setFullName(e.target.value)} required />

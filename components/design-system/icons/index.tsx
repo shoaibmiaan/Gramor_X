@@ -1,3 +1,4 @@
+import { BRAND } from "@/lib/tokens"
 import * as React from 'react'
 import { Icon } from '@/components/design-system/Icon'
 
@@ -14,10 +15,10 @@ export const MapPinIcon: React.FC<IconProps> = (props) => <Icon name="map-pin" {
 /** Brand/social + SMS (simple inline SVGs to unblock build) */
 export const GoogleIcon: React.FC<IconProps> = ({ className, ...rest }) => (
   <svg viewBox="0 0 48 48" className={className} aria-hidden {...rest}>
-    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 31.7 29.4 35 24 35c-7 0-12.8-5.8-12.8-12.8S17 9.5 24 9.5c3.2 0 6.1 1.2 8.3 3.2l5.6-5.6C34.3 3.9 29.4 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1-.1-2-.3-3.5z"/>
-    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.2 0 6.1 1.2 8.3 3.2l5.6-5.6C34.3 6 29.4 4 24 4 15.5 4 8.2 8.8 6.3 14.7z"/>
-    <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.5-5.3l-6.2-5.1C29.2 35.6 26.8 36.5 24 36.5c-5.3 0-9.8-3.3-11.4-8l-6.5 5C8 39.2 15.4 44 24 44z"/>
-    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 3.9-5 6.5-9.3 6.5-2.7 0-5.2-.9-7.2-2.5l-6.5 5C14 40.8 18.7 43 24 43c11 0 21-8 21-22 0-1-.1-2-.4-3.5z"/>
+    <path fill={BRAND.googleAmber} d="M43.6 20.5H42V20H24v8h11.3C33.9 31.7 29.4 35 24 35c-7 0-12.8-5.8-12.8-12.8S17 9.5 24 9.5c3.2 0 6.1 1.2 8.3 3.2l5.6-5.6C34.3 3.9 29.4 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1-.1-2-.3-3.5z"/>
+    <path fill={BRAND.googleOrange} d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.2 0 6.1 1.2 8.3 3.2l5.6-5.6C34.3 6 29.4 4 24 4 15.5 4 8.2 8.8 6.3 14.7z"/>
+    <path fill={BRAND.googleGreen} d="M24 44c5.2 0 10-2 13.5-5.3l-6.2-5.1C29.2 35.6 26.8 36.5 24 36.5c-5.3 0-9.8-3.3-11.4-8l-6.5 5C8 39.2 15.4 44 24 44z"/>
+    <path fill={BRAND.googleBlue} d="M43.6 20.5H42V20H24v8h11.3c-1.3 3.9-5 6.5-9.3 6.5-2.7 0-5.2-.9-7.2-2.5l-6.5 5C14 40.8 18.7 43 24 43c11 0 21-8 21-22 0-1-.1-2-.4-3.5z"/>
   </svg>
 )
 

@@ -44,8 +44,7 @@ type Props = React.SVGProps<SVGSVGElement> & {
 
 export const Icon: React.FC<Props> = ({ name, size = 20, title, className, ...rest }) => {
   // Prefer direct Lucide export by exact key
-  // @ts-expect-error index lookup is fine at runtime
-  const Direct = (Lucide as any)[name];
+  const Direct = (Lucide as unknown as Record<string, React.ComponentType<any>>)[String(name)];
   const Lower = String(name || '').toLowerCase();
   const Aliased = alias[Lower];
 
