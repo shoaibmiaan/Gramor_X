@@ -19,7 +19,7 @@ type MenuItem = {
   icon?: React.ReactNode;
 };
 
-// only allow the locales your `lib/locale.ts` supports
+// only allow the locales your `lib/locale` supports
 const SUPPORTED_LOCALES = ["en", "ur", "ar", "fr"] as const;
 function toLocale(l: string): Locale {
   const lc = (l || "").toLowerCase();
@@ -46,8 +46,9 @@ export const UserMenu: React.FC<{
   showEmail = true,
 }) => {
   const router = useRouter();
-  const [locale, setLocale] = useLocale();
-  const t = (s: string) => s;
+
+  // ⬇️ FIX: use object destructuring from useLocale()
+  const { locale, setLocale, t } = useLocale();
 
   const [open, setOpen] = useState(false);
   const [localAvatar, setLocalAvatar] = useState<string | null>(avatarUrl ?? null);
@@ -139,7 +140,6 @@ export const UserMenu: React.FC<{
   const handleLanguageChange = async (langStr: string) => {
     const lang = toLocale(langStr);
     setLocale(lang);
-    // FIX: use a real supabase client instance
     const supabase = supabaseBrowser;
     await supabase.from("user_profiles").update({ preferred_language: lang }).eq("user_id", userId);
   };
@@ -158,7 +158,6 @@ export const UserMenu: React.FC<{
         title={email ?? name ?? "User"}
       >
         {localAvatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <Image
             src={localAvatar}
             alt=""
@@ -186,7 +185,6 @@ export const UserMenu: React.FC<{
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-full bg-vibrantPurple/15 flex items-center justify-center overflow-hidden">
                   {localAvatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <Image
                       src={localAvatar}
                       alt=""
