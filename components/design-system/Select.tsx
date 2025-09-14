@@ -70,7 +70,6 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             aria-describedby={error ? errorId : hint ? hintId : undefined}
             className={cn(
               "w-full bg-transparent outline-none appearance-none pr-10 pl-3",
-              // iOS zoom guard
               "text-[16px]",
               sizes[size],
               className
@@ -80,7 +79,6 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             {children}
           </select>
 
-          {/* Chevron */}
           <span className="pointer-events-none absolute right-3 inline-flex translate-y-[-1px]">
             ▼
           </span>
@@ -102,4 +100,4 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     );
   }
 );
-(Select as any).displayName = "Select";
+Select.displayName = "Select";  // Fixed display name issue

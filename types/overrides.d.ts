@@ -5,7 +5,11 @@ declare global {
   // Loosen common design-system props used across pages/stories
   type Variant =
     | 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
-    | 'link' | 'accent' | 'warning' | 'subtle' | null | undefined;
+    | 'link' | 'accent' | 'warning' | 'subtle' 
+    | 'success'   // Added 'success' variant
+    | 'info'      // Added 'info' variant
+    | 'neutral'   // Added 'neutral' variant
+    | null | undefined;
 
   type Tone =
     | 'default' | 'success' | 'warning' | 'danger'
@@ -14,15 +18,15 @@ declare global {
   namespace JSX {
     interface IntrinsicAttributes {
       as?: any;
-      variant?: Variant;
+      variant?: Variant;  // Updated to support new variants
       tone?: Tone;
       appearance?: string;
       iconOnly?: boolean;
-      shape?: 'square'|'circle'|string;
+      shape?: 'square' | 'circle' | string;
       fullWidth?: boolean;
       intent?: string;
       surface?: string;
-      elevation?: boolean|string|number;
+      elevation?: boolean | string | number;
       rounded?: string;
       width?: string | number;
       gutter?: string;
@@ -30,7 +34,7 @@ declare global {
       sticky?: boolean;
       id?: string;
       className?: string;
-      padding?: 'none'|'sm'|'md'|'lg'|string;
+      padding?: 'none' | 'sm' | 'md' | 'lg' | string;
       insetBorder?: boolean;
       interactive?: boolean;
     }
@@ -43,8 +47,8 @@ declare global {
     onresult?: (ev: any) => void;
     onend?: () => void;
   }
-  var SpeechRecognition: { new(): SpeechRecognition } | undefined;
-  var webkitSpeechRecognition: { new(): SpeechRecognition } | undefined;
+  var SpeechRecognition: { new (): SpeechRecognition } | undefined;
+  var webkitSpeechRecognition: { new (): SpeechRecognition } | undefined;
   interface SpeechSynthesisUtteranceInit {
     text?: string; lang?: string; rate?: number; pitch?: number; volume?: number;
   }

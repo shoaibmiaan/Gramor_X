@@ -190,7 +190,7 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  let attempts: AttemptRow[] = [];
+  const attempts: AttemptRow[] = [];
   if (atts.length) {
     const ids = atts.map((a) => a.id);
     const { data: clips = [] } = await supabase

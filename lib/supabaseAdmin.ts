@@ -52,7 +52,7 @@ declare global {
 
 export const supabaseAdmin =
   // reuse cached client when available
-  // @ts-ignore
+  // @ts-expect-error - supabase types mismatch under server ctx
   globalThis.__supabaseAdmin ??
   (() => {
     if (process.env.NODE_ENV === 'test' && !serviceRoleKey) {
@@ -60,13 +60,13 @@ export const supabaseAdmin =
     }
     // create a real client (service role key required)
     const key = serviceRoleKey ?? '';
-    // @ts-ignore
+    // @ts-expect-error - supabase types mismatch under server ctx
     const client = createClient(url!, key, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       global: { fetch: (...args) => fetch(...args) },
     });
     // cache for HMR/dev
-    // @ts-ignore
+    // @ts-expect-error - supabase types mismatch under server ctx
     globalThis.__supabaseAdmin = client;
     return client;
   })();

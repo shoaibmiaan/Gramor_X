@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { answers } = req.body as { attemptId:string; answers: Record<string,string> };
 
-  let score: Record<Skill, number> = { listening:0, reading:0, writing:0, speaking:0 };
+  const score: Record<Skill, number> = { listening:0, reading:0, writing:0, speaking:0 };
   const max:  Record<Skill, number> = { listening:2, reading:2, writing:4, speaking:4 };
 
   Object.entries(answers || {}).forEach(([runtimeId, val]) => {

@@ -20,7 +20,7 @@ export const ExamStrategy: React.FC<{
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Badge variant="info" size="sm">Start here</Badge>
+            <Badge variant="warning" size="sm">Start here</Badge>
             <span className="text-small text-muted-foreground">Exam Strategy · {moduleName}</span>
           </div>
           <h3 className="text-h3 mt-2">{moduleName} — Strategy & Gameplan</h3>
@@ -49,7 +49,7 @@ export const ExamStrategy: React.FC<{
         ))}
       </div>
 
-      <Alert variant="info" className="mt-4">
+      <Alert variant="warning" className="mt-4">
         Use this strategy on every attempt. You can revisit it anytime from the module home page.
       </Alert>
     </Card>

@@ -1,4 +1,3 @@
-// components/reading/QuestionRenderer.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
@@ -62,12 +61,22 @@ export const QuestionRenderer: React.FC<Props> = ({
   slug,
   onChange,
 }) => {
-  const store = useReadingAnswers(slug) as ReturnType<typeof useReadingAnswers> &
-    Record<string, unknown>; // tolerate different hook shapes
+  // Ensure that store is typed correctly, and its methods are callable
+  const store = useReadingAnswers(slug) as ReturnType<typeof useReadingAnswers> & {
+    answer?: (id: string) => AnswerValue | undefined;
+    get?: (id: string) => AnswerValue | undefined;
+    answers?: Record<string, AnswerValue>;
+    setAnswer?: (id: string, value: AnswerValue) => void;
+    set?: (id: string, value: AnswerValue) => void;
+    update?: (id: string, value: AnswerValue) => void;
+    setAnswers?: (updateFn: (prev: Record<string, AnswerValue>) => Record<string, AnswerValue>) => void;
+    allAnswers?: () => Record<string, AnswerValue>;
+  };
+
   const initialFromStore =
     (store?.answer && store.answer(question.id)) ??
     (store?.get && store.get(question.id)) ??
-    (store?.answers && (store.answers as Record<string, AnswerValue>)[question.id]) ??
+    (store?.answers && store.answers[question.id]) ??
     undefined;
 
   const [value, setValue] = useState<AnswerValue | undefined>(
@@ -96,7 +105,7 @@ export const QuestionRenderer: React.FC<Props> = ({
     // lightweight local fallback so user never loses a selection
     try {
       const all = (typeof store?.allAnswers === 'function'
-        ? (store.allAnswers() as Record<string, AnswerValue>)
+        ? store.allAnswers()
         : {}) || {};
       const merged: Record<string, AnswerValue> = { ...all, [question.id]: v };
       localStorage.setItem(`readingAnswers:${slug}`, JSON.stringify(merged));
@@ -240,7 +249,7 @@ export const QuestionRenderer: React.FC<Props> = ({
         <Input
           aria-label="Answer"
           placeholder="Type your answer…"
-          value={value ?? ''}
+          value={typeof value === 'boolean' ? (value ? 'true' : 'false') : value ?? ''}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             commit(e.target.value)
           }

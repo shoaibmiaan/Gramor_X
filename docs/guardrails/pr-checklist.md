@@ -1,7 +1,7 @@
-# PR Checklist (Phase-1)
+# PR Guardrails (Phase 1 close)
 
-- [ ] Tokens only (no raw hex, px, colors)
-- [ ] A11y pass locally (jsx-a11y lint clean, keyboard focus works)
-- [ ] No horizontal scroll at 375px viewport
-- [ ] Lighthouse mobile ≥ baseline (see thresholds.md)
-- [ ] Storybook stories updated/added for new components
+- [ ] Tokens-only styling (no raw hex/px; use DS tokens/Tailwind scales)
+- [ ] A11y OK (eslint jsx-a11y clean; keyboard nav verified)
+- [ ] Responsive OK (no horizontal overflow at 375px)
+- [ ] Budgets OK (LH mobile on affected route(s) ≥ baseline)
+- [ ] Stories/Tests updated (storybook story exists; unit tests pass)
