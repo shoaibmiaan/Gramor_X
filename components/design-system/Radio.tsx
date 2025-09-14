@@ -27,18 +27,16 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
             name={name}
             type="radio"
             aria-describedby={error ? errId : descId}
-            aria-invalid={!!error || undefined}
+            
             className={cn(
               "peer h-5 w-5 shrink-0 rounded-full border",
               "text-primary",
-              // focus-visible ring (fixed per your rule)
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               error ? "border-sunsetOrange" : "border-border",
               "bg-card"
             )}
             {...props}
           />
-          {/* Dot */}
           <span className="pointer-events-none absolute h-2.5 w-2.5 rounded-full bg-primary opacity-0 peer-checked:opacity-100" />
         </span>
 
@@ -63,4 +61,4 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
     );
   }
 );
-(Radio as any).displayName = "Radio";
+Radio.displayName = "Radio";  // Fixed display name issue

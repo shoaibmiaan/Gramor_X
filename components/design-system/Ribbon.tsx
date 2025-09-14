@@ -1,6 +1,6 @@
 import React from "react";
 
-type Variant = "accent" | "primary" | "success" | "warning";
+type Variant = "accent" | "primary" | "success" | "warning" | "info" | "neutral"; // Added 'info' and 'neutral'
 type Position = "top-right" | "top-left";
 
 const variantCls: Record<Variant, string> = {
@@ -8,6 +8,8 @@ const variantCls: Record<Variant, string> = {
   primary: "from-purpleVibe to-electricBlue",
   success: "from-neonGreen to-success",
   warning: "from-goldenYellow to-sunsetOrange",
+  info: "from-skyBlue to-info",       // Added 'info'
+  neutral: "from-gray-500 to-gray-300",  // Added 'neutral'
 };
 
 const posWrap: Record<Position, string> = {

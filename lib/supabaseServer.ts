@@ -129,14 +129,14 @@ export function supabaseService(): SupabaseClient<DB> {
   }
 
   // reuse existing client if present
-  // @ts-ignore
+  // @ts-expect-error - supabase types mismatch under server ctx
   if (globalThis.__supabaseServiceClient) {
-    // @ts-ignore
+    // @ts-expect-error - supabase types mismatch under server ctx
     return globalThis.__supabaseServiceClient;
   }
 
   // create and cache
-  // @ts-ignore
+  // @ts-expect-error - supabase types mismatch under server ctx
   globalThis.__supabaseServiceClient = createClient<DB>(URL, SERVICE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
@@ -145,7 +145,7 @@ export function supabaseService(): SupabaseClient<DB> {
     },
   });
 
-  // @ts-ignore
+  // @ts-expect-error - supabase types mismatch under server ctx
   return globalThis.__supabaseServiceClient;
 }
 

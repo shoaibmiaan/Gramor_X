@@ -1,4 +1,3 @@
-// twilio-sms-webhook.ts
 import express, { Request, Response, NextFunction } from "express";
 import Twilio from "twilio";
 import { z } from "zod";
@@ -7,6 +6,7 @@ import { env } from "./lib/env";
 import { captureException } from "./lib/monitoring/sentry";
 import { supabaseService } from "./lib/supabaseService";
 
+// Log utility function
 type LogLevel = "info" | "error";
 function log(level: LogLevel, message: string, meta?: Record<string, any>) {
   const entry = { level, message, ...(meta || {}) };

@@ -106,7 +106,7 @@ export function ReadingStatsCard() {
         <div>
           <div className="text-sm text-gray-600 dark:text-muted-foreground">Avg. duration</div>
           <div className="text-xl font-semibold">
-            {stat?.avg_duration_ms ? Math.round((stat.avg_duration_ms/1000)/60) + ' min' : '—'}
+            {stat?.avg_duration_ms ? Math.round((stat.avg_duration_ms / 1000) / 60) + ' min' : '—'}
           </div>
         </div>
         <div>

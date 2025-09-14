@@ -15,6 +15,7 @@ type BaseProps = {
   asChild?: boolean;   // Radix-style: render child as the actual element
   leadingIcon?: React.ReactNode;
   trailingIcon?: React.ReactNode;
+  loading?: boolean;   // ✅ Added loading prop
 };
 
 type ButtonComponent = <E extends React.ElementType = 'button'>(
@@ -48,15 +49,16 @@ export const Button: ButtonComponent = (props) => {
   const {
     as, asChild, href, variant = 'primary', size = 'md',
     iconOnly, shape, fullWidth, className, children,
-    leadingIcon, trailingIcon, ...rest
+    leadingIcon, trailingIcon, loading, ...rest
   } = props as BaseProps & any;
 
   const classes = cx(
     'inline-flex items-center justify-center rounded-2xl transition-colors focus:outline-none focus:ring-2 ring-primary/40',
     'gap-2', // spacing for icon + label
-    sizeClass[(size ?? "md") as Size],
+    sizeClass[size as Size],  // Explicit type assertion for Size
     fullWidth ? 'w-full' : '',
-    variantClass[(variant ?? "primary") as Variant],
+    variantClass[variant as Variant],  // Explicit type assertion for Variant
+    loading && 'cursor-not-allowed opacity-70', // Disable button during loading
   );
 
   const shapeCls =
@@ -72,16 +74,16 @@ export const Button: ButtonComponent = (props) => {
   }
 
   const Comp: any =
-    as ? as :
-    href ? (href.startsWith('/') ? Link : 'a') :
-    'button';
+    as ?? (href ? (href.startsWith('/') ? Link : 'a') : 'button');
 
   return (
-    <Comp href={href} className={cx(classes, shapeCls, className)} {...rest}>
+    <Comp href={href} className={cx(classes, shapeCls, className)} {...rest} disabled={loading}>
+      {loading && <span className="inline-block h-4 w-4 animate-spin border-2 border-current border-r-transparent rounded-full" />}
       {leadingIcon && <span className="inline-flex shrink-0 items-center">{leadingIcon}</span>}
       {children}
       {trailingIcon && <span className="inline-flex shrink-0 items-center">{trailingIcon}</span>}
     </Comp>
   );
 };
+
 export default Button;

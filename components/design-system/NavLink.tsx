@@ -1,19 +1,41 @@
-import Link from 'next/link'
-import { useRouter } from 'next/router'
-import * as React from 'react'
+// components/design-system/NavLink.tsx
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import * as React from 'react';
 
-type Props = { href: string; children?: React.ReactNode; label?: string; exact?: boolean; className?: string; variant?: 'pill'|'plain'; }
+type AnchorProps = React.ComponentPropsWithoutRef<'a'>;
 
-export const NavLink: React.FC<Props> = ({ href, children, label, exact=false, className='', variant='pill' }) => {
-  const { pathname, asPath } = useRouter(); const current = asPath || pathname
-  const isActive = exact ? current === href : current.startsWith(href)
-  const base = variant==='pill' ? 'nav-pill' : 'inline-flex items-center'
-  const active = isActive ? 'is-active' : ''
+type Props = {
+  href: string;
+  exact?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  /** NEW: allow label prop for convenience (DesktopNav uses this) */
+  label?: string;
+} & Omit<AnchorProps, 'href'>;
+
+export function NavLink({
+  href,
+  exact,
+  className,
+  children,
+  label,          // ✅ new
+  onClick,
+  ...rest
+}: Props) {
+  const pathname = usePathname();
+  const isActive = exact ? pathname === href : pathname?.startsWith(href);
+  const content = children ?? label; // ✅ prefer children, fallback to label
+
   return (
-    <Link href={href} aria-current={isActive ? 'page' : undefined}
-      className={[base, active, 'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background', className].join(' ')}>
-      {children ?? label}
+    <Link
+      href={href}
+      onClick={onClick}
+      className={[className, isActive ? 'is-active' : ''].filter(Boolean).join(' ')}
+      aria-current={isActive ? 'page' : undefined}
+      {...rest}
+    >
+      {content}
     </Link>
-  )
+  );
 }
-export default NavLink
