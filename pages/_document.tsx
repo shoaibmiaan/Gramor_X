@@ -1,6 +1,6 @@
-import { HEX, WHITE } from "@/lib/tokens"
 // pages/_document.tsx
 import { Html, Head, Main, NextScript } from 'next/document';
+import { HEX, WHITE } from '@/lib/tokens';
 
 export default function Document() {
   const orgJsonLd = {
@@ -14,8 +14,6 @@ export default function Document() {
   return (
     <Html lang="en" dir="ltr" className="bg-background text-foreground">
       <Head>
-        {/* DO NOT add viewport here; Next.js handles it per-page */}
-
         {/* Base SEO */}
         <meta
           name="description"
@@ -42,11 +40,9 @@ export default function Document() {
         <meta property="og:image" content="/brand/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
 
-        {/* Preconnects (safe QoL) */}
+        {/* Preconnects */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-
-        {/* We use next/font in _app to load Poppins & Roboto Slab; avoid double-loading via Google Fonts link */}
 
         {/* PWA + Icons */}
         <link rel="manifest" href="/manifest.json" />
@@ -56,11 +52,10 @@ export default function Document() {
         {/* JSON-LD */}
         <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
 
-        {/* Pre-paint locale->dir fixer (sets RTL for ur/ar/fa/he if a cookie `locale` is present) */}
+        {/* Pre-paint locale->dir fixer */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{

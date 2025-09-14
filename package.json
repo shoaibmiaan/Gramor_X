@@ -8,6 +8,7 @@
     "build": "npm run build:premium && next build",
     "build:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --minify",
     "start": "next start",
+    "clean": "rm -rf .next",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",

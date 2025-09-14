@@ -1,8 +1,9 @@
-import { Icon } from "@/components/design-system/Icon";
 'use client';
 
 import React from 'react';
 import Link from 'next/link';
+
+import { Icon } from '@/components/design-system/Icon';
 import { Container } from '@/components/design-system/Container';
 import { NavLink } from '@/components/design-system/NavLink';
 import { SocialIconLink } from '@/components/design-system/SocialIconLink';
