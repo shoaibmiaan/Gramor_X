@@ -35,6 +35,9 @@
     }
   ],
   "compounds": [
-    { "name": "Launch Dev", "configurations": ["Run: npm run dev (Next + premium watcher)"] }
+    {
+      "name": "Launch Dev",
+      "configurations": ["Run: npm run dev (Next + premium watcher)"]
+    }
   ]
 }

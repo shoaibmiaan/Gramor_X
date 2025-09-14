@@ -1,35 +1,9 @@
 .
-├── .env.example
-├── .env.local
-├── .eslintrc.js
-├── .eslintrc.json
-├── .gitattributes
-├── .github
-│   └── workflows
-│       └── ci.yml
-├── .gitignore
-├── .gitlab-ci.yml
-├── .lighthouseci
-│   ├── assertion-results.json
-│   ├── flags-27bff290-066a-4257-a1bd-b4feb7b84ce9.json
-│   ├── lhr-1757388673379.html
-│   ├── lhr-1757388673379.json
-│   ├── lhr-1757388702363.html
-│   ├── lhr-1757388702363.json
-│   ├── lhr-1757388730720.html
-│   └── lhr-1757388730720.json
-├── .npmrc
-├── .prettierignore
-├── .prettierrc.json
-├── .storybook
-│   ├── main.ts
-│   ├── preview.ts
-│   └── preview.tsx
-├── .vscode
-│   └── settings.json
 ├── GTM_Implementation_Tracker_FilesByPhase.md
+├── LICENSE
 ├── MOBILE_RELEASE_PHASES.md
 ├── PROJECT_STRUCTURE.txt
+├── README.md
 ├── __tests__
 │   ├── check-otp.test.ts
 │   ├── login-success.test.ts
@@ -127,6 +101,8 @@
 │   │   ├── Toaster.tsx
 │   │   ├── Toggle.tsx
 │   │   ├── UserMenu.tsx
+│   │   ├── _core
+│   │   │   └── types.ts
 │   │   ├── icons
 │   │   │   └── index.tsx
 │   │   └── index.ts
@@ -134,7 +110,6 @@
 │   │   ├── AnswerControls
 │   │   │   ├── GapFill.tsx
 │   │   │   ├── HeadingMatch.tsx
-│   │   │   ├── Input.tsx
 │   │   │   ├── MCQ.tsx
 │   │   │   ├── MapPoint.tsx
 │   │   │   ├── Matching.tsx
@@ -197,7 +172,7 @@
 │   │   ├── Links.ts
 │   │   ├── MobileNav.tsx
 │   │   ├── ModuleMenu.tsx
-│   │   └── constants.ts
+│   │   └── constants.tsx
 │   ├── notifications
 │   │   └── NotificationProvider.tsx
 │   ├── onboarding
@@ -339,13 +314,82 @@
 │   ├── rls-policies.md
 │   └── ui-guidelines.md
 ├── docs
-│   └── audit
-│       ├── 00_env.md
-│       ├── day1_ds_findings.md
-│       ├── day1_pages.md
-│       ├── day1_risks.md
-│       ├── day1_summary.md
-│       └── screens
+│   ├── audit
+│   │   ├── 00_env.md
+│   │   ├── day1_ds_findings.md
+│   │   ├── day1_pages.md
+│   │   ├── day1_risks.md
+│   │   ├── day1_summary.md
+│   │   ├── guard_allowlist.txt
+│   │   ├── localhost--2025_09_09_03_30_48.report.html
+│   │   ├── localhost--2025_09_09_03_30_48.report.json
+│   │   ├── localhost-pricing-2025_09_09_03_31_17.report.html
+│   │   ├── localhost-pricing-2025_09_09_03_31_17.report.json
+│   │   ├── localhost-study_plan-2025_09_09_03_31_45.report.html
+│   │   ├── localhost-study_plan-2025_09_09_03_31_45.report.json
+│   │   ├── raw
+│   │   │   ├── ds_scan_arbitrary.txt
+│   │   │   ├── ds_scan_focusring.txt
+│   │   │   ├── ds_scan_hex.txt
+│   │   │   ├── ds_scan_img_tags.txt
+│   │   │   ├── ds_scan_inline_styles.txt
+│   │   │   └── ds_scan_internal_a.txt
+│   │   └── screens
+│   │       ├── home-mobile.png
+│   │       ├── listening-mobile.png
+│   │       ├── pricing-mobile.png
+│   │       └── reading-mobile.png
+│   ├── baseline
+│   │   ├── README.md
+│   │   ├── axe
+│   │   │   ├── gramorx_com_.json
+│   │   │   └── gramorx_com_pricing.json
+│   │   ├── component-matrix.v1.backup.json
+│   │   ├── component-matrix.v1.enriched.json
+│   │   ├── component-matrix.v1.json
+│   │   ├── lh-summary.md
+│   │   ├── lighthouse
+│   │   │   ├── gramorx_com--2025_09_11_15_03_17.report.html
+│   │   │   ├── gramorx_com--2025_09_11_15_03_17.report.json
+│   │   │   ├── gramorx_com--2025_09_11_15_03_36.report.html
+│   │   │   ├── gramorx_com--2025_09_11_15_03_36.report.json
+│   │   │   ├── gramorx_com--2025_09_11_15_03_53.report.html
+│   │   │   ├── gramorx_com--2025_09_11_15_03_53.report.json
+│   │   │   ├── gramorx_com-pricing-2025_09_11_15_04_09.report.html
+│   │   │   ├── gramorx_com-pricing-2025_09_11_15_04_09.report.json
+│   │   │   ├── gramorx_com-pricing-2025_09_11_15_04_24.report.html
+│   │   │   ├── gramorx_com-pricing-2025_09_11_15_04_24.report.json
+│   │   │   ├── gramorx_com-pricing-2025_09_11_15_04_39.report.html
+│   │   │   ├── gramorx_com-pricing-2025_09_11_15_04_39.report.json
+│   │   │   └── manifest.json
+│   │   ├── screens
+│   │   │   ├── __lg.png
+│   │   │   ├── __md.png
+│   │   │   ├── __sm.png
+│   │   │   ├── _auth_signin_lg.png
+│   │   │   ├── _auth_signin_md.png
+│   │   │   ├── _auth_signin_sm.png
+│   │   │   ├── _pricing_lg.png
+│   │   │   ├── _pricing_md.png
+│   │   │   └── _pricing_sm.png
+│   │   └── thresholds.md
+│   ├── guardrails
+│   │   └── pr-checklist.md
+│   ├── planning
+│   │   ├── backlog.csv
+│   │   └── risks.csv
+│   ├── research
+│   │   ├── interview-guide.md
+│   │   ├── kpis.md
+│   │   ├── personas.md
+│   │   ├── survey.md
+│   │   └── top-tasks.md
+│   ├── spec
+│   │   ├── signoff.md
+│   │   ├── tailwind-snippet.md
+│   │   └── tokens-and-patterns.v1.md
+│   └── testing
+│       └── test-plan.md
 ├── dump.txt
 ├── emails
 │   ├── BuddyInviteEmail.tsx
@@ -374,6 +418,8 @@
 │   ├── useStreak.ts
 │   └── useTTS.ts
 ├── index (10).html
+├── instrumentation-client.ts
+├── instrumentation.ts
 ├── layouts
 │   └── PremiumShell.tsx
 ├── lib
@@ -489,6 +535,8 @@
 │   ├── supabaseServer.ts
 │   ├── supabaseService.ts
 │   ├── teacher.ts
+│   ├── tokens.ts
+│   ├── url.ts
 │   ├── usage.ts
 │   └── utils.ts
 ├── lighthouserc.json
@@ -499,12 +547,6 @@
 │   └── ur
 │       ├── common.json
 │       └── home.json
-├── localhost--2025_09_09_03_30_48.report.html
-├── localhost--2025_09_09_03_30_48.report.json
-├── localhost-pricing-2025_09_09_03_31_17.report.html
-├── localhost-pricing-2025_09_09_03_31_17.report.json
-├── localhost-study_plan-2025_09_09_03_31_45.report.html
-├── localhost-study_plan-2025_09_09_03_31_45.report.json
 ├── manifest.json
 ├── middleware.ts
 ├── next-env.d.ts
@@ -513,6 +555,8 @@
 ├── package.json
 ├── pages
 │   ├── 403.tsx
+│   ├── 404.tsx
+│   ├── 500.tsx
 │   ├── _app.tsx
 │   ├── _document.tsx
 │   ├── accessibility.tsx
@@ -746,6 +790,8 @@
 │   │   ├── upload
 │   │   │   ├── audio.ts
 │   │   │   └── index.ts
+│   │   ├── user
+│   │   │   └── dashboard.ts
 │   │   ├── waitlist
 │   │   │   └── submit.ts
 │   │   ├── waitlist.ts
@@ -870,7 +916,6 @@
 │   │   └── teacher
 │   │       ├── index.tsx
 │   │       └── status.tsx
-│   ├── pages_premium.jsx
 │   ├── partners
 │   │   └── index.tsx
 │   ├── placement
@@ -888,6 +933,7 @@
 │   │   ├── pin.tsx
 │   │   └── reading
 │   │       └── [slug].tsx
+│   ├── premium-pin.tsx
 │   ├── pricing
 │   │   └── index.tsx
 │   ├── proctoring
@@ -930,6 +976,7 @@
 │   │   └── index.tsx
 │   ├── settings
 │   │   ├── billing.tsx
+│   │   ├── index.tsx
 │   │   ├── language.tsx
 │   │   └── security.tsx
 │   ├── signup
@@ -966,6 +1013,7 @@
 │   │   ├── cohorts
 │   │   │   └── [id].tsx
 │   │   └── index.tsx
+│   ├── tokens-test.tsx
 │   ├── tools
 │   │   └── mark-sections
 │   │       └── [slug].tsx
@@ -1011,6 +1059,7 @@
 │       ├── colors.ts
 │       ├── shadows.ts
 │       └── typography.ts
+├── project-tree.txt
 ├── public
 │   ├── apple-touch-icon.svg
 │   ├── brand
@@ -1033,22 +1082,63 @@
 │   │       └── common.json
 │   ├── manifest.json
 │   ├── premium.css
-│   ├── sw.js
 │   └── workbox-4754cb34.js
 ├── scripts
+│   ├── axe-scan.mjs
 │   ├── backfill_entitlements.ts
+│   ├── build-screens-readme.mjs
+│   ├── capture-screens.mjs
+│   ├── capture-screens.ts
+│   ├── capture_mobile_screens.ts
+│   ├── convert_img_to_next_image.mjs
+│   ├── convert_user_menu_imgs.mjs
+│   ├── ds_guard.sh
+│   ├── enrich-matrix.mjs
+│   ├── focus_ring_sweep.mjs
 │   ├── gen-types.ts
 │   ├── generate_certificate_template.ts
 │   ├── generate_social_proof.ts
+│   ├── inventory.ts
 │   ├── l10n_extract.ts
+│   ├── lh-extract.mjs
+│   ├── mark-internal.mjs
 │   ├── phase0.sh
-│   └── seed_challenge.ts
+│   ├── prefill-evidence.mjs
+│   ├── pricing_gradient_refactor.mjs
+│   ├── seed-backlog.mjs
+│   ├── seed-risks.mjs
+│   ├── seed_challenge.ts
+│   ├── update-first-batch.mjs
+│   └── wire-tokens.mjs
+├── sentry.edge.config.ts
+├── sentry.server.config.ts
+├── site.webmanifest
 ├── stories
 │   ├── Button.stories.tsx
 │   ├── Card.stories.tsx
-│   └── Container.stories.tsx
+│   ├── Container.stories.tsx
+│   ├── TokenCard.stories.tsx
+│   ├── TokenCard.tsx
+│   └── assets
+│       ├── accessibility.png
+│       ├── accessibility.svg
+│       ├── addon-library.png
+│       ├── assets.png
+│       ├── avif-test-image.avif
+│       ├── context.png
+│       ├── discord.svg
+│       ├── docs.png
+│       ├── figma-plugin.png
+│       ├── github.svg
+│       ├── share.png
+│       ├── styling.png
+│       ├── testing.png
+│       ├── theming.png
+│       ├── tutorials.svg
+│       └── youtube.svg
 ├── styles
 │   ├── globals.css
+│   ├── hex-bridge.css
 │   ├── premium.css
 │   ├── semantic.css
 │   ├── themes
@@ -1103,7 +1193,7 @@
 ├── tests
 │   ├── a11y
 │   │   ├── a11y.spec.ts
-│   │   └── wcag-axe.test.ts
+│   │   └── wcag-axe.test.tsx
 │   ├── api
 │   │   ├── challenge.progress.test.ts
 │   │   └── payments.webhook.test.ts
@@ -1112,6 +1202,8 @@
 │       │   └── [id].test.tsx
 │       ├── challenge.test.tsx
 │       └── predictor.test.tsx
+├── tokens
+│   └── tokens.css
 ├── tools
 │   ├── hash-pin.ts
 │   └── run-tests.ts
@@ -1131,15 +1223,18 @@
 │   ├── teacher-admin.html
 │   ├── user.html
 │   └── writing.html
+├── tsconfig.app.json
 ├── tsconfig.json
 ├── tsconfig.tsbuildinfo
 ├── twilio-sms-webhook.ts
 ├── types
+│   ├── api.ts
 │   ├── attempts.ts
 │   ├── certificates.ts
 │   ├── challenge.ts
 │   ├── database.ts
 │   ├── groq.ts
+│   ├── overrides.d.ts
 │   ├── partners.ts
 │   ├── payments.ts
 │   ├── plan.ts
@@ -1158,4 +1253,4 @@
 │   └── validation.ts
 └── vercel.json
 
-278 directories, 881 files
+287 directories, 967 files
