@@ -1,10 +1,12 @@
+// pages/_app.tsx
 import type { AppProps } from 'next/app';
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 
-import '@/styles/tokens.css';         // Day-5 tokens (must be first so vars exist)
-import '@/styles/premium.css';        // Premium theme variables/utilities
+// CSS order matters: tokens → premium → globals (which imports hex-bridge at the end)
+import '@/styles/tokens.css';
+import '@/styles/premium.css';
 import '@/styles/semantic.css';
 import '@/styles/globals.css';
 import '@/styles/themes/index.css';
@@ -53,7 +55,6 @@ const slab = Roboto_Slab({
   variable: '--font-display',
 });
 
-// ✅ CI/dev quiet flag (prevents auth noise when no session)
 const IS_CI = process.env.NEXT_PUBLIC_CI === 'true';
 
 function GuardSkeleton() {
@@ -110,7 +111,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/data-deletion');
 
   const isLearningRoute = pathname.startsWith('/learning') || pathname.startsWith('/content/studio');
-
   const isCommunityRoute = pathname.startsWith('/community');
 
   const isMarketplaceRoute =
@@ -121,7 +121,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname === '/partners';
 
   const isInstitutionsRoute = pathname.startsWith('/institutions');
-
   const isReportsRoute = pathname.startsWith('/reports') || pathname.startsWith('/placement');
 
   const isProctoringRoute =
@@ -192,7 +191,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   if (isChecking) return <GuardSkeleton />;
 
-  // Base page (no extra font wrappers here; fonts applied once at the top-level div)
   const basePage = needPremium ? (
     <PremiumThemeProvider>
       <Component {...pageProps} />
@@ -232,7 +230,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      {/* Fonts applied once here */}
       <div className={`${poppins.variable} ${slab.variable} ${poppins.className} min-h-[100dvh] bg-background text-foreground`}>
         {showLayout ? (
           <Layout>
