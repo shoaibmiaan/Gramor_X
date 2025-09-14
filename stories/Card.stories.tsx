@@ -1,67 +1,59 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import { Card } from '@/components/design-system/Card'
-import { Button } from '@/components/design-system/Button'
+import type { Meta, StoryObj } from '@storybook/react';
+import { Card, CardHeader, CardContent, CardFooter } from '../components/design-system/Card';
 
-const meta = {
+const meta: Meta<typeof Card> = {
   title: 'Design System/Card',
   component: Card,
   parameters: { layout: 'centered' },
-  args: { variant: 'surface', padding: 'md', rounded: 'ds-2xl' },
   argTypes: {
-    variant: { control: 'select', options: ['surface', 'glass', 'ghost'] },
-    padding: { control: 'select', options: ['none', 'sm', 'md', 'lg'] },
-    rounded: { control: 'select', options: ['ds', 'ds-2xl', 'xl', 'full'] },
-    elevation: { control: 'select', options: ['none', 'glow', 'glowLg'] },
-    hoverable: { control: 'boolean' },
-    divided: { control: 'boolean' },
-    compact: { control: 'boolean' },
-    focusable: { control: 'boolean' },
+    padding: { control: 'radio', options: ['none','sm','md','lg'] },
+    interactive: { control: 'boolean' },
+    insetBorder: { control: 'boolean' },
+    as: { control: false },
   },
-} satisfies Meta<typeof Card>
-
-export default meta
-type Story = StoryObj<typeof Card>
+};
+export default meta;
+type Story = StoryObj<typeof Card>;
 
 export const Surface: Story = {
-  render: (args) => (
-    <Card {...args}>
-      <Card.Header actions={<Button size="sm">Action</Button>}>Card title</Card.Header>
-      <Card.Body>
-        <p className="opacity-80">Body content with semantic tokens.</p>
-      </Card.Body>
-      <Card.Footer>
-        <div className="text-sm opacity-70">Footer area</div>
-      </Card.Footer>
-    </Card>
-  ),
-}
+  args: {
+    padding: 'md',
+    children: (
+      <CardContent>
+        Regular card content with md padding.
+      </CardContent>
+    ),
+  },
+};
 
-export const Glass: Story = { args: { variant: 'glass', elevation: 'glow' } }
-export const Ghost: Story = { args: { variant: 'ghost', divided: true } }
+export const WithHeaderAndFooter: Story = {
+  args: {
+    padding: 'none',
+    insetBorder: true,
+    children: (
+      <>
+        <CardHeader>Card title</CardHeader>
+        <CardContent>
+          <p>Body with <strong>CardContent</strong>.</p>
+        </CardContent>
+        <CardFooter>
+          <button className="px-3 py-1 rounded bg-primary text-white">Action</button>
+        </CardFooter>
+      </>
+    ),
+  },
+};
 
-export const WithMedia: Story = {
-  render: (args) => (
-    <Card {...args}>
-      <Card.Media padding={args.padding}>
-        <img
-          src="https://picsum.photos/1200/400"
-          alt="" className="w-full h-48 object-cover"
-          loading="lazy"
-        />
-      </Card.Media>
-      <Card.Header>With media</Card.Header>
-      <Card.Body>
-        <p>Media bleeds edge-to-edge based on padding.</p>
-      </Card.Body>
-    </Card>
-  ),
-  args: { variant: 'surface', padding: 'lg' },
-}
+export const InteractiveHover: Story = {
+  args: {
+    interactive: true,
+    children: <CardContent>Hover me (slight translateY)</CardContent>,
+  },
+};
 
-export const HoverableFocusable: Story = {
-  args: { hoverable: true, focusable: true, elevation: 'none' },
-}
-
-export const CompactDense: Story = {
-  args: { compact: true, padding: 'sm', divided: true },
-}
+export const AsSection: Story = {
+  args: {
+    as: 'section',
+    children: <CardContent>Rendered as &lt;section&gt;</CardContent>,
+  },
+};

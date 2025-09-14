@@ -1,7 +1,4 @@
-/** Premium Tailwind Config (for building public/premium.css)
- *  - Use a 'pr-' prefix so styles don't collide with the main site.
- *  - Map utilities to CSS variables defined in styles/premium.css.
- */
+/** @type {import('tailwindcss').Config} */
 const scale = require('./design-system/tokens/scale.js');
 module.exports = {
   darkMode: ['class', '[data-pr-theme="carbon"]'],

@@ -11,16 +11,12 @@ type Feature =
   | 'ai.speaking'
   | 'ai.explain';
 
-const usageKeyMap: Record<Feature, UsageKey> = {
+const usageKeyMap = {
   mock: 'mock.start',
-  'ai.wwriting': 'ai.writing.grade', // NOTE: Keep mapping consistent if keys differ in your lib
   'ai.writing': 'ai.writing.grade',
   'ai.speaking': 'ai.speaking.grade',
   'ai.explain': 'ai.explain',
-};
-
-// If your project actually expects only 'ai.writing', remove the duplicate 'ai.wwriting' line above.
-// (Left intentionally minimal to avoid changing behavior outside the syntax fix.)
+} as const satisfies Record<Feature, UsageKey>;
 
 function limitFor(feature: Feature, planId: PlanId) {
   const plan = getPlan(planId);
@@ -64,7 +60,6 @@ export function PaywallGate({
     let mounted = true;
 
     async function run() {
-      // If paywall flag is off -> always allow.
       if (!flags.enabled('paywall')) {
         if (!mounted) return;
         setAllowed(true);
@@ -85,7 +80,7 @@ export function PaywallGate({
         if (!res.allowed) onBlocked?.();
       } catch {
         if (!mounted) return;
-        // On error, be permissive to avoid false blocks.
+        // Be permissive on error to avoid false blocks
         setAllowed(true);
         setLoading(false);
       }
@@ -112,7 +107,6 @@ export function PaywallGate({
 
   if (fallback) return <div className={className}>{fallback}</div>;
 
-  // Default paywall UI
   return (
     <div className={className}>
       <div className="rounded-2xl border border-border bg-card text-foreground p-5 shadow-card">

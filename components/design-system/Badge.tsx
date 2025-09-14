@@ -10,7 +10,8 @@ type BadgeVariant =
   | 'error'
   | 'success'
   | 'info'
-  | 'subtle';
+  | 'subtle'
+  | 'neutral';  // Added 'neutral' variant
 
 type Props = {
   variant?: BadgeVariant;
@@ -29,6 +30,7 @@ const variantCls: Record<BadgeVariant, string> = {
   success:  'bg-emerald-600/15 text-emerald-300 ring-1 ring-emerald-500/30',
   info:     'bg-sky-600/15 text-sky-300 ring-1 ring-sky-500/30',
   subtle:   'bg-white/5 text-white/80 ring-1 ring-white/10',
+  neutral:  'bg-gray-500/15 text-gray-300 ring-1 ring-gray-400/30',  // Added 'neutral' variant
 };
 
 const sizeCls: Record<NonNullable<Props['size']>, string> = {
@@ -45,4 +47,5 @@ export function Badge({ variant='subtle', size='sm', className, children }: Prop
     </span>
   );
 }
+
 export default Badge;

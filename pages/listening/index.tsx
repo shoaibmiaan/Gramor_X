@@ -45,7 +45,7 @@ export default function ListeningIndexPage() {
 
   // auth (client only)
   useEffect(() => {
-    let mounted = true;
+    const mounted = true;
     supabase.auth.getUser().then(({ data }) => mounted && setUserId(data.user?.id ?? null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUserId(session?.user?.id ?? null);

@@ -30,9 +30,13 @@ export const routes = {
   writingIndex: () => '/writing',
   speakingSimulator: () => '/speaking/simulator',
 
-  // Paywall/Billing
+  // Paywall/Billing (canonical)
   pricing: () => '/pricing',
-  checkout: (plan?: string) => (plan ? `/checkout?plan=${encodeURIComponent(plan)}` : '/checkout'),
+  checkout: (plan?: string) =>
+    plan ? `/checkout?plan=${encodeURIComponent(plan)}` : '/checkout',
+  billing: () => '/settings/billing',
+
+  /** @deprecated Use routes.billing() instead */
   settingsBilling: () => '/settings/billing',
 
   // Platform

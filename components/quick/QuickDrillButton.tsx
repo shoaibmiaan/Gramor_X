@@ -1,29 +1,22 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
+import React from 'react';
 import { Button } from '@/components/design-system/Button';
 
-export default function QuickDrillButton() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+type QuickDrillButtonProps = {
+  startDrill: () => Promise<void>;
+  loading: boolean;
+};
 
-  const startDrill = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/quick-drill');
-      const data = await res.json();
-      if (data?.skill) {
-        await router.push(`/quick/${data.skill}`);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export const QuickDrillButton: React.FC<QuickDrillButtonProps> = ({ startDrill, loading }) => {
   return (
-    <Button onClick={startDrill} variant="secondary" className="rounded-ds-xl" loading={loading}>
+    <Button
+      onClick={startDrill}
+      variant="secondary"
+      className="rounded-ds-xl"
+      loading={loading} // Now this works because loading is supported in Button
+    >
       10-Minute Mode
     </Button>
   );
-}
+};
+
+export default QuickDrillButton;

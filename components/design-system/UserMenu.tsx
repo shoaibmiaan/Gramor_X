@@ -1,275 +1,135 @@
-'use client';
+import * as React from 'react';
 
-// components/design-system/UserMenu.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/router";
-
-import { Icon } from "@/components/design-system/Icon";
-import { supabaseBrowser } from "@/lib/supabaseBrowser";
-import { useLocale } from "@/lib/locale";
-import type { Locale } from "@/lib/locale";
-import { signOutAndRedirect } from "@/lib/auth/signOut";
-
-type MenuItem = {
+export type UserMenuItem = {
+  id: string;
   label: string;
   href?: string;
-  onClick?: () => void | Promise<void>;
-  icon?: React.ReactNode;
+  onSelect?: () => void;
 };
 
-// only allow the locales your `lib/locale` supports
-const SUPPORTED_LOCALES = ["en", "ur", "ar", "fr"] as const;
-function toLocale(l: string): Locale {
-  const lc = (l || "").toLowerCase();
-  return ((SUPPORTED_LOCALES as readonly string[]).includes(lc) ? lc : "en") as Locale;
-}
-
-export const UserMenu: React.FC<{
-  userId: string;
-  email?: string | null;
-  name?: string | null;
+export type UserMenuProps = {
   avatarUrl?: string | null;
-  className?: string;
-  items?: MenuItem[]; // Optional external items (e.g., from Header)
-  onSignOut?: () => void | Promise<void>;
-  showEmail?: boolean;
-}> = ({
-  userId,
-  email = null,
-  name = null,
+  email?: string | null;
+  userId?: string | null;
+  items?: UserMenuItem[];
+  onSignOut?: () => void;
+};
+
+export function UserMenu({
   avatarUrl = null,
-  className = "",
-  items,
+  email = null,
+  userId = null,
+  items = [],
   onSignOut,
-  showEmail = true,
-}) => {
-  const router = useRouter();
+}: UserMenuProps) {
+  const [open, setOpen] = React.useState(false);
 
-  // ⬇️ FIX: use object destructuring from useLocale()
-  const { locale, setLocale, t } = useLocale();
+  const initials = React.useMemo(() => {
+    if (!email) return 'U';
+    const [name] = email.split('@');
+    if (!name) return 'U';
+    return name
+      .split(/[._-]/)
+      .filter(Boolean)
+      .map((s) => s[0]?.toUpperCase())
+      .join('')
+      .slice(0, 2) || 'U';
+  }, [email]);
 
-  const [open, setOpen] = useState(false);
-  const [localAvatar, setLocalAvatar] = useState<string | null>(avatarUrl ?? null);
-
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef<Array<HTMLAnchorElement | HTMLButtonElement | null>>([]);
-
-  useEffect(() => setLocalAvatar(avatarUrl ?? null), [avatarUrl]);
-
-  const fallbackInitial = (name?.[0] || email?.[0] || "U").toUpperCase();
-
-  // Default actions (Dashboard/Profile/Account + Sign out)
-  const defaultSignOut = async () => {
-    await signOutAndRedirect(router);
-  };
-
-  const defaultItems: MenuItem[] = useMemo(() => {
-    const base: MenuItem[] = [
-      { label: "Dashboard", href: "/dashboard", icon: <Icon name="gauge" /> },
-      { label: "Profile", href: "/profile", icon: <Icon name="id-badge" /> },
-      { label: "Account", href: "/account", icon: <Icon name="user" /> },
-      { label: "Sign out", onClick: onSignOut ?? defaultSignOut, icon: <Icon name="sign-out-alt" /> },
-    ];
-    return base;
-  }, [onSignOut]);
-
-  const _items = items?.length ? items : defaultItems;
-
-  // Close on outside click + Esc
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (!open) return;
-      const t = e.target as Node;
-      if (btnRef.current?.contains(t)) return;
-      if (listRef.current?.contains(t)) return;
-      setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (!open) return;
-      if (e.key === "Escape") {
-        setOpen(false);
-        btnRef.current?.focus();
-      }
-    };
-    document.addEventListener("mousedown", onDocClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDocClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const focusItem = (idx: number) => {
-    const el = itemRefs.current[idx];
-    if (el) (el as HTMLElement).focus();
-  };
-
-  const onButtonKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      setOpen(true);
-      setTimeout(() => focusItem(0), 0);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setOpen(true);
-      setTimeout(() => focusItem(_items.length - 1), 0);
-    }
-  };
-
-  const onMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const currentIndex = itemRefs.current.findIndex((n) => n === document.activeElement);
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      focusItem((currentIndex + 1) % _items.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      focusItem((currentIndex - 1 + _items.length) % _items.length);
-    } else if (e.key === "Home") {
-      e.preventDefault();
-      focusItem(0);
-    } else if (e.key === "End") {
-      e.preventDefault();
-      focusItem(_items.length - 1);
-    }
-  };
-
-  // accept string from <select>, clamp to Locale
-  const handleLanguageChange = async (langStr: string) => {
-    const lang = toLocale(langStr);
-    setLocale(lang);
-    const supabase = supabaseBrowser;
-    await supabase.from("user_profiles").update({ preferred_language: lang }).eq("user_id", userId);
-  };
+  const safeItems: UserMenuItem[] = Array.isArray(items) ? items : [];
 
   return (
-    <div className={`relative ${className}`}>
+    <div className="relative inline-block text-left">
       <button
-        ref={btnRef}
         type="button"
+        className="inline-flex items-center gap-2 rounded-ds-xl border border-white/10 px-3 py-2 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary/40"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-controls="user-menu"
-        onClick={() => setOpen((v) => !v)}
-        onKeyDown={onButtonKeyDown}
-        className="h-9 w-9 rounded-full bg-vibrantPurple/15 text-vibrantPurple font-semibold flex items-center justify-center hover:bg-vibrantPurple/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        title={email ?? name ?? "User"}
+        onClick={() => setOpen((o) => !o)}
       >
-        {localAvatar ? (
-          <Image
-            src={localAvatar}
-            alt=""
-            className="h-9 w-9 rounded-full object-cover"
-            decoding="async"
-            width={40}
-            height={40}
-          />
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
         ) : (
-          fallbackInitial
+          <span
+            aria-hidden
+            className="h-8 w-8 rounded-full bg-primary/20 text-primary grid place-items-center text-sm font-semibold"
+          >
+            {initials}
+          </span>
         )}
+        <span className="text-sm text-foreground/80">
+          {email ?? userId ?? 'User'}
+        </span>
+        <svg
+          className="h-4 w-4 opacity-70"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+            clipRule="evenodd"
+          />
+        </svg>
       </button>
 
       {open && (
         <div
-          id="user-menu"
           role="menu"
-          ref={listRef}
-          tabIndex={-1}
-          onKeyDown={onMenuKeyDown}
-          className="absolute right-0 mt-2 w-64 rounded-2xl border border-vibrantPurple/20 bg-background dark:bg-dark shadow-lg overflow-hidden"
+          aria-label="User menu"
+          className="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-ds-xl border border-white/10 bg-background/95 backdrop-blur-lg shadow-xl"
+          onMouseLeave={() => setOpen(false)}
         >
-          {showEmail && (email || name) && (
-            <div className="px-4 py-3 text-small text-muted-foreground dark:text-foreground/70 border-b border-vibrantPurple/15">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-full bg-vibrantPurple/15 flex items-center justify-center overflow-hidden">
-                  {localAvatar ? (
-                    <Image
-                      src={localAvatar}
-                      alt=""
-                      className="h-9 w-9 object-cover"
-                      decoding="async"
-                      width={40}
-                      height={40}
-                    />
-                  ) : (
-                    <span className="text-vibrantPurple font-semibold">{fallbackInitial}</span>
-                  )}
-                </div>
-                <div>
-                  <div className="font-medium text-foreground dark:text-foreground">{name ?? email}</div>
-                  {email && name && <div className="opacity-80">{email}</div>}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="px-4 py-3 border-b border-vibrantPurple/15">
-            <label className="block text-small mb-1">{t("userMenu.language")}</label>
-            <select
-              className="w-full rounded-md bg-background dark:bg-dark border border-vibrantPurple/20 px-2 py-1"
-              value={locale}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-            >
-              <option value="en">English</option>
-              <option value="ur">Urdu</option>
-              <option value="ar">Arabic</option>
-              <option value="fr">French</option>
-            </select>
+          <div className="px-3 py-2 border-b border-white/10">
+            <div className="text-sm font-medium">{email ?? 'User'}</div>
+            {userId && <div className="text-xs opacity-70">{userId}</div>}
           </div>
 
-          <div className="py-1">
-            {_items.map((it, idx) => {
-              const common =
-                "w-full text-left px-4 py-3 flex items-center gap-2 hover:bg-vibrantPurple/10 focus:bg-vibrantPurple/10 focus:outline-none";
-              if (it.href) {
-                const isInternal = it.href.startsWith("/") || it.href.startsWith("#");
-                return isInternal ? (
-                  <Link
-                    key={it.label}
-                    href={it.href}
-                    role="menuitem"
-                    ref={(el) => { itemRefs.current[idx] = el; }}
-                    className={common}
-                    onClick={() => setOpen(false)}
-                  >
-                    {it.icon} <span>{it.label}</span>
-                  </Link>
-                ) : (
+          <ul className="py-1">
+            {safeItems.map((it) => (
+              <li key={it.id}>
+                {it.href ? (
                   <a
-                    key={it.label}
                     href={it.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    role="menuitem"
-                    ref={(el) => { itemRefs.current[idx] = el; }}
-                    className={common}
+                    className="block px-3 py-2 text-sm hover:bg-white/5"
                     onClick={() => setOpen(false)}
                   >
-                    {it.icon} <span>{it.label}</span>
+                    {it.label}
                   </a>
-                );
-              }
-              return (
-                <button
-                  key={it.label}
-                  type="button"
-                  role="menuitem"
-                  ref={(el) => { itemRefs.current[idx] = el; }}
-                  className={common}
-                  onClick={async () => {
-                    await it.onClick?.();
-                    setOpen(false);
-                  }}
-                >
-                  {it.icon} <span>{it.label}</span>
-                </button>
-              );
-            })}
+                ) : (
+                  <button
+                    type="button"
+                    className="w-full text-left block px-3 py-2 text-sm hover:bg-white/5"
+                    onClick={() => {
+                      setOpen(false);
+                      it.onSelect?.();
+                    }}
+                  >
+                    {it.label}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="border-t border-white/10">
+            <button
+              type="button"
+              className="w-full text-left block px-3 py-2 text-sm text-danger hover:bg-danger/10"
+              onClick={() => {
+                setOpen(false);
+                onSignOut?.();
+              }}
+            >
+              Sign out
+            </button>
           </div>
         </div>
       )}
     </div>
   );
-};
+}
+
+export default UserMenu;

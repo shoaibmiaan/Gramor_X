@@ -96,13 +96,18 @@ export function DesktopNav({
               <UserMenu
                 userId={user.id}
                 email={user.email}
-                name={user.name}
                 avatarUrl={user.avatarUrl}
                 onSignOut={signOut}
                 /** FIX: UserMenu expects `items`, not `links` */
                 items={[
-                  { href: '/account/billing', label: 'Billing' },
-                  { href: '/account/referrals', label: 'Referrals' },
+                  {
+                    href: '/account/billing', label: 'Billing',
+                    id: ''
+                  },
+                  {
+                    href: '/account/referrals', label: 'Referrals',
+                    id: ''
+                  },
                 ]}
               />
             ) : (

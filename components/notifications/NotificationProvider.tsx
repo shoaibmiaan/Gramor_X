@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { useToast } from '@/components/design-system/Toaster';
+import type { AuthChangeEvent, Session, SupabaseClient } from '@supabase/supabase-js';
 
 export type Notification = {
   id: string;
@@ -33,8 +34,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   // Works whether supabaseBrowser is an instance or a factory
   const supabase = useMemo(() => {
-    const maybeFn = supabaseBrowser as unknown as (() => any) | object;
-    return typeof maybeFn === 'function' ? (maybeFn as any)() : (maybeFn as any);
+    const maybeFn = supabaseBrowser as unknown as (() => unknown) | object;
+    const client = typeof maybeFn === 'function' ? (maybeFn as any)() : (maybeFn as any);
+    return client as SupabaseClient;
   }, []);
 
   // Track auth state (initial + changes). Clear notifications on logout.
@@ -42,17 +44,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     let cancelled = false;
 
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!cancelled) setHasSession(!!session);
     })();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_e, session) => {
-      setHasSession(!!session);
-      if (!session) setNotifications([]);
-    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        setHasSession(!!session);
+        if (!session) setNotifications([]);
+      }
+    );
 
     return () => {
-      subscription.subscription.unsubscribe();
+      subscription.unsubscribe(); // ✅ correct cleanup
       cancelled = true;
     };
   }, [supabase]);
@@ -73,7 +81,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       }
     })();
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [hasSession]);
 
   // Realtime subscription (only when logged in)
@@ -85,15 +95,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
-        (payload: any) => {
-          const n = payload.new as Notification;
+        (payload: { new: Notification }) => { // ✅ typed payload
+          const n = payload.new;
           setNotifications((prev) => [n, ...prev]);
           toast.info(n.title ?? 'Notification', n.body ?? undefined);
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [hasSession, supabase, toast]);
 
   const markRead = useCallback(async (id: string) => {
@@ -109,7 +121,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const unread = useMemo(() => notifications.filter((n) => !n.read_at).length, [notifications]);
 
-  const value = useMemo(() => ({ notifications, unread, markRead }), [notifications, unread, markRead]);
+  const value = useMemo(
+    () => ({ notifications, unread, markRead }),
+    [notifications, unread, markRead]
+  );
 
   return <NotificationCtx.Provider value={value}>{children}</NotificationCtx.Provider>;
 }
