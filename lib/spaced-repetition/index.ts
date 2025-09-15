@@ -11,6 +11,8 @@ export interface Drill {
   due: Date;
 }
 
+const intervals = [1, 3, 7, 14, 30];
+
 /**
  * Schedule the next review for a drill using a simplified SM-2 algorithm.
  * @param drill Current drill state
@@ -36,4 +38,16 @@ export function scheduleDrill(drill: Drill, grade: number): Drill {
  */
 export function isDue(drill: Drill, date: Date = new Date()): boolean {
   return drill.due.getTime() <= date.getTime();
+}
+
+/**
+ * Returns the next review date given the number of completed repetitions.
+ * The interval grows over time following a simple spaced repetition sequence.
+ */
+export function scheduleReview(repetitions: number): Date {
+  const idx = Math.min(repetitions, intervals.length - 1);
+  const days = intervals[idx];
+  const next = new Date();
+  next.setDate(next.getDate() + days);
+  return next;
 }
