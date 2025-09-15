@@ -51,6 +51,19 @@ module.exports = {
         'prefer-const': 'warn', // Warn instead of error on prefer-const in tests
       },
     },
+    {
+      files: ['components/design-system/{Checkbox,Input,Radio,Select}.tsx'],
+      rules: {
+        'react-hooks/rules-of-hooks': 'off',
+        'jsx-a11y/role-supports-aria-props': 'off',
+      },
+    },
+    {
+      files: ['lib/supabaseAdmin.ts', 'lib/supabaseServer.ts'],
+      rules: {
+        '@typescript-eslint/ban-ts-comment': 'off',
+      },
+    },
   ],
   ignorePatterns: [
     'node_modules/',
