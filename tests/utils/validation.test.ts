@@ -1,5 +1,5 @@
 import { strict as assert } from 'node:assert';
-import { isValidEmail, isValidE164Phone } from '../utils/validation';
+import { isValidEmail, isValidE164Phone } from '../../utils/validation';
 
 (() => {
   const goodEmails = ['user@example.com', 'name+tag@sub.domain.com'];

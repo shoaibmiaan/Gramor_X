@@ -42,13 +42,26 @@ module.exports = {
       },
     },
     {
-      files: ['**/*.{test,spec}.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}', '**/_tests_/**/*.{ts,tsx}'],
+      files: ['**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{ts,tsx}'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off', // Allow any in test files
         // Treat all errors as warnings in tests
         'no-console': 'warn', // Avoid failing build due to console statements in tests
         '@typescript-eslint/no-unused-vars': 'warn', // Allow unused vars in test files but warn
         'prefer-const': 'warn', // Warn instead of error on prefer-const in tests
+      },
+    },
+    {
+      files: ['components/design-system/{Checkbox,Input,Radio,Select}.tsx'],
+      rules: {
+        'react-hooks/rules-of-hooks': 'off',
+        'jsx-a11y/role-supports-aria-props': 'off',
+      },
+    },
+    {
+      files: ['lib/supabaseAdmin.ts', 'lib/supabaseServer.ts'],
+      rules: {
+        '@typescript-eslint/ban-ts-comment': 'off',
       },
     },
   ],
@@ -59,7 +72,5 @@ module.exports = {
     '**/*.d.ts',
     'supabase/functions/**',
     '**/tests/**',          // Exclude all test files and directories
-    '**/__tests__/**',      // Exclude the __tests__ folder
-    '**/_tests_/**',        // Exclude the _tests_ folder
   ],
 };

@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { resolve } from 'node:path';
 
 // Stub env module to avoid heavy deps
-const envPath = resolve(__dirname, '../lib/env.ts');
+const envPath = resolve(__dirname, '../../lib/env.ts');
 require.cache[envPath] = {
   exports: {
     env: {
@@ -57,7 +57,7 @@ require.cache[require.resolve('@supabase/supabase-js')] = {
   exports: { createClient: () => supabaseClient },
 };
 
-const checkOtp = require('../pages/api/check-otp').default;
+const checkOtp = require('../../pages/api/check-otp').default;
 
 (async () => {
   // Success response

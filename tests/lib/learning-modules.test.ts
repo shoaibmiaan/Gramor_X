@@ -1,9 +1,9 @@
 import { strict as assert } from 'node:assert';
-import { recommendTasks, HistoryItem } from '../lib/recommendations';
-import { scheduleDrill, isDue, Drill } from '../lib/spaced-repetition';
-import { calibrateDifficulty, Performance } from '../lib/difficulty';
-import { mapToRemedialExercises } from '../lib/error-mapping';
-import { selectNextTask } from '../lib/next-task';
+import { recommendTasks, HistoryItem } from '../../lib/recommendations';
+import { scheduleDrill, isDue, Drill } from '../../lib/spaced-repetition';
+import { calibrateDifficulty, Performance } from '../../lib/difficulty';
+import { mapToRemedialExercises } from '../../lib/error-mapping';
+import { selectNextTask } from '../../lib/next-task';
 
 (async () => {
   const history: HistoryItem[] = [
