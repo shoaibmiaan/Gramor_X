@@ -36,8 +36,6 @@ npm run dev
 ```
 
 Update values in `.env` as needed before running the app.
-=======
-```
 
 ### Environment Variables
 Copy `.env.example` to `.env` and set the required values. The following variables are recognized:
