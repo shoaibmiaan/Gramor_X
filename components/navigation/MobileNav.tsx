@@ -8,7 +8,7 @@ import { NavLink } from '@/components/design-system/NavLink';
 import { NotificationBell } from '@/components/design-system/NotificationBell';
 import { FireStreak } from './FireStreak';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
-import { MODULE_LINKS, NAV } from './constants';
+import { MODULE_LINKS, NAV, USER_MENU_LINKS } from './constants';
 
 interface UserInfo {
   id: string | null;
@@ -47,6 +47,9 @@ export function MobileNav({
 }: MobileNavProps) {
   const canSeePartners = role === 'partner' || role === 'admin';
   const canSeeAdmin = role === 'admin' && showAdmin;
+  const mobileItemClass = 'block rounded-lg px-3 py-3 hover:bg-muted';
+
+  const closeMenu = React.useCallback(() => setMobileOpen(false), [setMobileOpen]);
 
   const overlay = (
     <div
@@ -101,7 +104,8 @@ export function MobileNav({
               <li>
                 <NavLink
                   href="/dashboard"
-                  className="block rounded-lg px-3 py-3 hover:bg-muted"
+                  className={mobileItemClass}
+                  onClick={closeMenu}
                 >
                   Dashboard
                 </NavLink>
@@ -111,7 +115,8 @@ export function MobileNav({
             <li>
               <NavLink
                 href="/learning"
-                className="block rounded-lg px-3 py-3 hover:bg-muted"
+                className={mobileItemClass}
+                onClick={closeMenu}
               >
                 Learning
               </NavLink>
@@ -144,6 +149,10 @@ export function MobileNav({
                       <NavLink
                         href={m.href}
                         className="block px-4 py-3 hover:bg-muted"
+                        onClick={() => {
+                          setMobileModulesOpen(false);
+                          closeMenu();
+                        }}
                       >
                         {m.label}
                       </NavLink>
@@ -157,7 +166,8 @@ export function MobileNav({
               <li key={n.href}>
                 <NavLink
                   href={n.href}
-                  className="block rounded-lg px-3 py-3 hover:bg-muted"
+                  className={mobileItemClass}
+                  onClick={closeMenu}
                 >
                   {n.label}
                 </NavLink>
@@ -168,7 +178,8 @@ export function MobileNav({
               <li>
                 <NavLink
                   href="/partners"
-                  className="block rounded-lg px-3 py-3 hover:bg-muted"
+                  className={mobileItemClass}
+                  onClick={closeMenu}
                 >
                   Partners
                 </NavLink>
@@ -178,33 +189,22 @@ export function MobileNav({
               <li>
                 <NavLink
                   href="/admin/partners"
-                  className="block rounded-lg px-3 py-3 hover:bg-muted"
+                  className={mobileItemClass}
+                  onClick={closeMenu}
                 >
                   Admin
                 </NavLink>
               </li>
             )}
 
-            {user.id && (
-              <>
-                <li>
-                  <NavLink
-                    href="/account/billing"
-                    className="block rounded-lg px-3 py-3 hover:bg-muted"
-                  >
-                    Billing
+            {user.id &&
+              USER_MENU_LINKS.map((item) => (
+                <li key={item.id}>
+                  <NavLink href={item.href} className={mobileItemClass} onClick={closeMenu}>
+                    {item.label}
                   </NavLink>
                 </li>
-                <li>
-                  <NavLink
-                    href="/account/referrals"
-                    className="block rounded-lg px-3 py-3 hover:bg-muted"
-                  >
-                    Referrals
-                  </NavLink>
-                </li>
-              </>
-            )}
+              ))}
           </ul>
         </nav>
       </Container>

@@ -33,3 +33,11 @@ export const NAV: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/predictor', label: 'Band Predictor' },
   { href: '/pricing',   label: 'Pricing' },
 ];
+
+export const USER_MENU_LINKS: ReadonlyArray<{ id: string; href: string; label: string }> = [
+  { id: 'account',      href: '/account',           label: 'Account' },
+  { id: 'settings',     href: '/settings',          label: 'Settings' },
+  { id: 'notifications', href: '/notifications',    label: 'Notifications' },
+  { id: 'billing',      href: '/account/billing',   label: 'Billing' },
+  { id: 'referrals',    href: '/account/referrals', label: 'Referrals' },
+];

@@ -8,7 +8,7 @@ import { NotificationBell } from '@/components/design-system/NotificationBell';
 import { ModuleMenu } from './ModuleMenu';
 import { FireStreak } from './FireStreak';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
-import { NAV } from './constants';
+import { NAV, USER_MENU_LINKS } from './constants';
 
 interface UserInfo {
   id: string | null;
@@ -47,35 +47,38 @@ export function DesktopNav({
   const canSeePartners = role === 'partner' || role === 'admin';
   const canSeeAdmin = role === 'admin' && showAdmin;
 
+  const navItemClass =
+    'nav-pill text-small font-medium text-foreground/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
   return (
     <nav className={className} aria-label="Primary" {...rest}>
       <ul className="relative flex items-center gap-2">
         {user.id && (
           <li>
-            <NavLink href="/dashboard" className="px-3 py-2 rounded-lg hover:bg-muted" label="Dashboard" />
+            <NavLink href="/dashboard" className={navItemClass} label="Dashboard" />
           </li>
         )}
 
         <ModuleMenu open={openModules} setOpen={setOpenModules} modulesRef={modulesRef} />
 
         <li>
-          <NavLink href="/learning" className="px-3 py-2 rounded-lg hover:bg-muted" label="Learning" />
+          <NavLink href="/learning" className={navItemClass} label="Learning" />
         </li>
 
         {NAV.map((n) => (
           <li key={n.href}>
-            <NavLink href={n.href} className="px-3 py-2 rounded-lg hover:bg-muted" label={n.label} />
+            <NavLink href={n.href} className={navItemClass} label={n.label} />
           </li>
         ))}
 
         {canSeePartners && (
           <li>
-            <NavLink href="/partners" className="px-3 py-2 rounded-lg hover:bg-muted" label="Partners" />
+            <NavLink href="/partners" className={navItemClass} label="Partners" />
           </li>
         )}
         {canSeeAdmin && (
           <li>
-            <NavLink href="/admin/partners" className="px-3 py-2 rounded-lg hover:bg-muted" label="Admin" />
+            <NavLink href="/admin/partners" className={navItemClass} label="Admin" />
           </li>
         )}
 
@@ -98,17 +101,11 @@ export function DesktopNav({
                 email={user.email}
                 avatarUrl={user.avatarUrl}
                 onSignOut={signOut}
-                /** FIX: UserMenu expects `items`, not `links` */
-                items={[
-                  {
-                    href: '/account/billing', label: 'Billing',
-                    id: ''
-                  },
-                  {
-                    href: '/account/referrals', label: 'Referrals',
-                    id: ''
-                  },
-                ]}
+                items={USER_MENU_LINKS.map((link) => ({
+                  id: link.id,
+                  label: link.label,
+                  href: link.href,
+                }))}
               />
             ) : (
               <Link
