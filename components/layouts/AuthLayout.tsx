@@ -3,6 +3,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { ThemeToggle } from '@/components/design-system/ThemeToggle';
 
 type Props = {
@@ -15,7 +16,7 @@ type Props = {
 };
 
 const DefaultRight = () => (
-  <div className="relative h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-purpleVibe/20 via-electricBlue/10 to-neonGreen/10 dark:from-dark/70 dark:to-darker/80">
+  <div className="relative h-full w-full flex flex-col items-center justify-center bg-gradient-to-br from-purpleVibe/20 via-electricBlue/10 to-neonGreen/10">
     <Image
       src="/brand/logo.png"
       alt="GramorX Logo"
@@ -24,7 +25,7 @@ const DefaultRight = () => (
       className="h-24 w-24 md:h-32 md:w-32 object-contain drop-shadow-lg"
       priority
     />
-    <h2 className="mt-6 text-h3 font-semibold text-grayish dark:text-gray-300">Your IELTS Companion</h2>
+    <h2 className="mt-6 text-h3 font-semibold text-muted-foreground">Your IELTS Companion</h2>
   </div>
 );
 
@@ -42,7 +43,7 @@ export default function AuthLayout({
   const [mobileView, setMobileView] = React.useState<'left' | 'right'>('left');
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground dark:bg-gradient-to-br dark:from-dark/90 dark:to-darker">
+    <div className="relative min-h-screen bg-background text-foreground">
       {/* Theme toggle */}
       <div className="absolute right-4 top-4 z-40">
         <ThemeToggle />
@@ -53,18 +54,18 @@ export default function AuthLayout({
         
         {/* LEFT (form) */}
         {(mobileView === 'left' || !showRightOnMobile) && (
-          <section className="flex items-center justify-center bg-white dark:bg-dark px-8 py-12 pb-safe md:pb-12">
+          <section className="flex items-center justify-center bg-background px-8 py-12 pb-safe md:pb-12">
             <div className="w-full max-w-md space-y-6">
               {/* Brand header */}
-              <div className="flex items-center gap-3 mb-6">
+              <Link href="/" className="flex items-center gap-3 mb-6 hover:opacity-80 transition-opacity">
                 <Image src="/brand/logo.png" alt="GramorX" width={40} height={40} priority />
                 <span className="font-slab text-h2 font-bold text-gradient-primary">GramorX</span>
-              </div>
+              </Link>
 
               <div>
-                <h1 className="font-slab text-h1 sm:text-display font-bold text-gray-800 dark:text-white">{title}</h1>
+                <h1 className="font-slab text-h1 sm:text-display font-bold text-foreground">{title}</h1>
                 {subtitle && (
-                  <p className="mt-2 text-small text-grayish dark:text-gray-400">{subtitle}</p>
+                  <p className="mt-2 text-small text-muted-foreground">{subtitle}</p>
                 )}
               </div>
 
@@ -74,13 +75,13 @@ export default function AuthLayout({
         )}
 
         {/* RIGHT (info/illustration) */}
-        <aside className="hidden md:flex items-center justify-center bg-card dark:bg-darker">
+        <aside className="hidden md:flex items-center justify-center bg-muted">
           <div className="h-full w-full">{rightContent}</div>
         </aside>
 
         {/* Mobile toggle for right panel */}
         {showRightOnMobile && mobileView === 'right' && (
-          <aside className="block md:hidden border-t border-border bg-card dark:bg-darker">
+          <aside className="block md:hidden border-t border-border bg-muted">
             {rightContent}
           </aside>
         )}
