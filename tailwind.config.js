@@ -43,15 +43,15 @@ module.exports = {
         ...dsColorsSafe,
         background:           cv('background'),
         foreground:           cv('foreground'),
-        card:                 cv('lightCard'),
-        'card-foreground':    cv('foreground'),
+        card:                 cv('card'), // Choose one version (lightCard or card)
+        'card-foreground':    cv('card-foreground'),
         border:               'rgb(var(--gx-border) / <alpha-value>)',
         input:                'rgb(var(--gx-input) / <alpha-value>)',
         ring:                 cv('foreground'),
-        muted:                cv('grayish'),
-        'muted-foreground':   cv('mutedText'),
-        popover:              cv('background'),
-        'popover-foreground': cv('foreground'),
+        muted:                cv('muted'),
+        'muted-foreground':   cv('muted-foreground'),
+        popover:              cv('popover'),
+        'popover-foreground': cv('popover-foreground'),
         primary:        cv('primary'),
         primaryDark:    cv('primaryDark'),
         secondary:      cv('secondary'),
@@ -71,10 +71,10 @@ module.exports = {
         lightBg:        cv('lightBg'),
         lightText:      cv('lightText'),
         grayish:        cv('grayish'),
-        lightCard:      cv('lightCard'),
+        lightCard:      cv('lightCard'), // Choose one version (lightCard or card)
         lightBorder:    cv('lightBorder'),
         mutedText:      cv('mutedText'),
-        neutral:        'rgb(var(--color-gray) / <alpha-value>)',  // Added 'neutral' color variant
+        neutral:        'rgb(var(--color-gray) / <alpha-value>)',
       },
 
       borderRadius: {
