@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { resolve } from 'node:path';
 
 // Stub env module so supabaseBrowser works
-const envPath = resolve(__dirname, '../lib/env.ts');
+const envPath = resolve(__dirname, '../../lib/env.ts');
 require.cache[envPath] = {
   exports: {
     env: {
@@ -48,12 +48,12 @@ require.cache[require.resolve('@supabase/supabase-js')] = {
 };
 
 // Ensure a fresh supabaseBrowser uses this client
-try { delete require.cache[require.resolve('../lib/supabaseBrowser')]; } catch {}
+try { delete require.cache[require.resolve('../../lib/supabaseBrowser')]; } catch {}
 
 (global as any).fetch = async () => ({});
 (global as any).window = { location: { assign: (_p: string) => {} } };
 
-const { createMfaChallengeForUser, verifyMfaOtp } = require('../hooks/useEmailLoginMFA');
+const { createMfaChallengeForUser, verifyMfaOtp } = require('../../hooks/useEmailLoginMFA');
 
 (async () => {
   const res = await createMfaChallengeForUser({ factors: [{ id: 'factor1' }] });

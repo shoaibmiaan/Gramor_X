@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { resolve } from 'node:path';
 
 // Stub env module
-const envPath = resolve(__dirname, '../lib/env.ts');
+const envPath = resolve(__dirname, '../../../lib/env.ts');
 require.cache[envPath] = {
   exports: {
     env: {
@@ -99,7 +99,7 @@ require.cache[require.resolve('twilio')] = { exports: TwilioMock };
 // Stub fetch for email sending
 (global as any).fetch = async () => ({ ok: true });
 
-const handler = require('../pages/api/auth/login-event').default;
+const handler = require('../../../pages/api/auth/login-event').default;
 
 (async () => {
   const res = {
