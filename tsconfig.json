@@ -35,8 +35,6 @@
   "exclude": [
     "node_modules",
     "supabase/functions/**",
-    "**/tests/**",
-    "**/__tests__/**",
-    "**/_tests_/**"
+    "**/tests/**"
   ]
 }

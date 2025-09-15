@@ -6,7 +6,7 @@ RED=$'\e[31m'; GREEN=$'\e[32m'; YELLOW=$'\e[33m'; NC=$'\e[0m'
 ALLOWED="docs/audit/guard_allowlist.txt"
 DIRS="components pages layouts premium-ui common lib"
 INCLUDES=(--include='*.tsx' --include='*.ts' --include='*.jsx' --include='*.js' --include='*.css')
-EXCLUDES=(--exclude-dir node_modules --exclude-dir .next --exclude-dir public --exclude-dir .storybook --exclude-dir docs --exclude-dir supabase --exclude-dir db --exclude-dir tests --exclude-dir __tests__)
+EXCLUDES=(--exclude-dir node_modules --exclude-dir .next --exclude-dir public --exclude-dir .storybook --exclude-dir docs --exclude-dir supabase --exclude-dir db --exclude-dir tests)
 
 fail=0
 

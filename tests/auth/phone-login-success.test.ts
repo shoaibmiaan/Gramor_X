@@ -20,16 +20,16 @@ require.cache[require.resolve('react')] = { exports: ReactStub };
 
 // ---- Stub components used by the page ----
 const noop = () => null;
-require.cache[resolve(__dirname, '../components/layouts/AuthLayout.tsx')] = { exports: noop };
-require.cache[resolve(__dirname, '../components/design-system/Input.tsx')] = { exports: noop };
-require.cache[resolve(__dirname, '../components/design-system/Button.tsx')] = { exports: noop };
-require.cache[resolve(__dirname, '../components/design-system/Alert.tsx')] = { exports: noop };
+require.cache[resolve(__dirname, '../../components/layouts/AuthLayout.tsx')] = { exports: noop };
+require.cache[resolve(__dirname, '../../components/design-system/Input.tsx')] = { exports: noop };
+require.cache[resolve(__dirname, '../../components/design-system/Button.tsx')] = { exports: noop };
+require.cache[resolve(__dirname, '../../components/design-system/Alert.tsx')] = { exports: noop };
 require.cache[require.resolve('next/link')] = { exports: noop };
 require.cache[require.resolve('next/image')] = { exports: noop };
 
 // ---- Mock redirect and Supabase ----
 let redirectCalled = false;
-require.cache[resolve(__dirname, '../lib/routeAccess.ts')] = {
+require.cache[resolve(__dirname, '../../lib/routeAccess.ts')] = {
   exports: { redirectByRole: () => { redirectCalled = true; } },
 };
 const supabaseMock = {
@@ -47,7 +47,7 @@ const supabaseMock = {
     setSession: async () => {},
   },
 };
-require.cache[resolve(__dirname, '../lib/supabaseBrowser.ts')] = {
+require.cache[resolve(__dirname, '../../lib/supabaseBrowser.ts')] = {
   exports: { supabaseBrowser: supabaseMock },
 };
 
@@ -55,7 +55,7 @@ require.cache[resolve(__dirname, '../lib/supabaseBrowser.ts')] = {
 (global as any).fetch = async () => ({ ok: true });
 
 // ---- Import page and execute verifyOtp ----
-const LoginWithPhone = require('../pages/login/phone').default;
+const LoginWithPhone = require('../../pages/login/phone').default;
 
 (async () => {
   LoginWithPhone();
