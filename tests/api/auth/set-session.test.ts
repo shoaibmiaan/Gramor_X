@@ -20,7 +20,7 @@ require.cache[require.resolve('@supabase/auth-helpers-nextjs')] = {
   },
 };
 
-const handler = require('../pages/api/auth/set-session').default;
+const handler = require('../../../pages/api/auth/set-session').default;
 
 function createRes() {
   return {

@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { resolve } from 'node:path';
 
 // Stub env to satisfy supabaseBrowser
-const envPath = resolve(__dirname, '../lib/env.ts');
+const envPath = resolve(__dirname, '../../lib/env.ts');
 require.cache[envPath] = {
   exports: {
     env: {
@@ -56,8 +56,8 @@ require.cache[require.resolve('@supabase/supabase-js')] = {
 let assigned: string | undefined;
 (global as any).window = { location: { assign: (p: string) => { assigned = p; } } };
 
-const { redirectByRole } = require('../lib/routeAccess');
-const supabase = require('../lib/supabaseBrowser').supabaseBrowser;
+const { redirectByRole } = require('../../lib/routeAccess');
+const supabase = require('../../lib/supabaseBrowser').supabaseBrowser;
 
 (async () => {
   const { data, error } = await supabase.auth.signInWithPassword({

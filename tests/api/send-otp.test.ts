@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { resolve } from 'node:path';
 
 // Stub env module to avoid depending on actual env parsing
-const envPath = resolve(__dirname, '../lib/env.ts');
+const envPath = resolve(__dirname, '../../lib/env.ts');
 require.cache[envPath] = {
   exports: {
     env: {
@@ -39,7 +39,7 @@ function TwilioMock() {
 // Replace the real Twilio module
 require.cache[require.resolve('twilio')] = { exports: TwilioMock };
 
-const sendOtp = require('../pages/api/send-otp').default;
+const sendOtp = require('../../pages/api/send-otp').default;
 
 (async () => {
   // Success response

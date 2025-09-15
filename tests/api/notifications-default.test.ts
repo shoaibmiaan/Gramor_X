@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { resolve } from 'node:path';
 
 // Stub env module
-const envPath = resolve(__dirname, '../lib/env.ts');
+const envPath = resolve(__dirname, '../../lib/env.ts');
 require.cache[envPath] = { exports: { env: {} } };
 
 // Mock Supabase server client
@@ -23,11 +23,11 @@ const supabaseClient = {
     return {} as any;
   },
 };
-require.cache[require.resolve('../lib/supabaseServer')] = {
+require.cache[require.resolve('../../lib/supabaseServer')] = {
   exports: { createSupabaseServerClient: () => supabaseClient },
 };
 
-const handler = require('../pages/api/notifications/index').default;
+const handler = require('../../pages/api/notifications/index').default;
 
 (async () => {
   const res = {

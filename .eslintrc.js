@@ -42,7 +42,7 @@ module.exports = {
       },
     },
     {
-      files: ['**/*.{test,spec}.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}', '**/_tests_/**/*.{ts,tsx}'],
+      files: ['**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{ts,tsx}'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off', // Allow any in test files
         // Treat all errors as warnings in tests
@@ -59,7 +59,5 @@ module.exports = {
     '**/*.d.ts',
     'supabase/functions/**',
     '**/tests/**',          // Exclude all test files and directories
-    '**/__tests__/**',      // Exclude the __tests__ folder
-    '**/_tests_/**',        // Exclude the _tests_ folder
   ],
 };
