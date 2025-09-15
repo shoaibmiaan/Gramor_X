@@ -43,6 +43,16 @@ export default function StudioIndexPage(props: StudioIndexProps) {
     return items.filter((i) => (i.title ?? '').toLowerCase().includes(needle));
   }, [items, q]);
 
+  const dateFormatter = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'UTC',
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    []
+  );
+
   if (!props.ok) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
@@ -108,7 +118,7 @@ export default function StudioIndexPage(props: StudioIndexProps) {
                       : 'bg-sunsetRed/15 text-sunsetRed';
 
                 const when = it.updated_at
-                  ? new Date(it.updated_at).toLocaleString()
+                  ? dateFormatter.format(new Date(it.updated_at))
                   : '—';
 
                 return (
