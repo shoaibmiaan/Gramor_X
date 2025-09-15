@@ -1166,11 +1166,6 @@
   },
   {
     "type": "page",
-    "name_or_route": "pages/login/password.tsx",
-    "components_used_guess": "Alert, Input, Button, Link"
-  },
-  {
-    "type": "page",
     "name_or_route": "pages/login/phone.tsx",
     "components_used_guess": "Alert, Input, Button, Link"
   },

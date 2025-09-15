@@ -3729,22 +3729,6 @@
   },
   {
     "type": "page",
-    "name_or_route": "pages/login/password.tsx",
-    "components_used_guess": "Alert, Input, Button, Link",
-    "severity": "",
-    "fix_type": "",
-    "owner": "",
-    "due_window": "",
-    "evidence": [
-      "docs/baseline/screens/login_password_sm.png",
-      "docs/baseline/screens/login_password_md.png",
-      "docs/baseline/screens/login_password_lg.png",
-      "docs/baseline/axe/gramorx_com_login_password.json"
-    ],
-    "internal": false
-  },
-  {
-    "type": "page",
     "name_or_route": "pages/login/phone.tsx",
     "components_used_guess": "Alert, Input, Button, Link",
     "severity": "",
