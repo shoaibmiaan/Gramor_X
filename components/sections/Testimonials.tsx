@@ -73,7 +73,7 @@ export const Testimonials: React.FC = () => {
               </div>
 
               <blockquote className="mt-4 relative pl-4 border-l-4 border-border text-muted-foreground">
-                "{t.quote}"
+                &ldquo;{t.quote}&rdquo;
               </blockquote>
 
               <div className="mt-5 flex items-center gap-1 text-warning/90" aria-hidden="true">

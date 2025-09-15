@@ -58,7 +58,7 @@ const ProgressBar: React.FC<{ value: number }>= ({ value }) => (
   <div className="w-full h-2 rounded-full bg-muted/40 overflow-hidden">
     <div className="h-full w-[--w] bg-gradient-to-r from-primary/80 to-electricBlue/80 transition-[width] duration-300" style={{
       width: `${Math.min(100, Math.max(0, value))}%`,
-      // @ts-ignore
+    // @ts-expect-error: Legacy component property
       ['--w' as any]: `${Math.min(100, Math.max(0, value))}%`
     }}/>
   </div>

@@ -5,7 +5,11 @@ import type * as React from 'react';
 
 // Keep consumer compatibility: expose a React component under `Icon`
 type IconComponent = React.FC<React.SVGProps<SVGSVGElement>>;
-const withName = (name: IconName): IconComponent => (props) => <DSIcon name={name} {...props} />;
+const withName = (name: IconName): IconComponent => {
+  const NamedIcon = (props) => <DSIcon name={name} {...props} />;
+  NamedIcon.displayName = `Icon(${name})`;
+  return NamedIcon;
+};
 
 export type ModuleLink = {
   label: string;

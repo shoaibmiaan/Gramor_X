@@ -34,6 +34,15 @@ export const getServerSideProps: GetServerSideProps<StudioIndexProps> = async (c
 };
 
 export default function StudioIndexPage(props: StudioIndexProps) {
+  const [q, setQ] = React.useState('');
+  
+  const items = props.ok ? props.items : [];
+  const filtered = React.useMemo(() => {
+    const needle = q.toLowerCase().trim();
+    if (!needle) return items;
+    return items.filter((i) => (i.title ?? '').toLowerCase().includes(needle));
+  }, [items, q]);
+
   if (!props.ok) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
@@ -44,15 +53,6 @@ export default function StudioIndexPage(props: StudioIndexProps) {
       </main>
     );
   }
-
-  const { items } = props;
-  const [q, setQ] = React.useState('');
-
-  const filtered = React.useMemo(() => {
-    const needle = q.toLowerCase().trim();
-    if (!needle) return items;
-    return items.filter((i) => (i.title ?? '').toLowerCase().includes(needle));
-  }, [items, q]);
 
   return (
     <>
