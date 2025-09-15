@@ -84,7 +84,7 @@ export default function HomePage() {
   return (
     <>
       <Head>
-        <title>{t('home.title')}</title>
+        <title>{t('home.title') || 'Gramor – IELTS Prep'}</title>
         {/* Keep viewport only here (per-page), not in _document */}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
