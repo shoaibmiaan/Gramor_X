@@ -114,7 +114,7 @@ export const Modules: React.FC = () => {
           {items.map((m) => {
             const complete = m.status === 'COMPLETE';
             return (
-              <Card key={m.title} className="p-7 rounded-2xl relative hover:-translate-y-2 transition hover:shadow-glow">
+              <Card key={m.title} className="relative hover:-translate-y-2 transition hover:shadow-glow" padding="lg" interactive>
                 <Badge variant={complete ? 'success' : 'warning'} size="sm" className="absolute top-4 right-4">
                   {m.status}
                 </Badge>
@@ -130,7 +130,7 @@ export const Modules: React.FC = () => {
 
                 <ul className="mt-2">
                   {m.bullets.map((b) => (
-                    <li key={b} className="py-2 pl-6 border-b border-dashed border-purpleVibe/20 relative text-mutedText dark:text-mutedText">
+                    <li key={b} className="py-2 pl-6 border-b border-dashed border-purpleVibe/20 relative text-muted-foreground">
                       <span className="absolute left-0 top-2 text-neonGreen font-bold">✓</span>
                       {b}
                     </li>

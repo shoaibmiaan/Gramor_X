@@ -34,7 +34,8 @@ export const getServerSideProps: GetServerSideProps<ReportsPageProps> = async (c
   return { props: { ok: true, org, baseline, seedData } }
 }
 
-export default function OrgReportsPage({ ok, error, org, baseline, seedData }: ReportsPageProps){
+export default function OrgReportsPage(props: ReportsPageProps){
+  const { ok, org, baseline, seedData } = props
   const [range, setRange] = React.useState<'8w'|'12w'>('8w')
 
   if (!ok || !org){
@@ -51,8 +52,10 @@ export default function OrgReportsPage({ ok, error, org, baseline, seedData }: R
 
   // Group by week -> pivot per module for charts
   const grouped = React.useMemo(() => {
+    if (!ok || !org || !seedData) return [];
+  
     const byWeek: Record<string, Record<string, { attempts: number; avg: number | null }>> = {}
-    ;(seedData || []).forEach((r) => {
+    seedData.forEach((r) => {
       const wk = r.bucket_start_utc?.slice(0, 10) || 'unknown'
       byWeek[wk] = byWeek[wk] || {}
       byWeek[wk][r.module] = { attempts: r.attempts, avg: r.avg_score }
@@ -68,7 +71,31 @@ export default function OrgReportsPage({ ok, error, org, baseline, seedData }: R
       speaking: byWeek[w]?.speaking?.attempts || 0,
       writingAvg: byWeek[w]?.writing?.avg ?? null,
     }))
-  }, [seedData, range])
+  }, [seedData, range, ok, org])
+
+  if (!org){
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <h1 className="font-slab text-h2">Organization not found</h1>
+          <p className="mt-2 text-mutedText">It may have been removed or you lack access.</p>
+          <Link href="/institutions" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Institutions</Link>
+        </div>
+      </main>
+    )
+  }
+
+  if (!ok){
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <h1 className="font-slab text-h2">Error</h1>
+          <p className="mt-2 text-mutedText">{props.error}</p>
+          <Link href="/institutions" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Institutions</Link>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <>
