@@ -53,8 +53,8 @@ const Field = ({
 }) => (
   <label className="block rounded-lg border border-border p-3">
     <div className="flex items-center justify-between">
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-xs text-muted-foreground">{value}</span>
+      <span className="text-small font-medium">{label}</span>
+      <span className="text-caption text-muted-foreground">{value}</span>
     </div>
     <input
       aria-label={label}
@@ -66,7 +66,7 @@ const Field = ({
       onChange={(e) => onChange(Number(e.target.value))}
       className={type === 'range'
         ? 'mt-2 w-full'
-        : 'mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'}
+        : 'mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-small outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'}
     />
   </label>
 );
@@ -160,7 +160,7 @@ export default function BandPredictorForm({
           {busy ? 'Predicting…' : 'Predict my Band'}
         </button>
         {err ? (
-          <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+          <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-small">
             <p className="font-medium">Error</p>
             <p className="opacity-90">{err}</p>
           </div>

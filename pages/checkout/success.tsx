@@ -24,7 +24,7 @@ const SuccessPage: NextPage = () => {
       <main className="min-h-screen bg-background text-foreground">
         <Section>
           <Container className="max-w-3xl text-center">
-            <h1 className="mb-2 text-3xl font-semibold">You’re upgraded! 🎉</h1>
+            <h1 className="mb-2 text-h1 font-semibold">You’re upgraded! 🎉</h1>
             <p className="text-muted-foreground">
               Your subscription is active. You can now access full IELTS modules, AI feedback, and analytics.
             </p>
@@ -50,7 +50,7 @@ const SuccessPage: NextPage = () => {
               </Link>
             </div>
 
-            <p className="mt-6 text-sm text-muted-foreground">
+            <p className="mt-6 text-small text-muted-foreground">
               If you closed the window accidentally, your receipt will also be emailed.
             </p>
           </Container>

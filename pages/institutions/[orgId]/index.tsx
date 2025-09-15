@@ -33,7 +33,7 @@ export default function OrgHomePage({ ok, error, org, kpi }: OrgHomeProps){
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Organization not found</h1>
+          <h1 className="font-slab text-h2">Organization not found</h1>
           <p className="mt-2 text-mutedText">It may have been removed or you lack access.</p>
           <Link href="/institutions" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Institutions</Link>
         </div>
@@ -49,8 +49,8 @@ export default function OrgHomePage({ ok, error, org, kpi }: OrgHomeProps){
           <div className="rounded-2xl border border-lightBorder bg-card p-6">
             <header className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl md:text-3xl">{org.name}</h1>
-                {org.code && <div className="mt-1 text-sm text-mutedText">Code: {org.code}</div>}
+                <h1 className="text-h2 md:text-h1">{org.name}</h1>
+                {org.code && <div className="mt-1 text-small text-mutedText">Code: {org.code}</div>}
               </div>
               <div className="flex gap-2">
                 <Link href={`/institutions/${org.id}/students`} className="inline-flex"><Button className="bg-primary text-primary-foreground">Students</Button></Link>
@@ -66,7 +66,7 @@ export default function OrgHomePage({ ok, error, org, kpi }: OrgHomeProps){
               <KpiCard label="Mocks (7d)" value={kpi?.mocks_week ?? 0} />
             </div>
 
-            <div className="mt-6 rounded-2xl border border-border bg-background p-4 text-sm text-mutedText">
+            <div className="mt-6 rounded-2xl border border-border bg-background p-4 text-small text-mutedText">
               Use the **Students** and **Reports** tabs to drill down into cohort progress and module-level analytics.
             </div>
           </div>
@@ -79,8 +79,8 @@ export default function OrgHomePage({ ok, error, org, kpi }: OrgHomeProps){
 function KpiCard({ label, value }: { label: string; value: React.ReactNode }){
   return (
     <div className="rounded-2xl border border-lightBorder bg-card p-4">
-      <div className="text-sm text-mutedText">{label}</div>
-      <div className="mt-1 text-2xl">{value}</div>
+      <div className="text-small text-mutedText">{label}</div>
+      <div className="mt-1 text-h2">{value}</div>
     </div>
   )
 }

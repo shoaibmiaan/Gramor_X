@@ -40,7 +40,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
   }
 
   return (
-    <label className="inline-flex items-center gap-2 text-sm">
+    <label className="inline-flex items-center gap-2 text-small">
       <span className="text-mutedText">Language</span>
       <select
         className="rounded-ds border border-border bg-card px-3 py-2 text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -52,7 +52,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
           <option key={l.value} value={l.value}>{l.label}</option>
         ))}
       </select>
-      {busy && <span className="text-mutedText text-xs">…updating</span>}
+      {busy && <span className="text-mutedText text-caption">…updating</span>}
     </label>
   );
 }

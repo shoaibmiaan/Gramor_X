@@ -53,12 +53,12 @@ export function UserMenu({
         ) : (
           <span
             aria-hidden
-            className="h-8 w-8 rounded-full bg-primary/20 text-primary grid place-items-center text-sm font-semibold"
+            className="h-8 w-8 rounded-full bg-primary/20 text-primary grid place-items-center text-small font-semibold"
           >
             {initials}
           </span>
         )}
-        <span className="text-sm text-foreground/80">
+        <span className="text-small text-foreground/80">
           {email ?? userId ?? 'User'}
         </span>
         <svg
@@ -83,8 +83,8 @@ export function UserMenu({
           onMouseLeave={() => setOpen(false)}
         >
           <div className="px-3 py-2 border-b border-white/10">
-            <div className="text-sm font-medium">{email ?? 'User'}</div>
-            {userId && <div className="text-xs opacity-70">{userId}</div>}
+            <div className="text-small font-medium">{email ?? 'User'}</div>
+            {userId && <div className="text-caption opacity-70">{userId}</div>}
           </div>
 
           <ul className="py-1">
@@ -93,7 +93,7 @@ export function UserMenu({
                 {it.href ? (
                   <a
                     href={it.href}
-                    className="block px-3 py-2 text-sm hover:bg-white/5"
+                    className="block px-3 py-2 text-small hover:bg-white/5"
                     onClick={() => setOpen(false)}
                   >
                     {it.label}
@@ -101,7 +101,7 @@ export function UserMenu({
                 ) : (
                   <button
                     type="button"
-                    className="w-full text-left block px-3 py-2 text-sm hover:bg-white/5"
+                    className="w-full text-left block px-3 py-2 text-small hover:bg-white/5"
                     onClick={() => {
                       setOpen(false);
                       it.onSelect?.();
@@ -117,7 +117,7 @@ export function UserMenu({
           <div className="border-t border-white/10">
             <button
               type="button"
-              className="w-full text-left block px-3 py-2 text-sm text-danger hover:bg-danger/10"
+              className="w-full text-left block px-3 py-2 text-small text-danger hover:bg-danger/10"
               onClick={() => {
                 setOpen(false);
                 onSignOut?.();

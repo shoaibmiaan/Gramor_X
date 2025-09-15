@@ -164,7 +164,7 @@ const PricingPage: NextPage = () => {
           <Container className="pt-6 md:pt-8 pb-12 md:pb-16" aria-labelledby="pricing-title">
 
             {/* Top utility bar */}
-            <div className="mx-auto max-w-7xl mb-4 flex items-center justify-between gap-3 text-sm">
+            <div className="mx-auto max-w-7xl mb-4 flex items-center justify-between gap-3 text-small">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-2 rounded-full bg-indigo-600/10 text-indigo-700 px-2.5 py-1 font-medium">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.896l-7.336 3.869 1.402-8.168L.132 9.21l8.2-1.192L12 .587z"/></svg>
@@ -194,18 +194,18 @@ const PricingPage: NextPage = () => {
 
             {/* Hero */}
             <header className="text-center max-w-3xl mx-auto">
-              <p className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-[11px] md:text-xs text-muted-foreground bg-card/60 backdrop-blur supports-[backdrop-filter]:bg-card/40">
+              <p className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-[11px] md:text-caption text-muted-foreground bg-card/60 backdrop-blur supports-[backdrop-filter]:bg-card/40">
                 Flexible plans • Cancel anytime
               </p>
 
-              <h1 id="pricing-title" className="mt-3 md:mt-3 text-balance text-4xl md:text-5xl font-semibold leading-tight">
+              <h1 id="pricing-title" className="mt-3 md:mt-3 text-balance text-display md:text-displayLg font-semibold leading-tight">
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-cyan-500">Choose your plan</span>
               </h1>
 
-              <p className="mt-2 text-sm md:text-base text-muted-foreground text-pretty">
+              <p className="mt-2 text-small md:text-body text-muted-foreground text-pretty">
                 Upgrade for full IELTS modules, AI evaluation, and performance analytics.
               </p>
-              <div className="mt-2 text-xs text-muted-foreground">Local timezone: <strong>{timezone}</strong></div>
+              <div className="mt-2 text-caption text-muted-foreground">Local timezone: <strong>{timezone}</strong></div>
             </header>
 
             <div className="mx-auto mt-6">
@@ -217,7 +217,7 @@ const PricingPage: NextPage = () => {
               <div className="rounded-full border border-border bg-card p-1 flex" role="tablist" aria-label="Billing cycle">
                 <button
                   type="button"
-                  className={`px-4 py-1.5 text-sm rounded-full transition ${cycle === 'monthly' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`px-4 py-1.5 text-small rounded-full transition ${cycle === 'monthly' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
                   onClick={() => setCycle('monthly')}
                   aria-pressed={cycle === 'monthly'}
                 >
@@ -225,14 +225,14 @@ const PricingPage: NextPage = () => {
                 </button>
                 <button
                   type="button"
-                  className={`px-4 py-1.5 text-sm rounded-full transition ${cycle === 'annual' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`px-4 py-1.5 text-small rounded-full transition ${cycle === 'annual' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
                   onClick={() => setCycle('annual')}
                   aria-pressed={cycle === 'annual'}
                 >
                   Annual <span className="ml-1 opacity-80">(save ~2 months)</span>
                 </button>
               </div>
-              <span className="text-xs text-muted-foreground">Prices shown in {currency} before tax</span>
+              <span className="text-caption text-muted-foreground">Prices shown in {currency} before tax</span>
             </div>
 
             {/* Plans grid */}
@@ -259,26 +259,26 @@ const PricingPage: NextPage = () => {
 
                       {p.badge && <Ribbon label={p.badge} variant="accent" position="top-right" />}
 
-                      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6 text-white text-2xl bg-gradient-to-br from-purple-500 to-cyan-500">
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6 text-white text-h2 bg-gradient-to-br from-purple-500 to-cyan-500">
                         <i className={`fas ${p.icon}`} aria-hidden="true" />
                         <span className="sr-only">{p.title} icon</span>
                       </div>
 
-                      <h3 className="text-xl font-semibold mb-1 flex items-center gap-2">
-                        <i className="fas fa-circle-check text-emerald-500" aria-hidden="true" />
+                      <h3 className="text-h3 font-semibold mb-1 flex items-center gap-2">
+                        <i className="fas fa-circle-check text-success" aria-hidden="true" />
                         {p.title}
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-3">{p.subtitle}</p>
+                      <p className="text-small text-muted-foreground mb-3">{p.subtitle}</p>
 
                       <div className="mb-4">
-                        <div className="font-slab text-5xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-cyan-500 leading-none">{priceLabel}</div>
+                        <div className="font-slab text-displayLg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-cyan-500 leading-none">{priceLabel}</div>
                         <div className="text-muted-foreground mt-1">{periodLabel}</div>
                       </div>
 
                       <ul className="mt-2">
                         {p.features.map((f) => (
                           <li key={f} className="py-2 pl-6 border-b border-dashed border-purple-400/20 relative text-muted-foreground">
-                            <span className="absolute left-0 top-2 text-emerald-500 font-bold" aria-hidden="true">✓</span>
+                            <span className="absolute left-0 top-2 text-success font-bold" aria-hidden="true">✓</span>
                             {f}
                           </li>
                         ))}
@@ -294,7 +294,7 @@ const PricingPage: NextPage = () => {
                           Choose {p.title}
                         </Button>
                         {/* Make inline links underlined by default (no color-only distinction) */}
-                        <Link href="/waitlist" className="underline decoration-2 underline-offset-4 text-cyan-700 hover:opacity-90 text-sm text-center">
+                        <Link href="/waitlist" className="underline decoration-2 underline-offset-4 text-cyan-700 hover:opacity-90 text-small text-center">
                           Not ready? Join the pre-launch list
                         </Link>
                       </div>
@@ -318,8 +318,8 @@ const PricingPage: NextPage = () => {
               <h2 id="extras-heading" className="sr-only">Included features and helpful links</h2>
 
               <Card className="p-6 md:p-7 rounded-2xl">
-                <h3 className="text-lg font-medium">All plans include</h3>
-                <ul className="mt-3 list-none space-y-2 text-sm text-muted-foreground">
+                <h3 className="text-h4 font-medium">All plans include</h3>
+                <ul className="mt-3 list-none space-y-2 text-small text-muted-foreground">
                   <li>Dark/Light UI • Fully responsive</li>
                   <li>Study calendar & streaks</li>
                   <li>Core IELTS practice sets</li>
@@ -327,8 +327,8 @@ const PricingPage: NextPage = () => {
               </Card>
 
               <Card className="p-6 md:p-7 rounded-2xl">
-                <h3 className="text-lg font-medium">Need a discount?</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Have a referral code? You can apply it at checkout.</p>
+                <h3 className="text-h4 font-medium">Need a discount?</h3>
+                <p className="mt-2 text-small text-muted-foreground">Have a referral code? You can apply it at checkout.</p>
 
                 <Button
                   variant="primary"
@@ -346,7 +346,7 @@ const PricingPage: NextPage = () => {
                   Continue to checkout
                 </Button>
 
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 text-caption text-muted-foreground">
                   Or{' '}
                   <Link href="/account/referrals" className="underline decoration-2 underline-offset-4 hover:opacity-90">
                     generate your own code
@@ -356,8 +356,8 @@ const PricingPage: NextPage = () => {
               </Card>
 
               <Card className="p-6 md:p-7 rounded-2xl">
-                <h3 className="text-lg font-medium">Questions?</h3>
-                <ul className="mt-3 list-none space-y-2 text-sm text-muted-foreground">
+                <h3 className="text-h4 font-medium">Questions?</h3>
+                <ul className="mt-3 list-none space-y-2 text-small text-muted-foreground">
                   <li>
                     <Link href="/terms" className="underline decoration-2 underline-offset-4 hover:opacity-90">Billing & refunds</Link>
                   </li>
@@ -371,7 +371,7 @@ const PricingPage: NextPage = () => {
               </Card>
             </section>
 
-            <footer className="mt-8 md:mt-10 text-center text-sm text-muted-foreground">
+            <footer className="mt-8 md:mt-10 text-center text-small text-muted-foreground">
               Prices shown are indicative; taxes may apply at checkout.
             </footer>
           </Container>

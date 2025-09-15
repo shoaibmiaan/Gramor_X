@@ -199,7 +199,7 @@ export default function SignupWithPhone() {
                   ? 'Resend limit reached'
                   : `Resend code (${MAX_RESENDS - resendAttempts} left)`}
           </Button>
-          <p className="text-xs text-mutedText text-center">
+          <p className="text-caption text-mutedText text-center">
             We never share your number. Standard SMS rates may apply.
           </p>
           <p className="text-small text-mutedText text-center">

@@ -31,38 +31,38 @@ const AdminPartnersPage: NextPage = () => {
       <Head><title>Admin — Partners</title></Head>
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-6xl px-4 py-8">
-          <h1 className="text-3xl font-semibold">Admin • Partners</h1>
-          <p className="text-sm text-muted-foreground">Internal snapshot for your partner performance.</p>
+          <h1 className="text-h1 font-semibold">Admin • Partners</h1>
+          <p className="text-small text-muted-foreground">Internal snapshot for your partner performance.</p>
 
           {loading ? (
             <div className="mt-6 rounded-lg border border-border p-4">Loading…</div>
           ) : err ? (
             <div className="mt-6 rounded-lg border border-destructive/40 bg-destructive/10 p-4">
               <p className="font-medium">Couldn’t load data</p>
-              <p className="text-sm opacity-90">{err}</p>
+              <p className="text-small opacity-90">{err}</p>
             </div>
           ) : (
             <>
               <section className="mt-6 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-lg border border-border p-3">
-                  <p className="text-sm text-muted-foreground">Total signups</p>
-                  <p className="text-2xl font-semibold">{summary?.totalSignups ?? 0}</p>
+                  <p className="text-small text-muted-foreground">Total signups</p>
+                  <p className="text-h2 font-semibold">{summary?.totalSignups ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-border p-3">
-                  <p className="text-sm text-muted-foreground">Approved</p>
-                  <p className="text-2xl font-semibold">{summary?.totalApproved ?? 0}</p>
+                  <p className="text-small text-muted-foreground">Approved</p>
+                  <p className="text-h2 font-semibold">{summary?.totalApproved ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-border p-3">
-                  <p className="text-sm text-muted-foreground">Clicks</p>
-                  <p className="text-2xl font-semibold">{summary?.totalClicks ?? 0}</p>
+                  <p className="text-small text-muted-foreground">Clicks</p>
+                  <p className="text-h2 font-semibold">{summary?.totalClicks ?? 0}</p>
                 </div>
               </section>
 
               <section className="mt-8 rounded-xl border border-border p-4">
-                <h2 className="text-lg font-medium">Top Codes</h2>
+                <h2 className="text-h4 font-medium">Top Codes</h2>
                 {summary && summary.topCodes.length > 0 ? (
                   <div className="mt-2 overflow-x-auto">
-                    <table className="w-full border-collapse text-sm">
+                    <table className="w-full border-collapse text-small">
                       <thead>
                         <tr className="border-b border-border text-left">
                           <th className="py-2 pr-4">Code</th>
@@ -82,18 +82,18 @@ const AdminPartnersPage: NextPage = () => {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No redemptions yet.</p>
+                  <p className="text-small text-muted-foreground">No redemptions yet.</p>
                 )}
               </section>
 
               <section className="mt-8 rounded-xl border border-border p-4">
-                <h2 className="text-lg font-medium">Your latest code</h2>
+                <h2 className="text-h4 font-medium">Your latest code</h2>
                 {stats?.myCode ? (
-                  <code className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-sm">
+                  <code className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-small">
                     {stats.myCode}
                   </code>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No active code. Generate one on the Referrals page.</p>
+                  <p className="text-small text-muted-foreground">No active code. Generate one on the Referrals page.</p>
                 )}
               </section>
             </>

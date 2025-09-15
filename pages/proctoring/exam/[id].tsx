@@ -114,7 +114,7 @@ export default function ProctoringExamPage({ attemptId }: ExamPageProps) {
         <section className="mx-auto max-w-5xl px-4 py-6">
           <div className="rounded-2xl border border-lightBorder bg-card p-6">
             <header className="flex items-center justify-between">
-              <h1 className="font-slab text-2xl">Exam in progress</h1>
+              <h1 className="font-slab text-h2">Exam in progress</h1>
               <div className="rounded-xl bg-primary/10 px-3 py-1 text-primary">
                 Time left: {fmt(timeLeft)}
               </div>
@@ -129,7 +129,7 @@ export default function ProctoringExamPage({ attemptId }: ExamPageProps) {
             {/* Video + canvas */}
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-lightBorder bg-background p-3">
-                <div className="text-sm text-mutedText">Webcam preview</div>
+                <div className="text-small text-mutedText">Webcam preview</div>
                 <video
                   ref={videoRef}
                   className="mt-2 aspect-video w-full rounded-xl bg-dark/10"
@@ -138,9 +138,9 @@ export default function ProctoringExamPage({ attemptId }: ExamPageProps) {
                 />
               </div>
               <div className="rounded-2xl border border-lightBorder bg-background p-3">
-                <div className="text-sm text-mutedText">Analyzer buffer</div>
+                <div className="text-small text-mutedText">Analyzer buffer</div>
                 <canvas ref={canvasRef} className="mt-2 aspect-video w-full rounded-xl bg-dark/5" />
-                <div className="mt-2 text-xs text-mutedText">
+                <div className="mt-2 text-caption text-mutedText">
                   We periodically capture a frame to verify presence.
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function ProctoringExamPage({ attemptId }: ExamPageProps) {
               </Link>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-border bg-background p-4 text-sm text-mutedText">
+            <div className="mt-4 rounded-2xl border border-border bg-background p-4 text-small text-mutedText">
               Keep your face centered and avoid other people entering the frame. Suspicious events
               may be flagged.
             </div>

@@ -37,7 +37,7 @@ export default function SpeakingSettingsPage() {
           <Button onClick={save} variant="primary" className="mt-4 rounded-ds-xl">
             Save
           </Button>
-          {msg && <p className="mt-2 text-sm text-emerald-600">{msg}</p>}
+          {msg && <p className="mt-2 text-small text-success">{msg}</p>}
         </Card>
       </Container>
     </section>

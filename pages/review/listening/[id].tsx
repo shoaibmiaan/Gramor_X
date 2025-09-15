@@ -20,7 +20,7 @@ const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-5xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="rounded-2xl border border-border p-4 sm:p-6 bg-background/50 shadow-sm">{children}</div>
@@ -100,7 +100,7 @@ export default function ListeningReviewPage() {
     <Shell
       title={`Review — ${paper.title}`}
       right={
-        <div className="rounded-full border border-border px-3 py-1 text-sm">
+        <div className="rounded-full border border-border px-3 py-1 text-small">
           Score: {att.score}/{att.total} ({att.percentage}%)
         </div>
       }
@@ -108,7 +108,7 @@ export default function ListeningReviewPage() {
       <div className="grid gap-6">
         {/* Answers diff */}
         <div>
-          <h2 className="mb-2 text-base font-semibold">Answer check</h2>
+          <h2 className="mb-2 text-body font-semibold">Answer check</h2>
           <div className="grid gap-3">
             {flatQs.map((q, idx) => {
               const given = (att.answers?.[q.id] ?? '').trim();
@@ -116,8 +116,8 @@ export default function ListeningReviewPage() {
               const ok = given.toLowerCase() === key.toLowerCase();
               return (
                 <div key={q.id} className="rounded-lg border border-border p-3">
-                  <div className="mb-1 text-sm text-foreground/80">Q{idx + 1}. {q.prompt || q.id}</div>
-                  <div className="text-sm">
+                  <div className="mb-1 text-small text-foreground/80">Q{idx + 1}. {q.prompt || q.id}</div>
+                  <div className="text-small">
                     <span className={`rounded px-2 py-0.5 text-background ${ok ? 'bg-primary' : 'bg-border'}`}>{ok ? 'Correct' : 'Wrong'}</span>
                     <span className="ml-3">Your answer: <strong>{given || '—'}</strong></span>
                     {!ok && <span className="ml-3">Correct: <strong>{key}</strong></span>}
@@ -131,13 +131,13 @@ export default function ListeningReviewPage() {
         {/* Transcript */}
         {paper.transcript && (
           <div className="rounded-xl border border-border p-4">
-            <h2 className="mb-2 text-base font-semibold">Transcript</h2>
-            <p className="whitespace-pre-wrap text-sm text-foreground/80">{paper.transcript}</p>
+            <h2 className="mb-2 text-body font-semibold">Transcript</h2>
+            <p className="whitespace-pre-wrap text-small text-foreground/80">{paper.transcript}</p>
           </div>
         )}
 
         <div className="flex items-center justify-between">
-          <Link href="/listening" className="text-sm underline underline-offset-4">Try another test</Link>
+          <Link href="/listening" className="text-small underline underline-offset-4">Try another test</Link>
           <Link href="/dashboard" className="rounded-xl border border-border px-4 py-2 hover:border-primary">Go to dashboard</Link>
         </div>
       </div>

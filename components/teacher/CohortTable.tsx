@@ -42,7 +42,7 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between px-3 py-2">
-        <h4 className="text-sm font-medium text-foreground">Cohort Members</h4>
+        <h4 className="text-small font-medium text-foreground">Cohort Members</h4>
         <div className="flex items-center gap-2">
           <SortButton active={sortBy === "progress"} onClick={() => setOrder(prev => (prev === "asc" ? "desc" : "asc"))}>
             Progress {order === "asc" ? "↑" : "↓"}
@@ -51,8 +51,8 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full border-t border-border text-sm">
-          <thead className="bg-background/40 text-left text-xs text-muted-foreground">
+        <table className="w-full border-t border-border text-small">
+          <thead className="bg-background/40 text-left text-caption text-muted-foreground">
             <tr>
               <th className="px-3 py-2">Student</th>
               <th className="px-3 py-2">Email</th>
@@ -76,7 +76,7 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
                       <Avatar name={r.fullName || r.studentId} src={r.avatarUrl} />
                       <div className="min-w-0">
                         <div className="truncate text-foreground">{r.fullName || "—"}</div>
-                        <div className="text-xs text-muted-foreground">{shortId(r.studentId)}</div>
+                        <div className="text-caption text-muted-foreground">{shortId(r.studentId)}</div>
                       </div>
                     </div>
                   </td>
@@ -89,7 +89,7 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
                       <div className="w-40">
                         <Progress value={pct(r.completed ?? 0, r.total ?? 0)} />
                       </div>
-                      <span className="text-xs text-muted-foreground tabular-nums">
+                      <span className="text-caption text-muted-foreground tabular-nums">
                         {(r.completed ?? 0)}/{(r.total ?? 0)}
                       </span>
                     </div>
@@ -100,7 +100,7 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
                         <button
                           type="button"
                           onClick={() => onNudge(r.studentId)}
-                          className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground hover:bg-border/30"
+                          className="rounded-md border border-border bg-background px-2 py-1 text-caption text-foreground hover:bg-border/30"
                         >
                           Nudge
                         </button>
@@ -109,7 +109,7 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
                         <button
                           type="button"
                           onClick={() => onRemove(r.id)}
-                          className="rounded-md border border-border bg-background px-2 py-1 text-xs text-red-400 hover:bg-border/30"
+                          className="rounded-md border border-border bg-background px-2 py-1 text-caption text-red-400 hover:bg-border/30"
                         >
                           Remove
                         </button>
@@ -147,7 +147,7 @@ function SortButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-md border px-2 py-1 text-xs ${
+      className={`rounded-md border px-2 py-1 text-caption ${
         active
           ? "border-border bg-background text-foreground"
           : "border-border bg-card text-muted-foreground"
@@ -173,7 +173,7 @@ function Avatar({ name, src }: { name: string; src?: string }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <div className="grid h-8 w-8 place-items-center rounded-full border border-border bg-background text-xs text-muted-foreground">
+    <div className="grid h-8 w-8 place-items-center rounded-full border border-border bg-background text-caption text-muted-foreground">
       {initials}
     </div>
   );

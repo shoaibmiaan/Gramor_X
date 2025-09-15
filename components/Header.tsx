@@ -93,7 +93,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               />
               <span className="absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full bg-accent/90 ring-2 ring-card" />
             </span>
-            <p className="font-slab font-bold text-2xl md:text-3xl leading-none" role="heading" aria-level={1}>
+            <p className="font-slab font-bold text-h2 md:text-h1 leading-none" role="heading" aria-level={1}>
               <span className="text-gradient-primary transition-opacity group-hover:opacity-90">
                 GramorX
               </span>

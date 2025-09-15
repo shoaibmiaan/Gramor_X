@@ -41,7 +41,7 @@ export default function StudioDetailPage({ ok, error, item }: StudioDetailProps)
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Content Studio</h1>
+          <h1 className="font-slab text-h2">Content Studio</h1>
           <p className="mt-2 text-sunsetRed">{error || 'Not found'}</p>
           <Link href="/content/studio" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back</Link>
         </div>
@@ -68,7 +68,7 @@ export default function StudioDetailPage({ ok, error, item }: StudioDetailProps)
         <section className="mx-auto max-w-5xl px-4 py-6">
           <div className="rounded-2xl border border-lightBorder bg-card p-6">
             <header className="flex items-center justify-between">
-              <h1 className="text-2xl md:text-3xl">Edit Content</h1>
+              <h1 className="text-h2 md:text-h1">Edit Content</h1>
               <div className="flex gap-2">
                 <Button onClick={save} disabled={busy} className="bg-primary text-primary-foreground">{busy ? 'Saving…' : 'Save'}</Button>
                 <Link href="/content/studio" className="inline-flex"><Button variant="outline" className="border-border">Back</Button></Link>
@@ -76,10 +76,10 @@ export default function StudioDetailPage({ ok, error, item }: StudioDetailProps)
             </header>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <label className="text-sm text-mutedText">Title
+              <label className="text-small text-mutedText">Title
                 <Input value={title} onChange={(e)=>setTitle(e.target.value)} className="mt-1 rounded-xl border border-border bg-background px-3 py-2" />
               </label>
-              <label className="text-sm text-mutedText">Module
+              <label className="text-small text-mutedText">Module
                 <select value={module ?? ''} onChange={(e)=>setModule((e.target.value || null) as any)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2">
                   <option value="">—</option>
                   <option value="listening">Listening</option>
@@ -88,7 +88,7 @@ export default function StudioDetailPage({ ok, error, item }: StudioDetailProps)
                   <option value="speaking">Speaking</option>
                 </select>
               </label>
-              <label className="text-sm text-mutedText">Status
+              <label className="text-small text-mutedText">Status
                 <select value={status} onChange={(e)=>setStatus(e.target.value as any)} className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2">
                   <option value="draft">Draft</option>
                   <option value="published">Published</option>
@@ -97,11 +97,11 @@ export default function StudioDetailPage({ ok, error, item }: StudioDetailProps)
               </label>
             </div>
 
-            <label className="mt-4 block text-sm text-mutedText">Body (JSON)
-              <textarea value={body} onChange={(e)=>setBody(e.target.value)} rows={16} className="mt-1 w-full rounded-xl border border-border bg-background p-3 font-mono text-sm" />
+            <label className="mt-4 block text-small text-mutedText">Body (JSON)
+              <textarea value={body} onChange={(e)=>setBody(e.target.value)} rows={16} className="mt-1 w-full rounded-xl border border-border bg-background p-3 font-mono text-small" />
             </label>
 
-            {toast && <div className="mt-3 rounded-xl bg-success/15 px-3 py-2 text-sm text-success">{toast}</div>}
+            {toast && <div className="mt-3 rounded-xl bg-success/15 px-3 py-2 text-small text-success">{toast}</div>}
           </div>
         </section>
       </main>

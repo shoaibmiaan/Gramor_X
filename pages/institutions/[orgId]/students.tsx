@@ -56,7 +56,7 @@ export default function OrgStudentsPage({ ok, error, org }: StudentsPageProps){
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Organization not found</h1>
+          <h1 className="font-slab text-h2">Organization not found</h1>
           <p className="mt-2 text-mutedText">It may have been removed or you lack access.</p>
           <Link href="/institutions" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Institutions</Link>
         </div>
@@ -72,27 +72,27 @@ export default function OrgStudentsPage({ ok, error, org }: StudentsPageProps){
       <main className="min-h-screen bg-background">
         <section className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-slab text-2xl md:text-3xl">Students</h1>
+            <h1 className="font-slab text-h2 md:text-h1">Students</h1>
             <Link href={`/institutions/${org.id}`} className="inline-flex"><Button variant="outline" className="border-border">Back</Button></Link>
           </div>
-          <p className="mt-1 text-sm text-mutedText">Search and filter your cohort. Click a row for student analytics.</p>
+          <p className="mt-1 text-small text-mutedText">Search and filter your cohort. Click a row for student analytics.</p>
         </section>
 
         <section className="mx-auto max-w-7xl px-4">
           <div className="grid gap-3 md:grid-cols-12">
             <div className="md:col-span-6">
-              <label className="text-sm text-mutedText">Search</label>
+              <label className="text-small text-mutedText">Search</label>
               <div className="mt-1 flex items-center gap-2">
                 <Input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Name or email…" className="w-full rounded-xl border border-border bg-card px-3 py-2 focus-visible:ring-border" />
                 <Button onClick={()=>{ setPage(1); fetchData() }} className="bg-accent text-accent-foreground">Apply</Button>
               </div>
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">Min attempts</label>
+              <label className="text-small text-mutedText">Min attempts</label>
               <Input value={minAttempts} onChange={(e)=>setMinAttempts(e.target.value)} placeholder="0" className="mt-1 rounded-xl border border-border bg-card px-3 py-2" />
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">Sort</label>
+              <label className="text-small text-mutedText">Sort</label>
               <select className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2 focus-visible:ring-2 focus-visible:ring-border" value={sort} onChange={(e)=>{ setSort(e.target.value as any); setPage(1) }}> focus-visible:ring-offset-2 focus-visible:ring-offset-background
                 <option value="name">Name</option>
                 <option value="attempts">Attempts</option>
@@ -104,7 +104,7 @@ export default function OrgStudentsPage({ ok, error, org }: StudentsPageProps){
           <div className="mt-4 overflow-x-auto rounded-2xl border border-lightBorder">
             <table className="w-full min-w-[760px] divide-y divide-lightBorder">
               <thead className="bg-lightBg">
-                <tr className="text-left text-sm text-mutedText">
+                <tr className="text-left text-small text-mutedText">
                   <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Attempts</th>
@@ -136,7 +136,7 @@ export default function OrgStudentsPage({ ok, error, org }: StudentsPageProps){
                     <td className="px-4 py-3">{r.attempts_count}</td>
                     <td className="px-4 py-3">{r.latest_band ?? '—'}</td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/reports/band-analytics?userId=${r.user_id}`} className="inline-flex rounded-xl border border-border bg-background px-3 py-2 text-sm">View</Link>
+                      <Link href={`/reports/band-analytics?userId=${r.user_id}`} className="inline-flex rounded-xl border border-border bg-background px-3 py-2 text-small">View</Link>
                     </td>
                   </tr>
                 ))}

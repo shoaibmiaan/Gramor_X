@@ -80,20 +80,20 @@ export default function BookingsIndexPage(){
         <section className="border-b border-border bg-background/80 backdrop-blur">
           <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="flex items-center justify-between">
-              <h1 className="font-slab text-2xl md:text-3xl">Bookings</h1>
+              <h1 className="font-slab text-h2 md:text-h1">Bookings</h1>
               <div className="inline-flex rounded-xl border border-border p-1">
                 <button onClick={()=>{setRole('student'); setPage('1')}} className={cls('px-3 py-1 rounded-lg', role==='student'?'bg-primary text-primary-foreground':'hover:bg-lightBg')}>Student</button>
                 <button onClick={()=>{setRole('coach'); setPage('1')}} className={cls('px-3 py-1 rounded-lg', role==='coach'?'bg-primary text-primary-foreground':'hover:bg-lightBg')}>Coach</button>
               </div>
             </div>
-            <p className="mt-2 text-sm text-mutedText">View and manage your sessions. Filter by status and date range.</p>
+            <p className="mt-2 text-small text-mutedText">View and manage your sessions. Filter by status and date range.</p>
           </div>
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-4">
           <div className="grid gap-3 md:grid-cols-12">
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">Status</label>
+              <label className="text-small text-mutedText">Status</label>
               <select className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2 focus-visible:ring-2 focus-visible:ring-border" value={status} onChange={(e)=>{ setStatus(e.target.value as any); setPage('1') }}> focus-visible:ring-offset-2 focus-visible:ring-offset-background
                 <option value="">Any</option>
                 <option value="pending">Pending</option>
@@ -103,11 +103,11 @@ export default function BookingsIndexPage(){
               </select>
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">From (UTC)</label>
+              <label className="text-small text-mutedText">From (UTC)</label>
               <Input type="datetime-local" className="mt-1" value={isoToLocal(fromUtc)} onChange={(e)=>setFromUtc(localToIso(e.target.value))} />
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">To (UTC)</label>
+              <label className="text-small text-mutedText">To (UTC)</label>
               <Input type="datetime-local" className="mt-1" value={isoToLocal(toUtc)} onChange={(e)=>setToUtc(localToIso(e.target.value))} />
             </div>
             <div className="md:col-span-3 flex items-end">
@@ -159,10 +159,10 @@ function BookingRow({ item }: { item: BookingItem }){
     <Link href={`/bookings/${item.id}`} className="block rounded-2xl border border-lightBorder bg-card p-4 hover:shadow-glow transition">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm text-mutedText">{fmtRange(item.start_utc, item.end_utc)}</div>
+          <div className="text-small text-mutedText">{fmtRange(item.start_utc, item.end_utc)}</div>
           <div className="mt-1 font-medium">{item.coach?.name || 'Coach'}</div>
         </div>
-        <span className={cls('rounded-lg px-2 py-1 text-xs', badge)}>{item.status}</span>
+        <span className={cls('rounded-lg px-2 py-1 text-caption', badge)}>{item.status}</span>
       </div>
     </Link>
   )
@@ -171,7 +171,7 @@ function BookingRow({ item }: { item: BookingItem }){
 function EmptyState({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }){
   return (
     <div className="rounded-2xl border border-border bg-card p-10 text-center">
-      <h3 className="font-slab text-xl">{title}</h3>
+      <h3 className="font-slab text-h3">{title}</h3>
       {subtitle && <p className="mt-2 text-mutedText">{subtitle}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>

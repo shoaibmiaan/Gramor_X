@@ -116,10 +116,10 @@ export default function AiTutorPage(){
         <section className="border-b border-border bg-background/80 backdrop-blur">
           <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="flex items-center justify-between">
-              <h1 className="font-slab text-2xl md:text-3xl">AI Tutor (IELTS)</h1>
+              <h1 className="font-slab text-h2 md:text-h1">AI Tutor (IELTS)</h1>
               <Link href="/reports/band-analytics" className="inline-flex"><Button variant="outline" className="border-border">Band Analytics</Button></Link>
             </div>
-            <p className="mt-1 text-sm text-mutedText">Practice and get instant AI feedback across modules.</p>
+            <p className="mt-1 text-small text-mutedText">Practice and get instant AI feedback across modules.</p>
           </div>
         </section>
 
@@ -136,7 +136,7 @@ export default function AiTutorPage(){
             {/* Messages */}
             <div className="h-[56vh] overflow-y-auto rounded-xl border border-border bg-background p-3">
               {msgs.map((msg) => (
-                <div key={msg.id} className={cls('mb-3 max-w-[80%] rounded-2xl p-3 text-sm',
+                <div key={msg.id} className={cls('mb-3 max-w-[80%] rounded-2xl p-3 text-small',
                   msg.role==='user' ? 'ml-auto bg-electricBlue/10 text-foreground' : 'mr-auto bg-lightBg text-foreground')
                 }>
                   {msg.text}
@@ -158,28 +158,28 @@ export default function AiTutorPage(){
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {recState==='idle' && <Button onClick={startRecording} className="bg-primary text-primary-foreground">Start recording</Button>}
                 {recState==='recording' && <Button onClick={stopRecording} className="bg-sunsetRed text-lightText">Stop</Button>}
-                {recState==='processing' && <div className="text-sm text-mutedText">Processing…</div>}
+                {recState==='processing' && <div className="text-small text-mutedText">Processing…</div>}
               </div>
             )}
 
             {/* Quick suggestions */}
             <div className="mt-3 flex flex-wrap gap-2">
               {suggestions.map((s, i) => (
-                <button key={i} onClick={()=>{ setInput(s) }} className="rounded-xl border border-border bg-background px-3 py-2 text-xs hover:bg-lightBg">{s}</button>
+                <button key={i} onClick={()=>{ setInput(s) }} className="rounded-xl border border-border bg-background px-3 py-2 text-caption hover:bg-lightBg">{s}</button>
               ))}
             </div>
           </div>
 
           {/* Plan sidebar */}
           <aside className="rounded-2xl border border-lightBorder bg-card p-4">
-            <h3 className="font-slab text-lg">My Plan</h3>
-            <ul className="mt-2 space-y-2 text-sm">
+            <h3 className="font-slab text-h4">My Plan</h3>
+            <ul className="mt-2 space-y-2 text-small">
               <li className="rounded-xl border border-border bg-background p-3">Writing: 3 tasks / week</li>
               <li className="rounded-xl border border-border bg-background p-3">Speaking: 2 recordings / week</li>
               <li className="rounded-xl border border-border bg-background p-3">Reading: 4 passages / week</li>
               <li className="rounded-xl border border-border bg-background p-3">Listening: 4 sections / week</li>
             </ul>
-            <div className="mt-3 text-sm text-mutedText">Progress updates appear as you practice.</div>
+            <div className="mt-3 text-small text-mutedText">Progress updates appear as you practice.</div>
           </aside>
         </section>
       </main>

@@ -150,7 +150,7 @@ function AdminUsers() {
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
         <div className="mb-8">
-          <h1 className="font-slab text-4xl mb-2 text-gradient-primary">Users</h1>
+          <h1 className="font-slab text-display mb-2 text-gradient-primary">Users</h1>
           <p className="text-grayish">View all users and set roles.</p>
         </div>
 
@@ -176,14 +176,14 @@ function AdminUsers() {
             <table className="min-w-full text-left">
               <thead>
                 <tr className="border-b border-black/5 dark:border-white/10">
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">Name</th>
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">Email</th>
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">User ID</th>
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">Role</th>
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">Last Login</th>
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">Account Created</th>
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">Premium PIN</th>
-                  <th className="px-5 py-3 text-xs uppercase tracking-wider">Actions</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Name</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Email</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">User ID</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Role</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Last Login</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Account Created</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Premium PIN</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,17 +201,17 @@ function AdminUsers() {
                   filtered.map(u => (
                     <tr key={u.id} className="border-t border-black/5 dark:border-white/10">
                       <td className="px-5 py-4 font-medium">{u.full_name ?? '–'}</td>
-                      <td className="px-5 py-4 text-sm text-grayish">{u.email ?? '–'}</td>
-                      <td className="px-5 py-4 text-sm text-grayish">{u.id}</td>
+                      <td className="px-5 py-4 text-small text-grayish">{u.email ?? '–'}</td>
+                      <td className="px-5 py-4 text-small text-grayish">{u.id}</td>
                       <td className="px-5 py-4">
                         <Badge variant={u.role === 'admin' ? 'warning' : u.role === 'teacher' ? 'info' : 'secondary'}>
                           {u.role}
                         </Badge>
                       </td>
-                      <td className="px-5 py-4 text-sm text-grayish">
+                      <td className="px-5 py-4 text-small text-grayish">
                         {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : '–'}
                       </td>
-                      <td className="px-5 py-4 text-sm text-grayish">
+                      <td className="px-5 py-4 text-small text-grayish">
                         {u.created_at ? new Date(u.created_at).toLocaleString() : '–'}
                       </td>
                       <td className="px-5 py-4">
@@ -273,7 +273,7 @@ function AdminUsers() {
             type="password"
             placeholder="4-6 digits"
           />
-          {pinMsg && <p className="mt-2 text-sm">{pinMsg}</p>}
+          {pinMsg && <p className="mt-2 text-small">{pinMsg}</p>}
         </Modal>
       </Container>
     </section>

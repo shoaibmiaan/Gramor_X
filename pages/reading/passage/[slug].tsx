@@ -127,7 +127,7 @@ export default function ReadingRunner({ slug, title, difficulty, words, content,
       <Container>
         {/* Header + Meta */}
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-          <h1 className="text-2xl font-semibold">{title}</h1>
+          <h1 className="text-h2 font-semibold">{title}</h1>
           <div className="flex items-center gap-3">
             <Badge>{difficulty}</Badge>
             {typeof words === 'number' && words > 0 && <Badge>{words} words</Badge>}
@@ -171,7 +171,7 @@ export default function ReadingRunner({ slug, title, difficulty, words, content,
               <Card key={q.id} className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="font-medium">
-                    <span className="text-gray-500 mr-2">Question {q.order_no}.</span>
+                    <span className="text-grayish mr-2">Question {q.order_no}.</span>
                     {q.prompt}
                   </div>
                   <Badge>{q.kind.toUpperCase()}</Badge>
@@ -188,7 +188,7 @@ export default function ReadingRunner({ slug, title, difficulty, words, content,
 
         {/* Actions */}
         <div className="flex items-center justify-between mt-8">
-          <Link href="/reading" className="text-sm underline">
+          <Link href="/reading" className="text-small underline">
             Back to Catalog
           </Link>
           <div className="flex gap-3">

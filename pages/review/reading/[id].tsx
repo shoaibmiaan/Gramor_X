@@ -34,7 +34,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="grid gap-6">{children}</div>
@@ -91,13 +91,13 @@ export default function ReadingReviewPage() {
   return (
     <Shell
       title={`Review — ${paper.title}`}
-      right={<div className="rounded-full border border-border px-3 py-1 text-sm">Score: {att.score}/{att.total} ({att.percentage}%)</div>}
+      right={<div className="rounded-full border border-border px-3 py-1 text-small">Score: {att.score}/{att.total} ({att.percentage}%)</div>}
     >
       <section className="rounded-2xl border border-border p-4">
-        <h2 className="mb-2 text-base font-semibold">Performance by question type</h2>
+        <h2 className="mb-2 text-body font-semibold">Performance by question type</h2>
         <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
           {statsByType.map((s) => (
-            <div key={s.type} className="rounded-lg border border-border p-3 text-sm">
+            <div key={s.type} className="rounded-lg border border-border p-3 text-small">
               <div className="font-medium">{labelType(s.type)}</div>
               <div className="text-foreground/80">{s.correct}/{s.total} correct • {s.pct}%</div>
             </div>
@@ -106,20 +106,20 @@ export default function ReadingReviewPage() {
       </section>
 
       <section className="rounded-2xl border border-border p-4">
-        <h2 className="mb-2 text-base font-semibold">Answers & explanations</h2>
+        <h2 className="mb-2 text-body font-semibold">Answers & explanations</h2>
         <div className="grid gap-3">
           {flatQs.map((q, idx) => {
             const given = (att.answers?.[q.id] ?? '').trim();
             const ok = given.toLowerCase() === (q.answer ?? '').trim().toLowerCase();
             return (
               <div key={q.id} className="rounded-lg border border-border p-3">
-                <div className="mb-1 text-sm text-foreground/80">Q{idx + 1}. {q.prompt || q.id}</div>
-                <div className="text-sm">
+                <div className="mb-1 text-small text-foreground/80">Q{idx + 1}. {q.prompt || q.id}</div>
+                <div className="text-small">
                   <span className={`rounded px-2 py-0.5 text-background ${ok ? 'bg-primary' : 'bg-border'}`}>{ok ? 'Correct' : 'Wrong'}</span>
                   <span className="ml-3">Your answer: <strong>{given || '—'}</strong></span>
                   {!ok && <span className="ml-3">Correct: <strong>{q.answer}</strong></span>}
                 </div>
-                {q.explanation && <p className="mt-2 text-sm text-foreground/80">{q.explanation}</p>}
+                {q.explanation && <p className="mt-2 text-small text-foreground/80">{q.explanation}</p>}
               </div>
             );
           })}
@@ -127,7 +127,7 @@ export default function ReadingReviewPage() {
       </section>
 
       <div className="flex items-center justify-between">
-        <Link href="/reading" className="text-sm underline underline-offset-4">Try another reading</Link>
+        <Link href="/reading" className="text-small underline underline-offset-4">Try another reading</Link>
         <Link href="/dashboard" className="rounded-xl border border-border px-4 py-2 hover:border-primary">Go to dashboard</Link>
       </div>
     </Shell>

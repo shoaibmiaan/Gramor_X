@@ -53,7 +53,7 @@ const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-5xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="rounded-2xl border border-border p-4 sm:p-6 bg-background/50 shadow-sm">{children}</div>
@@ -147,21 +147,21 @@ export default function ListeningMockPage() {
       title={`Listening — ${paper.title}`}
       right={
         <>
-          <div className="text-sm text-foreground/80">Answered {percent}%</div>
-          <div className="rounded-full border border-border px-3 py-1 text-sm">
+          <div className="text-small text-foreground/80">Answered {percent}%</div>
+          <div className="rounded-full border border-border px-3 py-1 text-small">
             ⏱ {hhmmss(timeLeft)}
           </div>
-          <Link href="/dashboard" className="text-sm underline underline-offset-4">Save & exit</Link>
+          <Link href="/dashboard" className="text-small underline underline-offset-4">Save & exit</Link>
         </>
       }
     >
       <div className="grid gap-6">
         {/* Section controls */}
         <div className="flex items-center justify-between">
-          <div className="text-sm font-medium">Section {secIdx + 1} of {paper.sections.length} — {current.title}</div>
+          <div className="text-small font-medium">Section {secIdx + 1} of {paper.sections.length} — {current.title}</div>
           <div className="flex gap-2">
-            <button disabled={secIdx === 0} onClick={() => setSecIdx((i) => Math.max(0, i - 1))} className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">Prev</button>
-            <button disabled={secIdx === paper.sections.length - 1} onClick={() => setSecIdx((i) => Math.min(paper.sections.length - 1, i + 1))} className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">Next</button>
+            <button disabled={secIdx === 0} onClick={() => setSecIdx((i) => Math.max(0, i - 1))} className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Prev</button>
+            <button disabled={secIdx === paper.sections.length - 1} onClick={() => setSecIdx((i) => Math.min(paper.sections.length - 1, i + 1))} className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Next</button>
           </div>
         </div>
 
@@ -170,7 +170,7 @@ export default function ListeningMockPage() {
           {current.audioUrl ? (
             <audio src={current.audioUrl} controls className="w-full" />
           ) : (
-            <div className="text-sm text-foreground/70">No audio URL provided in this sample. (UI is wired for segmented audio if present.)</div>
+            <div className="text-small text-foreground/70">No audio URL provided in this sample. (UI is wired for segmented audio if present.)</div>
           )}
         </div>
 
@@ -178,14 +178,14 @@ export default function ListeningMockPage() {
         <div className="grid gap-4">
           {current.questions.map((q) => (
             <div key={q.id} className="rounded-xl border border-border p-3">
-              <div className="mb-2 text-sm font-medium">{q.prompt || `Question ${q.id}`}</div>
+              <div className="mb-2 text-small font-medium">{q.prompt || `Question ${q.id}`}</div>
               {q.type === 'mcq' && (
                 <div className="flex flex-wrap gap-2">
                   {q.options?.map((opt) => (
                     <button
                       key={opt}
                       onClick={() => setAnswers((a) => ({ ...a, [q.id]: opt }))}
-                      className={`rounded-lg border px-3 py-1 text-sm hover:border-primary ${answers[q.id] === opt ? 'border-primary' : 'border-border'}`}
+                      className={`rounded-lg border px-3 py-1 text-small hover:border-primary ${answers[q.id] === opt ? 'border-primary' : 'border-border'}`}
                       type="button"
                     >
                       {opt}
@@ -206,7 +206,7 @@ export default function ListeningMockPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <Link href="/listening" className="text-sm underline underline-offset-4">Change test</Link>
+          <Link href="/listening" className="text-small underline underline-offset-4">Change test</Link>
           <button onClick={submit} className="rounded-xl bg-primary px-4 py-2 font-medium text-background hover:opacity-90">Submit for scoring</button>
         </div>
       </div>

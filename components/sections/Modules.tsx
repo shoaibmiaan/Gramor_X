@@ -107,8 +107,8 @@ export const Modules: React.FC = () => {
     <Section id="modules">
       <Container>
         <div className="text-center mb-16">
-          <h2 className="font-slab text-4xl mb-3 text-gradient-primary">COMPREHENSIVE IELTS MODULES</h2>
-          <p className="text-muted-foreground text-lg">AI + proven pedagogy for faster score gains</p>
+          <h2 className="font-slab text-display mb-3 text-gradient-primary">COMPREHENSIVE IELTS MODULES</h2>
+          <p className="text-muted-foreground text-h4">AI + proven pedagogy for faster score gains</p>
         </div>
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((m) => {
@@ -119,11 +119,11 @@ export const Modules: React.FC = () => {
                   {m.status}
                 </Badge>
 
-                <div className="w-17.5 h-17.5 rounded-full flex items-center justify-center mb-6 text-white text-2xl bg-gradient-to-br from-purpleVibe to-electricBlue">
+                <div className="w-17.5 h-17.5 rounded-full flex items-center justify-center mb-6 text-white text-h2 bg-gradient-to-br from-purpleVibe to-electricBlue">
                   <i className={`fas ${m.icon}`} aria-hidden="true" />
                 </div>
 
-                <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                <h3 className="text-h3 font-semibold mb-3 flex items-center gap-2">
                   <Icon name="circle-check" />
                   {m.title}
                 </h3>

@@ -87,10 +87,10 @@ export default function MarketplacePage() {
         <section className="border-b border-border bg-background/80 backdrop-blur">
           <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="flex items-center justify-between">
-              <h1 className="font-slab text-2xl md:text-3xl">Find your IELTS Coach</h1>
+              <h1 className="font-slab text-h2 md:text-h1">Find your IELTS Coach</h1>
               <Link href="/marketplace/apply" className="rounded-xl bg-primary px-4 py-2 text-primary-foreground shadow-glow">Apply as a Coach</Link>
             </div>
-            <p className="mt-2 text-sm text-mutedText">Filter by language, price and rating. Book 1:1 sessions to boost your band quickly.</p>
+            <p className="mt-2 text-small text-mutedText">Filter by language, price and rating. Book 1:1 sessions to boost your band quickly.</p>
           </div>
         </section>
 
@@ -98,7 +98,7 @@ export default function MarketplacePage() {
         <section className="mx-auto max-w-7xl px-4 py-4">
           <div className="grid gap-3 md:grid-cols-12">
             <div className="md:col-span-6">
-              <label className="text-sm text-mutedText">Search</label>
+              <label className="text-small text-mutedText">Search</label>
               <div className="mt-1 flex items-center gap-2">
                 <input
                   className="w-full rounded-xl border border-border bg-card px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
@@ -110,7 +110,7 @@ export default function MarketplacePage() {
               </div>
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">Language</label>
+              <label className="text-small text-mutedText">Language</label>
               <select
                 className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2"
                 value={lang}
@@ -122,7 +122,7 @@ export default function MarketplacePage() {
               </select>
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">Sort</label>
+              <label className="text-small text-mutedText">Sort</label>
               <select
                 className="mt-1 w-full rounded-xl border border-border bg-card px-3 py-2"
                 value={sort}
@@ -170,18 +170,18 @@ function CoachCard({ coach }: { coach: CoachCardT }) {
           <Image src={coach.avatarUrl || '/avatar.svg'} alt={coach.name} fill sizes="56px" className="object-cover" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-medium">{coach.name}</h3>
-          <p className="mt-0.5 line-clamp-2 text-sm text-mutedText">{coach.headline}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <h3 className="truncate text-h4 font-medium">{coach.name}</h3>
+          <p className="mt-0.5 line-clamp-2 text-small text-mutedText">{coach.headline}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-small">
             <span className="rounded-lg bg-primary/10 px-2 py-1 text-primary">${coach.pricePerHour}/hr</span>
             <span className="rounded-lg bg-goldenYellow/10 px-2 py-1 text-goldenYellow">★ {coach.rating.avg.toFixed(1)} ({coach.rating.count})</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {coach.languages.slice(0, 3).map((l) => (
-              <span key={l} className="rounded-lg border border-lightBorder px-2 py-1 text-xs text-mutedText">{l.toUpperCase()}</span>
+              <span key={l} className="rounded-lg border border-lightBorder px-2 py-1 text-caption text-mutedText">{l.toUpperCase()}</span>
             ))}
             {coach.tags.slice(0, 3).map((t) => (
-              <span key={t} className="rounded-lg bg-electricBlue/10 px-2 py-1 text-xs text-electricBlue">#{t}</span>
+              <span key={t} className="rounded-lg bg-electricBlue/10 px-2 py-1 text-caption text-electricBlue">#{t}</span>
             ))}
           </div>
         </div>

@@ -42,17 +42,17 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
 
         <div className="min-w-0">
           {label && (
-            <label htmlFor={inputId} className="block text-sm font-medium text-foreground">
+            <label htmlFor={inputId} className="block text-small font-medium text-foreground">
               {label}
             </label>
           )}
           {description && (
-            <p id={descId} className="mt-0.5 text-sm text-muted-foreground">
+            <p id={descId} className="mt-0.5 text-small text-muted-foreground">
               {description}
             </p>
           )}
           {error && (
-            <p id={errId} className="mt-0.5 text-sm text-sunsetOrange">
+            <p id={errId} className="mt-0.5 text-small text-sunsetOrange">
               {error}
             </p>
           )}

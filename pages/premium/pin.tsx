@@ -76,14 +76,14 @@ export default function PremiumPinPage() {
 
           <section className="pr-w-full pr-max-w-md pr-mx-auto pr-p-2">
             <PrCard className="pr-p-6 md:pr-p-8">
-              <h1 className="pr-font-semibold pr-text-2xl pr-mb-2">Enter Premium PIN</h1>
+              <h1 className="pr-font-semibold pr-text-h2 pr-mb-2">Enter Premium PIN</h1>
               <p className="pr-muted pr-mb-6">
                 Access the distraction-free Premium Exam Room.
               </p>
 
               <form onSubmit={submitPin} className="pr-space-y-4" noValidate>
                 <label className="pr-block">
-                  <span className="pr-mb-1.5 pr-inline-block pr-text-sm pr-muted">PIN</span>
+                  <span className="pr-mb-1.5 pr-inline-block pr-text-small pr-muted">PIN</span>
                   <input
                     ref={inputRef}
                     type="password"
@@ -101,7 +101,7 @@ export default function PremiumPinPage() {
                 {err && (
                   <div
                     role="alert"
-                    className="pr-rounded-xl pr-border pr-border-[var(--pr-danger)] pr-bg-[color-mix(in oklab,var(--pr-danger),var(--pr-bg) 85%)] pr-text-[var(--pr-danger)] pr-p-3 pr-text-sm"
+                    className="pr-rounded-xl pr-border pr-border-[var(--pr-danger)] pr-bg-[color-mix(in oklab,var(--pr-danger),var(--pr-bg) 85%)] pr-text-[var(--pr-danger)] pr-p-3 pr-text-small"
                   >
                     {err}
                   </div>
@@ -115,12 +115,12 @@ export default function PremiumPinPage() {
                   {loading ? 'Verifying…' : 'Unlock Premium'}
                 </PrButton>
 
-                <p className="pr-text-sm pr-muted pr-text-center">
+                <p className="pr-text-small pr-muted pr-text-center">
                   You’ll be redirected to <span className="pr-font-medium">{nextUrl}</span>.
                 </p>
               </form>
 
-              <p className="pr-text-sm pr-muted pr-text-center pr-mt-4">
+              <p className="pr-text-small pr-muted pr-text-center pr-mt-4">
                 {t('premiumPin.info')}{' '}
                 {t('premiumPin.noPinPrefix')}{' '}
                 <a href="mailto:support@gramorx.com" className="pr-link">

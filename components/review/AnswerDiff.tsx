@@ -101,7 +101,7 @@ export function AnswerDiff({
 
   return (
     <div className={['space-y-3', className || ''].join(' ')}>
-      <div className="flex items-center gap-3 text-xs text-foreground/70">
+      <div className="flex items-center gap-3 text-caption text-foreground/70">
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded bg-success" /> Insertions
         </span>
@@ -111,13 +111,13 @@ export function AnswerDiff({
       </div>
 
       {titles?.original || titles?.revised ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-foreground/70">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-caption text-foreground/70">
           {titles?.original && <div>Original: {titles.original}</div>}
           {titles?.revised && <div>Revised: {titles.revised}</div>}
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-border bg-card p-4 text-sm leading-relaxed shadow-card">
+      <div className="rounded-2xl border border-border bg-card p-4 text-small leading-relaxed shadow-card">
         {chunks.map((c, idx) => renderChunk(mode, c, idx))}
       </div>
     </div>

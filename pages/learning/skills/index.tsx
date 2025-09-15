@@ -13,7 +13,7 @@ export default function SkillsHub() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <h1 className="font-slab text-4xl mb-3 text-gradient-primary">Skills Hub</h1>
+        <h1 className="font-slab text-display mb-3 text-gradient-primary">Skills Hub</h1>
         <p className="text-grayish max-w-2xl">
           Drill down into Grammar, Vocabulary, and Collocations. Each skill includes mini-lessons and practice.
         </p>

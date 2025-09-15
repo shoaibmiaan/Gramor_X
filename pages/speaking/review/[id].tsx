@@ -167,7 +167,7 @@ export default function SpeakingReview({ attempt: initial }: Props) {
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <Container>
           <Card className="p-6">
-            <h1 className="font-slab text-4xl">Review</h1>
+            <h1 className="font-slab text-display">Review</h1>
             <p className="text-grayish mt-2">Attempt not found or you don’t have access.</p>
             <div className="mt-6">
               <Button as="a" href="/speaking" variant="secondary">Back to Speaking</Button>
@@ -194,7 +194,7 @@ export default function SpeakingReview({ attempt: initial }: Props) {
           <Card className="p-6 md:col-span-2 rounded-ds-2xl">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h1 className="font-slab text-4xl">Speaking Review</h1>
+                <h1 className="font-slab text-display">Speaking Review</h1>
                 {attempt.scenario && (
                   <div className="mt-1 text-small text-grayish">Scenario: {attempt.scenario}</div>
                 )}

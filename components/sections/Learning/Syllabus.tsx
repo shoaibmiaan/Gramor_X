@@ -20,7 +20,7 @@ const syllabus: SyllabusItem[] = [
 export const Syllabus: React.FC = () => {
   return (
     <Section>
-      <h2 className="text-2xl font-bold mb-6">Your IELTS Syllabus</h2>
+      <h2 className="text-h2 font-bold mb-6">Your IELTS Syllabus</h2>
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {syllabus.map(({ title, href, unlocked }) => (
           <Link key={title} href={href} passHref legacyBehavior>

@@ -45,8 +45,8 @@ const AdminLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
       <div className="sticky top-[64px] z-30 border-b border-border bg-background/80 backdrop-blur">
         <Container className="py-3 space-y-2">
           <div>
-            <h1 className="font-slab text-xl">Admin & Teacher Console</h1>
-            <p className="text-sm text-mutedText">Manage partners, students, reviews, and cohorts.</p>
+            <h1 className="font-slab text-h3">Admin & Teacher Console</h1>
+            <p className="text-small text-mutedText">Manage partners, students, reviews, and cohorts.</p>
           </div>
 
           <div className="flex flex-wrap gap-2">

@@ -73,7 +73,7 @@ export function SavedItems() {
       <Card className="p-6 rounded-ds-2xl flex items-center justify-between">
         <div>
           <div className="font-semibold mb-1">Saved items</div>
-          <div className="text-sm text-gray-600 dark:text-muted-foreground">Sign in to access your bookmarks.</div>
+          <div className="text-small text-grayish dark:text-muted-foreground">Sign in to access your bookmarks.</div>
         </div>
         <Button href="/login" variant="primary" className="rounded-ds-xl">Sign in</Button>
       </Card>
@@ -95,7 +95,7 @@ export function SavedItems() {
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="border rounded p-1 text-sm dark:bg-black dark:border-white/10"
+          className="border rounded p-1 text-small dark:bg-black dark:border-white/10"
         >
           <option value="all">All</option>
           <option value="bookmark">Bookmarks</option>
@@ -107,14 +107,14 @@ export function SavedItems() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as 'newest' | 'oldest')}
-          className="border rounded p-1 text-sm dark:bg-black dark:border-white/10"
+          className="border rounded p-1 text-small dark:bg-black dark:border-white/10"
         >
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
         </select>
       </div>
       {items.filter((b) => filter === 'all' || b.category === filter).length === 0 ? (
-        <div className="text-sm text-gray-600 dark:text-muted-foreground">No saved items yet.</div>
+        <div className="text-small text-grayish dark:text-muted-foreground">No saved items yet.</div>
       ) : (
         <ul className="grid gap-2">
           {items
@@ -136,13 +136,13 @@ export function SavedItems() {
                     {tagList.map((t) => (
                       <span
                         key={t}
-                        className="text-xs px-1 rounded bg-vibrantPurple/10 text-vibrantPurple"
+                        className="text-caption px-1 rounded bg-vibrantPurple/10 text-vibrantPurple"
                       >
                         {t}
                       </span>
                     ))}
                     <input
-                      className="w-20 border rounded px-1 text-xs dark:bg-black dark:border-white/10"
+                      className="w-20 border rounded px-1 text-caption dark:bg-black dark:border-white/10"
                       placeholder="tag"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -160,7 +160,7 @@ export function SavedItems() {
                         }
                       }}
                     />
-                    <span className="text-sm text-gray-600 dark:text-muted-foreground">
+                    <span className="text-small text-grayish dark:text-muted-foreground">
                       {new Date(b.created_at).toLocaleDateString()}
                     </span>
                   </div>

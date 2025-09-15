@@ -12,7 +12,7 @@ type BillingState = {
 const Shell: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-bold">{title}</h1>
+      <h1 className="mb-6 text-h1 font-bold">{title}</h1>
       <div className="rounded-2xl border border-border bg-background/50 p-5 shadow-sm">{children}</div>
     </div>
   </div>
@@ -71,41 +71,41 @@ export default function BillingPage() {
   return (
     <Shell title="Billing">
       {!billing ? (
-        <div className="rounded-xl border border-border p-4 text-sm text-foreground/70">Loading…</div>
+        <div className="rounded-xl border border-border p-4 text-small text-foreground/70">Loading…</div>
       ) : (
         <div className="grid gap-5">
           {activated ? (
-            <div className="rounded-xl border border-border p-3 text-sm">
+            <div className="rounded-xl border border-border p-3 text-small">
               ✅ Your plan setup is complete. Manage details below.
             </div>
           ) : null}
 
           <section className="rounded-xl border border-border p-4">
-            <div className="text-sm font-medium">Current plan</div>
-            <div className="mt-1 text-lg font-semibold capitalize">{billing.plan ?? 'free'}</div>
-            <div className="mt-1 text-sm text-foreground/70">Status: {billing.status ?? 'none'}</div>
+            <div className="text-small font-medium">Current plan</div>
+            <div className="mt-1 text-h4 font-semibold capitalize">{billing.plan ?? 'free'}</div>
+            <div className="mt-1 text-small text-foreground/70">Status: {billing.status ?? 'none'}</div>
             {billing.renewal && (
-              <div className="mt-1 text-sm text-foreground/70">
+              <div className="mt-1 text-small text-foreground/70">
                 Renews on {new Date(billing.renewal).toLocaleDateString()}
               </div>
             )}
           </section>
 
           <section className="rounded-xl border border-border p-4">
-            <div className="text-sm font-medium">Payment method</div>
-            <div className="mt-1 text-sm text-foreground/80">{billing.paymentMethod === 'card' ? 'Card on file' : 'None'}</div>
+            <div className="text-small font-medium">Payment method</div>
+            <div className="mt-1 text-small text-foreground/80">{billing.paymentMethod === 'card' ? 'Card on file' : 'None'}</div>
             <div className="mt-3 flex gap-2">
-              <button className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary" disabled>
+              <button className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary" disabled>
                 Update card (soon)
               </button>
-              <button className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary" disabled>
+              <button className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary" disabled>
                 Download invoices (soon)
               </button>
             </div>
           </section>
 
           <div className="flex items-center justify-between">
-            <Link href="/pricing" className="text-sm underline underline-offset-4">Change plan</Link>
+            <Link href="/pricing" className="text-small underline underline-offset-4">Change plan</Link>
             <Link href="/dashboard" className="rounded-xl border border-border px-4 py-2 hover:border-primary">Go to dashboard</Link>
           </div>
         </div>

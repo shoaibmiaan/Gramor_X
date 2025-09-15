@@ -371,14 +371,14 @@ export default function SpeakingPracticePage() {
       <Head><title>Speaking Practice</title></Head>
       <Container className="py-8">
         <div className="flex items-center justify-between gap-3 mb-6">
-          <h1 className="text-2xl font-semibold">Speaking Practice</h1>
+          <h1 className="text-h2 font-semibold">Speaking Practice</h1>
           <div className="flex items-center gap-3">
-            <label className="inline-flex items-center gap-2 text-sm">
+            <label className="inline-flex items-center gap-2 text-small">
               <input type="checkbox" checked={ttsOn} onChange={(e) => setTtsOn(e.target.checked)} />
               Read prompt aloud
             </label>
-            <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10">Attempts</Link>
-            <Link href="/speaking/simulator/part2" className="px-3 py-2 rounded-xl bg-emerald-600 text-white">Part 2 Simulator</Link>
+            <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-lightBorder dark:border-white/10">Attempts</Link>
+            <Link href="/speaking/simulator/part2" className="px-3 py-2 rounded-xl bg-success text-white">Part 2 Simulator</Link>
           </div>
         </div>
 
@@ -388,10 +388,10 @@ export default function SpeakingPracticePage() {
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`px-3 py-1.5 rounded-xl border text-sm ${
+              className={`px-3 py-1.5 rounded-xl border text-small ${
                 m === mode
                   ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'border-gray-300 dark:border-white/10'
+                  : 'border-lightBorder dark:border-white/10'
               }`}
             >
               {m === 'part1' ? 'Part 1' : m === 'part2' ? 'Part 2' : 'Part 3'}
@@ -404,10 +404,10 @@ export default function SpeakingPracticePage() {
                 <button
                   key={f}
                   onClick={() => setFocus(f)}
-                  className={`px-3 py-1.5 rounded-xl border text-sm ${
+                  className={`px-3 py-1.5 rounded-xl border text-small ${
                     f === focus
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'border-gray-300 dark:border-white/10'
+                      ? 'bg-electricBlue text-white border-blue-600'
+                      : 'border-lightBorder dark:border-white/10'
                   }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -417,22 +417,22 @@ export default function SpeakingPracticePage() {
           )}
           <button
             onClick={() => setPrompt(bank.items[Math.floor(Math.random() * bank.items.length)])}
-            className="ml-auto px-3 py-1.5 rounded-xl border border-gray-300 dark:border-white/10 text-sm"
+            className="ml-auto px-3 py-1.5 rounded-xl border border-lightBorder dark:border-white/10 text-small"
           >
             New Prompt
           </button>
         </div>
 
         {/* Prompt card */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-5 bg-white/60 dark:bg-white/5">
-          <div className="text-xs uppercase tracking-wide text-gray-500">{bank.title}</div>
-          <p className="mt-2 text-base">{prompt}</p>
+        <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-5 bg-white/60 dark:bg-white/5">
+          <div className="text-caption uppercase tracking-wide text-grayish">{bank.title}</div>
+          <p className="mt-2 text-body">{prompt}</p>
 
           {/* Timers */}
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
-              <div className="text-xs text-gray-500">Prep</div>
-              <div className="font-mono text-xl">
+            <div className="rounded-xl border border-lightBorder dark:border-white/10 p-3 text-center">
+              <div className="text-caption text-grayish">Prep</div>
+              <div className="font-mono text-h3">
                 {bank.prep > 0
                   ? (stage === 'prep'
                       ? `${minutes(prepLeft)}:${seconds(prepLeft)}`
@@ -440,9 +440,9 @@ export default function SpeakingPracticePage() {
                   : '—'}
               </div>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
-              <div className="text-xs text-gray-500">Speaking</div>
-              <div className="font-mono text-xl">
+            <div className="rounded-xl border border-lightBorder dark:border-white/10 p-3 text-center">
+              <div className="text-caption text-grayish">Speaking</div>
+              <div className="font-mono text-h3">
                 {stage === 'record'
                   ? `${minutes(speakLeft)}:${seconds(speakLeft)}`
                   : `${minutes(bank.speak)}:${seconds(bank.speak)}`}
@@ -454,13 +454,13 @@ export default function SpeakingPracticePage() {
             <button
               onClick={startDrill}
               disabled={stage !== 'idle' && stage !== 'done' && stage !== 'error'}
-              className="px-4 py-2 rounded-xl bg-emerald-600 text-white disabled:bg-gray-300"
+              className="px-4 py-2 rounded-xl bg-success text-white disabled:bg-gray-300"
             >
               {stage === 'done' ? 'Restart Drill' : 'Start Drill'}
             </button>
             <button
               onClick={() => setStage('idle')}
-              className="px-4 py-2 rounded-xl border border-gray-300 dark:border-white/10"
+              className="px-4 py-2 rounded-xl border border-lightBorder dark:border-white/10"
             >
               Reset
             </button>
@@ -477,7 +477,7 @@ export default function SpeakingPracticePage() {
             onError={onError}
             className="bg-white/60 dark:bg-white/5"
           />
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-caption text-grayish">
             Recording auto-starts {bank.prep > 0 ? 'after prep' : 'immediately'} and auto-stops at the time limit.
           </p>
         </div>
@@ -485,9 +485,9 @@ export default function SpeakingPracticePage() {
         {/* Status + Result */}
         <div className="mt-6 grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Status</div>
-              <div className="mt-1 text-sm">
+            <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+              <div className="text-caption uppercase tracking-wide text-grayish">Status</div>
+              <div className="mt-1 text-small">
                 {stage === 'idle' && 'Idle'}
                 {stage === 'prep' && `Preparing (${bank.prep}s)…`}
                 {stage === 'record' && `Recording (${bank.speak}s)…`}
@@ -499,17 +499,17 @@ export default function SpeakingPracticePage() {
               {(stage === 'uploading' || stage === 'scoring') && (
                 <div className="mt-3 animate-pulse h-2 rounded bg-gray-200 dark:bg-white/10" />
               )}
-              {error && <div className="mt-3 text-sm text-rose-600 break-words">{error}</div>}
+              {error && <div className="mt-3 text-small text-rose-600 break-words">{error}</div>}
             </div>
 
             {result && stage === 'done' && (
-              <div className="mt-4 rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-                <div className="text-xs uppercase tracking-wide text-gray-500">AI Result</div>
+              <div className="mt-4 rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+                <div className="text-caption uppercase tracking-wide text-grayish">AI Result</div>
                 <div className="mt-2">
-                  <div className="text-3xl font-semibold">
+                  <div className="text-h1 font-semibold">
                     {typeof result.overall === 'number' ? result.overall.toFixed(1) : '—'}
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-small">
                     <div>Fluency: <strong>{result.fluency ?? '—'}</strong></div>
                     <div>Pronunciation: <strong>{result.pronunciation ?? '—'}</strong></div>
                     <div>Lexical: <strong>{result.lexical ?? '—'}</strong></div>
@@ -517,20 +517,20 @@ export default function SpeakingPracticePage() {
                   </div>
                   {result.transcript && (
                     <div className="mt-4">
-                      <div className="text-xs uppercase tracking-wide text-gray-500">Transcript</div>
-                      <pre className="mt-1 whitespace-pre-wrap text-sm">{result.transcript}</pre>
+                      <div className="text-caption uppercase tracking-wide text-grayish">Transcript</div>
+                      <pre className="mt-1 whitespace-pre-wrap text-small">{result.transcript}</pre>
                     </div>
                   )}
                   {result.feedback && (
-                    <p className="mt-3 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
+                    <p className="mt-3 text-small text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
                       {result.feedback}
                     </p>
                   )}
                   <div className="mt-4 flex gap-2">
-                    <button onClick={saveAsAttempt} className="px-3 py-2 rounded-xl bg-blue-600 text-white">
+                    <button onClick={saveAsAttempt} className="px-3 py-2 rounded-xl bg-electricBlue text-white">
                       Save as Attempt
                     </button>
-                    <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10">
+                    <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-lightBorder dark:border-white/10">
                       View Attempts
                     </Link>
                   </div>
@@ -541,21 +541,21 @@ export default function SpeakingPracticePage() {
 
           {/* Quick Nav + Tips */}
           <div className="md:col-span-1">
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Quick Jump</div>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                <Link href="/listening" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Listening</Link>
-                <Link href="/reading" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Reading</Link>
-                <Link href="/writing" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Writing</Link>
-                <Link href="/speaking/attempts" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Attempts</Link>
+            <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+              <div className="text-caption uppercase tracking-wide text-grayish">Quick Jump</div>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-small">
+                <Link href="/listening" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Listening</Link>
+                <Link href="/reading" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Reading</Link>
+                <Link href="/writing" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Writing</Link>
+                <Link href="/speaking/attempts" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Attempts</Link>
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-              <div className="text-xs uppercase tracking-wide text-gray-500">
+            <div className="mt-4 rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+              <div className="text-caption uppercase tracking-wide text-grayish">
                 Tips {mode === 'part2' ? `for ${focus.charAt(0).toUpperCase() + focus.slice(1)}` : `for ${mode.toUpperCase()}`}
               </div>
-              <ul className="mt-2 list-disc pl-5 text-sm space-y-1">
+              <ul className="mt-2 list-disc pl-5 text-small space-y-1">
                 {mode === 'part1' && (
                   <>
                     <li>Answer directly, then add 1–2 supporting details.</li>
@@ -604,7 +604,7 @@ export default function SpeakingPracticePage() {
         {/* Accent Mirror personalized drills */}
         <div className="mt-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Accent Mirror</h2>
+            <h2 className="text-h3 font-semibold">Accent Mirror</h2>
             <AccentPicker value={accent} onChange={setAccent} />
           </div>
           <AccentMirror accent={accent} />

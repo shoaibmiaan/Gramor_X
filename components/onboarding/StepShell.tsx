@@ -73,10 +73,10 @@ const StepShell: React.FC<StepShellProps> = ({
         <div className="header-glass rounded-ds-2xl border border-border p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-              {subtitle && <p className="mt-1 text-sm text-foreground/70">{subtitle}</p>}
+              <h1 className="text-h2 font-semibold tracking-tight">{title}</h1>
+              {subtitle && <p className="mt-1 text-small text-foreground/70">{subtitle}</p>}
             </div>
-            <div className="shrink-0 rounded-full px-3 py-1 text-xs bg-primary/10 text-primary tabular-nums">
+            <div className="shrink-0 rounded-full px-3 py-1 text-caption bg-primary/10 text-primary tabular-nums">
               {step}/{total}
             </div>
           </div>
@@ -90,7 +90,7 @@ const StepShell: React.FC<StepShellProps> = ({
                 const done = (s.done ?? idx < step);
                 const pillClasses = [
                   'nav-pill select-none',
-                  'rounded-ds-xl border px-3 py-1 text-xs',
+                  'rounded-ds-xl border px-3 py-1 text-caption',
                   active ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border',
                   done && !active ? 'ring-1 ring-success/40' : '',
                 ].join(' ');
@@ -112,7 +112,7 @@ const StepShell: React.FC<StepShellProps> = ({
 
           {/* Hint ribbon */}
           {hint && (
-            <div className="mt-3 rounded-ds-xl border border-border bg-card/60 p-2 text-xs text-mutedText">
+            <div className="mt-3 rounded-ds-xl border border-border bg-card/60 p-2 text-caption text-mutedText">
               {hint}
             </div>
           )}
@@ -155,7 +155,7 @@ const StepShell: React.FC<StepShellProps> = ({
         {/* Footer — sticky, glow, keyboard tips */}
         <div className="sticky bottom-0 mt-4 rounded-ds-2xl border border-border bg-gradient-to-r from-primary/10 via-electricBlue/10 to-vibrantPurple/10 backdrop-blur">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-3 py-3">
-            <div className="flex items-center gap-2 text-xs text-mutedText">
+            <div className="flex items-center gap-2 text-caption text-mutedText">
               <kbd className="rounded border border-border bg-card px-1.5 py-0.5">←</kbd>
               <span>Back</span>
               <span className="opacity-50">·</span>

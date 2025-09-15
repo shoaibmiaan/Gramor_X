@@ -237,7 +237,7 @@ export default function RoleplayPage() {
     content: m.text,
   }));
   const renderText = (raw: string) => (
-    <p className="whitespace-pre-wrap text-sm leading-relaxed">{raw}</p>
+    <p className="whitespace-pre-wrap text-small leading-relaxed">{raw}</p>
   );
 
   return (
@@ -246,7 +246,7 @@ export default function RoleplayPage() {
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-h1 font-semibold">Roleplay — {meta?.title}</h1>
-            <p className="text-gray-600 dark:text-grayish">{meta?.intro}</p>
+            <p className="text-grayish dark:text-grayish">{meta?.intro}</p>
           </div>
           <div className="flex flex-col items-end gap-2">
             <Badge variant={attemptId ? 'success' : 'neutral'}>
@@ -256,8 +256,8 @@ export default function RoleplayPage() {
           </div>
         </div>
 
-        {msg && <div className="mb-3 text-sm text-emerald-600">{msg}</div>}
-        {err && <div className="mb-3 text-sm text-red-600">{err}</div>}
+        {msg && <div className="mb-3 text-small text-success">{msg}</div>}
+        {err && <div className="mb-3 text-small text-danger">{err}</div>}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Conversation */}
@@ -300,7 +300,7 @@ export default function RoleplayPage() {
                   {rec.isRecording ? 'Stop' : 'Hold to Record'}
                 </Button>
               </div>
-              <div className="mt-2 text-xs text-gray-600 dark:text-grayish">
+              <div className="mt-2 text-caption text-grayish dark:text-grayish">
                 Scenario: <span className="font-medium">{meta?.title}</span>. You can send text, voice, or both.
               </div>
             </div>
@@ -309,7 +309,7 @@ export default function RoleplayPage() {
           {/* Scenario goals */}
           <Card className="p-6">
             <h3 className="text-h3 font-semibold mb-2">Sample Prompts</h3>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
+            <ul className="list-disc pl-5 space-y-1 text-small">
               {(meta?.sample || []).map((g, i) => (
                 <li key={i}>{g}</li>
               ))}

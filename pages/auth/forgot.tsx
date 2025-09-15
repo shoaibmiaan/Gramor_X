@@ -20,7 +20,7 @@ import { Input } from '@/components/design-system/Input';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 text-sm uppercase tracking-wide text-mutedText">
+    <div className="mb-3 text-small uppercase tracking-wide text-mutedText">
       {children}
     </div>
   );
@@ -148,7 +148,7 @@ export default function ForgotPasswordPage() {
         </Button>
       </form>
 
-      <div className="mt-6 flex items-center justify-between text-sm text-mutedText">
+      <div className="mt-6 flex items-center justify-between text-small text-mutedText">
         <div>
           Already have the code?{' '}
           <Link

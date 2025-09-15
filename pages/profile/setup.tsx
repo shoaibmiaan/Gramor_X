@@ -48,7 +48,7 @@ const Section: React.FC<{ title: string; subtitle?: string; children: React.Reac
         <h2 className="font-slab text-h4 m-0">{title}</h2>
         {subtitle && <p className="text-muted -mt-0.5 text-small">{subtitle}</p>}
       </div>
-      <span className="ml-auto shrink-0 rounded-full border px-2 py-0.5 text-xs text-muted group-open:rotate-180 transition-transform">⌄</span>
+      <span className="ml-auto shrink-0 rounded-full border px-2 py-0.5 text-caption text-muted group-open:rotate-180 transition-transform">⌄</span>
     </summary>
     <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-0">{children}</div>
   </details>
@@ -388,7 +388,7 @@ export default function ProfileSetup() {
             </div>
             <div className="w-full sm:w-64">
               <ProgressBar value={progress} />
-              <p className="mt-1 text-right text-xs text-muted">{progress}%</p>
+              <p className="mt-1 text-right text-caption text-muted">{progress}%</p>
             </div>
           </div>
           {/* live regions for a11y */}
@@ -492,7 +492,7 @@ export default function ProfileSetup() {
                   <div className="space-y-6">
                     <div>
                       <label className="block">
-                        <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">Goal band <span className="opacity-70">(4.0–9.0)</span></span>
+                        <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Goal band <span className="opacity-70">(4.0–9.0)</span></span>
                         <div className="flex items-center gap-4">
                           <input type="range" min={4} max={9} step={0.5} value={goal} onChange={e=>{ setGoal(parseFloat(e.target.value)); clearFieldError('goal'); }} className="w-full accent-primary" />
                           <span className="text-body font-semibold tabular-nums">{goal.toFixed(1)}</span>
@@ -526,7 +526,7 @@ export default function ProfileSetup() {
                 <Section title="Study preferences" subtitle="Tune your plan" defaultOpen={false}>
                   <div className="grid gap-6">
                     <div>
-                      <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">Focus areas</span>
+                      <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Focus areas</span>
                       <div className="flex flex-wrap gap-2">
                         {PREFS.map(p => (
                           <button key={p} type="button" onClick={()=>togglePref(p)} aria-pressed={prefs.includes(p)} className="focus-visible:outline-none">
@@ -537,7 +537,7 @@ export default function ProfileSetup() {
                     </div>
 
                     <div>
-                      <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">Weak areas</span>
+                      <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Weak areas</span>
                       <div className="flex flex-wrap gap-2">
                         {WEAKNESSES.map(w => (
                           <button key={w} type="button" onClick={()=>toggleWeakness(w)} aria-pressed={weaknesses.includes(w)} className="focus-visible:outline-none">

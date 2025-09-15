@@ -27,6 +27,20 @@ jobs:
       TWILIO_WHATSAPP_FROM: whatsapp:+10000000000
 
       NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: '60'
+      
+      # Payment provider environment variables
+      STRIPE_PRICE_STARTER_MONTHLY: price_dummy
+      STRIPE_PRICE_STARTER_ANNUAL: price_dummy
+      STRIPE_PRICE_BOOSTER_MONTHLY: price_dummy
+      STRIPE_PRICE_BOOSTER_ANNUAL: price_dummy
+      STRIPE_PRICE_MASTER_MONTHLY: price_dummy
+      STRIPE_PRICE_MASTER_ANNUAL: price_dummy
+      NEXT_PUBLIC_DEV_PAYMENTS: '1'
+      EASYPASA_MERCHANT_ID: dummy_merchant
+      EASYPASA_SECRET: dummy_secret
+      JAZZCASH_MERCHANT_ID: dummy_merchant
+      JAZZCASH_INTEGRITY_SALT: dummy_salt
+      SPEAKING_DAILY_LIMIT: '5'
 
     steps:
       - uses: actions/checkout@v4

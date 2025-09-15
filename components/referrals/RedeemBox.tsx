@@ -30,26 +30,26 @@ export default function RedeemBox({ onSuccess, className = '' }: Props) {
 
   return (
     <form onSubmit={submit} className={`rounded-xl border border-border p-3 ${className}`}>
-      <label htmlFor="ref-code" className="mb-1 block text-sm font-medium">Have a referral code?</label>
+      <label htmlFor="ref-code" className="mb-1 block text-small font-medium">Have a referral code?</label>
       <div className="flex items-center gap-2">
         <input
           id="ref-code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder="Enter code (e.g., 9XH2LQ7B)"
-          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-small outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
         <button
           type="submit"
           disabled={busy || code.trim().length < 6}
-          className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-60"
+          className="rounded-lg bg-primary px-4 py-2 text-small text-primary-foreground disabled:opacity-60"
         >
           {busy ? 'Applying…' : 'Apply'}
         </button>
       </div>
 
-      {msg ? <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{msg}</p> : null}
-      {err ? <p className="mt-2 text-sm text-destructive">{err}</p> : null}
+      {msg ? <p className="mt-2 text-small text-success dark:text-emerald-400">{msg}</p> : null}
+      {err ? <p className="mt-2 text-small text-destructive">{err}</p> : null}
     </form>
   );
 }

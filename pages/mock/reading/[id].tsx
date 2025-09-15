@@ -37,7 +37,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="grid gap-6 md:grid-cols-[2fr,1fr]">
@@ -103,27 +103,27 @@ export default function ReadingMockPage() {
       title={`Reading — ${paper.title}`}
       right={
         <>
-          <div className="text-sm text-foreground/80">Answered {percent}%</div>
-          <div className="rounded-full border border-border px-3 py-1 text-sm">⏱ {hhmmss(timeLeft)}</div>
+          <div className="text-small text-foreground/80">Answered {percent}%</div>
+          <div className="rounded-full border border-border px-3 py-1 text-small">⏱ {hhmmss(timeLeft)}</div>
         </>
       }
     >
       {/* Left: passage + questions */}
       <div className="rounded-2xl border border-border p-4 bg-background/50">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-sm font-medium">Passage {passageIdx + 1} of {paper.passages.length} — {current.title}</div>
+          <div className="text-small font-medium">Passage {passageIdx + 1} of {paper.passages.length} — {current.title}</div>
           <div className="flex gap-2">
-            <button disabled={passageIdx === 0} onClick={() => setPassageIdx((i) => Math.max(0, i - 1))} className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">Prev</button>
-            <button disabled={passageIdx === paper.passages.length - 1} onClick={() => setPassageIdx((i) => Math.min(paper.passages.length - 1, i + 1))} className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">Next</button>
+            <button disabled={passageIdx === 0} onClick={() => setPassageIdx((i) => Math.max(0, i - 1))} className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Prev</button>
+            <button disabled={passageIdx === paper.passages.length - 1} onClick={() => setPassageIdx((i) => Math.min(paper.passages.length - 1, i + 1))} className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Next</button>
           </div>
         </div>
         <article className="prose prose-invert max-w-none">
-          <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/90">{current.text}</p>
+          <p className="whitespace-pre-wrap text-small leading-6 text-foreground/90">{current.text}</p>
         </article>
         <div className="mt-4 grid gap-3">
           {current.questions.map((q) => (
             <div key={q.id} className="rounded-lg border border-border p-3">
-              <div className="mb-1 text-sm font-medium">{q.prompt || q.id}</div>
+              <div className="mb-1 text-small font-medium">{q.prompt || q.id}</div>
               {renderInput(q, answers[q.id] || '', (val) => setAnswers((a) => ({ ...a, [q.id]: val })))}
             </div>
           ))}
@@ -135,14 +135,14 @@ export default function ReadingMockPage() {
 
       {/* Right: palette */}
       <aside className="rounded-2xl border border-border p-4 bg-background/50">
-        <div className="mb-2 text-sm font-medium">Question palette</div>
+        <div className="mb-2 text-small font-medium">Question palette</div>
         <div className="grid grid-cols-5 gap-2">
           {palette.map((qid, idx) => (
-            <div key={qid} className={`rounded text-center text-xs py-1 border ${answers[qid] ? 'border-primary' : 'border-border'}`}>{idx + 1}</div>
+            <div key={qid} className={`rounded text-center text-caption py-1 border ${answers[qid] ? 'border-primary' : 'border-border'}`}>{idx + 1}</div>
           ))}
         </div>
         <div className="mt-4">
-          <Link href="/reading" className="text-sm underline underline-offset-4">Change test</Link>
+          <Link href="/reading" className="text-small underline underline-offset-4">Change test</Link>
         </div>
       </aside>
     </Shell>
@@ -168,7 +168,7 @@ function renderInput(q: Q, value: string, onChange: (v: string) => void) {
 const Options: React.FC<{ options: string[]; value: string; onPick: (v: string) => void }> = ({ options, value, onPick }) => (
   <div className="flex flex-wrap gap-2">
     {options.map((opt) => (
-      <button key={opt} onClick={() => onPick(opt)} type="button" className={`rounded-lg border px-3 py-1 text-sm hover:border-primary ${value === opt ? 'border-primary' : 'border-border'}`}>{opt}</button>
+      <button key={opt} onClick={() => onPick(opt)} type="button" className={`rounded-lg border px-3 py-1 text-small hover:border-primary ${value === opt ? 'border-primary' : 'border-border'}`}>{opt}</button>
     ))}
   </div>
 );

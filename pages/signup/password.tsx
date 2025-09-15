@@ -46,7 +46,7 @@ export default function SignupPassword() {
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
       <div className="w-full max-w-md card-surface p-6 rounded-ds-2xl shadow-glow">
-        <h1 className="text-2xl font-semibold mb-2">Create your password</h1>
+        <h1 className="text-h2 font-semibold mb-2">Create your password</h1>
         <p className="text-mutedText mb-6">Use at least 8 characters.</p>
 
         {err && (
@@ -75,7 +75,7 @@ export default function SignupPassword() {
           </Button>
         </form>
 
-        <div className="mt-4 text-sm text-mutedText">
+        <div className="mt-4 text-small text-mutedText">
           Already have an account?{' '}
           <Link href="/login" className="text-primary underline-offset-2 hover:underline">
             Log in

@@ -147,7 +147,7 @@ export default function AdminReviewsIndex() {
             {/* Filters */}
             <div className="grid gap-3 md:grid-cols-4">
               <div>
-                <label className="block text-small text-gray-600 dark:text-grayish mb-1">Search</label>
+                <label className="block text-small text-grayish dark:text-grayish mb-1">Search</label>
                 <input
                   value={q}
                   onChange={e => setQ(e.target.value)}
@@ -160,7 +160,7 @@ export default function AdminReviewsIndex() {
               </div>
 
               <div>
-                <label className="block text-small text-gray-600 dark:text-grayish mb-1">Module</label>
+                <label className="block text-small text-grayish dark:text-grayish mb-1">Module</label>
                 <select
                   value={moduleFilter}
                   onChange={e => setModuleFilter(e.target.value as 'all' | ModuleKind)}
@@ -175,7 +175,7 @@ export default function AdminReviewsIndex() {
               </div>
 
               <div>
-                <label className="block text-small text-gray-600 dark:text-grayish mb-1">Time window</label>
+                <label className="block text-small text-grayish dark:text-grayish mb-1">Time window</label>
                 <select
                   value={windowFilter}
                   onChange={e => setWindowFilter(e.target.value as '7d' | '30d' | 'all')}
@@ -190,7 +190,7 @@ export default function AdminReviewsIndex() {
               </div>
 
               <div>
-                <label className="block text-small text-gray-600 dark:text-grayish mb-1">Cohort</label>
+                <label className="block text-small text-grayish dark:text-grayish mb-1">Cohort</label>
                 <select
                   value={cohortFilter}
                   onChange={e => setCohortFilter(e.target.value)}
@@ -220,14 +220,14 @@ export default function AdminReviewsIndex() {
                 <tbody>
                   {loading ? (
                     Array.from({ length: 6 }).map((_, i) => (
-                      <tr key={`skeleton-${i}`} className="border-t border-gray-200/40 dark:border-white/10">
+                      <tr key={`skeleton-${i}`} className="border-t border-lightBorder/40 dark:border-white/10">
                         <td colSpan={7} className="py-3">
                           <div className="animate-pulse h-5 w-full bg-gray-200 dark:bg-white/10 rounded" />
                         </td>
                       </tr>
                     ))
                   ) : filtered.length === 0 ? (
-                    <tr className="border-t border-gray-200/40 dark:border-white/10">
+                    <tr className="border-t border-lightBorder/40 dark:border-white/10">
                       <td colSpan={7} className="py-6 text-grayish">No attempts found for the selected filters.</td>
                     </tr>
                   ) : (
@@ -235,7 +235,7 @@ export default function AdminReviewsIndex() {
                       const badge = STATUS_BADGE[row.status];
                       const updated = new Date(row.last_activity).toLocaleString();
                       return (
-                        <tr key={row.id} className="border-t border-gray-200/40 dark:border-white/10 hover:bg-purpleVibe/5 dark:hover:bg-white/5">
+                        <tr key={row.id} className="border-t border-lightBorder/40 dark:border-white/10 hover:bg-purpleVibe/5 dark:hover:bg-white/5">
                           <td className="py-3 pr-3">
                             <div className="font-medium">{row.user_name}</div>
                             <div className="text-small opacity-80">{row.user_email ?? '—'}</div>

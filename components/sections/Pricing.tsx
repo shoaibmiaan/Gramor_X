@@ -80,8 +80,8 @@ export const Pricing: React.FC = () => {
     <Section id="pricing">
       <Container>
         <div className="text-center mb-16">
-          <h2 className="font-slab text-4xl mb-3 text-gradient-primary">FLEXIBLE PRICING PLANS</h2>
-          <p className="text-muted-foreground text-lg">Choose the plan that fits your preparation needs</p>
+          <h2 className="font-slab text-display mb-3 text-gradient-primary">FLEXIBLE PRICING PLANS</h2>
+          <p className="text-muted-foreground text-h4">Choose the plan that fits your preparation needs</p>
         </div>
 
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -100,16 +100,16 @@ export const Pricing: React.FC = () => {
 
               {t.featured && <Ribbon label="MOST POPULAR" variant="accent" position="top-right" />}
 
-              <div className="w-17.5 h-17.5 rounded-full flex items-center justify-center mb-6 text-white text-2xl bg-gradient-to-br from-purpleVibe to-electricBlue">
+              <div className="w-17.5 h-17.5 rounded-full flex items-center justify-center mb-6 text-white text-h2 bg-gradient-to-br from-purpleVibe to-electricBlue">
                 <i className={`fas ${tierIcon(t.name)}`} aria-hidden="true" />
               </div>
 
-              <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
+              <h3 className="text-h3 font-semibold mb-2 flex items-center gap-2">
                 <Icon name="circle-check" />
                 {t.name}
               </h3>
               <div className="mb-4">
-                <div className="font-slab text-5xl text-gradient-primary leading-none">{t.price}</div>
+                <div className="font-slab text-displayLg text-gradient-primary leading-none">{t.price}</div>
                 <div className="text-muted-foreground mt-1">{t.period}</div>
               </div>
 
@@ -133,7 +133,7 @@ export const Pricing: React.FC = () => {
                 >
                   Choose {t.name}
                 </Button>
-                <Link href="/waitlist" className="text-electricBlue hover:underline text-sm text-center">
+                <Link href="/waitlist" className="text-electricBlue hover:underline text-small text-center">
                   Not ready? Join the pre-launch list
                 </Link>
               </div>

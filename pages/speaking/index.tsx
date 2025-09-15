@@ -131,8 +131,8 @@ export default function SpeakingHub({
                   {attempts.map((a) => (
                     <div key={a.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                       <div className="flex-1">
-                        <div className="text-sm opacity-70">{new Date(a.created_at).toLocaleString()}</div>
-                        <div className="mt-1 flex flex-wrap gap-2 text-sm">
+                        <div className="text-small opacity-70">{new Date(a.created_at).toLocaleString()}</div>
+                        <div className="mt-1 flex flex-wrap gap-2 text-small">
                           {(['p1','p2','p3'] as const).map((k) => {
                             const v = a.parts[k];
                             return v != null ? (

@@ -254,7 +254,7 @@ export default function TipDetail({
         <Container>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="font-slab text-4xl text-gradient-primary">{tip.title}</h1>
+              <h1 className="font-slab text-display text-gradient-primary">{tip.title}</h1>
               <div className="mt-3 flex flex-wrap gap-2">
                 <AreaBadge a={tip.area} />
                 <DiffBadge d={tip.difficulty} />
@@ -330,7 +330,7 @@ export default function TipDetail({
                 {DEBUG && drill.raw && (
                   <details className="mt-3">
                     <summary className="cursor-pointer opacity-70 text-small">Debug payload</summary>
-                    <pre className="mt-2 overflow-x-auto text-xs">{JSON.stringify(drill.raw, null, 2)}</pre>
+                    <pre className="mt-2 overflow-x-auto text-caption">{JSON.stringify(drill.raw, null, 2)}</pre>
                   </details>
                 )}
               </Card>
@@ -343,7 +343,7 @@ export default function TipDetail({
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {related.map((r) => (
                   <Card key={r.id} className="p-5">
-                    <h3 className="font-semibold text-lg mb-2">{r.title}</h3>
+                    <h3 className="font-semibold text-h4 mb-2">{r.title}</h3>
                     <div className="flex flex-wrap gap-2 mb-3">
                       <DiffBadge d={r.difficulty} />
                       {(r.tags || []).slice(0, 3).map((t) => (

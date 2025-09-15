@@ -72,7 +72,7 @@ export default function ReadingReviewPage() {
         ) : (
           <>
             <div className="flex items-center justify-between gap-4">
-              <h1 className="font-slab text-4xl text-gradient-primary">{data.title} — Review</h1>
+              <h1 className="font-slab text-display text-gradient-primary">{data.title} — Review</h1>
               <div className="flex items-center gap-2">
                 <Badge variant="success">Band {data.band.toFixed(1)}</Badge>
                 <Badge variant="info">{data.correctCount}/{data.total} correct</Badge>
@@ -86,7 +86,7 @@ export default function ReadingReviewPage() {
                 <h3 className="text-h3 font-semibold mb-2">Performance by question type</h3>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {Object.entries(data.breakdown).map(([type, b]) => (
-                    <div key={type} className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                    <div key={type} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                       <div className="flex items-center justify-between">
                         <div className="font-medium uppercase">{type}</div>
                         <Badge variant={b.pct >= 70 ? 'success' : b.pct >= 40 ? 'warning' : 'danger'} size="sm">{b.pct}%</Badge>

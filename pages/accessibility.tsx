@@ -27,7 +27,7 @@ export default function AccessibilityPage() {
       {/* Skip link (appears when focused) */}
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:border focus:border-border focus:bg-card focus:px-3 focus:py-2 focus:text-sm focus:text-foreground"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:border focus:border-border focus:bg-card focus:px-3 focus:py-2 focus:text-small focus:text-foreground"
       >
         Skip to main content
       </a>
@@ -35,8 +35,8 @@ export default function AccessibilityPage() {
       <div className="py-6">
         <Container>
           <header className="mb-4">
-            <h1 className="text-2xl font-bold text-foreground">Accessibility</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-h2 font-bold text-foreground">Accessibility</h1>
+            <p className="text-small text-muted-foreground">
               Quick WCAG checks & interactive playground to catch issues before launch.
             </p>
           </header>
@@ -44,10 +44,10 @@ export default function AccessibilityPage() {
           <main id="main" role="main" className="space-y-6">
             {/* Quick Checks */}
             <section aria-labelledby="quick-checks" className="rounded-xl border border-border bg-card p-4">
-              <h2 id="quick-checks" className="text-base font-semibold text-foreground">
+              <h2 id="quick-checks" className="text-body font-semibold text-foreground">
                 Quick checks
               </h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground">
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-small text-foreground">
                 <li>All interactive controls are reachable by <kbd>Tab</kbd> and visible on focus.</li>
                 <li>Images use <code className="rounded bg-background px-1">alt</code> text or are marked decorative.</li>
                 <li>Color is not the only way information is conveyed.</li>
@@ -55,36 +55,36 @@ export default function AccessibilityPage() {
                 <li>Page uses landmarks: header, nav, main, footer.</li>
                 <li>Form fields have associated labels; errors are announced.</li>
               </ul>
-              <div className="mt-3 text-xs text-muted-foreground">
+              <div className="mt-3 text-caption text-muted-foreground">
                 Tip: run automated checks with axe (Browser DevTools) and Lighthouse; then do a manual keyboard pass.
               </div>
             </section>
 
             {/* Keyboard Playground */}
             <section aria-labelledby="keyboard-play" className="rounded-xl border border-border bg-card p-4">
-              <h2 id="keyboard-play" className="text-base font-semibold text-foreground">
+              <h2 id="keyboard-play" className="text-body font-semibold text-foreground">
                 Keyboard playground
               </h2>
-              <p className="mb-3 text-sm text-muted-foreground">
+              <p className="mb-3 text-small text-muted-foreground">
                 Use <kbd>Tab</kbd>/<kbd>Shift+Tab</kbd> and <kbd>Space</kbd>/<kbd>Enter</kbd> to operate controls below.
               </p>
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <fieldset className="rounded-lg border border-border p-3">
-                  <legend className="px-1 text-xs text-muted-foreground">Form sample</legend>
+                  <legend className="px-1 text-caption text-muted-foreground">Form sample</legend>
                   <div className="space-y-2">
-                    <label className="block text-xs text-muted-foreground" htmlFor="name">
+                    <label className="block text-caption text-muted-foreground" htmlFor="name">
                       Name
                     </label>
                     <input
                       id="name"
                       type="text"
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-small text-foreground outline-none focus:border-primary"
                       placeholder="Your full name"
                     />
                     <button
                       type="button"
-                      className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       onClick={() => announce("Form validated. No errors found.")}
                     >
                       Validate
@@ -93,11 +93,11 @@ export default function AccessibilityPage() {
                 </fieldset>
 
                 <div className="rounded-lg border border-border p-3">
-                  <div className="text-xs text-muted-foreground">Buttons & links</div>
+                  <div className="text-caption text-muted-foreground">Buttons & links</div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      className="rounded-md border border-border bg-background px-3 py-1.5 text-small hover:bg-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       onClick={() => announce("Primary action triggered")}
                     >
                       Action
@@ -106,13 +106,13 @@ export default function AccessibilityPage() {
                       type="button"
                       disabled
                       aria-disabled="true"
-                      className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-muted-foreground opacity-60"
+                      className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-muted-foreground opacity-60"
                     >
                       Disabled
                     </button>
                     <Link
                       href="/pricing"
-                      className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
                       Go to pricing
                     </Link>
@@ -133,8 +133,8 @@ export default function AccessibilityPage() {
 
             {/* Landmarks / Motion */}
             <section aria-labelledby="landmarks" className="rounded-xl border border-border bg-card p-4">
-              <h2 id="landmarks" className="text-base font-semibold text-foreground">Landmarks & motion</h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground">
+              <h2 id="landmarks" className="text-body font-semibold text-foreground">Landmarks & motion</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-small text-foreground">
                 <li>
                   This page includes <code className="rounded bg-background px-1">main</code> landmark and a top-level
                   “Skip to main content” link.
@@ -144,7 +144,7 @@ export default function AccessibilityPage() {
                   <code className="rounded bg-background px-1">prefers-reduced-motion: reduce</code> is set.
                 </li>
               </ul>
-              <details className="mt-3 rounded-lg border border-border bg-background p-3 text-sm">
+              <details className="mt-3 rounded-lg border border-border bg-background p-3 text-small">
                 <summary className="cursor-pointer text-foreground">Why it matters</summary>
                 <p className="mt-2 text-muted-foreground">
                   Clear focus styles and proper landmarks help keyboard and screen-reader users navigate quickly. Live
@@ -155,8 +155,8 @@ export default function AccessibilityPage() {
 
             {/* Resources */}
             <section aria-labelledby="resources" className="rounded-xl border border-border bg-card p-4">
-              <h2 id="resources" className="text-base font-semibold text-foreground">Resources</h2>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+              <h2 id="resources" className="text-body font-semibold text-foreground">Resources</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-small">
                 <li>
                   <a
                     className="text-primary underline-offset-2 hover:underline"

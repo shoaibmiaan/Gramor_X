@@ -113,8 +113,8 @@ export function PaywallGate({
         <div className="flex items-start gap-3">
           <div className="mt-1 h-2.5 w-2.5 rounded-full bg-warning" />
           <div className="flex-1">
-            <h3 className="text-base font-semibold">Limit reached on Free plan</h3>
-            <p className="mt-1 text-sm text-foreground/80">
+            <h3 className="text-body font-semibold">Limit reached on Free plan</h3>
+            <p className="mt-1 text-small text-foreground/80">
               You used <span className="font-medium">{count}</span> of{' '}
               <span className="font-medium">{limit}</span> free{' '}
               {feature.startsWith('ai') ? 'AI evaluations' : 'mock starts'} today.
@@ -122,13 +122,13 @@ export function PaywallGate({
             <div className="mt-3 flex flex-wrap gap-2">
               <a
                 href={routes.pricing()}
-                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-small font-semibold text-primary-foreground"
               >
                 Upgrade to Premium
               </a>
               <a
                 href={routes.billing()}
-                className="inline-flex items-center rounded-xl border border-border px-4 py-2 text-sm font-semibold"
+                className="inline-flex items-center rounded-xl border border-border px-4 py-2 text-small font-semibold"
               >
                 Manage billing
               </a>

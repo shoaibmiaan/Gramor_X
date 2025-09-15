@@ -29,7 +29,7 @@ export default function Students() {
     <AdminGuard>
       <Head><title>Admin · Students</title></Head>
       <Container className="py-8">
-        <h1 className="text-2xl font-semibold mb-4">Students</h1>
+        <h1 className="text-h2 font-semibold mb-4">Students</h1>
         <input
           className="rounded-xl border px-3 py-2 bg-transparent w-full sm:w-80"
           placeholder="Search by name…"
@@ -37,7 +37,7 @@ export default function Students() {
           onChange={(e) => setQ(e.target.value)}
         />
         <div className="mt-4 rounded-2xl border overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-small">
             <thead className="bg-black/5 dark:bg-white/5">
               <tr>
                 <th className="text-left p-3">Name</th>

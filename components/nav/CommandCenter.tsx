@@ -134,7 +134,7 @@ export function CommandCenter({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-          <span className="text-xs text-foreground/60">⌘/Ctrl K</span>
+          <span className="text-caption text-foreground/60">⌘/Ctrl K</span>
           <input
             autoFocus
             value={q}
@@ -142,7 +142,7 @@ export function CommandCenter({
               setQ(e.target.value);
               setSel(0);
             }}
-            className="w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-foreground/50"
+            className="w-full bg-transparent px-2 py-2 text-small outline-none placeholder:text-foreground/50"
             placeholder={placeholder}
             aria-label="Command search"
           />
@@ -164,14 +164,14 @@ export function CommandCenter({
                     onMouseEnter={() => setSel(index)}
                     onClick={() => run(c, setOpenSafe)}
                     className={[
-                      'flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-sm',
+                      'flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-small',
                       active ? 'bg-primary/10' : 'hover:bg-foreground/5',
                     ].join(' ')}
                   >
                     <div className="min-w-0">
                       <div className="truncate">{highlight(c.title, q)}</div>
                       {c.hint && (
-                        <div className="truncate text-xs text-foreground/60">{highlight(c.hint, q)}</div>
+                        <div className="truncate text-caption text-foreground/60">{highlight(c.hint, q)}</div>
                       )}
                     </div>
                     {c.kbd && (
@@ -186,7 +186,7 @@ export function CommandCenter({
           ))}
 
           {filtered.length === 0 && (
-            <div className="px-4 py-6 text-center text-sm text-foreground/60">No results</div>
+            <div className="px-4 py-6 text-center text-small text-foreground/60">No results</div>
           )}
         </div>
       </div>

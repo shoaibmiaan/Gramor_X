@@ -55,7 +55,7 @@ export default function PeerReviewPage() {
       <Container>
         <Card className="p-6 mb-6 space-y-2">
           <Textarea value={newReview} onChange={(e) => setNewReview(e.target.value)} placeholder="Share your work for review" />
-          <Button onClick={submitReview} fullWidth className="px-4 py-3 text-base">
+          <Button onClick={submitReview} fullWidth className="px-4 py-3 text-body">
             Share
           </Button>
         </Card>
@@ -64,7 +64,7 @@ export default function PeerReviewPage() {
             <p className="whitespace-pre-wrap">{r.content}</p>
             <div className="space-y-1">
               {r.comments?.map((c) => (
-                <div key={c.id} className="text-sm text-muted-foreground">{c.content}</div>
+                <div key={c.id} className="text-small text-muted-foreground">{c.content}</div>
               ))}
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -76,7 +76,7 @@ export default function PeerReviewPage() {
               <Button
                 onClick={() => submitComment(r.id)}
                 fullWidth
-                className="px-4 py-3 text-base sm:w-auto"
+                className="px-4 py-3 text-body sm:w-auto"
               >
                 Comment
               </Button>

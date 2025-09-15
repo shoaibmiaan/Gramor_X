@@ -49,12 +49,12 @@ export const PaymentOptions: React.FC<Props> = ({ selected, onChange, className 
                 ].join(' ')}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full grid place-items-center text-white text-sm bg-gradient-to-br from-purpleVibe to-electricBlue">
+                  <div className="w-9 h-9 rounded-full grid place-items-center text-white text-small bg-gradient-to-br from-purpleVibe to-electricBlue">
                     <i className={`fas ${opt.icon}`} aria-hidden="true" />
                   </div>
 
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <div className="text-small font-medium text-foreground flex items-center gap-2">
                       {opt.label}
                       {opt.badge && (
                         <span className={`hidden sm:inline-block rounded-full px-2 py-0.5 text-[10px] border ${
@@ -66,7 +66,7 @@ export const PaymentOptions: React.FC<Props> = ({ selected, onChange, className 
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">{opt.sub}</div>
+                    <div className="text-caption text-muted-foreground truncate">{opt.sub}</div>
                   </div>
                 </div>
               </Card>

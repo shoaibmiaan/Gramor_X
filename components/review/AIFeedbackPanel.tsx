@@ -32,13 +32,13 @@ export function AIFeedbackPanel({
   return (
     <section className={['rounded-2xl border border-border bg-card p-4 shadow-card', className || ''].join(' ')}>
       <header className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-foreground">{header}</h3>
+        <h3 className="text-body font-semibold text-foreground">{header}</h3>
         <div className="flex gap-2">
           {onRegrade && (
             <button
               type="button"
               onClick={onRegrade}
-              className="rounded-xl border border-border px-3 py-1.5 text-sm hover:bg-foreground/5"
+              className="rounded-xl border border-border px-3 py-1.5 text-small hover:bg-foreground/5"
               title="Re-run AI grading"
             >
               Regrade
@@ -48,7 +48,7 @@ export function AIFeedbackPanel({
             <button
               type="button"
               onClick={onDownload}
-              className="rounded-xl bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              className="rounded-xl bg-primary px-3 py-1.5 text-small font-semibold text-primary-foreground hover:bg-primary/90"
               title="Download feedback"
             >
               Download
@@ -60,26 +60,26 @@ export function AIFeedbackPanel({
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Overall band */}
         <div className="rounded-xl border border-border p-3">
-          <div className="text-xs text-foreground/70">Module</div>
-          <div className="text-sm font-medium capitalize">{module}</div>
-          <div className="mt-3 text-xs text-foreground/70">Overall</div>
+          <div className="text-caption text-foreground/70">Module</div>
+          <div className="text-small font-medium capitalize">{module}</div>
+          <div className="mt-3 text-caption text-foreground/70">Overall</div>
           <div className="mt-1 flex items-end gap-2">
-            <span className="text-3xl font-bold tabular-nums">{band ?? '—'}</span>
-            {typeof band === 'number' && <span className="text-xs text-foreground/70">/ 9</span>}
+            <span className="text-h1 font-bold tabular-nums">{band ?? '—'}</span>
+            {typeof band === 'number' && <span className="text-caption text-foreground/70">/ 9</span>}
           </div>
           {typeof tokensUsed === 'number' && (
-            <div className="mt-3 text-xs text-foreground/60">Tokens: {tokensUsed}</div>
+            <div className="mt-3 text-caption text-foreground/60">Tokens: {tokensUsed}</div>
           )}
         </div>
 
         {/* Criteria */}
         <div className="sm:col-span-2 rounded-xl border border-border p-3">
-          <div className="text-xs text-foreground/70 mb-2">Criteria</div>
+          <div className="text-caption text-foreground/70 mb-2">Criteria</div>
           {critList.length ? (
             <ul className="space-y-2">
               {critList.map(([k, v]) => (
                 <li key={k}>
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-small">
                     <span className="capitalize">{labelize(k)}</span>
                     <span className="tabular-nums font-medium">{v}</span>
                   </div>
@@ -93,7 +93,7 @@ export function AIFeedbackPanel({
               ))}
             </ul>
           ) : (
-            <div className="text-sm text-foreground/70">No criteria available.</div>
+            <div className="text-small text-foreground/70">No criteria available.</div>
           )}
         </div>
       </div>
@@ -101,16 +101,16 @@ export function AIFeedbackPanel({
       {/* Notes */}
       {notes && (
         <div className="mt-4 rounded-xl border border-border p-3">
-          <div className="text-xs text-foreground/70 mb-2">Summary</div>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">{notes}</p>
+          <div className="text-caption text-foreground/70 mb-2">Summary</div>
+          <p className="whitespace-pre-wrap text-small leading-relaxed">{notes}</p>
         </div>
       )}
 
       {/* Tips */}
       {tips && tips.length > 0 && (
         <div className="mt-4 rounded-xl border border-border p-3">
-          <div className="text-xs text-foreground/70 mb-2">Actionable Tips</div>
-          <ul className="list-disc pl-5 space-y-1 text-sm">
+          <div className="text-caption text-foreground/70 mb-2">Actionable Tips</div>
+          <ul className="list-disc pl-5 space-y-1 text-small">
             {tips.map((t, i) => (
               <li key={i}>{t}</li>
             ))}

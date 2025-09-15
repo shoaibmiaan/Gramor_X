@@ -61,7 +61,7 @@ export default function TeacherOnboarding() {
 
   return (
     <div className="mx-auto max-w-2xl p-6 text-foreground">
-      <h1 className="mb-6 text-2xl font-semibold">Teacher Application</h1>
+      <h1 className="mb-6 text-h2 font-semibold">Teacher Application</h1>
 
       {err && <Alert variant="warning" className="mb-4">{err}</Alert>}
 

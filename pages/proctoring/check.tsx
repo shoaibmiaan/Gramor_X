@@ -68,8 +68,8 @@ export default function ProctoringCheckPage() {
       <main className="min-h-screen bg-background">
         <section className="mx-auto max-w-3xl px-4 py-8">
           <div className="rounded-2xl border border-lightBorder bg-card p-6">
-            <h1 className="text-2xl md:text-3xl font-slab">Pre-exam device check</h1>
-            <p className="mt-1 text-sm text-mutedText">
+            <h1 className="text-h2 md:text-h1 font-slab">Pre-exam device check</h1>
+            <p className="mt-1 text-small text-mutedText">
               We quickly verify your camera, mic and environment before starting the exam.
             </p>
 
@@ -101,14 +101,14 @@ export default function ProctoringCheckPage() {
               <div className="mt-4 rounded-2xl border border-lightBorder bg-background p-4">
                 <div
                   className={cls(
-                    'text-sm font-medium',
+                    'text-small font-medium',
                     result.passed ? 'text-success' : 'text-sunsetRed'
                   )}
                 >
                   {result.passed ? 'All checks passed.' : 'Some checks failed:'}
                 </div>
                 {!result.passed && result.reasons?.length > 0 && (
-                  <ul className="mt-2 list-disc pl-5 text-sm text-mutedText">
+                  <ul className="mt-2 list-disc pl-5 text-small text-mutedText">
                     {result.reasons.map((r, i) => (
                       <li key={i}>{r}</li>
                     ))}
@@ -135,7 +135,7 @@ export default function ProctoringCheckPage() {
               </div>
             )}
 
-            <div className="mt-4 text-sm text-mutedText">
+            <div className="mt-4 text-small text-mutedText">
               Tip: ensure you are in a well-lit room, alone, and your face is clearly visible.
             </div>
           </div>

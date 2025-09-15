@@ -19,7 +19,7 @@ type BaseProps = {
 };
 
 type ButtonComponent = <E extends React.ElementType = 'button'>(
-  props: PolymorphicProps<E, BaseProps>
+  props: PolymorphicProps<E, BaseProps> & { as?: any }
 ) => React.ReactElement | null;
 
 const variantClass: Record<Variant, string> = {
@@ -29,20 +29,20 @@ const variantClass: Record<Variant, string> = {
   ghost:     'bg-transparent hover:bg-white/10',
   link:      'underline underline-offset-4 hover:no-underline',
   accent:    'bg-accent text-black hover:bg-accent/90',
-  warning:   'bg-amber-500 text-black hover:bg-amber-400',
-  danger:    'bg-red-600 text-white hover:bg-red-500',
-  error:     'bg-red-600 text-white hover:bg-red-500',
-  success:   'bg-emerald-600 text-white hover:bg-emerald-500',
-  info:      'bg-sky-600 text-white hover:bg-sky-500',
+  warning:   'bg-warning text-black hover:bg-warning/90',
+  danger:    'bg-danger text-white hover:bg-danger/90',
+  error:     'bg-danger text-white hover:bg-danger/90',
+  success:   'bg-success text-white hover:bg-success/90',
+  info:      'bg-electricBlue text-white hover:bg-electricBlue/90',
   subtle:    'bg-white/5 text-white/90 hover:bg-white/10',
 };
 
 const sizeClass: Record<Size, string> = {
-  xs: 'h-7 px-2 text-xs',
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-11 px-5 text-base',
-  xl: 'h-12 px-6 text-lg',
+  xs: 'h-7 px-2 text-caption',
+  sm: 'h-8 px-3 text-small',
+  md: 'h-10 px-4 text-small',
+  lg: 'h-11 px-5 text-body',
+  xl: 'h-12 px-6 text-h4',
 };
 
 export const Button: ButtonComponent = (props) => {

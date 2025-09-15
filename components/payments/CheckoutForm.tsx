@@ -74,8 +74,8 @@ export default function CheckoutForm({
     <div className={`grid gap-4 md:grid-cols-3 ${className}`}>
       {methods.includes('stripe') && (
         <div className="rounded-xl border border-border p-4">
-          <h3 className="mb-1 text-lg font-medium">Pay by Card</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Visa, MasterCard</p>
+          <h3 className="mb-1 text-h4 font-medium">Pay by Card</h3>
+          <p className="mb-4 text-small text-muted-foreground">Visa, MasterCard</p>
           <button
             type="button"
             onClick={() => start('stripe')}
@@ -89,8 +89,8 @@ export default function CheckoutForm({
 
       {methods.includes('easypaisa') && (
         <div className="rounded-xl border border-border p-4">
-          <h3 className="mb-1 text-lg font-medium">Easypaisa</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Pakistan local payments</p>
+          <h3 className="mb-1 text-h4 font-medium">Easypaisa</h3>
+          <p className="mb-4 text-small text-muted-foreground">Pakistan local payments</p>
           <button
             type="button"
             onClick={() => start('easypaisa')}
@@ -104,8 +104,8 @@ export default function CheckoutForm({
 
       {methods.includes('jazzcash') && (
         <div className="rounded-xl border border-border p-4">
-          <h3 className="mb-1 text-lg font-medium">JazzCash</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Pakistan local payments</p>
+          <h3 className="mb-1 text-h4 font-medium">JazzCash</h3>
+          <p className="mb-4 text-small text-muted-foreground">Pakistan local payments</p>
           <button
             type="button"
             onClick={() => start('jazzcash')}
@@ -118,7 +118,7 @@ export default function CheckoutForm({
       )}
 
       {err ? (
-        <div className="md:col-span-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+        <div className="md:col-span-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-small">
           <p className="font-medium">Checkout error</p>
           <p className="opacity-90">{err}</p>
         </div>

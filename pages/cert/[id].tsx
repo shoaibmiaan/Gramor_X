@@ -102,21 +102,21 @@ export default function CertificatePage() {
         <Container>
           <header className="mb-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Certificate</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-h2 font-bold text-foreground">Certificate</h1>
+              <p className="text-small text-muted-foreground">
                 Share your achievement and keep pushing towards Band&nbsp;9.
               </p>
             </div>
             <nav className="flex items-center gap-3">
               <Link
                 href="/challenge"
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
               >
                 Challenges
               </Link>
               <Link
                 href="/progress"
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
               >
                 Progress
               </Link>
@@ -124,11 +124,11 @@ export default function CertificatePage() {
           </header>
 
           {loading ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">
               Loading certificate…
             </div>
           ) : error ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-red-400">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-red-400">
               {error} — You may need to{" "}
               <Link
                 className="text-primary underline-offset-2 hover:underline"
@@ -139,7 +139,7 @@ export default function CertificatePage() {
               to view this certificate.
             </div>
           ) : !cert ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">
               Certificate not found.
             </div>
           ) : (
@@ -157,7 +157,7 @@ export default function CertificatePage() {
                 <button
                   type="button"
                   onClick={copyLink}
-                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
                 >
                   Copy share link
                 </button>
@@ -175,7 +175,7 @@ export default function CertificatePage() {
                       if (j?.signedUrl) window.open(j.signedUrl, "_blank");
                     }
                   }}
-                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
                 >
                   Open image
                 </button>

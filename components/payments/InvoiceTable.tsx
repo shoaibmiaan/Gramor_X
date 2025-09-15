@@ -17,7 +17,7 @@ export type InvoiceTableProps = {
 export default function InvoiceTable({ invoices, className = '' }: InvoiceTableProps) {
   if (!invoices || invoices.length === 0) {
     return (
-      <div className={`rounded-lg border border-border p-4 text-sm text-muted-foreground ${className}`}>
+      <div className={`rounded-lg border border-border p-4 text-small text-muted-foreground ${className}`}>
         No invoices yet.
       </div>
     );
@@ -25,7 +25,7 @@ export default function InvoiceTable({ invoices, className = '' }: InvoiceTableP
 
   return (
     <div className={`overflow-x-auto ${className}`}>
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-small">
         <thead>
           <tr className="border-b border-border text-left">
             <th className="py-2 pr-4">Date</th>

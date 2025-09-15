@@ -51,10 +51,10 @@ export function ChallengeCohortCard({
     <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <h3 className="text-h4 font-semibold text-foreground">{title}</h3>
+          <p className="text-small text-muted-foreground">{description}</p>
         </div>
-        <span className="shrink-0 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">
+        <span className="shrink-0 rounded-full border border-border px-2.5 py-1 text-caption text-muted-foreground">
           {fmt(startDate)} → {fmt(endDate)}
         </span>
       </div>
@@ -67,20 +67,20 @@ export function ChallengeCohortCard({
             aria-hidden="true"
           />
         </div>
-        <span className="text-xs tabular-nums text-muted-foreground">
+        <span className="text-caption tabular-nums text-muted-foreground">
           {Math.round(progressPct)}%
         </span>
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
+        <span className="text-caption text-muted-foreground">
           {totalTasks} tasks • {enrolled ? "Enrolled" : "Not enrolled"}
         </span>
 
         {enrolled ? (
           <Link
             href={`/challenge/${encodeURIComponent(id)}`}
-            className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+            className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
           >
             Continue
           </Link>
@@ -89,14 +89,14 @@ export function ChallengeCohortCard({
             type="button"
             onClick={handleEnroll}
             disabled={loading}
-            className="px-3 py-1.5 text-sm"
+            className="px-3 py-1.5 text-small"
           >
             {loading ? "Joining…" : "Join challenge"}
           </Button>
         ) : (
           <Link
             href={`/challenge?enroll=${encodeURIComponent(id)}`}
-            className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+            className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
           >
             Join challenge
           </Link>

@@ -127,7 +127,7 @@ function BandChart({ data }: { data: any[] }) {
       width="100%"
       height="200"
       viewBox={`0 0 ${width} ${height}`}
-      className="bg-lightBg dark:bg-dark rounded-ds border border-gray-200 dark:border-gray-700"
+      className="bg-lightBg dark:bg-dark rounded-ds border border-lightBorder dark:border-gray-700"
     >
       {sections.map((s) => {
         const points = data
@@ -164,7 +164,7 @@ function TimeChart({ data }: { data: SectionStat[] }) {
       width="100%"
       height={height}
       viewBox={`0 0 ${width} ${height}`}
-      className="bg-lightBg dark:bg-dark rounded-ds border border-gray-200 dark:border-gray-700"
+      className="bg-lightBg dark:bg-dark rounded-ds border border-lightBorder dark:border-gray-700"
     >
       {data.map((d, i) => {
         const barWidth = (d.totalTime / max) * width;

@@ -56,8 +56,8 @@ const ReferralsPage: NextPage = () => {
       <Head><title>Account — Referrals</title></Head>
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-4 py-8">
-          <h1 className="text-3xl font-semibold">Referrals</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-h1 font-semibold">Referrals</h1>
+          <p className="text-small text-muted-foreground">
             Invite friends and both of you get a <span className="font-medium">14-day Booster</span> reward. {/* per tracker */ }
           </p>
 
@@ -74,7 +74,7 @@ const ReferralsPage: NextPage = () => {
 
               {code ? (
                 <>
-                  <code className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-sm">
+                  <code className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-small">
                     {code}
                   </code>
                   <button
@@ -96,7 +96,7 @@ const ReferralsPage: NextPage = () => {
             </div>
 
             {code ? (
-              <p className="mt-3 text-sm">
+              <p className="mt-3 text-small">
                 Your link:{' '}
                 <a href={referralLink} className="underline underline-offset-4" target="_blank" rel="noreferrer">
                   {referralLink}
@@ -105,14 +105,14 @@ const ReferralsPage: NextPage = () => {
             ) : null}
 
             {err ? (
-              <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+              <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-small">
                 <p className="font-medium">Error</p>
                 <p className="opacity-90">{err}</p>
               </div>
             ) : null}
           </div>
 
-          <ul className="mt-6 list-disc pl-5 text-sm text-muted-foreground">
+          <ul className="mt-6 list-disc pl-5 text-small text-muted-foreground">
             <li>Friends can paste your code at signup or checkout to redeem.</li>
             <li>Fraud protection applies; rewards may take a few minutes to appear.</li>
           </ul>

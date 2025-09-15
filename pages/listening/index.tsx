@@ -158,7 +158,7 @@ export default function ListeningIndexPage() {
       <Container>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="font-slab text-4xl text-gradient-primary">Listening Tests</h1>
+            <h1 className="font-slab text-display text-gradient-primary">Listening Tests</h1>
             <p className="text-grayish max-w-2xl">
               Pick a paper to start or resume where you left off. Auto-play per section & answer
               review are built in.

@@ -41,7 +41,7 @@ export function ExamShell({
       {/* Header */}
       <div className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-foreground truncate">{title ?? 'Exam'}</h1>
+          <h1 className="text-h4 font-semibold text-foreground truncate">{title ?? 'Exam'}</h1>
           {typeof seconds === 'number' && (
             <TimerHUD seconds={seconds} onTimeUp={onTimeUp} />
           )}

@@ -96,7 +96,7 @@ const CheckoutPage: NextPage = () => {
           <Container>
             <header className="text-center max-w-3xl mx-auto mb-6">
               <p className="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-caption text-muted-foreground bg-card/60 backdrop-blur supports-[backdrop-filter]:bg-card/40">
-                <i className="fas fa-sync-alt text-xs" aria-hidden="true"></i>
+                <i className="fas fa-sync-alt text-caption" aria-hidden="true"></i>
                 Flexible plans • Cancel anytime
               </p>
 
@@ -121,7 +121,7 @@ const CheckoutPage: NextPage = () => {
                 href="/pricing"
                 className="rounded-ds border border-border px-3 py-2 text-body hover:bg-muted transition flex items-center gap-2"
               >
-                <i className="fas fa-arrow-left text-xs" aria-hidden="true"></i>
+                <i className="fas fa-arrow-left text-caption" aria-hidden="true"></i>
                 Back to pricing
               </Link>
             </div>
@@ -160,7 +160,7 @@ const CheckoutPage: NextPage = () => {
                     <Card className="card-surface rounded-ds-2xl p-8">
                       <div className="flex items-start gap-6">
                         <div className="flex-none">
-                          <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl bg-gradient-to-br from-primary to-electricBlue">
+                          <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-h2 bg-gradient-to-br from-primary to-electricBlue">
                             <i className={`fas ${selectedPlanData?.icon ?? 'fa-star'}`} aria-hidden="true" />
                           </div>
                         </div>
@@ -287,7 +287,7 @@ const CheckoutPage: NextPage = () => {
                           }}
                           className="w-full"
                         >
-                          <i className="fas fa-arrow-left text-xs mr-2" aria-hidden="true"></i>
+                          <i className="fas fa-arrow-left text-caption mr-2" aria-hidden="true"></i>
                           Change plan
                         </Button>
                       </div>
@@ -315,17 +315,17 @@ const CheckoutPage: NextPage = () => {
 
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-caption text-muted-foreground">
                   <Link href="/account/referrals" className="underline-offset-4 hover:underline flex items-center gap-1">
-                    <i className="fas fa-ticket-alt text-xs" aria-hidden="true"></i>
+                    <i className="fas fa-ticket-alt text-caption" aria-hidden="true"></i>
                     Don&apos;t have a code? Generate yours
                   </Link>
                   <span>•</span>
                   <Link href="/partners" className="underline-offset-4 hover:underline flex items-center gap-1">
-                    <i className="fas fa-handshake text-xs" aria-hidden="true"></i>
+                    <i className="fas fa-handshake text-caption" aria-hidden="true"></i>
                     Become a partner
                   </Link>
                   <span>•</span>
                   <Link href="/help" className="underline-offset-4 hover:underline flex items-center gap-1">
-                    <i className="fas fa-question-circle text-xs" aria-hidden="true"></i>
+                    <i className="fas fa-question-circle text-caption" aria-hidden="true"></i>
                     Need help?
                   </Link>
                 </div>

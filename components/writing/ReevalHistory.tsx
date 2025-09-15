@@ -74,7 +74,7 @@ export const ReevalHistory: React.FC<ReevalHistoryProps> = ({
           return (
             <li
               key={item.id}
-              className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10"
+              className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
