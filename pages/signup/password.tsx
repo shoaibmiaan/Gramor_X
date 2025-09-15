@@ -35,7 +35,7 @@ export default function SignupPassword() {
         setErr(error.message || 'Sign up failed.');
         return;
       }
-      router.push('/signup/verify?email=' + encodeURIComponent(email));
+      router.push('/auth/verify?email=' + encodeURIComponent(email));
     } catch (e: any) {
       setErr(e?.message ?? 'Unexpected error.');
     } finally {
