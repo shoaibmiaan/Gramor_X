@@ -67,33 +67,37 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     <header
       role="banner"
       className={[
-        'relative z-50 transition-all duration-300',
-        solidHeader ? 'bg-background/95 border-b border-border shadow-sm' : 'header-glass',
+        'relative sticky top-0 z-50 w-full border-b transition-[background,box-shadow,border-color] duration-300',
+        'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:bg-background/70',
+        solidHeader
+          ? 'bg-background/95 border-border shadow-[0_16px_45px_-30px_rgba(67,97,238,0.55)] dark:shadow-[0_16px_45px_-30px_rgba(128,255,219,0.35)]'
+          : 'header-glass border-border/40 dark:border-vibrantPurple/30',
         'before:content-[""] before:absolute before:inset-x-0 before:bottom-0 before:h-[2px]',
-        'before:bg-gradient-to-r before:from-vibrantPurple/70 before:via-electricBlue/70 before:to-neonGreen/70',
-        solidHeader ? 'shadow-glow' : '',
+        'before:bg-gradient-to-r before:from-vibrantPurple/60 before:via-electricBlue/60 before:to-neonGreen/60',
       ].join(' ')}
     >
       <Container>
-        <div className="relative flex items-center justify-between py-3 md:py-4">
+        <div className="relative flex items-center justify-between py-2.5 md:py-3.5">
           {/* Brand */}
           <Link
             href={user?.id ? '/dashboard' : '/'}
-            className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ds"
+            className="group flex items-center gap-3 rounded-ds focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label="Go to home"
           >
-            <span className="relative inline-flex items-center justify-center rounded-xl bg-card p-1.5 shadow-sm ring-1 ring-border">
-              <Image
-                src="/brand/logo.png"
-                alt="GramorX logo"
-                width="44"
-                height="44"
-                className="h-10 w-10 md:h-11 md:w-11 rounded-lg object-contain"
-                priority
-              />
-              <span className="absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full bg-accent/90 ring-2 ring-card" />
+            <span className="relative inline-flex items-center justify-center rounded-xl bg-card/90 shadow-sm ring-1 ring-border transition group-hover:ring-primary/40 dark:bg-dark/70">
+              <span className="relative h-9 w-9 overflow-hidden rounded-lg md:h-10 md:w-10">
+                <Image
+                  src="/brand/logo.png"
+                  alt="GramorX logo"
+                  width={44}
+                  height={44}
+                  className="h-full w-full object-contain"
+                  priority
+                />
+              </span>
+              <span aria-hidden className="absolute -right-1 -bottom-1 h-2.5 w-2.5 rounded-full bg-accent/90 ring-2 ring-card" />
             </span>
-            <p className="font-slab font-bold text-h2 md:text-h1 leading-none" role="heading" aria-level={1}>
+            <p className="leading-none font-slab text-h2 font-bold md:text-h1" role="heading" aria-level={1}>
               <span className="text-gradient-primary transition-opacity group-hover:opacity-90">
                 GramorX
               </span>
