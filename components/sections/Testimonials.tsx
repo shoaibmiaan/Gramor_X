@@ -57,7 +57,9 @@ export const Testimonials: React.FC = () => {
           {items.map((t) => (
             <Card
               key={t.id}
-              className="p-6 rounded-ds-2xl border border-purpleVibe/20 hover:border-purpleVibe/40 transition bg-card/70"
+              className="border border-purpleVibe/20 hover:border-purpleVibe/40 transition-colors"
+              padding="md"
+              interactive
             >
               <div className="flex items-center justify-between">
                 <div className="font-semibold">{t.name}</div>
@@ -70,8 +72,8 @@ export const Testimonials: React.FC = () => {
                 {t.location ? ` • ${t.location}` : ''}
               </div>
 
-              <blockquote className="mt-4 relative pl-4 border-l-4 border-border text-mutedText">
-                “{t.quote}”
+              <blockquote className="mt-4 relative pl-4 border-l-4 border-border text-muted-foreground">
+                "{t.quote}"
               </blockquote>
 
               <div className="mt-5 flex items-center gap-1 text-warning/90" aria-hidden="true">
