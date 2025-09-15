@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { event, session } = req.body as { event: string; session: any };
 
   try {
-    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
       // writes sb-access-token / sb-refresh-token cookies
       await supabase.auth.setSession(session);
       return res.status(200).json({ ok: true });
