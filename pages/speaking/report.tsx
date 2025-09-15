@@ -55,7 +55,7 @@ export default function SpeakingReportPage() {
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
         <h1 className="font-slab text-h1 md:text-display mb-6">Speaking Report</h1>
-        {error && <p className="text-red-600 mb-4">{error}</p>}
+        {error && <p className="text-danger mb-4">{error}</p>}
         <Card className="card-surface p-6 rounded-ds-2xl">
           <h2 className="text-h3 mb-4">Averages</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -65,7 +65,7 @@ export default function SpeakingReportPage() {
             <Badge variant="secondary" className="rounded-ds-xl justify-center">Pronunciation: {agg.pronunciation}</Badge>
           </div>
 
-          <table className="w-full text-sm">
+          <table className="w-full text-small">
             <thead className="text-left">
               <tr>
                 <th className="pb-2">Date</th>

@@ -58,8 +58,8 @@ export function TaskList({ enrollmentId, tasks, progress, onUpdate }: TaskListPr
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-foreground">Daily Tasks</h4>
-        <span className="text-xs text-muted-foreground">
+        <h4 className="text-small font-medium text-foreground">Daily Tasks</h4>
+        <span className="text-caption text-muted-foreground">
           {completed}/{tasks.length} done
         </span>
       </div>
@@ -71,13 +71,13 @@ export function TaskList({ enrollmentId, tasks, progress, onUpdate }: TaskListPr
 
           return (
             <li key={t.day} className="flex items-center gap-3 px-3 py-2">
-              <span className="grid h-7 w-7 place-items-center rounded-md border border-border text-xs text-muted-foreground">
+              <span className="grid h-7 w-7 place-items-center rounded-md border border-border text-caption text-muted-foreground">
                 {t.day}
               </span>
 
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm text-foreground">{t.title}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="truncate text-small text-foreground">{t.title}</div>
+                <div className="text-caption text-muted-foreground">
                   Due {new Date(t.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                 </div>
               </div>
@@ -87,7 +87,7 @@ export function TaskList({ enrollmentId, tasks, progress, onUpdate }: TaskListPr
                   type="button"
                   disabled={isBusy || st === "done"}
                   onClick={() => setStatus(t.day, "done")}
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs hover:bg-border/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-border bg-background px-2 py-1 text-caption hover:bg-border/30 disabled:cursor-not-allowed disabled:opacity-50"
                   aria-pressed={st === "done"}
                 >
                   {isBusy && st !== "done" ? "…" : "Mark done"}
@@ -96,7 +96,7 @@ export function TaskList({ enrollmentId, tasks, progress, onUpdate }: TaskListPr
                   type="button"
                   disabled={isBusy || st === "skipped"}
                   onClick={() => setStatus(t.day, "skipped")}
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs hover:bg-border/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-border bg-background px-2 py-1 text-caption hover:bg-border/30 disabled:cursor-not-allowed disabled:opacity-50"
                   aria-pressed={st === "skipped"}
                 >
                   Skip
@@ -105,7 +105,7 @@ export function TaskList({ enrollmentId, tasks, progress, onUpdate }: TaskListPr
                   type="button"
                   disabled={isBusy || st === "pending"}
                   onClick={() => setStatus(t.day, "pending")}
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs hover:bg-border/30 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-border bg-background px-2 py-1 text-caption hover:bg-border/30 disabled:cursor-not-allowed disabled:opacity-50"
                   aria-pressed={st === "pending"}
                 >
                   Reset

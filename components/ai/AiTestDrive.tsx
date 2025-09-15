@@ -64,7 +64,7 @@ export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }
       )}
 
       {answer && (
-        <div className="mt-4 p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+        <div className="mt-4 p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
           <div className="whitespace-pre-line">{answer}</div>
         </div>
       )}

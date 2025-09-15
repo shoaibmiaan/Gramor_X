@@ -44,7 +44,7 @@ export function AnswerControl(props: AnswerControlProps) {
     case 'essay':
       return <EssayControl {...(props as AnswerControlProps<EssayItem>)} />;
     default:
-      return <div className="text-sm text-foreground/70">Unsupported question type.</div>;
+      return <div className="text-small text-foreground/70">Unsupported question type.</div>;
   }
 }
 
@@ -80,7 +80,7 @@ function MCQControl({ question, value, onChange, readOnly }: AnswerControlProps<
               disabled={readOnly}
               onChange={() => toggle(idx)}
             />
-            <span className="text-sm">{opt}</span>
+            <span className="text-small">{opt}</span>
           </label>
         );
       })}
@@ -105,7 +105,7 @@ function TFNGControl({ question, value, onChange, readOnly }: AnswerControlProps
           disabled={readOnly}
           onClick={() => onChange?.(o.v)}
           className={[
-            'rounded-lg border p-2 text-sm',
+            'rounded-lg border p-2 text-small',
             v === o.v ? 'border-primary bg-primary/10' : 'border-border hover:bg-foreground/5',
           ].join(' ')}
         >
@@ -133,7 +133,7 @@ function YNNGControl({ value, onChange, readOnly }: AnswerControlProps<YNNGItem>
           disabled={readOnly}
           onClick={() => onChange?.(o.v)}
           className={[
-            'rounded-lg border p-2 text-sm',
+            'rounded-lg border p-2 text-small',
             v === o.v ? 'border-primary bg-primary/10' : 'border-border hover:bg-foreground/5',
           ].join(' ')}
         >
@@ -151,9 +151,9 @@ function HeadingControl({ question, value, onChange, readOnly }: AnswerControlPr
     <div className="space-y-3">
       {question.paragraphs.map((para) => (
         <div key={para} className="flex items-center gap-3">
-          <div className="w-10 shrink-0 text-sm font-semibold text-foreground/80">§{para}</div>
+          <div className="w-10 shrink-0 text-small font-semibold text-foreground/80">§{para}</div>
           <select
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-small"
             disabled={readOnly}
             value={ans[para] ?? ''}
             onChange={(e) => onChange?.({ ...ans, [para]: Number(e.target.value) })}
@@ -178,10 +178,10 @@ function MatchingControl({ question, value, onChange, readOnly }: AnswerControlP
     <div className="space-y-3">
       {question.left.map((l, li) => (
         <div key={li} className="flex items-center gap-3">
-          <div className="shrink-0 w-6 text-sm font-semibold">{li + 1}.</div>
-          <div className="flex-1 text-sm">{l}</div>
+          <div className="shrink-0 w-6 text-small font-semibold">{li + 1}.</div>
+          <div className="flex-1 text-small">{l}</div>
           <select
-            className="w-40 rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm"
+            className="w-40 rounded-lg border border-border bg-background px-2.5 py-1.5 text-small"
             disabled={readOnly}
             value={map[li] ?? ''}
             onChange={(e) =>
@@ -209,7 +209,7 @@ function ShortControl({ value, onChange, readOnly }: AnswerControlProps<ShortIte
   return (
     <input
       type="text"
-      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-small"
       placeholder="Type your answer"
       value={String(value ?? '')}
       onChange={(e) => onChange?.(e.target.value)}
@@ -228,13 +228,13 @@ function EssayControl({ question, value, onChange, readOnly }: AnswerControlProp
   return (
     <div className="space-y-2">
       <textarea
-        className="min-h-[220px] w-full rounded-2xl border border-border bg-background p-3 text-sm"
+        className="min-h-[220px] w-full rounded-2xl border border-border bg-background p-3 text-small"
         placeholder="Write your response here..."
         value={text}
         onChange={(e) => onChange?.(e.target.value)}
         readOnly={readOnly}
       />
-      <div className="flex items-center justify-between text-xs text-foreground/70">
+      <div className="flex items-center justify-between text-caption text-foreground/70">
         <span>
           Words: <span className="tabular-nums">{words}</span>{' '}
           <span className={words < min ? 'text-warning' : words > max ? 'text-error' : 'text-foreground/70'}>

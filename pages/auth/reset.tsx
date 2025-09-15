@@ -20,7 +20,7 @@ import { Input } from '@/components/design-system/Input';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 text-sm uppercase tracking-wide text-mutedText">
+    <div className="mb-3 text-small uppercase tracking-wide text-mutedText">
       {children}
     </div>
   );
@@ -140,14 +140,14 @@ export default function ResetPasswordPage() {
       <div className="mb-4 grid grid-cols-2 rounded-ds overflow-hidden border border-border">
         <button
           type="button"
-          className={cls('py-2 text-sm', step === 'verify' ? 'bg-card text-card-foreground' : 'bg-background')}
+          className={cls('py-2 text-small', step === 'verify' ? 'bg-card text-card-foreground' : 'bg-background')}
           onClick={() => setStep('verify')}
         >
           Enter code
         </button>
         <button
           type="button"
-          className={cls('py-2 text-sm', step === 'update' ? 'bg-card text-card-foreground' : 'bg-background')}
+          className={cls('py-2 text-small', step === 'update' ? 'bg-card text-card-foreground' : 'bg-background')}
           onClick={() => setStep('update')}
         >
           I used the link
@@ -190,7 +190,7 @@ export default function ResetPasswordPage() {
             <Button type="submit" loading={busy} loadingText="Verifying…" leadingIcon={<SmsIcon className="h-5 w-5" />}>
               Verify code
             </Button>
-            <div className="text-sm text-mutedText">
+            <div className="text-small text-mutedText">
               Didn’t get it?{' '}
               <Link
                 href={`/auth/forgot${selectedRole ? `?role=${selectedRole}` : ''}`}
@@ -220,7 +220,7 @@ export default function ResetPasswordPage() {
           <Button type="submit" loading={busy} loadingText="Updating…" leadingIcon={<MailIcon className="h-5 w-5" />}>
             Update password
           </Button>
-          <div className="text-sm text-mutedText">
+          <div className="text-small text-mutedText">
             Back to{' '}
             <Link
               href={`/login${selectedRole ? `?role=${selectedRole}` : ''}`}

@@ -231,8 +231,8 @@ export default function AdminIndex() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h1 className="text-h2 md:text-h1 font-semibold tracking-tight">Admin Dashboard</h1>
+            <p className="text-small text-muted-foreground mt-1">
               Overview of IELTS modules, AI evaluation, blog moderation, and support operations.
             </p>
           </div>
@@ -242,7 +242,7 @@ export default function AdminIndex() {
             <select
               value={range}
               onChange={(e) => setRange(e.target.value as any)}
-              className="h-9 rounded-xl border bg-transparent px-3 text-sm"
+              className="h-9 rounded-xl border bg-transparent px-3 text-small"
               aria-label="Date Range"
             >
               <option value="7d">Last 7 days</option>
@@ -253,7 +253,7 @@ export default function AdminIndex() {
             <select
               value={module}
               onChange={(e) => setModule(e.target.value as any)}
-              className="h-9 rounded-xl border bg-transparent px-3 text-sm"
+              className="h-9 rounded-xl border bg-transparent px-3 text-small"
               aria-label="Module"
             >
               <option value="all">All Modules</option>
@@ -267,11 +267,11 @@ export default function AdminIndex() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search (students, tickets)…"
-              className="h-9 rounded-xl border bg-transparent px-3 text-sm w-56"
+              className="h-9 rounded-xl border bg-transparent px-3 text-small w-56"
             />
             <button
               onClick={exportCSV}
-              className="h-9 rounded-xl border px-3 text-sm hover:bg-muted"
+              className="h-9 rounded-xl border px-3 text-small hover:bg-muted"
               aria-label="Export CSV"
             >
               Export CSV
@@ -297,7 +297,7 @@ export default function AdminIndex() {
                 className="group rounded-2xl border p-3 hover:bg-muted transition"
               >
                 <div className="font-medium">{item.label}</div>
-                <div className="text-xs text-muted-foreground group-hover:underline">Open →</div>
+                <div className="text-caption text-muted-foreground group-hover:underline">Open →</div>
               </Link>
             ))}
         </div>
@@ -316,16 +316,16 @@ export default function AdminIndex() {
               href={k.href || '#'}
               className="rounded-2xl border p-4 hover:shadow-sm hover:-translate-y-0.5 transition bg-card"
             >
-              <div className="text-sm text-muted-foreground">{k.label}</div>
-              <div className="text-2xl font-semibold mt-1">{k.value}</div>
-              {k.sub && <div className="text-xs text-muted-foreground mt-1">{k.sub}</div>}
+              <div className="text-small text-muted-foreground">{k.label}</div>
+              <div className="text-h2 font-semibold mt-1">{k.value}</div>
+              {k.sub && <div className="text-caption text-muted-foreground mt-1">{k.sub}</div>}
             </Link>
           ))}
         </section>
 
         {/* Module Health */}
         <section className="mt-8">
-          <h2 className="text-lg font-semibold">IELTS Module Health</h2>
+          <h2 className="text-h4 font-semibold">IELTS Module Health</h2>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
             {perf.map((m) => {
               const slug = m.module.toLowerCase();
@@ -339,16 +339,16 @@ export default function AdminIndex() {
                     <div className="font-medium">{m.module}</div>
                     <span
                       className={{
-                        up: 'text-green-600 dark:text-green-400',
-                        down: 'text-red-600 dark:text-red-400',
+                        up: 'text-success dark:text-success',
+                        down: 'text-danger dark:text-danger',
                         flat: 'text-muted-foreground',
                       }[m.trend]}
                     >
                       {m.trend === 'up' ? '▲' : m.trend === 'down' ? '▼' : '–'}
                     </span>
                   </div>
-                  <div className="text-sm text-muted-foreground mt-1">{m.attempts} attempts</div>
-                  <div className="text-xl font-semibold mt-1">Avg {m.avgBand.toFixed(1)}</div>
+                  <div className="text-small text-muted-foreground mt-1">{m.attempts} attempts</div>
+                  <div className="text-h3 font-semibold mt-1">Avg {m.avgBand.toFixed(1)}</div>
                 </Link>
               );
             })}
@@ -361,7 +361,7 @@ export default function AdminIndex() {
           <div className="rounded-2xl border overflow-hidden">
             <div className="flex items-center justify-between p-4">
               <h3 className="font-semibold">AI Evaluation Queue</h3>
-              <Link className="text-sm underline" href="/admin/ai-queue?status=pending">
+              <Link className="text-small underline" href="/admin/ai-queue?status=pending">
                 Open full queue
               </Link>
             </div>
@@ -369,7 +369,7 @@ export default function AdminIndex() {
               {loading ? (
                 <SkeletonRows rows={3} />
               ) : (
-                <table className="w-full text-sm">
+                <table className="w-full text-small">
                   <thead className="text-left text-muted-foreground">
                     <tr className="border-b">
                       <th className="p-3">ID</th>
@@ -383,27 +383,27 @@ export default function AdminIndex() {
                   <tbody>
                     {queue.map((r) => (
                       <tr key={r.id} className="border-b last:border-0">
-                        <td className="p-3 font-mono text-xs">{r.id}</td>
+                        <td className="p-3 font-mono text-caption">{r.id}</td>
                         <td className="p-3 capitalize">{r.type}</td>
-                        <td className="p-3 uppercase text-xs">{r.provider}</td>
+                        <td className="p-3 uppercase text-caption">{r.provider}</td>
                         <td className="p-3">
                           <span
-                            className={`rounded-full px-2 py-0.5 text-xs border ${
+                            className={`rounded-full px-2 py-0.5 text-caption border ${
                               r.status === 'pending'
-                                ? 'border-amber-400 text-amber-600 dark:text-amber-400'
+                                ? 'border-warning text-warning dark:text-warning'
                                 : r.status === 'scored'
-                                ? 'border-green-500 text-green-600 dark:text-green-400'
-                                : 'border-red-500 text-red-600 dark:text-red-400'
+                                ? 'border-success text-success dark:text-success'
+                                : 'border-danger text-danger dark:text-danger'
                             }`}
                           >
                             {r.status}
                           </span>
                         </td>
-                        <td className="p-3 text-xs text-muted-foreground">{r.submittedAt}</td>
+                        <td className="p-3 text-caption text-muted-foreground">{r.submittedAt}</td>
                         <td className="p-3">
                           <Link
                             href={`/admin/moderation?type=${r.type}&attempt=${r.id}`}
-                            className="text-xs underline"
+                            className="text-caption underline"
                           >
                             Review →
                           </Link>
@@ -420,7 +420,7 @@ export default function AdminIndex() {
           <div className="rounded-2xl border overflow-hidden">
             <div className="flex items-center justify-between p-4">
               <h3 className="font-semibold">Recent Signups</h3>
-              <Link className="text-sm underline" href="/admin/students?sort=joined_at.desc">
+              <Link className="text-small underline" href="/admin/students?sort=joined_at.desc">
                 View all
               </Link>
             </div>
@@ -428,7 +428,7 @@ export default function AdminIndex() {
               {loading ? (
                 <SkeletonRows rows={3} />
               ) : (
-                <table className="w-full text-sm">
+                <table className="w-full text-small">
                   <thead className="text-left text-muted-foreground">
                     <tr className="border-b">
                       <th className="p-3">Name</th>
@@ -441,10 +441,10 @@ export default function AdminIndex() {
                     {filteredSignups.map((s) => (
                       <tr key={s.id} className="border-b last:border-0">
                         <td className="p-3">{s.name}</td>
-                        <td className="p-3 text-xs text-muted-foreground">{s.email}</td>
-                        <td className="p-3 text-xs text-muted-foreground">{s.joinedAt}</td>
+                        <td className="p-3 text-caption text-muted-foreground">{s.email}</td>
+                        <td className="p-3 text-caption text-muted-foreground">{s.joinedAt}</td>
                         <td className="p-3">
-                          <Link className="text-xs underline" href={`/admin/students?id=${s.id}`}>
+                          <Link className="text-caption underline" href={`/admin/students?id=${s.id}`}>
                             Open →
                           </Link>
                         </td>
@@ -460,7 +460,7 @@ export default function AdminIndex() {
           <div className="rounded-2xl border overflow-hidden">
             <div className="flex items-center justify-between p-4">
               <h3 className="font-semibold">System Status</h3>
-              <Link className="text-sm underline" href="/admin/system">
+              <Link className="text-small underline" href="/admin/system">
                 Status page
               </Link>
             </div>
@@ -478,10 +478,10 @@ export default function AdminIndex() {
                   <div
                     className={
                       p.state === 'ok'
-                        ? 'text-xs text-green-600 dark:text-green-400'
+                        ? 'text-caption text-success dark:text-success'
                         : p.state === 'degraded'
-                        ? 'text-xs text-amber-600 dark:text-amber-400'
-                        : 'text-xs text-red-600 dark:text-red-400'
+                        ? 'text-caption text-warning dark:text-warning'
+                        : 'text-caption text-danger dark:text-danger'
                     }
                   >
                     {p.state.toUpperCase()} • {p.last}
@@ -499,10 +499,10 @@ export default function AdminIndex() {
             <div className="flex items-center justify-between p-4">
               <h3 className="font-semibold">Blog Moderation Queue</h3>
               <div className="flex items-center gap-2">
-                <Link className="text-sm underline" href="/admin/blog/new">
+                <Link className="text-small underline" href="/admin/blog/new">
                   New post
                 </Link>
-                <Link className="text-sm underline" href="/admin/blog/moderation">
+                <Link className="text-small underline" href="/admin/blog/moderation">
                   Open queue
                 </Link>
               </div>
@@ -511,9 +511,9 @@ export default function AdminIndex() {
               {loading ? (
                 <SkeletonRows rows={3} />
               ) : blogQueue.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground">No submissions — great!</div>
+                <div className="p-4 text-small text-muted-foreground">No submissions — great!</div>
               ) : (
-                <table className="w-full text-sm">
+                <table className="w-full text-small">
                   <thead className="text-left text-muted-foreground">
                     <tr className="border-b">
                       <th className="p-3">Title</th>
@@ -533,32 +533,32 @@ export default function AdminIndex() {
                           </Link>
                         </td>
                         <td className="p-3">{b.category}</td>
-                        <td className="p-3 text-xs text-muted-foreground">{b.author ?? '—'}</td>
+                        <td className="p-3 text-caption text-muted-foreground">{b.author ?? '—'}</td>
                         <td className="p-3">
                           <div className="flex flex-wrap gap-1">
                             {b.tags.map((t) => (
                               <span
                                 key={t}
-                                className="px-2 py-0.5 rounded-lg text-xs bg-white/60 dark:bg-white/10"
+                                className="px-2 py-0.5 rounded-lg text-caption bg-white/60 dark:bg-white/10"
                               >
                                 #{t}
                               </span>
                             ))}
                           </div>
                         </td>
-                        <td className="p-3 text-xs text-muted-foreground">{b.submittedAt}</td>
+                        <td className="p-3 text-caption text-muted-foreground">{b.submittedAt}</td>
                         <td className="p-3">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => approvePost(b.slug)}
-                              className="h-8 rounded-lg border px-2 text-xs hover:bg-green-50 dark:hover:bg-green-900/10"
+                              className="h-8 rounded-lg border px-2 text-caption hover:bg-success/10 dark:hover:bg-success/10"
                               aria-label="Approve"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => rejectPost(b.slug)}
-                              className="h-8 rounded-lg border px-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/10"
+                              className="h-8 rounded-lg border px-2 text-caption hover:bg-danger/10 dark:hover:bg-danger/10"
                               aria-label="Reject"
                             >
                               Reject
@@ -577,7 +577,7 @@ export default function AdminIndex() {
           <div className="rounded-2xl border overflow-hidden">
             <div className="flex items-center justify-between p-4">
               <h3 className="font-semibold">Support Tickets (24h)</h3>
-              <Link className="text-sm underline" href="/admin/support">
+              <Link className="text-small underline" href="/admin/support">
                 Open Support
               </Link>
             </div>
@@ -585,9 +585,9 @@ export default function AdminIndex() {
               {loading ? (
                 <SkeletonRows rows={3} />
               ) : filteredTickets.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground">No tickets match your search.</div>
+                <div className="p-4 text-small text-muted-foreground">No tickets match your search.</div>
               ) : (
-                <table className="w-full text-sm">
+                <table className="w-full text-small">
                   <thead className="text-left text-muted-foreground">
                     <tr className="border-b">
                       <th className="p-3">Ticket</th>
@@ -601,32 +601,32 @@ export default function AdminIndex() {
                   <tbody>
                     {filteredTickets.map((t) => (
                       <tr key={t.ticketId} className="border-b last:border-0">
-                        <td className="p-3 font-mono text-xs">{t.ticketId}</td>
+                        <td className="p-3 font-mono text-caption">{t.ticketId}</td>
                         <td className="p-3">
                           <div className="truncate max-w-[18ch]" title={t.subject}>
                             {t.subject}
                           </div>
-                          <div className="text-xs text-muted-foreground">{t.email}</div>
+                          <div className="text-caption text-muted-foreground">{t.email}</div>
                         </td>
                         <td className="p-3 capitalize">{t.category}</td>
                         <td className="p-3">
                           <span
-                            className={`rounded-full px-2 py-0.5 text-xs border ${
+                            className={`rounded-full px-2 py-0.5 text-caption border ${
                               t.status === 'open'
                                 ? 'border-amber-400 text-amber-600 dark:text-amber-400'
                                 : t.status === 'in_progress'
-                                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                ? 'border-blue-500 text-electricBlue dark:text-blue-400'
                                 : t.status === 'resolved'
-                                ? 'border-green-500 text-green-600 dark:text-green-400'
+                                ? 'border-green-500 text-success dark:text-green-400'
                                 : 'border-muted-foreground text-muted-foreground'
                             }`}
                           >
                             {t.status.replace('_', ' ')}
                           </span>
                         </td>
-                        <td className="p-3 text-xs text-muted-foreground">{t.createdAt}</td>
+                        <td className="p-3 text-caption text-muted-foreground">{t.createdAt}</td>
                         <td className="p-3">
-                          <Link className="text-xs underline" href={`/admin/support?ticket=${t.ticketId}`}>
+                          <Link className="text-caption underline" href={`/admin/support?ticket=${t.ticketId}`}>
                             Open →
                           </Link>
                         </td>
@@ -693,9 +693,9 @@ function SkeletonRows({ rows = 3 }: { rows?: number }) {
 function StatusDot({ state }: { state: ProviderStatus['state'] }) {
   const cls =
     state === 'ok'
-      ? 'bg-green-500'
+      ? 'bg-success'
       : state === 'degraded'
-      ? 'bg-amber-500'
-      : 'bg-red-500';
+      ? 'bg-warning'
+      : 'bg-danger';
   return <span className={`inline-block w-2.5 h-2.5 rounded-full ${cls}`} aria-hidden="true" />;
 }

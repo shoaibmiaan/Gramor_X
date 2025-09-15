@@ -270,7 +270,7 @@ export default function Strategies() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <h1 className="font-slab text-4xl text-gradient-primary">IELTS Strategy Tips</h1>
+        <h1 className="font-slab text-display text-gradient-primary">IELTS Strategy Tips</h1>
         <p className="text-grayish max-w-2xl">Filter by skill & difficulty, search by keywords, then launch a quick AI micro-drill.</p>
 
         {/* Filters Card */}

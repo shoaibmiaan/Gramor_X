@@ -84,7 +84,7 @@ export default function WritingReview({ attempt }: { attempt: Attempt }) {
             </div>
 
             <h3 className="text-h3 mt-6">Your Essay</h3>
-            <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10 whitespace-pre-wrap">
+            <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10 whitespace-pre-wrap">
               {attempt.essay_text}
             </div>
           </Card>
@@ -99,7 +99,7 @@ export default function WritingReview({ attempt }: { attempt: Attempt }) {
               {err && <Alert variant="warning" title="Failed" className="mt-4">{err}</Alert>}
               {result && (
                 <div className="mt-6 grid gap-4">
-                  <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                  <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                     <div className="flex items-center gap-3">
                       <Badge variant="neutral" size="sm">Original: {attempt.band_overall}</Badge>
                       <Badge
@@ -113,7 +113,7 @@ export default function WritingReview({ attempt }: { attempt: Attempt }) {
 
                   <div className="grid sm:grid-cols-2 gap-3">
                     {(['task','coherence','lexical','grammar'] as const).map(k => (
-                      <div key={k} className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                      <div key={k} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                         <div className="flex items-center justify-between">
                           <span className="capitalize">{k}</span>
                           <Badge

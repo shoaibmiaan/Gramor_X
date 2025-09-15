@@ -142,7 +142,7 @@ export const AIReview: React.FC<SpeakingAIReviewProps> = ({ attemptId }) => {
         }}
       />
       <h3 className="text-h3 mt-6">Transcript</h3>
-      <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10 whitespace-pre-wrap">
+      <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10 whitespace-pre-wrap">
         {renderAnnotated(annotated || data.transcript)}
       </div>
       {data.notes && (

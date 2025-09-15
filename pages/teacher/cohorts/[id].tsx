@@ -114,24 +114,24 @@ export default function CohortDetail() {
         <Container>
           <header className="mb-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-h2 font-bold text-foreground">
                 {cohort?.name || "Cohort"}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-small text-muted-foreground">
                 Track member progress and assign tasks.
               </p>
             </div>
             <nav className="flex items-center gap-3">
               <Link
                 href="/teacher"
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
               >
                 All Cohorts
               </Link>
               <button
                 type="button"
                 onClick={() => setAssignOpen(true)}
-                className="rounded-md border border-border bg-primary px-3 py-1.5 text-sm text-background hover:opacity-90"
+                className="rounded-md border border-border bg-primary px-3 py-1.5 text-small text-background hover:opacity-90"
               >
                 Assign task
               </button>
@@ -139,15 +139,15 @@ export default function CohortDetail() {
           </header>
 
           {loading ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">
               Loading cohort…
             </div>
           ) : error ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-red-400">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-red-400">
               {error}
             </div>
           ) : !cohort ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">
               Cohort not found.
             </div>
           ) : (

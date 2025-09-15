@@ -61,7 +61,7 @@ export function WaitlistForm() {
 
       <div className="flex items-center gap-3">
         <Button variant="primary" type="submit" disabled={busy}>Join Waitlist</Button>
-        {msg && <span className="text-sm text-muted-foreground">{msg}</span>}
+        {msg && <span className="text-small text-muted-foreground">{msg}</span>}
       </div>
     </form>
   );

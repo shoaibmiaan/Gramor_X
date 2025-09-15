@@ -31,14 +31,14 @@ const PredictorResultPage: NextPage = () => {
       <Head><title>Prediction Result</title></Head>
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-4 py-8">
-          <h1 className="text-3xl font-semibold">Your IELTS Estimate</h1>
+          <h1 className="text-h1 font-semibold">Your IELTS Estimate</h1>
 
           {!res ? (
             <div className="mt-6 rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-small text-muted-foreground">
                 No result found. Please run the predictor first.
               </p>
-              <Link href="/predictor" className="mt-3 inline-block rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground">
+              <Link href="/predictor" className="mt-3 inline-block rounded-lg bg-primary px-3 py-2 text-small text-primary-foreground">
                 Go to Predictor
               </Link>
             </div>
@@ -53,8 +53,8 @@ const PredictorResultPage: NextPage = () => {
 
               {res.advice.length > 0 ? (
                 <section className="mt-6 rounded-xl border border-border p-4">
-                  <h2 className="text-lg font-medium">Personalized Advice</h2>
-                  <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
+                  <h2 className="text-h4 font-medium">Personalized Advice</h2>
+                  <ul className="mt-2 list-disc pl-5 text-small text-muted-foreground">
                     {res.advice.map((a, i) => <li key={i}>{a}</li>)}
                   </ul>
                 </section>

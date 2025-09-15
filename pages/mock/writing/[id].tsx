@@ -33,7 +33,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-5xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="rounded-2xl border border-border p-4 sm:p-6 bg-background/50 shadow-sm">{children}</div>
@@ -92,25 +92,25 @@ export default function WritingMockPage() {
   return (
     <Shell
       title={`Writing — ${paper.title}`}
-      right={<div className="rounded-full border border-border px-3 py-1 text-sm">⏱ {hhmmss(timeLeft)}</div>}
+      right={<div className="rounded-full border border-border px-3 py-1 text-small">⏱ {hhmmss(timeLeft)}</div>}
     >
       <div className="grid gap-6">
         <section className="rounded-xl border border-border p-4">
-          <h2 className="mb-2 text-base font-semibold">Task 1</h2>
-          <p className="mb-2 text-sm text-foreground/80">{paper.task1Prompt}</p>
+          <h2 className="mb-2 text-body font-semibold">Task 1</h2>
+          <p className="mb-2 text-small text-foreground/80">{paper.task1Prompt}</p>
           <textarea value={task1} onChange={(e) => setTask1(e.target.value)} className="h-40 w-full rounded-lg border border-border bg-background p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background" />
-          <div className="mt-1 text-xs text-foreground/70">Words: {wc1} (min {paper.minWordsTask1})</div>
+          <div className="mt-1 text-caption text-foreground/70">Words: {wc1} (min {paper.minWordsTask1})</div>
         </section>
 
         <section className="rounded-xl border border-border p-4">
-          <h2 className="mb-2 text-base font-semibold">Task 2</h2>
-          <p className="mb-2 text-sm text-foreground/80">{paper.task2Prompt}</p>
+          <h2 className="mb-2 text-body font-semibold">Task 2</h2>
+          <p className="mb-2 text-small text-foreground/80">{paper.task2Prompt}</p>
           <textarea value={task2} onChange={(e) => setTask2(e.target.value)} className="h-60 w-full rounded-lg border border-border bg-background p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background" />
-          <div className="mt-1 text-xs text-foreground/70">Words: {wc2} (min {paper.minWordsTask2})</div>
+          <div className="mt-1 text-caption text-foreground/70">Words: {wc2} (min {paper.minWordsTask2})</div>
         </section>
 
         <div className="flex items-center justify-between">
-          <Link href="/writing" className="text-sm underline underline-offset-4">Change test</Link>
+          <Link href="/writing" className="text-small underline underline-offset-4">Change test</Link>
           <button onClick={submit} disabled={!ok} className={`rounded-xl px-4 py-2 font-medium text-background ${ok ? 'bg-primary hover:opacity-90' : 'bg-border cursor-not-allowed'}`}>Submit for AI grading</button>
         </div>
       </div>

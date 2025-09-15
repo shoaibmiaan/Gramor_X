@@ -40,11 +40,11 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-foreground">Leaderboard</h4>
+        <h4 className="text-small font-medium text-foreground">Leaderboard</h4>
         <button
           type="button"
           onClick={fetchData}
-          className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground hover:bg-border/30 disabled:opacity-50"
+          className="rounded-md border border-border bg-background px-2 py-1 text-caption text-foreground hover:bg-border/30 disabled:opacity-50"
           disabled={loading}
         >
           {loading ? "Refreshing…" : "Refresh"}
@@ -52,7 +52,7 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
       </div>
 
       {error && (
-        <div className="rounded-md border border-border bg-card px-3 py-2 text-xs text-red-400">
+        <div className="rounded-md border border-border bg-card px-3 py-2 text-caption text-red-400">
           {error}
         </div>
       )}
@@ -70,7 +70,7 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
           rows.map((r) => (
             <li key={r.userId} className="flex items-center gap-3 px-3 py-2">
               <span
-                className={`grid h-6 w-6 place-items-center rounded text-xs ${
+                className={`grid h-6 w-6 place-items-center rounded text-caption ${
                   r.rank <= 3 ? "bg-primary text-background" : "border border-border text-muted-foreground"
                 }`}
                 aria-label={`Rank ${r.rank}`}
@@ -81,8 +81,8 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
               <Avatar name={r.fullName} src={r.avatarUrl} />
 
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm text-foreground">{r.fullName}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="truncate text-small text-foreground">{r.fullName}</div>
+                <div className="text-caption text-muted-foreground">
                   {r.completedTasks}/{r.totalTasks} tasks
                 </div>
               </div>
@@ -97,12 +97,12 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
             </li>
           ))
         ) : (
-          <li className="px-3 py-4 text-sm text-muted-foreground">No entries yet.</li>
+          <li className="px-3 py-4 text-small text-muted-foreground">No entries yet.</li>
         )}
       </ul>
 
       {top3.length > 0 && (
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-caption text-muted-foreground">
           🏆 Congrats to the top performers! Keep pushing for Band&nbsp;9!
         </p>
       )}
@@ -135,7 +135,7 @@ function Avatar({ name, src }: { name: string; src?: string }) {
   return (
     <div
       aria-label={name}
-      className="grid h-8 w-8 place-items-center rounded-full border border-border bg-background text-xs text-muted-foreground"
+      className="grid h-8 w-8 place-items-center rounded-full border border-border bg-background text-caption text-muted-foreground"
     >
       {initials || "U"}
     </div>

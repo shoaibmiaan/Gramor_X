@@ -20,7 +20,7 @@ import { destinationByRole } from '@/lib/routeAccess';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 text-sm uppercase tracking-wide text-mutedText">
+    <div className="mb-3 text-small uppercase tracking-wide text-mutedText">
       {children}
     </div>
   );
@@ -170,7 +170,7 @@ export default function LoginOptions() {
             </Button>
           </div>
 
-          <div className="mt-6 text-sm text-mutedText">
+          <div className="mt-6 text-small text-mutedText">
             By continuing, you agree to our{' '}
               <Link href="/legal/terms" className="text-primary hover:underline hover:text-primary/80 transition">
                 Terms
@@ -241,7 +241,7 @@ export default function LoginOptions() {
               aria-disabled="true"
             >
               <span>Sign in with Apple</span>
-              <Badge variant="info" size="sm" className="absolute top-2 right-3 text-xs px-2 py-0.5">
+              <Badge variant="info" size="sm" className="absolute top-2 right-3 text-caption px-2 py-0.5">
                 Coming Soon
               </Badge>
             </Button>
@@ -259,13 +259,13 @@ export default function LoginOptions() {
               aria-disabled="true"
             >
               <span>Phone (OTP)</span>
-              <Badge variant="info" size="sm" className="absolute top-2 right-3 text-xs px-2 py-0.5">
+              <Badge variant="info" size="sm" className="absolute top-2 right-3 text-caption px-2 py-0.5">
                 Coming Soon
               </Badge>
             </Button>
           </div>
 
-          <div className="mt-6 flex items-center justify-between text-sm text-mutedText">
+          <div className="mt-6 flex items-center justify-between text-small text-mutedText">
             <div>
               New here?{' '}
               <Link

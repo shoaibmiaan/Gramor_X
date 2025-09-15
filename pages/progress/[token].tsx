@@ -50,20 +50,20 @@ export default function PublicProgress({ reading }: Props) {
           {reading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <div className="text-sm text-gray-600 dark:text-grayish">Attempts</div>
-                <div className="text-xl font-semibold">{reading.attempts}</div>
+                <div className="text-small text-grayish dark:text-grayish">Attempts</div>
+                <div className="text-h3 font-semibold">{reading.attempts}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 dark:text-grayish">Points</div>
-                <div className="text-xl font-semibold">{reading.total_score}/{reading.total_max}</div>
+                <div className="text-small text-grayish dark:text-grayish">Points</div>
+                <div className="text-h3 font-semibold">{reading.total_score}/{reading.total_max}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 dark:text-grayish">Accuracy</div>
-                <div className="text-xl font-semibold">{reading.accuracy_pct ?? '—'}%</div>
+                <div className="text-small text-grayish dark:text-grayish">Accuracy</div>
+                <div className="text-h3 font-semibold">{reading.accuracy_pct ?? '—'}%</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600 dark:text-grayish">Last attempt</div>
-                <div className="text-xl font-semibold">
+                <div className="text-small text-grayish dark:text-grayish">Last attempt</div>
+                <div className="text-h3 font-semibold">
                   {reading.last_attempt_at ? new Date(reading.last_attempt_at).toLocaleDateString() : '—'}
                 </div>
               </div>

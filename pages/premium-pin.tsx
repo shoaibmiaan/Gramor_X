@@ -58,13 +58,13 @@ export default function PremiumPinPage() {
               <Icon name="key" aria-hidden className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold leading-tight">Premium Earth Access</h1>
-              <p className="text-sm text-muted-foreground">Enter your PIN to unlock premium features.</p>
+              <h1 className="text-h3 font-semibold leading-tight">Premium Earth Access</h1>
+              <p className="text-small text-muted-foreground">Enter your PIN to unlock premium features.</p>
             </div>
           </header>
 
           <form onSubmit={onSubmit} className="space-y-4" noValidate>
-            <label htmlFor="pin" className="block text-sm font-medium">
+            <label htmlFor="pin" className="block text-small font-medium">
               Access PIN
             </label>
             <Input
@@ -82,7 +82,7 @@ export default function PremiumPinPage() {
             />
 
             {error ? (
-              <p id="pin-error" role="alert" className="text-sm text-destructive">
+              <p id="pin-error" role="alert" className="text-small text-destructive">
                 {error}
               </p>
             ) : null}
@@ -97,7 +97,7 @@ export default function PremiumPinPage() {
               {loading ? 'Verifying…' : 'Continue'}
             </Button>
 
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-center text-caption text-muted-foreground">
               Having trouble? <a href="/support" className="underline underline-offset-2">Contact support</a>
             </p>
           </form>

@@ -47,7 +47,7 @@ export const CertificationBadges: React.FC = () => {
                 transition p-4 text-center
               "
             >
-              <div className="text-sm font-medium">{p.name}</div>
+              <div className="text-small font-medium">{p.name}</div>
             </a>
           ))}
         </div>

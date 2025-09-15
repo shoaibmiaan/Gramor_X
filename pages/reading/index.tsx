@@ -59,7 +59,7 @@ export default function ReadingListPage() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <h1 className="font-slab text-4xl text-gradient-primary">Reading Practice</h1>
+        <h1 className="font-slab text-display text-gradient-primary">Reading Practice</h1>
         <p className="text-grayish max-w-2xl">
           Choose a passage and start a timed practice. Your answers autosave locally.
         </p>

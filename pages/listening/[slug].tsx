@@ -325,7 +325,7 @@ export default function ListeningTestPage() {
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="font-slab text-4xl text-gradient-primary">{test.title}</h1>
+              <h1 className="font-slab text-display text-gradient-primary">{test.title}</h1>
               <p className="text-grayish">Auto-play per section • Answer highlighting</p>
             </div>
             <div className="flex items-center gap-3">
@@ -404,8 +404,8 @@ export default function ListeningTestPage() {
                           ? 'border-success/50 bg-success/10'
                           : chosen
                           ? 'border-sunsetOrange/50 bg-sunsetOrange/10'
-                          : 'border-gray-200'
-                        : 'border-gray-200 dark:border-white/10';
+                          : 'border-lightBorder'
+                        : 'border-lightBorder dark:border-white/10';
                       return (
                         <li key={opt}>
                           <button

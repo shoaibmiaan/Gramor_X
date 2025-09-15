@@ -14,7 +14,7 @@ export default function ReadingStatsPage() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <h1 className="font-slab text-4xl text-gradient-primary">Reading Stats</h1>
+        <h1 className="font-slab text-display text-gradient-primary">Reading Stats</h1>
         {!stats ? (
           <Card className="p-6 mt-6">
             <div className="animate-pulse h-5 w-40 bg-gray-200 dark:bg-white/10 rounded" />

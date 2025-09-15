@@ -281,12 +281,12 @@ export default function AIChatPage() {
                 }}
                 rows={1}
                 placeholder="Ask anything… (Enter to send, Shift+Enter = new line)"
-                className="w-full resize-none rounded-2xl border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40 max-h-[148px] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="w-full resize-none rounded-2xl border border-border bg-background px-3 py-2 text-small outline-none focus-visible:ring-2 focus-visible:ring-primary/40 max-h-[148px] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               />
               <button
                 onClick={() => send()}
                 disabled={busy || !input.trim()}
-                className="rounded-2xl h-10 min-w-[88px] px-4 text-sm font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                className="rounded-2xl h-10 min-w-[88px] px-4 text-small font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
               >
                 Send
               </button>

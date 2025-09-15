@@ -36,7 +36,7 @@ export default function DataDeletionPage() {
         <Container>
           {/* Hero */}
           <div className="mb-12">
-            <p className="uppercase tracking-wide text-xs text-grayish/80">Legal • Data Deletion</p>
+            <p className="uppercase tracking-wide text-caption text-grayish/80">Legal • Data Deletion</p>
             <h1 className="font-slab text-display text-gradient-primary">
               User Data Deletion — Simple, Transparent, Fast.
             </h1>
@@ -68,7 +68,7 @@ export default function DataDeletionPage() {
                 <a
                   key={s.id}
                   href={`#${s.id}`}
-                  className="block p-3.5 rounded-ds border border-gray-200 dark:border-white/10 hover:bg-purpleVibe/10 dark:hover:bg-white/5 transition-colors"
+                  className="block p-3.5 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-purpleVibe/10 dark:hover:bg-white/5 transition-colors"
                 >
                   {s.title}
                 </a>

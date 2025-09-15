@@ -52,19 +52,19 @@ export default function SpeakingAttemptsPage() {
       <Head><title>Speaking Attempts</title></Head>
       <Container className="py-8">
         <div className="flex items-center justify-between gap-3 mb-6">
-          <h1 className="text-2xl font-semibold">Speaking Attempts</h1>
+          <h1 className="text-h2 font-semibold">Speaking Attempts</h1>
           <div className="flex gap-2">
-            <Link href="/speaking/simulator/part2" className="px-4 py-2 rounded-xl bg-emerald-600 text-white">
+            <Link href="/speaking/simulator/part2" className="px-4 py-2 rounded-xl bg-success text-white">
               Start Part 2
             </Link>
-            <Link href="/speaking/simulator" className="px-4 py-2 rounded-xl border border-gray-300 dark:border-white/10">
+            <Link href="/speaking/simulator" className="px-4 py-2 rounded-xl border border-lightBorder dark:border-white/10">
               Open Simulator
             </Link>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-2xl border border-lightBorder dark:border-white/10 overflow-hidden">
+          <table className="w-full text-small">
             <thead className="bg-gray-50 dark:bg-white/5">
               <tr className="text-left">
                 <th className="px-4 py-3">Date</th>
@@ -84,26 +84,26 @@ export default function SpeakingAttemptsPage() {
                     {a.duration_sec ? `${Math.floor(a.duration_sec / 60)}m ${a.duration_sec % 60}s` : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/speaking/review/${a.id}`} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white">
+                    <Link href={`/speaking/review/${a.id}`} className="px-3 py-1.5 rounded-lg bg-electricBlue text-white">
                       Review
                     </Link>
                   </td>
                 </tr>
               ))}
               {!loading && items.length === 0 && (
-                <tr><td className="px-4 py-6 text-center text-gray-500" colSpan={5}>No attempts yet.</td></tr>
+                <tr><td className="px-4 py-6 text-center text-grayish" colSpan={5}>No attempts yet.</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
-        {error && <p className="mt-3 text-rose-600 text-sm">{error}</p>}
+        {error && <p className="mt-3 text-rose-600 text-small">{error}</p>}
 
         <div className="mt-4 flex justify-center">
           {hasMore && (
             <button
               onClick={() => load(offset + limit)}
-              className="px-4 py-2 rounded-xl border border-gray-300 dark:border-white/10"
+              className="px-4 py-2 rounded-xl border border-lightBorder dark:border-white/10"
               disabled={loading}
             >
               {loading ? 'Loading…' : 'Load more'}

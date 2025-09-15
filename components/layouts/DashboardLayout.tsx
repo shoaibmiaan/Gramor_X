@@ -15,8 +15,8 @@ const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
       {/* Context header */}
       <section className="bg-card/40 border-b border-border">
         <Container className="py-5 sm:py-6 pb-safe md:pb-0">
-          <h1 className="text-xl sm:text-2xl font-slab">Your Dashboard</h1>
-          <p className="text-sm text-mutedText mt-1">
+          <h1 className="text-h3 sm:text-h2 font-slab">Your Dashboard</h1>
+          <p className="text-small text-mutedText mt-1">
             Track progress, follow your plan, and jump back into modules.
           </p>
 

@@ -109,41 +109,41 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
 
     return (
       <div
-        className={`w-full rounded-2xl border border-gray-200 dark:border-white/10 p-4 ${className}`}
+        className={`card-surface p-4 ${className}`}
       >
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500 dark:text-gray-300">
+          <div className="text-small text-grayish">
             Status: <span className="font-medium">{status}</span>
           </div>
-          <div className="font-mono text-lg tabular-nums">
+          <div className="font-mono text-h4 tabular-nums">
             {minutes}:{seconds}
           </div>
         </div>
 
         <div className="mt-3 flex gap-2">
           <button
-            className="px-3 py-2 rounded-xl bg-emerald-600 text-white disabled:bg-gray-300 disabled:text-gray-600"
+            className="px-3 py-2 rounded-xl bg-success text-white disabled:bg-grayish/30 disabled:text-grayish"
             disabled={!canStart}
             onClick={() => start().catch((e) => onError?.(String(e)))}
           >
             Start
           </button>
           <button
-            className="px-3 py-2 rounded-xl bg-amber-500 text-white disabled:bg-gray-300 disabled:text-gray-600"
+            className="px-3 py-2 rounded-xl bg-warning text-black disabled:bg-grayish/30 disabled:text-grayish"
             disabled={!canPause}
             onClick={() => pause()}
           >
             Pause
           </button>
           <button
-            className="px-3 py-2 rounded-xl bg-blue-600 text-white disabled:bg-gray-300 disabled:text-gray-600"
+            className="px-3 py-2 rounded-xl bg-electricBlue text-white disabled:bg-grayish/30 disabled:text-grayish"
             disabled={!canResume}
             onClick={() => resume()}
           >
             Resume
           </button>
           <button
-            className="px-3 py-2 rounded-xl bg-rose-600 text-white disabled:bg-gray-300 disabled:text-gray-600"
+            className="px-3 py-2 rounded-xl bg-danger text-white disabled:bg-grayish/30 disabled:text-grayish"
             disabled={!canStop}
             onClick={() =>
               stop()
@@ -157,7 +157,7 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
             Stop & Save
           </button>
           <button
-            className="ml-auto px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-100"
+            className="ml-auto px-3 py-2 rounded-xl border border-lightBorder dark:border-white/10 text-lightText dark:text-white"
             onClick={() => reset()}
             disabled={isRecording}
           >
@@ -168,7 +168,7 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
         {audioUrl && (
           <div className="mt-4">
             <audio src={audioUrl} controls className="w-full" />
-            <div className="text-xs text-gray-500 mt-1">Format: {mimeType}</div>
+            <div className="text-caption text-grayish mt-1">Format: {mimeType}</div>
           </div>
         )}
       </div>

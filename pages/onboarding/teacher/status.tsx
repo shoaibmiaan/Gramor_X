@@ -9,7 +9,7 @@ export default function TeacherStatus() {
   // Minimal static status; later fetch /api/teacher/status
   return (
     <div className="mx-auto max-w-xl p-6">
-      <h1 className="text-2xl font-semibold">Application Submitted</h1>
+      <h1 className="text-h2 font-semibold">Application Submitted</h1>
       <p className="mt-2 text-mutedText">
         Thanks! Our team will review your details. You’ll receive an email/SMS when approved.
       </p>

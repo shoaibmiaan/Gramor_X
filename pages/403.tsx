@@ -32,7 +32,7 @@ const ForbiddenPage: NextPage<Props> = ({ reason }) => {
         <Container>
           <Card className="p-10 text-center space-y-6">
             <h1 className="text-6xl font-bold text-primary">403</h1>
-            <p className="text-lg text-mutedText">
+            <p className="text-h4 text-mutedText">
               You don’t have permission to access this page
               {reason ? `: ${reason}` : '.'}
             </p>

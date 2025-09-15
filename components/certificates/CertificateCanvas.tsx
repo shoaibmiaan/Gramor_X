@@ -181,7 +181,7 @@ export function CertificateCanvas({
         <button
           type="button"
           onClick={download}
-          className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+          className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
         >
           Download PNG
         </button>

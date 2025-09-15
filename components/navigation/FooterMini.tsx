@@ -22,11 +22,11 @@ export const FooterMini: React.FC<{
         aria-hidden="true"
       />
       <Container>
-        <div className="flex flex-col items-start justify-between gap-3 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start justify-between gap-3 py-4 text-small text-muted-foreground sm:flex-row sm:items-center">
           {/* Left: brand + year */}
           <div className="flex items-center gap-2">
             <Link href="/" className="inline-flex items-center gap-2">
-              <span className="font-slab text-base font-bold">
+              <span className="font-slab text-body font-bold">
                 <span className="text-gradient-primary">GramorX</span>
               </span>
             </Link>

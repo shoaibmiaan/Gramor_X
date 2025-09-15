@@ -200,7 +200,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="font-medium">Complete your profile to unlock a personalized plan.</div>
-                <div className="text-sm opacity-80">It only takes a minute—target band, exam date and study prefs.</div>
+                <div className="text-small opacity-80">It only takes a minute—target band, exam date and study prefs.</div>
               </div>
               <Link href="/profile/setup" className="shrink-0">
                 <Button variant="secondary" className="rounded-ds-xl">

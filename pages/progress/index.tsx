@@ -136,7 +136,7 @@ export default function Progress() {
           </div>
 
           {loading ? (
-            <div className="rounded-xl border border-border p-4 text-sm text-foreground/70">
+            <div className="rounded-xl border border-border p-4 text-small text-foreground/70">
               Loading your analytics…
             </div>
           ) : !hasAnyData ? (
@@ -146,7 +146,7 @@ export default function Progress() {
               <div className="mb-8">
                 <h2 className="font-slab text-h3 mb-2">Band trajectory</h2>
                 <BandChart data={bandData} />
-                <p className="mt-2 text-xs text-foreground/70">
+                <p className="mt-2 text-caption text-foreground/70">
                   Tip: Complete a{' '}
                   <Link
                     href="/mock/listening/sample-001"
@@ -182,7 +182,7 @@ function EmptyState() {
   return (
     <div className="rounded-ds border border-border p-8 text-center bg-card text-card-foreground">
       <h3 className="font-slab text-h4 mb-2">No progress yet</h3>
-      <p className="text-sm text-foreground/70 mb-4">
+      <p className="text-small text-foreground/70 mb-4">
         Start a mock to see your band trajectory, accuracy and time charts here.
       </p>
       <div className="flex gap-2 justify-center">

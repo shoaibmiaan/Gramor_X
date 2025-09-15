@@ -88,7 +88,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="rounded-ds-xl border border-border p-3 text-sm text-mutedText">
+          <div className="rounded-ds-xl border border-border p-3 text-small text-mutedText">
             We’ll prioritize your weak areas, add mocks on weekends, and include AI-evaluated
             Writing & Speaking frequently.
           </div>

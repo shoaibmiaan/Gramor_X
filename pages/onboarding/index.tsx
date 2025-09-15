@@ -30,11 +30,11 @@ export default function Onboarding() {
         <div className="grid gap-3">
           {STEPS.map((s, i) => (
             <Card key={s.label} className="p-3 rounded-ds-xl border border-border">
-              <div className="text-sm">Step {i + 1}</div>
+              <div className="text-small">Step {i + 1}</div>
               <div className="font-medium">{s.label}</div>
             </Card>
           ))}
-          <p className="text-sm text-mutedText">You can update all of these later from your dashboard.</p>
+          <p className="text-small text-mutedText">You can update all of these later from your dashboard.</p>
         </div>
       </StepShell>
     </div>

@@ -284,7 +284,7 @@ export default function WritingHome() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-small text-grayish">Mode</span>
-                <div className="flex rounded-ds border border-gray-200 dark:border-white/10 overflow-hidden">
+                <div className="flex rounded-ds border border-lightBorder dark:border-white/10 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setMode('practice')}
@@ -310,7 +310,7 @@ export default function WritingHome() {
               <button
                 type="button"
                 onClick={() => setTaskType('T1')}
-                className={`p-3.5 rounded-ds border border-gray-200 dark:border-white/10 ${
+                className={`p-3.5 rounded-ds border border-lightBorder dark:border-white/10 ${
                   taskType === 'T1' ? 'bg-electricBlue/10 text-electricBlue border-electricBlue/30' : ''
                 }`}
               >
@@ -319,7 +319,7 @@ export default function WritingHome() {
               <button
                 type="button"
                 onClick={() => setTaskType('T2')}
-                className={`p-3.5 rounded-ds border border-gray-200 dark:border-white/10 ${
+                className={`p-3.5 rounded-ds border border-lightBorder dark:border-white/10 ${
                   taskType === 'T2' ? 'bg-electricBlue/10 text-electricBlue border-electricBlue/30' : ''
                 }`}
               >
@@ -328,7 +328,7 @@ export default function WritingHome() {
               <button
                 type="button"
                 onClick={() => setTaskType('GT')}
-                className={`p-3.5 rounded-ds border border-gray-200 dark:border-white/10 ${
+                className={`p-3.5 rounded-ds border border-lightBorder dark:border-white/10 ${
                   taskType === 'GT' ? 'bg-electricBlue/10 text-electricBlue border-electricBlue/30' : ''
                 }`}
               >
@@ -340,11 +340,11 @@ export default function WritingHome() {
             {taskType === 'GT' && (
               <div className="mt-4 grid sm:grid-cols-2 gap-3">
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                     Letter type
                   </span>
                   <select
-                    className="w-full p-3.5 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark"
+                    className="w-full p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark"
                     value={letterType}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       setLetterType(e.target.value as 'formal' | 'informal' | 'semi-formal')
@@ -356,11 +356,11 @@ export default function WritingHome() {
                   </select>
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                     Tone
                   </span>
                   <select
-                    className="w-full p-3.5 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark"
+                    className="w-full p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark"
                     value={tone}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       setTone(e.target.value as 'neutral' | 'polite' | 'friendly')
@@ -401,52 +401,52 @@ export default function WritingHome() {
             {useOutline && (
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                     Notes / Brainstorm
                   </span>
                   <textarea
-                    className="w-full min-h={[90]} p-3.5 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
+                    className="w-full min-h={[90]} p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
                     placeholder="Keywords, examples, data points…"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                     Introduction
                   </span>
                   <textarea
-                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
+                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
                     value={intro}
                     onChange={(e) => setIntro(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                     Body Paragraph 1
                   </span>
                   <textarea
-                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
+                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
                     value={bp1}
                     onChange={(e) => setBp1(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                     Body Paragraph 2
                   </span>
                   <textarea
-                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
+                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
                     value={bp2}
                     onChange={(e) => setBp2(e.target.value)}
                   />
                 </label>
                 <label className="block md:col-span-2">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                     Conclusion
                   </span>
                   <textarea
-                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
+                    className="w-full min-h-[90px] p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none"
                     value={conclusion}
                     onChange={(e) => setConclusion(e.target.value)}
                   />
@@ -457,11 +457,11 @@ export default function WritingHome() {
             {/* Essay textarea */}
             <div className="mt-3">
               <label className="block">
-                <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">
+                <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
                   Your response
                 </span>
                 <textarea
-                  className="w-full min-h-[260px] p-4 rounded-ds border border-gray-200 dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus:border-primary"
+                  className="w-full min-h-[260px] p-4 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark text-lightText dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus:border-primary"
                   placeholder="Write your essay here…"
                   value={essay}
                   onChange={(e) => setEssay(e.target.value)}
@@ -506,7 +506,7 @@ export default function WritingHome() {
                 Target: {TARGET_MINUTES[taskType]} minutes for {taskType}.
               </p>
               <div className="mt-3 flex items-center gap-3">
-                <div className="text-3xl font-semibold tabular-nums">
+                <div className="text-h1 font-semibold tabular-nums">
                   {mm}:{ss}
                 </div>
                 <div className="flex gap-2">

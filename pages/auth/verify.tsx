@@ -10,7 +10,7 @@ import { redirectByRole } from '@/lib/routeAccess';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 text-sm uppercase tracking-wide text-mutedText">{children}</div>
+    <div className="mb-3 text-small uppercase tracking-wide text-mutedText">{children}</div>
   );
 }
 
@@ -77,7 +77,7 @@ export default function VerifyPage() {
 
         {!hasCode && !error && (
           <div>
-            <p className="text-sm text-mutedText mb-3">
+            <p className="text-small text-mutedText mb-3">
               {email
                 ? `We’ve sent a confirmation link to ${email}.`
                 : 'Check your inbox for a verification link.'}
@@ -93,7 +93,7 @@ export default function VerifyPage() {
               </Button>
               <Link
                 href={`/login${ref ? `?ref=${ref}` : ''}`}
-                className="text-sm text-accent underline"
+                className="text-small text-accent underline"
               >
                 Back to Login
               </Link>
@@ -102,7 +102,7 @@ export default function VerifyPage() {
         )}
 
         {hasCode && !error && (
-          <p className="text-sm text-mutedText">Completing sign-in…</p>
+          <p className="text-small text-mutedText">Completing sign-in…</p>
         )}
       </Card>
     </>

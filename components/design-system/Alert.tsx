@@ -13,11 +13,11 @@ type Props = {
 };
 
 const map: Record<NonNullable<Props['variant']>, { box: string; title: string }> = {
-  error:   { box: 'bg-red-600/15 text-red-200 ring-1 ring-red-500/30',         title: 'text-red-200' },
-  danger:  { box: 'bg-red-600/15 text-red-200 ring-1 ring-red-500/30',         title: 'text-red-200' },
-  success: { box: 'bg-emerald-600/15 text-emerald-200 ring-1 ring-emerald/30', title: 'text-emerald-200' },
-  info:    { box: 'bg-sky-600/15 text-sky-200 ring-1 ring-sky-500/30',         title: 'text-sky-200' },
-  warning: { box: 'bg-amber-600/15 text-amber-100 ring-1 ring-amber-500/30',   title: 'text-amber-100' },
+  error:   { box: 'bg-danger/15 text-danger ring-1 ring-danger/30',           title: 'text-danger' },
+  danger:  { box: 'bg-danger/15 text-danger ring-1 ring-danger/30',           title: 'text-danger' },
+  success: { box: 'bg-success/15 text-success ring-1 ring-success/30',        title: 'text-success' },
+  info:    { box: 'bg-electricBlue/15 text-electricBlue ring-1 ring-electricBlue/30', title: 'text-electricBlue' },
+  warning: { box: 'bg-warning/15 text-warning ring-1 ring-warning/30',        title: 'text-warning' },
 };
 
 export function Alert({ title, children, variant = 'info', className, ...rest }: Props) {
@@ -25,7 +25,7 @@ export function Alert({ title, children, variant = 'info', className, ...rest }:
   return (
     <div className={cx('rounded-xl p-4', v.box, className)} {...rest}>
       {title && <div className={cx('mb-1 font-semibold', v.title)}>{title}</div>}
-      <div className="text-sm leading-6">{children}</div>
+      <div className="text-small leading-6">{children}</div>
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function ClassDetailPage({ ok, error, item }: ClassPageProps){
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Class not found</h1>
+          <h1 className="font-slab text-h2">Class not found</h1>
           <p className="mt-2 text-mutedText">It may have been removed.</p>
           <Link href="/classes" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Classes</Link>
         </div>
@@ -75,10 +75,10 @@ export default function ClassDetailPage({ ok, error, item }: ClassPageProps){
           <div className="rounded-2xl border border-lightBorder bg-card p-6">
             <header className="flex items-center justify-between gap-3">
               <div>
-                <h1 className="text-xl">{item.title}</h1>
-                <div className="mt-1 text-sm text-mutedText">{fmtRange(item.start_utc, item.end_utc)}</div>
+                <h1 className="text-h3">{item.title}</h1>
+                <div className="mt-1 text-small text-mutedText">{fmtRange(item.start_utc, item.end_utc)}</div>
               </div>
-              <span className={`rounded-lg px-2 py-1 text-xs ${pill}`}>{item.status}</span>
+              <span className={`rounded-lg px-2 py-1 text-caption ${pill}`}>{item.status}</span>
             </header>
 
             {item.description && (
@@ -103,7 +103,7 @@ export default function ClassDetailPage({ ok, error, item }: ClassPageProps){
             )}
             {token && (
               <div className="mt-4 rounded-2xl border border-lightBorder bg-background p-4">
-                <div className="text-sm text-mutedText">Your token (share privately):</div>
+                <div className="text-small text-mutedText">Your token (share privately):</div>
                 <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
                   <Input readOnly value={token} className="rounded-xl border border-border bg-card px-3 py-2" />
                   <Button onClick={copy} className="bg-accent text-accent-foreground">{copied ? 'Copied' : 'Copy'}</Button>

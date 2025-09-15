@@ -183,15 +183,15 @@ export default function ReviewAttemptPage() {
                   </div>
 
                   <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                    <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                    <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                       <div className="text-small opacity-80">Module</div>
                       <div className="capitalize font-medium">{data.module}</div>
                     </div>
-                    <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                    <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                       <div className="text-small opacity-80">Task</div>
                       <div className="font-medium">{data.task}</div>
                     </div>
-                    <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                    <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                       <div className="text-small opacity-80">AI band</div>
                       <div className="font-semibold">{data.ai_band.toFixed(1)}</div>
                     </div>
@@ -225,7 +225,7 @@ export default function ReviewAttemptPage() {
               <h3 className="font-semibold mb-3">Set final band</h3>
               <form onSubmit={submitOverride} className="space-y-4">
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">Final band (0–9)</span>
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Final band (0–9)</span>
                   <input
                     inputMode="decimal"
                     value={finalBand}
@@ -239,7 +239,7 @@ export default function ReviewAttemptPage() {
                 </label>
 
                 <label className="block">
-                  <span className="mb-1.5 inline-block text-small text-gray-600 dark:text-grayish">Reason (required)</span>
+                  <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Reason (required)</span>
                   <textarea
                     rows={5}
                     value={reason}

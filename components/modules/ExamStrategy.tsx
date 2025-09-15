@@ -35,7 +35,7 @@ export const ExamStrategy: React.FC<{
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {sections.map((s, i) => (
-          <div key={i} className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+          <div key={i} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
             <div className="font-medium">{s.heading}</div>
             <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
               {s.bullets.map((b, j) => (

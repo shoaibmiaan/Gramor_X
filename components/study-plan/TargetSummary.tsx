@@ -12,16 +12,16 @@ export const TargetSummary: React.FC<Props> = ({ daily, weekly, eta }) => (
     <h3 className="font-slab text-h3 mb-4">Your Targets</h3>
     <div className="grid grid-cols-2 gap-4 mb-4">
       <div>
-        <div className="text-sm text-gray-600 dark:text-muted-foreground">Daily</div>
-        <div className="text-xl font-semibold">{daily}</div>
+        <div className="text-small text-grayish dark:text-muted-foreground">Daily</div>
+        <div className="text-h3 font-semibold">{daily}</div>
       </div>
       <div>
-        <div className="text-sm text-gray-600 dark:text-muted-foreground">Weekly</div>
-        <div className="text-xl font-semibold">{weekly}</div>
+        <div className="text-small text-grayish dark:text-muted-foreground">Weekly</div>
+        <div className="text-h3 font-semibold">{weekly}</div>
       </div>
     </div>
     {eta && (
-      <p className="text-sm text-gray-600 dark:text-muted-foreground">
+      <p className="text-small text-grayish dark:text-muted-foreground">
         ETA to goal: {new Date(eta).toLocaleDateString()}
       </p>
     )}

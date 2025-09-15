@@ -104,10 +104,10 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
     <section className="min-h-[100vh] flex items-center justify-center py-20 sm:py-24 relative">
       <Container>
         <div className="relative z-10 max-w-2xl mx-auto text-center">
-          <h1 className="font-slab text-4xl sm:text-5xl md:text-6xl font-bold mb-5 leading-tight">
+          <h1 className="font-slab text-display sm:text-displayLg md:text-6xl font-bold mb-5 leading-tight">
             <span className="text-gradient-primary">ACHIEVE YOUR DREAM IELTS SCORE WITH AI-POWERED PREP</span>
           </h1>
-          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+          <p className="text-h4 text-muted-foreground mb-8 max-w-xl mx-auto">
             Master all four modules with adaptive paths, realistic mocks, and instant AI feedback.
           </p>
 
@@ -119,10 +119,10 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
                 const v = [diff.days, diff.hours, diff.minutes, diff.seconds][i] || 0;
                 return (
                   <div key={label} className="text-center">
-                    <div className="font-slab text-4xl md:text-5xl font-bold text-gradient-vertical">
+                    <div className="font-slab text-display md:text-displayLg font-bold text-gradient-vertical">
                       {String(v).padStart(2, '0')}
                     </div>
-                    <div className="uppercase tracking-wide text-muted-foreground text-sm mt-1">{label}</div>
+                    <div className="uppercase tracking-wide text-muted-foreground text-small mt-1">{label}</div>
                   </div>
                 );
               })}
@@ -131,7 +131,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
 
           {/* Word of the Day + streak */}
           <Card className="mt-6 max-w-md p-6 rounded-2xl mx-auto">
-            <h3 className="text-primary font-semibold text-xl mb-4">
+            <h3 className="text-primary font-semibold text-h3 mb-4">
               <Icon name="book" /> Word of the Day
             </h3>
 
@@ -142,8 +142,8 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
             {data ? (
               <>
                 <div className="mb-4">
-                  <h4 className="text-3xl mb-1 text-primary">{data.word.word}</h4>
-                  <div className="text-base text-muted-foreground mb-3">{data.word.meaning}</div>
+                  <h4 className="text-h1 mb-1 text-primary">{data.word.word}</h4>
+                  <div className="text-body text-muted-foreground mb-3">{data.word.meaning}</div>
                   {data.word.example && (
                     <div className="italic text-muted-foreground border-l-4 pl-4 border-border">“{data.word.example}”</div>
                   )}
@@ -156,7 +156,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
 
                 <div className="mt-4 rounded-xl p-4 bg-card border border-border text-left">
                   <div className="flex items-center gap-4">
-                    <div className="text-2xl" aria-hidden="true"><Icon name="fire" /></div>
+                    <div className="text-h2" aria-hidden="true"><Icon name="fire" /></div>
                     <div>
                       <h4 className="font-semibold">Your Learning Streak</h4>
                       <div className="text-muted-foreground">Current streak: <span className="font-bold">{data.streakDays} {data.streakDays === 1 ? 'day' : 'days'}</span></div>

@@ -103,7 +103,7 @@ export default function WritingReview({ attempt: initialAttempt, reevals, isAdmi
             </div>
 
             <h3 className="text-h3 mt-6">Your Essay</h3>
-            <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10 whitespace-pre-wrap">
+            <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10 whitespace-pre-wrap">
               {attempt.essay_text}
             </div>
           </Card>

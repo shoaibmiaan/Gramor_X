@@ -111,21 +111,21 @@ export default function ChallengeIndexPage() {
         <Container>
           <header className="mb-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Challenges</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-h2 font-bold text-foreground">Challenges</h1>
+              <p className="text-small text-muted-foreground">
                 Pick a cohort and start your 14-day journey. Track progress & climb the leaderboard.
               </p>
             </div>
             <nav className="flex items-center gap-3">
               <Link
                 href="/progress"
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
               >
                 Progress & Reports
               </Link>
               <Link
                 href="/study-plan"
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
               >
                 Study Plan
               </Link>
@@ -157,7 +157,7 @@ export default function ChallengeIndexPage() {
             })}
           </section>
 
-          <div className="mt-6 text-xs text-muted-foreground">
+          <div className="mt-6 text-caption text-muted-foreground">
             Deep links:{" "}
             <Link href="/challenge/BandBoost-Sep2025" className="text-primary underline-offset-2 hover:underline">
               /challenge/BandBoost-Sep2025

@@ -39,16 +39,16 @@ export function ImpersonationBanner() {
   }
 
   return (
-    <div className="w-full bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-100 border-b border-amber-300/60 dark:border-amber-400/30">
+    <div className="w-full bg-warning/10 text-warning-foreground dark:bg-warning/20 dark:text-warning border-b border-warning/60 dark:border-warning/30">
       <div className="max-w-6xl mx-auto px-3 py-2 flex items-center justify-between gap-3">
-        <div className="text-sm">
+        <div className="text-small">
           <strong>Impersonation mode</strong>
           {who?.email ? <> — signed in as <span className="underline">{who.email}</span></> : null}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={stop}
-            className="text-sm rounded-lg border border-amber-400/60 dark:border-amber-300/30 px-3 py-1.5 hover:bg-amber-200/60 dark:hover:bg-amber-400/20"
+            className="text-small rounded-lg border border-warning/60 dark:border-warning/30 px-3 py-1.5 hover:bg-warning/20 dark:hover:bg-warning/20"
           >
             Return to Admin
           </button>

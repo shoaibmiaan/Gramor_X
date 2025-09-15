@@ -21,7 +21,7 @@ export default function LessonsIndex() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <h1 className="font-slab text-4xl mb-3 text-gradient-primary capitalize">{skill} Lessons</h1>
+        <h1 className="font-slab text-display mb-3 text-gradient-primary capitalize">{skill} Lessons</h1>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {lessons.map((l) => {
             const unlocked = isUnlocked(completed, l);

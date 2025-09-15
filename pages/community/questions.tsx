@@ -56,7 +56,7 @@ export default function QuestionsPage() {
         {qas.map((q) => (
           <Card key={q.id} className="p-4 mb-4 space-y-2">
             <div className="font-medium">{q.question}</div>
-            <div className="text-sm text-muted-foreground whitespace-pre-wrap">{q.answer}</div>
+            <div className="text-small text-muted-foreground whitespace-pre-wrap">{q.answer}</div>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="secondary" onClick={() => vote(q.id, 1)}>▲</Button>
               <span>{q.votes}</span>

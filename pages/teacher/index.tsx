@@ -27,8 +27,8 @@ const SectionCard: React.FC<
 > = ({ title, subtle, className = "", children }) => (
   <Container surface="card" elevation rounded="ds-2xl" className={`p-5 ${className}`}>
     <div className="mb-3 flex items-start justify-between">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      {subtle ? <span className="text-sm text-mutedText">{subtle}</span> : null}
+      <h3 className="text-h4 font-semibold">{title}</h3>
+      {subtle ? <span className="text-small text-mutedText">{subtle}</span> : null}
     </div>
     {children}
   </Container>
@@ -115,10 +115,10 @@ export default function TeacherHome() {
         <Container width="xl" gutter="md" py="lg">
           {/* Header */}
           <header className="mb-6 md:mb-8">
-            <span className="inline-block rounded-full border border-border bg-card/60 px-3 py-1 text-xs">
+            <span className="inline-block rounded-full border border-border bg-card/60 px-3 py-1 text-caption">
               Teacher Console
             </span>
-            <h1 className="mt-3 bg-gradient-to-r from-vibrantPurple via-electricBlue to-neonGreen bg-clip-text text-3xl font-bold leading-tight text-transparent md:text-4xl">
+            <h1 className="mt-3 bg-gradient-to-r from-vibrantPurple via-electricBlue to-neonGreen bg-clip-text text-h1 font-bold leading-tight text-transparent md:text-display">
               Welcome back, Teacher 👋
             </h1>
             <p className="mt-2 text-mutedText">
@@ -164,8 +164,8 @@ export default function TeacherHome() {
                         key={s.label}
                         className="rounded-ds border border-border bg-background/60 p-4 text-center"
                       >
-                        <div className="text-2xl font-bold">{s.value}</div>
-                        <div className="mt-1 text-xs text-mutedText">{s.label}</div>
+                        <div className="text-h2 font-bold">{s.value}</div>
+                        <div className="mt-1 text-caption text-mutedText">{s.label}</div>
                       </div>
                     ))}
                   </div>
@@ -215,13 +215,13 @@ export default function TeacherHome() {
                     ].map((r, i) => (
                       <li key={i} className="flex items-center justify-between py-3">
                         <div className="flex items-center gap-3">
-                          <span className="rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                          <span className="rounded-full border border-success/30 bg-success/10 px-2 py-0.5 text-caption font-medium text-success">
                             Live
                           </span>
                           <span className="font-medium">{r.who}</span>
                           <span className="text-mutedText">— {r.what}</span>
                         </div>
-                        <span className="text-xs text-mutedText">{r.when}</span>
+                        <span className="text-caption text-mutedText">{r.when}</span>
                       </li>
                     ))}
                   </ul>
@@ -256,7 +256,7 @@ export default function TeacherHome() {
                 </SectionCard>
 
                 <SectionCard title="Deep Links">
-                  <div className="grid grid-cols-1 gap-2 text-sm">
+                  <div className="grid grid-cols-1 gap-2 text-small">
                     <Button variant="link" href="/dashboard">
                       /dashboard
                     </Button>
@@ -293,7 +293,7 @@ export default function TeacherHome() {
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="e.g., Alpha Academy — Batch A"
-                    className="w-full rounded-ds border border-border bg-background px-3 py-2 text-sm outline-none ring-border focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="w-full rounded-ds border border-border bg-background px-3 py-2 text-small outline-none ring-border focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   />
                   <Button
                     type="submit"
@@ -320,8 +320,8 @@ export default function TeacherHome() {
                     ? cohorts.map((c) => (
                         <li key={c.id} className="flex items-center justify-between border-b border-border px-4 py-3 last:border-b-0">
                           <div>
-                            <div className="text-sm">{c.name}</div>
-                            <div className="text-xs text-mutedText">
+                            <div className="text-small">{c.name}</div>
+                            <div className="text-caption text-mutedText">
                               Created {new Date(c.created_at).toLocaleDateString()}
                             </div>
                           </div>
@@ -331,7 +331,7 @@ export default function TeacherHome() {
                         </li>
                       ))
                     : (
-                      <li className="px-4 py-4 text-sm text-mutedText">No cohorts yet.</li>
+                      <li className="px-4 py-4 text-small text-mutedText">No cohorts yet.</li>
                     )}
                 </ul>
               </SectionCard>
@@ -350,7 +350,7 @@ export default function TeacherHome() {
                   }}
                 >
                   <label className="flex flex-col gap-2">
-                    <span className="text-sm">Cohort</span>
+                    <span className="text-small">Cohort</span>
                     <select className="rounded-ds border border-border bg-background p-2">
                       <option value="">Select cohort</option>
                       {cohorts.map((c) => (
@@ -362,7 +362,7 @@ export default function TeacherHome() {
                   </label>
 
                   <label className="flex flex-col gap-2">
-                    <span className="text-sm">Module</span>
+                    <span className="text-small">Module</span>
                     <select className="rounded-ds border border-border bg-background p-2">
                       <option>Reading</option>
                       <option>Listening</option>
@@ -372,7 +372,7 @@ export default function TeacherHome() {
                   </label>
 
                   <label className="md:col-span-2 flex flex-col gap-2">
-                    <span className="text-sm">Title</span>
+                    <span className="text-small">Title</span>
                     <input
                       className="rounded-ds border border-border bg-background p-2"
                       placeholder="e.g., Reading: Matching Headings Set #3"
@@ -380,13 +380,13 @@ export default function TeacherHome() {
                   </label>
 
                   <label className="flex flex-col gap-2">
-                    <span className="text-sm">Due Date</span>
+                    <span className="text-small">Due Date</span>
                     <input type="date" className="rounded-ds border border-border bg-background p-2" />
                   </label>
 
                   <label className="md:col-span-2 flex items-center gap-2">
                     <input type="checkbox" className="rounded border-border" defaultChecked />
-                    <span className="text-sm">Enable AI feedback on submission</span>
+                    <span className="text-small">Enable AI feedback on submission</span>
                   </label>
 
                   <div className="md:col-span-2 flex gap-2">
@@ -414,7 +414,7 @@ export default function TeacherHome() {
                   }}
                 >
                   <label className="flex flex-col gap-2">
-                    <span className="text-sm">Audience</span>
+                    <span className="text-small">Audience</span>
                     <select className="rounded-ds border border-border bg-background p-2">
                       <option>Late submissions · Writing T2</option>
                       <option>Low accuracy · T/F/NG</option>
@@ -424,7 +424,7 @@ export default function TeacherHome() {
                   </label>
 
                   <label className="flex flex-col gap-2">
-                    <span className="text-sm">Message</span>
+                    <span className="text-small">Message</span>
                     <textarea
                       rows={4}
                       className="rounded-ds border border-border bg-background p-3"

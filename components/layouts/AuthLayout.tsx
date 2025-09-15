@@ -24,7 +24,7 @@ const DefaultRight = () => (
       className="h-24 w-24 md:h-32 md:w-32 object-contain drop-shadow-lg"
       priority
     />
-    <h2 className="mt-6 text-xl font-semibold text-gray-600 dark:text-gray-300">Your IELTS Companion</h2>
+    <h2 className="mt-6 text-h3 font-semibold text-grayish dark:text-gray-300">Your IELTS Companion</h2>
   </div>
 );
 
@@ -58,13 +58,13 @@ export default function AuthLayout({
               {/* Brand header */}
               <div className="flex items-center gap-3 mb-6">
                 <Image src="/brand/logo.png" alt="GramorX" width={40} height={40} priority />
-                <span className="font-slab text-2xl font-bold text-gradient-primary">GramorX</span>
+                <span className="font-slab text-h2 font-bold text-gradient-primary">GramorX</span>
               </div>
 
               <div>
-                <h1 className="font-slab text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white">{title}</h1>
+                <h1 className="font-slab text-h1 sm:text-display font-bold text-gray-800 dark:text-white">{title}</h1>
                 {subtitle && (
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
+                  <p className="mt-2 text-small text-grayish dark:text-gray-400">{subtitle}</p>
                 )}
               </div>
 

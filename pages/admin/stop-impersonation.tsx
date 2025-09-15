@@ -21,7 +21,7 @@ export default function StopImpersonation() {
     <>
       <Head><title>Returning…</title></Head>
       <div className="min-h-[100dvh] grid place-items-center">
-        <div className="animate-pulse text-sm opacity-70">Signing out and returning to Admin…</div>
+        <div className="animate-pulse text-small opacity-70">Signing out and returning to Admin…</div>
       </div>
     </>
   );

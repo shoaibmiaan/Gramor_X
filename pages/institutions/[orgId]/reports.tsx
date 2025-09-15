@@ -41,7 +41,7 @@ export default function OrgReportsPage({ ok, error, org, baseline, seedData }: R
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Organization not found</h1>
+          <h1 className="font-slab text-h2">Organization not found</h1>
           <p className="mt-2 text-mutedText">It may have been removed or you lack access.</p>
           <Link href="/institutions" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Institutions</Link>
         </div>
@@ -76,10 +76,10 @@ export default function OrgReportsPage({ ok, error, org, baseline, seedData }: R
       <main className="min-h-screen bg-background">
         <section className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-slab text-2xl md:text-3xl">Reports</h1>
+            <h1 className="font-slab text-h2 md:text-h1">Reports</h1>
             <Link href={`/institutions/${org.id}`} className="inline-flex"><Button variant="outline" className="border-border">Back</Button></Link>
           </div>
-          <p className="mt-1 text-sm text-mutedText">Cohort activity and performance across IELTS modules.</p>
+          <p className="mt-1 text-small text-mutedText">Cohort activity and performance across IELTS modules.</p>
 
           {/* KPI */}
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -147,8 +147,8 @@ export default function OrgReportsPage({ ok, error, org, baseline, seedData }: R
 function Kpi({ label, value }: { label: string; value: React.ReactNode }){
   return (
     <div className="rounded-2xl border border-lightBorder bg-card p-4">
-      <div className="text-sm text-mutedText">{label}</div>
-      <div className="mt-1 text-2xl">{value}</div>
+      <div className="text-small text-mutedText">{label}</div>
+      <div className="mt-1 text-h2">{value}</div>
     </div>
   )
 }

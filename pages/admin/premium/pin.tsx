@@ -33,9 +33,9 @@ export default function AdminPremiumPin() {
   return (
     <main className="pr-min-h-[100dvh] pr-flex pr-items-center pr-justify-center pr-bg-gradient-to-b pr-from-black pr-to-neutral-900 pr-text-white pr-p-4">
       <div className="pr-w-full pr-max-w-md pr-space-y-4 pr-rounded-xl pr-border pr-border-white/10 pr-bg-white/5 pr-backdrop-blur pr-p-6">
-        <h1 className="pr-text-xl pr-font-semibold">Admin · Premium PIN</h1>
+        <h1 className="pr-text-h3 pr-font-semibold">Admin · Premium PIN</h1>
 
-        <label className="pr-block pr-text-sm pr-text-white/80">User Email</label>
+        <label className="pr-block pr-text-small pr-text-white/80">User Email</label>
         <input
           className="pr-w-full pr-rounded-lg pr-bg-white/10 pr-border pr-border-white/20 pr-py-2 pr-px-3"
           placeholder="user@example.com"
@@ -43,7 +43,7 @@ export default function AdminPremiumPin() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <label className="pr-block pr-text-sm pr-text-white/80">New PIN (4–6 digits)</label>
+        <label className="pr-block pr-text-small pr-text-white/80">New PIN (4–6 digits)</label>
         <input
           className="pr-w-full pr-rounded-lg pr-bg-white/10 pr-border pr-border-white/20 pr-py-2 pr-px-3"
           type="password"
@@ -58,7 +58,7 @@ export default function AdminPremiumPin() {
           <button
             disabled={busy}
             onClick={() => call('/api/admin/premium/set-pin', { email, newPin: pin })}
-            className="pr-flex-1 pr-rounded-lg pr-bg-emerald-500 hover:pr-bg-emerald-600 pr-py-2 pr-font-medium disabled:pr-opacity-60"
+            className="pr-flex-1 pr-rounded-lg pr-bg-success hover:pr-bg-success pr-py-2 pr-font-medium disabled:pr-opacity-60"
           >
             Set / Update
           </button>
@@ -71,9 +71,9 @@ export default function AdminPremiumPin() {
           </button>
         </div>
 
-        {msg && <div className="pr-text-sm">{msg}</div>}
+        {msg && <div className="pr-text-small">{msg}</div>}
 
-        <p className="pr-text-xs pr-text-white/60">
+        <p className="pr-text-caption pr-text-white/60">
           Access enforced server-side. Only emails in <code>ADMIN_EMAILS</code> can use these APIs.
         </p>
       </div>

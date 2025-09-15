@@ -13,7 +13,7 @@ export const CommandCenterTile: React.FC<CommandCenterTileProps> = ({ label, hre
   <Link
     href={href}
     className={cn(
-      'rounded-ds-xl border border-border px-4 py-3 text-sm font-medium hover:bg-electricBlue/5 transition flex items-center justify-between',
+      'rounded-ds-xl border border-border px-4 py-3 text-small font-medium hover:bg-electricBlue/5 transition flex items-center justify-between',
       className,
     )}
   >

@@ -60,11 +60,11 @@ export default function Page() {
               <Checkbox checked={weak[key]} onCheckedChange={() => toggle(key)} />
               <div>
                 <div className="font-medium">{label}</div>
-                <div className="text-sm text-mutedText">{hint}</div>
+                <div className="text-small text-mutedText">{hint}</div>
               </div>
             </label>
           ))}
-          <p className="text-sm text-mutedText">
+          <p className="text-small text-mutedText">
             You can refine this after your first mock — AI will surface patterns.
           </p>
         </div>

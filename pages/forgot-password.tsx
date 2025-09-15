@@ -39,16 +39,16 @@ const ForgotPassword: NextPage = () => {
       </Head>
       <main className="min-h-[100dvh] flex items-center justify-center p-6">
         <div className="w-full max-w-md">
-          <h1 className="text-2xl font-semibold mb-4">Reset your password</h1>
+          <h1 className="text-h2 font-semibold mb-4">Reset your password</h1>
 
           {sent ? (
-            <div className="rounded-md border p-4 text-sm">
+            <div className="rounded-md border p-4 text-small">
               If an account exists for <strong>{email}</strong>, a reset link has been sent.
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-4">
               <label className="block">
-                <span className="text-sm">Email</span>
+                <span className="text-small">Email</span>
                 <input
                   type="email"
                   required
@@ -58,14 +58,14 @@ const ForgotPassword: NextPage = () => {
                   placeholder="you@example.com"
                 />
               </label>
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-small text-danger">{error}</p>}
               <button type="submit" className="rounded-md px-4 py-2 border">
                 Send reset link
               </button>
             </form>
           )}
 
-          <div className="mt-6 text-sm">
+          <div className="mt-6 text-small">
             {/* FIX: use Next <Link> for internal nav */}
             <Link href="/login" className="underline">Back to login</Link>
           </div>

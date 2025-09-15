@@ -12,8 +12,8 @@ function Bar({ label, value }: { label: string; value: number }) {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-sm font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">Band {value.toFixed(1)}</span>
+        <span className="text-small font-medium">{label}</span>
+        <span className="text-caption text-muted-foreground">Band {value.toFixed(1)}</span>
       </div>
       <div className="h-2 w-full rounded-full bg-muted">
         {/* width via style is allowed (not a color), keeps token colors intact */}
@@ -26,10 +26,10 @@ function Bar({ label, value }: { label: string; value: number }) {
 export default function BandBreakdown({ overall, breakdown, confidence, className = '' }: BandBreakdownProps) {
   return (
     <section className={`rounded-xl border border-border p-4 ${className}`}>
-      <p className="text-sm text-muted-foreground">Estimated overall</p>
-      <p className="text-5xl font-semibold">Band {overall.toFixed(1)}</p>
+      <p className="text-small text-muted-foreground">Estimated overall</p>
+      <p className="text-displayLg font-semibold">Band {overall.toFixed(1)}</p>
       {typeof confidence === 'number' ? (
-        <p className="mt-1 text-sm text-muted-foreground">Confidence: {(confidence * 100).toFixed(0)}%</p>
+        <p className="mt-1 text-small text-muted-foreground">Confidence: {(confidence * 100).toFixed(0)}%</p>
       ) : null}
 
       <div className="mt-6 grid gap-4">

@@ -25,8 +25,8 @@ export default function PartnerSummary({ className = '' }: Props) {
   return (
     <section className={`rounded-xl border border-border p-4 ${className}`}>
       <header className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-medium">Partner Summary</h2>
-        <button onClick={load} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted">
+        <h2 className="text-h4 font-medium">Partner Summary</h2>
+        <button onClick={load} className="rounded-lg border border-border px-3 py-1.5 text-small hover:bg-muted">
           Refresh
         </button>
       </header>
@@ -34,32 +34,32 @@ export default function PartnerSummary({ className = '' }: Props) {
       {loading ? (
         <p>Loading…</p>
       ) : err ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-small">
           <p className="font-medium">Error</p><p className="opacity-90">{err}</p>
         </div>
       ) : data ? (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-border p-3">
-              <p className="text-sm text-muted-foreground">Signups</p>
-              <p className="text-2xl font-semibold">{data.totalSignups}</p>
+              <p className="text-small text-muted-foreground">Signups</p>
+              <p className="text-h2 font-semibold">{data.totalSignups}</p>
             </div>
             <div className="rounded-lg border border-border p-3">
-              <p className="text-sm text-muted-foreground">Approved</p>
-              <p className="text-2xl font-semibold">{data.totalApproved}</p>
+              <p className="text-small text-muted-foreground">Approved</p>
+              <p className="text-h2 font-semibold">{data.totalApproved}</p>
             </div>
             <div className="rounded-lg border border-border p-3">
-              <p className="text-sm text-muted-foreground">Clicks</p>
-              <p className="text-2xl font-semibold">{data.totalClicks}</p>
+              <p className="text-small text-muted-foreground">Clicks</p>
+              <p className="text-h2 font-semibold">{data.totalClicks}</p>
             </div>
           </div>
 
-          <h3 className="mt-6 text-sm font-medium uppercase tracking-wide text-muted-foreground">Top Codes</h3>
+          <h3 className="mt-6 text-small font-medium uppercase tracking-wide text-muted-foreground">Top Codes</h3>
           {data.topCodes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No redemptions yet.</p>
+            <p className="text-small text-muted-foreground">No redemptions yet.</p>
           ) : (
             <div className="mt-2 overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse text-small">
                 <thead>
                   <tr className="border-b border-border text-left">
                     <th className="py-2 pr-4">Code</th>

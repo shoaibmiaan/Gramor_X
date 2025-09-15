@@ -136,7 +136,7 @@ export function AudioPlayerSegmented({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          className="rounded-xl border border-border px-3 py-2 text-sm hover:bg-foreground/5"
+          className="rounded-xl border border-border px-3 py-2 text-small hover:bg-foreground/5"
           onClick={prevSeg}
           disabled={!segments.length || seg <= 0}
           title="Previous segment"
@@ -145,7 +145,7 @@ export function AudioPlayerSegmented({
         </button>
         <button
           type="button"
-          className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          className="rounded-xl bg-primary px-4 py-2 text-small font-semibold text-primary-foreground hover:bg-primary/90"
           onClick={playPause}
           title={playing ? 'Pause' : 'Play'}
         >
@@ -153,7 +153,7 @@ export function AudioPlayerSegmented({
         </button>
         <button
           type="button"
-          className="rounded-xl border border-border px-3 py-2 text-sm hover:bg-foreground/5"
+          className="rounded-xl border border-border px-3 py-2 text-small hover:bg-foreground/5"
           onClick={nextSeg}
           disabled={!segments.length || seg >= segments.length - 1}
           title="Next segment"
@@ -162,9 +162,9 @@ export function AudioPlayerSegmented({
         </button>
 
         <div className="ml-3 inline-flex items-center gap-1">
-          <span className="text-xs text-foreground/70">Speed</span>
+          <span className="text-caption text-foreground/70">Speed</span>
           <select
-            className="rounded-lg border border-border bg-background px-2 py-1 text-sm"
+            className="rounded-lg border border-border bg-background px-2 py-1 text-small"
             value={rate}
             onChange={(e) => setRateSafe(Number(e.target.value))}
           >
@@ -177,7 +177,7 @@ export function AudioPlayerSegmented({
         </div>
 
         {segments.length > 0 && seg >= 0 && (
-          <div className="ml-auto text-xs text-foreground/80">
+          <div className="ml-auto text-caption text-foreground/80">
             Segment {seg + 1}/{segments.length}
             {segments[seg].label ? ` • ${segments[seg].label}` : ''}
           </div>
@@ -200,7 +200,7 @@ export function AudioPlayerSegmented({
                 type="button"
                 onClick={() => gotoSegment(i)}
                 className={[
-                  'truncate rounded-lg border px-2 py-1 text-xs',
+                  'truncate rounded-lg border px-2 py-1 text-caption',
                   active ? 'border-primary bg-primary/10' : 'border-border hover:bg-foreground/5',
                 ].join(' ')}
                 title={s.label ? `Jump to ${s.label}` : `Jump to ${i + 1}`}

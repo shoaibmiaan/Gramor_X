@@ -121,7 +121,7 @@ export default function PartnerHistoryPage({ attempts, clips }: Props) {
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-h1 font-semibold">Speaking Attempts History</h1>
-            <p className="text-gray-600 dark:text-grayish">
+            <p className="text-grayish dark:text-grayish">
               Review your AI Partner and Simulator attempts.
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function PartnerHistoryPage({ attempts, clips }: Props) {
         {rows.length === 0 ? (
           <Card className="p-8 text-center">
             <div className="text-h3 font-semibold mb-1">No attempts found</div>
-            <p className="text-gray-600 dark:text-grayish mb-4">
+            <p className="text-grayish dark:text-grayish mb-4">
               Start a conversation on the Partner screen or record in the Simulator.
             </p>
             <div className="flex justify-center gap-2">
@@ -162,7 +162,7 @@ export default function PartnerHistoryPage({ attempts, clips }: Props) {
                     <Badge intent={r.kind === 'partner' ? 'primary' : 'neutral'}>
                       {r.kind === 'partner' ? 'Partner' : 'Simulator'}
                     </Badge>
-                    <div className="text-sm text-gray-600 dark:text-grayish">
+                    <div className="text-small text-grayish dark:text-grayish">
                       {new Date(r.created).toLocaleString()}
                     </div>
                   </div>
@@ -178,7 +178,7 @@ export default function PartnerHistoryPage({ attempts, clips }: Props) {
                   <Stat label="Part 3" value={r.p3Count} />
                 </div>
 
-                <div className="text-sm opacity-80">
+                <div className="text-small opacity-80">
                   Bands: P1 {fmtBand(r.p1_band)} · P2 {fmtBand(r.p2_band)} · P3 {fmtBand(r.p3_band)}
                 </div>
 
@@ -194,7 +194,7 @@ export default function PartnerHistoryPage({ attempts, clips }: Props) {
                   </Button>
                 </div>
 
-                <div className="text-xs text-gray-600 dark:text-grayish font-mono break-all">
+                <div className="text-caption text-grayish dark:text-grayish font-mono break-all">
                   {r.id}
                 </div>
               </Card>
@@ -210,7 +210,7 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-ds-2xl card-surface p-3 text-center">
       <div className="text-h4 font-semibold">{value}</div>
-      <div className="text-xs opacity-70">{label}</div>
+      <div className="text-caption opacity-70">{label}</div>
     </div>
   );
 }

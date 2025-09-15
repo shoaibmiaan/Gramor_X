@@ -69,7 +69,7 @@ export default function DrillsPage() {
   return (
     <main className="py-8">
       <Container>
-        <h1 className="text-2xl font-semibold mb-4">Daily Drill</h1>
+        <h1 className="text-h2 font-semibold mb-4">Daily Drill</h1>
         <Card className="card-surface p-6 rounded-ds-2xl">
           {drill ? (
             <>
@@ -93,7 +93,7 @@ export default function DrillsPage() {
                   ) : (
                     <p className="text-danger">Incorrect.</p>
                   )}
-                  <p className="mt-2 text-sm">{drill.explanation}</p>
+                  <p className="mt-2 text-small">{drill.explanation}</p>
                   <Button onClick={load} variant="secondary" className="mt-4 rounded-ds">
                     New drill
                   </Button>

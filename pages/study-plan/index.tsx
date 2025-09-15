@@ -12,7 +12,7 @@ const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-5xl px-4 py-10">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{title}</h1>
+        <h1 className="text-h1 font-bold">{title}</h1>
         {right}
       </header>
       {/* MAIN landmark here */}
@@ -55,15 +55,15 @@ export default function StudyPlanPage() {
   return (
     <Shell
       title="Your Study Plan"
-      right={<Link href="/progress" className="text-sm underline decoration-2 underline-offset-4">Progress</Link>}
+      right={<Link href="/progress" className="text-small underline decoration-2 underline-offset-4">Progress</Link>}
     >
       {loading ? (
-        <div className="rounded-xl border border-border p-4 text-sm text-foreground/70" aria-live="polite">
+        <div className="rounded-xl border border-border p-4 text-small text-foreground/70" aria-live="polite">
           Loading your plan…
         </div>
       ) : none ? (
         <div className="grid gap-3">
-          <div className="rounded-xl border border-border p-4 text-sm">
+          <div className="rounded-xl border border-border p-4 text-small">
             No active plan found. Complete{' '}
             <Link href="/onboarding/goal" className="underline decoration-2 underline-offset-4">
               Onboarding
@@ -83,10 +83,10 @@ export default function StudyPlanPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {days.map((d) => (
             <article key={d.date} className="rounded-xl border border-border p-4">
-              <div className="mb-2 text-sm font-medium">
+              <div className="mb-2 text-small font-medium">
                 <time dateTime={d.date}>{formatHuman(d.date)}</time>
               </div>
-              <ul className="text-sm text-foreground/80">
+              <ul className="text-small text-foreground/80">
                 {d.tasks.map((t, i) => (
                   <li key={i} className="flex items-center justify-between">
                     <span className="capitalize">{t.module}</span>
@@ -96,22 +96,22 @@ export default function StudyPlanPage() {
               </ul>
               <div className="mt-3 flex flex-wrap gap-2">
                 {d.tasks.some(t => t.module === 'listening') && (
-                  <Link href="/listening" className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">
+                  <Link href="/listening" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
                     Listening
                   </Link>
                 )}
                 {d.tasks.some(t => t.module === 'reading') && (
-                  <Link href="/reading" className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">
+                  <Link href="/reading" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
                     Reading
                   </Link>
                 )}
                 {d.tasks.some(t => t.module === 'writing') && (
-                  <Link href="/writing" className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">
+                  <Link href="/writing" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
                     Writing
                   </Link>
                 )}
                 {d.tasks.some(t => t.module === 'speaking') && (
-                  <Link href="/speaking/simulator" className="rounded-lg border border-border px-3 py-1 text-sm hover:border-primary">
+                  <Link href="/speaking/simulator" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
                     Speaking
                   </Link>
                 )}

@@ -69,7 +69,7 @@ export default function PlanPicker({
             type="button"
             onClick={() => setCycle(k)}
             className={[
-              'px-4 py-2 rounded-lg text-sm',
+              'px-4 py-2 rounded-lg text-small',
               cycle === k ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
             ].join(' ')}
           >
@@ -92,24 +92,24 @@ export default function PlanPicker({
               ].join(' ')}
             >
               {p.badge ? (
-                <div className="absolute -top-3 right-4 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow">
+                <div className="absolute -top-3 right-4 rounded-full bg-primary px-3 py-1 text-caption font-medium text-primary-foreground shadow">
                   {p.badge}
                 </div>
               ) : null}
 
-              <h3 className="text-lg font-semibold">{p.title}</h3>
+              <h3 className="text-h4 font-semibold">{p.title}</h3>
               {p.subtitle ? (
-                <p className="text-sm text-muted-foreground">{p.subtitle}</p>
+                <p className="text-small text-muted-foreground">{p.subtitle}</p>
               ) : null}
 
               <div className="mt-4">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-semibold">{price.toLocaleString()}</span>
-                  <span className="text-sm text-muted-foreground">/ {cycle === 'monthly' ? 'mo' : 'yr'}</span>
+                  <span className="text-h1 font-semibold">{price.toLocaleString()}</span>
+                  <span className="text-small text-muted-foreground">/ {cycle === 'monthly' ? 'mo' : 'yr'}</span>
                 </div>
               </div>
 
-              <ul className="mt-4 space-y-2 text-sm">
+              <ul className="mt-4 space-y-2 text-small">
                 {p.features.map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
@@ -121,14 +121,14 @@ export default function PlanPicker({
               {onSelect ? (
                 <button
                   onClick={() => onSelect(p.key, cycle)}
-                  className="mt-5 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                  className="mt-5 w-full rounded-lg bg-primary px-4 py-2 text-small font-medium text-primary-foreground hover:opacity-90"
                 >
                   Choose {p.title}
                 </button>
               ) : (
                 <Link
                   href={href}
-                  className="mt-5 block w-full rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground hover:opacity-90"
+                  className="mt-5 block w-full rounded-lg bg-primary px-4 py-2 text-center text-small font-medium text-primary-foreground hover:opacity-90"
                 >
                   Choose {p.title}
                 </Link>

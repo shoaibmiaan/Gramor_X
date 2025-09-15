@@ -49,10 +49,10 @@ const BillingPage: NextPage = () => {
         <div className="mx-auto max-w-5xl px-4 py-8">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold">Billing</h1>
-              <p className="text-sm text-muted-foreground">Manage your plan, seats, and invoices.</p>
+              <h1 className="text-h1 font-semibold">Billing</h1>
+              <p className="text-small text-muted-foreground">Manage your plan, seats, and invoices.</p>
             </div>
-            <Link href="/pricing" className="rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">
+            <Link href="/pricing" className="rounded-lg border border-border px-3 py-2 text-small hover:bg-muted">
               Change plan
             </Link>
           </div>
@@ -62,14 +62,14 @@ const BillingPage: NextPage = () => {
           ) : err ? (
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
               <p className="font-medium">Couldn’t load billing</p>
-              <p className="text-sm opacity-90">{err}</p>
+              <p className="text-small opacity-90">{err}</p>
             </div>
           ) : (
             <>
               {/* Subscription Summary */}
               <section className="mb-8 rounded-xl border border-border p-4">
-                <h2 className="mb-1 text-lg font-medium">Subscription</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="mb-1 text-h4 font-medium">Subscription</h2>
+                <p className="text-small text-muted-foreground">
                   Plan: <span className="font-medium capitalize">{sub?.plan ?? 'free'}</span> · Status:{' '}
                   <span className="font-medium">{sub?.status ?? '—'}</span>
                   {sub?.renewsAt ? <> · Renews on <time dateTime={sub.renewsAt}>{new Date(sub.renewsAt).toLocaleDateString()}</time></> : null}
@@ -87,12 +87,12 @@ const BillingPage: NextPage = () => {
 
               {/* Invoices */}
               <section className="rounded-xl border border-border p-4">
-                <h2 className="mb-2 text-lg font-medium">Invoices</h2>
+                <h2 className="mb-2 text-h4 font-medium">Invoices</h2>
                 {invoices.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No invoices yet.</p>
+                  <p className="text-small text-muted-foreground">No invoices yet.</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-sm">
+                    <table className="w-full border-collapse text-small">
                       <thead>
                         <tr className="border-b border-border text-left">
                           <th className="py-2 pr-4">Date</th>

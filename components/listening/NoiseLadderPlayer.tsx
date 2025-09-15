@@ -76,7 +76,7 @@ export const NoiseLadderPlayer: React.FC<NoiseLadderPlayerProps> = ({
         type="button"
         onClick={() => step(-1)}
         disabled={level <= 0}
-        className="px-2 py-1 rounded-ds border border-gray-200 dark:border-white/10"
+        className="px-2 py-1 rounded-ds border border-lightBorder dark:border-white/10"
         aria-label="Decrease noise"
       >
         -
@@ -88,7 +88,7 @@ export const NoiseLadderPlayer: React.FC<NoiseLadderPlayerProps> = ({
         type="button"
         onClick={() => step(1)}
         disabled={level >= layers.length - 1}
-        className="px-2 py-1 rounded-ds border border-gray-200 dark:border-white/10"
+        className="px-2 py-1 rounded-ds border border-lightBorder dark:border-white/10"
         aria-label="Increase noise"
       >
         +

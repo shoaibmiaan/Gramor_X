@@ -53,7 +53,7 @@ export default function BookingDetailPage(props: BookingPageProps){
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Booking not found</h1>
+          <h1 className="font-slab text-h2">Booking not found</h1>
           <p className="mt-2 text-mutedText">It may have been removed.</p>
           <Link href="/bookings" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Bookings</Link>
         </div>
@@ -84,10 +84,10 @@ export default function BookingDetailPage(props: BookingPageProps){
                 <Image src={b.coach?.avatar_url || '/avatar.svg'} alt="Coach" fill sizes="56px" className="object-cover" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-xl">Session with {b.coach?.display_name || 'Coach'}</h1>
-                <div className="mt-1 text-sm text-mutedText">{fmtRange(b.start_utc, b.end_utc)}</div>
+                <h1 className="text-h3">Session with {b.coach?.display_name || 'Coach'}</h1>
+                <div className="mt-1 text-small text-mutedText">{fmtRange(b.start_utc, b.end_utc)}</div>
               </div>
-              <span className={cls('rounded-lg px-2 py-1 text-xs', statusBadge)}>{b.status}</span>
+              <span className={cls('rounded-lg px-2 py-1 text-caption', statusBadge)}>{b.status}</span>
             </header>
 
             <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -100,7 +100,7 @@ export default function BookingDetailPage(props: BookingPageProps){
             {b.status !== 'canceled' && (
               <div className="mt-4 flex items-center justify-between gap-3">
                 <Button onClick={cancel} variant="destructive" className="bg-sunsetRed text-lightText">Cancel Booking</Button>
-                {b.status === 'pending' && <span className="text-sm text-mutedText">Awaiting coach confirmation.</span>}
+                {b.status === 'pending' && <span className="text-small text-mutedText">Awaiting coach confirmation.</span>}
               </div>
             )}
           </div>

@@ -46,7 +46,7 @@ export function UsageCounterBadge({
   return (
     <span
       className={[
-        'inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium',
+        'inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-caption font-medium',
         allowed ? 'text-foreground' : 'text-error',
         className || '',
       ].join(' ')}
