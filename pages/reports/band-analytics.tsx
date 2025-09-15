@@ -89,10 +89,10 @@ export default function BandAnalyticsPage(){
         <section className="border-b border-border bg-background/80 backdrop-blur">
           <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="flex items-center justify-between">
-              <h1 className="font-slab text-2xl md:text-3xl">Band Analytics</h1>
+              <h1 className="font-slab text-h2 md:text-h1">Band Analytics</h1>
               <Link href="/institutions" className="inline-flex"><Button variant="outline" className="border-border">Back</Button></Link>
             </div>
-            <p className="mt-1 text-sm text-mutedText">Track IELTS band progress across modules, plus weekly attempt activity.</p>
+            <p className="mt-1 text-small text-mutedText">Track IELTS band progress across modules, plus weekly attempt activity.</p>
           </div>
         </section>
 
@@ -100,15 +100,15 @@ export default function BandAnalyticsPage(){
         <section className="mx-auto max-w-7xl px-4 py-4">
           <div className="grid gap-3 md:grid-cols-12">
             <div className="md:col-span-4">
-              <label className="text-sm text-mutedText">User ID</label>
+              <label className="text-small text-mutedText">User ID</label>
               <Input value={userId} onChange={(e)=>setUserId(e.target.value)} placeholder="optional — leave blank for me" className="mt-1 rounded-xl border border-border bg-card px-3 py-2" />
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">From (UTC)</label>
+              <label className="text-small text-mutedText">From (UTC)</label>
               <Input type="datetime-local" value={isoToLocal(fromUtc)} onChange={(e)=>setFromUtc(localToIso(e.target.value))} className="mt-1 rounded-xl border border-border bg-card px-3 py-2" />
             </div>
             <div className="md:col-span-3">
-              <label className="text-sm text-mutedText">To (UTC)</label>
+              <label className="text-small text-mutedText">To (UTC)</label>
               <Input type="datetime-local" value={isoToLocal(toUtc)} onChange={(e)=>setToUtc(localToIso(e.target.value))} className="mt-1 rounded-xl border border-border bg-card px-3 py-2" />
             </div>
             <div className="md:col-span-2 flex items-end">
@@ -133,8 +133,8 @@ export default function BandAnalyticsPage(){
             <>
               {/* Header card */}
               <div className="rounded-2xl border border-lightBorder bg-card p-4">
-                <div className="text-sm text-mutedText">User</div>
-                <div className="text-xl">{data.user?.name || 'Me'} {data.user?.email ? <span className="text-mutedText text-sm">· {data.user.email}</span> : null}</div>
+                <div className="text-small text-mutedText">User</div>
+                <div className="text-h3">{data.user?.name || 'Me'} {data.user?.email ? <span className="text-mutedText text-small">· {data.user.email}</span> : null}</div>
               </div>
 
               {/* Attempts per module */}

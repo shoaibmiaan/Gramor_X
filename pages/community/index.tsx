@@ -61,7 +61,7 @@ export default function CommunityThreadsPage() {
           <Card key={t.id} className="p-4 mb-4">
             <div className="flex justify-between">
               <h2 className="font-semibold">{t.title}</h2>
-              {t.flagged && <span className="text-red-500 text-xs">Flagged</span>}
+              {t.flagged && <span className="text-danger text-caption">Flagged</span>}
             </div>
             <p className="mt-2 whitespace-pre-wrap">{t.content}</p>
             <Button variant="secondary" size="sm" className="mt-2" onClick={() => moderateThread(t.id, t.flagged)}>

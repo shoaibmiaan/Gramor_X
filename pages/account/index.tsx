@@ -61,8 +61,8 @@ export default function SettingsHubPage() {
       <div className="py-6">
         <Container>
           <header className="mb-4">
-            <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-h2 font-bold text-foreground">Settings</h1>
+            <p className="text-small text-muted-foreground">
               Tweak your experience and account preferences.
             </p>
           </header>
@@ -70,8 +70,8 @@ export default function SettingsHubPage() {
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Language */}
             <div className="rounded-xl border border-border bg-card p-4">
-              <h2 className="text-sm font-medium text-foreground">Language</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h2 className="text-small font-medium text-foreground">Language</h2>
+              <p className="mt-1 text-small text-muted-foreground">
                 Switch between English and Urdu. We remember your choice.
               </p>
               <div className="mt-3 flex gap-2">
@@ -94,19 +94,19 @@ export default function SettingsHubPage() {
 
             {/* Notifications (placeholder) */}
             <div className="rounded-xl border border-border bg-card p-4">
-              <h2 className="text-sm font-medium text-foreground">Notifications</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h2 className="text-small font-medium text-foreground">Notifications</h2>
+              <p className="mt-1 text-small text-muted-foreground">
                 Daily task reminders and challenge nudges.
               </p>
-              <div className="mt-3 text-xs text-muted-foreground">
+              <div className="mt-3 text-caption text-muted-foreground">
                 Coming soon — wired to <code className="font-mono">/api/notifications/nudge</code>.
               </div>
             </div>
 
             {/* Accessibility */}
             <div className="rounded-xl border border-border bg-card p-4">
-              <h2 className="text-sm font-medium text-foreground">Accessibility</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h2 className="text-small font-medium text-foreground">Accessibility</h2>
+              <p className="mt-1 text-small text-muted-foreground">
                 Keyboard checks, screen reader hints, and live region demo.
               </p>
               <div className="mt-3">
@@ -127,8 +127,8 @@ export default function SettingsHubPage() {
 
             {/* Security */}
             <div className="rounded-xl border border-border bg-card p-4">
-              <h2 className="text-sm font-medium text-foreground">Security</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h2 className="text-small font-medium text-foreground">Security</h2>
+              <p className="mt-1 text-small text-muted-foreground">
                 Reset your password.{" "}
                 {email ? `Email on file: ${email}` : "No email on file."}
               </p>
@@ -143,7 +143,7 @@ export default function SettingsHubPage() {
                   Send reset email
                 </Button>
                 {!email && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-caption text-muted-foreground">
                     Add an email to your account first.
                   </span>
                 )}

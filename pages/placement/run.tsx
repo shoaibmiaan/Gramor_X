@@ -51,7 +51,7 @@ export default function PlacementRun() {
           </p>
           <ul className="grid gap-3">
             {['A','B','C','D'].map(opt => (
-              <li key={opt} className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+              <li key={opt} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                 <label className="flex items-center gap-3">
                   <input type="radio" name="L1" value={opt} onChange={(e)=>setAnswers(a=>({...a, L1:e.target.value}))}/>
                   <span>Option {opt}</span>
@@ -79,7 +79,7 @@ export default function PlacementRun() {
           <div className="grid sm:grid-cols-2 gap-3">
             {[1,2,3].map(n=>(
               <label key={n} className="block">
-                <span className="text-small text-gray-500 dark:text-grayish">Answer {n}</span>
+                <span className="text-small text-grayish dark:text-grayish">Answer {n}</span>
                 <input
                   className="w-full rounded-ds border bg-white text-lightText dark:bg-dark/50 dark:text-white dark:border-purpleVibe/30 px-3.5 py-2.5"
                   onChange={(e)=>{
@@ -121,7 +121,7 @@ export default function PlacementRun() {
               'A) Green spaces always reduce temperatures by the same amount.',
               'B) Some researchers disagree about the size of the benefits.',
             ].map((stmt, i)=>(
-              <div key={i} className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+              <div key={i} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                 <div className="mb-2">{stmt}</div>
                 {['True','False','Not Given'].map(v=>(
                   <label key={v} className="mr-4">
@@ -213,7 +213,7 @@ export default function PlacementRun() {
               The chart below shows the percentage of households with internet access in three countries from 2010 to 2020.
               Summarise the information by selecting and reporting the main features, and make comparisons where relevant.
             </p>
-            <Image src={chartImg} alt="Task 1 chart" width={800} height={450} className="mt-3 rounded-ds border border-gray-200 dark:border-white/10" />          </Card>
+            <Image src={chartImg} alt="Task 1 chart" width={800} height={450} className="mt-3 rounded-ds border border-lightBorder dark:border-white/10" />          </Card>
           <textarea
             rows={10}
             className="w-full rounded-ds border bg-white text-lightText dark:bg-dark/50 dark:text-white dark:border-purpleVibe/30 px-3.5 py-2.5"
@@ -403,7 +403,7 @@ const SpeakingRecorder: React.FC<{
         {!supported && <span className="text-small text-sunsetOrange">Microphone not available in this browser.</span>}
       </div>
       {audioUrl && (
-        <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+        <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
           <audio src={audioUrl} controls className="w-full" />
         </div>
       )}

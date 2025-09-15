@@ -5,7 +5,7 @@ export function FireStreak({ value }: { value: number }) {
     <span
       className="
         inline-flex items-center gap-1.5 rounded-full
-        bg-primary/12 px-2.5 py-1 text-sm font-semibold text-primary
+        bg-primary/12 px-2.5 py-1 text-small font-semibold text-primary
         ring-1 ring-inset ring-border
       "
       title="Daily streak"

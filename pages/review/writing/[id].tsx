@@ -14,7 +14,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-4xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="rounded-2xl border border-border p-4 sm:p-6 bg-background/50 shadow-sm">{children}</div>
@@ -74,44 +74,44 @@ export default function WritingReviewPage() {
   return (
     <Shell
       title="Writing Review"
-      right={!loadingAI && ai ? <div className="rounded-full border border-border px-3 py-1 text-sm">Band (AI): {ai.bandOverall.toFixed(1)}</div> : <div className="text-sm">Getting AI feedback…</div>}
+      right={!loadingAI && ai ? <div className="rounded-full border border-border px-3 py-1 text-small">Band (AI): {ai.bandOverall.toFixed(1)}</div> : <div className="text-small">Getting AI feedback…</div>}
     >
       <div className="grid gap-6">
         <section className="rounded-xl border border-border p-4">
-          <h2 className="mb-2 text-base font-semibold">Task 1</h2>
-          <div className="mb-2 text-xs text-foreground/70">Words: {att.wordcount1}</div>
-          <p className="whitespace-pre-wrap text-sm">{att.task1}</p>
+          <h2 className="mb-2 text-body font-semibold">Task 1</h2>
+          <div className="mb-2 text-caption text-foreground/70">Words: {att.wordcount1}</div>
+          <p className="whitespace-pre-wrap text-small">{att.task1}</p>
         </section>
 
         <section className="rounded-xl border border-border p-4">
-          <h2 className="mb-2 text-base font-semibold">Task 2</h2>
-          <div className="mb-2 text-xs text-foreground/70">Words: {att.wordcount2}</div>
-          <p className="whitespace-pre-wrap text-sm">{att.task2}</p>
+          <h2 className="mb-2 text-body font-semibold">Task 2</h2>
+          <div className="mb-2 text-caption text-foreground/70">Words: {att.wordcount2}</div>
+          <p className="whitespace-pre-wrap text-small">{att.task2}</p>
         </section>
 
         <section className="rounded-xl border border-border p-4">
-          <h2 className="mb-2 text-base font-semibold">AI Feedback</h2>
+          <h2 className="mb-2 text-body font-semibold">AI Feedback</h2>
           {loadingAI ? (
-            <div className="text-sm text-foreground/70">Analyzing…</div>
+            <div className="text-small text-foreground/70">Analyzing…</div>
           ) : ai ? (
             <div className="grid gap-3">
-              <div className="flex flex-wrap gap-2 text-sm">
+              <div className="flex flex-wrap gap-2 text-small">
                 <Badge label="Task Achievement" val={ai.criteria.taskAchievement} />
                 <Badge label="Coherence & Cohesion" val={ai.criteria.coherence} />
                 <Badge label="Lexical Resource" val={ai.criteria.lexical} />
                 <Badge label="Grammar & Accuracy" val={ai.criteria.grammar} />
               </div>
-              <ul className="list-inside list-disc text-sm text-foreground/80">
+              <ul className="list-inside list-disc text-small text-foreground/80">
                 {ai.notes.map((n, i) => <li key={i}>{n}</li>)}
               </ul>
             </div>
           ) : (
-            <div className="text-sm text-foreground/70">AI feedback unavailable.</div>
+            <div className="text-small text-foreground/70">AI feedback unavailable.</div>
           )}
         </section>
 
         <div className="flex items-center justify-between">
-          <Link href="/writing" className="text-sm underline underline-offset-4">Try another writing</Link>
+          <Link href="/writing" className="text-small underline underline-offset-4">Try another writing</Link>
           <Link href="/dashboard" className="rounded-xl border border-border px-4 py-2 hover:border-primary">Go to dashboard</Link>
         </div>
       </div>

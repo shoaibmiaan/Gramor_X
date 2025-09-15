@@ -138,7 +138,7 @@ export const StudyCalendar: React.FC = () => {
   return (
     <Card className="p-6 rounded-ds-2xl">
       <h3 className="font-slab text-h3 mb-4">Study Calendar</h3>
-      <div className="grid grid-cols-7 gap-2 text-center text-xs">
+      <div className="grid grid-cols-7 gap-2 text-center text-caption">
         {days.map((day) => (
           <div
             key={day.key}
@@ -175,13 +175,13 @@ export const StudyCalendar: React.FC = () => {
         <div className="flex gap-2 mt-4">
           <button
             onClick={exportICS}
-            className="px-3 py-1 text-xs rounded bg-electricBlue text-white"
+            className="px-3 py-1 text-caption rounded bg-electricBlue text-white"
           >
             Export iCal
           </button>
           <button
             onClick={exportGoogle}
-            className="px-3 py-1 text-xs rounded bg-electricBlue text-white"
+            className="px-3 py-1 text-caption rounded bg-electricBlue text-white"
           >
             Export Google
           </button>
@@ -189,7 +189,7 @@ export const StudyCalendar: React.FC = () => {
       )}
 
       {nextRestart && (
-        <div className="mt-4 text-center text-sm text-muted-foreground">
+        <div className="mt-4 text-center text-small text-muted-foreground">
           Restart scheduled on {nextRestart}
         </div>
       )}

@@ -170,7 +170,7 @@ export default function ProfilePage() {
                 {profile?.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <Image src={profile.avatar_url} alt="Avatar" width={80} height={80} className="h-20 w-20 object-cover" />                ) : (
-                  <span className="text-2xl font-semibold text-vibrantPurple">
+                  <span className="text-h2 font-semibold text-vibrantPurple">
                     {profile?.full_name?.[0] || 'U'}
                   </span>
                 )}

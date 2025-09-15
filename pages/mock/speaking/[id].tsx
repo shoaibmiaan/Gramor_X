@@ -37,7 +37,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-3xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="rounded-2xl border border-border p-4 sm:p-6 bg-background/50 shadow-sm">{children}</div>
@@ -119,9 +119,9 @@ export default function SpeakingMockPage() {
   if (stage === 'done') return (
     <Shell title="Speaking — Finished">
       <div className="grid gap-4">
-        <div className="text-sm">Your attempt has been saved.</div>
+        <div className="text-small">Your attempt has been saved.</div>
         <div className="flex items-center justify-between">
-          <Link href="/speaking" className="text-sm underline underline-offset-4">Try another script</Link>
+          <Link href="/speaking" className="text-small underline underline-offset-4">Try another script</Link>
           <Link href={`/review/speaking/${script.id}?attempt=${attemptId}`} className="rounded-xl border border-border px-4 py-2 hover:border-primary">Go to review</Link>
         </div>
       </div>
@@ -129,31 +129,31 @@ export default function SpeakingMockPage() {
   );
 
   return (
-    <Shell title={`Speaking — ${script.title}`} right={<div className="rounded-full border border-border px-3 py-1 text-sm">⏱ {timer}s</div>}>
+    <Shell title={`Speaking — ${script.title}`} right={<div className="rounded-full border border-border px-3 py-1 text-small">⏱ {timer}s</div>}>
       <div className="grid gap-6">
         {stage === 'p1' && (
           <section className="rounded-xl border border-border p-4">
-            <h2 className="mb-2 text-base font-semibold">Part 1 — Introduction & Interview</h2>
-            <ul className="list-disc list-inside text-sm text-foreground/80">{script.part1.map((q, i) => <li key={i}>{q}</li>)}</ul>
+            <h2 className="mb-2 text-body font-semibold">Part 1 — Introduction & Interview</h2>
+            <ul className="list-disc list-inside text-small text-foreground/80">{script.part1.map((q, i) => <li key={i}>{q}</li>)}</ul>
           </section>
         )}
         {stage === 'p2prep' && (
           <section className="rounded-xl border border-border p-4">
-            <h2 className="mb-2 text-base font-semibold">Part 2 — Cue Card (Preparation)</h2>
-            <ul className="list-disc list-inside text-sm text-foreground/80">{script.part2.cueCard.map((l, i) => <li key={i}>{l}</li>)}</ul>
-            <p className="mt-2 text-sm text-foreground/70">You have {script.part2.prepSec} seconds to prepare.</p>
+            <h2 className="mb-2 text-body font-semibold">Part 2 — Cue Card (Preparation)</h2>
+            <ul className="list-disc list-inside text-small text-foreground/80">{script.part2.cueCard.map((l, i) => <li key={i}>{l}</li>)}</ul>
+            <p className="mt-2 text-small text-foreground/70">You have {script.part2.prepSec} seconds to prepare.</p>
           </section>
         )}
         {stage === 'p2talk' && (
           <section className="rounded-xl border border-border p-4">
-            <h2 className="mb-2 text-base font-semibold">Part 2 — Talk</h2>
-            <p className="text-sm text-foreground/80">Speak for up to {script.part2.speakSec} seconds.</p>
+            <h2 className="mb-2 text-body font-semibold">Part 2 — Talk</h2>
+            <p className="text-small text-foreground/80">Speak for up to {script.part2.speakSec} seconds.</p>
           </section>
         )}
         {stage === 'p3' && (
           <section className="rounded-xl border border-border p-4">
-            <h2 className="mb-2 text-base font-semibold">Part 3 — Discussion</h2>
-            <ul className="list-disc list-inside text-sm text-foreground/80">{script.part3.map((q, i) => <li key={i}>{q}</li>)}</ul>
+            <h2 className="mb-2 text-body font-semibold">Part 3 — Discussion</h2>
+            <ul className="list-disc list-inside text-small text-foreground/80">{script.part3.map((q, i) => <li key={i}>{q}</li>)}</ul>
           </section>
         )}
 
@@ -165,7 +165,7 @@ export default function SpeakingMockPage() {
               {stage === 'p2prep' ? 'Start Part 2 (Speak)' : stage === 'p2talk' ? 'Proceed to Part 3' : stage === 'p3' ? 'Finish' : 'Next'}
             </button>
           )}
-          <Link href="/speaking" className="text-sm underline underline-offset-4">Change script</Link>
+          <Link href="/speaking" className="text-small underline underline-offset-4">Change script</Link>
         </div>
       </div>
     </Shell>

@@ -247,7 +247,7 @@ export default function ReadingExam() {
                 )}
 
                 {review && q.answer && (
-                  <p className="pr-text-sm pr-opacity-70">Correct: {q.answer}</p>
+                  <p className="pr-text-small pr-opacity-70">Correct: {q.answer}</p>
                 )}
               </div>
             ))}

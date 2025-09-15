@@ -59,7 +59,7 @@ export function ModulesMenu() {
         ref={btnRef}
         type="button"
         onClick={toggle}
-        className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm hover:bg-foreground/5"
+        className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-small hover:bg-foreground/5"
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -82,8 +82,8 @@ export function ModulesMenu() {
                   href={it.href}
                   className="block rounded-lg px-3 py-2 hover:bg-foreground/5"
                 >
-                  <div className="text-sm font-medium">{it.label}</div>
-                  {it.desc && <div className="text-xs text-foreground/60">{it.desc}</div>}
+                  <div className="text-small font-medium">{it.label}</div>
+                  {it.desc && <div className="text-caption text-foreground/60">{it.desc}</div>}
                 </a>
               ))}
             </div>

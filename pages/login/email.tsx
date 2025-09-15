@@ -125,7 +125,7 @@ export default function LoginWithEmail() {
           <Button asChild variant="link" className="mt-2" fullWidth>
             <Link href="/forgot-password">Forgot password?</Link>
           </Button>
-          <p className="mt-2 text-xs text-mutedText text-center">
+          <p className="mt-2 text-caption text-mutedText text-center">
             By continuing you agree to our <Link href="/legal/terms" className="underline">Terms</Link> &amp; <Link href="/legal/privacy" className="underline">Privacy</Link>.
           </p>
         </form>

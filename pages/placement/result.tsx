@@ -18,7 +18,7 @@ export default function PlacementResult() {
           <Card className="p-6 rounded-ds-2xl">
             <div className="grid sm:grid-cols-4 gap-4 text-center">
               {PREFS.map(s=>(
-                <div key={s} className="p-4 rounded-ds border border-gray-200 dark:border-white/10">
+                <div key={s} className="p-4 rounded-ds border border-lightBorder dark:border-white/10">
                   <div className="text-small opacity-80">{s}</div>
                   <div className="text-h1">—</div>
                 </div>

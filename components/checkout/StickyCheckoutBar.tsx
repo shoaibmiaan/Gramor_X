@@ -25,8 +25,8 @@ export const StickyCheckoutBar: React.FC<Props> = ({ label, price, onBuy }) => {
         <div className="rounded-2xl border border-border bg-card/95 backdrop-blur shadow-glow p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-xs text-muted-foreground truncate">{label}</div>
-              <div className="font-slab text-lg text-gradient-primary">{price}</div>
+              <div className="text-caption text-muted-foreground truncate">{label}</div>
+              <div className="font-slab text-h4 text-gradient-primary">{price}</div>
             </div>
 
             <Button size="sm" className="rounded-full px-4" onClick={handleClick}>

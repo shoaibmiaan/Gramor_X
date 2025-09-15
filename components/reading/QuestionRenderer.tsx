@@ -221,7 +221,7 @@ export const QuestionRenderer: React.FC<Props> = ({
               </label>
               <select
                 id={selectId}
-                className="rounded-ds border border-gray-200 dark:border-white/10 p-2 bg-white dark:bg-dark"
+                className="rounded-ds border border-lightBorder dark:border-white/10 p-2 bg-white dark:bg-dark"
                 value={selected}
                 onChange={(e) => setAt(idx, e.target.value)}
                 aria-label={`Select match for ${p.left}`}

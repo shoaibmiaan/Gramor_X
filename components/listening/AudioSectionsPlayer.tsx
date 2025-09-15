@@ -286,7 +286,7 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
           <button
             type="button"
             onClick={prevSection}
-            className="px-3 py-2 rounded-ds border border-gray-200 dark:border-white/10 hover:bg-white/5"
+            className="px-3 py-2 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-white/5"
             aria-label="Previous section"
           >
             <Icon name="step-backward" />
@@ -314,7 +314,7 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
           <button
             type="button"
             onClick={nextSection}
-            className="px-3 py-2 rounded-ds border border-gray-200 dark:border-white/10 hover:bg-white/5"
+            className="px-3 py-2 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-white/5"
             aria-label="Next section"
           >
             <Icon name="step-forward" />
@@ -351,7 +351,7 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
       <div className="mt-4">
         <div className="text-small opacity-70 mb-1">Transcript</div>
         <div
-          className={`p-3.5 rounded-ds border border-gray-200 dark:border-white/10 ${isSubmitted ? '' : 'blur-sm select-none pointer-events-none'}`}
+          className={`p-3.5 rounded-ds border border-lightBorder dark:border-white/10 ${isSubmitted ? '' : 'blur-sm select-none pointer-events-none'}`}
           aria-live="polite"
         >
           {current.transcript ? (

@@ -63,8 +63,8 @@ export default function LanguageSettingsPage() {
         <Container>
           <header className="mb-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{t("Language Settings")}</h1>
-              <p className="text-sm text-mutedText">
+              <h1 className="text-h2 font-bold text-foreground">{t("Language Settings")}</h1>
+              <p className="text-small text-mutedText">
                 {t("Choose your preferred interface language.")}
               </p>
             </div>
@@ -78,27 +78,27 @@ export default function LanguageSettingsPage() {
                 // value={locale}
                 onChanged={handleChange}
               />
-              <span className="text-xs text-mutedText" role="status" aria-live="polite">
+              <span className="text-caption text-mutedText" role="status" aria-live="polite">
                 {busy ? t("Saving…") : saved === "ok" ? t("Saved ✓") : saved === "err" ? t("Error") : null}
               </span>
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <div className="rounded-lg border border-border bg-background p-3">
-                <h3 className="mb-1 text-sm font-medium text-foreground">{t("Preview (English)")}</h3>
-                <p className="text-sm text-mutedText">
+                <h3 className="mb-1 text-small font-medium text-foreground">{t("Preview (English)")}</h3>
+                <p className="text-small text-mutedText">
                   Welcome to GramorX. Let’s raise your IELTS band with daily practice and AI feedback.
                 </p>
               </div>
               <div className="rounded-lg border border-border bg-background p-3">
-                <h3 className="mb-1 text-sm font-medium text-foreground">{t("Preview (Urdu)")}</h3>
-                <p className="text-sm text-mutedText">
+                <h3 className="mb-1 text-small font-medium text-foreground">{t("Preview (Urdu)")}</h3>
+                <p className="text-small text-mutedText">
                   GramorX میں خوش آمدید۔ روزانہ مشق اور AI فیڈبیک کے ساتھ اپنا IELTS بینڈ بہتر بنائیں۔
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-mutedText">
+            <div className="mt-4 text-caption text-mutedText">
               {t("Current locale")}: <span className="font-mono">{locale}</span>
             </div>
           </section>

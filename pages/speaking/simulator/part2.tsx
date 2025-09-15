@@ -296,9 +296,9 @@ export default function SpeakingPart2() {
 
       <Container className="py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">IELTS Speaking – Part 2 (Cue Card)</h1>
+          <h1 className="text-h2 font-semibold">IELTS Speaking – Part 2 (Cue Card)</h1>
           <div className="flex items-center gap-3">
-            <label className="inline-flex items-center gap-2 text-sm">
+            <label className="inline-flex items-center gap-2 text-small">
               <input
                 type="checkbox"
                 checked={ttsOn}
@@ -308,7 +308,7 @@ export default function SpeakingPart2() {
             </label>
             <button
               onClick={startFlow}
-              className="px-4 py-2 rounded-xl bg-emerald-600 text-white disabled:bg-gray-300"
+              className="px-4 py-2 rounded-xl bg-success text-white disabled:bg-gray-300"
               disabled={stage !== 'idle' && stage !== 'done' && stage !== 'error'}
             >
               {stage === 'done' ? 'Restart' : 'Start Part 2'}
@@ -320,9 +320,9 @@ export default function SpeakingPart2() {
           {/* Left: Cue + Recorder */}
           <div className="md:col-span-2">
             {/* Cue card */}
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-5 bg-white/60 dark:bg-white/5">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Cue Card</div>
-              <h2 className="mt-1 text-lg font-medium">{cue.topic}</h2>
+            <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-5 bg-white/60 dark:bg-white/5">
+              <div className="text-caption uppercase tracking-wide text-grayish">Cue Card</div>
+              <h2 className="mt-1 text-h4 font-medium">{cue.topic}</h2>
               <ul className="mt-3 list-disc pl-5 space-y-1">
                 {cue.points.map((p, i) => (
                   <li key={i} className="text-gray-700 dark:text-gray-100">{p}</li>
@@ -331,15 +331,15 @@ export default function SpeakingPart2() {
 
               {/* Timers */}
               <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
-                  <div className="text-xs text-gray-500">Prep</div>
-                  <div className="font-mono text-xl">
+                <div className="rounded-xl border border-lightBorder dark:border-white/10 p-3 text-center">
+                  <div className="text-caption text-grayish">Prep</div>
+                  <div className="font-mono text-h3">
                     {stage === 'prep' ? `${minutes(prepLeft)}:${seconds(prepLeft)}` : '01:00'}
                   </div>
                 </div>
-                <div className="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
-                  <div className="text-xs text-gray-500">Speaking</div>
-                  <div className="font-mono text-xl">
+                <div className="rounded-xl border border-lightBorder dark:border-white/10 p-3 text-center">
+                  <div className="text-caption text-grayish">Speaking</div>
+                  <div className="font-mono text-h3">
                     {stage === 'record' ? `${minutes(recordLeft)}:${seconds(recordLeft)}` : '02:00'}
                   </div>
                 </div>
@@ -355,7 +355,7 @@ export default function SpeakingPart2() {
                 onError={handleError}
                 className="bg-white/60 dark:bg-white/5"
               />
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-caption text-grayish">
                 Recording auto-starts after prep and auto-stops at 2 minutes (or when you press Stop &amp; Save).
               </p>
             </div>
@@ -363,9 +363,9 @@ export default function SpeakingPart2() {
 
           {/* Right: Status + Result */}
           <div className="md:col-span-1">
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Status</div>
-              <div className="mt-1 text-sm">
+            <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+              <div className="text-caption uppercase tracking-wide text-grayish">Status</div>
+              <div className="mt-1 text-small">
                 {stage === 'idle' && 'Idle'}
                 {stage === 'intro' && 'Reading instructions…'}
                 {stage === 'prep' && 'Preparing (1:00)…'}
@@ -381,46 +381,46 @@ export default function SpeakingPart2() {
               )}
 
               {error && (
-                <div className="mt-3 text-sm text-rose-600 break-words">
+                <div className="mt-3 text-small text-rose-600 break-words">
                   {error}
                 </div>
               )}
             </div>
 
             {result && stage === 'done' && (
-              <div className="mt-4 rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-                <div className="text-xs uppercase tracking-wide text-gray-500">AI Result</div>
+              <div className="mt-4 rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+                <div className="text-caption uppercase tracking-wide text-grayish">AI Result</div>
                 <div className="mt-2">
-                  <div className="text-3xl font-semibold">
+                  <div className="text-h1 font-semibold">
                     {typeof result.overall === 'number' ? result.overall.toFixed(1) : '—'}
                   </div>
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-small">
                     <div>Fluency: <strong>{result.fluency ?? '—'}</strong></div>
                     <div>Pronunciation: <strong>{result.pronunciation ?? '—'}</strong></div>
                     <div>Lexical: <strong>{result.lexical ?? '—'}</strong></div>
                     <div>Grammar: <strong>{result.grammar ?? '—'}</strong></div>
                   </div>
                   {result.feedback && (
-                    <p className="mt-3 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
+                    <p className="mt-3 text-small text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
                       {result.feedback}
                     </p>
                   )}
                   <div className="mt-4 flex gap-2">
                     <button
-                      className="px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10"
+                      className="px-3 py-2 rounded-xl border border-lightBorder dark:border-white/10"
                       onClick={() => setStage('idle')}
                     >
                       Try Again
                     </button>
                     <button
-                      className="px-3 py-2 rounded-xl bg-blue-600 text-white"
+                      className="px-3 py-2 rounded-xl bg-electricBlue text-white"
                       onClick={gotoReview}
                     >
                       Open Review
                     </button>
                   </div>
                   <div className="mt-3">
-                    <Link href="/speaking/attempts/" className="text-sm underline">
+                    <Link href="/speaking/attempts/" className="text-small underline">
                       View all attempts
                     </Link>
                   </div>

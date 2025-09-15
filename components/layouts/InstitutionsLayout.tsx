@@ -30,8 +30,8 @@ const InstitutionsLayout: React.FC<React.PropsWithChildren> = ({ children }) => 
       <div className="sticky top-[64px] z-30 border-b border-border bg-background/80 backdrop-blur">
         <Container className="py-4 space-y-2">
           <div>
-            <h1 className="font-slab text-xl">Institutions</h1>
-            <p className="text-sm text-mutedText">Manage cohorts, students, and reports for your academy.</p>
+            <h1 className="font-slab text-h3">Institutions</h1>
+            <p className="text-small text-mutedText">Manage cohorts, students, and reports for your academy.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Item href="/institutions" label="All Orgs" />

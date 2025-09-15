@@ -42,22 +42,22 @@ export const NotificationBell: React.FC = () => {
       {open && (
         <div ref={popoverRef} className="absolute right-0 mt-2 w-80 rounded-ds-2xl border border-border bg-card text-card-foreground shadow-lg z-50">
           <div className="flex items-center justify-between border-b border-border px-3 py-2">
-            <span className="text-sm font-semibold">Notifications</span>
+            <span className="text-small font-semibold">Notifications</span>
             {unread>0 && (
               <button onClick={markAllAsRead}
-                className="text-xs text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ds px-1.5 py-0.5">
+                className="text-caption text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ds px-1.5 py-0.5">
                 Mark all as read
               </button>
             )}
           </div>
-          <ul id="notification-menu" role="menu" className="max-h-72 overflow-auto text-sm">
+          <ul id="notification-menu" role="menu" className="max-h-72 overflow-auto text-small">
             {notifications.map((n,i)=>{
               const isInternal = n.url?.startsWith('/')
               const common = 'flex items-start gap-2 px-3 py-2 hover:bg-muted/60 focus:bg-muted/60 rounded-none'
               const row =
                 <div className={n.read_at?'opacity-60':'' + ''}>
                   <div className="font-medium">{n.title}</div>
-                  {n.body && <div className="text-sm text-muted-foreground">{n.body}</div>}
+                  {n.body && <div className="text-small text-muted-foreground">{n.body}</div>}
                 </div>
               return (
                 <li key={n.id} role="none">

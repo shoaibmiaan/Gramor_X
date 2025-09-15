@@ -45,12 +45,12 @@ export const ChallengeScore: React.FC<ChallengeProps> = ({ attemptId, type }) =>
       </Button>
       {error && <p className="text-sunsetOrange text-small mt-2">{error}</p>}
       {result && (
-        <div className="mt-4 p-4 rounded-ds border border-gray-200 dark:border-white/10">
+        <div className="mt-4 p-4 rounded-ds border border-lightBorder dark:border-white/10">
           <p className="font-medium">{result.justification}</p>
           {Array.isArray(result.evidence) && result.evidence.length > 0 && (
             <ul className="list-disc list-inside mt-2 space-y-1">
               {result.evidence.map((snip: string, i: number) => (
-                <li key={i} className="text-sm">
+                <li key={i} className="text-small">
                   {snip}
                 </li>
               ))}

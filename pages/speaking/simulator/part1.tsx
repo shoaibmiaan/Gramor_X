@@ -268,7 +268,7 @@ export default function SpeakingSimPart1() {
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
         <div className="flex items-center justify-between">
-          <h1 className="font-slab text-4xl text-gradient-primary">Simulator — Part 1 (Interview)</h1>
+          <h1 className="font-slab text-display text-gradient-primary">Simulator — Part 1 (Interview)</h1>
           <Link href="/speaking/simulator">
             <Button variant="secondary">Back</Button>
           </Link>
@@ -302,7 +302,7 @@ export default function SpeakingSimPart1() {
                     {isRecording ? `${secondsLeft}s left` : 'Waiting…'}
                   </Badge>
                 </div>
-                <div className="rounded-ds border border-gray-200 dark:border-white/10 p-4 mb-3">
+                <div className="rounded-ds border border-lightBorder dark:border-white/10 p-4 mb-3">
                   {question}
                 </div>
                 <div className="text-small">{isRecording ? 'Recording…' : 'Mic idle'}</div>

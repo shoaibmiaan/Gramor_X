@@ -31,9 +31,9 @@ const roundedMap = {
 } as const
 
 const sizeMap: Record<TextareaSize, string> = {
-  sm: 'text-sm p-3',
+  sm: 'text-small p-3',
   md: 'text-[0.95rem] p-4',
-  lg: 'text-base p-5',
+  lg: 'text-body p-5',
 }
 
 const resizeMap: Record<TextareaResize, string> = {

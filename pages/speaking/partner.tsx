@@ -359,7 +359,7 @@ export default function AIPartnerPage() {
           <Card className="card-surface p-6 rounded-ds-2xl">
             <div className="grid gap-3 max-h-[60vh] overflow-auto pr-1">
               {msgs.map((m, i) => (
-                <div key={i} className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                <div key={i} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                   <b className="opacity-70">{m.role === 'bot' ? 'Partner' : 'You'}:</b> {m.text}
                 </div>
               ))}
@@ -444,7 +444,7 @@ export default function AIPartnerPage() {
 
         {/* ===== Unified History (on-page list) ===== */}
         <Card className="card-surface p-0 mt-6 rounded-ds-2xl overflow-hidden">
-          <div className="grid grid-cols-[180px_140px_1fr_120px_160px] gap-0 text-sm font-medium bg-black/5 dark:bg-white/5 px-4 py-3">
+          <div className="grid grid-cols-[180px_140px_1fr_120px_160px] gap-0 text-small font-medium bg-black/5 dark:bg-white/5 px-4 py-3">
             <div>Date</div>
             <div>Type</div>
             <div>Clips</div>

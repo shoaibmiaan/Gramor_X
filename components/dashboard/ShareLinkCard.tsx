@@ -43,7 +43,7 @@ export function ShareLinkCard() {
           <input
             readOnly
             value={link}
-            className="flex-1 rounded border p-2 bg-transparent text-sm"
+            className="flex-1 rounded border p-2 bg-transparent text-small"
           />
           <Button onClick={copy} variant="secondary" className="rounded-ds-xl">
             Copy

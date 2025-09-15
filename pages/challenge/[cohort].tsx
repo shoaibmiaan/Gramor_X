@@ -119,21 +119,21 @@ export default function CohortDetailPage() {
         <Container>
           <header className="mb-4 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{cohort || "Challenge"}</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="text-h2 font-bold text-foreground">{cohort || "Challenge"}</h1>
+              <p className="text-small text-muted-foreground">
                 {tasks.length} tasks • {pct}% complete
               </p>
             </div>
             <nav className="flex items-center gap-3">
               <Link
                 href="/challenge"
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
               >
                 All Challenges
               </Link>
               <Link
                 href="/progress"
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground hover:bg-border/30"
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30"
               >
                 Progress
               </Link>
@@ -141,7 +141,7 @@ export default function CohortDetailPage() {
           </header>
 
           {!userId ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">
               Please{" "}
               <Link href={`/login?next=${encodeURIComponent(router.asPath)}`} className="text-primary underline-offset-2 hover:underline">
                 log in
@@ -149,7 +149,7 @@ export default function CohortDetailPage() {
               to join and track this challenge.
             </div>
           ) : !enrollment ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-muted-foreground">
               Preparing your enrollment…
             </div>
           ) : (
@@ -179,7 +179,7 @@ export default function CohortDetailPage() {
 
               <aside className="lg:col-span-2">
                 <Leaderboard cohortId={cohort} />
-                <div className="mt-4 rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
+                <div className="mt-4 rounded-lg border border-border bg-card p-3 text-caption text-muted-foreground">
                   Tip: finish today’s task first — momentum is everything. Need help? Try{" "}
                   <Link href="/ai?sidebar=1" className="text-primary underline-offset-2 hover:underline">
                     AI Sidebar

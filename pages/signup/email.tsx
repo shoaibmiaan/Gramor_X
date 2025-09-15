@@ -12,7 +12,7 @@ import { Alert } from '@/components/design-system/Alert';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-3 text-sm uppercase tracking-wide text-mutedText">{children}</div>
+    <div className="mb-3 text-small uppercase tracking-wide text-mutedText">{children}</div>
   );
 }
 

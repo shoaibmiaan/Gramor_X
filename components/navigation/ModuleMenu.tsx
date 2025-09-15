@@ -124,8 +124,8 @@ export function ModuleMenu({ open, setOpen, modulesRef }: ModuleMenuProps) {
             <div className="grid grid-cols-12">
               {/* Left: modules */}
               <div className="col-span-8 p-6 lg:p-7 bg-card dark:bg-darker">
-                <h3 className="font-slab text-lg mb-2">Skill Modules</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h3 className="font-slab text-h4 mb-2">Skill Modules</h3>
+                <p className="text-small text-muted-foreground mb-4">
                   Build the core exam skills with focused practice.
                 </p>
 
@@ -155,7 +155,7 @@ export function ModuleMenu({ open, setOpen, modulesRef }: ModuleMenuProps) {
 
                       <span className="min-w-0">
                         <span className="block font-medium">{label}</span>
-                        {desc && <span className="text-sm text-muted-foreground">{desc}</span>}
+                        {desc && <span className="text-small text-muted-foreground">{desc}</span>}
                       </span>
 
                       <span
@@ -175,8 +175,8 @@ export function ModuleMenu({ open, setOpen, modulesRef }: ModuleMenuProps) {
               {/* Right: CTA rail */}
               <div className="col-span-4 p-6 lg:p-7 bg-muted/60 dark:bg-purpleVibe/20">
                 <div>
-                  <h4 className="font-slab text-lg mb-1">New here?</h4>
-                  <p className="text-sm text-muted-foreground">Take a quick placement to get a personalized start.</p>
+                  <h4 className="font-slab text-h4 mb-1">New here?</h4>
+                  <p className="text-small text-muted-foreground">Take a quick placement to get a personalized start.</p>
                 </div>
 
                 <Link
@@ -212,7 +212,7 @@ export function ModuleMenu({ open, setOpen, modulesRef }: ModuleMenuProps) {
             ref={menuRef}
           >
             <div className="flex items-center justify-between px-4 py-3">
-              <h3 className="font-slab text-lg">Modules</h3>
+              <h3 className="font-slab text-h4">Modules</h3>
               <button
                 onClick={close}
                 aria-label="Close"
@@ -228,7 +228,7 @@ export function ModuleMenu({ open, setOpen, modulesRef }: ModuleMenuProps) {
               <div className="rounded-xl border border-border bg-card dark:bg-darker p-3">
                 <div className="mb-2">
                   <div className="font-medium">Skill Modules</div>
-                  <div className="text-sm text-muted-foreground">Build the core exam skills with focused practice.</div>
+                  <div className="text-small text-muted-foreground">Build the core exam skills with focused practice.</div>
                 </div>
 
                 <ul className="space-y-1">
@@ -255,7 +255,7 @@ export function ModuleMenu({ open, setOpen, modulesRef }: ModuleMenuProps) {
                         </span>
                         <span className="min-w-0">
                           <span className="block font-medium">{label}</span>
-                          {desc && <span className="text-sm text-muted-foreground">{desc}</span>}
+                          {desc && <span className="text-small text-muted-foreground">{desc}</span>}
                         </span>
                         <span
                           aria-hidden="true"
@@ -274,8 +274,8 @@ export function ModuleMenu({ open, setOpen, modulesRef }: ModuleMenuProps) {
 
               <div className="mt-3 rounded-xl border border-border bg-muted/60 dark:bg-purpleVibe/20 p-3">
                 <div className="mb-2">
-                  <div className="font-slab text-lg">New here?</div>
-                  <div className="text-sm text-muted-foreground">Take a quick placement to get a personalized start.</div>
+                  <div className="font-slab text-h4">New here?</div>
+                  <div className="text-small text-muted-foreground">Take a quick placement to get a personalized start.</div>
                 </div>
                 <Link href="/placement" onClick={close} className="w-full btn btn-primary btn--fx rounded-xl px-4 py-3 inline-flex items-center justify-center gap-2">
                   Start placement

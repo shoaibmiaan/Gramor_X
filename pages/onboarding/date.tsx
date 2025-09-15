@@ -47,7 +47,7 @@ export default function Page() {
             value={examDate}
             onChange={(e) => setExamDate(e.target.value)}
           />
-          <p className="text-sm text-mutedText">
+          <p className="text-small text-mutedText">
             Choosing a date helps us pace your mocks and AI-graded tasks.
           </p>
         </div>

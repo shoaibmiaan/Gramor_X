@@ -46,7 +46,7 @@ export default function CommunityChat() {
         <Card className="p-6 space-y-4">
           <div className="h-96 overflow-y-auto space-y-2">
             {messages.map((m, i) => (
-              <div key={i} className="text-sm">
+              <div key={i} className="text-small">
                 <span className="font-medium mr-2">{m.author}:</span>
                 {m.content}
               </div>

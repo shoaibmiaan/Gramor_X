@@ -38,7 +38,7 @@ export default function StudioIndexPage(props: StudioIndexProps) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Content Studio</h1>
+          <h1 className="font-slab text-h2">Content Studio</h1>
           <p className="mt-2 text-sunsetRed">{props.error}</p>
         </div>
       </main>
@@ -63,14 +63,14 @@ export default function StudioIndexPage(props: StudioIndexProps) {
       <main className="min-h-screen bg-background text-foreground">
         <section className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="font-slab text-2xl md:text-3xl">Content Studio</h1>
+            <h1 className="font-slab text-h2 md:text-h1">Content Studio</h1>
             <Link href="/content/studio/new" className="inline-flex">
               <Button variant="primary" className="bg-primary text-primary-foreground">
                 New Item
               </Button>
             </Link>
           </div>
-          <p className="mt-1 text-sm text-mutedText">
+          <p className="mt-1 text-small text-mutedText">
             Create and manage IELTS practice content for all modules.
           </p>
         </section>
@@ -84,7 +84,7 @@ export default function StudioIndexPage(props: StudioIndexProps) {
               placeholder="Search by title…"
               className="rounded-xl border border-border bg-card px-3 py-2"
             />
-            <div className="self-center text-sm text-mutedText">
+            <div className="self-center text-small text-mutedText">
               {filtered.length} of {items.length}
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function StudioIndexPage(props: StudioIndexProps) {
         <section className="mx-auto max-w-7xl px-4 pb-12">
           {items.length === 0 ? (
             <div className="rounded-2xl border border-border bg-card p-10 text-center">
-              <h3 className="font-slab text-xl">No content yet</h3>
+              <h3 className="font-slab text-h3">No content yet</h3>
               <p className="mt-2 text-mutedText">Use “New Item” to add your first practice set.</p>
             </div>
           ) : (
@@ -119,9 +119,9 @@ export default function StudioIndexPage(props: StudioIndexProps) {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="line-clamp-1 font-medium">{it.title ?? 'Untitled'}</div>
-                      <span className={cls('rounded-lg px-2 py-1 text-xs', statusClass)}>{it.status}</span>
+                      <span className={cls('rounded-lg px-2 py-1 text-caption', statusClass)}>{it.status}</span>
                     </div>
-                    <div className="mt-1 text-sm text-mutedText">
+                    <div className="mt-1 text-small text-mutedText">
                       {(it.module ?? '—').toString().toUpperCase()} · Updated {when}
                     </div>
                   </Link>

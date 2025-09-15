@@ -46,7 +46,7 @@ export const Footer: React.FC = () => {
       <Container>
         {/* Top CTA */}
         <div className="flex flex-col items-start justify-between gap-4 py-10 sm:flex-row sm:items-center">
-          <h2 className="font-slab text-2xl">
+          <h2 className="font-slab text-h2">
             Ready to boost your IELTS score?
           </h2>
           <div className="flex items-center gap-3">
@@ -79,12 +79,12 @@ export const Footer: React.FC = () => {
           <div>
             <div className="mb-4">
               <Link href="/" className="inline-flex items-center gap-2">
-                <span className="font-slab text-xl font-bold">
+                <span className="font-slab text-h3 font-bold">
                   <span className="text-gradient-primary">GramorX</span>
                 </span>
               </Link>
             </div>
-            <p className="max-w-sm text-sm text-muted-foreground">
+            <p className="max-w-sm text-small text-muted-foreground">
               AI-powered IELTS prep: focused practice, instant feedback, and
               clear analytics—built to help you score higher, faster.
             </p>
@@ -116,13 +116,13 @@ export const Footer: React.FC = () => {
 
           {/* Modules */}
           <div>
-            <h3 className="mb-3 font-slab text-lg">IELTS Modules</h3>
+            <h3 className="mb-3 font-slab text-h4">IELTS Modules</h3>
             <ul className="space-y-2">
               {MODULES.map((m) => (
                 <li key={m.href}>
                   <NavLink
                     href={m.href}
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-small text-muted-foreground hover:text-foreground"
                   >
                     {m.label}
                   </NavLink>
@@ -133,13 +133,13 @@ export const Footer: React.FC = () => {
 
           {/* Quick links */}
           <div>
-            <h3 className="mb-3 font-slab text-lg">Quick Links</h3>
+            <h3 className="mb-3 font-slab text-h4">Quick Links</h3>
             <ul className="space-y-2">
               {QUICK_LINKS.map((q) => (
                 <li key={q.href}>
                   <NavLink
                     href={q.href}
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-small text-muted-foreground hover:text-foreground"
                   >
                     {q.label}
                   </NavLink>
@@ -150,8 +150,8 @@ export const Footer: React.FC = () => {
 
           {/* Contact */}
           <div>
-            <h3 className="mb-3 font-slab text-lg">Contact</h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <h3 className="mb-3 font-slab text-h4">Contact</h3>
+            <ul className="space-y-3 text-small text-muted-foreground">
               <li className="flex items-start gap-2">
                 <Icon name="map-pin" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden />
                 <span>Gulberg, Lahore, Pakistan</span>
@@ -169,7 +169,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col items-start justify-between gap-3 border-t border-border py-6 text-sm text-muted-foreground sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start justify-between gap-3 border-t border-border py-6 text-small text-muted-foreground sm:flex-row sm:items-center">
           <p>© {year} GramorX Learning School. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <NavLink href="/legal/terms" className="hover:text-foreground">

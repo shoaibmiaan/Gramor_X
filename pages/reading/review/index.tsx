@@ -344,13 +344,13 @@ const ReviewPage: NextPage<Props> = ({ passage, questions, notFound, error }) =>
 
             const answerBlock = (
               <div className="mt-3 grid gap-2">
-                <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                   <div className="text-small opacity-80 mb-1">Your answer</div>
                   <div className={ok ? 'text-success' : 'text-sunsetOrange'}>
                     {formatAnswer(q, user) ?? <span className="opacity-60">—</span>}
                   </div>
                 </div>
-                <div className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                   <div className="text-small opacity-80 mb-1">Correct</div>
                   <div className="opacity-95">{formatAnswer(q, q.answers)}</div>
                 </div>
@@ -400,7 +400,7 @@ const ReviewPage: NextPage<Props> = ({ passage, questions, notFound, error }) =>
                 </div>
 
                 {explanations[q.id] && (
-                  <div className="mt-4 p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                  <div className="mt-4 p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                     <div className="text-small font-semibold mb-1">Explanation</div>
                     <p className="text-body opacity-90">{explanations[q.id]}</p>
                   </div>
@@ -416,7 +416,7 @@ const ReviewPage: NextPage<Props> = ({ passage, questions, notFound, error }) =>
             href={`/reading/passage/${encodeURIComponent(passage.slug)}`}
             variant="primary"
             fullWidth
-            className="rounded-ds-xl px-4 py-3 text-base sm:w-auto"
+            className="rounded-ds-xl px-4 py-3 text-body sm:w-auto"
           >
             Retake Passage
           </Button>
@@ -425,7 +425,7 @@ const ReviewPage: NextPage<Props> = ({ passage, questions, notFound, error }) =>
             href="/reading"
             variant="secondary"
             fullWidth
-            className="rounded-ds-xl px-4 py-3 text-base sm:w-auto"
+            className="rounded-ds-xl px-4 py-3 text-body sm:w-auto"
           >
             Back to Reading List
           </Button>

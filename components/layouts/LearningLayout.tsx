@@ -23,8 +23,8 @@ const LearningLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
     <div className="min-h-screen bg-background text-foreground">
       <section className="border-b border-border bg-card/30">
         <Container className="py-5 sm:py-6 pb-safe md:pb-0">
-          <h1 className="font-slab text-xl sm:text-2xl">Learning & Studio</h1>
-          <p className="text-sm text-mutedText mt-1">
+          <h1 className="font-slab text-h3 sm:text-h2">Learning & Studio</h1>
+          <p className="text-small text-mutedText mt-1">
             Lessons, drills, strategies — and your content studio.
           </p>
           <nav className="mt-3 flex flex-wrap gap-2">

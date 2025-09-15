@@ -50,13 +50,13 @@ export default function PartnerReview() {
 
   return (
     <Container className="py-10">
-      <h1 className="text-4xl font-semibold mb-8">Partner Review</h1>
+      <h1 className="text-display font-semibold mb-8">Partner Review</h1>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Feedback card */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Feedback</h2>
+            <h2 className="text-h2 font-semibold">Feedback</h2>
             {data?.feedbackAt && (
               <Badge variant="subtle">Updated {new Date(data.feedbackAt).toLocaleString()}</Badge>
             )}
@@ -65,13 +65,13 @@ export default function PartnerReview() {
           {loading ? (
             <div className="animate-pulse h-24 rounded-xl bg-black/5 dark:bg-white/10" />
           ) : err ? (
-            <div className="text-sm px-3 py-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-300">
+            <div className="text-small px-3 py-2 rounded-xl bg-danger/10 text-danger dark:text-red-300">
               {err}
             </div>
           ) : data?.feedback ? (
             <p className="leading-7 whitespace-pre-wrap">{data.feedback}</p>
           ) : (
-            <p className="text-gray-600 dark:text-gray-300">No feedback yet.</p>
+            <p className="text-grayish dark:text-gray-300">No feedback yet.</p>
           )}
 
           <div className="mt-6 flex gap-3">
@@ -85,7 +85,7 @@ export default function PartnerReview() {
         {/* Transcript card */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Transcript (latest)</h2>
+            <h2 className="text-h2 font-semibold">Transcript (latest)</h2>
             {data?.transcriptAt && (
               <Badge variant="subtle">Updated {new Date(data.transcriptAt).toLocaleString()}</Badge>
             )}
@@ -94,13 +94,13 @@ export default function PartnerReview() {
           {loading ? (
             <div className="animate-pulse h-40 rounded-xl bg-black/5 dark:bg-white/10" />
           ) : err ? (
-            <p className="text-sm px-3 py-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-300">
+            <p className="text-small px-3 py-2 rounded-xl bg-danger/10 text-danger dark:text-red-300">
               {err}
             </p>
           ) : data?.transcript ? (
             <pre className="leading-7 whitespace-pre-wrap">{data.transcript}</pre>
           ) : (
-            <p className="text-gray-600 dark:text-gray-300">No transcript saved yet.</p>
+            <p className="text-grayish dark:text-gray-300">No transcript saved yet.</p>
           )}
         </Card>
       </div>

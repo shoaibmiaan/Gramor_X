@@ -10,7 +10,7 @@ export type SocialProofStripProps = {
 const Logo = ({ label }: { label: string }) => (
   <div
     aria-label={label}
-    className="flex h-9 items-center justify-center rounded-md border border-border px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+    className="flex h-9 items-center justify-center rounded-md border border-border px-3 text-caption font-semibold uppercase tracking-wide text-muted-foreground"
     title={label}
   >
     {label}
@@ -27,12 +27,12 @@ export default function SocialProofStrip({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-baseline gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Trusted by</p>
-            <p className="text-xl font-semibold">{students.toLocaleString()}+ students</p>
+            <p className="text-caption uppercase tracking-wide text-muted-foreground">Trusted by</p>
+            <p className="text-h3 font-semibold">{students.toLocaleString()}+ students</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Across</p>
-            <p className="text-xl font-semibold">{countries}+ countries</p>
+            <p className="text-caption uppercase tracking-wide text-muted-foreground">Across</p>
+            <p className="text-h3 font-semibold">{countries}+ countries</p>
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export default function SocialProofStrip({
           <Logo label="TestCoach" />
         </div>
 
-        <div className="text-sm">
+        <div className="text-small">
           <Link href="/testimonials" className="underline-offset-4 hover:underline">
             See success stories
           </Link>

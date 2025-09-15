@@ -8,7 +8,7 @@ export default function PlacementStartPage() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <h1 className="font-slab text-4xl text-gradient-primary mb-4">
+        <h1 className="font-slab text-display text-gradient-primary mb-4">
           Quick Placement — Start
         </h1>
         <p className="text-grayish max-w-2xl mb-10">

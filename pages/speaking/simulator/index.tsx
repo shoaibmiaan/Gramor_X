@@ -273,16 +273,16 @@ export default function SpeakingSimulator() {
                 {run === 'asking' && (
                   <Card className="p-4">
                     <Badge>Question {qIndex + 1} of {P1_QUESTIONS.length}</Badge>
-                    <p className="mt-2 text-lg">{P1_QUESTIONS[qIndex]}</p>
-                    <p className="text-sm text-grayish mt-2">Listening… recording will start automatically.</p>
+                    <p className="mt-2 text-h4">{P1_QUESTIONS[qIndex]}</p>
+                    <p className="text-small text-grayish mt-2">Listening… recording will start automatically.</p>
                   </Card>
                 )}
 
                 {run === 'recording' && (
                   <Card className="p-6 text-center rounded-ds-2xl">
                     <Badge variant="warning">Recording…</Badge>
-                    <div className="mt-3 font-mono text-4xl">
-                      {fmt(recordLeft)} <span className="opacity-60 text-lg">/ {fmt(recordTotal)}</span>
+                    <div className="mt-3 font-mono text-display">
+                      {fmt(recordLeft)} <span className="opacity-60 text-h4">/ {fmt(recordTotal)}</span>
                     </div>
                   </Card>
                 )}
@@ -349,8 +349,8 @@ export default function SpeakingSimulator() {
                       {run === 'recording' && (
                         <Card className="p-6 text-center rounded-ds-2xl">
                           <Badge variant="warning">Recording…</Badge>
-                          <div className="mt-3 font-mono text-4xl">
-                            {fmt(recordLeft)} <span className="opacity-60 text-lg">/ {fmt(recordTotal)}</span>
+                          <div className="mt-3 font-mono text-display">
+                            {fmt(recordLeft)} <span className="opacity-60 text-h4">/ {fmt(recordTotal)}</span>
                           </div>
                         </Card>
                       )}
@@ -400,16 +400,16 @@ export default function SpeakingSimulator() {
                 {run === 'asking' && (
                   <Card className="p-4">
                     <Badge>Question {qIndex + 1} of {P3_QUESTIONS.length}</Badge>
-                    <p className="mt-2 text-lg">{P3_QUESTIONS[qIndex]}</p>
-                    <p className="text-sm text-grayish mt-2">Listening… recording will start automatically.</p>
+                    <p className="mt-2 text-h4">{P3_QUESTIONS[qIndex]}</p>
+                    <p className="text-small text-grayish mt-2">Listening… recording will start automatically.</p>
                   </Card>
                 )}
 
                 {run === 'recording' && (
                   <Card className="p-6 text-center rounded-ds-2xl">
                     <Badge variant="warning">Recording…</Badge>
-                    <div className="mt-3 font-mono text-4xl">
-                      {fmt(recordLeft)} <span className="opacity-60 text-lg">/ {fmt(recordTotal)}</span>
+                    <div className="mt-3 font-mono text-display">
+                      {fmt(recordLeft)} <span className="opacity-60 text-h4">/ {fmt(recordTotal)}</span>
                     </div>
                   </Card>
                 )}

@@ -58,7 +58,7 @@ export default function Page() {
               </Button>
             ))}
           </div>
-          <p className="text-sm text-mutedText">
+          <p className="text-small text-mutedText">
             Many universities accept 6.5–7.0. Choose slightly higher to keep buffer.
           </p>
         </div>

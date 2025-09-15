@@ -33,8 +33,8 @@ const PublicMarketingLayout: React.FC<React.PropsWithChildren> = ({ children }) 
       {/* Context header */}
       <section className="border-b border-border bg-card/30">
         <Container className="py-6 pb-safe md:pb-0">
-          <h1 className="font-slab text-xl sm:text-2xl">Welcome</h1>
-          <p className="mt-1 text-sm text-mutedText">
+          <h1 className="font-slab text-h3 sm:text-h2">Welcome</h1>
+          <p className="mt-1 text-small text-mutedText">
             Explore plans, try the predictor, and learn how GramorX boosts your IELTS score.
           </p>
 

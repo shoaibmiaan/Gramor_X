@@ -84,7 +84,7 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
         <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <h1 className="font-slab text-2xl">Coach not found</h1>
+          <h1 className="font-slab text-h2">Coach not found</h1>
           <p className="mt-2 text-mutedText">The profile may be private or inactive.</p>
           <Link className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground" href="/marketplace">Back to Marketplace</Link>
         </div>
@@ -107,9 +107,9 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
                 <Image src={coach.avatarUrl || '/avatar.svg'} alt={coach.name} fill sizes="96px" className="object-cover" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl md:text-3xl">{coach.name}</h1>
+                <h1 className="text-h2 md:text-h1">{coach.name}</h1>
                 {coach.headline && <p className="mt-1 text-mutedText">{coach.headline}</p>}
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-small">
                   {coach.pricePerHour != null && (
                     <span className="rounded-lg bg-primary/10 px-2 py-1 text-primary">${coach.pricePerHour}/hr</span>
                   )}
@@ -117,10 +117,10 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {coach.languages.map((l) => (
-                    <span key={l} className="rounded-lg border border-lightBorder px-2 py-1 text-xs text-mutedText">{l.toUpperCase()}</span>
+                    <span key={l} className="rounded-lg border border-lightBorder px-2 py-1 text-caption text-mutedText">{l.toUpperCase()}</span>
                   ))}
                   {coach.tags.map((t) => (
-                    <span key={t} className="rounded-lg bg-electricBlue/10 px-2 py-1 text-xs text-electricBlue">#{t}</span>
+                    <span key={t} className="rounded-lg bg-electricBlue/10 px-2 py-1 text-caption text-electricBlue">#{t}</span>
                   ))}
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
         {coach.bio && (
           <section className="mx-auto max-w-5xl px-4">
             <div className="rounded-2xl border border-lightBorder bg-card p-6">
-              <h2 className="font-slab text-xl">About</h2>
+              <h2 className="font-slab text-h3">About</h2>
               <p className="mt-2 whitespace-pre-line text-mutedText">{coach.bio}</p>
             </div>
           </section>
@@ -145,12 +145,12 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
         {/* Availability & Booking */}
         <section id="booking" className="mx-auto max-w-5xl px-4 py-8">
           <div className="rounded-2xl border border-lightBorder bg-card p-6">
-            <h2 className="font-slab text-xl">Availability</h2>
+            <h2 className="font-slab text-h3">Availability</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <label className="text-sm text-mutedText">From (UTC)
+              <label className="text-small text-mutedText">From (UTC)
                 <input type="datetime-local" className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2" value={isoToLocal(start)} onChange={(e) => setStart(localToIso(e.target.value))} />
               </label>
-              <label className="text-sm text-mutedText">To (UTC)
+              <label className="text-small text-mutedText">To (UTC)
                 <input type="datetime-local" className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2" value={isoToLocal(end)} onChange={(e) => setEnd(localToIso(e.target.value))} />
               </label>
               <div className="flex items-end">
@@ -192,7 +192,7 @@ function BookCard({ coachId, startUtc, endUtc }: { coachId: string; startUtc: st
 
   return (
     <div className="rounded-2xl border border-lightBorder bg-background p-4">
-      <div className="text-sm text-mutedText">{fmtRange(startUtc, endUtc)}</div>
+      <div className="text-small text-mutedText">{fmtRange(startUtc, endUtc)}</div>
       {done ? (
         <Link href={`/bookings/${done.id}`} className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-success px-3 py-2 text-lightText">View Booking</Link>
       ) : (

@@ -178,7 +178,7 @@ export default function CourseDetailPage() {
               <div className="h-6 w-32 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
               <div className="mt-4 space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10">
+                  <div key={i} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
                     <div className="h-4 w-1/2 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
                   </div>
                 ))}
@@ -287,7 +287,7 @@ export default function CourseDetailPage() {
                   return (
                     <li
                       key={lsn.id}
-                      className="p-3.5 rounded-ds border border-gray-200 dark:border-white/10 flex items-center justify-between gap-4"
+                      className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10 flex items-center justify-between gap-4"
                     >
                       <div>
                         <div className="text-small opacity-70">Lesson {idx + 1}</div>

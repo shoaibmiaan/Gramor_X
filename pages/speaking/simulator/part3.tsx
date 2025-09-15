@@ -200,39 +200,39 @@ export default function SpeakingPart3() {
       <Head><title>Speaking Simulator — Part 3</title></Head>
       <Container className="py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">IELTS Speaking — Part 3 (Discussion)</h1>
+          <h1 className="text-h2 font-semibold">IELTS Speaking — Part 3 (Discussion)</h1>
           <div className="flex items-center gap-3">
-            <label className="inline-flex items-center gap-2 text-sm">
+            <label className="inline-flex items-center gap-2 text-small">
               <input type="checkbox" checked={ttsOn} onChange={(e) => setTtsOn(e.target.checked)} />
               Read question aloud
             </label>
-            <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10">Attempts</Link>
+            <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-lightBorder dark:border-white/10">Attempts</Link>
           </div>
         </div>
 
         {/* Prompt card */}
-        <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-5 bg-white/60 dark:bg-white/5">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Question</div>
-          <p className="mt-2 text-base">{prompt}</p>
+        <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-5 bg-white/60 dark:bg-white/5">
+          <div className="text-caption uppercase tracking-wide text-grayish">Question</div>
+          <p className="mt-2 text-body">{prompt}</p>
 
           {/* Timers */}
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
-              <div className="text-xs text-gray-500">Prep</div>
-              <div className="font-mono text-xl">{stage === 'prep' ? `${minutes(prepLeft)}:${seconds(prepLeft)}` : '00:15'}</div>
+            <div className="rounded-xl border border-lightBorder dark:border-white/10 p-3 text-center">
+              <div className="text-caption text-grayish">Prep</div>
+              <div className="font-mono text-h3">{stage === 'prep' ? `${minutes(prepLeft)}:${seconds(prepLeft)}` : '00:15'}</div>
             </div>
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
-              <div className="text-xs text-gray-500">Speaking</div>
-              <div className="font-mono text-xl">{stage === 'record' ? `${minutes(left)}:${seconds(left)}` : '01:30'}</div>
+            <div className="rounded-xl border border-lightBorder dark:border-white/10 p-3 text-center">
+              <div className="text-caption text-grayish">Speaking</div>
+              <div className="font-mono text-h3">{stage === 'record' ? `${minutes(left)}:${seconds(left)}` : '01:30'}</div>
             </div>
           </div>
 
           <div className="mt-4 flex gap-2">
             <button onClick={start} disabled={stage !== 'idle' && stage !== 'done' && stage !== 'error'}
-              className="px-4 py-2 rounded-xl bg-emerald-600 text-white disabled:bg-gray-300">
+              className="px-4 py-2 rounded-xl bg-success text-white disabled:bg-gray-300">
               {stage === 'done' ? 'Discuss Again' : 'Start Discussion'}
             </button>
-            <button onClick={newPrompt} className="px-4 py-2 rounded-xl border border-gray-300 dark:border-white/10">New Question</button>
+            <button onClick={newPrompt} className="px-4 py-2 rounded-xl border border-lightBorder dark:border-white/10">New Question</button>
           </div>
         </div>
 
@@ -246,15 +246,15 @@ export default function SpeakingPart3() {
             onError={onError}
             className="bg-white/60 dark:bg-white/5"
           />
-          <p className="mt-2 text-xs text-gray-500">Auto-starts after prep and auto-stops at 90 seconds.</p>
+          <p className="mt-2 text-caption text-grayish">Auto-starts after prep and auto-stops at 90 seconds.</p>
         </div>
 
         {/* Status + Result */}
         <div className="mt-6 grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Status</div>
-              <div className="mt-1 text-sm">
+            <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+              <div className="text-caption uppercase tracking-wide text-grayish">Status</div>
+              <div className="mt-1 text-small">
                 {stage === 'idle' && 'Idle'}
                 {stage === 'prep' && 'Preparing (0:15)…'}
                 {stage === 'record' && 'Recording (1:30)…'}
@@ -266,15 +266,15 @@ export default function SpeakingPart3() {
               {(stage === 'uploading' || stage === 'scoring') && (
                 <div className="mt-3 animate-pulse h-2 rounded bg-gray-200 dark:bg-white/10" />
               )}
-              {error && <div className="mt-3 text-sm text-rose-600 break-words">{error}</div>}
+              {error && <div className="mt-3 text-small text-rose-600 break-words">{error}</div>}
             </div>
 
             {result && stage === 'done' && (
-              <div className="mt-4 rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-                <div className="text-xs uppercase tracking-wide text-gray-500">AI Result</div>
+              <div className="mt-4 rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+                <div className="text-caption uppercase tracking-wide text-grayish">AI Result</div>
                 <div className="mt-2">
-                  <div className="text-3xl font-semibold">{typeof result.overall === 'number' ? result.overall.toFixed(1) : '—'}</div>
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                  <div className="text-h1 font-semibold">{typeof result.overall === 'number' ? result.overall.toFixed(1) : '—'}</div>
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-small">
                     <div>Fluency: <strong>{result.fluency ?? '—'}</strong></div>
                     <div>Pronunciation: <strong>{result.pronunciation ?? '—'}</strong></div>
                     <div>Lexical: <strong>{result.lexical ?? '—'}</strong></div>
@@ -282,16 +282,16 @@ export default function SpeakingPart3() {
                   </div>
                   {result.transcript && (
                     <div className="mt-4">
-                      <div className="text-xs uppercase tracking-wide text-gray-500">Transcript</div>
-                      <pre className="mt-1 whitespace-pre-wrap text-sm">{result.transcript}</pre>
+                      <div className="text-caption uppercase tracking-wide text-grayish">Transcript</div>
+                      <pre className="mt-1 whitespace-pre-wrap text-small">{result.transcript}</pre>
                     </div>
                   )}
                   {result.feedback && (
-                    <p className="mt-3 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{result.feedback}</p>
+                    <p className="mt-3 text-small text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{result.feedback}</p>
                   )}
                   <div className="mt-4 flex gap-2">
-                    <button onClick={saveAttempt} className="px-3 py-2 rounded-xl bg-blue-600 text-white">Save as Attempt</button>
-                    <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-gray-300 dark:border-white/10">View Attempts</Link>
+                    <button onClick={saveAttempt} className="px-3 py-2 rounded-xl bg-electricBlue text-white">Save as Attempt</button>
+                    <Link href="/speaking/attempts" className="px-3 py-2 rounded-xl border border-lightBorder dark:border-white/10">View Attempts</Link>
                   </div>
                 </div>
               </div>
@@ -300,13 +300,13 @@ export default function SpeakingPart3() {
 
           {/* Quick Nav */}
           <div className="md:col-span-1">
-            <div className="rounded-2xl border border-gray-200 dark:border-white/10 p-4">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Quick Jump</div>
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                <Link href="/speaking/simulator" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Simulator Hub</Link>
-                <Link href="/speaking/simulator/part1" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Part 1</Link>
-                <Link href="/speaking/simulator/part2" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Part 2</Link>
-                <Link href="/speaking/practice?mode=part3" className="rounded-lg border border-gray-200 dark:border-white/10 p-2 text-center">Practice</Link>
+            <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+              <div className="text-caption uppercase tracking-wide text-grayish">Quick Jump</div>
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-small">
+                <Link href="/speaking/simulator" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Simulator Hub</Link>
+                <Link href="/speaking/simulator/part1" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Part 1</Link>
+                <Link href="/speaking/simulator/part2" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Part 2</Link>
+                <Link href="/speaking/practice?mode=part3" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Practice</Link>
               </div>
             </div>
           </div>

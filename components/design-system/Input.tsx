@@ -17,9 +17,9 @@ export type InputProps = Readonly<
 >;
 
 const sizes: Record<NonNullable<InputProps["size"]>, string> = {
-  sm: "h-9 text-sm",
-  md: "h-11 text-base",
-  lg: "h-12 text-base",
+  sm: "h-9 text-small",
+  md: "h-11 text-body",
+  lg: "h-12 text-body",
 };
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -47,7 +47,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="mb-1 block text-sm font-medium text-muted-foreground"
+            className="mb-1 block text-small font-medium text-muted-foreground"
           >
             {label} {required && <span aria-hidden="true" className="text-sunsetOrange">*</span>}
           </label>
@@ -81,12 +81,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {hint && !error && (
-          <p id={hintId} className="mt-1 text-xs text-muted-foreground">
+          <p id={hintId} className="mt-1 text-caption text-muted-foreground">
             {hint}
           </p>
         )}
         {error && (
-          <p id={errorId} className="mt-1 text-xs text-sunsetOrange">
+          <p id={errorId} className="mt-1 text-caption text-sunsetOrange">
             {error}
           </p>
         )}

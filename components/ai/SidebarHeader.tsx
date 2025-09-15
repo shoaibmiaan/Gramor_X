@@ -33,7 +33,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
     >
       <div className="flex items-center gap-2">
         <span className={`inline-block h-2.5 w-2.5 rounded-full ${dotClass}`} />
-        <span className="text-sm font-medium">{title}</span>
+        <span className="text-small font-medium">{title}</span>
       </div>
       <button
         type="button"

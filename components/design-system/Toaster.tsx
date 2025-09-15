@@ -73,7 +73,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               }`}
           >
             <div className="font-semibold">{t.title}</div>
-            {t.desc && <div className="text-sm opacity-90 mt-1">{t.desc}</div>}
+            {t.desc && <div className="text-small opacity-90 mt-1">{t.desc}</div>}
           </div>
         ))}
       </div>

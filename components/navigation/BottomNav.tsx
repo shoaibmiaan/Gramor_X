@@ -48,7 +48,7 @@ export const BottomNav: React.FC = () => {
               onClick={gate(href)}   // ✅ gate now applied
               className="
                 group flex flex-col items-center gap-1 py-2.5
-                text-xs text-muted-foreground transition
+                text-caption text-muted-foreground transition
                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background
                 [&.is-active]:text-primary
               "

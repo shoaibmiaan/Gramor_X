@@ -38,7 +38,7 @@ export function QuestionPalette({
   return (
     <div className={['p-3', className || ''].join(' ')}>
       <div className="px-1 py-1">
-        <div className="text-sm font-semibold text-foreground mb-2">Questions</div>
+        <div className="text-small font-semibold text-foreground mb-2">Questions</div>
         <div className="grid grid-cols-8 gap-1.5">
           {items.map((q) => {
             const active = q === current;
@@ -50,7 +50,7 @@ export function QuestionPalette({
                 type="button"
                 onClick={() => onNavigate?.(q)}
                 className={[
-                  'relative h-9 rounded-md border text-sm font-medium',
+                  'relative h-9 rounded-md border text-small font-medium',
                   active ? 'border-primary bg-primary/10 text-foreground' : 'border-border hover:bg-foreground/5',
                 ].join(' ')}
                 title={`Go to question ${q}`}
@@ -70,7 +70,7 @@ export function QuestionPalette({
           })}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-3 text-xs text-foreground/80">
+        <div className="mt-3 flex flex-wrap gap-3 text-caption text-foreground/80">
           <LegendDot className="bg-success" label="Answered" />
           <LegendDot className="bg-warning" label="Flagged" />
           <LegendDot className="bg-foreground/60" label="Seen" />

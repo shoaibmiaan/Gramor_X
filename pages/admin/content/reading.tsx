@@ -56,7 +56,7 @@ export default function ReadingContent() {
     <AdminGuard>
       <Head><title>Admin · Reading Content</title></Head>
       <Container className="py-8">
-        <h1 className="text-2xl font-semibold mb-6">Reading — Tests</h1>
+        <h1 className="text-h2 font-semibold mb-6">Reading — Tests</h1>
 
         <form onSubmit={createTest} className="rounded-2xl border p-4 grid gap-3 sm:grid-cols-3">
           <input
@@ -87,7 +87,7 @@ export default function ReadingContent() {
         </form>
 
         <div className="mt-6 rounded-2xl border overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-small">
             <thead className="bg-black/5 dark:bg-white/5">
               <tr>
                 <th className="text-left p-3">Title</th>

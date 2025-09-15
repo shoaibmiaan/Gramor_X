@@ -65,7 +65,7 @@ export const StreakIndicator: React.FC<Props> = ({
       ? 'border-accent/30 bg-accent/10 text-accent'
       : 'border-electricBlue/30 bg-electricBlue/10 text-electricBlue' // electric (default)
 
-  const density = compact ? 'px-2.5 py-1.5 text-sm' : 'px-3.5 py-2'
+  const density = compact ? 'px-2.5 py-1.5 text-small' : 'px-3.5 py-2'
   const pulseShadow = pulse ? 'shadow-[0_0_0_6px_rgba(0,187,249,0.25)] transition-shadow' : ''
 
   return (

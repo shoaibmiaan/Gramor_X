@@ -9,7 +9,7 @@ const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-3xl px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-h3 font-semibold">{title}</h1>
         <div className="flex items-center gap-3">{right}</div>
       </header>
       <div className="rounded-2xl border border-border p-4 sm:p-6 bg-background/50 shadow-sm">{children}</div>
@@ -52,30 +52,30 @@ export default function SpeakingReviewPage() {
   }, [attempt]);
 
   return (
-    <Shell title="Speaking Review" right={ai ? <div className="rounded-full border border-border px-3 py-1 text-sm">Band: {ai.bandOverall.toFixed(1)}</div> : <div className="text-sm">Analyzing…</div>}>
+    <Shell title="Speaking Review" right={ai ? <div className="rounded-full border border-border px-3 py-1 text-small">Band: {ai.bandOverall.toFixed(1)}</div> : <div className="text-small">Analyzing…</div>}>
       <div className="grid gap-6">
         <section className="rounded-xl border border-border p-4">
-          <h2 className="mb-2 text-base font-semibold">Your recording</h2>
-          {audioUrl ? <audio src={audioUrl} controls className="w-full" /> : <div className="text-sm text-foreground/70">No audio found.</div>}
+          <h2 className="mb-2 text-body font-semibold">Your recording</h2>
+          {audioUrl ? <audio src={audioUrl} controls className="w-full" /> : <div className="text-small text-foreground/70">No audio found.</div>}
         </section>
 
         <section className="rounded-xl border border-border p-4">
-          <h2 className="mb-2 text-base font-semibold">AI Feedback</h2>
-          {loading ? <div className="text-sm text-foreground/70">Analyzing…</div> : ai ? (
+          <h2 className="mb-2 text-body font-semibold">AI Feedback</h2>
+          {loading ? <div className="text-small text-foreground/70">Analyzing…</div> : ai ? (
             <div className="grid gap-3">
-              <div className="flex flex-wrap gap-2 text-sm">
+              <div className="flex flex-wrap gap-2 text-small">
                 <Badge label="Fluency" val={ai.fluency} />
                 <Badge label="Lexical" val={ai.lexical} />
                 <Badge label="Grammar" val={ai.grammar} />
                 <Badge label="Pronunciation" val={ai.pronunciation} />
               </div>
-              <ul className="list-inside list-disc text-sm text-foreground/80">{ai.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
+              <ul className="list-inside list-disc text-small text-foreground/80">{ai.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
             </div>
-          ) : <div className="text-sm text-foreground/70">AI feedback unavailable.</div>}
+          ) : <div className="text-small text-foreground/70">AI feedback unavailable.</div>}
         </section>
 
         <div className="flex items-center justify-between">
-          <Link href="/speaking" className="text-sm underline underline-offset-4">Try another speaking</Link>
+          <Link href="/speaking" className="text-small underline underline-offset-4">Try another speaking</Link>
           <Link href="/dashboard" className="rounded-xl border border-border px-4 py-2 hover:border-primary">Go to dashboard</Link>
         </div>
       </div>

@@ -23,8 +23,8 @@ const MarketplaceLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
     <div className="min-h-screen bg-background text-foreground">
       <section className="border-b border-border bg-card/30">
         <Container className="py-5 sm:py-6 pb-safe md:pb-0">
-          <h1 className="font-slab text-xl sm:text-2xl">Coaches & Classes</h1>
-          <p className="text-sm text-mutedText mt-1">Find a coach, join a class, or manage bookings.</p>
+          <h1 className="font-slab text-h3 sm:text-h2">Coaches & Classes</h1>
+          <p className="text-small text-mutedText mt-1">Find a coach, join a class, or manage bookings.</p>
           <nav className="mt-3 flex flex-wrap gap-2">
             <Item href="/marketplace" label="Marketplace" />
             <Item href="/coach" label="Coaches" />

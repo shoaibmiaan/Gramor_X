@@ -30,11 +30,11 @@ export default function ShareLink({ code, className = '' }: ShareLinkProps) {
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <code className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-sm">{code}</code>
-      <button onClick={copy} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted">
+      <code className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-small">{code}</code>
+      <button onClick={copy} className="rounded-lg border border-border px-3 py-1.5 text-small hover:bg-muted">
         Copy link
       </button>
-      <button onClick={share} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted">
+      <button onClick={share} className="rounded-lg border border-border px-3 py-1.5 text-small hover:bg-muted">
         Share
       </button>
     </div>

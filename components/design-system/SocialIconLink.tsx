@@ -15,7 +15,7 @@ export const SocialIconLink: React.FC<{
   tone?: Tone
   newTab?: boolean // force open in new tab
 }> = ({ href, icon, label, className = '', size = 'md', tone = 'brand', newTab }) => {
-  const sz = { sm: 'w-8 h-8 text-sm', md: 'w-10 h-10', lg: 'w-12 h-12 text-lg' }[size]
+  const sz = { sm: 'w-8 h-8 text-small', md: 'w-10 h-10', lg: 'w-12 h-12 text-h4' }[size]
   const toneCls =
     tone === 'neutral'
       ? 'bg-muted text-foreground/80 hover:text-foreground'

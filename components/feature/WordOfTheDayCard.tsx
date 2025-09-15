@@ -75,15 +75,15 @@ export function WordOfTheDayCard() {
         <div className="h-4 w-40 rounded bg-muted/30" />
         <div className="mt-3 h-7 w-56 rounded bg-muted/30" />
         <div className="mt-2 h-4 w-full rounded bg-muted/20" />
-        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        {error && <p className="mt-3 text-small text-destructive">{error}</p>}
       </div>
     );
   }
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
-      <div className="text-sm text-muted-foreground mb-2">📘 Word of the Day</div>
-      <div className="text-2xl font-semibold">{data.word.word}</div>
+      <div className="text-small text-muted-foreground mb-2">📘 Word of the Day</div>
+      <div className="text-h2 font-semibold">{data.word.word}</div>
       <p className="mt-2 text-muted-foreground">{data.word.meaning}</p>
       {data.word.example && (
         <p className="mt-1 italic text-muted-foreground">&ldquo;{data.word.example}&rdquo;</p>
@@ -97,13 +97,13 @@ export function WordOfTheDayCard() {
         >
           {data.learnedToday ? 'Learned today' : busy ? 'Saving…' : 'Mark as Learned'}
         </Button>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-small text-muted-foreground">
           🔥 <span className="font-medium">{data.streakDays}</span> days &nbsp;•&nbsp; value $
           {Number.isFinite(data.streakValueUSD) ? data.streakValueUSD.toFixed(2) : '0.00'}
         </div>
       </div>
 
-      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-3 text-small text-destructive">{error}</p>}
     </div>
   );
 }

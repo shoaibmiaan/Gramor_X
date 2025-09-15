@@ -24,7 +24,7 @@ export const QuestionBlock: React.FC<{
     <div
       data-qid={q.id}
       className={`p-4 rounded-ds border ${
-        flagged ? 'border-goldenYellow/60' : 'border-gray-200 dark:border-white/10'
+        flagged ? 'border-goldenYellow/60' : 'border-lightBorder dark:border-white/10'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -59,7 +59,7 @@ export const QuestionBlock: React.FC<{
               return (
                 <label
                   key={id}
-                  className="flex items-center gap-2 p-3 rounded-ds border border-gray-200 dark:border-white/10 cursor-pointer"
+                  className="flex items-center gap-2 p-3 rounded-ds border border-lightBorder dark:border-white/10 cursor-pointer"
                 >
                   <input
                     type="radio"
@@ -139,11 +139,11 @@ export const QuestionBlock: React.FC<{
             {(q as MATCH).pairs.map((p, idx) => (
               <div
                 key={`${q.id}:${idx}`}
-                className="p-3 rounded-ds border border-gray-200 dark:border-white/10"
+                className="p-3 rounded-ds border border-lightBorder dark:border-white/10"
               >
                 <div className="text-small text-muted-foreground mb-1">{p.left}</div>
                 <select
-                  className="w-full bg-white dark:bg-dark/50 border border-gray-200 dark:border-white/10 rounded-ds p-2"
+                  className="w-full bg-white dark:bg-dark/50 border border-lightBorder dark:border-white/10 rounded-ds p-2"
                   value={(value && value[p.left]) || ''}
                   onChange={(e) => onChange({ ...(value || {}), [p.left]: e.currentTarget.value })}
                   aria-label={`Select match for ${p.left}`}
