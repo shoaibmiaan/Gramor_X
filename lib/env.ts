@@ -53,6 +53,12 @@ const envSchema = z.object({
 
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_STARTER_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_STARTER_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_BOOSTER_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_BOOSTER_ANNUAL: z.string().optional(),
+  STRIPE_PRICE_MASTER_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_MASTER_ANNUAL: z.string().optional(),
 
   SPEAKING_DAILY_LIMIT: z.coerce.number().optional(),
   SPEAKING_BUCKET: z.string().optional(),
@@ -62,6 +68,13 @@ const envSchema = z.object({
   TWILIO_VERIFY_SERVICE_SID: z.string().min(1),
   TWILIO_WHATSAPP_FROM: z.string().min(1),
   TWILIO_BYPASS: z.string().optional(),
+
+  // Payment provider specific
+  NEXT_PUBLIC_DEV_PAYMENTS: z.string().optional(),
+  EASYPASA_MERCHANT_ID: z.string().optional(),
+  EASYPASA_SECRET: z.string().optional(),
+  JAZZCASH_MERCHANT_ID: z.string().optional(),
+  JAZZCASH_INTEGRITY_SALT: z.string().optional(),
 
   LOCAL_ADMIN_TOKEN: z.string().optional(),
   ADMIN_API_TOKEN: z.string().optional(),
@@ -118,6 +131,12 @@ const raw = {
 
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_STARTER_MONTHLY: process.env.STRIPE_PRICE_STARTER_MONTHLY,
+  STRIPE_PRICE_STARTER_ANNUAL: process.env.STRIPE_PRICE_STARTER_ANNUAL,
+  STRIPE_PRICE_BOOSTER_MONTHLY: process.env.STRIPE_PRICE_BOOSTER_MONTHLY,
+  STRIPE_PRICE_BOOSTER_ANNUAL: process.env.STRIPE_PRICE_BOOSTER_ANNUAL,
+  STRIPE_PRICE_MASTER_MONTHLY: process.env.STRIPE_PRICE_MASTER_MONTHLY,
+  STRIPE_PRICE_MASTER_ANNUAL: process.env.STRIPE_PRICE_MASTER_ANNUAL,
 
   SPEAKING_DAILY_LIMIT: process.env.SPEAKING_DAILY_LIMIT,
   SPEAKING_BUCKET: process.env.SPEAKING_BUCKET,
@@ -127,6 +146,12 @@ const raw = {
   TWILIO_VERIFY_SERVICE_SID: process.env.TWILIO_VERIFY_SERVICE_SID,
   TWILIO_WHATSAPP_FROM: process.env.TWILIO_WHATSAPP_FROM,
   TWILIO_BYPASS: process.env.TWILIO_BYPASS,
+
+  NEXT_PUBLIC_DEV_PAYMENTS: process.env.NEXT_PUBLIC_DEV_PAYMENTS,
+  EASYPASA_MERCHANT_ID: process.env.EASYPASA_MERCHANT_ID,
+  EASYPASA_SECRET: process.env.EASYPASA_SECRET,
+  JAZZCASH_MERCHANT_ID: process.env.JAZZCASH_MERCHANT_ID,
+  JAZZCASH_INTEGRITY_SALT: process.env.JAZZCASH_INTEGRITY_SALT,
 
   LOCAL_ADMIN_TOKEN: process.env.LOCAL_ADMIN_TOKEN,
   ADMIN_API_TOKEN: process.env.ADMIN_API_TOKEN,

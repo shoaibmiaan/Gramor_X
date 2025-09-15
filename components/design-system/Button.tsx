@@ -19,7 +19,7 @@ type BaseProps = {
 };
 
 type ButtonComponent = <E extends React.ElementType = 'button'>(
-  props: PolymorphicProps<E, BaseProps>
+  props: PolymorphicProps<E, BaseProps> & { as?: any }
 ) => React.ReactElement | null;
 
 const variantClass: Record<Variant, string> = {

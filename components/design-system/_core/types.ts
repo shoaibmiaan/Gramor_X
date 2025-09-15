@@ -17,7 +17,7 @@ export type Tone =
 
 /** Simple polymorphic typing */
 export type AsProp<E extends React.ElementType = React.ElementType> = {
-  as?: E;
+  as?: any;
 };
 
 export type PolymorphicProps<E extends React.ElementType, P> =
