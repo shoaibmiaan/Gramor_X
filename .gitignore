@@ -43,16 +43,15 @@ coverage/
 # Service worker (if generated)
 public/sw.js
 
-<<<<<<< HEAD
 # Lock file (keep this one if using npm, remove if not)
 !package-lock.json
 
 # Sentry Config File
 .env.sentry-build-plugin
-=======
+
+# Storybook
 *storybook.log
 storybook-static
->>>>>>> d319ad3 (chore: fix build (tsx rename), uniform Button named import, locale shim + LocaleSwitcher wiring)
 
 *.bak
 .vercel
