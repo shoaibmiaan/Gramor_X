@@ -46,7 +46,7 @@ module.exports = {
         card:                 'rgb(var(--gx-card) / <alpha-value>)',
         'card-foreground':    'rgb(var(--gx-card-foreground) / <alpha-value>)',
         border:               'rgb(var(--gx-border) / <alpha-value>)',
-        input:                cv('foreground'),
+        input:                'rgb(var(--gx-input) / <alpha-value>)',
         ring:                 'rgb(var(--gx-ring) / <alpha-value>)',
         muted:                'rgb(var(--gx-muted) / <alpha-value>)',
         'muted-foreground':   'rgb(var(--gx-muted-foreground) / <alpha-value>)',
