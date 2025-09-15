@@ -200,17 +200,32 @@ const defaults = {
   TWILIO_WHATSAPP_FROM: 'whatsapp:+10000000000',
   PAYMENTS_PROVIDER: 'none',
   NEXT_PUBLIC_PAYMENTS_PROVIDER: 'none',
+  NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: 30,
+  NODE_ENV: 'development' as const,
 };
 
-export const env = (parsed.success
-  ? parsed.data
-  : {
-      ...defaults,
-      ...raw,
-      NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: Number(
-        raw.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30,
-      ),
-    }) as z.infer<typeof envSchema>;
+const withDefaults = () => {
+  const merged: Record<string, unknown> = { ...defaults };
+  for (const [key, value] of Object.entries(raw)) {
+    if (value !== undefined) {
+      merged[key] = value;
+    }
+  }
+
+  const idleSource = merged.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES;
+  const idleNumber =
+    typeof idleSource === 'number' ? idleSource : Number(idleSource ?? defaults.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES);
+  merged.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES = Number.isNaN(idleNumber)
+    ? defaults.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES
+    : idleNumber;
+
+  merged.NODE_ENV =
+    (merged.NODE_ENV as z.infer<typeof envSchema>['NODE_ENV'] | undefined) ?? defaults.NODE_ENV;
+
+  return merged as z.infer<typeof envSchema>;
+};
+
+export const env = (parsed.success ? parsed.data : withDefaults()) as z.infer<typeof envSchema>;
 
 // tiny helpers
 export const isBrowser = typeof window !== 'undefined';
