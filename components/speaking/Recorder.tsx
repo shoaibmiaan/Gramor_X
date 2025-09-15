@@ -1,4 +1,3 @@
-// components/speaking/Recorder.tsx
 import React, {
   forwardRef,
   useEffect,
@@ -110,10 +109,10 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
 
     return (
       <div
-        className={`bg-card border border-border rounded-ds-2xl p-4 ${className}`}
+        className={`card-surface p-4 ${className}`}
       >
         <div className="flex items-center justify-between">
-          <div className="text-small text-muted-foreground">
+          <div className="text-small text-grayish">
             Status: <span className="font-medium">{status}</span>
           </div>
           <div className="font-mono text-h4 tabular-nums">
@@ -158,7 +157,7 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
             Stop & Save
           </button>
           <button
-            className="ml-auto px-3 py-2 rounded-xl border border-border text-foreground"
+            className="ml-auto px-3 py-2 rounded-xl border border-lightBorder dark:border-white/10 text-lightText dark:text-white"
             onClick={() => reset()}
             disabled={isRecording}
           >
@@ -169,7 +168,7 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
         {audioUrl && (
           <div className="mt-4">
             <audio src={audioUrl} controls className="w-full" />
-            <div className="text-caption text-muted-foreground mt-1">Format: {mimeType}</div>
+            <div className="text-caption text-grayish mt-1">Format: {mimeType}</div>
           </div>
         )}
       </div>

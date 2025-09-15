@@ -116,8 +116,8 @@ export default function StudioIndexPage(props: StudioIndexProps) {
                   it.status === 'published'
                     ? 'bg-success/15 text-success'
                     : it.status === 'draft'
-                      ? 'bg-goldenYellow/15 text-goldenYellow'
-                      : 'bg-sunsetRed/15 text-sunsetRed';
+                    ? 'bg-goldenYellow/15 text-goldenYellow'
+                    : 'bg-sunsetRed/15 text-sunsetRed';
 
                 const when = it.updated_at
                   ? dateFormatter.format(new Date(it.updated_at))

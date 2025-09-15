@@ -25,7 +25,7 @@ const DefaultRight = () => (
       className="h-24 w-24 md:h-32 md:w-32 object-contain drop-shadow-lg"
       priority
     />
-    <h2 className="mt-6 text-h3 font-semibold text-muted-foreground">Your IELTS Companion</h2>
+    <h2 className="mt-6 text-h3 font-semibold text-grayish dark:text-gray-300">Your IELTS Companion</h2>
   </div>
 );
 
@@ -63,9 +63,9 @@ export default function AuthLayout({
               </Link>
 
               <div>
-                <h1 className="font-slab text-h1 sm:text-display font-bold text-foreground">{title}</h1>
+                <h1 className="font-slab text-h1 sm:text-display font-bold text-gray-800 dark:text-white">{title}</h1>
                 {subtitle && (
-                  <p className="mt-2 text-small text-muted-foreground">{subtitle}</p>
+                  <p className="mt-2 text-small text-grayish dark:text-gray-400">{subtitle}</p>
                 )}
               </div>
 

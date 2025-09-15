@@ -77,7 +77,7 @@ export default function ExamStrategy() {
             <NavLink
               key={x.href}
               href={x.href}
-              className="p-3.5 rounded-ds border border-border hover:bg-electricBlue/5 transition"
+              className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-electricBlue/5 transition"
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium">{x.label}</span>

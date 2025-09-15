@@ -38,6 +38,18 @@ export default function OrgReportsPage(props: ReportsPageProps){
   const { ok, org, baseline, seedData } = props
   const [range, setRange] = React.useState<'8w'|'12w'>('8w')
 
+  if (!ok || !org){
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <h1 className="font-slab text-h2">Organization not found</h1>
+          <p className="mt-2 text-mutedText">It may have been removed or you lack access.</p>
+          <Link href="/institutions" className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2 text-primary-foreground">Back to Institutions</Link>
+        </div>
+      </main>
+    )
+  }
+
   // Group by week -> pivot per module for charts
   const grouped = React.useMemo(() => {
     if (!ok || !org || !seedData) return [];
