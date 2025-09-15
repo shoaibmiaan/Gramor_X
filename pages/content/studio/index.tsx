@@ -34,6 +34,25 @@ export const getServerSideProps: GetServerSideProps<StudioIndexProps> = async (c
 };
 
 export default function StudioIndexPage(props: StudioIndexProps) {
+  const [q, setQ] = React.useState('');
+
+  const items = props.ok ? props.items : [];
+  const filtered = React.useMemo(() => {
+    const needle = q.toLowerCase().trim();
+    if (!needle) return items;
+    return items.filter((i) => (i.title ?? '').toLowerCase().includes(needle));
+  }, [items, q]);
+
+  const dateFormatter = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'UTC',
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }),
+    []
+  );
+
   if (!props.ok) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
@@ -45,15 +64,6 @@ export default function StudioIndexPage(props: StudioIndexProps) {
     );
   }
 
-  const { items } = props;
-  const [q, setQ] = React.useState('');
-
-  const filtered = React.useMemo(() => {
-    const needle = q.toLowerCase().trim();
-    if (!needle) return items;
-    return items.filter((i) => (i.title ?? '').toLowerCase().includes(needle));
-  }, [items, q]);
-
   return (
     <>
       <Head>
@@ -64,11 +74,13 @@ export default function StudioIndexPage(props: StudioIndexProps) {
         <section className="mx-auto max-w-7xl px-4 py-6">
           <div className="flex items-center justify-between gap-3">
             <h1 className="font-slab text-h2 md:text-h1">Content Studio</h1>
-            <Link href="/content/studio/new" className="inline-flex">
-              <Button variant="primary" className="bg-primary text-primary-foreground">
-                New Item
-              </Button>
-            </Link>
+            <Button
+              href="/content/studio/new"
+              variant="primary"
+              className="bg-primary text-primary-foreground"
+            >
+              New Item
+            </Button>
           </div>
           <p className="mt-1 text-small text-mutedText">
             Create and manage IELTS practice content for all modules.
@@ -104,11 +116,11 @@ export default function StudioIndexPage(props: StudioIndexProps) {
                   it.status === 'published'
                     ? 'bg-success/15 text-success'
                     : it.status === 'draft'
-                      ? 'bg-goldenYellow/15 text-goldenYellow'
-                      : 'bg-sunsetRed/15 text-sunsetRed';
+                    ? 'bg-goldenYellow/15 text-goldenYellow'
+                    : 'bg-sunsetRed/15 text-sunsetRed';
 
                 const when = it.updated_at
-                  ? new Date(it.updated_at).toLocaleString()
+                  ? dateFormatter.format(new Date(it.updated_at))
                   : '—';
 
                 return (
@@ -119,7 +131,9 @@ export default function StudioIndexPage(props: StudioIndexProps) {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="line-clamp-1 font-medium">{it.title ?? 'Untitled'}</div>
-                      <span className={cls('rounded-lg px-2 py-1 text-caption', statusClass)}>{it.status}</span>
+                      <span className={cls('rounded-lg px-2 py-1 text-caption', statusClass)}>
+                        {it.status}
+                      </span>
                     </div>
                     <div className="mt-1 text-small text-mutedText">
                       {(it.module ?? '—').toString().toUpperCase()} · Updated {when}

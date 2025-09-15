@@ -23,7 +23,7 @@ export default function ExamStrategy() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           {/* 1. Foundations */}
-          <Card className="card-surface p-6 rounded-ds-2xl">
+          <Card padding="md">
             <h3 className="text-h3">1) Foundations</h3>
             <ul className="mt-3 space-y-2 text-muted-foreground">
               <li>• Understand band descriptors (TR/CC/LR/GRA)</li>
@@ -38,7 +38,7 @@ export default function ExamStrategy() {
           </Card>
 
           {/* 2. Practise with AI */}
-          <Card className="card-surface p-6 rounded-ds-2xl">
+          <Card padding="md">
             <h3 className="text-h3">2) Practise with AI</h3>
             <ul className="mt-3 space-y-2 text-muted-foreground">
               <li>• Writing Task 1/2 or GT letter → instant band & tips</li>
@@ -52,7 +52,7 @@ export default function ExamStrategy() {
           </Card>
 
           {/* 3. Review & Improve */}
-          <Card className="card-surface p-6 rounded-ds-2xl">
+          <Card padding="md">
             <h3 className="text-h3">3) Review & Improve</h3>
             <ul className="mt-3 space-y-2 text-muted-foreground">
               <li>• Compare scores vs goals & identify gaps</li>

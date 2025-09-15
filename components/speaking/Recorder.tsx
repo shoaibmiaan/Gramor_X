@@ -1,9 +1,9 @@
-// components/speaking/Recorder.tsx
 import React, {
   forwardRef,
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
 } from 'react';
 import { useRecorder } from '@/hooks/useRecorder';
 
@@ -56,15 +56,15 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
       reset: () => reset(),
     }));
 
+    const startedRef = useRef(false);
+
     // auto-start for exam flow
     useEffect(() => {
-      let kicked = false;
-      if (autoStart && !kicked && !isRecording && durationSec === 0) {
-        kicked = true;
+      if (autoStart && !startedRef.current && !isRecording && durationSec === 0) {
+        startedRef.current = true;
         start().catch((e) => onError?.(String(e)));
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [autoStart]);
+    }, [autoStart, isRecording, durationSec, start, onError]);
 
     // hard max duration
     useEffect(() => {
