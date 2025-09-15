@@ -5,7 +5,7 @@ import { Textarea } from '@/components/design-system/Textarea';
 import { Select } from '@/components/design-system/Select';
 import { Button } from '@/components/design-system/Button';
 import MistakeCard, { Mistake } from '@/components/mistakes/MistakeCard';
-import { scheduleReview } from '@/lib/spacedRepetition';
+import { scheduleReview } from '@/lib/spaced-repetition';
 
 export default function MistakesPage() {
   const [mistakes, setMistakes] = useState<Mistake[]>([]);
