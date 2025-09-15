@@ -187,14 +187,16 @@ export default function LoginOptions() {
           <SectionLabel>Sign in</SectionLabel>
 
           <div className="grid gap-3">
-            {/* Email = main CTA — use real Link (your DS Button doesn’t support href/asChild) */}
-            <Link
+            <Button
               href={`/login/email${selectedRole ? `?role=${selectedRole}` : ''}`}
-              className="btn btn-primary rounded-ds-xl w-full inline-flex items-center justify-center gap-2"
+              variant="primary"
+              size="lg"
+              fullWidth
+              className="rounded-ds-xl"
+              leadingIcon={<MailIcon className="h-5 w-5" />}
             >
-              <MailIcon className="h-5 w-5" />
-              <span>Email &amp; Password</span>
-            </Link>
+              Email &amp; Password
+            </Button>
 
             {/* Google (soft primary) */}
             <Button
