@@ -98,7 +98,7 @@ export default function SignupWithPhone() {
           });
         } catch {}
       }
-      window.location.assign('/welcome');
+      router.push('/welcome');
     }
   }
 
