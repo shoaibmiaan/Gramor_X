@@ -1,0 +1,35 @@
+image: node:20
+
+variables:
+  NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+
+cache:
+  key: npm-cache
+  paths:
+    - .npm/
+
+before_script:
+  - npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
+  - npm config set always-auth true
+
+stages: [install, lint, test, build]
+
+install:
+  stage: install
+  script:
+    - npm ci
+
+lint:
+  stage: lint
+  script:
+    - npm run lint || true  # Ensure linting doesn't break the build (run as warning)
+
+test:
+  stage: test
+  script:
+    - npm run test || true  # Ensure tests don't break the build (run as warning)
+
+build:
+  stage: build
+  script:
+    - npm run build

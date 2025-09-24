@@ -1,0 +1,37 @@
+{
+  "Language Settings": "Language Settings",
+  "Choose your preferred interface language.": "Choose your preferred interface language.",
+  "Language": "Language",
+  "Saving…": "Saving…",
+  "Saved ✓": "Saved ✓",
+  "Error": "Error",
+  "Preview (English)": "Preview (English)",
+  "Preview (Urdu)": "Preview (Urdu)",
+  "Current locale": "Current locale",
+  "footer": {
+    "brand": {
+      "description": "The most advanced IELTS preparation platform powered by AI and expert teaching."
+    },
+    "resources": {
+      "bandScorePredictor": "Band Score Predictor",
+      "listeningPractice": "Listening Practice",
+      "readingPractice": "Reading Practice",
+      "writingTaskSamples": "Writing Task Samples",
+      "speakingQuestions": "Speaking Questions"
+    },
+    "quickLinks": {
+      "pricingPlans": "Pricing & Plans",
+      "referralRewards": "Referral Rewards",
+      "partnerProgram": "Partner Program",
+      "support": "Support",
+      "blog": "Blog",
+      "faq": "FAQ"
+    },
+    "contact": {
+      "email": "info@solvioadvisors.com",
+      "phone": "+1 (972) 295-4571",
+      "location": "Houston, USA",
+      "supportHours": "Support: 24/7"
+    }
+  }
+}

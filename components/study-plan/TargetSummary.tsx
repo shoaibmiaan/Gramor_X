@@ -1,0 +1,31 @@
+import React from 'react';
+import { Card } from '@/components/design-system/Card';
+
+interface Props {
+  daily: number;
+  weekly: number;
+  eta: string | null;
+}
+
+export const TargetSummary: React.FC<Props> = ({ daily, weekly, eta }) => (
+  <Card className="p-6 rounded-ds-2xl">
+    <h3 className="font-slab text-h3 mb-4">Your Targets</h3>
+    <div className="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <div className="text-small text-grayish dark:text-muted-foreground">Daily</div>
+        <div className="text-h3 font-semibold">{daily}</div>
+      </div>
+      <div>
+        <div className="text-small text-grayish dark:text-muted-foreground">Weekly</div>
+        <div className="text-h3 font-semibold">{weekly}</div>
+      </div>
+    </div>
+    {eta && (
+      <p className="text-small text-grayish dark:text-muted-foreground">
+        ETA to goal: {new Date(eta).toLocaleDateString()}
+      </p>
+    )}
+  </Card>
+);
+
+export default TargetSummary;

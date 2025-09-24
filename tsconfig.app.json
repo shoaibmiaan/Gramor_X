@@ -1,0 +1,21 @@
+// tsconfig.app.json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "pages/**/*",
+    "components/**/*",
+    "lib/**/*",
+    "premium-ui/**/*",
+    "types/**/*"
+  ],
+  "exclude": [
+    "stories/**/*",
+    "tests/**/*",
+    "scripts/**/*",
+    "supabase/functions/**/*"
+  ]
+}

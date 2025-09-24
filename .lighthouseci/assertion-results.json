@@ -1,0 +1,19 @@
+[
+  {
+    "name": "minScore",
+    "expected": 0.6,
+    "actual": null,
+    "values": [
+      null,
+      null,
+      null
+    ],
+    "operator": ">=",
+    "passed": false,
+    "message": "Audit did not produce a value at all. \"minScore\" might not be a valid assertion for this audit.",
+    "auditProperty": "performance",
+    "auditId": "categories",
+    "level": "warn",
+    "url": "https://gramorx.com/pricing"
+  }
+]

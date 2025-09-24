@@ -1,0 +1,23 @@
+{
+  "home": {
+    "title": "Bienvenido a GramorX"
+  },
+  "profileSetup": {
+    "completeProfile": "Completa tu perfil",
+    "description": "Usaremos IA para personalizar tu plan de estudio y tablero.",
+    "preferredLanguage": "Idioma preferido",
+    "explanationLanguage": "Idioma de explicación",
+    "saveDraft": "Guardar borrador",
+    "finishContinue": "Terminar y continuar"
+  },
+  "userMenu": {
+    "language": "Idioma"
+  },
+  "premiumPin": {
+    "info": "Los PIN se envían mediante invitaciones por correo electrónico.",
+    "noPinPrefix": "Si no tienes uno,",
+    "contactSupport": "contacta con soporte",
+    "or": "o",
+    "viewPricing": "consulta los precios"
+  }
+}
