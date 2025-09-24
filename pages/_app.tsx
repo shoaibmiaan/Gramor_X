@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app';
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 import '@/styles/tokens.css';
 import '@/styles/premium.css';
@@ -185,25 +186,41 @@ function InnerApp({ Component, pageProps }: AppProps) {
   // Keep backend session cookie in sync
   useEffect(() => {
     if (IS_CI) return;
-    let unsub: (() => void) | undefined;
+
+    let isMounted = true;
+
+    const syncSession = async (event: AuthChangeEvent, sessionNow: Session | null) => {
+      if (event === 'INITIAL_SESSION' && !sessionNow) return;
+      try {
+        await fetch('/api/auth/set-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ event, session: sessionNow }),
+        });
+      } catch {
+        /* silent */
+      }
+    };
+
     (async () => {
       const {
         data: { session },
       } = await supabaseBrowser.auth.getSession();
-      if (!session) return;
-      const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (event, sessionNow) => {
-        try {
-          await fetch('/api/auth/set-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ event, session: sessionNow }),
-          });
-        } catch { /* silent */ }
-      });
-      unsub = () => sub?.subscription?.unsubscribe();
+      if (!isMounted) return;
+      await syncSession('INITIAL_SESSION', session);
     })();
-    return () => unsub?.();
+
+    const {
+      data: { subscription },
+    } = supabaseBrowser.auth.onAuthStateChange((event, sessionNow) => {
+      void syncSession(event, sessionNow);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+    };
   }, []);
 
   // Hard redirect teachers away from non-teacher sections
