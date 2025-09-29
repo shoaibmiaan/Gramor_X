@@ -2,8 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
@@ -15,17 +14,17 @@ import {
   SmsIcon,
 } from '@/components/design-system/icons';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { destinationByRole } from '@/lib/routeAccess';
 
 type AuthMode = 'login' | 'signup';
 type OAuthProvider = 'apple' | 'google' | 'facebook';
 
-export interface AuthOptionsProps {
+interface AuthOptionsProps {
   mode: AuthMode;
 }
 
-export function AuthOptions({ mode }: AuthOptionsProps) {
+export default function AuthOptions({ mode }: AuthOptionsProps) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -44,27 +43,36 @@ export function AuthOptions({ mode }: AuthOptionsProps) {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!mounted) return;
-
-      if (session) {
-        const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-        const blockedPath = mode === 'login' ? '/login' : '/signup';
-        const safe =
-          rawNext && !rawNext.startsWith('http') && rawNext !== blockedPath
-            ? rawNext
-            : destinationByRole(session.user);
-        if (router.asPath !== safe) {
-          await router.replace(safe);
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabaseBrowser.auth.getSession();
+        if (error) {
+          console.error('Failed to get session:', error);
+          if (mounted) setReady(true);
           return;
         }
+
+        if (!mounted) return;
+
+        if (session) {
+          const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
+          const blockedPath = mode === 'login' ? '/login' : '/signup';
+          const safe =
+            rawNext && !rawNext.startsWith('http') && rawNext !== blockedPath
+              ? rawNext
+              : destinationByRole(session.user);
+          if (router.asPath !== safe) {
+            await router.replace(safe);
+            return;
+          }
+        }
+        setReady(true);
+      } catch (err) {
+        console.error('Error checking session:', err);
+        if (mounted) setReady(true);
       }
-      setReady(true);
-    })();
+    };
+    checkSession();
     return () => {
       mounted = false;
     };
@@ -112,8 +120,7 @@ export function AuthOptions({ mode }: AuthOptionsProps) {
       setErr(null);
       setBusy(provider);
 
-      const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
-
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
       let next: string;
       if (mode === 'login') {
         next = `/dashboard${selectedRole ? `?role=${encodeURIComponent(selectedRole)}` : ''}`;
@@ -125,16 +132,27 @@ export function AuthOptions({ mode }: AuthOptionsProps) {
         next = `/onboarding/goal${suffix ? `?${suffix}` : ''}`;
       }
 
-      const redirectTo = origin ? `${origin}/auth/callback?next=${encodeURIComponent(next)}` : undefined;
+      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
-        options: { redirectTo },
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
       });
-      if (error) throw error;
+      if (error) {
+        console.error(`OAuth error for ${provider}:`, error);
+        throw error;
+      }
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Unable to continue.';
+      const message = e instanceof Error ? e.message : 'Unable to sign in. Please try again.';
+      console.error('OAuth sign-in failed:', e);
       setErr(message);
+    } finally {
       setBusy(null);
     }
   }
@@ -311,12 +329,16 @@ export function AuthOptions({ mode }: AuthOptionsProps) {
                 {mode === 'login' ? 'Create an account' : 'Log in'}
               </Link>
             </div>
-            <Button variant="link" onClick={() => {
-              setSelectedRole(null);
-              if (typeof window !== 'undefined') localStorage.removeItem('selectedRole');
-              const { role: _role, ...rest } = router.query as Record<string, unknown>;
-              router.replace({ pathname: router.pathname, query: { ...rest } }, undefined, { shallow: true });
-            }} aria-label="Change selected role">
+            <Button
+              variant="link"
+              onClick={() => {
+                setSelectedRole(null);
+                if (typeof window !== 'undefined') localStorage.removeItem('selectedRole');
+                const { role: _role, ...rest } = router.query as Record<string, unknown>;
+                router.replace({ pathname: router.pathname, query: { ...rest } }, undefined, { shallow: true });
+              }}
+              aria-label="Change selected role"
+            >
               Change role
             </Button>
           </div>
@@ -325,5 +347,3 @@ export function AuthOptions({ mode }: AuthOptionsProps) {
     </>
   );
 }
-
-export default AuthOptions;

@@ -1,22 +1,14 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/design-system/Toaster';
-import type { AuthChangeEvent, Session, SupabaseClient } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export type Notification = {
   id: string;
-  title: string | null;
-  body: string | null;
-  read_at: string | null;
-  created_at: string;
+  message: string;
   url?: string | null;
+  read: boolean;
+  created_at: string;
 };
 
 type Ctx = {
@@ -32,14 +24,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [hasSession, setHasSession] = useState(false);
   const toast = useToast();
 
-  // Works whether supabaseBrowser is an instance or a factory
-  const supabase = useMemo(() => {
-    const maybeFn = supabaseBrowser as unknown as (() => unknown) | object;
-    const client = typeof maybeFn === 'function' ? (maybeFn as any)() : (maybeFn as any);
-    return client as SupabaseClient;
-  }, []);
-
-  // Track auth state (initial + changes). Clear notifications on logout.
   useEffect(() => {
     let cancelled = false;
 
@@ -52,41 +36,48 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        setHasSession(!!session);
-        if (!session) setNotifications([]);
-      }
-    );
+    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+      setHasSession(!!session);
+      if (!session) setNotifications([]);
+    });
 
     return () => {
-      subscription.unsubscribe(); // ✅ correct cleanup
+      subscription.unsubscribe();
       cancelled = true;
     };
-  }, [supabase]);
+  }, []);
 
-  // Initial load (only when logged in)
   useEffect(() => {
     if (!hasSession) return;
     let active = true;
 
-    (async () => {
+    const fetchNotifications = async () => {
       try {
-        const res = await fetch('/api/notifications');
-        if (!res.ok) return;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.warn('No session for fetching notifications');
+          return;
+        }
+        const res = await fetch('/api/notifications', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
         const data = await res.json();
-        if (active) setNotifications(data.notifications ?? data.items ?? []);
-      } catch {
-        /* noop */
+        if (!Array.isArray(data.notifications)) throw new Error('Invalid response format');
+        if (active) setNotifications(data.notifications);
+      } catch (error) {
+        console.error('Fetch notifications error:', error);
+        toast.error('Failed to load notifications');
       }
-    })();
+    };
+
+    fetchNotifications();
 
     return () => {
       active = false;
     };
-  }, [hasSession]);
+  }, [hasSession, toast]);
 
-  // Realtime subscription (only when logged in)
   useEffect(() => {
     if (!hasSession) return;
 
@@ -95,36 +86,43 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
-        (payload: { new: Notification }) => { // ✅ typed payload
+        (payload: { new: Notification }) => {
           const n = payload.new;
-          setNotifications((prev) => [n, ...prev]);
-          toast.info(n.title ?? 'Notification', n.body ?? undefined);
+          setNotifications(prev => [n, ...prev]);
+          toast.info(n.message);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIPTION_ERROR') {
+          toast.error('Error subscribing to notifications');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [hasSession, supabase, toast]);
+  }, [hasSession, toast]);
 
   const markRead = useCallback(async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     try {
-      await fetch(`/api/notifications/${id}`, { method: 'PATCH' });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.warn('No session for marking notification read');
+        return;
+      }
+      await fetch(`/api/notifications/${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
     } catch {
       /* noop */
     }
   }, []);
 
-  const unread = useMemo(() => notifications.filter((n) => !n.read_at).length, [notifications]);
+  const unread = notifications.filter((n) => !n.read).length;
 
-  const value = useMemo(
-    () => ({ notifications, unread, markRead }),
-    [notifications, unread, markRead]
-  );
+  const value = { notifications, unread, markRead };
 
   return <NotificationCtx.Provider value={value}>{children}</NotificationCtx.Provider>;
 }

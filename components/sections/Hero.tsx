@@ -1,12 +1,12 @@
 'use client';
-import { Icon } from "@/components/design-system/Icon";
-// components/sections/Hero.tsx
+
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { Icon } from '@/components/design-system/Icon';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 
 type WOD = {
   word: { id: string; word: string; meaning: string; example: string | null };
@@ -21,12 +21,8 @@ type HeroProps = {
 
 export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
   const [mounted, setMounted] = useState(false);
-
-  // countdown for a soft launch window (7 days)
   const [target, setTarget] = useState<Date | null>(null);
   const [now, setNow] = useState<Date | null>(null);
-
-  // word + streak
   const [data, setData] = useState<WOD | null>(null);
   const [busy, setBusy] = useState(false);
   const [auth, setAuth] = useState<'unknown' | 'authed' | 'guest'>('unknown');
@@ -52,51 +48,85 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
   }, [target, now]);
 
   const load = useCallback(async (): Promise<WOD | null> => {
-    const { data: session } = await supabaseBrowser.auth.getSession();
-    const token = session?.session?.access_token;
-    if (!token) {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Failed to get session:', error);
+        setAuth('guest');
+        setData(null);
+        onStreakChange?.(0);
+        return null;
+      }
+      const token = session?.access_token;
+      if (!token) {
+        setAuth('guest');
+        setData(null);
+        onStreakChange?.(0);
+        return null;
+      }
+      setAuth('authed');
+      const res = await fetch('/api/words/today', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        console.error('Failed to fetch word of the day:', res.status);
+        setData(null);
+        onStreakChange?.(0);
+        return null;
+      }
+      const json: WOD = await res.json();
+      setData(json);
+      onStreakChange?.(json.streakDays ?? 0);
+      try {
+        window.dispatchEvent(
+          new CustomEvent('streak:changed', { detail: { value: json.streakDays ?? 0 } })
+        );
+      } catch {}
+      return json;
+    } catch (err) {
+      console.error('Error loading word of the day:', err);
       setAuth('guest');
       setData(null);
       onStreakChange?.(0);
       return null;
     }
-    setAuth('authed');
-    const res = await fetch('/api/words/today', { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) {
-      setData(null);
-      onStreakChange?.(0);
-      return null;
-    }
-    const json: WOD = await res.json();
-    setData(json);
-    onStreakChange?.(json.streakDays ?? 0);
-    try {
-      window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value: json.streakDays ?? 0 } }));
-    } catch {}
-    return json;
   }, [onStreakChange]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const markLearned = async () => {
     if (!data || data.learnedToday) return;
     setBusy(true);
-    const { data: session } = await supabaseBrowser.auth.getSession();
-    const token = session?.session?.access_token;
-    if (!token) { setBusy(false); return; }
-    const r = await fetch('/api/words/learn', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ wordId: data.word.id }),
-    });
-    setBusy(false);
-    if (r.ok) {
-      const updated = await load();
-      if (updated) {
-        try {
-          window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value: updated.streakDays ?? 0 } }));
-        } catch {}
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session?.access_token) {
+        console.error('No session for marking word learned:', error);
+        setBusy(false);
+        return;
       }
+      const r = await fetch('/api/words/learn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ wordId: data.word.id }),
+      });
+      if (!r.ok) {
+        console.error('Failed to mark word learned:', r.status);
+      } else {
+        const updated = await load();
+        if (updated) {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('streak:changed', { detail: { value: updated.streakDays ?? 0 } })
+            );
+          } catch {}
+        }
+      }
+    } catch (err) {
+      console.error('Error marking word learned:', err);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -115,7 +145,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
           <Card className="inline-block p-6 rounded-2xl">
             <div className="text-primary font-semibold mb-3">PRE-LAUNCH ACCESS IN</div>
             <div className="flex gap-5 justify-center" aria-live="polite">
-              {(['Days','Hours','Minutes','Seconds'] as const).map((label, i) => {
+              {(['Days', 'Hours', 'Minutes', 'Seconds'] as const).map((label, i) => {
                 const v = [diff.days, diff.hours, diff.minutes, diff.seconds][i] || 0;
                 return (
                   <div key={label} className="text-center">
@@ -136,7 +166,9 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
             </h3>
 
             {auth === 'guest' && (
-              <Alert variant="info" className="mb-4">Sign in to track your streak and unlock daily rewards.</Alert>
+              <Alert variant="info" className="mb-4">
+                Sign in to track your streak and unlock daily rewards.
+              </Alert>
             )}
 
             {data ? (
@@ -145,22 +177,37 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
                   <h4 className="text-h1 mb-1 text-primary">{data.word.word}</h4>
                   <div className="text-body text-muted-foreground mb-3">{data.word.meaning}</div>
                   {data.word.example && (
-                    <div className="italic text-muted-foreground border-l-4 pl-4 border-border">“{data.word.example}”</div>
+                    <div className="italic text-muted-foreground border-l-4 pl-4 border-border">
+                      “{data.word.example}”
+                    </div>
                   )}
                 </div>
 
-                <Button variant={data.learnedToday ? 'secondary' : 'accent'} onClick={markLearned} disabled={busy || data.learnedToday}>
+                <Button
+                  variant={data.learnedToday ? 'secondary' : 'accent'}
+                  onClick={markLearned}
+                  disabled={busy || data.learnedToday}
+                >
                   <Icon name="check-circle" />
                   {data.learnedToday ? 'Learned today' : 'Mark as Learned'}
                 </Button>
 
                 <div className="mt-4 rounded-xl p-4 bg-card border border-border text-left">
                   <div className="flex items-center gap-4">
-                    <div className="text-h2" aria-hidden="true"><Icon name="fire" /></div>
+                    <div className="text-h2" aria-hidden="true">
+                      <Icon name="fire" />
+                    </div>
                     <div>
                       <h4 className="font-semibold">Your Learning Streak</h4>
-                      <div className="text-muted-foreground">Current streak: <span className="font-bold">{data.streakDays} {data.streakDays === 1 ? 'day' : 'days'}</span></div>
-                      <div className="text-muted-foreground">Value at launch: <span className="font-bold">${(data.streakValueUSD ?? 0).toFixed(2)}</span></div>
+                      <div className="text-muted-foreground">
+                        Current streak:{' '}
+                        <span className="font-bold">
+                          {data.streakDays} {data.streakDays === 1 ? 'day' : 'days'}
+                        </span>
+                      </div>
+                      <div className="text-muted-foreground">
+                        Value at launch: <span className="font-bold">${(data.streakValueUSD ?? 0).toFixed(2)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -173,8 +220,12 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
           </Card>
 
           <div className="flex gap-4 mt-8 justify-center">
-            <Button href="/waitlist" variant="primary">Join Exclusive Waitlist</Button>
-            <Button href="/pricing" variant="secondary">See Plans</Button>
+            <Button href="/waitlist" variant="primary">
+              Join Exclusive Waitlist
+            </Button>
+            <Button href="/pricing" variant="secondary">
+              See Plans
+            </Button>
           </div>
         </div>
       </Container>

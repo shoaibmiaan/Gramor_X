@@ -1,9 +1,8 @@
 import { env } from "@/lib/env";
-// pages/learning/strategies/index.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient'; // Centralized browser client
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
@@ -55,12 +54,6 @@ function normalizeDrill(payload: any): DrillResult {
   return { prompt, instructions, passage, choices, raw: src };
 }
 
-function getSupabase(): SupabaseClient {
-  const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  return createClient(url, key);
-}
-
 export default function Strategies() {
   const router = useRouter();
 
@@ -102,7 +95,7 @@ export default function Strategies() {
     if (difficulty !== 'all') q.level = difficulty;
     if (query.trim()) q.q = query.trim();
     router.replace({ pathname: router.pathname, query: q }, undefined, { shallow: true });
-  }, [area, difficulty, query]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [area, difficulty, query, router]);
 
   // ---- fetch tips
   useEffect(() => {
@@ -111,7 +104,6 @@ export default function Strategies() {
       try {
         setLoading(true);
         setErr(null);
-        const supabase = getSupabase();
         const { data, error } = await supabase
           .from('strategies_tips')
           .select('*')
@@ -131,7 +123,6 @@ export default function Strategies() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const supabase = getSupabase();
       const { data: userRes } = await supabase.auth.getUser();
       const uid = userRes?.user?.id ?? null;
       if (cancelled) return;
@@ -168,33 +159,35 @@ export default function Strategies() {
   }, [tips, area, difficulty, query]);
 
   // ---- actions
-  // Redirect to /login when signed out (PATCH A)
+  // Redirect to /login when signed out when toggling
   const toggleSave = async (tipId: string) => {
     if (!userId) {
       router.push(`/login?next=${encodeURIComponent(router.asPath)}`);
       return;
     }
-    const supabase = getSupabase();
     const next = new Set(savedSet);
     const isSaved = next.has(tipId);
     // optimistic
     isSaved ? next.delete(tipId) : next.add(tipId);
     setSavedSet(next);
 
-    if (isSaved) {
-      const { error } = await supabase
-        .from('strategies_tip_saves')
-        .delete()
-        .eq('user_id', userId)
-        .eq('tip_id', tipId);
-      if (error) setSavedSet(prev => new Set([...prev, tipId])); // rollback
-    } else {
-      const { error } = await supabase
-        .from('strategies_tip_saves')
-        .insert({ user_id: userId, tip_id: tipId });
-      if (error) {
-        setSavedSet(prev => { const s = new Set(prev); s.delete(tipId); return s; });
-      }
+    const { error: deleteError } = isSaved ? await supabase
+      .from('strategies_tip_saves')
+      .delete()
+      .eq('user_id', userId)
+      .eq('tip_id', tipId) : { error: null };
+
+    if (deleteError) {
+      setSavedSet(prev => new Set([...prev, tipId])); // rollback
+      return;
+    }
+
+    const { error: insertError } = !isSaved ? await supabase
+      .from('strategies_tip_saves')
+      .insert({ user_id: userId, tip_id: tipId }) : { error: null };
+
+    if (insertError) {
+      setSavedSet(prev => { const s = new Set(prev); s.delete(tipId); return s; });
     }
   };
 
@@ -203,27 +196,29 @@ export default function Strategies() {
       router.push(`/login?next=${encodeURIComponent(router.asPath)}`);
       return;
     }
-    const supabase = getSupabase();
     const next = new Set(helpfulSet);
     const isHelpful = next.has(tipId);
     // optimistic
     isHelpful ? next.delete(tipId) : next.add(tipId);
     setHelpfulSet(next);
 
-    if (isHelpful) {
-      const { error } = await supabase
-        .from('strategies_tip_votes')
-        .delete()
-        .eq('user_id', userId)
-        .eq('tip_id', tipId);
-      if (error) setHelpfulSet(prev => new Set([...prev, tipId])); // rollback
-    } else {
-      const { error } = await supabase
-        .from('strategies_tip_votes')
-        .insert({ user_id: userId, tip_id: tipId, helpful: true });
-      if (error) {
-        setHelpfulSet(prev => { const s = new Set(prev); s.delete(tipId); return s; });
-      }
+    const { error: deleteError } = isHelpful ? await supabase
+      .from('strategies_tip_votes')
+      .delete()
+      .eq('user_id', userId)
+      .eq('tip_id', tipId) : { error: null };
+
+    if (deleteError) {
+      setHelpfulSet(prev => new Set([...prev, tipId])); // rollback
+      return;
+    }
+
+    const { error: insertError } = !isHelpful ? await supabase
+      .from('strategies_tip_votes')
+      .insert({ user_id: userId, tip_id: tipId, helpful: true }) : { error: null };
+
+    if (insertError) {
+      setHelpfulSet(prev => { const s = new Set(prev); s.delete(tipId); return s; });
     }
   };
 

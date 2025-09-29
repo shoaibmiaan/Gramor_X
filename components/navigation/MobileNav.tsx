@@ -17,7 +17,7 @@ interface UserInfo {
   avatarUrl: string | null;
 }
 
-type MobileNavProps = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {
+type MobileNavProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'role'> & {
   user: UserInfo;
   role: string | null;
   ready: boolean;
@@ -27,7 +27,6 @@ type MobileNavProps = Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & {
   mobileModulesOpen: boolean;
   setMobileModulesOpen: (open: boolean) => void;
   signOut: () => Promise<void>;
-  /** Force-hide admin links regardless of role */
   showAdmin?: boolean;
 }
 
@@ -78,7 +77,7 @@ export function MobileNav({
       <Container>
         <div className="flex items-center justify-between py-3">
           <FireStreak value={streak} />
-          {ready && user.id ? (
+          {ready && user && user.id ? (
             <button
               onClick={signOut}
               className="rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground hover:opacity-90"
@@ -100,7 +99,7 @@ export function MobileNav({
 
         <nav className="pb-4">
           <ul className="flex flex-col gap-1">
-            {user.id && (
+            {user && user.id && (
               <li>
                 <NavLink
                   href="/dashboard"
@@ -197,7 +196,7 @@ export function MobileNav({
               </li>
             )}
 
-            {user.id &&
+            {user && user.id &&
               USER_MENU_LINKS.map((item) => (
                 <li key={item.id}>
                   <NavLink href={item.href} className={mobileItemClass} onClick={closeMenu}>

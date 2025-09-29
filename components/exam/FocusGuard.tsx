@@ -43,4 +43,3 @@ export default function FocusGuard({ exam, slug }: Props) {
     </div>
   ) : null;
 }
-

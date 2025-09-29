@@ -1,11 +1,12 @@
-// pages/auth/verify.tsx
+'use client';
+
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { redirectByRole } from '@/lib/routeAccess';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -31,17 +32,21 @@ export default function VerifyPage() {
 
   React.useEffect(() => {
     if (!hasCode) return;
-    (async () => {
+    const handleVerification = async () => {
       setBusy(true);
       setError(null);
-      const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-      setBusy(false);
-      if (error) {
-        setError(error.message);
-        return;
+      try {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        if (error) throw error;
+        redirectByRole(data?.session?.user ?? null);
+      } catch (err: any) {
+        console.error('Verification error:', err);
+        setError(err.message || 'Failed to verify email.');
+      } finally {
+        setBusy(false);
       }
-      redirectByRole(data?.session?.user ?? null);
-    })();
+    };
+    handleVerification();
   }, [hasCode]);
 
   async function handleResend() {
@@ -51,12 +56,12 @@ export default function VerifyPage() {
     try {
       // @ts-expect-error supabase-js may not expose resend type yet
       const { error: resendErr } = await supabase.auth.resend({ type: 'signup', email });
-      if (resendErr) {
-        setError(resendErr.message);
-      } else {
-        setResent(true);
-        setNotice('We’ve sent a new verification link.');
-      }
+      if (resendErr) throw resendErr;
+      setResent(true);
+      setNotice('We’ve sent a new verification link.');
+    } catch (err: any) {
+      console.error('Resend error:', err);
+      setError(err.message || 'Failed to resend verification email.');
     } finally {
       setBusy(false);
     }
