@@ -11,6 +11,24 @@ import { MobileNav } from '@/components/navigation/MobileNav';
 import { Button } from '@/components/design-system/Button';
 import { useHeaderState } from '@/components/hooks/useHeaderState';
 import { useUserContext } from '@/context/UserContext';
+import type { User } from '@supabase/supabase-js';
+
+interface NavUserInfo {
+  id: string | null;
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+const mapUserToNavUser = (user: User | null): NavUserInfo => {
+  const metadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  return {
+    id: user?.id ?? null,
+    email: user?.email ?? null,
+    name: typeof metadata['full_name'] === 'string' ? (metadata['full_name'] as string) : null,
+    avatarUrl: typeof metadata['avatar_url'] === 'string' ? (metadata['avatar_url'] as string) : null,
+  };
+};
 
 export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [openDesktopModules, setOpenDesktopModules] = useState(false);
@@ -19,7 +37,26 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [scrolled, setScrolled] = useState(false);
 
   const { user, role, loading } = useUserContext();
-  const { streak: streakState, ready, signOut } = useHeaderState(streak);
+  const { streak: streakState, signOut } = useHeaderState(streak);
+  const [navUser, setNavUser] = useState<NavUserInfo>(() => mapUserToNavUser(user));
+
+  useEffect(() => {
+    setNavUser(mapUserToNavUser(user));
+  }, [user]);
+
+  useEffect(() => {
+    const onAvatarChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ url: string }>;
+      const nextUrl = customEvent.detail?.url;
+      if (typeof nextUrl === 'string') {
+        setNavUser((current) => ({ ...current, avatarUrl: nextUrl }));
+      }
+    };
+    window.addEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
+    return () => window.removeEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
+  }, []);
+
+  const navigationReady = !loading;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
@@ -118,9 +155,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
           <div className="flex items-center gap-3">
             <DesktopNav
-              user={user}
+              user={navUser}
               role={role ?? 'guest'}
-              ready={ready}
+              ready={navigationReady}
               streak={streakState}
               openModules={openDesktopModules}
               setOpenModules={setOpenDesktopModules}
@@ -147,9 +184,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
             )}
 
             <MobileNav
-              user={user}
+              user={navUser}
               role={role ?? 'guest'}
-              ready={ready}
+              ready={navigationReady}
               streak={streakState}
               mobileOpen={mobileOpen}
               setMobileOpen={setMobileOpen}

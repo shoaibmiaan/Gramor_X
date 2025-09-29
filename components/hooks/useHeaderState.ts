@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
@@ -14,7 +14,6 @@ interface UserInfo {
 
 export function useHeaderState(initialStreak?: number) {
   const router = useRouter();
-
   const [ready, setReady] = useState(false);
   const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<UserInfo>({ id: null, email: null, name: null, avatarUrl: null });
@@ -133,19 +132,9 @@ export function useHeaderState(initialStreak?: number) {
     );
 
     return () => {
-      cancelled = true;
       sub?.subscription?.unsubscribe();
     };
-  }, []);
-
-  useEffect(() => {
-    const onAvatarChanged = (e: Event) => {
-      const ce = e as CustomEvent<{ url: string }>;
-      setUser((u) => ({ ...u, avatarUrl: ce.detail.url }));
-    };
-    window.addEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
-    return () => window.removeEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
-  }, []);
+  }, [fetchStreak]);
 
   const signOut = useCallback(async () => {
     try {
