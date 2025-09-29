@@ -27,6 +27,9 @@ type DesktopNavProps = Omit<React.HTMLAttributes<HTMLElement>, 'role'> & {
   modulesRef: React.RefObject<HTMLLIElement>;
   signOut: () => Promise<void>;
   showAdmin?: boolean;
+  hasPremiumAccess?: boolean;
+  premiumRooms?: string[];
+  onClearPremiumAccess?: () => void;
 };
 
 export function DesktopNav({
@@ -39,6 +42,9 @@ export function DesktopNav({
   modulesRef,
   signOut,
   showAdmin = true,
+  hasPremiumAccess = false,
+  premiumRooms = [],
+  onClearPremiumAccess,
   className,
   ...rest
 }: DesktopNavProps) {
@@ -54,6 +60,19 @@ export function DesktopNav({
   const menuItems = isTeacher
     ? [{ id: 'account', label: 'Profile', href: '/account' }]
     : USER_MENU_LINKS;
+
+  // Add premium access info to menu items if user has premium access
+  const enhancedMenuItems = hasPremiumAccess
+    ? [
+        ...menuItems,
+        {
+          id: 'premium-status',
+          label: `⭐ Premium Access (${premiumRooms.length} rooms)`,
+          href: '/premium-room',
+          isPremium: true,
+        },
+      ]
+    : menuItems;
 
   return (
     <nav className={className} aria-label="Primary" {...rest}>
@@ -101,6 +120,43 @@ export function DesktopNav({
           </li>
         )}
 
+        {/* Premium Access Status */}
+        {hasPremiumAccess && (
+          <li className="relative group">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-medium">
+              <span>⭐</span>
+              <span>Premium</span>
+            </div>
+            {/* Premium Access Tooltip */}
+            <div className="absolute top-full right-0 mt-2 w-48 z-50 hidden group-hover:block">
+              <div className="bg-card border border-border rounded-lg shadow-lg p-3">
+                <div className="text-xs font-medium text-green-600 mb-1">Premium Access Active</div>
+                <div className="text-xs text-muted-foreground mb-2">
+                  Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
+                </div>
+                {premiumRooms.length > 0 && (
+                  <div className="text-xs text-muted-foreground max-h-20 overflow-y-auto">
+                    {premiumRooms.slice(0, 3).map((room, index) => (
+                      <div key={index} className="truncate">• {room}</div>
+                    ))}
+                    {premiumRooms.length > 3 && (
+                      <div className="text-xs">+{premiumRooms.length - 3} more</div>
+                    )}
+                  </div>
+                )}
+                {onClearPremiumAccess && (
+                  <button
+                    onClick={onClearPremiumAccess}
+                    className="text-xs text-red-500 hover:text-red-700 mt-2"
+                  >
+                    Clear All Access
+                  </button>
+                )}
+              </div>
+            </div>
+          </li>
+        )}
+
         {/* Right cluster */}
         <li className="ml-2">
           <FireStreak value={streak} />
@@ -121,10 +177,11 @@ export function DesktopNav({
                 avatarUrl={user?.avatarUrl ?? undefined}
                 onSignOut={signOut}
                 isAdmin={role === 'admin'}
-                items={menuItems.map((link) => ({
+                items={enhancedMenuItems.map((link) => ({
                   id: link.id,
                   label: link.label,
                   href: link.href,
+                  isPremium: link.isPremium || false,
                 }))}
               />
             ) : (

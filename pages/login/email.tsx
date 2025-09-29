@@ -37,14 +37,27 @@ export default function LoginWithEmail() {
     setMfaErr(null);
 
     const trimmedEmail = email.trim();
-    if (!trimmedEmail || !pw) {
+
+    if (!trimmedEmail && !pw) {
       setErr('Email and password are required.');
       return;
     }
+
+    if (!trimmedEmail) {
+      setErr('Email is required.');
+      return;
+    }
+
+    if (!pw) {
+      setErr('Password is required.');
+      return;
+    }
+
     if (!isValidEmail(trimmedEmail)) {
       setEmailErr('Enter a valid email address.');
       return;
     }
+
     setEmailErr(null);
 
     setLoading(true);
@@ -84,8 +97,6 @@ export default function LoginWithEmail() {
       } catch (err) {
         console.error('Error logging login event:', err);
       }
-
-      // Rely on _app.tsx onAuthStateChange to redirect
     } catch (err) {
       console.error('Login error:', err);
       setErr('Unable to sign in. Please try again.');
