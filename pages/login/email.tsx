@@ -37,14 +37,29 @@ export default function LoginWithEmail() {
     setMfaErr(null);
 
     const trimmedEmail = email.trim();
-    if (!trimmedEmail || !pw) {
+
+    // If no email or password is provided, show an error
+    if (!trimmedEmail && !pw) {
       setErr('Email and password are required.');
       return;
     }
+
+    // If only email is provided, show error
+    if (!trimmedEmail) {
+      setErr('Email is required.');
+      return;
+    }
+
+    if (!pw) {
+      setErr('Password is required.');
+      return;
+    }
+
     if (!isValidEmail(trimmedEmail)) {
       setEmailErr('Enter a valid email address.');
       return;
     }
+
     setEmailErr(null);
 
     setLoading(true);
@@ -66,6 +81,7 @@ export default function LoginWithEmail() {
         return;
       }
 
+      // If login is successful, set session and proceed
       await supabaseBrowser.auth.setSession({
         access_token: body.session.access_token,
         refresh_token: body.session.refresh_token,
@@ -75,6 +91,13 @@ export default function LoginWithEmail() {
         data: { user },
       } = await supabaseBrowser.auth.getUser().catch(err => console.error('Get user failed:', err));
 
+      // Skip OTP if both email and password are provided
+      if (!body.mfaRequired) {
+        // Proceed to the home page or desired redirect here
+        return;
+      }
+
+      // If MFA (OTP) is required, trigger the challenge
       const challenged = await createChallenge(user).catch(err => console.error('Create challenge failed:', err));
       if (challenged) return;
 

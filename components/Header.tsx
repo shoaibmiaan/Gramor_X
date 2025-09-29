@@ -11,6 +11,7 @@ import { MobileNav } from '@/components/navigation/MobileNav';
 import { Button } from '@/components/design-system/Button';
 import { useHeaderState } from '@/components/hooks/useHeaderState';
 import { useUserContext } from '@/context/UserContext';
+import { PremiumRoomManager } from '@/premium-ui/access/roomUtils';
 
 export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [openDesktopModules, setOpenDesktopModules] = useState(false);
@@ -20,6 +21,30 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
   const { user, role, loading } = useUserContext();
   const { streak: streakState, ready, signOut } = useHeaderState(streak);
+
+  // Check if user has access to any premium rooms
+  const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
+  const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
+
+  useEffect(() => {
+    const checkPremiumAccess = () => {
+      const accessedRooms = PremiumRoomManager.getAccessList();
+      setHasPremiumAccess(accessedRooms.length > 0);
+      setPremiumRooms(accessedRooms.map(room => room.roomName));
+    };
+
+    checkPremiumAccess();
+    
+    // Listen for storage changes to update premium access status
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'premiumRooms') {
+        checkPremiumAccess();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
@@ -64,6 +89,12 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
       document.removeEventListener('touchmove', preventTouch);
     };
   }, [mobileOpen]);
+
+  const handleClearPremiumAccess = () => {
+    PremiumRoomManager.clearAllAccess();
+    setHasPremiumAccess(false);
+    setPremiumRooms([]);
+  };
 
   if (loading) {
     return (
@@ -129,6 +160,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               showAdmin={false}
               className="hidden items-center gap-2 will-change-transform transition-[opacity,transform] duration-200 lg:flex data-[solid=true]:opacity-100 data-[solid=false]:opacity-95"
               data-solid={solidHeader}
+              hasPremiumAccess={hasPremiumAccess}
+              premiumRooms={premiumRooms}
+              onClearPremiumAccess={handleClearPremiumAccess}
             />
 
             {user?.id && role && role !== 'guest' && (
@@ -140,10 +174,46 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               </span>
             )}
 
+            {/* Premium Room Access Button */}
             {user?.id && (
-              <Button asChild>
-                <Link href="/premium-pin">Premium PIN</Link>
-              </Button>
+              <div className="relative group">
+                {hasPremiumAccess ? (
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="default" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white border-0">
+                      <Link href="/premium-room">
+                        <span className="flex items-center gap-2">
+                          <span>⭐</span>
+                          <span>Premium Room</span>
+                        </span>
+                      </Link>
+                    </Button>
+                    {/* Premium Access Indicator */}
+                    <div className="hidden group-hover:block absolute top-full right-0 mt-2 w-48 z-50">
+                      <div className="bg-card border border-border rounded-lg shadow-lg p-3">
+                        <div className="text-xs font-medium text-green-600 mb-1">Premium Access Active</div>
+                        <div className="text-xs text-muted-foreground">
+                          Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
+                        </div>
+                        <button
+                          onClick={handleClearPremiumAccess}
+                          className="text-xs text-red-500 hover:text-red-700 mt-2"
+                        >
+                          Clear All Access
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <Button asChild variant="outline">
+                    <Link href="/premium-pin">
+                      <span className="flex items-center gap-2">
+                        <span>🔒</span>
+                        <span>Enter Premium</span>
+                      </span>
+                    </Link>
+                  </Button>
+                )}
+              </div>
             )}
 
             <MobileNav
@@ -158,6 +228,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               signOut={signOut}
               showAdmin={false}
               className="lg:hidden"
+              hasPremiumAccess={hasPremiumAccess}
+              premiumRooms={premiumRooms}
+              onClearPremiumAccess={handleClearPremiumAccess}
             />
           </div>
         </div>
@@ -165,6 +238,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
       <span className="sr-only" aria-live="polite">
         {typeof streakState === 'number' ? `Current streak ${streakState} days` : ''}
+        {hasPremiumAccess ? `Premium access active for ${premiumRooms.length} rooms` : ''}
       </span>
     </header>
   );
