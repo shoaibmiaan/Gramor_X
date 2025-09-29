@@ -93,7 +93,7 @@ export default function RoleplayPage() {
     setBusy(true);
     setErr(null);
     try {
-      const headers = { ...(await authHeaders()), 'Content-Type': 'application/json' };
+      const headers = await authHeaders({ 'Content-Type': 'application/json' });
       const res = await fetch('/api/speaking/start-attempt', {
         method: 'POST',
         headers,
@@ -123,7 +123,7 @@ export default function RoleplayPage() {
   const seedIfEmpty = useCallback(async () => {
     if (chat.length > 0) return;
     const id = await ensureAttempt();
-    const headers = { ...(await authHeaders()), 'Content-Type': 'application/json' };
+    const headers = await authHeaders({ 'Content-Type': 'application/json' });
     const res = await fetch('/api/speaking/partner', {
       method: 'POST',
       headers,
@@ -185,7 +185,7 @@ export default function RoleplayPage() {
           fd.append('file', blob, `${id}-roleplay.webm`);
           res = await fetch('/api/speaking/partner', { method: 'POST', headers, body: fd });
         } else {
-          const headers = { ...(await authHeaders()), 'Content-Type': 'application/json' };
+          const headers = await authHeaders({ 'Content-Type': 'application/json' });
           res = await fetch('/api/speaking/partner', {
             method: 'POST',
             headers,

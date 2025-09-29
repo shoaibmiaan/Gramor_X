@@ -1,4 +1,3 @@
-// lib/supabaseBrowser.ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/supabase'; // Adjust if you have typed DB
 
@@ -13,8 +12,3 @@ export const supabaseBrowser = createClient<Database>(url, anon, {
     persistSession: true,
   },
 });
-
-export const authHeaders = async (extra: Record<string, string> = {}) => {
-  const { data: { session } } = await supabaseBrowser.auth.getSession();
-  return { ...extra, Authorization: `Bearer ${session?.access_token}` };
-};

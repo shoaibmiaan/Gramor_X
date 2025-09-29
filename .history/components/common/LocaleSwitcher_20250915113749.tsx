@@ -1,6 +1,12 @@
+import type { SupportedLocale } from "@/lib/i18n/config";
+const SUPPORTED_LOCALES = ["en","ur"] as const;
+function toSupported(l: string): SupportedLocale {
+  return ((SUPPORTED_LOCALES as readonly string[]).includes(l) ? l : "en") as SupportedLocale;
+}
+
 // components/common/LocaleSwitcher.tsx
 import React from 'react';
-import { persistLocale as setLocale, getLocale, type Locale } from '@/lib/locale';
+import {  setLocale, getLocale, type Locale } from '@/lib/locale';
 import { loadTranslations } from "@/lib/i18n";
 
 type Props = {
