@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
 
 import { Container } from '@/components/design-system/Container';
 import { DesktopNav } from '@/components/navigation/DesktopNav';
@@ -11,6 +12,30 @@ import { Button } from '@/components/design-system/Button';
 import { useHeaderState } from '@/components/hooks/useHeaderState';
 import { useUserContext } from '@/context/UserContext';
 import { PremiumRoomManager } from '@/premium-ui/access/roomUtils'; // Fixed conflict
+
+type NavUser = {
+  id: string | null;
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+};
+
+const mapUserToNavUser = (user: User | null): NavUser => {
+  if (!user) {
+    return { id: null, email: null, name: null, avatarUrl: null };
+  }
+
+  const metadata = user.user_metadata ?? {};
+  const name = typeof metadata['full_name'] === 'string' ? (metadata['full_name'] as string) : null;
+  const avatarUrl = typeof metadata['avatar_url'] === 'string' ? (metadata['avatar_url'] as string) : null;
+
+  return {
+    id: user.id ?? null,
+    email: user.email ?? null,
+    name,
+    avatarUrl,
+  };
+};
 
 export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [openDesktopModules, setOpenDesktopModules] = useState(false);
