@@ -1,10 +1,9 @@
-// pages/teacher/register.tsx
 import * as React from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
 import { useTeacherProfile } from '@/hooks/useTeacherProfile';
-import TeacherOnboardingForm from '@/components/teacher/TeacherOnboardingForm';
+import { TeacherOnboardingForm } from '@/components/teacher/TeacherOnboardingForm';
 
 const SUBJECTS = [
   'IELTS Listening',
