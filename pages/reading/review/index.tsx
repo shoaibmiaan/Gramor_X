@@ -1,5 +1,7 @@
+// pages/reading/review/index.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import type { GetServerSideProps, NextPage } from 'next';import { useRouter } from 'next/router';
+import type { GetServerSideProps, NextPage } from 'next';
+import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient'; // Centralized browser client for client-side
@@ -436,3 +438,5 @@ function formatAnswer(q: ReviewQuestion, ans: any): React.ReactNode {
   if (Array.isArray(ans)) return ans.join(' / ');
   return String(ans);
 }
+
+export default ReviewPage;
