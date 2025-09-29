@@ -2,7 +2,7 @@
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 export async function signOutAndRedirect(router?: { replace: (p: string) => any }) {
-  const supabase = supabaseBrowser();
+  const supabase = supabaseBrowser;
   // Clear client session first (local)
   try { await supabase.auth.signOut({ scope: 'local' } as any); } catch {}
   // Clear server cookie (Next.js auth helpers) if present
