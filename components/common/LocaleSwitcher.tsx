@@ -1,7 +1,18 @@
 // components/common/LocaleSwitcher.tsx
 import React from 'react';
 import { persistLocale as setLocale, getLocale, type Locale } from '@/lib/locale';
-import { loadTranslations } from "@/lib/i18n";
+import { loadTranslations } from '@/lib/i18n';
+import { i18nConfig, type SupportedLocale } from '@/lib/i18n/config';
+
+const supportedLocales = new Set<SupportedLocale>(i18nConfig.locales);
+
+export function toSupportedLocale(locale: Locale): SupportedLocale {
+  if (supportedLocales.has(locale as SupportedLocale)) {
+    return locale as SupportedLocale;
+  }
+
+  return i18nConfig.defaultLocale;
+}
 
 type Props = {
   value?: Locale;
@@ -22,9 +33,10 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value as Locale;
+    const supportedLocale = toSupportedLocale(next);
     try {
       setBusy(true);
-      await loadTranslations(toSupported(next));
+      await loadTranslations(supportedLocale);
       setLocale(next);
       setLocal(next);
       onChanged?.(next);
