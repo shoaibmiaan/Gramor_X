@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import type { GetServerSideProps, NextPage } from 'next';import { useRouter } from 'next/router';
+type { GetServerSideProps, NextPage } from 'next';
+import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient'; // Centralized browser client for client-side
