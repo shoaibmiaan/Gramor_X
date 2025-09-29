@@ -1,10 +1,10 @@
-import { env } from "@/lib/env";
 // pages/reading/review/index.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import type { GetServerSideProps, NextPage } from 'next';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient'; // Centralized browser client for client-side
 import { useLocale } from '@/lib/locale';
 import { translateExplanation } from '@/lib/explanations';
 import { type AnswerValue } from '@/components/reading/useReadingAnswers';
@@ -83,14 +83,11 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     return { props: { passage: null, questions: [], error: 'Missing slug', notFound: false } };
   }
 
-  const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) {
-    return {
-      props: { passage: null, questions: [], error: 'Supabase env missing', notFound: false },
-    };
-  }
-  const supabase = createClient(url, anon);
+  const supabase = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } } // Added for server
+  );
 
   const { data: passageRow, error: pErr } = await supabase
     .from('reading_passages')
@@ -166,17 +163,13 @@ const ReviewPage: NextPage<Props> = ({ passage, questions, notFound, error }) =>
       try {
         // Attempt: fetch from DB if we have attemptId + token
         if (attemptId) {
-          const url = env.NEXT_PUBLIC_SUPABASE_URL;
-          const anon = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-          const { createClient } = await import('@supabase/supabase-js');
-          const supabase = createClient(url, anon);
           const { data: { session } } = await supabase.auth.getSession();
           const authHeader = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 
           // Use REST query to respect RLS with user context via header
-          const resp = await fetch(`${url}/rest/v1/reading_attempts?id=eq.${attemptId}&select=answers`, {
+          const resp = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/reading_attempts?id=eq.${attemptId}&select=answers`, {
             headers: {
-              apikey: anon,
+              apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
               ...authHeader,
             },
           });
@@ -227,7 +220,7 @@ const ReviewPage: NextPage<Props> = ({ passage, questions, notFound, error }) =>
 
         if (!cancelled) setLoadErr('No saved answers were found for this attempt.');
       } catch (e: any) {
-        if (!cancelled) setLoadErr(e?.message ?? 'Could not load answers.');
+        if (!cancelled) setLoadErr(e.message ?? 'Could not load answers.');
       }
     }
     load();

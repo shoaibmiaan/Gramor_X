@@ -1,5 +1,3 @@
-import { env } from "@/lib/env";
-// pages/reading/passage/[slug].tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
@@ -40,9 +38,11 @@ type Props = {
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const slug = String(ctx.params?.slug ?? '');
-  const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const supabase = createClient(url, anon, { auth: { persistSession: false } });
+  const supabase = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } } // Ensured for server
+  );
 
   const [{ data: passage }, { data: qRows }] = await Promise.all([
     supabase
@@ -100,6 +100,11 @@ export default function ReadingRunner({ slug, title, difficulty, words, content,
   // -------- Submit --------
   const handleSubmit = async () => {
     const { data: { session } } = await supabaseBrowser.auth.getSession();
+    if (!session) {
+      // Prevent 401 by checking session
+      console.error('No session for submit');
+      return;
+    }
     const token = session?.access_token ?? '';
 
     const r = await fetch('/api/reading/submit', {

@@ -1,3 +1,4 @@
+// pages/api/notifications/[id].ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
@@ -14,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'PATCH') {
     const { error } = await supabase
       .from('notifications')
-      .update({ read_at: new Date().toISOString() })
+      .update({ read: true })
       .eq('id', id)
       .eq('user_id', user.id);
     if (error) return res.status(500).json({ error: error.message });

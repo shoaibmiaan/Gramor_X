@@ -7,7 +7,7 @@ import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { redirectByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
@@ -66,25 +66,30 @@ export default function LoginWithEmail() {
         return;
       }
 
-      await supabase.auth.setSession({
+      await supabaseBrowser.auth.setSession({
         access_token: body.session.access_token,
         refresh_token: body.session.refresh_token,
-      });
+      }).catch(err => console.error('Set session failed:', err));
 
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await supabaseBrowser.auth.getUser().catch(err => console.error('Get user failed:', err));
 
-      const challenged = await createChallenge(user);
+      const challenged = await createChallenge(user).catch(err => console.error('Create challenge failed:', err));
       if (challenged) return;
 
       try {
-        await fetch('/api/auth/login-event', { method: 'POST' });
-      } catch {}
-      redirectByRole(body.session.user);
-    } catch {
-      setLoading(false);
+        const loginEventRes = await fetch('/api/auth/login-event', { method: 'POST' });
+        if (!loginEventRes.ok) console.error('Login event failed:', loginEventRes.status);
+      } catch (err) {
+        console.error('Error logging login event:', err);
+      }
+
+      // Rely on _app.tsx onAuthStateChange to redirect
+    } catch (err) {
+      console.error('Login error:', err);
       setErr('Unable to sign in. Please try again.');
+      setLoading(false);
     }
   }
 

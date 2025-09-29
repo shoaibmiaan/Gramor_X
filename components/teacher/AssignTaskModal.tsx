@@ -1,155 +1,137 @@
-// components/teacher/AssignTaskModal.tsx
-import * as React from "react";
+'use client';
 
-export type AssignTaskModalProps = {
-  open: boolean;
-  onClose: () => void;
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
+import { Button } from '@/components/design-system/Button';
+import { Input } from '@/components/design-system/Input';
+import { Textarea } from '@/components/design-system/Textarea';
+import { Alert } from '@/components/design-system/Alert';
+
+interface AssignTaskModalProps {
   cohortId: string;
+  onClose: () => void;
+  onSuccess?: () => void;
   /** If provided, called instead of default POST to /api/teacher/assignments */
-  onSubmit?: (data: { cohortId: string; title: string; description?: string; dueDate: string }) => Promise<void> | void;
-};
+  customSubmit?: (data: { title: string; description: string; dueDate: string }) => Promise<void>;
+}
 
-export function AssignTaskModal({ open, onClose, cohortId, onSubmit }: AssignTaskModalProps) {
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [dueDate, setDueDate] = React.useState(() => new Date().toISOString().slice(0, 10));
-  const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+export const AssignTaskModal: React.FC<AssignTaskModalProps> = ({
+  cohortId,
+  onClose,
+  onSuccess,
+  customSubmit,
+}) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<{ id: string } | null>(null);
 
-  React.useEffect(() => {
-    if (!open) {
-      setTitle("");
-      setDescription("");
-      setDueDate(new Date().toISOString().slice(0, 10));
-      setBusy(false);
-      setError(null);
-    }
-  }, [open]);
+  useEffect(() => {
+    let mounted = true;
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) {
-      setError("Title is required");
-      return;
-    }
-    setError(null);
-    setBusy(true);
-    try {
-      if (onSubmit) {
-        await onSubmit({ cohortId, title: title.trim(), description: description.trim() || undefined, dueDate });
-      } else {
-        const res = await fetch("/api/teacher/assignments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cohortId, title: title.trim(), description: description.trim() || undefined, dueDate }),
-        });
-        if (!res.ok) throw new Error("Failed to create assignment");
+    const fetchUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (mounted) setUser(user ? { id: user.id } : null);
+      } catch (err) {
+        console.error('Failed to fetch user:', err);
+        if (mounted) setError('Failed to load user data. Please sign in.');
       }
-      onClose();
-    } catch (err: any) {
-      setError(err.message ?? "Error");
+    };
+
+    fetchUser();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      if (customSubmit) {
+        await customSubmit({ title, description, dueDate });
+      } else {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) {
+          throw new Error('Please sign in to assign tasks.');
+        }
+
+        const res = await fetch('/api/teacher/assignments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ cohortId, title, description, dueDate }),
+        });
+
+        if (!res.ok) {
+          const { error } = await res.json();
+          throw new Error(error || 'Failed to assign task');
+        }
+
+        onSuccess?.();
+        onClose();
+      }
+    } catch (err) {
+      console.error('Assignment error:', err);
+      setError((err as Error).message || 'Failed to assign task. Please try again.');
     } finally {
-      setBusy(false);
+      setSubmitting(false);
     }
   };
 
-  if (!open) return null;
+  if (!user) return <Alert variant="warning">Please sign in to assign tasks.</Alert>;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center"
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => !busy && onClose()}
-      />
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-lg rounded-xl border border-border bg-card p-4 shadow-xl">
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-body font-semibold text-foreground">Assign task to cohort</h3>
-          <button
-            type="button"
-            className="rounded-md border border-border bg-background px-2 py-1 text-caption text-muted-foreground hover:bg-border/30"
-            onClick={() => !busy && onClose()}
-          >
-            Close
-          </button>
-        </div>
-
-        <form onSubmit={submit} className="space-y-3">
-          <div>
-            <label className="mb-1 block text-caption text-muted-foreground">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-small text-foreground outline-none ring-0 focus:border-primary"
-              placeholder="e.g. Complete Listening Mock 01"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-caption text-muted-foreground">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-small text-foreground outline-none ring-0 focus:border-primary"
-              placeholder="Add instructions or links…"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-caption text-muted-foreground">Cohort</label>
-              <input
-                type="text"
-                value={cohortId}
-                readOnly
-                className="w-full cursor-not-allowed rounded-md border border-border bg-background px-3 py-2 text-small text-muted-foreground"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-caption text-muted-foreground">Due date</label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-small text-foreground outline-none ring-0 focus:border-primary"
-                required
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="rounded-md border border-border bg-background px-3 py-2 text-caption text-red-400">
-              {error}
-            </div>
-          )}
-
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => !busy && onClose()}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-small text-foreground hover:bg-border/30 disabled:opacity-50"
-              disabled={busy}
-            >
-              Cancel
-            </button>
-            <button
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-background p-6 rounded-lg max-w-md w-full">
+        <h2 className="text-xl font-semibold mb-4">Assign New Task</h2>
+        {error && <Alert variant="warning" className="mb-4">{error}</Alert>}
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <Input
+            label="Task Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+          <Textarea
+            label="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            required
+          />
+          <Input
+            label="Due Date"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            required
+          />
+          <div className="flex gap-2 mt-4">
+            <Button
               type="submit"
-              className="rounded-md border border-border bg-primary px-3 py-1.5 text-small text-background hover:opacity-90 disabled:opacity-50"
-              disabled={busy}
+              tone="primary"
+              disabled={submitting}
+              loading={submitting}
+              loadingText="Assigning..."
             >
-              {busy ? "Assigning…" : "Assign task"}
-            </button>
+              Assign Task
+            </Button>
+            <Button type="button" tone="secondary" onClick={onClose}>
+              Cancel
+            </Button>
           </div>
         </form>
       </div>
     </div>
   );
-}
+};

@@ -2,7 +2,7 @@
 import { env } from "@/lib/env";
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient"; // Import centralized client
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
@@ -14,11 +14,6 @@ type Props = {
   initialUrl?: string;
   bucket?: string; // default 'avatars'
 };
-
-const supabase = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL,
-  env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-);
 
 export const AvatarUploader: React.FC<Props> = ({
   userId,
@@ -162,4 +157,3 @@ export const AvatarUploader: React.FC<Props> = ({
     </div>
   );
 };
-  
