@@ -1,0 +1,1 @@
+export { supabaseBrowser as default, getAuthHeaders as authHeaders } from './supabase';

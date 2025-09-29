@@ -160,6 +160,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               showAdmin={false}
               className="hidden items-center gap-2 will-change-transform transition-[opacity,transform] duration-200 lg:flex data-[solid=true]:opacity-100 data-[solid=false]:opacity-95"
               data-solid={solidHeader}
+              // Pass premium access info to DesktopNav
               hasPremiumAccess={hasPremiumAccess}
               premiumRooms={premiumRooms}
               onClearPremiumAccess={handleClearPremiumAccess}
@@ -179,11 +180,11 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               <div className="relative group">
                 {hasPremiumAccess ? (
                   <div className="flex items-center gap-2">
-                    <Button asChild variant="default" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white border-0">
+                    <Button asChild variant="premium">
                       <Link href="/premium-room">
                         <span className="flex items-center gap-2">
-                          <span>⭐</span>
-                          <span>Premium Room</span>
+                          <span className="text-yellow-300">⭐</span>
+                          Premium Room
                         </span>
                       </Link>
                     </Button>
@@ -208,7 +209,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                     <Link href="/premium-pin">
                       <span className="flex items-center gap-2">
                         <span>🔒</span>
-                        <span>Enter Premium</span>
+                        Enter Premium
                       </span>
                     </Link>
                   </Button>
@@ -228,6 +229,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               signOut={signOut}
               showAdmin={false}
               className="lg:hidden"
+              // Pass premium access info to MobileNav
               hasPremiumAccess={hasPremiumAccess}
               premiumRooms={premiumRooms}
               onClearPremiumAccess={handleClearPremiumAccess}

@@ -28,9 +28,6 @@ type MobileNavProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'role'> & {
   setMobileModulesOpen: (open: boolean) => void;
   signOut: () => Promise<void>;
   showAdmin?: boolean;
-  hasPremiumAccess?: boolean;
-  premiumRooms?: string[];
-  onClearPremiumAccess?: () => void;
 }
 
 export function MobileNav({
@@ -44,9 +41,6 @@ export function MobileNav({
   setMobileModulesOpen,
   signOut,
   showAdmin = true,
-  hasPremiumAccess = false,
-  premiumRooms = [],
-  onClearPremiumAccess,
   className,
   ...rest
 }: MobileNavProps) {
@@ -103,30 +97,6 @@ export function MobileNav({
           )}
         </div>
 
-        {/* Premium Access Status */}
-        {hasPremiumAccess && (
-          <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-yellow-400/10 to-orange-500/10 border border-yellow-200/20">
-            <div className="flex items-center gap-2 text-sm font-medium text-yellow-700 dark:text-yellow-300">
-              <span>⭐</span>
-              <span>Premium Access Active</span>
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''} available
-            </div>
-            {onClearPremiumAccess && (
-              <button
-                onClick={() => {
-                  onClearPremiumAccess();
-                  setMobileOpen(false);
-                }}
-                className="text-xs text-red-500 hover:text-red-700 mt-2"
-              >
-                Clear All Access
-              </button>
-            )}
-          </div>
-        )}
-
         <nav className="pb-4">
           <ul className="flex flex-col gap-1">
             {user && user.id && (
@@ -137,38 +107,6 @@ export function MobileNav({
                   onClick={closeMenu}
                 >
                   Dashboard
-                </NavLink>
-              </li>
-            )}
-
-            {/* Premium Room Link */}
-            {hasPremiumAccess && (
-              <li>
-                <NavLink
-                  href="/premium-room"
-                  className={`${mobileItemClass} bg-gradient-to-r from-yellow-400/10 to-orange-500/10 border border-yellow-200/20`}
-                  onClick={closeMenu}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>⭐</span>
-                    <span>Premium Room</span>
-                  </span>
-                </NavLink>
-              </li>
-            )}
-
-            {/* Premium PIN Link for non-premium users */}
-            {user && user.id && !hasPremiumAccess && (
-              <li>
-                <NavLink
-                  href="/premium-pin"
-                  className={`${mobileItemClass} border border-primary/20`}
-                  onClick={closeMenu}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>🔒</span>
-                    <span>Enter Premium</span>
-                  </span>
                 </NavLink>
               </li>
             )}
