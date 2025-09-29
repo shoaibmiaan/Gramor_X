@@ -1,6 +1,6 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -57,6 +57,40 @@ const slab = Roboto_Slab({
 });
 
 const IS_CI = process.env.NEXT_PUBLIC_CI === 'true';
+
+// Error boundary component
+function SupabaseErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = (error: any) => {
+      console.warn('Supabase initialization error:', error);
+      setHasError(true);
+    };
+
+    // Global error handler for Supabase
+    window.addEventListener('error', handleError);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-bold mb-4">Setting up your environment...</h1>
+          <p className="text-muted-foreground">
+            Please check your environment variables and restart the development server.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 function GuardSkeleton() {
   return (
@@ -325,14 +359,16 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
 export default function App(props: AppProps) {
   return (
-    <LanguageProvider>
-      <ToastProvider>
-        <NotificationProvider>
-          <UserProvider>
-            <InnerApp {...props} />
-          </UserProvider>
-        </NotificationProvider>
-      </ToastProvider>
-    </LanguageProvider>
+    <SupabaseErrorBoundary>
+      <LanguageProvider>
+        <ToastProvider>
+          <NotificationProvider>
+            <UserProvider>
+              <InnerApp {...props} />
+            </UserProvider>
+          </NotificationProvider>
+        </ToastProvider>
+      </LanguageProvider>
+    </SupabaseErrorBoundary>
   );
 }

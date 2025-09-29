@@ -1,3 +1,4 @@
+// components/Header.tsx
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -10,7 +11,7 @@ import { MobileNav } from '@/components/navigation/MobileNav';
 import { Button } from '@/components/design-system/Button';
 import { useHeaderState } from '@/components/hooks/useHeaderState';
 import { useUserContext } from '@/context/UserContext';
-import { PremiumRoomManager } from '@/premium-ui/access/roomUtils'; // Fixed conflict
+import { PremiumRoomManager } from '@/premium-ui/access/roomUtils';
 
 export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [openDesktopModules, setOpenDesktopModules] = useState(false);
@@ -19,27 +20,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [scrolled, setScrolled] = useState(false);
 
   const { user, role, loading } = useUserContext();
-  const { streak: streakState, signOut } = useHeaderState(streak);
-  const [navUser, setNavUser] = useState(() => mapUserToNavUser(user));
+  const { streak: streakState, ready, signOut } = useHeaderState(streak);
 
-  useEffect(() => {
-    setNavUser(mapUserToNavUser(user));
-  }, [user]);
-
-  useEffect(() => {
-    const onAvatarChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<{ url: string }>;
-      const nextUrl = customEvent.detail?.url;
-      if (typeof nextUrl === 'string') {
-        setNavUser((current) => ({ ...current, avatarUrl: nextUrl }));
-      }
-    };
-    window.addEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
-    return () => window.removeEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
-  }, []);
-
-  const navigationReady = !loading;
-
+  // Check if user has access to any premium rooms
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
 
@@ -52,6 +35,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
     checkPremiumAccess();
     
+    // Listen for storage changes to update premium access status
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'premiumRooms') {
         checkPremiumAccess();
@@ -68,7 +52,6 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-  
   const solidHeader = scrolled || openDesktopModules || mobileOpen;
 
   const modulesRef = useRef<HTMLLIElement>(null);
@@ -166,9 +149,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
           <div className="flex items-center gap-3">
             <DesktopNav
-              user={navUser}
+              user={user}
               role={role ?? 'guest'}
-              ready={navigationReady}
+              ready={ready}
               streak={streakState}
               openModules={openDesktopModules}
               setOpenModules={setOpenDesktopModules}
@@ -177,6 +160,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               showAdmin={false}
               className="hidden items-center gap-2 will-change-transform transition-[opacity,transform] duration-200 lg:flex data-[solid=true]:opacity-100 data-[solid=false]:opacity-95"
               data-solid={solidHeader}
+              // Pass premium access info to DesktopNav
               hasPremiumAccess={hasPremiumAccess}
               premiumRooms={premiumRooms}
               onClearPremiumAccess={handleClearPremiumAccess}
@@ -196,11 +180,11 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               <div className="relative group">
                 {hasPremiumAccess ? (
                   <div className="flex items-center gap-2">
-                    <Button asChild variant="default" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white border-0">
+                    <Button asChild variant="premium">
                       <Link href="/premium-room">
                         <span className="flex items-center gap-2">
-                          <span>⭐</span>
-                          <span>Premium Room</span>
+                          <span className="text-yellow-300">⭐</span>
+                          Premium Room
                         </span>
                       </Link>
                     </Button>
@@ -225,7 +209,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                     <Link href="/premium-pin">
                       <span className="flex items-center gap-2">
                         <span>🔒</span>
-                        <span>Enter Premium</span>
+                        Enter Premium
                       </span>
                     </Link>
                   </Button>
@@ -234,9 +218,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
             )}
 
             <MobileNav
-              user={navUser}
+              user={user}
               role={role ?? 'guest'}
-              ready={navigationReady}
+              ready={ready}
               streak={streakState}
               mobileOpen={mobileOpen}
               setMobileOpen={setMobileOpen}
@@ -245,6 +229,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               signOut={signOut}
               showAdmin={false}
               className="lg:hidden"
+              // Pass premium access info to MobileNav
               hasPremiumAccess={hasPremiumAccess}
               premiumRooms={premiumRooms}
               onClearPremiumAccess={handleClearPremiumAccess}

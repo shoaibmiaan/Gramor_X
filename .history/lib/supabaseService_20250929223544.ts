@@ -1,0 +1,1 @@
+export { supabaseAdmin as supabaseService, isAdminEmail } from './supabase';

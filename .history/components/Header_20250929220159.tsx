@@ -1,3 +1,4 @@
+// components/Header.tsx
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -10,7 +11,7 @@ import { MobileNav } from '@/components/navigation/MobileNav';
 import { Button } from '@/components/design-system/Button';
 import { useHeaderState } from '@/components/hooks/useHeaderState';
 import { useUserContext } from '@/context/UserContext';
-import { PremiumRoomManager } from '@/premium-ui/access/roomUtils'; // Fixed conflict
+import { PremiumRoomManager } from '@/premium-ui/access/roomUtils';
 
 export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [openDesktopModules, setOpenDesktopModules] = useState(false);
@@ -19,27 +20,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [scrolled, setScrolled] = useState(false);
 
   const { user, role, loading } = useUserContext();
-  const { streak: streakState, signOut } = useHeaderState(streak);
-  const [navUser, setNavUser] = useState(() => mapUserToNavUser(user));
+  const { streak: streakState, ready, signOut } = useHeaderState(streak);
 
-  useEffect(() => {
-    setNavUser(mapUserToNavUser(user));
-  }, [user]);
-
-  useEffect(() => {
-    const onAvatarChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<{ url: string }>;
-      const nextUrl = customEvent.detail?.url;
-      if (typeof nextUrl === 'string') {
-        setNavUser((current) => ({ ...current, avatarUrl: nextUrl }));
-      }
-    };
-    window.addEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
-    return () => window.removeEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
-  }, []);
-
-  const navigationReady = !loading;
-
+  // Check if user has access to any premium rooms
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
 
@@ -52,6 +35,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
     checkPremiumAccess();
     
+    // Listen for storage changes to update premium access status
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'premiumRooms') {
         checkPremiumAccess();
@@ -68,7 +52,6 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-  
   const solidHeader = scrolled || openDesktopModules || mobileOpen;
 
   const modulesRef = useRef<HTMLLIElement>(null);
@@ -166,9 +149,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
           <div className="flex items-center gap-3">
             <DesktopNav
-              user={navUser}
+              user={user}
               role={role ?? 'guest'}
-              ready={navigationReady}
+              ready={ready}
               streak={streakState}
               openModules={openDesktopModules}
               setOpenModules={setOpenDesktopModules}
@@ -234,9 +217,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
             )}
 
             <MobileNav
-              user={navUser}
+              user={user}
               role={role ?? 'guest'}
-              ready={navigationReady}
+              ready={ready}
               streak={streakState}
               mobileOpen={mobileOpen}
               setMobileOpen={setMobileOpen}

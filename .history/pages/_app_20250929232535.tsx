@@ -14,7 +14,7 @@ import '@/styles/themes/index.css';
 import Layout from '@/components/Layout';
 import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabaseBrowser } from '@/lib/supabase'; // ✅ CHANGE THIS LINE - import from '@/lib/supabase'
 import { env } from '@/lib/env';
 import { LanguageProvider } from '@/lib/locale';
 import { initIdleTimeout } from '@/utils/idleTimeout';

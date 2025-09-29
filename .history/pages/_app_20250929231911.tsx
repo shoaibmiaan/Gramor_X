@@ -1,6 +1,6 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -14,7 +14,7 @@ import '@/styles/themes/index.css';
 import Layout from '@/components/Layout';
 import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+// import { supabaseBrowser } from '@/lib/supabaseBrowser'; // REMOVED - using safe version below
 import { env } from '@/lib/env';
 import { LanguageProvider } from '@/lib/locale';
 import { initIdleTimeout } from '@/utils/idleTimeout';
@@ -43,6 +43,46 @@ import TeacherProfile from '@/components/teacher/TeacherProfile';
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
 
+// TEMPORARY: Safe Supabase import with fallback
+let supabaseBrowser: any = null;
+try {
+  const supabaseModule = require('@/lib/supabaseBrowser');
+  supabaseBrowser = supabaseModule.supabaseBrowser || supabaseModule.default;
+  
+  // If it's still undefined, create a minimal fallback
+  if (!supabaseBrowser || !supabaseBrowser.auth) {
+    console.warn('Supabase client undefined, creating emergency fallback');
+    supabaseBrowser = {
+      auth: {
+        getSession: async () => { 
+          console.log('🔧 Using fallback getSession');
+          return { data: { session: null }, error: null }; 
+        },
+        onAuthStateChange: () => { 
+          console.log('🔧 Using fallback onAuthStateChange');
+          return { data: { subscription: { unsubscribe: () => {} } } };
+        }
+      }
+    };
+  } else {
+    console.log('✅ Supabase client loaded successfully');
+  }
+} catch (error) {
+  console.error('Failed to import Supabase, using fallback:', error);
+  supabaseBrowser = {
+    auth: {
+      getSession: async () => { 
+        console.log('🔧 Using fallback getSession (catch block)');
+        return { data: { session: null }, error: null }; 
+      },
+      onAuthStateChange: () => { 
+        console.log('🔧 Using fallback onAuthStateChange (catch block)');
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      }
+    }
+  };
+}
+
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -57,6 +97,40 @@ const slab = Roboto_Slab({
 });
 
 const IS_CI = process.env.NEXT_PUBLIC_CI === 'true';
+
+// Error boundary component
+function SupabaseErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = (error: any) => {
+      console.warn('Supabase initialization error:', error);
+      setHasError(true);
+    };
+
+    // Global error handler for Supabase
+    window.addEventListener('error', handleError);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center p-8">
+          <h1 className="text-2xl font-bold mb-4">Setting up your environment...</h1>
+          <p className="text-muted-foreground">
+            Please check your environment variables and restart the development server.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 function GuardSkeleton() {
   return (
@@ -325,14 +399,16 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
 export default function App(props: AppProps) {
   return (
-    <LanguageProvider>
-      <ToastProvider>
-        <NotificationProvider>
-          <UserProvider>
-            <InnerApp {...props} />
-          </UserProvider>
-        </NotificationProvider>
-      </ToastProvider>
-    </LanguageProvider>
+    <SupabaseErrorBoundary>
+      <LanguageProvider>
+        <ToastProvider>
+          <NotificationProvider>
+            <UserProvider>
+              <InnerApp {...props} />
+            </UserProvider>
+          </NotificationProvider>
+        </ToastProvider>
+      </LanguageProvider>
+    </SupabaseErrorBoundary>
   );
 }

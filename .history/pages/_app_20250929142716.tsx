@@ -112,12 +112,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     [pathname]
   );
 
-  // Check if it's a premium room route that requires PIN access
-  const isPremiumRoomRoute = useMemo(
-    () => pathname.startsWith('/premium/') && !pathname.startsWith('/premium-pin'),
-    [pathname]
-  );
-
   const isAuthPage = useMemo(
     () =>
       /^\/(login|signup|register)(\/|$)/.test(pathname) ||
@@ -127,8 +121,8 @@ function InnerApp({ Component, pageProps }: AppProps) {
   );
 
   const isNoChromeRoute = useMemo(
-    () => /\/exam(\/|$)|\/exam-room(\/|$)|\/focus-mode(\/|$)/.test(pathname) || isAuthPage || isPremiumRoomRoute,
-    [pathname, isAuthPage, isPremiumRoomRoute]
+    () => /\/exam(\/|$)|\/exam-room(\/|$)|\/focus-mode(\/|$)/.test(pathname) || isAuthPage,
+    [pathname, isAuthPage]
   );
 
   const showLayout = !needPremium && !isNoChromeRoute;
@@ -243,8 +237,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const { isChecking } = useRouteGuard();
   if (isChecking) return <GuardSkeleton />;
 
-  // For premium room routes, wrap with PremiumThemeProvider and don't use regular layout
-  const basePage = needPremium || isPremiumRoomRoute ? (
+  const basePage = needPremium ? (
     <PremiumThemeProvider>
       <Component {...pageProps} />
     </PremiumThemeProvider>

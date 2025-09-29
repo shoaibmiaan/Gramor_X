@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/router'; // Merged conflict
 import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
@@ -19,7 +19,6 @@ export function useHeaderState(initialStreak?: number) {
   const [user, setUser] = useState<UserInfo>({ id: null, email: null, name: null, avatarUrl: null });
   const [streak, setStreak] = useState<number>(initialStreak ?? 0);
 
-  // Streak (prop wins; otherwise fetch)
   useEffect(() => {
     if (typeof initialStreak === 'number') setStreak(initialStreak);
   }, [initialStreak]);

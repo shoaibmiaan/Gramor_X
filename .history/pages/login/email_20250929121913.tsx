@@ -38,22 +38,20 @@ export default function LoginWithEmail() {
 
     const trimmedEmail = email.trim();
 
-    if (!trimmedEmail && !pw) {
-      setErr('Email and password are required.');
-      return;
-    }
-
-    if (!trimmedEmail) {
-      setErr('Email is required.');
-      return;
-    }
-
+    // If password is provided, email can be optional
     if (!pw) {
       setErr('Password is required.');
       return;
     }
 
-    if (!isValidEmail(trimmedEmail)) {
+    // If email is empty, do not validate it
+    if (!trimmedEmail && pw) {
+      setErr('Email is required when entering the password.');
+      return;
+    }
+
+    // If email is provided, validate it
+    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
       setEmailErr('Enter a valid email address.');
       return;
     }
@@ -65,7 +63,7 @@ export default function LoginWithEmail() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail, password: pw }),
+        body: JSON.stringify({ email: trimmedEmail || null, password: pw }),
       });
       const body = await res.json().catch(() => ({}));
       setLoading(false);
@@ -97,6 +95,8 @@ export default function LoginWithEmail() {
       } catch (err) {
         console.error('Error logging login event:', err);
       }
+
+      // Rely on _app.tsx onAuthStateChange to redirect
     } catch (err) {
       console.error('Login error:', err);
       setErr('Unable to sign in. Please try again.');
@@ -116,20 +116,23 @@ export default function LoginWithEmail() {
 
       {!otpSent ? (
         <form onSubmit={onSubmit} className="space-y-6 mt-2">
-          <Input
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => {
-              const v = e.target.value;
-              setEmail(v);
-              setEmailErr(!v || isValidEmail(v.trim()) ? null : 'Enter a valid email address.');
-            }}
-            autoComplete="email"
-            required
-            error={emailErr ?? undefined}
-          />
+          {!(pw && email) && (
+            <Input
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => {
+                const v = e.target.value;
+                setEmail(v);
+                setEmailErr(!v || isValidEmail(v.trim()) ? null : 'Enter a valid email address.');
+              }}
+              autoComplete="email"
+              required={!pw}  // If password is provided, don't require email
+              error={emailErr ?? undefined}
+            />
+          )}
+
           <PasswordInput
             label="Password"
             placeholder="Your password"
