@@ -4,23 +4,22 @@ import { persistLocale as setLocale, getLocale, type Locale } from '@/lib/locale
 import { loadTranslations } from '@/lib/i18n';
 import { i18nConfig, type SupportedLocale } from '@/lib/i18n/config';
 
-const supportedLocales = new Set<SupportedLocale>(i18nConfig.locales);
-
-export function toSupportedLocale(locale: Locale): SupportedLocale {
-  if (supportedLocales.has(locale as SupportedLocale)) {
-    return locale as SupportedLocale;
-  }
-
-  return i18nConfig.defaultLocale;
-}
-
 type Props = {
   value?: Locale;
   onChanged?: (next: Locale) => void;
   options?: { value: Locale; label: string }[];
+  label?: string;
 };
 
-export default function LocaleSwitcher({ value, onChanged, options }: Props) {
+const supportedLocales = new Set<SupportedLocale>(i18nConfig.locales);
+
+function toSupportedLocale(locale: Locale): SupportedLocale {
+  return supportedLocales.has(locale as SupportedLocale)
+    ? (locale as SupportedLocale)
+    : i18nConfig.defaultLocale;
+}
+
+export default function LocaleSwitcher({ value, onChanged, options, label }: Props) {
   const [busy, setBusy] = React.useState(false);
   const [local, setLocal] = React.useState<Locale>(value ?? getLocale('en'));
 
@@ -37,9 +36,9 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
     try {
       setBusy(true);
       await loadTranslations(supportedLocale);
-      setLocale(next);
-      setLocal(next);
-      onChanged?.(next);
+      setLocale(supportedLocale);
+      setLocal(supportedLocale);
+      onChanged?.(supportedLocale);
     } finally {
       setBusy(false);
     }
@@ -47,7 +46,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
 
   return (
     <label className="inline-flex items-center gap-2 text-small">
-      <span className="text-mutedText">Language</span>
+      <span className="text-mutedText">{label ?? 'Language'}</span>
       <select
         className="rounded-ds border border-border bg-card px-3 py-2 text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         value={local}
@@ -55,7 +54,9 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
         disabled={busy}
       >
         {langs.map((l) => (
-          <option key={l.value} value={l.value}>{l.label}</option>
+          <option key={l.value} value={l.value}>
+            {l.label}
+          </option>
         ))}
       </select>
       {busy && <span className="text-mutedText text-caption">…updating</span>}
