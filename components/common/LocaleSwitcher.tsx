@@ -7,9 +7,10 @@ type Props = {
   value?: Locale;
   onChanged?: (next: Locale) => void;
   options?: { value: Locale; label: string }[];
+  label?: string;
 };
 
-export default function LocaleSwitcher({ value, onChanged, options }: Props) {
+export default function LocaleSwitcher({ value, onChanged, options, label }: Props) {
   const [busy, setBusy] = React.useState(false);
   const [local, setLocal] = React.useState<Locale>(value ?? getLocale('en'));
 
@@ -35,7 +36,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
 
   return (
     <label className="inline-flex items-center gap-2 text-small">
-      <span className="text-mutedText">Language</span>
+      <span className="text-mutedText">{label ?? "Language"}</span>
       <select
         className="rounded-ds border border-border bg-card px-3 py-2 text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         value={local}
