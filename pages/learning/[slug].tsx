@@ -1,20 +1,14 @@
 import { env } from "@/lib/env";
-// pages/learning/[slug].tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient'; // Centralized browser client
 import Image from "next/image";
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
-
-const supabase = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL,
-  env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
 
 type Course = {
   id: string;
@@ -112,6 +106,9 @@ export default function CourseDetailPage() {
           .maybeSingle();
 
         if (p) setProgress(p as Progress);
+      } else {
+        // Handle no session (prevent 401)
+        setProgress(null);
       }
 
       setLoading(false);
@@ -136,7 +133,7 @@ export default function CourseDetailPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user && course) {
-      await supabase.from('user_course_progress').upsert(
+      const { error } = await supabase.from('user_course_progress').upsert(
         {
           user_id: user.id,
           course_id: course.id,
@@ -145,12 +142,20 @@ export default function CourseDetailPage() {
         { onConflict: 'user_id,course_id' }
       );
 
+      if (error) {
+        console.error('Progress update error:', error);
+        return;
+      }
+
       setProgress(prev => ({
         ...(prev || ({} as Progress)),
         user_id: user.id,
         course_id: course.id,
         last_lesson_id: lessonId,
       } as Progress));
+    } else {
+      // Handle no user (prevent 401)
+      console.warn('No authenticated user for progress update');
     }
 
     if (s) router.push(`/learning/${s}/lesson/${lessonId}`);
@@ -211,8 +216,8 @@ export default function CourseDetailPage() {
           {/* Hero / Overview */}
           <Card className="p-0 rounded-ds-2xl overflow-hidden">
             {course.thumbnail_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <Image src={course.thumbnail_url} alt="" width={800} height={256} className="h-64 w-full object-cover" />            ) : (
+              <Image src={course.thumbnail_url} alt="" width={800} height={256} className="h-64 w-full object-cover" />
+            ) : (
               <div className="h-64 w-full bg-purpleVibe/10" />
             )}
             <div className="p-6">

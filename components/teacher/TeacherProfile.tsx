@@ -1,58 +1,51 @@
-import React, { useState } from 'react';
+'use client';
 
-const TeacherProfile = () => {
-  const [profileData, setProfileData] = useState({
-    name: '',
-    subject: '',
-    bio: '',
-  });
+     import { useState, useEffect } from 'react';
+     import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setProfileData((prev) => ({ ...prev, [name]: value }));
-  };
+     export default function TeacherProfile() {
+       const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+       const [loading, setLoading] = useState(true);
+       const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    // Here you will handle the form submission, probably sending the data to the backend
-    console.log('Profile submitted for approval:', profileData);
-  };
+       useEffect(() => {
+         let mounted = true;
 
-  return (
-    <div>
-      <h3>Submit your profile for approval</h3>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name:</label>
-          <input
-            type="text"
-            name="name"
-            value={profileData.name}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label>Subject:</label>
-          <input
-            type="text"
-            name="subject"
-            value={profileData.subject}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label>Bio:</label>
-          <textarea
-            name="bio"
-            value={profileData.bio}
-            onChange={handleChange}
-          ></textarea>
-        </div>
-        <button type="button" onClick={handleSubmit}>
-          Submit for Approval
-        </button>
-      </form>
-    </div>
-  );
-};
+         const fetchUser = async () => {
+           try {
+             const { data: { user }, error } = await supabase.auth.getUser();
+             if (error) throw error;
+             if (mounted) {
+               setUser(user ? { id: user.id, email: user.email ?? '' } : null);
+             }
+           } catch (err) {
+             if (mounted) setError(err.message || 'Failed to fetch user');
+           } finally {
+             if (mounted) setLoading(false);
+           }
+         };
 
-export default TeacherProfile;
+         fetchUser();
+
+         return () => {
+           mounted = false;
+         };
+       }, []);
+
+       if (loading) return <div>Loading...</div>;
+       if (error) return <div>Error: {error}</div>;
+
+       return (
+         <div>
+           <h1>Teacher Profile</h1>
+           {user ? (
+             <>
+               <p>ID: {user.id}</p>
+               <p>Email: {user.email}</p>
+             </>
+           ) : (
+             <p>No user data available</p>
+           )}
+         </div>
+       );
+     }

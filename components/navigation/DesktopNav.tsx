@@ -19,7 +19,6 @@ interface UserInfo {
 
 type DesktopNavProps = Omit<React.HTMLAttributes<HTMLElement>, 'role'> & {
   user: UserInfo | null;
-  /** app/user role, not ARIA role */
   role: string | null;
   ready: boolean;
   streak: number;
@@ -27,7 +26,6 @@ type DesktopNavProps = Omit<React.HTMLAttributes<HTMLElement>, 'role'> & {
   setOpenModules: (open: boolean) => void;
   modulesRef: React.RefObject<HTMLLIElement>;
   signOut: () => Promise<void>;
-  /** Force-hide admin links regardless of role (default true to keep current behavior explicit) */
   showAdmin?: boolean;
 };
 
@@ -56,9 +54,6 @@ export function DesktopNav({
   const menuItems = isTeacher
     ? [{ id: 'account', label: 'Profile', href: '/account' }]
     : USER_MENU_LINKS;
-
-  // Determine if the user is an admin
-  const isAdmin = role === 'admin';  // Check if role is admin
 
   return (
     <nav className={className} aria-label="Primary" {...rest}>
@@ -125,7 +120,7 @@ export function DesktopNav({
                 email={user?.email ?? undefined}
                 avatarUrl={user?.avatarUrl ?? undefined}
                 onSignOut={signOut}
-                isAdmin={isAdmin}  // Pass isAdmin here
+                isAdmin={role === 'admin'}
                 items={menuItems.map((link) => ({
                   id: link.id,
                   label: link.label,

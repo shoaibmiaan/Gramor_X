@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { useLocale } from '@/lib/locale';
 import {
   isGuestOnlyRoute,
@@ -17,8 +16,8 @@ import {
 function safeNext(next?: string | string[] | null) {
   const n = typeof next === 'string' ? next : Array.isArray(next) ? next[0] : '';
   if (!n) return '';
-  if (n.startsWith('http')) return '';      // block open redirects
-  if (n === '/login') return '';            // avoid loops
+  if (n.startsWith('http')) return ''; // block open redirects
+  if (n === '/login') return ''; // avoid loops
   return n;
 }
 
@@ -39,7 +38,7 @@ export function useRouteGuard() {
 
     (async () => {
       try {
-        const { data: { session }, error } = await supabaseBrowser.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         if (!mounted) return;
 
         const authed = !!session && !error;
@@ -52,7 +51,7 @@ export function useRouteGuard() {
 
         // hydrate locale if logged in
         if (authed && user) {
-          const { data: profile } = await supabaseBrowser
+          const { data: profile } = await supabase
             .from('user_profiles') // keep your table name
             .select('preferred_language')
             .eq('user_id', user.id)

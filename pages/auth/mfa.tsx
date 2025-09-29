@@ -1,7 +1,9 @@
+'use client';
+
 import { useState } from 'react';
 import AuthLayout from '@/components/layouts/AuthLayout';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { redirectByRole } from '@/lib/routeAccess';
 
 export default function MfaPage() {
@@ -14,11 +16,15 @@ export default function MfaPage() {
     setLoading(true);
     setError(null);
     try {
+      if (!/^\d{6}$/.test(code)) {
+        throw new Error('Please enter a valid 6-digit code.');
+      }
       const { data, error } = await supabase.auth.verifyOtp({ type: 'totp', token: code });
-      if (error) setError(error.message);
-      else redirectByRole(data.user ?? null);
+      if (error) throw error;
+      redirectByRole(data.user ?? null);
     } catch (err: any) {
-      setError(err.message);
+      console.error('MFA verification error:', err);
+      setError(err.message || 'Failed to verify code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -29,11 +35,12 @@ export default function MfaPage() {
       <form onSubmit={submit} className="mt-4 space-y-4 max-w-sm">
         <input
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={(e) => setCode(e.target.value.replace(/\s+/g, ''))}
           placeholder="123456"
           className="w-full rounded-md border px-3 py-2"
           inputMode="numeric"
           pattern="[0-9]{6}"
+          required
         />
         <button
           type="submit"

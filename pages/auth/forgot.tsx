@@ -2,19 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
-import {
-  AppleIcon,
-  GoogleIcon,
-  FacebookIcon,
-  MailIcon,
-  SmsIcon,
-} from '@/components/design-system/icons';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { MailIcon } from '@/components/design-system/icons';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { destinationByRole } from '@/lib/routeAccess';
 import { Input } from '@/components/design-system/Input';
 
@@ -35,10 +28,9 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const router = useRouter();
 
-  // Only redirect away if we DEFINITELY have a session (same pattern)
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
 
@@ -54,11 +46,11 @@ export default function ForgotPasswordPage() {
         }
       }
       setReady(true);
-    })();
+    };
+    checkSession();
     return () => { mounted = false; };
-  }, [router.query.next, router.asPath, router.replace]);
+  }, [router]);
 
-  // Persist role in query + localStorage (same as LoginOptions)
   useEffect(() => {
     if (!router.isReady) return;
     const roleQuery = typeof router.query.role === 'string' ? router.query.role : null;
@@ -81,11 +73,12 @@ export default function ForgotPasswordPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null); setOk(null);
+    setErr(null);
+    setOk(null);
     if (!email) return setErr('Please enter your email.');
     setBusy(true);
     try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
       const next = `/login${selectedRole ? `?role=${encodeURIComponent(selectedRole)}` : ''}`;
       const redirectTo = `${origin}/auth/reset?next=${encodeURIComponent(next)}`;
 
@@ -105,6 +98,7 @@ export default function ForgotPasswordPage() {
         </>
       );
     } catch (e: any) {
+      console.error('Reset password error:', e);
       setErr(e?.message || 'Failed to send reset email.');
     } finally {
       setBusy(false);
@@ -138,7 +132,7 @@ export default function ForgotPasswordPage() {
         <Input
           type="email"
           value={email}
-          onChange={(e)=>setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
           aria-label="Email"
           required
