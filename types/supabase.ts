@@ -66,3 +66,5 @@ export interface DBSchema {
 
 export type TableName = keyof DBSchema;
 export type RowOf<T extends TableName> = DBSchema[T];
+
+export type Database = DBSchema;
