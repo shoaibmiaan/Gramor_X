@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 interface Params {
   exam: string;
@@ -8,9 +8,9 @@ interface Params {
 
 export async function recordFocusViolation(params: Params) {
   try {
-    const { data } = await supabase.auth.getUser();
+    const { data } = await supabaseBrowser.auth.getUser();
     const userId = data.user?.id ?? null;
-    await supabase.from('exam_focus_violations').insert({
+    await supabaseBrowser.from('exam_focus_violations').insert({
       user_id: userId,
       exam: params.exam,
       test_slug: params.testSlug ?? null,
@@ -21,4 +21,3 @@ export async function recordFocusViolation(params: Params) {
     console.error('recordFocusViolation failed', err);
   }
 }
-

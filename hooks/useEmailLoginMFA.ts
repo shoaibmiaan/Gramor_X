@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient'; // Use supabaseClient as the single source of truth
 import { redirectByRole } from '@/lib/routeAccess';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 

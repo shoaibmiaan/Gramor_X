@@ -93,11 +93,11 @@ type Props = { attempt: Attempt | null };
  * ────────────────────────────*/
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const { attemptId } = ctx.query as { attemptId: string };
-  const url = env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const supabase = createClient(url, anon, {
-    global: { headers: { Cookie: ctx.req.headers.cookie || '' } },
-  });
+  const supabase = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } } // Added for server
+  );
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {

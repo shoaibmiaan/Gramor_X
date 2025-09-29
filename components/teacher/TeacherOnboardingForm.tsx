@@ -1,165 +1,157 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { useRouter } from 'next/router';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/design-system/Input';
-import { Select } from '@/components/design-system/Select';
 import { Textarea } from '@/components/design-system/Textarea';
 import { Button } from '@/components/design-system/Button';
-import { Card } from '@/components/design-system/Card';
-import { Badge } from '@/components/design-system/Badge';
-import { teacherRegisterSchema } from '@/lib/validation/teacher';  // Validation schema
-import { useTeacherProfile } from '@/hooks/useTeacherProfile'; // Custom hook to get teacher profile
-import { useSWR } from 'swr';
-import { z } from 'zod';
+import { Alert } from '@/components/design-system/Alert';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 
-type Props = {
-  subjectsOptions: string[];
-};
-
-const TeacherOnboardingForm: React.FC<Props> = ({ subjectsOptions }) => {
+export default function TeacherOnboardingForm() {
   const router = useRouter();
-  const { profile, isLoading, refresh } = useTeacherProfile();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    subjectExpertise: '',
+    teachingExperience: '',
+    linkedIn: '',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [teacherData, setTeacherData] = useState({
-    teacher_subjects: [] as string[],
-    teacher_bio: '',
-    teacher_experience_years: 0,
-    teacher_cv_url: '',
-  });
+  const [user, setUser] = useState<{ id: string; fullName: string; email: string } | null>(null);
 
-  // Handle form field changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (mounted) {
+          if (!user) {
+            router.push('/login?next=/teacher/welcome');
+            return;
+          }
+          setUser({
+            id: user.id,
+            fullName: user.user_metadata?.full_name || '',
+            email: user.email || '',
+          });
+          setFormData((prev) => ({
+            ...prev,
+            fullName: user.user_metadata?.full_name || '',
+            linkedIn: user.user_metadata?.linkedIn || '',
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch user:', err);
+        if (mounted) setError('Failed to load user data. Please sign in.');
+      }
+    };
+
+    fetchUser();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setTeacherData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const options = e.target.selectedOptions;
-    const values = Array.from(options).map((opt) => opt.value);
-    setTeacherData((prev) => ({ ...prev, teacher_subjects: values }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setSubmitting(true);
-
-    // Validate form data
-    const validation = teacherRegisterSchema.safeParse(teacherData);
-    if (!validation.success) {
-      setError(validation.error.issues.map((issue) => issue.message).join(', '));
-      setSubmitting(false);
-      return;
-    }
+    setError(null);
 
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Please sign in to submit the form.');
+      }
+
       const response = await fetch('/api/teacher/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validation.data),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          fullName: formData.fullName,
+          subjectExpertise: formData.subjectExpertise,
+          teachingExperience: formData.teachingExperience,
+          linkedIn: formData.linkedIn,
+        }),
       });
 
       if (!response.ok) {
-        const responseData = await response.json();
-        throw new Error(responseData?.error || 'Registration failed');
+        const { error } = await response.json();
+        throw new Error(error || 'Failed to submit onboarding form');
       }
 
-      await refresh(); // Refresh the teacher profile after success
-      router.push('/teacher'); // Navigate to teacher page after successful submission
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during submission');
+      router.push('/teacher/dashboard');
+    } catch (err) {
+      console.error('Form submission error:', err);
+      setError(err.message || 'Failed to submit form. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Conditional rendering based on the profile state
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!profile) {
-    return <div>You need to be logged in to register as a teacher.</div>;
-  }
+  if (!user) return <Alert variant="warning">Please sign in to complete onboarding.</Alert>;
+  if (error) return <Alert variant="warning" className="m-6">{error}</Alert>;
 
   return (
-    <Card className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Teacher Registration</h1>
-        <Badge variant="secondary">Step 1 of 1</Badge>
-      </div>
-
-      {error && (
-        <div className="rounded-ds-2xl border border-border p-3 text-sm">
-          <span className="text-red-600">{error}</span>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <label className="text-sm">Subjects you teach</label>
-          <Select
-            name="teacher_subjects"
-            multiple
-            value={teacherData.teacher_subjects}
-            onChange={handleSubjectChange}
-            className="w-full"
-          >
-            {subjectsOptions.map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
-              </option>
-            ))}
-          </Select>
-          <p className="text-xs text-muted-foreground">Select one or more subjects you teach.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm">Years of Experience</label>
-            <Input
-              name="teacher_experience_years"
-              type="number"
-              min={0}
-              max={50}
-              placeholder="Enter your experience"
-              value={teacherData.teacher_experience_years}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <label className="text-sm">CV URL (optional)</label>
-            <Input
-              name="teacher_cv_url"
-              type="url"
-              placeholder="https://your-cv-link.com"
-              value={teacherData.teacher_cv_url}
-              onChange={handleInputChange}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm">Short Bio</label>
-          <Textarea
-            name="teacher_bio"
-            rows={6}
-            placeholder="Describe your background and experience"
-            value={teacherData.teacher_bio}
-            onChange={handleInputChange}
-          />
-          <p className="text-xs text-muted-foreground">Min 50 characters.</p>
-        </div>
-
-        <div className="pt-2">
-          <Button type="submit" disabled={submitting} className="btn">
-            {submitting ? 'Submitting…' : 'Submit for Review'}
-          </Button>
-        </div>
+    <div className="p-6 max-w-md mx-auto">
+      <h2 className="text-xl font-semibold text-foreground mb-4">Teacher Onboarding</h2>
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        <Input
+          label="Full Name"
+          name="fullName"
+          placeholder="Enter your full name"
+          value={formData.fullName}
+          onChange={handleInputChange}
+          required
+        />
+        <Input
+          label="Subject Expertise"
+          name="subjectExpertise"
+          placeholder="e.g., IELTS Writing"
+          value={formData.subjectExpertise}
+          onChange={handleInputChange}
+          required
+        />
+        <Textarea
+          label="Teaching Experience"
+          name="teachingExperience"
+          placeholder="Describe your years of teaching and certifications"
+          value={formData.teachingExperience}
+          onChange={handleInputChange}
+          rows={4}
+          required
+        />
+        <Input
+          label="LinkedIn / Portfolio (optional)"
+          name="linkedIn"
+          placeholder="https://..."
+          value={formData.linkedIn}
+          onChange={handleInputChange}
+        />
+        <Button
+          type="submit"
+          tone="primary"
+          disabled={submitting}
+          loading={submitting}
+          loadingText="Submitting..."
+        >
+          Submit for Approval
+        </Button>
       </form>
-    </Card>
+    </div>
   );
-};
-
-export default TeacherOnboardingForm;
+}

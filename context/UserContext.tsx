@@ -1,4 +1,3 @@
-// context/UserContext.tsx
 'use client';
 
 import React, {
@@ -11,7 +10,7 @@ import React, {
   useState,
 } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 
 type AppRole = 'student' | 'teacher' | 'admin';
 type RoleOrGuest = AppRole | 'guest';
@@ -29,7 +28,7 @@ UserContext.displayName = 'UserContext';
 async function fetchRole(userId: string | null | undefined): Promise<RoleOrGuest | null> {
   if (!userId) return 'guest';
 
-  const { data, error } = await supabaseBrowser
+  const { data, error } = await supabase
     .from('profiles') // adjust if your table/column differs
     .select('role')
     .eq('id', userId)
@@ -56,7 +55,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const {
         data: { session },
-      } = await supabaseBrowser.auth.getSession();
+      } = await supabase.auth.getSession();
 
       const nextUser = session?.user ?? null;
       if (!mounted.current) return;
@@ -77,7 +76,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     void load();
 
-    const { data: sub } = supabaseBrowser.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const nextUser = session?.user ?? null;
       setUser(nextUser);
       setLoading(true);
