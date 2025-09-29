@@ -1,58 +1,76 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
-import { Button } from '@/components/design-system/Button';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { useToast } from '@/components/design-system/Toaster';
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import { Container } from '@/components/design-system/Container'
+import { Card } from '@/components/design-system/Card'
+import { Button } from '@/components/design-system/Button'
+import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser'
+import { useToast } from '@/components/design-system/Toaster'
 
 export default function NotificationSettings() {
-  const router = useRouter();
-  const { error: toastError, success: toastSuccess } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [channels, setChannels] = useState<string[]>([]);
-  const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
+  const router = useRouter()
+  const { error: toastError, success: toastSuccess } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [channels, setChannels] = useState<string[]>([])
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        router.replace('/login');
-        return;
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) {
+          router.replace('/login')
+          return
+        }
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('notification_channels, quiet_hours_start, quiet_hours_end')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+
+        if (error) throw new Error(error.message)
+
+        if (data) {
+          setChannels(data.notification_channels ?? [])
+          setStart(data.quiet_hours_start ?? '')
+          setEnd(data.quiet_hours_end ?? '')
+        }
+      } catch (error: any) {
+        setFetchError('Failed to load user profile data')
+        console.error(error)
+      } finally {
+        setLoading(false)
       }
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('notification_channels, quiet_hours_start, quiet_hours_end')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-      if (data) {
-        setChannels(data.notification_channels ?? []);
-        setStart(data.quiet_hours_start ?? '');
-        setEnd(data.quiet_hours_end ?? '');
-      }
-      setLoading(false);
-    })();
-  }, [router]);
+    }
+
+    fetchUserProfile()
+  }, [router])
 
   const toggle = (c: string) => {
-    setChannels((ch) => ch.includes(c) ? ch.filter((x) => x !== c) : [...ch, c]);
-  };
+    setChannels((ch) => ch.includes(c) ? ch.filter((x) => x !== c) : [...ch, c])
+  }
 
   const save = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({
-        notification_channels: channels,
-        quiet_hours_start: start || null,
-        quiet_hours_end: end || null,
-      })
-      .eq('user_id', session.user.id);
-    if (error) toastError('Could not save settings');
-    else toastSuccess('Settings saved');
-  };
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) return
+
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          notification_channels: channels,
+          quiet_hours_start: start || null,
+          quiet_hours_end: end || null,
+        })
+        .eq('user_id', session.user.id)
+
+      if (error) throw new Error(error.message)
+      toastSuccess('Settings saved')
+    } catch (error: any) {
+      toastError(error.message || 'Could not save settings')
+    }
+  }
 
   if (loading) {
     return (
@@ -61,7 +79,17 @@ export default function NotificationSettings() {
           <Card className="p-6 max-w-xl mx-auto">Loading…</Card>
         </Container>
       </section>
-    );
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <section className="py-24">
+        <Container>
+          <Card className="p-6 max-w-xl mx-auto">{fetchError}</Card>
+        </Container>
+      </section>
+    )
   }
 
   return (
@@ -106,6 +134,5 @@ export default function NotificationSettings() {
         </Card>
       </Container>
     </section>
-  );
+  )
 }
-

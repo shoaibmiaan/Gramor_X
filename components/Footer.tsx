@@ -92,22 +92,22 @@ export const Footer: React.FC = () => {
             {/* Socials */}
             <div className="mt-5 flex items-center gap-3">
               <SocialIconLink
-                href="https://x.com/gramorx"
+                href="https://x.com/gramor_x"
                 icon={<Twitter aria-hidden className="h-5 w-5" />}
                 label="X (Twitter)"
               />
               <SocialIconLink
-                href="https://facebook.com/gramorx"
+                href="https://facebook.com/gramor_x"
                 icon={<Facebook aria-hidden className="h-5 w-5" />}
                 label="Facebook"
               />
               <SocialIconLink
-                href="https://instagram.com/gramorx"
+                href="https://instagram.com/gramor_x"
                 icon={<Instagram aria-hidden className="h-5 w-5" />}
                 label="Instagram"
               />
               <SocialIconLink
-                href="https://youtube.com/@gramorx"
+                href="https://youtube.com/@gramor_x"
                 icon={<Youtube aria-hidden className="h-5 w-5" />}
                 label="YouTube"
               />
@@ -154,11 +154,11 @@ export const Footer: React.FC = () => {
             <ul className="space-y-3 text-small text-muted-foreground">
               <li className="flex items-start gap-2">
                 <Icon name="map-pin" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden />
-                <span>Gulberg, Lahore, Pakistan</span>
+                <span>7600 Washington Ave. Houston, TX, USA</span>
               </li>
               <li className="flex items-start gap-2">
                 <Icon name="phone" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden />
-                <span>+92 300 0000000</span>
+                <span>+1 972 2954571</span>
               </li>
               <li className="flex items-start gap-2">
                 <Icon name="mail" className="mt-0.5 h-4 w-4 opacity-80" aria-hidden />

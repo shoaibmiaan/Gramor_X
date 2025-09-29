@@ -1,124 +1,153 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
-type StreakResponse = {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export type StreakData = {
   current_streak: number;
   last_activity_date: string | null;
+  next_restart_date: string | null;
   shields: number;
 };
-type ErrorResponse = { error: string };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<StreakResponse | ErrorResponse>) {
-  const supabase = createSupabaseServerClient({ req });
+// Utility function (same as client)
+const getDayKeyInTZ = (date: Date = new Date()): string => {
+  return date.toISOString().split('T')[0];
+};
 
-  const { data: { user }, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+const daysBetween = (d1: string, d2: string): number => {
+  const date1 = new Date(d1);
+  const date2 = new Date(d2);
+  return Math.floor((date2.getTime() - date1.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'No authorization token' });
   }
 
-  if (req.method === 'GET') {
-    const { data: streakData, error: streakErr } = await supabase
-      .from('user_streaks')
-      .select('current_streak, last_activity_date')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const { data: shieldData, error: shieldErr } = await supabase
-      .from('streak_shields')
-      .select('tokens')
-      .eq('user_id', user.id)
-      .maybeSingle();
+  // Create admin supabase client to verify user
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    if (streakErr || shieldErr) {
-      return res.status(500).json({ error: streakErr?.message || shieldErr?.message || 'Failed to fetch' });
-    }
-
-    return res.status(200).json({
-      current_streak: streakData?.current_streak ?? 0,
-      last_activity_date: streakData?.last_activity_date ?? null,
-      shields: shieldData?.tokens ?? 0,
-    });
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return res.status(401).json({ error: 'Invalid token' });
   }
 
-  if (req.method === 'POST') {
-    const { action } = (req.body as { action?: string }) || {};
-    const today = new Date().toISOString().split('T')[0];
-    const { data: existing, error: fetchErr } = await supabase
-      .from('user_streaks')
-      .select('current_streak, last_activity_date')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const { data: shieldRow, error: shieldErr } = await supabase
-      .from('streak_shields')
-      .select('tokens')
-      .eq('user_id', user.id)
-      .maybeSingle();
+  // Create user-specific supabase client for RLS
+  const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  await supabaseUser.auth.setSession({ access_token: token, refresh_token: '' });
 
-    if (fetchErr || shieldErr) {
-      return res.status(500).json({ error: fetchErr?.message || shieldErr?.message || 'Fetch failed' });
+  try {
+    let { data: streak, error: fetchError } = await supabaseUser
+      .from('streaks')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      throw fetchError;
     }
 
-    const currentTokens = shieldRow?.tokens ?? 0;
+    if (!streak) {
+      const defaultStreak: StreakData = {
+        current_streak: 0,
+        last_activity_date: null,
+        next_restart_date: null,
+        shields: 0,
+      };
+      const { data: inserted, error: insertError } = await supabaseUser
+        .from('streaks')
+        .insert({ ...defaultStreak, user_id: user.id })
+        .select()
+        .single();
 
-    if (action === 'claim') {
-      const tokens = currentTokens + 1;
-      const { error: upsertErr } = await supabase
-        .from('streak_shields')
-        .upsert({ user_id: user.id, tokens });
-      if (upsertErr) {
-        return res.status(500).json({ error: upsertErr.message });
-      }
-      await supabase.from('streak_shield_logs').insert({ user_id: user.id, action: 'claim' });
-      return res.status(200).json({
-        current_streak: existing?.current_streak ?? 0,
-        last_activity_date: existing?.last_activity_date ?? null,
-        shields: tokens,
-      });
+      if (insertError) throw insertError;
+      streak = inserted;
     }
 
-    let newStreak = 1;
-    let shields = currentTokens;
+    if (req.method === 'GET') {
+      return res.status(200).json(streak);
+    }
 
-    if (action === 'use' && currentTokens > 0) {
-      newStreak = (existing?.current_streak ?? 0) + 1;
-      shields = currentTokens - 1;
-    } else if (existing) {
-      if (existing.last_activity_date === today) {
-        newStreak = existing.current_streak;
-      } else {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const y = yesterday.toISOString().split('T')[0];
-        if (existing.last_activity_date === y) {
-          newStreak = existing.current_streak + 1;
+    if (req.method === 'POST') {
+      const { action, date } = req.body;
+      const today = getDayKeyInTZ();
+      let updateData: Partial<StreakData> = {};
+
+      if (!action) {
+        const last = streak.last_activity_date;
+        if (last === today) {
+          return res.status(200).json(streak);
         }
+
+        let newCurrent = 1;
+        if (last) {
+          const daysSinceLast = daysBetween(last, today);
+          if (daysSinceLast === 1) {
+            newCurrent = streak.current_streak + 1;
+          }
+        }
+        updateData = {
+          current_streak: newCurrent,
+          last_activity_date: today,
+        };
+      } else if (action === 'use') {
+        if (streak.shields <= 0) {
+          return res.status(400).json({ error: 'No shields available' });
+        }
+
+        const last = streak.last_activity_date;
+        if (last === today) {
+          return res.status(200).json(streak);
+        }
+
+        let newCurrent = streak.current_streak + 1;
+        if (!last) {
+          newCurrent = 1;
+        }
+        updateData = {
+          current_streak: newCurrent,
+          last_activity_date: today,
+          shields: streak.shields - 1,
+        };
+      } else if (action === 'claim') {
+        updateData = {
+          shields: streak.shields + 1,
+        };
+      } else if (action === 'schedule') {
+        if (!date) {
+          return res.status(400).json({ error: 'Date required for scheduling' });
+        }
+        updateData = {
+          next_restart_date: date,
+        };
+      } else {
+        return res.status(400).json({ error: 'Invalid action' });
       }
+
+      const { data: updated, error: updateError } = await supabaseUser
+        .from('streaks')
+        .update(updateData)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      return res.status(200).json(updated);
     }
 
-    const { error } = await supabase
-      .from('user_streaks')
-      .upsert({
-        user_id: user.id,
-        current_streak: newStreak,
-        last_activity_date: today,
-      });
-
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-
-    if (action === 'use' && currentTokens > 0) {
-      const { error: shieldUpdateErr } = await supabase
-        .from('streak_shields')
-        .upsert({ user_id: user.id, tokens: shields });
-      if (shieldUpdateErr) {
-        return res.status(500).json({ error: shieldUpdateErr.message });
-      }
-      await supabase.from('streak_shield_logs').insert({ user_id: user.id, action: 'use' });
-    }
-
-    return res.status(200).json({ current_streak: newStreak, last_activity_date: today, shields });
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (err: any) {
+    console.error('[API/streak] Error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
-
-  res.setHeader('Allow', 'GET,POST');
-  return res.status(405).json({ error: 'Method Not Allowed' });
 }

@@ -2,19 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
-import {
-  AppleIcon,
-  GoogleIcon,
-  FacebookIcon,
-  MailIcon,
-  SmsIcon,
-} from '@/components/design-system/icons';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { MailIcon, SmsIcon } from '@/components/design-system/icons';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { destinationByRole } from '@/lib/routeAccess';
 import { Input } from '@/components/design-system/Input';
 
@@ -37,29 +30,25 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState<'verify' | 'update'>('verify');
 
-  // verify inputs
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-
-  // update inputs
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
   const router = useRouter();
 
-  // Session check → if arrived via email link, Supabase creates a session → jump to update
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
       if (session) setStep('update');
       setReady(true);
-    })();
+    };
+    checkSession();
     return () => { mounted = false; };
   }, []);
 
-  // Persist role in query + localStorage (same as LoginOptions)
   useEffect(() => {
     if (!router.isReady) return;
     const roleQuery = typeof router.query.role === 'string' ? router.query.role : null;
@@ -82,7 +71,8 @@ export default function ResetPasswordPage() {
 
   async function verifyWithCode(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null); setOk(null);
+    setErr(null);
+    setOk(null);
 
     if (!email) return setErr('Enter your email.');
     if (!/^\d{6}$/.test(code)) return setErr('Enter the 6-digit code from the email.');
@@ -94,6 +84,7 @@ export default function ResetPasswordPage() {
       setOk('Email verified. You can now set a new password.');
       setStep('update');
     } catch (e: any) {
+      console.error('Code verification error:', e);
       setErr(e?.message || 'Code verification failed.');
     } finally {
       setBusy(false);
@@ -102,14 +93,14 @@ export default function ResetPasswordPage() {
 
   async function updatePwd(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null); setOk(null);
+    setErr(null);
+    setOk(null);
 
     if (!password) return setErr('Please enter a new password.');
     if (password !== confirm) return setErr('Passwords do not match.');
 
     setBusy(true);
     try {
-      // Optional RPC; ignore if missing
       try {
         const { data: reused } = await supabase.rpc('password_is_reused', { new_password: password });
         if (reused) return setErr('Please choose a password you have not used before.');
@@ -122,6 +113,7 @@ export default function ResetPasswordPage() {
       const next = `/login${selectedRole ? `?role=${encodeURIComponent(selectedRole)}` : ''}`;
       setTimeout(() => router.replace(next), 900);
     } catch (e: any) {
+      console.error('Password update error:', e);
       setErr(e?.message || 'Failed to update password.');
     } finally {
       setBusy(false);
@@ -136,7 +128,6 @@ export default function ResetPasswordPage() {
     <>
       <SectionLabel>Reset password</SectionLabel>
 
-      {/* Tabs (kept minimal to match your compact pattern) */}
       <div className="mb-4 grid grid-cols-2 rounded-ds overflow-hidden border border-border">
         <button
           type="button"
@@ -174,14 +165,14 @@ export default function ResetPasswordPage() {
             <Input
               type="email"
               value={email}
-              onChange={(e)=>setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Email used for your account"
               required
             />
             <Input
               type="text"
               value={code}
-              onChange={(e)=>setCode(e.target.value.replace(/\s+/g, ''))}
+              onChange={(e) => setCode(e.target.value.replace(/\s+/g, ''))}
               inputMode="numeric"
               maxLength={6}
               placeholder="6-digit code"
@@ -206,14 +197,14 @@ export default function ResetPasswordPage() {
           <Input
             type="password"
             value={password}
-            onChange={(e)=>setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="New password"
             required
           />
           <Input
             type="password"
             value={confirm}
-            onChange={(e)=>setConfirm(e.target.value)}
+            onChange={(e) => setConfirm(e.target.value)}
             placeholder="Confirm new password"
             required
           />

@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 interface UserInfo {
@@ -18,26 +18,49 @@ export function useHeaderState(initialStreak?: number) {
   const [ready, setReady] = useState(false);
   const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<UserInfo>({ id: null, email: null, name: null, avatarUrl: null });
+  const [streak, setStreak] = useState<number>(initialStreak ?? 0);
 
   // Streak (prop wins; otherwise fetch)
-  const [streak, setStreak] = useState<number>(initialStreak ?? 0);
   useEffect(() => {
     if (typeof initialStreak === 'number') setStreak(initialStreak);
   }, [initialStreak]);
+
   const fetchStreak = useCallback(async () => {
-    if (typeof initialStreak === 'number') return;
-    const { data: session } = await supabaseBrowser.auth.getSession();
-    const token = session?.session?.access_token;
-    if (!token) return;
-    const res = await fetch('/api/words/today', { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) {
+    let mounted = true;
+    if (typeof initialStreak === 'number') return () => {};
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session fetch error:', error);
+        return () => {};
+      }
+      const token = session.access_token;
+      if (!token) return () => {};
+      const res = await fetch('/api/streak', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        console.error('Failed to fetch streak:', res.status);
+        return () => {};
+      }
       const j = await res.json();
-      if (typeof j?.streakDays === 'number') setStreak(j.streakDays);
+      if (mounted && typeof j?.current_streak === 'number') {
+        setStreak(j.current_streak);
+      }
+    } catch (err) {
+      console.error('Failed to fetch streak:', err);
     }
+    return () => { mounted = false; };
   }, [initialStreak]);
+
   useEffect(() => {
-    fetchStreak();
+    let mounted = true;
+    fetchStreak().then((cleanup) => {
+      return () => { if (mounted && cleanup) cleanup(); };
+    });
+    return () => { mounted = false; };
   }, [fetchStreak]);
+
   useEffect(() => {
     const onChanged = (e: Event) => {
       const ce = e as CustomEvent<{ value?: number }>;
@@ -53,43 +76,59 @@ export function useHeaderState(initialStreak?: number) {
     const computeRole = async (uid: string | null, appMeta?: any, userMeta?: any) => {
       let r: any = appMeta?.role ?? userMeta?.role ?? null;
       if (!r && uid) {
-        const { data: prof } = await supabaseBrowser.from('profiles').select('role').eq('id', uid).single();
+        const { data: prof, error } = await supabase.from('profiles').select('role').eq('id', uid).single();
+        if (error) {
+          console.error('Failed to fetch profile role:', error);
+          return null;
+        }
         r = prof?.role ?? null;
       }
       return r ? String(r).toLowerCase() : null;
     };
 
     const sync = async () => {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const s = data.session?.user ?? null;
-      const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
-      if (!cancelled) {
-        setUser({
-          id: s?.id ?? null,
-          email: s?.email ?? null,
-          name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
-          avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
-        });
-        const r = await computeRole(s?.id ?? null, s?.app_metadata, userMeta);
-        if (!cancelled) setRole(r);
-        setReady(true);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Failed to get session:', error);
+          return;
+        }
+        const s = session?.user ?? null;
+        const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
+        if (!cancelled) {
+          setUser({
+            id: s?.id ?? null,
+            email: s?.email ?? null,
+            name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
+            avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
+          });
+          const r = await computeRole(s?.id ?? null, s?.app_metadata, userMeta);
+          if (!cancelled) setRole(r);
+          setReady(true);
+        }
+      } catch (err) {
+        console.error('Unexpected auth error:', err);
       }
     };
     sync();
 
-    const { data: sub } = supabaseBrowser.auth.onAuthStateChange(
+    const { data: sub } = supabase.auth.onAuthStateChange(
       async (_e: AuthChangeEvent, session: Session | null) => {
-        const s = session?.user ?? null;
-        const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
-        setUser({
-          id: s?.id ?? null,
-          email: s?.email ?? null,
-          name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
-          avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
-        });
-        const r = await computeRole(s?.id ?? null, s?.app_metadata, userMeta);
-        setRole(r);
-        if (!s) setStreak(0);
+        try {
+          const s = session?.user ?? null;
+          const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
+          setUser({
+            id: s?.id ?? null,
+            email: s?.email ?? null,
+            name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
+            avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
+          });
+          const r = await computeRole(s?.id ?? null, s?.app_metadata, userMeta);
+          setRole(r);
+          if (!s) setStreak(0);
+        } catch (err) {
+          console.error('Auth state change error:', err);
+        }
       }
     );
 
@@ -109,11 +148,14 @@ export function useHeaderState(initialStreak?: number) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabaseBrowser.auth.signOut();
-    setStreak(0);
-    router.replace('/login');
+    try {
+      await supabase.auth.signOut();
+      setStreak(0);
+      router.push('/login');
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
   }, [router]);
 
   return { user, role, streak, ready, signOut };
 }
-

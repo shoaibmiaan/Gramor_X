@@ -1,11 +1,10 @@
 import { env } from "@/lib/env";
-// pages/learning/strategies/[tipSlug].tsx
 import Head from 'next/head';
 import type { GetServerSideProps } from 'next';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
+import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient'; // Centralized browser client for client-side
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
@@ -26,18 +25,18 @@ type StrategyTip = {
   created_at: string;
 };
 
-  type DrillResult = {
-    prompt?: string;
-    instructions?: string;
-    passage?: string;
-    choices?: string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    raw?: any;
-  };
-
-  // Normalize various payload shapes from /api/drills/generate (same as list page)
+type DrillResult = {
+  prompt?: string;
+  instructions?: string;
+  passage?: string;
+  choices?: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function normalizeDrill(payload: any): DrillResult {
+  raw?: any;
+};
+
+// Normalize various payload shapes from /api/drills/generate (same as list page)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeDrill(payload: any): DrillResult {
   const src = payload?.data ?? payload ?? {};
   const prompt =
     src.prompt ||
@@ -52,18 +51,11 @@ type StrategyTip = {
     (Array.isArray(src.steps) ? src.steps.join('\n') : undefined);
   const passage = src.passage || src.context || src.text;
   const choicesRaw = src.choices || src.options || src.answers;
-    const choices = Array.isArray(choicesRaw)
-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        choicesRaw.map((c: any) => (typeof c === 'string' ? c : c?.text ?? JSON.stringify(c)))
-      : undefined;
+  const choices = Array.isArray(choicesRaw)
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      choicesRaw.map((c: any) => (typeof c === 'string' ? c : c?.text ?? JSON.stringify(c)))
+    : undefined;
   return { prompt, instructions, passage, choices, raw: src };
-}
-
-function getClient(): SupabaseClient {
-  return createClient(
-    env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
 }
 
 export default function TipDetail({
@@ -90,7 +82,6 @@ export default function TipDetail({
     if (!tip) return;
     let cancel = false;
     (async () => {
-      const supabase = getClient();
       const { data } = await supabase.auth.getUser();
       const uid = data?.user?.id ?? null;
       if (cancel) return;
@@ -185,7 +176,6 @@ export default function TipDetail({
   const toggleSave = async () => {
     if (!userId) return requireLogin();
     setLoadingToggles(true);
-    const supabase = getClient();
     const optimistic = !saved;
     setSaved(optimistic);
     try {
@@ -208,7 +198,6 @@ export default function TipDetail({
   const toggleHelpful = async () => {
     if (!userId) return requireLogin();
     setLoadingToggles(true);
-    const supabase = getClient();
     const optimistic = !helpful;
     setHelpful(optimistic);
     try {
@@ -255,7 +244,7 @@ export default function TipDetail({
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="font-slab text-display text-gradient-primary">{tip.title}</h1>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2 items-center">
                 <AreaBadge a={tip.area} />
                 <DiffBadge d={tip.difficulty} />
                 {(tip.tags || []).map((t) => (
@@ -367,7 +356,8 @@ export default function TipDetail({
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const supabase = createClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } } // Added to prevent session persistence on server
   );
 
   const slug = String(ctx.params?.tipSlug || '');

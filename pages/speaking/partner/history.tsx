@@ -1,5 +1,3 @@
-import { env } from "@/lib/env";
-// pages/speaking/partner/history.tsx
 import React, { useMemo, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
@@ -36,7 +34,8 @@ type Props = {
 export const getServerSideProps: GetServerSideProps<Props> = async () => {
   const supabase = createClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { auth: { persistSession: false } } // Added for server
   );
 
   // Recent attempts for the (RLS-scoped) current user

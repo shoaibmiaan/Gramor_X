@@ -4,13 +4,13 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon, type IconName } from '@/components/design-system/Icon';
 import { NavLink } from '@/components/design-system/NavLink';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 
 const NAV_ITEMS: ReadonlyArray<{ href: string; label: string; icon: IconName; exact?: boolean }> = [
-  { href: '/',            label: 'Home',    icon: 'Home',       exact: true },
-  { href: '/learning',    label: 'Courses', icon: 'BookOpen' },
-  { href: '/mock-tests',  label: 'Tests',   icon: 'PencilLine' },
-  { href: '/profile',     label: 'Profile', icon: 'User' },
+  { href: '/', label: 'Home', icon: 'Home', exact: true },
+  { href: '/learning', label: 'Courses', icon: 'BookOpen' },
+  { href: '/mock-tests', label: 'Tests', icon: 'PencilLine' },
+  { href: '/profile', label: 'Profile', icon: 'User' },
 ];
 
 export const BottomNav: React.FC = () => {
@@ -18,9 +18,28 @@ export const BottomNav: React.FC = () => {
   const [hasSession, setHasSession] = React.useState(false);
 
   React.useEffect(() => {
-    supabaseBrowser.auth.getSession().then(({ data: { session } }) => {
-      setHasSession(Boolean(session));
-    });
+    let mounted = true;
+
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Failed to get session:', error);
+          return;
+        }
+        if (mounted) {
+          setHasSession(Boolean(session));
+        }
+      } catch (err) {
+        console.error('Error checking session:', err);
+      }
+    };
+
+    checkSession();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const gate = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -45,7 +64,7 @@ export const BottomNav: React.FC = () => {
             <NavLink
               href={href}
               exact={exact}
-              onClick={gate(href)}   // ✅ gate now applied
+              onClick={gate(href)}
               className="
                 group flex flex-col items-center gap-1 py-2.5
                 text-caption text-muted-foreground transition

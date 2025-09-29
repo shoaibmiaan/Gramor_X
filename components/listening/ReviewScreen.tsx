@@ -1,6 +1,6 @@
 import { env } from "@/lib/env";
 import React, { useEffect, useMemo, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient'; // Import centralized client
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { EmptyState } from '@/components/design-system/EmptyState';
@@ -8,12 +8,6 @@ import { Skeleton } from '@/components/design-system/Skeleton';
 import { ScoreCard } from '@/components/design-system/ScoreCard';
 import AnswerReview from '@/components/listening/AnswerReview'; // ✅ default import
 import { isCorrect } from '@/lib/answers';
-
-// Browser client (auth comes from the user's session)
-const supabase = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL as string,
-  env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-);
 
 type Row = {
   type: 'mcq'|'gap'|'match';

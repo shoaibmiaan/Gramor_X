@@ -1,17 +1,16 @@
-// pages/welcome/index.tsx
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { StreakIndicator } from '@/components/design-system/StreakIndicator';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { getUserRole } from '@/lib/routeAccess';
 import { useLocale } from '@/lib/locale';
+import { useStreak } from '@/hooks/useStreak'; // Added for streak data
 
 type WordOfDay = { word: string; meaning?: string; example?: string };
 
@@ -20,7 +19,7 @@ const ModuleCard: React.FC<{ title: string; href: string; caption: string; chip?
 }) => (
   <Link href={href} className="block focus-visible:outline-none group">
     <div className="card-surface rounded-ds-2xl border border-border bg-card text-card-foreground p-5 transition
-                    hover:shadow-glow hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-border"> focus-visible:ring-offset-2 focus-visible:ring-offset-background
+                    hover:shadow-glow hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-h4 font-semibold">{title}</h3>
         {chip ? <Badge variant="info">{chip}</Badge> : null}
@@ -76,38 +75,67 @@ function normalizeWod(raw: any): WordOfDay {
 export default function WelcomePage() {
   const router = useRouter();
   const { t } = useLocale();
+  const { streak, loading: streakLoading, error: streakError } = useStreak(); // Added useStreak hook
 
   const [name, setName] = useState<string | null>(null);
-  const [streak, setStreak] = useState<number>(0);
   const [wod, setWod] = useState<WordOfDay | null>(null);
   const [loadingWord, setLoadingWord] = useState(true);
 
   // Redirect non-students away from /welcome
   useEffect(() => {
+    let mounted = true;
     (async () => {
-      const { data: { session } } = await supabaseBrowser.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Session fetch error:', error);
+        if (mounted) router.replace('/login');
+        return;
+      }
       const role = getUserRole(session?.user);
-      if (role === 'teacher') { router.replace('/teacher'); return; }
-      if (role === 'admin')   { router.replace('/admin');   return; }
+      if (role === 'teacher' && mounted) {
+        router.replace('/teacher');
+        return;
+      }
+      if (role === 'admin' && mounted) {
+        router.replace('/admin');
+        return;
+      }
+      if (!session && mounted) {
+        router.replace('/login');
+        return;
+      }
     })();
+    return () => { mounted = false; };
   }, [router]);
 
   // Pull minimal profile info
   useEffect(() => {
+    let mounted = true;
     (async () => {
-      const { data: { session } } = await supabaseBrowser.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Session fetch error:', error);
+        return;
+      }
       const uid = session?.user?.id;
       if (!uid) return;
 
-      const { data } = await supabaseBrowser
+      const { data, error: profileError } = await supabase
         .from('user_profiles')
-        .select('full_name, streak_days')
+        .select('full_name')
         .eq('user_id', uid)
         .maybeSingle();
 
-      setName((data as any)?.full_name ?? null);
-      setStreak((data as any)?.streak_days ?? 0);
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        return;
+      }
+
+      if (mounted) {
+        setName(data?.full_name ?? null);
+      }
     })();
+    return () => { mounted = false; };
   }, []);
 
   // Word of the day (robust normalization → always strings)
@@ -117,10 +145,12 @@ export default function WelcomePage() {
       setLoadingWord(true);
       try {
         const r = await fetch('/api/words/today');
+        if (!r.ok) throw new Error('Failed to fetch word of the day');
         const j = await r.json();
         if (!active) return;
         setWod(normalizeWod(j));
-      } catch {
+      } catch (err) {
+        console.error('Word of the day fetch error:', err);
         if (!active) return;
         setWod(normalizeWod(null));
       } finally {
@@ -156,7 +186,14 @@ export default function WelcomePage() {
             <div className="min-w-[220px]">
               <div className="rounded-ds-2xl border border-border bg-background/60 p-4">
                 <div className="mb-2 text-small text-mutedText">Your streak</div>
-                <StreakIndicator value={streak} />
+                {/* Conditional rendering of StreakIndicator */}
+                {streakLoading ? (
+                  <div>Loading streak...</div>
+                ) : streakError ? (
+                  <div>Error: {streakError}</div>
+                ) : (
+                  <StreakIndicator value={streak?.current ?? 0} />
+                )}
                 <div className="mt-2 text-small text-mutedText">Keep a daily streak to unlock bonus mock tests.</div>
               </div>
             </div>
