@@ -4,7 +4,7 @@ import { ExamShell } from '../../premium-ui/exam/ExamShell';
 import { Scratchpad } from '../../premium-ui/exam/Scratchpad';
 import { MediaDock } from '../../premium-ui/exam/MediaDock';
 
-export function PremiumExamPage() {
+export default function PremiumExamPage() {
   const handleAccessGranted = () => {
     // Track analytics, update user state, etc.
     console.log('Premium exam room access granted');
