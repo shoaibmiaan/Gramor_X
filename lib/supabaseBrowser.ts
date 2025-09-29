@@ -16,5 +16,11 @@ export const supabaseBrowser = createClient<Database>(url, anon, {
 
 export const authHeaders = async (extra: Record<string, string> = {}) => {
   const { data: { session } } = await supabaseBrowser.auth.getSession();
-  return { ...extra, Authorization: `Bearer ${session?.access_token}` };
+  const accessToken = session?.access_token;
+
+  if (!accessToken) {
+    return { ...extra };
+  }
+
+  return { ...extra, Authorization: `Bearer ${accessToken}` };
 };
