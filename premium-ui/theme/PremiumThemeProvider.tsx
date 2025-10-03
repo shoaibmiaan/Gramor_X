@@ -1,24 +1,17 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+// premium-ui/theme/PremiumThemeProvider.tsx
+import React, { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { PREMIUM_THEMES, type PremiumThemeId } from './premium-themes';
 
-type ThemeCtxValue = {
-  theme: PremiumThemeId;
-  setTheme: (t: PremiumThemeId) => void;
-};
-
+type ThemeCtxValue = { theme: PremiumThemeId; setTheme: (t: PremiumThemeId) => void };
 const ThemeCtx = createContext<ThemeCtxValue | null>(null);
 const STORAGE_KEY = 'pr-theme';
 
-/** Optional: migrate any old theme ids to the new ones */
 function normalizeTheme(raw?: string | null): PremiumThemeId {
   if (!raw) return 'carbon';
   const val = raw.toLowerCase();
-  // Legacy aliases
   if (val === 'dark') return 'carbon';
   if (val === 'light') return 'ivory';
   if (val === 'gold') return 'royal';
-  if (val === 'aurora') return 'aurora';
   if (['carbon','ivory','royal','aurora'].includes(val)) return val as PremiumThemeId;
   return 'carbon';
 }
@@ -29,23 +22,20 @@ export function usePremiumTheme() {
   return ctx;
 }
 
-type Props = {
-  children: ReactNode;
-  /** allow Storybook or app shells to specify initial */
-  initialTheme?: PremiumThemeId;
-};
+type Props = { children: ReactNode; initialTheme?: PremiumThemeId };
 
 export function PremiumThemeProvider({ children, initialTheme }: Props) {
   const [theme, setTheme] = useState<PremiumThemeId>(() =>
     normalizeTheme(
       initialTheme ||
-      (typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : 'carbon')
-    )
+        (typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : 'carbon'),
+    ),
   );
 
-  // persist + reflect to DOM
   useEffect(() => {
-    try { window.localStorage.setItem(STORAGE_KEY, theme); } catch {}
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch {}
     if (typeof document !== 'undefined') {
       const root = document.documentElement;
       root.setAttribute('data-pr-theme', theme);
@@ -53,7 +43,6 @@ export function PremiumThemeProvider({ children, initialTheme }: Props) {
     }
   }, [theme]);
 
-  // sync across tabs
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY) setTheme(normalizeTheme(e.newValue));
@@ -66,8 +55,8 @@ export function PremiumThemeProvider({ children, initialTheme }: Props) {
 
   return (
     <ThemeCtx.Provider value={value}>
-      {/* wrapper can hold bg/surface classes for quick theming */}
-      <div className="pr min-h-[100dvh] bg-[var(--pr-bg)] text-[var(--pr-fg)]">
+      {/* contains the page, no unintended layout */}
+      <div className="pr-min-h-[100dvh] pr-bg-[var(--pr-bg)] pr-text-[var(--pr-fg)]">
         {children}
       </div>
     </ThemeCtx.Provider>

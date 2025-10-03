@@ -25,30 +25,34 @@ export function useHeaderState(initialStreak?: number) {
     if (typeof initialStreak === 'number') setStreak(initialStreak);
   }, [initialStreak]);
 
+  // Fail-soft streak fetch: never throw, never hide header; just default to 0 on errors.
   const fetchStreak = useCallback(async () => {
     let mounted = true;
     if (typeof initialStreak === 'number') return () => {};
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('Session fetch error:', error);
-        return () => {};
+      if (error || !session?.access_token) {
+        if (mounted) setStreak(0);
+        return () => { mounted = false; };
       }
-      const token = session.access_token;
-      if (!token) return () => {};
+
       const res = await fetch('/api/streak', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
+
       if (!res.ok) {
-        console.error('Failed to fetch streak:', res.status);
-        return () => {};
+        // Keep header visible — just fall back to 0
+        console.warn('Streak fetch non-200:', res.status);
+        if (mounted) setStreak(0);
+        return () => { mounted = false; };
       }
-      const j = await res.json();
-      if (mounted && typeof j?.current_streak === 'number') {
-        setStreak(j.current_streak);
-      }
+
+      const j = await res.json().catch(() => null);
+      const value = typeof j?.current_streak === 'number' ? j.current_streak : 0;
+      if (mounted) setStreak(value);
     } catch (err) {
-      console.error('Failed to fetch streak:', err);
+      console.warn('Streak fetch error (fail-soft):', err);
+      if (mounted) setStreak(0);
     }
     return () => { mounted = false; };
   }, [initialStreak]);

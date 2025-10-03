@@ -59,7 +59,7 @@ export async function middleware(req: NextRequest) {
     pathname === '/favicon.ico' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
-    pathname.startsWith('/api/') // important: do not guard API routes
+    pathname.startsWith('/api/')
   ) {
     return NextResponse.next();
   }
@@ -74,6 +74,37 @@ export async function middleware(req: NextRequest) {
 
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
+
+  // --- Premium PIN gate (takes precedence over generic auth) ---
+  const isPremiumSection = pathname.startsWith('/premium');
+  const isPremiumPinPage = pathname === '/premium/pin' || pathname === '/premium-pin';
+  const pinOk = req.cookies.get('pr_pin_ok')?.value === '1';
+
+  if (isPremiumSection) {
+    // If we're on the PIN page and the cookie is already set, forward to target (or /premium)
+    if (isPremiumPinPage && pinOk) {
+      const url = req.nextUrl.clone();
+      const nextParam = req.nextUrl.searchParams.get('next');
+      url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/premium';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+
+    // Always allow the PIN entry page if no cookie yet
+    if (isPremiumPinPage) return res;
+
+    // For any other /premium path, require the cookie
+    if (!pinOk) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/premium/pin';
+      url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
+      return NextResponse.redirect(url);
+    }
+
+    // PIN valid → allow without forcing login
+    return res;
+  }
+  // --- end Premium PIN gate ---
 
   // If not signed in and trying to view a protected route -> redirect to login
   if (!session && isProtected && !isAuthPage) {

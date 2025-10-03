@@ -1,12 +1,14 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 import '@/styles/tokens.css';
-import '@/styles/premium.css';
+// IMPORTANT: do not import '@/styles/premium.css' here.
+// It’s the Tailwind INPUT. We load the compiled /public/premium.css via <Head> below.
 import '@/styles/semantic.css';
 import '@/styles/globals.css';
 import '@/styles/themes/index.css';
@@ -378,6 +380,12 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      {/* Load the compiled premium DS stylesheet globally */}
+      <Head>
+        <link rel="preload" href="/premium.css" as="style" />
+        <link rel="stylesheet" href="/premium.css" />
+      </Head>
+
       <div className={`${poppins.className} ${slab.className} min-h-[100dvh] bg-background text-foreground`}>
         {showLayout ? (
           <Layout>
