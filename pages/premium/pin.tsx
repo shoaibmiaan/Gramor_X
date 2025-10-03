@@ -19,7 +19,6 @@ export default function PremiumPinPage() {
   const router = useRouter();
   const { t } = useLocale();
 
-  // Sanitize the redirect target
   const rawNext =
     typeof router.query.next === 'string' && router.query.next ? router.query.next : '/premium';
   const nextUrl = isInternalRoute(rawNext) ? rawNext : '/premium';
@@ -48,8 +47,8 @@ export default function PremiumPinPage() {
       });
 
       if (res.ok) {
-        // Cookie pr_pin_ok=1 is set by the API; middleware will now allow /premium/*
-        router.replace(nextUrl);
+        // API sets pr_pin_ok=1; middleware will forward even if this navigation races.
+        await router.replace(nextUrl);
         return;
       }
 
@@ -77,9 +76,7 @@ export default function PremiumPinPage() {
           <section className="pr-w-full pr-max-w-md pr-mx-auto pr-p-2">
             <PrCard className="pr-p-6 md:pr-p-8">
               <h1 className="pr-font-semibold pr-text-h2 pr-mb-2">Enter Premium PIN</h1>
-              <p className="pr-muted pr-mb-6">
-                Access the distraction-free Premium Exam Room.
-              </p>
+              <p className="pr-muted pr-mb-6">Access the distraction-free Premium Exam Room.</p>
 
               <form onSubmit={submitPin} className="pr-space-y-4" noValidate>
                 <label className="pr-block">
@@ -107,11 +104,7 @@ export default function PremiumPinPage() {
                   </div>
                 )}
 
-                <PrButton
-                  type="submit"
-                  disabled={loading || !pin}
-                  className="pr-w-full pr-justify-center"
-                >
+                <PrButton type="submit" disabled={loading || !pin} className="pr-w-full pr-justify-center">
                   {loading ? 'Verifying…' : 'Unlock Premium'}
                 </PrButton>
 

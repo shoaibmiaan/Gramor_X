@@ -3,13 +3,13 @@ import * as React from "react";
 import Head from "next/head";
 import { Container } from "@/components/design-system/Container";
 import LocaleSwitcher from "@/components/common/LocaleSwitcher";
-import { detectLocale, setLocale } from "@/lib/locale";
+import { _detectLocale as detectLocale, persistLocale as setLocale } from "@/lib/locale";
 import { loadTranslations, t, getLocale } from "@/lib/i18n";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
 
 export default function LanguageSettingsPage() {
-  const [locale, setLocaleState] = React.useState<SupportedLocale>("en");
+  const [locale, setLocale] = React.useState<SupportedLocale>("en");
   const [busy, setBusy] = React.useState(false);
   const [saved, setSaved] = React.useState<null | "ok" | "err">(null);
   const [userId, setUserId] = React.useState<string | null>(null);
@@ -24,7 +24,7 @@ export default function LanguageSettingsPage() {
 
       const initial = safeDetect ? safeDetect() : getLocale();
       await loadTranslations(initial);
-      setLocaleState(getLocale());
+      setLocale(getLocale());
 
       const { data } = await supabaseBrowser.auth.getSession();
       setUserId(data.session?.user?.id ?? null);
@@ -37,7 +37,7 @@ export default function LanguageSettingsPage() {
     try {
       await loadTranslations(next);
       setLocale(next);
-      setLocaleState(next);
+      setLocale(next);
 
       // Persist to profile if logged in
       if (userId) {

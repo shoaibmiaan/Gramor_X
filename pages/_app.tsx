@@ -1,12 +1,14 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
-import { useEffect, useMemo } from 'react';
+import Head from 'next/head';
+import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 import '@/styles/tokens.css';
-import '@/styles/premium.css';
+// IMPORTANT: do not import '@/styles/premium.css' here.
+// It’s the Tailwind INPUT. We load the compiled /public/premium.css via <Head> below.
 import '@/styles/semantic.css';
 import '@/styles/globals.css';
 import '@/styles/themes/index.css';
@@ -182,52 +184,126 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/premium/reading') ||
     pathname.startsWith('/proctoring/exam');
 
-  // Idle timeout
+  // Idle timeout (coerce to number safely)
+  const idleMinutes = useMemo(
+    () => Number(env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30),
+    []
+  );
   useEffect(() => {
     if (IS_CI) return;
-    const cleanup = initIdleTimeout(env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES);
+    const cleanup = initIdleTimeout(idleMinutes);
     return cleanup;
-  }, []);
+  }, [idleMinutes]);
 
-  // Keep backend session cookie in sync
+  // ---------- AUTH BRIDGE: sync server cookies + correct redirects ----------
+  // Debounce & de-duplicate event syncing in dev/HMR
+  const syncingRef = useRef(false);
+  const lastEventRef = useRef<AuthChangeEvent | 'INITIAL_SESSION' | null>(null);
+  const lastTokenRef = useRef<string | null>(null);
+  const subscribedRef = useRef(false);
+
+  const syncSession = async (event: AuthChangeEvent | 'INITIAL_SESSION', sessionNow: Session | null) => {
+    if (event === 'INITIAL_SESSION' && !sessionNow) return;
+
+    // Only process events that affect cookies / routing
+    const ALLOW = new Set<AuthChangeEvent | 'INITIAL_SESSION'>([
+      'INITIAL_SESSION',
+      'SIGNED_IN',
+      'SIGNED_OUT',
+      'TOKEN_REFRESHED',
+    ]);
+    if (!ALLOW.has(event)) return;
+
+    // Drop exact duplicates (same event + same access token)
+    const token = sessionNow?.access_token ?? null;
+    if (lastEventRef.current === event && lastTokenRef.current === token) return;
+    lastEventRef.current = event;
+    lastTokenRef.current = token;
+
+    // Prevent concurrent POSTs
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    try {
+      await fetch('/api/auth/set-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ event, session: sessionNow }),
+      });
+    } catch {
+      // best-effort; ignore
+    } finally {
+      syncingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (IS_CI) return;
+
+    // Avoid double-subscribe during fast-refresh in dev
+    if (typeof window !== 'undefined') {
+      // @ts-expect-error TODO: type global flag
+      if (window.__GX_AUTH_BRIDGE_ACTIVE) return;
+      // @ts-expect-error TODO: type global flag
+      window.__GX_AUTH_BRIDGE_ACTIVE = true;
+    }
 
     let isMounted = true;
 
-    const syncSession = async (event: AuthChangeEvent, sessionNow: Session | null) => {
-      if (event === 'INITIAL_SESSION' && !sessionNow) return;
-      try {
-        await fetch('/api/auth/set-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ event, session: sessionNow }),
-        });
-      } catch {
-        /* silent */
-      }
-    };
-
+    // 1) On mount, sync initial session and leave auth pages if already signed-in
     (async () => {
       const {
         data: { session },
       } = await supabaseBrowser.auth.getSession();
       if (!isMounted) return;
+
       await syncSession('INITIAL_SESSION', session);
+
+      if (session?.user && isAuthPage) {
+        const url = new URL(window.location.href);
+        const next = url.searchParams.get('next');
+        const target = next && next.startsWith('/') ? next : '/';
+        router.replace(target);
+      }
     })();
 
-    const {
-      data: { subscription },
-    } = supabaseBrowser.auth.onAuthStateChange((event, sessionNow) => {
-      void syncSession(event, sessionNow);
-    });
+    // 2) Subscribe to auth changes
+    if (!subscribedRef.current) {
+      const {
+        data: { subscription },
+      } = supabaseBrowser.auth.onAuthStateChange((event, sessionNow) => {
+        (async () => {
+          await syncSession(event, sessionNow);
 
-    return () => {
-      isMounted = false;
-      subscription?.unsubscribe();
-    };
-  }, []);
+          // Route reactions AFTER cookie sync so middleware sees it
+          if (event === 'SIGNED_IN' && sessionNow?.user) {
+            const url = new URL(window.location.href);
+            const next = url.searchParams.get('next');
+            const target = next && next.startsWith('/') ? next : '/';
+            router.replace(target);
+          }
+
+          if (event === 'SIGNED_OUT') {
+            if (!['/login', '/signup', '/forgot-password'].includes(router.pathname)) {
+              router.replace('/login');
+            }
+          }
+        })();
+      });
+
+      subscribedRef.current = true;
+
+      return () => {
+        isMounted = false;
+        subscription?.unsubscribe();
+        subscribedRef.current = false;
+        if (typeof window !== 'undefined') {
+          // @ts-expect-error TODO: type global flag
+          window.__GX_AUTH_BRIDGE_ACTIVE = false;
+        }
+      };
+    }
+  }, [router, isAuthPage]);
 
   // Hard redirect teachers away from non-teacher sections
   useEffect(() => {
@@ -304,6 +380,12 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      {/* Load the compiled premium DS stylesheet globally */}
+      <Head>
+        <link rel="preload" href="/premium.css" as="style" />
+        <link rel="stylesheet" href="/premium.css" />
+      </Head>
+
       <div className={`${poppins.className} ${slab.className} min-h-[100dvh] bg-background text-foreground`}>
         {showLayout ? (
           <Layout>

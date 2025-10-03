@@ -1,16 +1,20 @@
 // pages/api/premium/signout.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { env } from '@/lib/env';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const parts = [
-    `pr_pin_ok=`,
-    `Path=/premium`,
-    `HttpOnly`,
-    `SameSite=Lax`,
-    `Max-Age=0`,
-  ];
-  if (env.NODE_ENV === 'production') parts.push('Secure');
-  res.setHeader('Set-Cookie', parts.join('; '));
-  res.status(200).json({ ok: true });
+const isProd = process.env.NODE_ENV === 'production';
+
+export default function handler(req: NextApiRequest, res: NextApiResponse<{ ok: true }>) {
+  const cookie = [
+    'pr_pin_ok=0',
+    'Path=/',
+    'Max-Age=0',
+    'HttpOnly',
+    'SameSite=Lax',
+    isProd ? 'Secure' : null,
+  ]
+    .filter(Boolean)
+    .join('; ');
+
+  res.setHeader('Set-Cookie', cookie);
+  return res.status(200).json({ ok: true });
 }

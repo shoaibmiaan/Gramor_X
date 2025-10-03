@@ -1,10 +1,10 @@
 // pages/PremiumExamPage.tsx
-import { PremiumRoom } from '../../premium-ui/access/PremiumRoom';
-import { ExamShell } from '../../premium-ui/exam/ExamShell';
-import { Scratchpad } from '../../premium-ui/exam/Scratchpad';
-import { MediaDock } from '../../premium-ui/exam/MediaDock';
+import { PremiumRoom } from '../premium-ui/access/PremiumRoom';
+import { ExamShell } from '../premium-ui/exam/ExamShell';
+import { Scratchpad } from '../premium-ui/exam/Scratchpad';
+import { MediaDock } from '../premium-ui/exam/MediaDock';
 
-export default function PremiumExamPage() {
+export function PremiumExamPage() {
   const handleAccessGranted = () => {
     // Track analytics, update user state, etc.
     console.log('Premium exam room access granted');
