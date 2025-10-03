@@ -1,4 +1,5 @@
 .
+├── all_files.txt
 ├── azure-pipelines.yml
 ├── common
 │   └── LocaleSwitcher.tsx
@@ -167,8 +168,6 @@
 │   ├── predictor
 │   │   ├── BandBreakdown.tsx
 │   │   └── BandPredictorForm.tsx
-│   ├── premium
-│   │   └── ProtectedRoute.tsx
 │   ├── quick
 │   │   └── QuickDrillButton.tsx
 │   ├── reading
@@ -408,6 +407,7 @@
 │   ├── SignupEmail.tsx
 │   └── TeacherNudgeEmail.tsx
 ├── features.md
+├── files_list.txt
 ├── GTM_Implementation_Tracker_FilesByPhase.md
 ├── hooks
 │   ├── teacher
@@ -537,7 +537,6 @@
 │   ├── streaks.ts
 │   ├── studyPlan.ts
 │   ├── subscriptions.ts
-│   ├── supabase
 │   ├── supabaseAdmin.ts
 │   ├── supabaseBrowser.ts
 │   ├── supabaseClient.ts
@@ -562,7 +561,6 @@
 ├── manifest.json
 ├── middleware.ts
 ├── MOBILE_RELEASE_PHASES.md
-├── new.zip
 ├── next-env.d.ts
 ├── next.config.js
 ├── next.config.mjs
@@ -958,7 +956,6 @@
 │   │   ├── listening
 │   │   │   └── [slug].tsx
 │   │   ├── pin.tsx
-│   │   ├── PremiumExamPage.tsx
 │   │   └── reading
 │   │       └── [slug].tsx
 │   ├── premium-pin.tsx
@@ -1066,10 +1063,7 @@
 ├── premium-ui
 │   ├── access
 │   │   ├── ExamGate.tsx
-│   │   ├── PinGate.tsx
-│   │   ├── PremiumRoom.tsx
-│   │   ├── PremiumRoomManager.tsx
-│   │   └── roomUtils.ts
+│   │   └── PinGate.tsx
 │   ├── components
 │   │   ├── PrAudioPlayer.tsx
 │   │   ├── PrButton.tsx
@@ -1324,4 +1318,4 @@
 │   └── validation.ts
 └── vercel.json
 
-303 directories, 1022 files
+301 directories, 1018 files

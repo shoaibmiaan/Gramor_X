@@ -62,6 +62,7 @@ export function DesktopNav({
     : USER_MENU_LINKS;
 
   // Add premium access info to menu items if user has premium access
+<<<<<<< HEAD
   const enhancedMenuItems = hasPremiumAccess ? [
     ...menuItems,
     {
@@ -71,6 +72,19 @@ export function DesktopNav({
       isPremium: true
     }
   ] : menuItems;
+=======
+  const enhancedMenuItems = hasPremiumAccess
+    ? [
+        ...menuItems,
+        {
+          id: 'premium-status',
+          label: `⭐ Premium Access (${premiumRooms.length} rooms)`,
+          href: '/premium-room',
+          isPremium: true,
+        },
+      ]
+    : menuItems;
+>>>>>>> origin/main
 
   return (
     <nav className={className} aria-label="Primary" {...rest}>
@@ -179,7 +193,11 @@ export function DesktopNav({
                   id: link.id,
                   label: link.label,
                   href: link.href,
+<<<<<<< HEAD
                   isPremium: link.isPremium || false
+=======
+                  isPremium: link.isPremium || false,
+>>>>>>> origin/main
                 }))}
               />
             ) : (

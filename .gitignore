@@ -55,3 +55,8 @@ storybook-static
 
 *.bak
 .vercel
+
+# build outputs
+.next/
+public/premium.css
+public/premium.css.map

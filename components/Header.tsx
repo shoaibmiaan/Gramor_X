@@ -1,9 +1,9 @@
-// components/Header.tsx
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
 
 import { Container } from '@/components/design-system/Container';
 import { DesktopNav } from '@/components/navigation/DesktopNav';
@@ -11,7 +11,35 @@ import { MobileNav } from '@/components/navigation/MobileNav';
 import { Button } from '@/components/design-system/Button';
 import { useHeaderState } from '@/components/hooks/useHeaderState';
 import { useUserContext } from '@/context/UserContext';
+<<<<<<< HEAD
 import { PremiumRoomManager } from '@/premium-ui/access/roomUtils';
+=======
+import { PremiumRoomManager } from '@/premium-ui/access/roomUtils'; // Fixed conflict
+
+type NavUser = {
+  id: string | null;
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+};
+
+const mapUserToNavUser = (user: User | null): NavUser => {
+  if (!user) {
+    return { id: null, email: null, name: null, avatarUrl: null };
+  }
+
+  const metadata = user.user_metadata ?? {};
+  const name = typeof metadata['full_name'] === 'string' ? (metadata['full_name'] as string) : null;
+  const avatarUrl = typeof metadata['avatar_url'] === 'string' ? (metadata['avatar_url'] as string) : null;
+
+  return {
+    id: user.id ?? null,
+    email: user.email ?? null,
+    name,
+    avatarUrl,
+  };
+};
+>>>>>>> origin/main
 
 export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [openDesktopModules, setOpenDesktopModules] = useState(false);
@@ -20,7 +48,48 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [scrolled, setScrolled] = useState(false);
 
   const { user, role, loading } = useUserContext();
-  const { streak: streakState, ready, signOut } = useHeaderState(streak);
+  const { streak: streakState, signOut } = useHeaderState(streak);
+  const [navUser, setNavUser] = useState(() => mapUserToNavUser(user));
+
+  useEffect(() => {
+    setNavUser(mapUserToNavUser(user));
+  }, [user]);
+
+  useEffect(() => {
+    const onAvatarChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ url: string }>;
+      const nextUrl = customEvent.detail?.url;
+      if (typeof nextUrl === 'string') {
+        setNavUser((current) => ({ ...current, avatarUrl: nextUrl }));
+      }
+    };
+    window.addEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
+    return () => window.removeEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
+  }, []);
+
+  const navigationReady = !loading;
+
+  const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
+  const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
+
+  useEffect(() => {
+    const checkPremiumAccess = () => {
+      const accessedRooms = PremiumRoomManager.getAccessList();
+      setHasPremiumAccess(accessedRooms.length > 0);
+      setPremiumRooms(accessedRooms.map(room => room.roomName));
+    };
+
+    checkPremiumAccess();
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'premiumRooms') {
+        checkPremiumAccess();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   // Check if user has access to any premium rooms
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
@@ -52,6 +121,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+  
   const solidHeader = scrolled || openDesktopModules || mobileOpen;
 
   const modulesRef = useRef<HTMLLIElement>(null);
@@ -149,9 +219,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
           <div className="flex items-center gap-3">
             <DesktopNav
-              user={user}
+              user={navUser}
               role={role ?? 'guest'}
-              ready={ready}
+              ready={navigationReady}
               streak={streakState}
               openModules={openDesktopModules}
               setOpenModules={setOpenDesktopModules}
@@ -205,7 +275,11 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                   </div>
                 ) : (
                   <Button asChild variant="outline">
+<<<<<<< HEAD
                     <Link href="/premium/pin">
+=======
+                    <Link href="/premium-pin">
+>>>>>>> origin/main
                       <span className="flex items-center gap-2">
                         <span>🔒</span>
                         <span>Enter Premium</span>
@@ -217,9 +291,9 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
             )}
 
             <MobileNav
-              user={user}
+              user={navUser}
               role={role ?? 'guest'}
-              ready={ready}
+              ready={navigationReady}
               streak={streakState}
               mobileOpen={mobileOpen}
               setMobileOpen={setMobileOpen}
