@@ -1,21 +1,25 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+// pages/api/premium/session.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).end("Method not allowed");
+type Resp = { ok: true; userId: string } | { ok: false; error: string };
 
-  const { clear } = (req.body ?? {}) as { clear?: boolean };
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Resp>) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ ok: false, error: 'method-not-allowed' });
+  }
 
-  const maxAge = clear ? 0 : 60 * 60 * 12; // 12 hours
-  // Scoped for whole site so middleware can read it
-  const cookie = [
-    `pr_access=${clear ? "" : "1"}`,
-    `Path=/`,
-    `Max-Age=${maxAge}`,
-    `SameSite=Lax`,
-    `HttpOnly`,
-    `Secure`,
-  ].join("; ");
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ ok: false, error: 'no-token' });
 
-  res.setHeader("Set-Cookie", cookie);
-  res.status(200).json({ ok: true });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ ok: false, error: 'invalid-token' });
+
+  return res.status(200).json({ ok: true, userId: user.id });
 }

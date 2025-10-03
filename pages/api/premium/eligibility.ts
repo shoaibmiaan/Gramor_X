@@ -1,17 +1,30 @@
 // pages/api/premium/eligibility.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+type Resp = { eligible: boolean; plan: string | null; reason?: string };
 
-  const supabase = createServerSupabaseClient({ req, res });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return res.status(401).json({ error: 'Not authenticated' });
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Resp>) {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(200).json({ eligible: false, plan: null, reason: 'unauthenticated' });
 
-  // Placeholder: in a real implementation you'd check subscription/credit tables.
-  // For now all authenticated users are considered eligible with 1 credit.
-  return res.status(200).json({ eligible: true, subscriptionActive: true, credits: 1 });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return res.status(200).json({ eligible: false, plan: null, reason: 'unauthenticated' });
+
+  const { data: prof, error } = await supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', user.id)
+    .single();
+
+  if (error) return res.status(200).json({ eligible: false, plan: null, reason: 'no_profile' });
+
+  const plan = (prof?.plan ?? null) as string | null;
+  const eligible = plan === 'premium' || plan === 'master';
+  return res.status(200).json({ eligible, plan, reason: eligible ? undefined : 'plan_required' });
 }

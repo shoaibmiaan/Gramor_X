@@ -205,7 +205,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                   </div>
                 ) : (
                   <Button asChild variant="outline">
-                    <Link href="/premium-pin">
+                    <Link href="/premium/pin">
                       <span className="flex items-center gap-2">
                         <span>🔒</span>
                         <span>Enter Premium</span>

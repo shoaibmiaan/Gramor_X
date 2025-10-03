@@ -1,36 +1,27 @@
 // pages/api/premium/set-pin.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
-type Resp =
-  | { ok: true; status: 'CREATED' | 'UPDATED' }
-  | { ok: false; reason: 'INVALID_CURRENT' | 'INVALID_NEW' | 'BAD_INPUT' }
-  | { error: string };
+const THIRTY_DAYS = 60 * 60 * 24 * 30;
+const isProd = process.env.NODE_ENV === 'production';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Resp>) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+/** Test helper: directly set pr_pin_ok cookie. Disable in prod if undesired. */
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const cookie = [
+    'pr_pin_ok=1',
+    'Path=/',
+    `Max-Age=${THIRTY_DAYS}`,
+    'HttpOnly',
+    'SameSite=Lax',
+    isProd ? 'Secure' : null,
+  ]
+    .filter(Boolean)
+    .join('; ');
 
-  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-  const { currentPin, newPin } = body ?? {};
-  if (!newPin) return res.status(400).json({ ok: false, reason: 'BAD_INPUT' });
-  if (!/^\d{4,6}$/.test(String(newPin))) return res.status(400).json({ ok: false, reason: 'INVALID_NEW' });
-
-  const supabase = createSupabaseServerClient({ headers: { Authorization: auth } });
-
-  const { data, error } = await supabase.rpc('set_premium_pin', {
-    current_pin: currentPin ?? null,
-    new_pin: String(newPin),
-  });
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  if (data === 'CREATED' || data === 'UPDATED') return res.status(200).json({ ok: true, status: data });
-  if (data === 'INVALID_CURRENT') return res.status(400).json({ ok: false, reason: 'INVALID_CURRENT' });
-  if (data === 'INVALID_NEW') return res.status(400).json({ ok: false, reason: 'INVALID_NEW' });
-
-  return res.status(400).json({ ok: false, reason: 'BAD_INPUT' });
+  res.setHeader('Set-Cookie', cookie);
+  return res.status(200).json({ ok: true });
 }

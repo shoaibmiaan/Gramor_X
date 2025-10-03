@@ -1,32 +1,42 @@
+// pages/api/premium/status.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { createClient } from '@supabase/supabase-js';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<{ active: boolean } | { error: string }>
-) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+type Resp = {
+  pinOk: boolean;
+  loggedIn: boolean;
+  userId: string | null;
+  plan: string | null;
+};
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Resp>) {
+  const pinOk = req.cookies?.pr_pin_ok === '1';
+
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(200).json({ pinOk, loggedIn: false, userId: null, plan: null });
   }
 
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
-  const supabase = createSupabaseServerClient({ headers: { Authorization: auth } });
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) {
+    return res.status(200).json({ pinOk, loggedIn: false, userId: null, plan: null });
+  }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  const user = userData?.user;
-  if (userError || !user) return res.status(401).json({ error: 'Unauthorized' });
+  const { data: prof } = await supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', user.id)
+    .single();
 
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle();
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  return res.status(200).json({ active: Boolean(data) });
+  return res.status(200).json({
+    pinOk,
+    loggedIn: true,
+    userId: user.id,
+    plan: (prof?.plan ?? null) as string | null,
+  });
 }
