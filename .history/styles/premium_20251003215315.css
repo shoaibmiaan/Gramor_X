@@ -1,0 +1,83 @@
+/* styles/premium.css
+   Tailwind INPUT for the premium bundle (compiled -> public/premium.css) */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Base tokens & themes ---------- */
+@layer base {
+  :root {
+    --pr-radius: 16px;
+    --pr-shadow-md: 0 8px 24px rgba(0,0,0,0.20);
+    --pr-shadow-lg: 0 18px 48px rgba(0,0,0,0.30);
+  }
+
+  /* Dark (Carbon) */
+  [data-pr-theme="carbon"] {
+    --pr-bg: #0b0f1a;
+    --pr-fg: #e6eaf2;
+    --pr-card: #0f1626;
+    --pr-border: #24304a;
+    --pr-primary: #3390ff;
+    --pr-success: #35d399;
+    --pr-danger: #ff6b8b;
+  }
+
+  /* Light (Ivory) */
+  [data-pr-theme="ivory"] {
+    --pr-bg: #f7f7fb;
+    --pr-fg: #0b1324;
+    --pr-card: #ffffff;
+    --pr-border: #e6e8ef;
+    --pr-primary: #2563eb;
+    --pr-success: #16a34a;
+    --pr-danger: #e11d48;
+  }
+
+  /* Ensure page background follows the theme */
+  html[data-pr-theme] {
+    background-color: var(--pr-bg);
+    color: var(--pr-fg);
+  }
+}
+
+/* ---------- Minimal component classes used on Premium pages ---------- */
+@layer components {
+  .pr-card {
+    background: var(--pr-card);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius);
+    box-shadow: var(--pr-shadow-md);
+  }
+
+  .pr-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1;
+    border: 1px solid transparent;
+  }
+  .pr-badge-success {
+    border-color: var(--pr-success);
+    color: var(--pr-success);
+    background: color-mix(in oklab, var(--pr-success), var(--pr-bg) 85%);
+  }
+  .pr-badge-primary {
+    border-color: var(--pr-primary);
+    color: var(--pr-primary);
+    background: color-mix(in oklab, var(--pr-primary), var(--pr-bg) 85%);
+  }
+
+  .pr-link { text-decoration: none; color: var(--pr-primary); }
+  .pr-link:hover { text-decoration: underline; }
+
+  .pr-muted { color: color-mix(in oklab, var(--pr-fg), var(--pr-bg) 45%); }
+
+  /* simple heading scales used by the page */
+  .pr-text-h2 { font-size: 28px; line-height: 1.2; font-weight: 600; }
+  .pr-text-h5 { font-size: 18px; line-height: 1.25; font-weight: 600; }
+  .pr-text-small { font-size: 12px; line-height: 1.3; }
+}
