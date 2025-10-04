@@ -407,7 +407,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
 export default function App(props: AppProps) {
   return (
-    <LanguageProvider >
+    <LanguageProvider initialLocale={getLocale()}>
       <ToastProvider>
         <NotificationProvider>
           <UserProvider>

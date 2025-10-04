@@ -28,9 +28,11 @@ export default function PremiumPinPage() {
   const [hidden, setHidden] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
+
   const inputsRef = React.useRef<Array<HTMLInputElement | null>>([]);
 
   React.useEffect(() => {
+    // focus first cell
     inputsRef.current[0]?.focus();
   }, []);
 
@@ -71,6 +73,7 @@ export default function PremiumPinPage() {
     const next = Array(CELLS).fill('');
     for (let i = 0; i < text.length; i++) next[i] = text[i]!;
     setPinArr(next);
+    // focus last filled
     const last = Math.min(text.length, CELLS) - 1;
     inputsRef.current[Math.max(last, 0)]?.focus();
   }
@@ -79,7 +82,6 @@ export default function PremiumPinPage() {
     e?.preventDefault();
     const pin = pinArr.join('');
     if (pin.length !== CELLS || loading) return;
-
     setLoading(true);
     setErr(null);
     try {
@@ -103,23 +105,25 @@ export default function PremiumPinPage() {
     }
   }
 
-  // Cell styles (theme-safe)
+  // --- Visual styling tokens (theme-safe) ---
   const cellStyle: React.CSSProperties = {
     width: 48,
     height: 56,
     borderRadius: 14,
     border: '1px solid var(--pr-border)',
-    background: 'transparent',
-    color: 'currentColor',
+    background: 'transparent',                 // key: let background stay transparent
+    color: 'currentColor',                     // key: inherit theme text color (dark/light)
     textAlign: 'center',
     fontSize: 20,
     fontWeight: 600,
     letterSpacing: '0.02em',
     caretColor: 'var(--pr-primary)',
-    boxShadow: 'inset 0 -1px 0 color-mix(in oklab, var(--pr-foreground), transparent 92%)',
+    boxShadow:
+      'inset 0 -1px 0 color-mix(in oklab, var(--pr-foreground), transparent 92%)', // soft luxe inset line
     outline: 'none',
     transition: 'border-color .15s ease, box-shadow .15s ease, transform .08s ease',
   };
+
   const cellFocusStyle: React.CSSProperties = {
     border: '1px solid color-mix(in oklab, var(--pr-primary), white 10%)',
     boxShadow:
@@ -132,13 +136,6 @@ export default function PremiumPinPage() {
       <Head>
         <title>Enter Premium PIN</title>
       </Head>
-
-      {/* Moving background layer */}
-      <div className="pr-fixed pr-inset-0 pr-z-[-1]" aria-hidden="true">
-        <div className="lux-outer">
-          <div className="lux-inner" />
-        </div>
-      </div>
 
       <main className="pr-grid pr-place-items-center pr-min-h-[100dvh] pr-p-4">
         <div className="pr-absolute pr-top-4 pr-right-4">
@@ -171,6 +168,7 @@ export default function PremiumPinPage() {
                       onFocus={(e) => Object.assign(e.currentTarget.style, cellFocusStyle)}
                       onBlur={(e) => {
                         Object.assign(e.currentTarget.style, cellStyle);
+                        // preserve typed value after blur
                         e.currentTarget.style.background = 'transparent';
                         e.currentTarget.style.color = 'currentColor';
                       }}
@@ -223,44 +221,6 @@ export default function PremiumPinPage() {
           </PrCard>
         </section>
       </main>
-
-      {/* Scoped styles for the animated background */}
-      <style jsx>{`
-        .lux-outer {
-          position: absolute;
-          inset: -20%;
-          animation: lux-rotate 60s linear infinite;
-          will-change: transform;
-          pointer-events: none;
-        }
-        .lux-inner {
-          position: absolute;
-          inset: 0;
-          opacity: 0.25; /* overall intensity */
-          filter: blur(70px) saturate(115%);
-          animation: lux-pan 18s ease-in-out infinite alternate;
-          will-change: transform;
-          background:
-            radial-gradient(50% 35% at 25% 25%, color-mix(in oklab, var(--pr-primary), transparent 80%) 0%, transparent 70%),
-            radial-gradient(40% 30% at 75% 75%, color-mix(in oklab, var(--pr-foreground), transparent 92%) 0%, transparent 70%),
-            radial-gradient(45% 35% at 80% 20%, color-mix(in oklab, var(--pr-primary), white 12%) 0%, transparent 70%),
-            radial-gradient(35% 35% at 20% 80%, color-mix(in oklab, var(--pr-primary), transparent 85%) 0%, transparent 70%);
-        }
-        @keyframes lux-rotate {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes lux-pan {
-          0%   { transform: translate3d(-2%, -1%, 0) scale(1.02); }
-          100% { transform: translate3d(2%, 1%, 0)  scale(1.02); }
-        }
-        /* Respect user motion preferences */
-        @media (prefers-reduced-motion: reduce) {
-          .lux-outer, .lux-inner {
-            animation: none !important;
-            transform: none !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
