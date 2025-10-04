@@ -7,8 +7,8 @@ import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 import '@/styles/tokens.css';
-// IMPORTANT: do not import '@/styles/premium.css' here.
-// It’s the Tailwind INPUT. We load the compiled /public/premium.css via <Head> below.
+// Do NOT import '@/styles/premium.css' directly; it is Tailwind input.
+// We load the compiled /public/premium.css via <Head> below.
 import '@/styles/semantic.css';
 import '@/styles/globals.css';
 import '@/styles/themes/index.css';
@@ -129,7 +129,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
   );
 
   const isNoChromeRoute = useMemo(
-    () => /\/exam(\/|$)|\/exam-room(\/|$)|\/focus-mode(\/|$)/.test(pathname) || isAuthPage || isPremiumRoomRoute,
+    () =>
+      /\/exam(\/|$)|\/exam-room(\/|$)|\/focus-mode(\/|$)/.test(pathname) ||
+      isAuthPage ||
+      isPremiumRoomRoute,
     [pathname, isAuthPage, isPremiumRoomRoute]
   );
 
@@ -164,7 +167,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/marketplace') ||
     pathname.startsWith('/coach') ||
     pathname.startsWith('/classes') ||
-    pathname.startsWith('/bookings') ||
     pathname === '/partners';
 
   const isInstitutionsRoute = pathname.startsWith('/institutions');
@@ -196,7 +198,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
   }, [idleMinutes]);
 
   // ---------- AUTH BRIDGE: sync server cookies + correct redirects ----------
-  // Debounce & de-duplicate event syncing in dev/HMR
   const syncingRef = useRef(false);
   const lastEventRef = useRef<AuthChangeEvent | 'INITIAL_SESSION' | null>(null);
   const lastTokenRef = useRef<string | null>(null);
@@ -220,7 +221,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     lastEventRef.current = event;
     lastTokenRef.current = token;
 
-    // Prevent concurrent POSTs
     if (syncingRef.current) return;
     syncingRef.current = true;
     try {
@@ -407,7 +407,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
 export default function App(props: AppProps) {
   return (
-    <LanguageProvider>
+    <LanguageProvider >
       <ToastProvider>
         <NotificationProvider>
           <UserProvider>

@@ -56,6 +56,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/assets') ||
     pathname.startsWith('/public') ||
     pathname.startsWith('/images') ||
+    pathname === '/premium.css' ||            // ✅ allow premium stylesheet
     pathname === '/favicon.ico' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||

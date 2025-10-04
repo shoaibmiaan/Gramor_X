@@ -186,7 +186,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
               shape="rounded"
               fullWidth
               elevateOnHover
-              className="justify-between"
+              className="justify-center"
               trailingIcon={<span className="text-mutedText">→</span>}
             >
               <span className="font-medium">Student</span>
@@ -200,7 +200,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
               shape="rounded"
               fullWidth
               elevateOnHover
-              className="justify-between"
+              className="justify-center"
               trailingIcon={<span className="text-mutedText">→</span>}
             >
               <span className="font-medium">Teacher</span>
