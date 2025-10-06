@@ -14,7 +14,9 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["*"],
+      "@supabase/auth-helpers-nextjs": ["shims/auth-helpers-nextjs.ts"],
+      "@supabase/ssr": ["shims/ssr.ts"]
     },
     "verbatimModuleSyntax": false,
     "forceConsistentCasingInFileNames": true,
@@ -35,6 +37,10 @@
   "exclude": [
     "node_modules",
     "supabase/functions/**",
-    "**/tests/**"
+    "**/tests/**",
+    ".next",
+    ".history",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ]
 }
