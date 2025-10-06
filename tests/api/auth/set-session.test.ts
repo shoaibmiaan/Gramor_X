@@ -1,31 +1,32 @@
 import { strict as assert } from 'node:assert';
 
-const calls = {
-  setSession: [] as any[],
-  signOut: 0,
-};
+function withAuthStub(auth: Record<string, any>) {
+  const helperPath = require.resolve('@supabase/auth-helpers-nextjs');
+  const handlerPath = require.resolve('../../../pages/api/auth/set-session');
 
-require.cache[require.resolve('@supabase/auth-helpers-nextjs')] = {
-  exports: {
-    createPagesServerClient: () => ({
-      auth: {
-        setSession: async (session: any) => {
-          calls.setSession.push(session);
-        },
-        signOut: async () => {
-          calls.signOut += 1;
-        },
-      },
-    }),
-  },
-};
+  delete require.cache[helperPath];
+  delete require.cache[handlerPath];
 
-const handler = require('../../../pages/api/auth/set-session').default;
+  require.cache[helperPath] = {
+    exports: {
+      createPagesServerClient: () => ({ auth }),
+    },
+  } as any;
+
+  return require(handlerPath).default;
+}
 
 function createRes() {
+  const headers: Record<string, string | string[]> = {};
   return {
     statusCode: 0,
     body: undefined as any,
+    getHeader(name: string) {
+      return headers[name];
+    },
+    setHeader(name: string, value: string | string[]) {
+      headers[name] = value;
+    },
     status(code: number) {
       this.statusCode = code;
       return this;
@@ -41,9 +42,20 @@ function createRes() {
 }
 
 (async () => {
+  // Scenario 1: Supabase helpers expose setSession/signOut
+  const calls = { setSession: [] as any[], signOut: 0 };
+  const handlerWithHelpers = withAuthStub({
+    setSession: async (session: any) => {
+      calls.setSession.push(session);
+    },
+    signOut: async () => {
+      calls.signOut += 1;
+    },
+  });
+
   const session = { access_token: 'tok', refresh_token: 'ref' };
   const resInitial = createRes();
-  await handler(
+  await handlerWithHelpers(
     { method: 'POST', body: { event: 'INITIAL_SESSION', session } } as any,
     resInitial as any,
   );
@@ -51,15 +63,44 @@ function createRes() {
   assert.equal(resInitial.body.ok, true);
   assert.equal(calls.setSession.length, 1);
   assert.equal(calls.setSession[0], session);
+  assert.equal(resInitial.getHeader('Set-Cookie'), undefined);
 
   const resSignedOut = createRes();
-  await handler(
+  await handlerWithHelpers(
     { method: 'POST', body: { event: 'SIGNED_OUT', session: null } } as any,
     resSignedOut as any,
   );
   assert.equal(resSignedOut.statusCode, 200);
   assert.equal(resSignedOut.body.ok, true);
   assert.equal(calls.signOut, 1);
+
+  // Scenario 2: Fallback without helper methods
+  const handlerWithFallback = withAuthStub({});
+  const fallbackRes = createRes();
+  await handlerWithFallback(
+    { method: 'POST', body: { event: 'INITIAL_SESSION', session } } as any,
+    fallbackRes as any,
+  );
+  assert.equal(fallbackRes.statusCode, 200);
+  assert.equal(fallbackRes.body.ok, true);
+  const cookies = fallbackRes.getHeader('Set-Cookie');
+  assert.ok(Array.isArray(cookies));
+  assert.equal(cookies?.length, 2);
+  assert.ok(String(cookies?.[0]).includes('sb-access-token=tok'));
+  assert.ok(String(cookies?.[1]).includes('sb-refresh-token=ref'));
+
+  const fallbackSignOutRes = createRes();
+  await handlerWithFallback(
+    { method: 'POST', body: { event: 'SIGNED_OUT', session: null } } as any,
+    fallbackSignOutRes as any,
+  );
+  assert.equal(fallbackSignOutRes.statusCode, 200);
+  assert.equal(fallbackSignOutRes.body.ok, true);
+  const clearedCookies = fallbackSignOutRes.getHeader('Set-Cookie');
+  assert.ok(Array.isArray(clearedCookies));
+  clearedCookies?.forEach((cookieValue) => {
+    assert.ok(String(cookieValue).includes('Max-Age=0'));
+  });
 
   console.log('set-session events tested');
 })();
