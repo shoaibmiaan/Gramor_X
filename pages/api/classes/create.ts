@@ -1,7 +1,7 @@
-// pages/api/classes/create.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   title: z.string().trim().min(3).max(80),
@@ -16,7 +16,7 @@ type CreateClassResponse =
   | { ok: true; classId: string }
   | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'FORBIDDEN' | 'BAD_REQUEST' | 'DB_ERROR' };
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<CreateClassResponse>
 ) {
@@ -24,7 +24,8 @@ export default async function handler(
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const supabase = supabaseServer(req, res);
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) {
@@ -73,3 +74,5 @@ export default async function handler(
 
   return res.status(200).json({ ok: true, classId: created!.id as string });
 }
+
+export default withPlan('master', handler);

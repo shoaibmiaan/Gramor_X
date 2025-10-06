@@ -45,6 +45,9 @@ import TeacherProfile from '@/components/teacher/TeacherProfile';
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
 
+// ✅ NEW: global plan guard (client-side gating + ribbon)
+import GlobalPlanGuard from '@/components/GlobalPlanGuard';
+
 const poppins = Poppins({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -110,7 +113,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
   };
 
   const needPremium = useMemo(
-    () => pathname.startsWith('/premium') || pathname.startsWith('/pricing'),
+    () => pathname.startsWith('/premium'),
     [pathname]
   );
 
@@ -387,6 +390,9 @@ function InnerApp({ Component, pageProps }: AppProps) {
       </Head>
 
       <div className={`${poppins.className} ${slab.className} min-h-[100dvh] bg-background text-foreground`}>
+        {/* ✅ NEW: Client-side plan guard + ribbon + route protection */}
+        <GlobalPlanGuard />
+
         {showLayout ? (
           <Layout>
             <ImpersonationBanner />

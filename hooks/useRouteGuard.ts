@@ -68,7 +68,9 @@ export function useRouteGuard() {
           if (authed) {
             hasRedirected.current = true;
             const target = safeNext(router.query.next) || '/welcome';
-            await router.replace(target);
+            if (target && router.asPath !== target) {
+              await router.replace(target);
+            }
           }
           return;
         }
@@ -82,7 +84,14 @@ export function useRouteGuard() {
         if (!authed) {
           hasRedirected.current = true;
           const next = encodeURIComponent(router.asPath);
-          await router.replace(`/login?next=${next}`);
+          const targetQuery = { next };
+          const targetAsPath = `/login?${new URLSearchParams(targetQuery).toString()}`;
+          if (router.asPath !== targetAsPath) {
+            await router.replace({
+              pathname: '/login',
+              query: targetQuery,
+            });
+          }
           return;
         }
 
@@ -91,15 +100,22 @@ export function useRouteGuard() {
           const need = requiredRolesFor(pathname);
           hasRedirected.current = true;
           if (!role) {
-            await router.replace({
-              pathname: '/login',
-              query: {
-                next: router.asPath,
-                need: Array.isArray(need) ? need.join(',') : need ?? '',
-              },
-            } as any);
+            const targetQuery = {
+              next: router.asPath,
+              need: Array.isArray(need) ? need.join(',') : need ?? '',
+            };
+            const targetAsPath = `/login?${new URLSearchParams(targetQuery).toString()}`;
+            if (router.asPath !== targetAsPath) {
+              await router.replace({
+                pathname: '/login',
+                query: targetQuery,
+              });
+            }
           } else {
-            await router.replace('/403');
+            const target = '/403';
+            if (router.asPath !== target) {
+              await router.replace('/403');
+            }
           }
           return;
         }

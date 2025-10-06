@@ -1,145 +1,240 @@
-// pages/billing.tsx
+// pages/account/billing.tsx
 import * as React from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
-import type { NextPage } from 'next';
+import type { GetServerSideProps } from 'next';
+import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 
-type Invoice = Readonly<{
+type Invoice = {
   id: string;
-  amount: number;           // minor units
-  currency: string;         // e.g. 'PKR' | 'USD'
-  createdAt: string;        // ISO
+  amount: number;                // cents
+  currency: string;              // e.g., 'USD'
+  createdAt: string;             // ISO
   hostedInvoiceUrl?: string;
-  status: 'paid' | 'open' | 'void' | 'uncollectible';
-}>;
+  status: 'paid' | 'open' | 'void' | 'uncollectible' | 'draft';
+};
 
-type SubscriptionSummary = Readonly<{
-  plan: 'starter' | 'booster' | 'master' | 'free';
-  status: 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
+type Summary = {
+  plan: 'free' | 'starter' | 'booster' | 'master';
+  status:
+    | 'active'
+    | 'trialing'
+    | 'canceled'
+    | 'incomplete'
+    | 'past_due'
+    | 'unpaid'
+    | 'paused';
   renewsAt?: string;
   trialEndsAt?: string;
-}>;
+};
 
-const BillingPage: NextPage = () => {
+type Due = {
+  id: string;
+  amount_cents: number;
+  currency: string;
+  created_at: string;
+  status: 'due' | 'collected' | 'canceled';
+  plan_key: 'starter' | 'booster' | 'master';
+  cycle: 'monthly' | 'annual';
+};
+
+// ---------- SSR guard: use AUTH-HELPERS cookie, not @supabase/ssr ----------
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const { req, res, resolvedUrl } = ctx;
+
+  const supabase = createPagesServerClient({ req, res });
+  const { data, error } = await supabase.auth.getUser();
+
+  // If no user, bounce to login (preserve return path)
+  if (error || !data?.user) {
+    return {
+      redirect: {
+        destination: `/login?next=${encodeURIComponent(resolvedUrl)}`,
+        permanent: false,
+      },
+    };
+  }
+
+  // If needed, you could prefetch summary here with the same client.
+  return { props: {} };
+};
+
+// ------------------- Client component -------------------
+export default function BillingPage() {
   const [loading, setLoading] = React.useState(true);
-  const [sub, setSub] = React.useState<SubscriptionSummary | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [summary, setSummary] = React.useState<Summary | null>(null);
   const [invoices, setInvoices] = React.useState<Invoice[]>([]);
-  const [err, setErr] = React.useState<string | null>(null);
+  const [dues, setDues] = React.useState<Due[]>([]);
+  const [portalLoading, setPortalLoading] = React.useState(false);
+  const [portalAvailable, setPortalAvailable] = React.useState(true);
 
   React.useEffect(() => {
     (async () => {
       try {
-        const subRes = await fetch('/api/subscriptions/portal', { method: 'POST' });
-        if (!subRes.ok) throw new Error('Failed to load subscription');
-        const payload = await subRes.json();
-        setSub(payload.subscription as SubscriptionSummary);
-        setInvoices((payload.invoices ?? []) as Invoice[]);
+        setLoading(true);
+        setError(null);
+
+        // Ensure cookies are sent
+        const r = await fetch('/api/billing/summary', { credentials: 'include' });
+        const j = await r.json();
+
+        if (!j.ok) throw new Error(j.error || 'Failed to load subscription');
+
+        setSummary(j.summary as Summary);
+        setInvoices(((j.invoices ?? []) as Invoice[]));
+        setDues(((j.dues ?? []) as Due[]));
+        setPortalAvailable(!j.needsStripeSetup);
       } catch (e) {
-        setErr((e as Error).message);
+        setError((e as Error).message || 'Failed to load subscription');
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
+  async function openPortal() {
+    try {
+      setPortalLoading(true);
+      const r = await fetch('/api/billing/portal', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error(j.error || 'Failed to open portal');
+      window.location.href = j.url as string;
+    } catch (e) {
+      setError((e as Error).message);
+      setPortalLoading(false);
+    }
+  }
+
   return (
-    <>
-      <Head><title>Account — Billing</title></Head>
-      <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-5xl px-4 py-8">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-h1 font-semibold">Billing</h1>
-              <p className="text-small text-muted-foreground">Manage your plan, seats, and invoices.</p>
-            </div>
-            <Link href="/pricing" className="rounded-lg border border-border px-3 py-2 text-small hover:bg-muted">
-              Change plan
+    <div className="mx-auto max-w-3xl p-4">
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold">Billing</h1>
+        <p className="opacity-70">Manage your plan and invoices.</p>
+      </header>
+
+      {loading && <div className="rounded-2xl p-4 ring-1 ring-inset">Loading billing…</div>}
+
+      {!loading && error && (
+        <div className="rounded-2xl p-4 ring-1 ring-inset">
+          <div className="font-medium">Couldn’t load billing</div>
+          <div className="text-sm opacity-70">{error}</div>
+          <div className="mt-3">
+            <Link className="underline" href="/pricing">
+              Go to Pricing
             </Link>
           </div>
-
-          {loading ? (
-            <div className="rounded-lg border border-border p-4">Loading…</div>
-          ) : err ? (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4">
-              <p className="font-medium">Couldn’t load billing</p>
-              <p className="text-small opacity-90">{err}</p>
-            </div>
-          ) : (
-            <>
-              {/* Subscription Summary */}
-              <section className="mb-8 rounded-xl border border-border p-4">
-                <h2 className="mb-1 text-h4 font-medium">Subscription</h2>
-                <p className="text-small text-muted-foreground">
-                  Plan: <span className="font-medium capitalize">{sub?.plan ?? 'free'}</span> · Status:{' '}
-                  <span className="font-medium">{sub?.status ?? '—'}</span>
-                  {sub?.renewsAt ? <> · Renews on <time dateTime={sub.renewsAt}>{new Date(sub.renewsAt).toLocaleDateString()}</time></> : null}
-                  {sub?.trialEndsAt ? <> · Trial ends <time dateTime={sub.trialEndsAt}>{new Date(sub.trialEndsAt).toLocaleDateString()}</time></> : null}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <form action="/api/subscriptions/portal" method="POST">
-                    <button className="rounded-lg bg-primary px-4 py-2 text-primary-foreground">Open customer portal</button>
-                  </form>
-                  <Link href="/account/referrals" className="rounded-lg border border-border px-4 py-2 hover:bg-muted">
-                    Get rewards via referrals
-                  </Link>
-                </div>
-              </section>
-
-              {/* Invoices */}
-              <section className="rounded-xl border border-border p-4">
-                <h2 className="mb-2 text-h4 font-medium">Invoices</h2>
-                {invoices.length === 0 ? (
-                  <p className="text-small text-muted-foreground">No invoices yet.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-small">
-                      <thead>
-                        <tr className="border-b border-border text-left">
-                          <th className="py-2 pr-4">Date</th>
-                          <th className="py-2 pr-4">Amount</th>
-                          <th className="py-2 pr-4">Status</th>
-                          <th className="py-2 pr-4">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {invoices.map((inv) => (
-                          <tr key={inv.id} className="border-b border-border/60">
-                            <td className="py-2 pr-4">
-                              <time dateTime={inv.createdAt}>
-                                {new Date(inv.createdAt).toLocaleDateString()}
-                              </time>
-                            </td>
-                            <td className="py-2 pr-4">
-                              {(inv.amount / 100).toLocaleString(undefined, { style: 'currency', currency: inv.currency })}
-                            </td>
-                            <td className="py-2 pr-4 capitalize">{inv.status}</td>
-                            <td className="py-2 pr-4">
-                              {inv.hostedInvoiceUrl ? (
-                                <a
-                                  href={inv.hostedInvoiceUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="underline underline-offset-4"
-                                >
-                                  View
-                                </a>
-                              ) : (
-                                '—'
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
-            </>
-          )}
         </div>
-      </main>
-    </>
-  );
-};
+      )}
 
-export default BillingPage;
+      {!loading && !error && summary && (
+        <>
+          {/* Current plan */}
+          <section className="mb-6 rounded-2xl p-4 ring-1 ring-inset">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm opacity-70">Current plan</div>
+                <div className="text-lg font-semibold capitalize">{summary.plan}</div>
+                <div className="text-sm opacity-70">
+                  Status: {summary.status}
+                  {summary.renewsAt && <> · Renews {new Date(summary.renewsAt).toLocaleDateString()}</>}
+                  {summary.trialEndsAt && <> · Trial ends {new Date(summary.trialEndsAt).toLocaleDateString()}</>}
+                </div>
+              </div>
+
+              {portalAvailable ? (
+                <button
+                  onClick={openPortal}
+                  disabled={portalLoading}
+                  className="rounded-xl px-4 py-2 ring-1 ring-inset"
+                  aria-busy={portalLoading}
+                >
+                  {portalLoading ? 'Opening…' : 'Change plan'}
+                </button>
+              ) : (
+                <Link href="/pricing" className="rounded-xl px-4 py-2 ring-1 ring-inset">
+                  Change plan
+                </Link>
+              )}
+            </div>
+
+            {!portalAvailable && (
+              <p className="mt-3 text-sm opacity-70">
+                Payments are temporarily unavailable. If you recently subscribed,
+                your card was <span className="font-medium">not charged</span> and the
+                amount is marked as <span className="font-medium">due</span>. We’ll notify
+                you before retrying payment.
+              </p>
+            )}
+          </section>
+
+          {/* Pending dues */}
+          {dues.length > 0 && (
+            <section className="mb-6 rounded-2xl p-4 ring-1 ring-inset">
+              <h2 className="mb-2 text-lg font-semibold">Pending dues</h2>
+              <ul className="space-y-2">
+                {dues.map((d) => (
+                  <li key={d.id} className="flex items-center justify-between rounded-xl p-3 ring-1 ring-inset">
+                    <div>
+                      <div className="font-medium capitalize">
+                        {d.plan_key} · {d.cycle}
+                      </div>
+                      <div className="text-sm opacity-70">
+                        {new Date(d.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">
+                        {d.currency} {(d.amount_cents / 100).toFixed(2)}
+                      </div>
+                      <div className="text-xs opacity-70">Not charged yet</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-sm opacity-70">
+                Due to a temporary technical issue, your card has not been charged. We’ll
+                notify you before retrying payment.
+              </p>
+            </section>
+          )}
+
+          {/* Invoices */}
+          <section className="rounded-2xl p-4 ring-1 ring-inset">
+            <h2 className="mb-3 text-lg font-semibold">Invoices</h2>
+            {invoices.length === 0 ? (
+              <p className="text-sm opacity-70">No invoices yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {invoices.map((inv) => (
+                  <li key={inv.id} className="flex items-center justify-between rounded-xl p-3 ring-1 ring-inset">
+                    <div>
+                      <div className="font-medium">{inv.status.toUpperCase()}</div>
+                      <div className="text-sm opacity-70">
+                        {new Date(inv.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">
+                        {inv.currency} {(inv.amount / 100).toFixed(2)}
+                      </div>
+                      {inv.hostedInvoiceUrl ? (
+                        <a className="text-sm underline" href={inv.hostedInvoiceUrl} target="_blank" rel="noreferrer">
+                          View invoice
+                        </a>
+                      ) : (
+                        <span className="text-sm opacity-70">No PDF</span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      )}
+    </div>
+  );
+}

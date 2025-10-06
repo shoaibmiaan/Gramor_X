@@ -48,6 +48,9 @@ function makeTestStub(): SupabaseClient<DB> {
       async getSession() {
         return resolved({ data: { session: null }, error: null });
       },
+      async setSession(_session: any) {
+        return resolved({ data: null, error: null });
+      },
     },
     from: fromHandler,
   } as unknown as SupabaseClient<DB>;
@@ -84,7 +87,7 @@ export function createSupabaseServerClient<T = DB>(opts: CreateOpts = {}): Supab
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       headers,
-      fetch: (...args) => fetch(...args),
+      fetch: (...args) => fetch(...args).catch(() => resolved({ ok: false })),
     },
   });
 }
@@ -107,7 +110,7 @@ export function supabaseServer(req?: NextApiRequest, cookieHeader?: string): Sup
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       headers,
-      fetch: (...args) => fetch(...args),
+      fetch: (...args) => fetch(...args).catch(() => resolved({ ok: false })),
     },
   });
 }
@@ -141,7 +144,7 @@ export function supabaseService(): SupabaseClient<DB> {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
       headers: { 'X-Client-Info': 'gramorx/pages-router-service' },
-      fetch: (...args) => fetch(...args),
+      fetch: (...args) => fetch(...args).catch(() => resolved({ ok: false })),
     },
   });
 
@@ -164,3 +167,6 @@ export async function getServerUser(req?: NextApiRequest) {
 
 // Default export for CJS compatibility
 export default createSupabaseServerClient;
+
+// Export alias for backward compatibility
+export const createServerClient = createSupabaseServerClient;

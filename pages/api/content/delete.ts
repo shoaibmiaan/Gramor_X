@@ -1,7 +1,7 @@
-// pages/api/content/delete.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   contentId: z.string().uuid(),
@@ -14,10 +14,11 @@ type DeleteResponse =
 
 const BUCKET = 'content';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<DeleteResponse>) {
+async function handler(req: NextApiRequest, res: NextApiResponse<DeleteResponse>) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const supabase = supabaseServer(req, res);
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -47,3 +48,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   return res.status(200).json({ ok: true, contentId });
 }
+
+export default withPlan('master', handler);

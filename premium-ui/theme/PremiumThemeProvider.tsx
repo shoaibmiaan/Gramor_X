@@ -1,5 +1,11 @@
-// premium-ui/theme/PremiumThemeProvider.tsx
-import React, { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { PREMIUM_THEMES, type PremiumThemeId } from './premium-themes';
 
 type ThemeCtxValue = { theme: PremiumThemeId; setTheme: (t: PremiumThemeId) => void };
@@ -12,7 +18,7 @@ function normalizeTheme(raw?: string | null): PremiumThemeId {
   if (val === 'dark') return 'carbon';
   if (val === 'light') return 'ivory';
   if (val === 'gold') return 'royal';
-  if (['carbon','ivory','royal','aurora'].includes(val)) return val as PremiumThemeId;
+  if (['carbon', 'ivory', 'royal', 'aurora'].includes(val)) return val as PremiumThemeId;
   return 'carbon';
 }
 
@@ -22,9 +28,23 @@ export function usePremiumTheme() {
   return ctx;
 }
 
-type Props = { children: ReactNode; initialTheme?: PremiumThemeId };
+type Props = {
+  children: ReactNode;
+  initialTheme?: PremiumThemeId;
 
-export function PremiumThemeProvider({ children, initialTheme }: Props) {
+  /** Where the global “Leave Premium” button navigates. Defaults to "/" */
+  exitHref?: string;
+
+  /** Hide the global button (rare). Defaults to false */
+  hideExitButton?: boolean;
+};
+
+export function PremiumThemeProvider({
+  children,
+  initialTheme,
+  exitHref = '/',
+  hideExitButton = false,
+}: Props) {
   const [theme, setTheme] = useState<PremiumThemeId>(() =>
     normalizeTheme(
       initialTheme ||
@@ -55,9 +75,51 @@ export function PremiumThemeProvider({ children, initialTheme }: Props) {
 
   return (
     <ThemeCtx.Provider value={value}>
-      {/* contains the page, no unintended layout */}
-      <div className="pr-min-h-[100dvh] pr-bg-[var(--pr-bg)] pr-text-[var(--pr-fg)]">
-        {children}
+      {/* Keep transparent so animated layer is visible */}
+      <div className="pr-min-h-[100dvh] pr-text-[var(--pr-fg)] pr-relative pr-isolate">
+        {/* Animated background behind everything */}
+        <div className="lux-bg" aria-hidden />
+        {/* optional extra sheet for depth */}
+        <div className="lux-sheet" aria-hidden />
+
+        {/* Foreground content */}
+        <div className="pr-relative" style={{ zIndex: 1 }}>
+          {children}
+        </div>
+
+        {/* Global “Leave Premium” button (bottom-left) */}
+        {!hideExitButton && (
+          <a
+            href={exitHref}
+            className="pr-exit-btn"
+            aria-label="Exit Premium (Back to Portal)"
+            title="Back to Portal"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className="pr-mr-2 pr-shrink-0"
+            >
+              <path
+                d="M10.5 6l-6 6 6 6"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M20 12H5"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span>Back to Portal</span>
+          </a>
+        )}
       </div>
     </ThemeCtx.Provider>
   );

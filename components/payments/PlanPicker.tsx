@@ -1,5 +1,5 @@
+// components/PlanPicker.tsx
 import * as React from 'react';
-import Link from 'next/link';
 
 type PlanKey = 'starter' | 'booster' | 'master';
 type Cycle = 'monthly' | 'annual';
@@ -8,8 +8,8 @@ export type Plan = Readonly<{
   key: PlanKey;
   title: string;
   subtitle?: string;
-  priceMonthly: number; // in your display currency
-  priceAnnual: number;  // discounted display
+  priceMonthly: number; // display currency major units
+  priceAnnual: number;  // discounted display (per month equivalent if you prefer)
   features: string[];
   badge?: string;
   mostPopular?: boolean;
@@ -18,7 +18,6 @@ export type Plan = Readonly<{
 export type PlanPickerProps = {
   plans?: Plan[];
   defaultCycle?: Cycle;
-  onSelect?: (plan: PlanKey, cycle: Cycle) => void;
   className?: string;
 };
 
@@ -27,16 +26,16 @@ const DEFAULT_PLANS: Plan[] = [
     key: 'starter',
     title: 'Seedling',
     subtitle: 'Essentials to get started',
-    priceMonthly: 999,
-    priceAnnual: 899,
+    priceMonthly: 9,
+    priceAnnual: 8,
     features: ['Daily vocab', '1 grammar drill/week', 'Community access'],
   },
   {
     key: 'booster',
     title: 'Rocket',
     subtitle: 'Best for fast progress',
-    priceMonthly: 1999,
-    priceAnnual: 1699,
+    priceMonthly: 19,
+    priceAnnual: 16,
     features: ['All IELTS modules', 'AI feedback', 'Mock tests', 'Progress analytics'],
     badge: 'Most popular',
     mostPopular: true,
@@ -45,8 +44,8 @@ const DEFAULT_PLANS: Plan[] = [
     key: 'master',
     title: 'Owl',
     subtitle: 'Advanced & coaching',
-    priceMonthly: 3999,
-    priceAnnual: 3499,
+    priceMonthly: 39,
+    priceAnnual: 35,
     features: ['Priority support', '1:1 reviews', 'Advanced drills'],
   },
 ];
@@ -54,16 +53,46 @@ const DEFAULT_PLANS: Plan[] = [
 export default function PlanPicker({
   plans = DEFAULT_PLANS,
   defaultCycle = 'monthly',
-  onSelect,
   className = '',
 }: PlanPickerProps) {
   const [cycle, setCycle] = React.useState<Cycle>(defaultCycle);
+  const [busyKey, setBusyKey] = React.useState<PlanKey | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function startCheckout(plan: PlanKey) {
+    setError(null);
+    setBusyKey(plan);
+    try {
+      const r = await fetch('/api/payments/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, billingCycle: cycle }),
+      });
+      const j = (await r.json()) as { ok: boolean; url?: string; manual?: boolean; message?: string; error?: string };
+      if (!r.ok || !j.ok) throw new Error(j.error || 'Checkout failed');
+
+      if (j.manual) {
+        // Manual path: plan provisioned + due recorded
+        window.location.assign('/account/billing?due=1');
+        return;
+      }
+      if (j.url) {
+        window.location.assign(j.url);
+        return;
+      }
+      throw new Error('No redirect URL returned');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusyKey(null);
+    }
+  }
 
   return (
     <section className={`w-full ${className}`}>
       {/* Billing cycle toggle */}
       <div className="mb-6 inline-flex rounded-xl border border-border p-1">
-        {(['monthly','annual'] as const).map((k) => (
+        {(['monthly', 'annual'] as const).map((k) => (
           <button
             key={k}
             type="button"
@@ -82,7 +111,7 @@ export default function PlanPicker({
       <div className="grid gap-4 md:grid-cols-3">
         {plans.map((p) => {
           const price = cycle === 'monthly' ? p.priceMonthly : p.priceAnnual;
-          const href = `/checkout?plan=${p.key}&billingCycle=${cycle}`;
+          const busy = busyKey === p.key;
           return (
             <div
               key={p.key}
@@ -104,7 +133,9 @@ export default function PlanPicker({
 
               <div className="mt-4">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-h1 font-semibold">{price.toLocaleString()}</span>
+                  <span className="text-h1 font-semibold">
+                    {Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price)}
+                  </span>
                   <span className="text-small text-muted-foreground">/ {cycle === 'monthly' ? 'mo' : 'yr'}</span>
                 </div>
               </div>
@@ -118,24 +149,23 @@ export default function PlanPicker({
                 ))}
               </ul>
 
-              {onSelect ? (
-                <button
-                  onClick={() => onSelect(p.key, cycle)}
-                  className="mt-5 w-full rounded-lg bg-primary px-4 py-2 text-small font-medium text-primary-foreground hover:opacity-90"
-                >
-                  Choose {p.title}
-                </button>
-              ) : (
-                <Link
-                  href={href}
-                  className="mt-5 block w-full rounded-lg bg-primary px-4 py-2 text-center text-small font-medium text-primary-foreground hover:opacity-90"
-                >
-                  Choose {p.title}
-                </Link>
-              )}
+              <button
+                onClick={() => startCheckout(p.key)}
+                disabled={busy}
+                className="mt-5 w-full rounded-lg bg-primary px-4 py-2 text-small font-medium text-primary-foreground hover:opacity-90"
+                aria-busy={busy}
+              >
+                {busy ? 'Please wait…' : `Choose ${p.title}`}
+              </button>
             </div>
           );
         })}
+
+        {error && (
+          <div className="md:col-span-3 rounded-xl p-3 ring-1 ring-red-500/40">
+            <div className="text-sm">{error}</div>
+          </div>
+        )}
       </div>
     </section>
   );

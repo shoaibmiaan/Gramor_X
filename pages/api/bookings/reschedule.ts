@@ -1,7 +1,7 @@
-// pages/api/bookings/reschedule.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   bookingId: z.string().uuid(),
@@ -17,13 +17,14 @@ function overlap(aStart: string, aEnd: string, bStart: string, bEnd: string) {
   return !(aEnd <= bStart || bEnd <= aStart);
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<RescheduleResponse>
 ) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const supabase = supabaseServer(req, res);
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -85,3 +86,5 @@ export default async function handler(
 
   return res.status(200).json({ ok: true, bookingId, status: updated!.status });
 }
+
+export default withPlan('starter', handler);

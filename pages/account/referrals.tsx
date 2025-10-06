@@ -1,4 +1,3 @@
-// pages/referrals.tsx
 import * as React from 'react';
 import Head from 'next/head';
 import type { NextPage } from 'next';
@@ -48,13 +47,19 @@ const ReferralsPage: NextPage = () => {
         /* noop */
       }
     } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+      window.open(
+        `https://wa.me/?text=${encodeURIComponent(text)}`,
+        '_blank',
+        'noopener,noreferrer'
+      );
     }
   }, [referralLink]);
 
   return (
     <>
-      <Head><title>Account — Referrals</title></Head>
+      <Head>
+        <title>Account — Referrals</title>
+      </Head>
       <main className="min-h-screen bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-4 py-8">
           <h1 className="text-h1 font-semibold">Referrals</h1>
@@ -70,7 +75,7 @@ const ReferralsPage: NextPage = () => {
                 disabled={creating}
                 className="rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-60"
               >
-                {creating ? 'Generating…' : (code ? 'Regenerate Code' : 'Generate My Code')}
+                {creating ? 'Generating…' : code ? 'Regenerate Code' : 'Generate My Code'}
               </button>
 
               {code ? (
@@ -99,7 +104,12 @@ const ReferralsPage: NextPage = () => {
             {code ? (
               <p className="mt-3 text-small">
                 Your link:{' '}
-                <a href={referralLink} className="underline underline-offset-4" target="_blank" rel="noreferrer">
+                <a
+                  href={referralLink}
+                  className="underline underline-offset-4"
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   {referralLink}
                 </a>
               </p>

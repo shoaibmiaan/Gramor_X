@@ -1,8 +1,8 @@
-// pages/api/ai/writing/score-v2.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
 // import { scoreWritingV2 } from '@/lib/ai/writing_v2';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   attemptId: z.string().uuid().optional(),
@@ -50,13 +50,15 @@ function heuristic(text: string, wordsHint?: number): WritingScore {
   };
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<WritingResponse>
 ) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const supabase = supabaseServer(req, res);
+  // ❗️ Fixed: only pass req so cookies are actually read
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
 
@@ -82,3 +84,5 @@ export default async function handler(
 
   return res.status(200).json({ ok: true, attemptId: attemptId ?? undefined, score });
 }
+
+export default withPlan('starter', handler);

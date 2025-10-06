@@ -1,95 +1,65 @@
-// pages/api/institutions/students.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const QuerySchema = z.object({
   orgId: z.string().uuid(),
-  page: z.coerce.number().min(1).default(1),
-  pageSize: z.coerce.number().min(1).max(100).default(20),
-  q: z.string().trim().max(80).optional(), // name/email search
-  sort: z.enum(['new', 'name']).default('new'),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-type StudentRow = {
-  user_id: string;
-  full_name: string | null;
-  email: string | null;
-  joined_at: string | null;
-  latest_band: number | null;
-  attempts_count: number | null;
-};
-
-type StudentCard = {
-  userId: string;
-  name: string;
-  email: string | null;
-  joinedAt?: string | null;
-  latestBand?: number | null;
-  attempts?: number | null;
-};
-
+type Student = { id: string; email: string; name: string | null; joinedAt: string };
 type StudentsResponse =
-  | { ok: true; items: StudentCard[]; page: number; pageSize: number; total: number }
-  | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'FORBIDDEN' | 'BAD_REQUEST' | 'DB_ERROR' | 'NOT_FOUND' };
+  | { ok: true; orgId: string; items: Student[]; total: number; page: number; pageSize: number }
+  | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'FORBIDDEN' | 'NOT_FOUND' | 'DB_ERROR' | 'BAD_REQUEST' };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<StudentsResponse>
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse<StudentsResponse>) {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const supabase = supabaseServer(req, res);
+  // ❗️ Fixed: only pass req so cookies are actually read
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
 
   const parsed = QuerySchema.safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ ok: false, error: parsed.error.message, code: 'BAD_REQUEST' });
-  const { orgId, page, pageSize, q, sort } = parsed.data;
+  const { orgId, page, pageSize } = parsed.data;
 
-  // Ensure requester is an admin/manager in this org
-  const { data: me, error: mErr } = await supabase
-    .from('institution_members')
-    .select('org_id, role')
+  // Verify caller is org admin
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('role')
     .eq('org_id', orgId)
     .eq('user_id', user.id)
+    .eq('role', 'admin')
     .maybeSingle();
-  if (mErr) return res.status(500).json({ ok: false, error: mErr.message, code: 'DB_ERROR' });
-  if (!me || !['owner', 'admin', 'manager'].includes((me as any).role)) {
-    return res.status(403).json({ ok: false, error: 'Forbidden', code: 'FORBIDDEN' });
-  }
 
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
+  if (!membership) return res.status(403).json({ ok: false, error: 'Forbidden', code: 'FORBIDDEN' });
 
-  // We assume a view `institution_students_summary` keyed by (org_id, user_id)
-  let query = supabase
-    .from<StudentRow>('institution_students_summary')
-    .select('user_id, full_name, email, joined_at, latest_band, attempts_count', { count: 'exact' })
-    .eq('org_id', orgId);
+  // Verify org exists
+  const { data: org } = await supabase.from('orgs').select('id').eq('id', orgId).maybeSingle();
+  if (!org) return res.status(404).json({ ok: false, error: 'Organization not found', code: 'NOT_FOUND' });
 
-  if (q && q.length > 1) {
-    query = query.or([`full_name.ilike.%${q}%`, `email.ilike.%${q}%`].join(','));
-  }
+  const { data, error, count } = await supabase
+    .from('org_members')
+    .select('user_id, created_at, users!inner(email, full_name)', { count: 'exact' })
+    .eq('org_id', orgId)
+    .eq('role', 'student')
+    .range((page - 1) * pageSize, page * pageSize - 1);
 
-  query = sort === 'name'
-    ? query.order('full_name', { ascending: true, nullsFirst: true })
-    : query.order('joined_at', { ascending: false, nullsFirst: false });
-
-  query = query.range(from, to);
-
-  const { data, error, count } = await query;
   if (error) return res.status(500).json({ ok: false, error: error.message, code: 'DB_ERROR' });
 
-  const items: StudentCard[] = (data ?? []).map((s) => ({
-    userId: s.user_id,
-    name: s.full_name ?? 'Student',
-    email: s.email ?? null,
-    joinedAt: s.joined_at ?? undefined,
-    latestBand: s.latest_band ?? undefined,
-    attempts: s.attempts_count ?? undefined,
+  const items: Student[] = (data ?? []).map((row) => ({
+    id: row.user_id,
+    email: row.users!.email as string,
+    name: row.users!.full_name as string | null,
+    joinedAt: row.created_at,
   }));
 
-  return res.status(200).json({ ok: true, items, page, pageSize, total: count ?? 0 });
+  return res.status(200).json({ ok: true, orgId, items, total: count ?? 0, page, pageSize });
 }
+
+export default withPlan('master', handler);

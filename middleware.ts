@@ -1,8 +1,8 @@
 // middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
+// Pages that should be accessible without being logged in
 const AUTH_PAGES = [
   '/login',
   '/signup',
@@ -15,7 +15,7 @@ const AUTH_PAGES = [
   '/auth/verify',
 ];
 
-// Prefixes that must be authenticated (includes premium & exam routes)
+// Prefixes that require auth (your existing list)
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
@@ -48,15 +48,24 @@ function pathStartsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+// ensure refreshed cookies from Supabase are preserved when redirecting
+function redirectWithCookies(from: NextResponse, url: URL) {
+  const r = NextResponse.redirect(url);
+  // copy any cookies written to `from` (e.g., refreshed tokens) into the redirect
+  for (const c of from.cookies.getAll()) r.cookies.set(c);
+  return r;
+}
+
 export async function middleware(req: NextRequest) {
-  // Skip static files and all API routes (we only guard pages)
   const { pathname, search } = req.nextUrl;
+
+  // Skip static and API routes (we only guard real pages)
   if (
-    pathname.startsWith('/_next') ||
+    pathname.startsWith('/_next') || // includes /_next/data prefetches
     pathname.startsWith('/assets') ||
     pathname.startsWith('/public') ||
     pathname.startsWith('/images') ||
-    pathname === '/premium.css' ||            // ✅ allow premium stylesheet
+    pathname === '/premium.css' || // allow premium stylesheet
     pathname === '/favicon.ico' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
@@ -65,30 +74,31 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Create a mutable response FIRST so Supabase can attach refreshed cookies
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
 
-  // Get/refresh the session so cookies are available to the edge runtime
+  // Auth-helpers client that works in Edge middleware and handles cookies correctly
+  const supabase = createMiddlewareClient({ req, res });
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
 
-  // --- Premium PIN gate (takes precedence over generic auth) ---
+  // ----- Premium PIN gate (takes precedence over generic auth) -----
   const isPremiumSection = pathname.startsWith('/premium');
   const isPremiumPinPage = pathname === '/premium/pin' || pathname === '/premium-pin';
   const pinOk = req.cookies.get('pr_pin_ok')?.value === '1';
 
   if (isPremiumSection) {
-    // If we're on the PIN page and the cookie is already set, forward to target (or /premium)
+    // If on PIN page and cookie is already set -> send to intended target or /premium
     if (isPremiumPinPage && pinOk) {
       const url = req.nextUrl.clone();
       const nextParam = req.nextUrl.searchParams.get('next');
       url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/premium';
       url.search = '';
-      return NextResponse.redirect(url);
+      return redirectWithCookies(res, url);
     }
 
     // Always allow the PIN entry page if no cookie yet
@@ -99,37 +109,38 @@ export async function middleware(req: NextRequest) {
       const url = req.nextUrl.clone();
       url.pathname = '/premium/pin';
       url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
-      return NextResponse.redirect(url);
+      return redirectWithCookies(res, url);
     }
 
     // PIN valid → allow without forcing login
     return res;
   }
-  // --- end Premium PIN gate ---
+  // ----- end Premium PIN gate -----
 
   // If not signed in and trying to view a protected route -> redirect to login
-  if (!session && isProtected && !isAuthPage) {
-    const next = encodeURIComponent(pathname + (search || ''));
+  if (!user && isProtected && !isAuthPage) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
-    url.search = `?next=${next}`;
-    return NextResponse.redirect(url);
+    url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
+    return redirectWithCookies(res, url);
   }
 
-  // If already signed in and hitting an auth page, send them to their intended next/home
-  if (session && isAuthPage) {
+  // If already signed in and on an auth page -> bounce to intended next or home
+  if (user && isAuthPage) {
     const url = req.nextUrl.clone();
     const nextParam = req.nextUrl.searchParams.get('next');
     url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/';
     url.search = '';
-    return NextResponse.redirect(url);
+    return redirectWithCookies(res, url);
   }
 
-  // Otherwise continue
+  // Otherwise continue (with any refreshed cookies attached)
   return res;
 }
 
 // Apply to all pages except excluded above
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|images|public|api).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|images|public|api).*)',
+  ],
 };

@@ -1,13 +1,13 @@
-// pages/api/classes/attendance.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   classId: z.string().uuid(),
   action: z.enum(['join', 'leave']),
-  joinCode: z.string().trim().length(6).optional(), // required for join if not already a member
-  sessionUtc: z.string().datetime().optional(),     // optional session bucket (ISO date/time)
+  joinCode: z.string().trim().length(6).optional(),
+  sessionUtc: z.string().datetime().optional(),
   device: z.object({
     ua: z.string().max(512).optional(),
     platform: z.string().max(64).optional(),
@@ -18,7 +18,7 @@ type AttendanceResponse =
   | { ok: true; classId: string; action: 'join' | 'leave' }
   | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'NOT_FOUND' | 'FORBIDDEN' | 'EXPIRED' | 'DB_ERROR' | 'BAD_REQUEST' };
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<AttendanceResponse>
 ) {
@@ -26,7 +26,8 @@ export default async function handler(
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const supabase = supabaseServer(req, res);
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) {
@@ -104,7 +105,7 @@ export default async function handler(
     return res.status(200).json({ ok: true, classId, action: 'join' });
   }
 
-  // action === 'leave' → close the latest open attendance row for this user
+  // action === 'leave'
   const { data: latest, error: lErr } = await supabase
     .from('class_attendance')
     .select('id, joined_at_utc, left_at_utc')
@@ -127,3 +128,5 @@ export default async function handler(
 
   return res.status(200).json({ ok: true, classId, action: 'leave' });
 }
+
+export default withPlan('master', handler);

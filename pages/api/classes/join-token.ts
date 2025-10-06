@@ -1,19 +1,19 @@
-// pages/api/classes/join-token.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   classId: z.string().uuid(),
-  rotate: z.boolean().default(false),               // if true: rotate join_code
-  extendHours: z.number().int().min(1).max(720).optional(), // extend expiry
+  rotate: z.boolean().default(false),
+  extendHours: z.number().int().min(1).max(720).optional(),
 });
 
 type JoinTokenResponse =
   | { ok: true; classId: string; joinCode: string; expiresUtc: string }
   | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'FORBIDDEN' | 'NOT_FOUND' | 'DB_ERROR' | 'BAD_REQUEST' };
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<JoinTokenResponse>
 ) {
@@ -21,7 +21,8 @@ export default async function handler(
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const supabase = supabaseServer(req, res);
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) {
@@ -52,7 +53,7 @@ export default async function handler(
     return res.status(403).json({ ok: false, error: 'Forbidden', code: 'FORBIDDEN' });
   }
 
-  let newCode = klass.join_code;
+  let newCode = klass.join_code as string;
   let newExpiry = klass.join_code_expires_utc as string;
 
   if (rotate) {
@@ -82,3 +83,5 @@ export default async function handler(
     expiresUtc: updated!.join_code_expires_utc as string,
   });
 }
+
+export default withPlan('master', handler);

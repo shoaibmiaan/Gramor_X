@@ -1,7 +1,7 @@
-// pages/api/bookings/create.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   coachId: z.string().uuid(),
@@ -18,7 +18,7 @@ function intervalsOverlap(aStart: string, aEnd: string, bStart: string, bEnd: st
   return !(aEnd <= bStart || bEnd <= aStart);
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<CreateBookingResponse>
 ) {
@@ -26,10 +26,8 @@ export default async function handler(
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const supabase = supabaseServer(req, res);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = supabaseServer(req);
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -77,7 +75,7 @@ export default async function handler(
     return res.status(409).json({ ok: false, error: 'Slot already booked', code: 'CONFLICT' });
   }
 
-  // 3) Create booking (pending by default; allow coach to confirm in their console)
+  // 3) Create booking
   const { data: created, error: cErr } = await supabase
     .from('bookings')
     .insert({
@@ -97,3 +95,5 @@ export default async function handler(
 
   return res.status(200).json({ ok: true, bookingId: created!.id, status: created!.status });
 }
+
+export default withPlan('starter', handler);

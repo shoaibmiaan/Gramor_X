@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
@@ -12,6 +13,10 @@ import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 
 export default function SignUpWithEmail() {
+  const router = useRouter();
+  const role = typeof router.query?.role === 'string' ? (router.query.role as string) : '';
+  const ref  = typeof router.query?.ref === 'string'  ? (router.query.ref as string)  : '';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,7 +35,6 @@ export default function SignUpWithEmail() {
       setErr('Email and passwords are required.');
       return;
     }
-
     if (!isValidEmail(trimmedEmail)) {
       setEmailErr('Enter a valid email address.');
       return;
@@ -45,37 +49,54 @@ export default function SignUpWithEmail() {
 
     setLoading(true);
     try {
-      const { user, error } = await supabase.auth.signUp({
+      const origin =
+        typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+
+      // Where to land AFTER clicking the email verification link
+      const nextQS = new URLSearchParams();
+      if (role) nextQS.set('role', role);
+      if (ref)  nextQS.set('ref', ref);
+      const next = `/onboarding/goal${nextQS.toString() ? `?${nextQS.toString()}` : ''}`;
+
+      const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
+        options: {
+          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          // persist intended role on the auth user for downstream use:
+          data: { role: role || 'student' },
+        },
       });
-      setLoading(false);
 
       if (error) {
-        // If email is already used, resend verification email
-        if (error.message.includes('User already registered')) {
-          const { error: resendError } = await supabase.auth.resendVerificationEmail(trimmedEmail);
-          if (resendError) {
-            setErr('Unable to resend the verification email. Please try again.');
-            return;
-          }
-          setErr('Verification email has been resent. Check your inbox.');
+        // Common case: already registered but unverified
+        if (error.message.toLowerCase().includes('already')) {
+          await supabase.auth.resend({
+            type: 'signup',
+            email: trimmedEmail,
+            options: {
+              emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+            },
+          });
+          await router.replace(
+            `/signup/verify?email=${encodeURIComponent(trimmedEmail)}${role ? `&role=${encodeURIComponent(role)}` : ''}`
+          );
           return;
         }
-        setErr(error.message);
+        setErr(getAuthErrorMessage(error.message) || error.message);
+        setLoading(false);
         return;
       }
 
-      // If a referral code is provided, store it or link it to the user
-      if (referralCode) {
-        await supabase.from('referrals').insert([{ email: trimmedEmail, referral_code: referralCode }]);
-      }
+      // (Optional) hold referralCode; link it after verification to avoid orphan rows.
 
-      // Successful sign up
-      setErr('Check your email for a verification link!');
-    } catch (err) {
-      setLoading(false);
+      // Success: move user away from the form
+      await router.replace(
+        `/signup/verify?email=${encodeURIComponent(trimmedEmail)}${role ? `&role=${encodeURIComponent(role)}` : ''}`
+      );
+    } catch (e: any) {
       setErr('Unable to sign up. Please try again.');
+      setLoading(false);
     }
   }
 
@@ -100,6 +121,7 @@ export default function SignUpWithEmail() {
           required
           error={emailErr ?? undefined}
         />
+
         <PasswordInput
           label="Password"
           placeholder="Your password"
@@ -108,6 +130,7 @@ export default function SignUpWithEmail() {
           autoComplete="new-password"
           required
         />
+
         <PasswordInput
           label="Confirm Password"
           placeholder="Confirm your password"
@@ -117,6 +140,7 @@ export default function SignUpWithEmail() {
           required
           error={passwordErr ?? undefined}
         />
+
         <Input
           label="Referral Code (Optional)"
           type="text"
@@ -124,36 +148,31 @@ export default function SignUpWithEmail() {
           value={referralCode}
           onChange={(e) => setReferralCode(e.target.value)}
         />
-        <Button type="submit" variant="primary" className="rounded-ds-xl" fullWidth disabled={loading}>
+
+        <Button
+          type="submit"
+          variant="primary"
+          className="rounded-ds-xl"
+          fullWidth
+          disabled={loading}
+        >
           {loading ? 'Signing Up…' : 'Sign Up'}
         </Button>
+
         <Button asChild variant="link" className="mt-2" fullWidth>
-          <Link href="/login">Already have an account? Log in</Link>
+          <Link href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}>Already have an account? Log in</Link>
         </Button>
+
         <p className="mt-2 text-caption text-mutedText text-center">
-          By continuing you agree to our <Link href="/legal/terms" className="underline">Terms</Link> &amp; <Link href="/legal/privacy" className="underline">Privacy</Link>.
+          By continuing you agree to our <Link href="/legal/terms" className="underline">Terms</Link> &amp;{' '}
+          <Link href="/legal/privacy" className="underline">Privacy</Link>.
         </p>
       </form>
 
-      {err && err.includes('Verification email has been resent') && (
-        <div className="mt-4 text-center">
-          <Button
-            variant="secondary"
-            onClick={() => window.open(`https://mail.google.com/mail/u/0/#inbox`, '_blank')}
-          >
-            Go to Inbox
-          </Button>
-        </div>
-      )}
-
-      {/* Back to Sign Up Methods (Index) Button */}
       <div className="mt-4 text-center">
-        <Button
-          variant="link"
-          onClick={() => window.location.href = '/'} // Redirect to the index page
-        >
+        <Link href={`/signup${role ? `?role=${encodeURIComponent(role)}` : ''}`} className="text-primary underline">
           Back to Sign Up Methods
-        </Button>
+        </Link>
       </div>
     </>
   );

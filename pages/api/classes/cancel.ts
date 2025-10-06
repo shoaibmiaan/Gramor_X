@@ -1,7 +1,7 @@
-// pages/api/classes/cancel.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
   classId: z.string().uuid(),
@@ -12,10 +12,11 @@ type CancelClassResponse =
   | { ok: true; classId: string; status: 'canceled' }
   | { ok: false; error: string; code?: 'UNAUTHORIZED'|'FORBIDDEN'|'NOT_FOUND'|'DB_ERROR'|'BAD_REQUEST' };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<CancelClassResponse>) {
+async function handler(req: NextApiRequest, res: NextApiResponse<CancelClassResponse>) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const supabase = supabaseServer(req, res);
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
@@ -53,3 +54,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   return res.status(200).json({ ok: true, classId, status: 'canceled' });
 }
+
+export default withPlan('master', handler);

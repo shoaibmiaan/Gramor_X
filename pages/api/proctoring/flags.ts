@@ -1,80 +1,70 @@
-// pages/api/proctoring/flags.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
-const BodySchema = z.object({
+const QuerySchema = z.object({
   sessionId: z.string().uuid(),
-  events: z.array(
-    z.object({
-      type: z.enum([
-        'face_off', 'multiple_faces', 'tab_switch', 'noise',
-        'mic_mute', 'cam_off', 'suspicious_motion', 'identity_mismatch',
-      ]),
-      atUtc: z.string().datetime(),               // ISO timestamp
-      score: z.number().min(0).max(1).default(0), // confidence 0..1
-      evidenceUrl: z.string().url().optional(),
-      notes: z.string().max(1000).optional(),
-      meta: z.record(z.any()).optional(),
-    })
-  ).min(1).max(200),
 });
 
+type Flag = {
+  id: string;
+  sessionId: string;
+  type: string;
+  timestamp: string;
+  details: Record<string, any>;
+};
 type FlagsResponse =
-  | { ok: true; sessionId: string; inserted: number }
-  | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'NOT_FOUND' | 'FORBIDDEN' | 'BAD_REQUEST' | 'DB_ERROR' };
+  | { ok: true; sessionId: string; flags: Flag[] }
+  | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'FORBIDDEN' | 'NOT_FOUND' | 'DB_ERROR' | 'BAD_REQUEST' };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<FlagsResponse>
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  }
+async function handler(req: NextApiRequest, res: NextApiResponse<FlagsResponse>) {
+  if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const supabase = supabaseServer(req, res);
+  // ❗️ Fixed: only pass req so cookies are actually read
+  const supabase = supabaseServer(req);
+
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user;
   if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
 
-  const parsed = BodySchema.safeParse(req.body);
+  const parsed = QuerySchema.safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ ok: false, error: parsed.error.message, code: 'BAD_REQUEST' });
+  const { sessionId } = parsed.data;
 
-  const { sessionId, events } = parsed.data;
+  // Verify proctor access (assumes proctors table)
+  const { data: proctor } = await supabase
+    .from('proctors')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (!proctor) return res.status(403).json({ ok: false, error: 'Forbidden', code: 'FORBIDDEN' });
 
-  // Ensure session belongs to user (or relax if invigilator later)
-  const { data: session, error: sErr } = await supabase
+  // Verify session exists
+  const { data: session } = await supabase
     .from('proctoring_sessions')
-    .select('id, user_id, status')
+    .select('id')
     .eq('id', sessionId)
     .maybeSingle();
-
-  if (sErr) return res.status(500).json({ ok: false, error: sErr.message, code: 'DB_ERROR' });
   if (!session) return res.status(404).json({ ok: false, error: 'Session not found', code: 'NOT_FOUND' });
-  if (session.user_id !== user.id) return res.status(403).json({ ok: false, error: 'Forbidden', code: 'FORBIDDEN' });
 
-  const rows = events.map(e => ({
-    session_id: sessionId,
-    type: e.type,
-    at_utc: e.atUtc,
-    confidence: e.score,
-    evidence_url: e.evidenceUrl ?? null,
-    notes: e.notes ?? null,
-    meta_json: e.meta ?? null,
+  // Fetch flags
+  const { data, error } = await supabase
+    .from('proctoring_flags')
+    .select('id, session_id, type, created_at, details_json')
+    .eq('session_id', sessionId);
+
+  if (error) return res.status(500).json({ ok: false, error: error.message, code: 'DB_ERROR' });
+
+  const flags: Flag[] = (data ?? []).map((row) => ({
+    id: row.id,
+    sessionId: row.session_id,
+    type: row.type,
+    timestamp: row.created_at,
+    details: row.details_json ?? {},
   }));
 
-  const { error: iErr } = await supabase.from('proctoring_flags').insert(rows);
-  if (iErr) return res.status(500).json({ ok: false, error: iErr.message, code: 'DB_ERROR' });
-
-  // Also mirror into proctoring_events for a unified timeline
-  await supabase.from('proctoring_events').insert(
-    events.map(e => ({
-      session_id: sessionId,
-      type: `flag_${e.type}`,
-      at_utc: e.atUtc,
-      meta_json: { score: e.score, evidenceUrl: e.evidenceUrl, notes: e.notes, ...e.meta },
-    }))
-  );
-
-  return res.status(200).json({ ok: true, sessionId, inserted: events.length });
+  return res.status(200).json({ ok: true, sessionId, flags });
 }
+
+export default withPlan('starter', handler);

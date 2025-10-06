@@ -18,16 +18,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No authorization token' });
 
+  let user = null;
   // Admin client for token verification
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) return res.status(401).json({ error: 'Invalid token' });
+  let adminSupabase;
+  try {
+    adminSupabase = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: { user: authUser }, error: authError } = await adminSupabase.auth.getUser(token);
+    if (authError || !authUser) return res.status(401).json({ error: 'Invalid token' });
+    user = authUser;  // Declare and assign here
+  } catch (error) {
+    console.error('[API/streak] Auth verification failed:', error);
+    return res.status(503).json({ error: 'auth_unavailable' });
+  }
 
   // RLS client (acts as the user)
-  const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  await supabaseUser.auth.setSession({ access_token: token, refresh_token: '' });
+  let supabaseUser;
+  try {
+    supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    await supabaseUser.auth.setSession({ access_token: token, refresh_token: '' });
+  } catch (error) {
+    console.error('[API/streak] User client setup failed:', error);
+    return res.status(503).json({ error: 'service_unavailable' });
+  }
 
   try {
     // Read current row (aliases to expected keys)
@@ -46,8 +60,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .insert({ user_id: user.id, current: 0, last_active_date: null, updated_at: null })
         .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
         .single();
-      if (insertError) throw insertError;
-      row = inserted;
+      if (insertError) {
+        console.error('[API/streak] Insert failed:', insertError);
+        // Fallback: treat as new streak of 0
+        row = { current_streak: 0, last_activity_date: null, updated_at: null };
+      } else {
+        row = inserted;
+      }
     }
 
     // Build response object (shields/next_restart_date are not stored on this table)
@@ -98,7 +117,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
           .single();
 
-        if (upErr) throw upErr;
+        if (upErr) {
+          console.error('[API/streak] Update failed:', upErr);
+          // Fallback: return original row
+          return res.status(200).json(asResponse(row));
+        }
         return res.status(200).json(asResponse(updatedRow));
       }
 

@@ -1,73 +1,58 @@
-// pages/api/marketplace/apply.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
 
 const BodySchema = z.object({
-  displayName: z.string().trim().min(2).max(60),
-  headline: z.string().trim().min(6).max(120),
-  bio: z.string().trim().min(30).max(2000),
-  pricePerHour: z.number().min(1).max(100000),
-  languages: z.array(z.string().trim().max(8)).min(1).max(8),
-  tags: z.array(z.string().trim().max(24)).max(20).optional(),
-  introVideoUrl: z.string().url().optional(),
+  bio: z.string().trim().min(20).max(1000),
+  qualifications: z.string().trim().max(2000).optional(),
+  specialties: z.array(z.string().max(100)).min(1).max(20),
 });
 
 type ApplyResponse =
-  | { ok: true; coachId: string }
-  | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'BAD_REQUEST' | 'DB_ERROR' };
+  | { ok: true; applicationId: string }
+  | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'CONFLICT' | 'DB_ERROR' | 'BAD_REQUEST' };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ApplyResponse>
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Method not allowed' });
-  }
+async function handler(req: NextApiRequest, res: NextApiResponse<ApplyResponse>) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
-  const supabase = supabaseServer(req, res);
-  const {
-    data: { user },
-    error: uErr,
-  } = await supabase.auth.getUser();
+  // ❗️ Fixed: only pass req so cookies are actually read
+  const supabase = supabaseServer(req);
 
-  if (uErr || !user) {
-    return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
-  }
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
 
   const parsed = BodySchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ ok: false, error: parsed.error.message, code: 'BAD_REQUEST' });
-  }
+  if (!parsed.success) return res.status(400).json({ ok: false, error: parsed.error.message, code: 'BAD_REQUEST' });
+  const { bio, qualifications, specialties } = parsed.data;
 
-  const payload = parsed.data;
+  // Check if user already has a pending/active application
+  const { data: existing } = await supabase
+    .from('marketplace_applications')
+    .select('id')
+    .eq('user_id', user.id)
+    .in('status', ['pending', 'approved'])
+    .maybeSingle();
 
-  // Upsert to coaches (status under review by default)
-  const { data, error } = await supabase
-    .from('coaches')
-    .upsert(
-      {
-        user_id: user.id,
-        display_name: payload.displayName,
-        headline: payload.headline,
-        bio: payload.bio,
-        price_per_hour: payload.pricePerHour,
-        languages: payload.languages,
-        tags: payload.tags ?? [],
-        intro_video_url: payload.introVideoUrl ?? null,
-        rating_avg: 0,
-        rating_count: 0,
-        is_active: false,
-        status: 'under_review',
-      },
-      { onConflict: 'user_id' }
-    )
+  if (existing) return res.status(409).json({ ok: false, error: 'Application already exists', code: 'CONFLICT' });
+
+  // Create application
+  const { data: app, error } = await supabase
+    .from('marketplace_applications')
+    .insert({
+      user_id: user.id,
+      bio,
+      qualifications: qualifications ?? null,
+      specialties_json: specialties,
+      status: 'pending',
+    })
     .select('id')
     .single();
 
-  if (error) {
-    return res.status(500).json({ ok: false, error: error.message, code: 'DB_ERROR' });
-  }
+  if (error) return res.status(500).json({ ok: false, error: error.message, code: 'DB_ERROR' });
 
-  return res.status(200).json({ ok: true, coachId: data!.id as string });
+  return res.status(200).json({ ok: true, applicationId: app!.id as string });
 }
+
+export default withPlan('starter', handler);
