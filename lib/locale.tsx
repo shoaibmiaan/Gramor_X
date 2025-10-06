@@ -1,56 +1,60 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-interface LocaleContextValue {
-  locale: string;
-  setLocale: (lng: string) => void;
-  explanationLocale: string;
-  setExplanationLocale: (lng: string) => void;
-  t: (key: string) => string;
+/** ---- minimal message registry ---- */
+type Messages = Record<string, any>;
+const registry: Record<string, Messages> = {};   // e.g. { en: { home: { title: "…" } } }
+let currentLocale = "en";
+
+/** Deep lookup: "a.b.c" -> obj.a?.b?.c */
+function get(obj: any, path: string) {
+  return path.split(".").reduce((acc, p) => (acc != null ? acc[p] : undefined), obj);
 }
 
-const LocaleContext = createContext<LocaleContextValue>({
-  locale: 'en',
-  setLocale: () => {},
-  explanationLocale: 'en',
-  setExplanationLocale: () => {},
-  t: (key: string) => key,
-});
-
-async function loadMessages(locale: string) {
-  const fetchJson = async (path: string) => {
-    try {
-      const res = await fetch(path);
-      if (!res.ok) throw new Error('Failed to load');
-      return (await res.json()) as Record<string, any>;
-    } catch {
-      return {} as Record<string, any>;
-    }
-  };
-  const [common, home] = await Promise.all([
-    fetchJson(`/locales/${locale}/common.json`),
-    fetchJson(`/locales/${locale}/home.json`),
-  ]);
-  return { ...common, home } as Record<string, any>;
+/** Public: register/merge messages at runtime (optional) */
+export function registerMessages(locale: string, messages: Messages) {
+  registry[locale] = { ...(registry[locale] || {}), ...messages };
 }
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [locale, setLocale] = useState('en');
-  const [explanationLocale, setExplanationLocale] = useState('en');
-  const [messages, setMessages] = useState<Record<string, any>>({});
+/** ---- core API (module-safe) ---- */
+export function setLocale(locale: string) {
+  currentLocale = locale || "en";
+}
+export function getLocale() {
+  return currentLocale;
+}
 
+/** Always-callable translator. Falls back to key or provided fallback. */
+export function t(key: string, fallback?: string): string {
+  const msg = get(registry[currentLocale] || {}, key);
+  if (typeof msg === "string") return msg;
+  return fallback ?? key;
+}
+
+/** ---- React context (optional) ---- */
+type Ctx = { locale: string; setLocale: (l: string) => void; t: typeof t };
+const LocaleCtx = createContext<Ctx | null>(null);
+
+export function useLocale(): Ctx {
+  // If not inside provider, fall back to module-level state so callers still work.
+  return (
+    useContext(LocaleCtx) ?? { locale: currentLocale, setLocale, t }
+  );
+}
+
+export function LocaleProvider({
+  initialLocale = "en",
+  children,
+}: {
+  initialLocale?: string;
+  children: React.ReactNode;
+}) {
+  const [locale, setLocaleState] = useState(initialLocale);
+
+  // keep module-level locale in sync with provider state
   useEffect(() => {
-    loadMessages(locale).then(setMessages);
+    currentLocale = locale;
   }, [locale]);
 
-  const t = (key: string): string => {
-    return key.split('.').reduce((obj: any, part: string) => (obj ? obj[part] : undefined), messages) ?? key;
-  };
-
-  return (
-    <LocaleContext.Provider value={{ locale, setLocale, explanationLocale, setExplanationLocale, t }}>
-      {children}
-    </LocaleContext.Provider>
-  );
-};
-
-export const useLocale = () => useContext(LocaleContext);
+  const value = useMemo<Ctx>(() => ({ locale, setLocale: setLocaleState, t }), [locale]);
+  return <LocaleCtx.Provider value={value}>{children}</LocaleCtx.Provider>;
+}

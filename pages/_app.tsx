@@ -18,7 +18,7 @@ import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { env } from '@/lib/env';
-import { LanguageProvider } from '@/lib/locale';
+import { LocaleProvider } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 
@@ -413,7 +413,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
 export default function App(props: AppProps) {
   return (
-    <LanguageProvider >
+    <LocaleProvider initialLocale="en">
       <ToastProvider>
         <NotificationProvider>
           <UserProvider>
@@ -421,6 +421,6 @@ export default function App(props: AppProps) {
           </UserProvider>
         </NotificationProvider>
       </ToastProvider>
-    </LanguageProvider>
+    </LocaleProvider>
   );
 }

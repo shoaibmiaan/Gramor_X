@@ -1,92 +1,31 @@
-// lib/supabaseSSR.ts
-// SSR helper for API routes that need to READ+WRITE Supabase cookies.
-// Mirrors the cookie adapter we use in middleware and is safe for localhost.
-//
-// Notes:
-// - Ensures Path=/, SameSite=Lax, HttpOnly by default
-// - Trims cookie names on read()
-// - Appends multiple Set-Cookie values correctly
-// - In dev, Secure=false; in prod, Secure=true (driven by options.secure passed by Supabase)
-
+// lib/supabaseSSR.ts (no-SSR version)
+// Drop-in replacement so existing API routes keep working without @supabase/ssr.
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
+import cookie from 'cookie';
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const IS_PROD = process.env.NODE_ENV === 'production';
+function bearerFromCookies(req: NextApiRequest): string | undefined {
+  const raw = req.headers.cookie;
+  if (!raw) return;
+  const parsed = cookie.parse(raw);
+  const t = parsed['sb-access-token'];
+  return t ? `Bearer ${t}` : undefined;
+}
 
-function readCookie(req: NextApiRequest, name: string) {
-  const raw = req.headers.cookie ?? '';
-  if (!raw) return undefined;
-  // Split pairs and trim; handle leading spaces
-  const parts = raw.split(';');
-  for (const p of parts) {
-    const idx = p.indexOf('=');
-    if (idx < 0) continue;
-    const k = p.slice(0, idx).trim();
-    const v = p.slice(idx + 1);
-    if (k === name) return decodeURIComponent(v);
+export function supabaseServer(req: NextApiRequest, _res: NextApiResponse) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  if (!url || !anon) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
   }
-  return undefined;
-}
 
-function serializeCookie(name: string, value: string, options: CookieOptions = {}) {
-  const parts: string[] = [];
-  parts.push(`${name}=${encodeURIComponent(value)}`);
+  // Prefer Authorization header; fall back to cookie if present.
+  const auth = (req.headers.authorization as string | undefined) || bearerFromCookies(req);
 
-  // Enforce safe defaults if not set by caller (Supabase usually sets them, but we guard)
-  const path = options.path ?? '/';
-  const sameSite = (options.sameSite ?? 'Lax') as Exclude<CookieOptions['sameSite'], undefined>;
-  const httpOnly = options.httpOnly ?? true;
-  const secure = options.secure ?? IS_PROD; // never secure on http://localhost
-
-  parts.push(`Path=${path}`);
-  parts.push(`SameSite=${sameSite}`);
-  if (httpOnly) parts.push('HttpOnly');
-  if (secure) parts.push('Secure');
-
-  // Respect explicit domain/expires/maxAge if provided
-  if (options.domain) parts.push(`Domain=${options.domain}`);
-  if (options.expires) parts.push(`Expires=${(options.expires as Date).toUTCString()}`);
-  if (typeof options.maxAge === 'number') parts.push(`Max-Age=${Math.floor(options.maxAge)}`);
-
-  return parts.join('; ');
-}
-
-function appendSetCookie(res: NextApiResponse, cookie: string) {
-  const prev = res.getHeader('Set-Cookie');
-  if (!prev) {
-    res.setHeader('Set-Cookie', cookie);
-  } else if (Array.isArray(prev)) {
-    res.setHeader('Set-Cookie', [...prev, cookie]);
-  } else {
-    res.setHeader('Set-Cookie', [prev as string, cookie]);
-  }
-}
-
-export function createSSRClient<T = unknown>(req: NextApiRequest, res: NextApiResponse) {
-  if (!URL || !ANON) throw new Error('Supabase env missing (URL or ANON)');
-  return createServerClient<T>(URL, ANON, {
-    cookies: {
-      get: (name: string) => readCookie(req, name),
-      set: (name: string, value: string, options: CookieOptions = {}) => {
-        const cookie = serializeCookie(name, value, options);
-        appendSetCookie(res, cookie);
-      },
-      remove: (name: string, options: CookieOptions = {}) => {
-        // Ensure deletion is effective across the app
-        const del = serializeCookie(name, '', {
-          ...options,
-          path: options.path ?? '/',
-          sameSite: options.sameSite ?? 'Lax',
-          httpOnly: options.httpOnly ?? true,
-          maxAge: 0,
-          // also add an Expires in the past to satisfy all browsers
-          expires: new Date(0),
-          secure: options.secure ?? IS_PROD,
-        });
-        appendSetCookie(res, del);
-      },
-    },
+  return createClient(url, anon, {
+    global: { headers: auth ? { Authorization: auth } : {} },
   });
 }
+
+// Back-compat alias so existing imports keep working
+export const createSSRClient = supabaseServer;
