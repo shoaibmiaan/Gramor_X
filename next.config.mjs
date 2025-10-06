@@ -1,9 +1,11 @@
 // next.config.mjs
-// ESM Next.js config (Next 14)
-
 import withPWA from 'next-pwa';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// --- Security: CSP (unchanged) ---
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// --- Security: CSP ---
 const csp = [
   "default-src 'self';",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: https://js.stripe.com https://browser.sentry-cdn.com;",
@@ -21,14 +23,12 @@ const csp = [
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 let supabaseHost = '';
 try {
-  if (SUPABASE_URL) supabaseHost = new URL(SUPABASE_URL).host; // e.g. abcd.supabase.co
+  if (SUPABASE_URL) supabaseHost = new URL(SUPABASE_URL).host;
 } catch { /* ignore */ }
 
-// --- Base Next config ---
 const baseConfig = {
-  experimental: {
-    esmExternals: false,
-  },
+  experimental: { esmExternals: false },
+
   async headers() {
     return [
       {
@@ -44,17 +44,24 @@ const baseConfig = {
   },
 
   productionBrowserSourceMaps: false,
-
   eslint: { ignoreDuringBuilds: true },
-
   typescript: { ignoreBuildErrors: true },
 
   webpack: (config) => {
+    // keep your existing wasm output tweak
     config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm';
+
+    // 🔐 alias @supabase/ssr to our shim so Vercel can resolve it
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@supabase/ssr': path.resolve(__dirname, 'shims/ssr.ts'),
+    };
+
     return config;
   },
 
-  // ✅ Allow next/image to load from Supabase Storage + common CDNs
+  // Allow next/image to load from Supabase Storage + common CDNs
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
@@ -62,11 +69,10 @@ const baseConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
-    // Add the exact Supabase host if we can detect it (helps older setups)
     domains: [
       ...new Set(
         [
-          supabaseHost, // from env (optional)
+          supabaseHost,
           'lh3.googleusercontent.com',
           'res.cloudinary.com',
           'images.unsplash.com',
@@ -76,16 +82,11 @@ const baseConfig = {
   },
 };
 
-// --- PWA wrapper (unchanged except for baseConfig.images above) ---
 export default withPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-  buildExcludes: [
-    /.*\.map$/,
-    /middleware-manifest\.json$/,
-    /server\/middleware-manifest\.json$/,
-  ],
+  buildExcludes: [/.*\.map$/, /middleware-manifest\.json$/, /server\/middleware-manifest\.json$/],
   publicExcludes: ['**/*.map'],
 })(baseConfig);
