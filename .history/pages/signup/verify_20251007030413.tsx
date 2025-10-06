@@ -106,77 +106,87 @@ export default function VerifyEmailPage() {
   const mailto = `mailto:${encodeURIComponent(email)}`;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
-      <SectionLabel>Verify your email</SectionLabel>
+    <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-2">
+      <div>
+        <div className="mb-6 flex items-center gap-2">
+          <img src="/logo.svg" alt="" className="h-6 w-6" />
+          <span className="text-xl font-semibold">GramorX</span>
+        </div>
 
-      {err && (
-        <Alert variant="warning" title="Error" className="mt-4" role="status" aria-live="assertive">
-          {err}
-        </Alert>
-      )}
+        <SectionLabel>VERIFY YOUR EMAIL</SectionLabel>
 
-      {status === 'sent' && !err && (
-        <Alert variant="success" title="Sent" className="mt-4" role="status" aria-live="polite">
-          Verification email sent. Please check your inbox.
-        </Alert>
-      )}
+        {err && (
+          <Alert variant="warning" title="Error" className="mt-4" role="status" aria-live="assertive">
+            {err}
+          </Alert>
+        )}
 
-      <p className="mt-6 text-muted-foreground">
-        We sent a verification link to <strong>{email}</strong>. Click it to verify and continue setup.
-      </p>
+        {status === 'sent' && !err && (
+          <Alert variant="success" title="Sent" className="mt-4" role="status" aria-live="polite">
+            Verification email sent. Please check your inbox.
+          </Alert>
+        )}
 
-      <div className="mt-6 space-y-4">
-        <Button onClick={onResend} className="w-full" disabled={status === 'sending' || cooldown > 0}>
-          {status === 'sending'
-            ? 'Sending…'
-            : cooldown > 0
+        <p className="mt-6 text-muted-foreground">
+          We sent a verification link to <strong>{email}</strong>. Please open your inbox and click the link
+          to verify. The link will bring you back to complete setup.
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-4">
+          <Button onClick={onResend} disabled={status === 'sending' || cooldown > 0}>
+            {status === 'sending'
+              ? 'Sending…'
+              : cooldown > 0
               ? `Resend (${cooldown}s)`
               : 'Resend verification email'}
-        </Button>
+          </Button>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Button asChild variant="secondary" className="w-full">
+          <Button asChild variant="secondary">
             <a href={gmailUrl} target="_blank" rel="noreferrer">
               Open Gmail
             </a>
           </Button>
 
-          <Button asChild variant="secondary" className="w-full">
+          <Button asChild variant="secondary">
             <a href={outlookUrl} target="_blank" rel="noreferrer">
               Open Outlook
             </a>
           </Button>
         </div>
+
+        <div className="mt-4">
+          <a className="underline" href={mailto}>
+            Open default mail app
+          </a>
+        </div>
+
+        <div className="mt-8 space-y-2 text-sm text-muted-foreground">
+          <p className="font-medium">Didn’t get the email?</p>
+          <ul className="list-disc pl-5">
+            <li>Check your spam or promotions folder.</li>
+            <li>Make sure <code>no-reply@supabase.io</code> and our domain aren’t blocked.</li>
+            <li>Try the resend button above after a short delay.</li>
+          </ul>
+        </div>
+
+        <div className="mt-8">
+          <Link
+            href={`/signup/email${role ? `?role=${encodeURIComponent(role)}` : ''}`}
+            className="underline"
+          >
+            Use a different email
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-4 text-center">
-        <a className="underline" href={mailto}>
-          Open default mail app
-        </a>
-      </div>
-
-      <div className="mt-8 space-y-2 text-sm text-muted-foreground">
-        <p className="font-medium">Didn’t get the email?</p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Check spam/promotions folder.</li>
-          <li>Ensure <code>no-reply@supabase.io</code> isn’t blocked.</li>
-          <li>Try resending after a delay.</li>
-        </ul>
-      </div>
-
-      <div className="mt-4 text-center space-y-2">
-        <Link
-          href={`/signup/email${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
-        >
-          Use a different email
-        </Link>
-        <Link
-          href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
-        >
-          Back to Log in
-        </Link>
+      {/* Right side: simple brand panel */}
+      <div className="hidden rounded-ds-2xl bg-gradient-to-br from-slate-900/60 to-slate-700/40 p-10 md:block">
+        <div className="mx-auto grid h-full place-items-center">
+          <div className="text-center">
+            <img src="/logo-mark.svg" alt="" className="mx-auto mb-6 h-14 w-14 opacity-80" />
+            <h2 className="text-2xl font-semibold opacity-90">Your IELTS Companion</h2>
+          </div>
+        </div>
       </div>
     </div>
   );

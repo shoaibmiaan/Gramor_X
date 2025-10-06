@@ -107,6 +107,11 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
+      <div className="mb-6 flex items-center gap-2">
+        <img src="/logo.svg" alt="" className="h-6 w-6" />
+        <span className="text-xl font-semibold">GramorX</span>
+      </div>
+
       <SectionLabel>Verify your email</SectionLabel>
 
       {err && (
@@ -122,11 +127,12 @@ export default function VerifyEmailPage() {
       )}
 
       <p className="mt-6 text-muted-foreground">
-        We sent a verification link to <strong>{email}</strong>. Click it to verify and continue setup.
+        We sent a verification link to <strong>{email}</strong>. Please open your inbox and click the link
+        to verify. The link will bring you back to complete setup.
       </p>
 
-      <div className="mt-6 space-y-4">
-        <Button onClick={onResend} className="w-full" disabled={status === 'sending' || cooldown > 0}>
+      <div className="mt-6 flex flex-wrap gap-4">
+        <Button onClick={onResend} disabled={status === 'sending' || cooldown > 0}>
           {status === 'sending'
             ? 'Sending…'
             : cooldown > 0
@@ -134,22 +140,20 @@ export default function VerifyEmailPage() {
               : 'Resend verification email'}
         </Button>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Button asChild variant="secondary" className="w-full">
-            <a href={gmailUrl} target="_blank" rel="noreferrer">
-              Open Gmail
-            </a>
-          </Button>
+        <Button asChild variant="secondary">
+          <a href={gmailUrl} target="_blank" rel="noreferrer">
+            Open Gmail
+          </a>
+        </Button>
 
-          <Button asChild variant="secondary" className="w-full">
-            <a href={outlookUrl} target="_blank" rel="noreferrer">
-              Open Outlook
-            </a>
-          </Button>
-        </div>
+        <Button asChild variant="secondary">
+          <a href={outlookUrl} target="_blank" rel="noreferrer">
+            Open Outlook
+          </a>
+        </Button>
       </div>
 
-      <div className="mt-4 text-center">
+      <div className="mt-4">
         <a className="underline" href={mailto}>
           Open default mail app
         </a>
@@ -157,25 +161,19 @@ export default function VerifyEmailPage() {
 
       <div className="mt-8 space-y-2 text-sm text-muted-foreground">
         <p className="font-medium">Didn’t get the email?</p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Check spam/promotions folder.</li>
-          <li>Ensure <code>no-reply@supabase.io</code> isn’t blocked.</li>
-          <li>Try resending after a delay.</li>
+        <ul className="list-disc pl-5">
+          <li>Check your spam or promotions folder.</li>
+          <li>Make sure <code>no-reply@supabase.io</code> and our domain aren’t blocked.</li>
+          <li>Try the resend button above after a short delay.</li>
         </ul>
       </div>
 
-      <div className="mt-4 text-center space-y-2">
+      <div className="mt-8">
         <Link
           href={`/signup/email${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
+          className="text-primary underline"
         >
           Use a different email
-        </Link>
-        <Link
-          href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
-        >
-          Back to Log in
         </Link>
       </div>
     </div>

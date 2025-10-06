@@ -164,18 +164,12 @@ export default function VerifyEmailPage() {
         </ul>
       </div>
 
-      <div className="mt-4 text-center space-y-2">
+      <div className="mt-4 text-center">
         <Link
           href={`/signup/email${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
+          className="text-primary underline"
         >
           Use a different email
-        </Link>
-        <Link
-          href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
-        >
-          Back to Log in
         </Link>
       </div>
     </div>

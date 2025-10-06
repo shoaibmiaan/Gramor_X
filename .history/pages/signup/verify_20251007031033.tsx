@@ -122,7 +122,8 @@ export default function VerifyEmailPage() {
       )}
 
       <p className="mt-6 text-muted-foreground">
-        We sent a verification link to <strong>{email}</strong>. Click it to verify and continue setup.
+        We sent a verification link to <strong>{email}</strong>. Please open your inbox and click the link
+        to verify. The link will bring you back to complete setup.
       </p>
 
       <div className="mt-6 space-y-4">
@@ -157,25 +158,19 @@ export default function VerifyEmailPage() {
 
       <div className="mt-8 space-y-2 text-sm text-muted-foreground">
         <p className="font-medium">Didn’t get the email?</p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Check spam/promotions folder.</li>
-          <li>Ensure <code>no-reply@supabase.io</code> isn’t blocked.</li>
-          <li>Try resending after a delay.</li>
+        <ul className="list-disc pl-5">
+          <li>Check your spam or promotions folder.</li>
+          <li>Make sure <code>no-reply@supabase.io</code> and our domain aren’t blocked.</li>
+          <li>Try the resend button above after a short delay.</li>
         </ul>
       </div>
 
-      <div className="mt-4 text-center space-y-2">
+      <div className="mt-4 text-center">
         <Link
           href={`/signup/email${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
+          className="text-primary underline"
         >
           Use a different email
-        </Link>
-        <Link
-          href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
-        >
-          Back to Log in
         </Link>
       </div>
     </div>
