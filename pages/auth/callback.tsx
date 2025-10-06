@@ -1,89 +1,84 @@
+// pages/auth/callback.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import AuthLayout from '@/components/layouts/AuthLayout';
-import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { redirectByRole } from '@/lib/routeAccess';
+import { Alert } from '@/components/design-system/Alert';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const [err, setErr] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
+    if (!router.isReady) return;
 
-    const handleCallback = async () => {
+    (async () => {
       try {
-        // Supabase puts ?code=... in the URL
-        const sp = new URLSearchParams(window.location.search);
-        const code = sp.get('code');
-        const urlError = sp.get('error_description') || sp.get('error');
-        const next = sp.get('next') || '';
+        let session = null;
 
-        if (urlError) {
-          if (mounted) setErr(urlError);
-          return;
-        }
-        if (!code) {
-          if (mounted) setErr('Missing authorization code. Please try signing in again.');
-          return;
-        }
-
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) {
-          if (mounted) setErr(error.message);
-          return;
-        }
-        if (!data.session) {
-          if (mounted) setErr('No active session. Please try signing in again.');
-          return;
+        // 1) New PKCE/email link flow: ?code=...
+        const code = typeof router.query.code === 'string' ? router.query.code : null;
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          session = data.session;
+        } else {
+          // 2) Legacy hash-token flow: #access_token=...&refresh_token=...
+          const hash = typeof window !== 'undefined' ? window.location.hash : '';
+          if (hash) {
+            const p = new URLSearchParams(hash.replace(/^#/, ''));
+            const access_token = p.get('access_token');
+            const refresh_token = p.get('refresh_token');
+            if (access_token && refresh_token) {
+              const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+              if (error) throw error;
+              session = data.session;
+            }
+          }
         }
 
-        // best-effort login event (non-blocking)
+        // Best-effort: sync cookies for middleware/API
         try {
-          fetch('/api/auth/login-event', {
+          await fetch('/api/auth/set-session', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${data.session.access_token}` },
-          }).catch(() => {});
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ event: 'SIGNED_IN', session }),
+          });
         } catch {}
 
-        const user = data.session.user;
+        // Figure out where to go next
+        const rawNext = typeof router.query.next === 'string' ? router.query.next : '/';
+        const target = rawNext.startsWith('/') ? rawNext : '/';
 
-        // MFA gate (if you use it)
-        const mfaEnabled = user.user_metadata?.mfa_enabled;
-        const mfaVerified = user.user_metadata?.mfa_verified;
-        if (mfaEnabled && !mfaVerified) {
-          if (mounted) window.location.assign('/auth/mfa');
-          return;
+        if (session?.user) {
+          router.replace(target);
+        } else {
+          // User might be confirmed but no session (e.g. old link or blocked 3rd-party cookies)
+          router.replace(`/login?next=${encodeURIComponent(target)}`);
         }
-
-        // Prefer explicit next
-        if (next && !next.startsWith('http')) {
-          await router.replace(next);
-          return;
-        }
-
-        // Otherwise route by role
-        await redirectByRole(user);
-      } catch (e) {
-        console.error('Callback error:', e);
-        if (mounted) setErr('An unexpected error occurred. Please try again.');
+      } catch (e: any) {
+        setError(e?.message ?? 'Could not complete sign-in.');
+        const rawNext = typeof router.query.next === 'string' ? router.query.next : '/';
+        setTimeout(() => router.replace(`/login?next=${encodeURIComponent(rawNext)}`), 1500);
       }
-    };
-
-    handleCallback();
-    return () => { mounted = false; };
+    })();
   }, [router]);
 
   return (
-    <AuthLayout title="Signing you in..." subtitle={err ? undefined : 'Please wait...'} showRightOnMobile>
-      {err && (
-        <Alert variant="warning" title="Error" className="mt-4">
-          {err}
-        </Alert>
-      )}
-    </AuthLayout>
+    <div className="grid min-h-[60vh] place-items-center p-8">
+      <div className="max-w-md w-full">
+        {!error ? (
+          <Alert variant="info" title="Finishing sign-in…">
+            Please wait while we complete your sign-in.
+          </Alert>
+        ) : (
+          <Alert variant="warning" title="Verification problem">
+            {error}
+          </Alert>
+        )}
+      </div>
+    </div>
   );
 }

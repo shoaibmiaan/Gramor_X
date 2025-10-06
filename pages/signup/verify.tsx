@@ -1,96 +1,183 @@
-// pages/signup/check-email.tsx
+// pages/signup/verify.tsx
 'use client';
 
-import { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Button } from '@/components/design-system/Button';
+import { useRouter } from 'next/router';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
+import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
+import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 
-export default function CheckEmail() {
-  const email = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    const u = new URL(window.location.href);
-    return u.searchParams.get('email') ?? '';
-  }, []);
+export default function VerifyEmailPage() {
+  const router = useRouter();
+
+  const email = typeof router.query.email === 'string' ? router.query.email : '';
+  const role = typeof router.query.role === 'string' ? router.query.role : '';
+  const ref  = typeof router.query.ref  === 'string' ? router.query.ref  : '';
+
+  // Where the user should land after clicking the magic link
+  const next = useMemo(() => {
+    const qs = new URLSearchParams();
+    if (role) qs.set('role', role);
+    if (ref)  qs.set('ref', ref);
+    const path = '/onboarding/goal';
+    const s = qs.toString();
+    return s ? `${path}?${s}` : path;
+  }, [role, ref]);
+
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [err, setErr] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  // Auto-redirect if already signed in (e.g., they verified in another tab)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (session?.user) router.replace(next);
+    })();
+    return () => { mounted = false; };
+  }, [next, router]);
+
+  // Cooldown timer for the resend button
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  async function onResend() {
+    setErr(null);
+    if (!email) {
+      setErr('We could not detect your email address.');
+      return;
+    }
+    if (status === 'sending' || cooldown > 0) return;
+
+    setStatus('sending');
+    try {
+      const origin =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        },
+      });
+
+      if (error) {
+        setErr(error.message);
+        setStatus('error');
+        return;
+      }
+
+      setStatus('sent');
+      setCooldown(30);
+    } catch {
+      setErr('Failed to resend the verification email. Please try again.');
+      setStatus('error');
+    }
+  }
+
+  // If the page was opened without an email param, nudge them back
+  if (!email) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-12">
+        <SectionLabel>Verify your email</SectionLabel>
+        <Alert variant="warning" title="No email found" className="mt-4">
+          We couldn’t detect your email address for verification.&nbsp;
+          <Link className="text-primary underline" href="/signup">
+            Go back to sign up
+          </Link>
+          .
+        </Alert>
+      </div>
+    );
+  }
+
+  const gmailUrl = 'https://mail.google.com/mail/u/0/#inbox';
+  const outlookUrl = 'https://outlook.live.com/mail/0/inbox';
+  const mailto = `mailto:${encodeURIComponent(email)}`;
 
   return (
-    <main className="min-h-screen bg-app-surface px-4 py-12">
-      <div className="mx-auto max-w-5xl grid gap-8 md:grid-cols-2">
-        {/* Left: Copy + actions */}
-        <section className="rounded-2xl bg-surface shadow-elevated p-8 md:p-10">
-          <div className="flex items-center gap-3 mb-8">
-            <Image
-              src="/logo-mark.png"
-              alt="GramorX"
-              width={40}
-              height={40}
-              className="rounded-xl"
-              priority
-            />
-            <h1 className="text-3xl font-semibold tracking-tight text-brand">
-              GramorX
-            </h1>
-          </div>
+    <div className="mx-auto max-w-3xl px-6 py-12">
+      <SectionLabel>Verify your email</SectionLabel>
 
-          <SectionLabel>Verify your email</SectionLabel>
-          <h2 className="mt-2 text-2xl font-semibold">Check your inbox</h2>
-          <p className="mt-2 text-muted-foreground">
-            We sent a verification link to{` `}
-            <span className="font-medium">{email || 'your email'}</span>. Click
-            the link to continue.
-          </p>
+      {err && (
+        <Alert variant="warning" title="Error" className="mt-4" role="status" aria-live="assertive">
+          {err}
+        </Alert>
+      )}
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button asChild>
-              <Link href={`/api/auth/resend?email=${encodeURIComponent(email)}`}>
-                Resend link
-              </Link>
-            </Button>
+      {status === 'sent' && !err && (
+        <Alert variant="success" title="Sent" className="mt-4" role="status" aria-live="polite">
+          Verification email sent. Please check your inbox.
+        </Alert>
+      )}
 
-            <Link
-              href="/signup/email"
-              className="text-link hover:underline focus:outline-none focus:ring-2 focus:ring-focus"
-            >
-              Use a different email
-            </Link>
-          </div>
+      <p className="mt-6 text-muted-foreground">
+        We sent a verification link to <strong>{email}</strong>. Click it to verify and continue setup.
+      </p>
 
-          <div className="mt-6">
-            <Alert tone="info" title="Didn’t get it?">
-              Check Spam/Promotions. If you still don’t see it, hit “Resend
-              link.” Links expire after a short time.
-            </Alert>
-          </div>
+      <div className="mt-6 space-y-4">
+        <Button onClick={onResend} className="w-full" disabled={status === 'sending' || cooldown > 0}>
+          {status === 'sending'
+            ? 'Sending…'
+            : cooldown > 0
+              ? `Resend (${cooldown}s)`
+              : 'Resend verification email'}
+        </Button>
 
-          <div className="mt-8">
-            <Link
-              href="/login"
-              className="text-muted-foreground hover:text-foreground hover:underline"
-            >
-              ← Back to login
-            </Link>
-          </div>
-        </section>
+        <div className="grid grid-cols-2 gap-4">
+          <Button asChild variant="secondary" className="w-full">
+            <a href={gmailUrl} target="_blank" rel="noreferrer">
+              Open Gmail
+            </a>
+          </Button>
 
-        {/* Right: Brand panel */}
-        <aside className="rounded-2xl bg-gradient-brand p-10 flex items-center justify-center text-center shadow-elevated">
-          <div>
-            <Image
-              src="/brand/companion-icon.png"
-              alt=""
-              width={80}
-              height={80}
-              className="mx-auto mb-6"
-            />
-            <h3 className="text-2xl font-semibold">Your IELTS Companion</h3>
-            <p className="mt-2 text-muted-foreground">
-              Smart practice. Instant feedback. Clear progress.
-            </p>
-          </div>
-        </aside>
+          <Button asChild variant="secondary" className="w-full">
+            <a href={outlookUrl} target="_blank" rel="noreferrer">
+              Open Outlook
+            </a>
+          </Button>
+        </div>
       </div>
-    </main>
+
+      <div className="mt-4 text-center">
+        <a className="underline" href={mailto}>
+          Open default mail app
+        </a>
+      </div>
+
+      <div className="mt-8 space-y-2 text-sm text-muted-foreground">
+        <p className="font-medium">Didn’t get the email?</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>Check spam/promotions folder.</li>
+          <li>Ensure <code>no-reply@supabase.io</code> isn’t blocked.</li>
+          <li>Try resending after a delay.</li>
+        </ul>
+      </div>
+
+      <div className="mt-4 text-center space-y-2">
+        <Link
+          href={`/signup/email${role ? `?role=${encodeURIComponent(role)}` : ''}`}
+          className="text-primary underline block"
+        >
+          Use a different email
+        </Link>
+        <Link
+          href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}
+          className="text-primary underline block"
+        >
+          Back to Log in
+        </Link>
+      </div>
+    </div>
   );
 }
