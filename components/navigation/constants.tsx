@@ -36,6 +36,7 @@ export const NAV: ReadonlyArray<{ href: string; label: string }> = [
 
 export const USER_MENU_LINKS: ReadonlyArray<{ id: string; href: string; label: string }> = [
   { id: 'account',      href: '/account',           label: 'Account' },
+  { id: 'saved',        href: '/saved',             label: 'Saved items' },
   { id: 'settings',     href: '/settings',          label: 'Settings' },
   { id: 'notifications', href: '/notifications',    label: 'Notifications' },
   { id: 'billing',      href: '/account/billing',   label: 'Billing' },
