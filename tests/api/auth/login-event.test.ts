@@ -48,7 +48,7 @@ const adminClient = {
         },
       } as any;
     }
-    if (table === 'user_profiles') {
+    if (table === 'profiles') {
       return {
         select: () => ({
           eq() {

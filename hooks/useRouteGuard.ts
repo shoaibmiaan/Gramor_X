@@ -52,7 +52,7 @@ export function useRouteGuard() {
         // hydrate locale if logged in
         if (authed && user) {
           const { data: profile } = await supabase
-            .from('user_profiles') // keep your table name
+            .from('profiles') // keep your table name aligned with your schema
             .select('preferred_language')
             .eq('user_id', user.id)
             .maybeSingle();

@@ -23,7 +23,7 @@ export default function SettingsHubPage() {
 
       // Check if the user is an admin
       const { data: profile } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('role')
         .eq('id', data.session?.user?.id)
         .single();

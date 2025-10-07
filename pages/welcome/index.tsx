@@ -121,7 +121,7 @@ export default function WelcomePage() {
       if (!uid) return;
 
       const { data, error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('full_name')
         .eq('user_id', uid)
         .maybeSingle();

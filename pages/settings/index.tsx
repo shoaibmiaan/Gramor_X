@@ -87,7 +87,7 @@ export default function Dashboard() {
 
         // Load (or create minimal) profile
         const { data, error } = await supabaseBrowser
-          .from('user_profiles')
+        .from('profiles')
           .select('*')
           .eq('user_id', session.user.id)
           .maybeSingle();
@@ -112,7 +112,7 @@ export default function Dashboard() {
           } as any;
 
           const { data: created, error: insertErr } = await supabaseBrowser
-            .from('user_profiles')
+            .from('profiles')
             .insert(minimal)
             .select('*')
             .single();
