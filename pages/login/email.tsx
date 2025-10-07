@@ -2,18 +2,20 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
-import { redirectByRole } from '@/lib/routeAccess';
+import { destinationByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
 
 export default function LoginWithEmail() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [emailErr, setEmailErr] = useState<string | null>(null);
@@ -89,24 +91,41 @@ export default function LoginWithEmail() {
 
       const {
         data: { user },
-      } = await supabaseBrowser.auth.getUser().catch(err => console.error('Get user failed:', err));
+        error: userError,
+      } = await supabaseBrowser.auth.getUser();
+      if (userError) console.error('Get user failed:', userError);
+
+      async function recordLoginEvent() {
+        try {
+          const loginEventRes = await fetch('/api/auth/login-event', { method: 'POST' });
+          if (!loginEventRes.ok) console.error('Login event failed:', loginEventRes.status);
+        } catch (err) {
+          console.error('Error logging login event:', err);
+        }
+      }
 
       // Skip OTP if both email and password are provided
       if (!body.mfaRequired) {
-        // Proceed to the home page or desired redirect here
+        await recordLoginEvent();
+
+        const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
+        const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
+
+        const fallback = user ? destinationByRole(user) : '/dashboard';
+        const target = safeNext ?? fallback;
+
+        try {
+          await router.replace(target);
+        } catch (err) {
+          console.error('Redirect after login failed:', err);
+          if (typeof window !== 'undefined') window.location.assign(target);
+        }
         return;
       }
 
       // If MFA (OTP) is required, trigger the challenge
       const challenged = await createChallenge(user).catch(err => console.error('Create challenge failed:', err));
       if (challenged) return;
-
-      try {
-        const loginEventRes = await fetch('/api/auth/login-event', { method: 'POST' });
-        if (!loginEventRes.ok) console.error('Login event failed:', loginEventRes.status);
-      } catch (err) {
-        console.error('Error logging login event:', err);
-      }
 
       // Rely on _app.tsx onAuthStateChange to redirect
     } catch (err) {
