@@ -91,7 +91,7 @@ Deno.serve(async () => {
 
   for (const [userId, info] of byUser) {
     const { data: profile } = await client
-      .from("user_profiles")
+      .from("profiles")
       .select(
         "email, phone, notification_channels, quiet_hours_start, quiet_hours_end"
       )

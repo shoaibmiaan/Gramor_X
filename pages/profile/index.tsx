@@ -43,7 +43,7 @@ export default function ProfilePage() {
         setUserId(session.user.id);
 
         const { data, error } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .eq('user_id', session.user.id)
           .maybeSingle();
@@ -101,7 +101,7 @@ export default function ProfilePage() {
       const { error: updErr } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
       if (updErr) throw updErr;
       const { error: profErr } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('user_id', userId);
       if (profErr) throw profErr;

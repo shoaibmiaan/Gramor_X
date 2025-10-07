@@ -31,7 +31,7 @@ export default function Dashboard() {
       if (!session?.user) { router.replace('/login'); return; }
 
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('user_id', session.user.id)
         .maybeSingle();
@@ -71,7 +71,7 @@ export default function Dashboard() {
     current.push(skill);
 
     void supabase
-      .from('user_profiles')
+      .from('profiles')
       .update({ study_prefs: current })
       .eq('user_id', profile.user_id as string)
       .then(() => {

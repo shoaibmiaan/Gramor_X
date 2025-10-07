@@ -24,7 +24,7 @@ export default function NotificationSettings() {
           return
         }
         const { data, error } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('notification_channels, quiet_hours_start, quiet_hours_end')
           .eq('user_id', session.user.id)
           .maybeSingle()
@@ -57,7 +57,7 @@ export default function NotificationSettings() {
       if (!session?.user) return
 
       const { error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
           notification_channels: channels,
           quiet_hours_start: start || null,
