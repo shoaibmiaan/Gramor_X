@@ -12,11 +12,13 @@ import { Ribbon } from '@/components/design-system/Ribbon';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import SocialProofStrip from '@/components/marketing/SocialProofStrip';
+import {
+  getPlanDisplayPrice,
+  type Cycle,
+  type PlanKey,
+} from '@/lib/pricing';
 
 // ------------------ Types ------------------
-type PlanKey = 'starter' | 'booster' | 'master';
-type Cycle = 'monthly' | 'annual';
-
 type PlanRow = {
   key: PlanKey;
   title: 'Seedling' | 'Rocket' | 'Owl';
@@ -34,37 +36,39 @@ type Currency =
   | 'USD' | 'EUR' | 'GBP' | 'INR' | 'PKR' | 'AED' | 'SAR' | 'AUD' | 'CAD' | 'NGN' | 'BRL' | 'PHP';
 
 // ------------------ Data ------------------
-const PLANS: readonly PlanRow[] = [
-  {
-    key: 'starter',
+const PLAN_PRESENTATION: Record<PlanKey, Omit<PlanRow, 'key' | 'priceMonthly' | 'priceAnnual'>> = {
+  starter: {
     title: 'Seedling',
     subtitle: 'Essentials to get started',
-    priceMonthly: 999,
-    priceAnnual: 899,
     features: ['Daily vocab', '1 grammar drill/week', 'Community access'],
     icon: 'fa-seedling',
   },
-  {
-    key: 'booster',
+  booster: {
     title: 'Rocket',
     subtitle: 'Best for fast progress',
-    priceMonthly: 1999,
-    priceAnnual: 1699,
     features: ['All IELTS modules', 'AI feedback', 'Mock tests', 'Progress analytics'],
     badge: 'MOST POPULAR',
     mostPopular: true,
     icon: 'fa-rocket',
   },
-  {
-    key: 'master',
+  master: {
     title: 'Owl',
     subtitle: 'Advanced & coaching',
-    priceMonthly: 3999,
-    priceAnnual: 3499,
     features: ['Priority support', '1:1 reviews', 'Advanced drills'],
     icon: 'fa-feather',
   },
-] as const;
+};
+
+const toUsdCents = (major: number) => Math.round(major * 100);
+
+const PLAN_KEYS: readonly PlanKey[] = ['starter', 'booster', 'master'];
+
+const PLANS: readonly PlanRow[] = PLAN_KEYS.map((key) => ({
+  key,
+  ...PLAN_PRESENTATION[key],
+  priceMonthly: toUsdCents(getPlanDisplayPrice(key, 'monthly')),
+  priceAnnual: toUsdCents(getPlanDisplayPrice(key, 'annual')),
+})) as const;
 
 // Simple demo FX rates relative to USD. Replace with live rates from your backend/payments provider.
 const FX: Record<Currency, number> = {
