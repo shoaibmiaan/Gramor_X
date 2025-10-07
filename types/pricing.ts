@@ -6,6 +6,8 @@
 // - Adds alias mapping so "seedling/rocket/owl" map to "starter/booster/master"
 // -----------------------------------------------------------------------------
 
+import { USD_PLAN_PRICES } from '@/lib/pricing';
+
 export type PlanId = 'free' | 'starter' | 'booster' | 'master';
 
 export interface Plan {
@@ -57,8 +59,8 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Starter (Seedling)',
     shortName: 'Starter',
     tagline: 'Build consistent habits',
-    monthlyUSD: 9,
-    annualUSD: 84,
+    monthlyUSD: USD_PLAN_PRICES.starter.monthly,
+    annualUSD: USD_PLAN_PRICES.starter.annual,
     quota: { dailyMocks: 2, aiEvaluationsPerDay: 10, storageGB: 5 },
     features: [
       'All Free features',
@@ -74,8 +76,8 @@ export const PLANS: Record<PlanId, Plan> = {
     shortName: 'Booster',
     tagline: 'Serious prep, fast',
     highlight: true,
-    monthlyUSD: 19,
-    annualUSD: 180,
+    monthlyUSD: USD_PLAN_PRICES.booster.monthly,
+    annualUSD: USD_PLAN_PRICES.booster.annual,
     quota: { dailyMocks: 5, aiEvaluationsPerDay: 40, storageGB: 15 },
     features: [
       'All Starter features',
@@ -90,8 +92,8 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Master (Owl)',
     shortName: 'Master',
     tagline: 'Max score, full control',
-    monthlyUSD: 39,
-    annualUSD: 360,
+    monthlyUSD: USD_PLAN_PRICES.master.monthly,
+    annualUSD: USD_PLAN_PRICES.master.annual,
     quota: { dailyMocks: 10, aiEvaluationsPerDay: 120, storageGB: 50 },
     features: [
       'All Booster features',
