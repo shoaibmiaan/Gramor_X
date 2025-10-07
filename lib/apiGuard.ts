@@ -48,7 +48,7 @@ export function withPlan(
     // Read profile (RLS should allow user to read own profile)
     type ProfileRow = { id: string; plan: PlanId | null; role: Role };
     const { data: profile, error: profileErr } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('id, plan, role')
       .eq('id', user.id)
       .single<ProfileRow>();

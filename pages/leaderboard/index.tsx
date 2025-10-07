@@ -17,14 +17,14 @@ export default function WeeklyLeaderboard() {
     (async () => {
       const { data, error } = await supabase
         .from('weekly_leaderboard')
-        .select('user_id, score, user_profiles(full_name)')
+        .select('user_id, score, profiles(full_name)')
         .order('score', { ascending: false })
         .limit(10);
       if (!error && data) {
         const formatted: Entry[] = data.map((d: any) => ({
           user_id: d.user_id,
           score: d.score,
-          full_name: d.user_profiles?.full_name ?? 'Anonymous',
+          full_name: d.profiles?.full_name ?? 'Anonymous',
         }));
         setEntries(formatted);
       }

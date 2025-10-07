@@ -70,9 +70,9 @@ async function getRoleForUser(user: User): Promise<AppRole | null> {
     (user.user_metadata?.role as AppRole | undefined);
   if (metaRole) return metaRole;
 
-  // 2) DB profile (your schema uses user_profiles)
+  // 2) DB profile (your schema uses profiles)
   const { data: prof } = await supabaseAdmin
-    .from('user_profiles') // <-- ensure this table exists in your project
+    .from('profiles') // <-- ensure this table exists in your project
     .select('role')
     .eq('id', user.id)
     .single();

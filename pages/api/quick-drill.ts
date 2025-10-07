@@ -32,7 +32,7 @@ export default async function handler(
 
   if (!skill) {
     const { data: profile } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('ai_recommendation')
       .eq('user_id', user.id)
       .maybeSingle();
