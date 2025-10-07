@@ -1,3 +1,4 @@
+// tests/api/auth/set-session.test.ts
 import { strict as assert } from 'node:assert';
 
 function withAuthStub(auth: Record<string, any>) {
@@ -54,6 +55,7 @@ function createRes() {
   });
 
   const session = { access_token: 'tok', refresh_token: 'ref' };
+
   const resInitial = createRes();
   await handlerWithHelpers(
     { method: 'POST', body: { event: 'INITIAL_SESSION', session } } as any,
@@ -73,6 +75,44 @@ function createRes() {
   assert.equal(resSignedOut.statusCode, 200);
   assert.equal(resSignedOut.body.ok, true);
   assert.equal(calls.signOut, 1);
+
+  // Scenario 1b: Helpers are present but throw -> fallback should recover
+  const failingHandler = withAuthStub({
+    setSession: async () => {
+      throw new TypeError('setSession not supported');
+    },
+    signOut: async () => {
+      throw new Error('signOut not supported');
+    },
+  });
+
+  const failingRes = createRes();
+  await failingHandler(
+    { method: 'POST', body: { event: 'SIGNED_IN', session } } as any,
+    failingRes as any,
+  );
+  assert.equal(failingRes.statusCode, 200);
+  assert.equal(failingRes.body.ok, true);
+  const failingCookies = failingRes.getHeader('Set-Cookie');
+  assert.ok(Array.isArray(failingCookies));
+  assert.ok(String(failingCookies?.[0]).includes('sb-access-token=tok'));
+
+  const failingSignOutRes = createRes();
+  await failingHandler(
+    { method: 'POST', body: { event: 'SIGNED_OUT', session: null } } as any,
+    failingSignOutRes as any,
+  );
+  assert.equal(failingSignOutRes.statusCode, 200);
+  assert.equal(failingSignOutRes.body.ok, true);
+  const failingCleared = failingSignOutRes.getHeader('Set-Cookie');
+  assert.ok(Array.isArray(failingCleared));
+  ['sb-access-token', 'sb-refresh-token', 'sb:token', 'supabase-auth-token'].forEach((name) => {
+    assert.ok(
+      failingCleared?.some((cookieValue) =>
+        String(cookieValue).includes(`${name}=`) && String(cookieValue).includes('Max-Age=0'),
+      ),
+    );
+  });
 
   // Scenario 2: Fallback without helper methods
   const handlerWithFallback = withAuthStub({});
