@@ -5,6 +5,32 @@ export type PlanKey = 'starter' | 'booster' | 'master';
 export type PlanId = 'free' | PlanKey;
 export type Cycle = 'monthly' | 'annual';
 
+type PlanPrice = {
+  /** Amount billed each month for the monthly cycle (in major units). */
+  monthly: number;
+  /** Total amount billed upfront for the annual cycle (in major units). */
+  annual: number;
+};
+
+/**
+ * Canonical USD pricing for all paid plans.
+ *  - `monthly` is the amount a customer pays for one month.
+ *  - `annual` is the full upfront charge for one year (should be 12 × the per-month display value).
+ */
+export const USD_PLAN_PRICES: Record<PlanKey, PlanPrice> = {
+  starter: { monthly: 9, annual: 96 },
+  booster: { monthly: 19, annual: 192 },
+  master: { monthly: 39, annual: 420 },
+};
+
+export const getPlanDisplayPrice = (plan: PlanKey, cycle: Cycle): number =>
+  cycle === 'monthly'
+    ? USD_PLAN_PRICES[plan].monthly
+    : USD_PLAN_PRICES[plan].annual / 12;
+
+export const getPlanBillingAmount = (plan: PlanKey, cycle: Cycle): number =>
+  cycle === 'monthly' ? USD_PLAN_PRICES[plan].monthly : USD_PLAN_PRICES[plan].annual;
+
 export const PLAN_LABEL: Record<PlanKey, string> = {
   starter: 'Seedling 🌱',
   booster: 'Rocket 🚀',
@@ -39,8 +65,8 @@ export const PLANS: Record<PlanKey, PlanCard> = {
     title: 'Seedling',
     icon: 'fa-seedling',
     currency: CURRENCY,
-    displayPriceMonthly: 9,
-    displayPriceAnnual: 8, // shown as per-month equivalent for the annual plan
+    displayPriceMonthly: getPlanDisplayPrice('starter', 'monthly'),
+    displayPriceAnnual: getPlanDisplayPrice('starter', 'annual'),
     stripe: {
       priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_M,
       priceIdAnnual:  process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_Y,
@@ -53,8 +79,8 @@ export const PLANS: Record<PlanKey, PlanCard> = {
     badge: 'MOST POPULAR',
     mostPopular: true,
     currency: CURRENCY,
-    displayPriceMonthly: 19,
-    displayPriceAnnual: 16,
+    displayPriceMonthly: getPlanDisplayPrice('booster', 'monthly'),
+    displayPriceAnnual: getPlanDisplayPrice('booster', 'annual'),
     stripe: {
       priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_BOOSTER_M,
       priceIdAnnual:  process.env.NEXT_PUBLIC_STRIPE_PRICE_BOOSTER_Y,
@@ -65,8 +91,8 @@ export const PLANS: Record<PlanKey, PlanCard> = {
     title: 'Owl',
     icon: 'fa-feather',
     currency: CURRENCY,
-    displayPriceMonthly: 39,
-    displayPriceAnnual: 35,
+    displayPriceMonthly: getPlanDisplayPrice('master', 'monthly'),
+    displayPriceAnnual: getPlanDisplayPrice('master', 'annual'),
     stripe: {
       priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_MASTER_M,
       priceIdAnnual:  process.env.NEXT_PUBLIC_STRIPE_PRICE_MASTER_Y,
