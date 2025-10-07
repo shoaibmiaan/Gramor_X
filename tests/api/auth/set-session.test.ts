@@ -1,3 +1,4 @@
+// tests/api/auth/set-session.test.ts
 import { strict as assert } from 'node:assert';
 
 function withAuthStub(auth: Record<string, any>) {
@@ -54,6 +55,7 @@ function createRes() {
   });
 
   const session = { access_token: 'tok', refresh_token: 'ref' };
+
   const resInitial = createRes();
   await handlerWithHelpers(
     { method: 'POST', body: { event: 'INITIAL_SESSION', session } } as any,
