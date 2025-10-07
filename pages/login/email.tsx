@@ -84,10 +84,23 @@ export default function LoginWithEmail() {
       }
 
       // If login is successful, set session and proceed
-      await supabaseBrowser.auth.setSession({
-        access_token: body.session.access_token,
-        refresh_token: body.session.refresh_token,
-      }).catch(err => console.error('Set session failed:', err));
+      await supabaseBrowser.auth
+        .setSession({
+          access_token: body.session.access_token,
+          refresh_token: body.session.refresh_token,
+        })
+        .catch(err => console.error('Set session failed:', err));
+
+      try {
+        await fetch('/api/auth/set-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ event: 'SIGNED_IN', session: body.session }),
+        });
+      } catch (err) {
+        console.error('Sync server session failed:', err);
+      }
 
       const {
         data: { user },
