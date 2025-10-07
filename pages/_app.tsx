@@ -2,7 +2,7 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -80,7 +80,7 @@ function GuardSkeleton() {
 function TeacherOnboardingGate() {
   const router = useRouter();
 
-  const handleSubmit = React.useCallback(
+  const handleSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       void router.push('/teacher/register');
