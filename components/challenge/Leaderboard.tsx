@@ -52,7 +52,7 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
       </div>
 
       {error && (
-        <div className="rounded-md border border-border bg-card px-3 py-2 text-caption text-red-400">
+        <div className="rounded-md border border-border bg-card px-3 py-2 text-caption text-danger">
           {error}
         </div>
       )}

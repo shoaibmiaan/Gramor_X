@@ -21,7 +21,7 @@ body { @apply font-sans text-lightText bg-lightBg overflow-x-hidden relative; }
 }
 
 /* Header / Nav */
-.header-glass { @apply text-lightText bg-white/90 backdrop-blur-md border-b border-gray-200; }
+.header-glass { @apply text-lightText bg-white/90 backdrop-blur-md border-b border-lightBorder; }
 .dark .header-glass { @apply text-white bg-dark/95 border-vibrantPurple/20; }
 
 /* Nav pill */

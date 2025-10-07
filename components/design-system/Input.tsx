@@ -11,6 +11,7 @@ export type InputProps = Readonly<
   Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> & {
     label?: string;
     hint?: string;
+    helperText?: string;
     error?: string | null;
     size?: FieldSize;
     variant?: FieldVariant;
@@ -53,6 +54,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       className,
       label,
       hint,
+      helperText,
       error,
       size = 'md',
       variant = 'solid',
@@ -68,10 +70,11 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const uid = React.useId();
     const inputId = id ?? uid;
 
-    const hintId = hint ? `${inputId}-hint` : undefined;
+    const resolvedHint = helperText ?? hint;
+    const hintId = resolvedHint ? `${inputId}-hint` : undefined;
     const errorId = error ? `${inputId}-error` : undefined;
     const describedBy =
-      [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ') || undefined;
+      [error ? errorId : null, resolvedHint ? hintId : null].filter(Boolean).join(' ') || undefined;
 
     const hasLeft = Boolean(leftSlot);
     const hasRight = Boolean(rightSlot);
@@ -129,9 +132,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <p id={errorId} className="text-caption text-sunsetOrange">
               {error}
             </p>
-          ) : hint ? (
+          ) : resolvedHint ? (
             <p id={hintId} className="text-caption text-muted-foreground">
-              {hint}
+              {resolvedHint}
             </p>
           ) : null}
         </div>

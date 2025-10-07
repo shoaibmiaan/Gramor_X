@@ -165,7 +165,7 @@ export default function ReviewAttemptPage() {
             {/* Left: Attempt summary */}
             <Card className="p-6 md:col-span-2 rounded-ds-2xl">
               {loading ? (
-                <div className="animate-pulse h-5 w-full bg-gray-200 dark:bg-white/10 rounded" />
+                <div className="animate-pulse h-5 w-full bg-muted dark:bg-white/10 rounded" />
               ) : !data ? (
                 <div className="text-grayish">No data.</div>
               ) : (

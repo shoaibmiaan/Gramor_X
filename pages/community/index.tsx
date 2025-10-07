@@ -28,10 +28,11 @@ export default function CommunityThreadsPage() {
 
   async function fetchThreads() {
     const { data } = await supabase
-      .from<Thread>('community_threads')
-      .select('*')
-      .order('created_at', { ascending: false });
-    setThreads(data || []);
+      .from('community_threads')
+      .select('id, title, content, flagged, created_at')
+      .order('created_at', { ascending: false })
+      .returns<Thread[]>();
+    setThreads(data ?? []);
   }
 
   async function createThread() {

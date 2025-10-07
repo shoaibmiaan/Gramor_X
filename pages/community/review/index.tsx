@@ -27,10 +27,11 @@ export default function PeerReviewPage() {
 
   async function fetchReviews() {
     const { data } = await supabase
-      .from<Review>('peer_reviews')
+      .from('peer_reviews')
       .select('id, content, created_at, comments:peer_review_comments(id, content)')
-      .order('created_at', { ascending: false });
-    setReviews((data as any) || []);
+      .order('created_at', { ascending: false })
+      .returns<Review[]>();
+    setReviews(data ?? []);
   }
 
   async function submitReview() {

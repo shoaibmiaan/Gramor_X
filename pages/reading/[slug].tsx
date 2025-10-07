@@ -216,14 +216,14 @@ export default function ReadingRunnerPage() {
         <Container>
         {!test ? (
           err ? <Alert variant="warning" title="Error">{err}</Alert> : (
-            <Card className="p-6"><div className="animate-pulse h-6 w-40 bg-gray-200 dark:bg-white/10 rounded" /></Card>
+            <Card className="p-6"><div className="animate-pulse h-6 w-40 bg-muted dark:bg-white/10 rounded" /></Card>
           )
         ) : (
           <>
             {/* Sticky bar */}
             <div className="sticky top-16 z-10 card-surface border border-lightBorder dark:border-white/10 rounded-ds p-3 flex items-center gap-3 flex-wrap">
               <Badge variant="info">Time Left: {mm}:{ss}</Badge>
-              <div className="flex-1 h-2 bg-gray-200/60 dark:bg-white/10 rounded-ds" aria-label="Progress" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100}>
+              <div className="flex-1 h-2 bg-muted/60 dark:bg-white/10 rounded-ds" aria-label="Progress" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100}>
                 <div className="h-2 bg-primary rounded-ds" style={{ width: `${progressPct}%` }} />
               </div>
               <Badge variant={progressPct===100 ? 'success' : 'warning'}>{progressPct}%</Badge>

@@ -190,7 +190,7 @@ function AdminUsers() {
                 {loading ? (
                   <tr>
                     <td className="px-5 py-4" colSpan={8}>
-                      <div className="animate-pulse h-5 w-40 bg-gray-200 dark:bg-white/10 rounded" />
+                      <div className="animate-pulse h-5 w-40 bg-muted dark:bg-white/10 rounded" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (

@@ -24,19 +24,21 @@ export const GapToGoal: React.FC = () => {
 
       const [targetRes, profileRes] = await Promise.all([
         supabaseBrowser
-          .from<VisaTarget>('visa_targets')
-          .select('*')
+          .from('visa_targets')
+          .select('user_id, institution, target_band, deadline')
           .eq('user_id', user.id)
-          .maybeSingle(),
+          .maybeSingle()
+          .returns<VisaTarget>(),
         supabaseBrowser
-          .from<Profile>('user_profiles')
+          .from('user_profiles')
           .select('goal_band')
           .eq('user_id', user.id)
-          .maybeSingle(),
+          .maybeSingle()
+          .returns<Pick<Profile, 'goal_band'>>(),
       ]);
 
       if (targetRes.data) setTarget(targetRes.data);
-      if (profileRes.data) setCurrentBand(profileRes.data.goal_band);
+      if (profileRes.data) setCurrentBand(profileRes.data.goal_band ?? null);
     })();
   }, []);
 

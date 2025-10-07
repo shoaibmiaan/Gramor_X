@@ -143,7 +143,7 @@ export default function CohortDetail() {
               Loading cohort…
             </div>
           ) : error ? (
-            <div className="rounded-xl border border-border bg-card p-4 text-small text-red-400">
+            <div className="rounded-xl border border-border bg-card p-4 text-small text-danger">
               {error}
             </div>
           ) : !cohort ? (

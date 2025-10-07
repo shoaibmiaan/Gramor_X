@@ -23,9 +23,10 @@ export default function QuestionsPage() {
 
   async function fetchQas() {
     const { data } = await supabase
-      .from<QA>('community_questions')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from('community_questions')
+      .select('id, question, answer, votes')
+      .order('created_at', { ascending: false })
+      .returns<QA[]>();
     setQas(data || []);
   }
 

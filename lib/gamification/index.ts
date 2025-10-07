@@ -12,9 +12,10 @@ export type UserBadge = {
  */
 export async function getUserBadges(userId: string): Promise<Badge[]> {
   const { data, error } = await supabase
-    .from<UserBadge>('user_badges')
+    .from('user_badges')
     .select('badge_id')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .returns<Array<Pick<UserBadge, 'badge_id'>>>();
   if (error || !data) return [];
   const all = [...badges.streaks, ...badges.milestones, ...badges.community];
   return all.filter((b) => data.some((d) => d.badge_id === b.id));
@@ -24,5 +25,7 @@ export async function getUserBadges(userId: string): Promise<Badge[]> {
  * Award a badge to a user. Uses upsert to avoid duplicates.
  */
 export async function awardBadge(userId: string, badgeId: string) {
-  return supabase.from<UserBadge>('user_badges').upsert({ user_id: userId, badge_id: badgeId }, { onConflict: 'user_id,badge_id' });
+  return supabase
+    .from('user_badges')
+    .upsert({ user_id: userId, badge_id: badgeId }, { onConflict: 'user_id,badge_id' });
 }

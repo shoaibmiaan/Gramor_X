@@ -17,7 +17,7 @@ export default function ReadingStatsPage() {
         <h1 className="font-slab text-display text-gradient-primary">Reading Stats</h1>
         {!stats ? (
           <Card className="p-6 mt-6">
-            <div className="animate-pulse h-5 w-40 bg-gray-200 dark:bg-white/10 rounded" />
+            <div className="animate-pulse h-5 w-40 bg-muted dark:bg-white/10 rounded" />
           </Card>
         ) : (
           <Card className="p-6 mt-6">
