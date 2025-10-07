@@ -84,7 +84,9 @@ function writeSessionCookies(res: NextApiResponse, session: SupabaseSession | nu
 
 function clearSessionCookies(res: NextApiResponse) {
   const secure = process.env.NODE_ENV === 'production';
-  ['sb-access-token', 'sb-refresh-token'].forEach((name) => {
+  const cookieNames = ['sb-access-token', 'sb-refresh-token', 'sb:token', 'supabase-auth-token'];
+
+  cookieNames.forEach((name) => {
     appendSetCookie(
       res,
       serializeCookie(name, '', {
@@ -117,7 +119,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // writes sb-access-token / sb-refresh-token cookies when available
         await supabase.auth.setSession(session as any);
       } else {
-        writeSessionCookies(res, session);
+        const wroteCookies = writeSessionCookies(res, session);
+        if (!wroteCookies) {
+          clearSessionCookies(res);
+        }
       }
       return res.status(200).json({ ok: true });
     }

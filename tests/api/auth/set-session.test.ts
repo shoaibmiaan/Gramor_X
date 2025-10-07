@@ -89,6 +89,24 @@ function createRes() {
   assert.ok(String(cookies?.[0]).includes('sb-access-token=tok'));
   assert.ok(String(cookies?.[1]).includes('sb-refresh-token=ref'));
 
+  const fallbackInitialNullRes = createRes();
+  await handlerWithFallback(
+    { method: 'POST', body: { event: 'INITIAL_SESSION', session: null } } as any,
+    fallbackInitialNullRes as any,
+  );
+  assert.equal(fallbackInitialNullRes.statusCode, 200);
+  assert.equal(fallbackInitialNullRes.body.ok, true);
+  const initialNullCookies = fallbackInitialNullRes.getHeader('Set-Cookie');
+  assert.ok(Array.isArray(initialNullCookies));
+  assert.equal(initialNullCookies?.length, 4);
+  ['sb-access-token', 'sb-refresh-token', 'sb:token', 'supabase-auth-token'].forEach((name) => {
+    assert.ok(
+      initialNullCookies?.some((cookieValue) =>
+        String(cookieValue).includes(`${name}=`) && String(cookieValue).includes('Max-Age=0'),
+      ),
+    );
+  });
+
   const fallbackSignOutRes = createRes();
   await handlerWithFallback(
     { method: 'POST', body: { event: 'SIGNED_OUT', session: null } } as any,
@@ -98,8 +116,12 @@ function createRes() {
   assert.equal(fallbackSignOutRes.body.ok, true);
   const clearedCookies = fallbackSignOutRes.getHeader('Set-Cookie');
   assert.ok(Array.isArray(clearedCookies));
-  clearedCookies?.forEach((cookieValue) => {
-    assert.ok(String(cookieValue).includes('Max-Age=0'));
+  ['sb-access-token', 'sb-refresh-token', 'sb:token', 'supabase-auth-token'].forEach((name) => {
+    assert.ok(
+      clearedCookies?.some((cookieValue) =>
+        String(cookieValue).includes(`${name}=`) && String(cookieValue).includes('Max-Age=0'),
+      ),
+    );
   });
 
   console.log('set-session events tested');
