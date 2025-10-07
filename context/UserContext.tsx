@@ -25,7 +25,7 @@ interface UserContextValue {
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 UserContext.displayName = 'UserContext';
 
-async function fetchRole(userId: string | null | undefined): Promise<RoleOrGuest | null> {
+async function fetchRole(userId: string | null | undefined): Promise<RoleOrGuest> {
   if (!userId) return 'guest';
 
   const { data, error } = await supabase
@@ -49,6 +49,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   const mounted = useRef(true);
+  const roleRequestId = useRef(0);
+
+  const applyRole = useCallback(
+    (userId: string | null | undefined) => {
+      roleRequestId.current += 1;
+      const requestId = roleRequestId.current;
+
+      if (!mounted.current) return;
+
+      if (!userId) {
+        setRole('guest');
+        return;
+      }
+
+      // Optimistically fall back to guest while the role query resolves.
+      setRole((prev) => prev ?? 'guest');
+
+      fetchRole(userId)
+        .then((nextRole) => {
+          if (!mounted.current || roleRequestId.current !== requestId) return;
+          setRole(nextRole ?? 'guest');
+        })
+        .catch(() => {
+          if (!mounted.current || roleRequestId.current !== requestId) return;
+          setRole('guest');
+        });
+    },
+    [],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,37 +91,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(nextUser);
 
-      const nextRole = await fetchRole(nextUser?.id);
-      if (!mounted.current) return;
-
-      setRole(nextRole);
+      applyRole(nextUser?.id);
     } finally {
       if (mounted.current) setLoading(false);
     }
-  }, []);
+  }, [applyRole]);
 
   useEffect(() => {
     mounted.current = true;
 
     void load();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted.current) return;
       const nextUser = session?.user ?? null;
       setUser(nextUser);
-      setLoading(true);
-
-      const nextRole = await fetchRole(nextUser?.id);
-      if (!mounted.current) return;
-
-      setRole(nextRole);
-      setLoading(false);
+      applyRole(nextUser?.id);
     });
 
     return () => {
       mounted.current = false;
-      sub?.subscription?.unsubscribe?.();
+      subscription?.unsubscribe?.();
     };
-  }, [load]);
+  }, [load, applyRole]);
 
   const value = useMemo<UserContextValue>(
     () => ({
