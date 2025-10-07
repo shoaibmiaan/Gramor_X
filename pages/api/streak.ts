@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
-import { supabaseService } from '@/lib/supabaseServer';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { supabaseService, supabaseServer } from '@/lib/supabaseServer';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -16,32 +16,54 @@ const getDayKey = (d = new Date()) => d.toISOString().split('T')[0];
 const ms = (h: number) => h * 60 * 60 * 1000;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No authorization token' });
+  let token = req.headers.authorization?.split(' ')[1] ?? null;
+  let refreshToken: string | null = null;
 
-  let user = null;
-  // Admin client for token verification
-  let adminSupabase;
-  try {
-    adminSupabase = createClient(supabaseUrl, supabaseAnonKey);
-    const { data: { user: authUser }, error: authError } = await adminSupabase.auth.getUser(token);
-    if (authError || !authUser) return res.status(401).json({ error: 'Invalid token' });
-    user = authUser;  // Declare and assign here
-  } catch (error) {
-    console.error('[API/streak] Auth verification failed:', error);
-    return res.status(503).json({ error: 'auth_unavailable' });
+  if (!token) {
+    try {
+      const cookieClient = supabaseServer(req);
+      const { data, error } = await cookieClient.auth.getSession();
+      if (error) {
+        console.error('[API/streak] Cookie session lookup failed:', error);
+      }
+      token = data?.session?.access_token ?? null;
+      refreshToken = data?.session?.refresh_token ?? null;
+    } catch (error) {
+      console.error('[API/streak] Cookie session client unavailable:', error);
+    }
   }
 
+  if (!token) return res.status(401).json({ error: 'No authorization token' });
+
   // RLS client (acts as the user)
-  let supabaseUser;
+  let supabaseUser: SupabaseClient;
   try {
     supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
-    await supabaseUser.auth.setSession({ access_token: token, refresh_token: '' });
   } catch (error) {
-    console.error('[API/streak] User client setup failed:', error);
+    console.error('[API/streak] User client creation failed:', error);
     return res.status(503).json({ error: 'service_unavailable' });
+  }
+
+  try {
+    await supabaseUser.auth.setSession({
+      access_token: token,
+      refresh_token: refreshToken ?? '',
+    });
+  } catch (error) {
+    console.error('[API/streak] User session setup failed:', error);
+    return res.status(503).json({ error: 'service_unavailable' });
+  }
+
+  let user = null;
+  try {
+    const { data: { user: authUser }, error: authError } = await supabaseUser.auth.getUser();
+    if (authError || !authUser) return res.status(401).json({ error: 'Invalid token' });
+    user = authUser;
+  } catch (error) {
+    console.error('[API/streak] Auth verification failed:', error);
+    return res.status(503).json({ error: 'auth_unavailable' });
   }
 
   try {
@@ -55,10 +77,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
     // If no row, create one
+    const baseInsert = { user_id: user.id, current: 0, last_active_date: null, updated_at: null };
+
     if (!row) {
       const { data: inserted, error: insertError } = await supabaseUser
         .from('streaks')
-        .insert({ user_id: user.id, current: 0, last_active_date: null, updated_at: null })
+        .insert(baseInsert)
         .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
         .single();
       if (insertError) {
@@ -72,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const svc = supabaseService();
             const { data: serviceInserted, error: serviceErr } = await svc
               .from('streaks')
-              .insert({ user_id: user.id, current: 0, last_active_date: null, updated_at: null })
+              .insert(baseInsert)
               .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
               .single();
 
@@ -88,7 +112,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Fallback: treat as new streak of 0 when all attempts fail
         if (!row) {
-          row = { current_streak: 0, last_activity_date: null, updated_at: null };
+          row = {
+            user_id: user.id,
+            current_streak: 0,
+            last_activity_date: null,
+            updated_at: null,
+          } as typeof row;
         }
       } else {
         row = inserted;
