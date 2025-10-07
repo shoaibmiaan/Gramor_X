@@ -35,6 +35,14 @@ const variantMap: Record<FieldVariant, string> = {
 };
 
 // Shared props
+type SelectOption =
+  | string
+  | Readonly<{
+      value: string;
+      label: React.ReactNode;
+      disabled?: boolean;
+    }>;
+
 type SelectProps = {
   label?: string;
   hint?: string;
@@ -46,6 +54,7 @@ type SelectProps = {
   required?: boolean;
   className?: string;
   id?: string;
+  options?: ReadonlyArray<SelectOption>;
 } & Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'>;
 
 // Shared field wrapper component
@@ -99,8 +108,9 @@ export const Select = React.memo(
         leftSlot,
         rightSlot,
         disabled,
+        options,
         children,
-        ...props
+      ...props
       },
       ref
     ) => {
@@ -146,7 +156,21 @@ export const Select = React.memo(
               )}
               {...props}
             >
-              {children}
+              {children ??
+                options?.map((option) => {
+                  if (typeof option === 'string') {
+                    return (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    );
+                  }
+                  return (
+                    <option key={option.value} value={option.value} disabled={option.disabled}>
+                      {option.label}
+                    </option>
+                  );
+                })}
             </select>
             {hasRight && (
               <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">

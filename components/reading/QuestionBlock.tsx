@@ -69,7 +69,7 @@ export const QuestionBlock: React.FC<{
                     aria-label={`Option ${i + 1}: ${opt}`}
                   />
                   <span>
-                    <kbd className="px-1.5 py-0.5 rounded-ds bg-gray-200/60 dark:bg-white/10 mr-2">
+                    <kbd className="px-1.5 py-0.5 rounded-ds bg-muted/60 dark:bg-white/10 mr-2">
                       {i + 1}
                     </kbd>
                     {opt}
@@ -126,7 +126,7 @@ export const QuestionBlock: React.FC<{
             />
             <p className="text-small text-muted-foreground mt-1">
               Press{' '}
-              <kbd className="px-1 rounded-ds bg-gray-200/60 dark:bg-white/10">
+              <kbd className="px-1 rounded-ds bg-muted/60 dark:bg-white/10">
                 Enter
               </kbd>{' '}
               to jump to next unanswered.

@@ -62,8 +62,8 @@ export function SavedItems() {
   if (loading) {
     return (
       <Card className="p-6 rounded-ds-2xl">
-        <div className="animate-pulse h-5 w-40 bg-gray-200 dark:bg-white/10 rounded" />
-        <div className="mt-4 animate-pulse h-4 w-64 bg-gray-200 dark:bg-white/10 rounded" />
+        <div className="animate-pulse h-5 w-40 bg-muted dark:bg-white/10 rounded" />
+        <div className="mt-4 animate-pulse h-4 w-64 bg-muted dark:bg-white/10 rounded" />
       </Card>
     );
   }

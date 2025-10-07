@@ -77,7 +77,7 @@ export default function ReadingListPage() {
         {!items ? (
           <div className="mt-10">
             <Card className="p-6">
-              <div className="animate-pulse h-6 w-40 bg-gray-200 dark:bg-white/10 rounded" />
+              <div className="animate-pulse h-6 w-40 bg-muted dark:bg-white/10 rounded" />
             </Card>
           </div>
         ) : (

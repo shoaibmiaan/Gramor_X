@@ -67,7 +67,7 @@ export default function ReadingReviewPage() {
       <Container>
         {!data ? (
           err ? <Alert variant="warning" title="Error">{err}</Alert> : (
-            <Card className="p-6"><div className="animate-pulse h-6 w-40 bg-gray-200 dark:bg-white/10 rounded" /></Card>
+            <Card className="p-6"><div className="animate-pulse h-6 w-40 bg-muted dark:bg-white/10 rounded" /></Card>
           )
         ) : (
           <>
