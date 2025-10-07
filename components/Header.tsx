@@ -96,7 +96,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     setPremiumRooms([]);
   };
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 supports-[backdrop-filter]:backdrop-blur-xl">
         <Container>
