@@ -45,14 +45,17 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
     let mounted = true;
     const checkSession = async () => {
       try {
-        const { data: { session }, error } = await supabaseBrowser.auth.getSession();
-        if (error) {
-          console.error('Failed to get session:', error);
-          if (mounted) setReady(true);
-          return;
-        }
+        const {
+          data: { session },
+          error,
+        } = await supabaseBrowser.auth.getSession();
 
         if (!mounted) return;
+
+        if (error) {
+          console.error('Failed to get session:', error);
+          return;
+        }
 
         if (session) {
           const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
@@ -61,18 +64,22 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
             rawNext && !rawNext.startsWith('http') && rawNext !== blockedPath
               ? rawNext
               : destinationByRole(session.user);
+
           if (router.asPath !== safe) {
-            await router.replace(safe);
-            return;
+            try {
+              await router.replace(safe);
+            } catch (navigationError) {
+              console.error('Failed to redirect after session detection:', navigationError);
+            }
           }
         }
-        setReady(true);
       } catch (err) {
-        console.error('Error checking session:', err);
+        if (mounted) console.error('Error checking session:', err);
+      } finally {
         if (mounted) setReady(true);
       }
     };
-    checkSession();
+    void checkSession();
     return () => {
       mounted = false;
     };
