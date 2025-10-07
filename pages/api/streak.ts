@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { supabaseService } from '@/lib/supabaseServer';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -62,8 +63,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .single();
       if (insertError) {
         console.error('[API/streak] Insert failed:', insertError);
-        // Fallback: treat as new streak of 0
-        row = { current_streak: 0, last_activity_date: null, updated_at: null };
+
+        const shouldRetryWithService =
+          insertError?.code === '42501' || insertError?.message?.includes('row-level security');
+
+        if (shouldRetryWithService) {
+          try {
+            const svc = supabaseService();
+            const { data: serviceInserted, error: serviceErr } = await svc
+              .from('streaks')
+              .insert({ user_id: user.id, current: 0, last_active_date: null, updated_at: null })
+              .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
+              .single();
+
+            if (serviceErr) {
+              console.error('[API/streak] Service insert failed:', serviceErr);
+            } else {
+              row = serviceInserted ?? row;
+            }
+          } catch (serviceClientError) {
+            console.error('[API/streak] Service client unavailable for insert:', serviceClientError);
+          }
+        }
+
+        // Fallback: treat as new streak of 0 when all attempts fail
+        if (!row) {
+          row = { current_streak: 0, last_activity_date: null, updated_at: null };
+        }
       } else {
         row = inserted;
       }
