@@ -83,7 +83,7 @@ export default function SignUpWithEmail() {
           );
           return;
         }
-        setErr(getAuthErrorMessage(error.message) || error.message);
+        setErr(getAuthErrorMessage(error) || error.message);
         setLoading(false);
         return;
       }
