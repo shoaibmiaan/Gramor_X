@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 import '@/styles/tokens.css';
 // Do NOT import '@/styles/premium.css' directly; it is Tailwind input.
@@ -139,7 +139,8 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const pathname = router.pathname;
 
   // Expecting UserContext to expose approval status; default false if missing
-  const { role, isTeacherApproved } = useUserContext() as {
+  const { user, role, isTeacherApproved } = useUserContext() as {
+    user: SupabaseUser | null;
     role?: string | null;
     isTeacherApproved?: boolean | null;
   };
@@ -172,6 +173,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
   );
 
   const showLayout = !needPremium && !isNoChromeRoute;
+  const forceLayoutOnAuthPage = isAuthPage && !!user;
 
   const isDashboardRoute =
     pathname.startsWith('/dashboard') ||
@@ -425,7 +427,12 @@ function InnerApp({ Component, pageProps }: AppProps) {
         {/* ✅ NEW: Client-side plan guard + ribbon + route protection */}
         <GlobalPlanGuard />
 
-        {showLayout ? (
+        {forceLayoutOnAuthPage ? (
+          <Layout>
+            <ImpersonationBanner />
+            {nakedContent}
+          </Layout>
+        ) : showLayout ? (
           <Layout>
             <ImpersonationBanner />
             {content}
