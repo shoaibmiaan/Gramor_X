@@ -21,8 +21,8 @@ export default function TeacherRegisterPage() {
 
   React.useEffect(() => {
     if (isLoading) return;
-    if (profile?.teacher_onboarding_completed && !profile.teacher_approved) {
-      router.replace('/teacher'); // go to pending screen
+    if (profile?.teacher_onboarding_completed) {
+      router.replace('/teacher'); // go to pending or dashboard screen
     }
   }, [isLoading, profile, router]);
 
