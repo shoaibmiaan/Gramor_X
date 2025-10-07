@@ -42,7 +42,6 @@ const tiers: readonly Tier[] = [
       'Unlimited speaking practice',
       'Advanced analytics dashboard',
       'Adaptive learning paths',
-      'Priority support',
       'Teacher review (2/month)',
     ],
   },
