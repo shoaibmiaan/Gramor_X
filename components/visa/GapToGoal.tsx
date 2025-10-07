@@ -30,7 +30,7 @@ export const GapToGoal: React.FC = () => {
           .maybeSingle()
           .returns<VisaTarget>(),
         supabaseBrowser
-          .from('user_profiles')
+          .from('profiles')
           .select('goal_band')
           .eq('user_id', user.id)
           .maybeSingle()
