@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import type { Session } from '@supabase/supabase-js';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
@@ -65,6 +66,53 @@ export default function LoginWithEmail() {
     setEmailErr(null);
 
     setLoading(true);
+    async function syncServerSession(session: Session | null) {
+      try {
+        const syncRes = await fetch('/api/auth/set-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ event: 'SIGNED_IN', session }),
+        });
+
+        if (!syncRes.ok) {
+          console.error('Sync server session failed:', syncRes.status);
+          return false;
+        }
+
+        const syncBody = await syncRes.json().catch(() => ({}));
+        if (syncBody && typeof syncBody === 'object' && syncBody.ok === false) {
+          console.error('Sync server session failed: response not ok');
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Sync server session failed:', error);
+        return false;
+      }
+    }
+
+    async function recordLoginEvent(session: Session | null, allowResync = true) {
+      try {
+        const loginEventRes = await fetch('/api/auth/login-event', {
+          method: 'POST',
+          credentials: 'same-origin',
+        });
+
+        if (loginEventRes.status === 401 && allowResync) {
+          const resynced = await syncServerSession(session);
+          if (resynced) return recordLoginEvent(session, false);
+        }
+
+        if (!loginEventRes.ok) {
+          console.error('Login event failed:', loginEventRes.status);
+        }
+      } catch (error) {
+        console.error('Error logging login event:', error);
+      }
+    }
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -84,10 +132,14 @@ export default function LoginWithEmail() {
       }
 
       // If login is successful, set session and proceed
-      await supabaseBrowser.auth.setSession({
-        access_token: body.session.access_token,
-        refresh_token: body.session.refresh_token,
-      }).catch(err => console.error('Set session failed:', err));
+      await supabaseBrowser.auth
+        .setSession({
+          access_token: body.session.access_token,
+          refresh_token: body.session.refresh_token,
+        })
+        .catch(err => console.error('Set session failed:', err));
+
+      const serverSynced = await syncServerSession(body.session);
 
       const {
         data: { user },
@@ -95,18 +147,13 @@ export default function LoginWithEmail() {
       } = await supabaseBrowser.auth.getUser();
       if (userError) console.error('Get user failed:', userError);
 
-      async function recordLoginEvent() {
-        try {
-          const loginEventRes = await fetch('/api/auth/login-event', { method: 'POST' });
-          if (!loginEventRes.ok) console.error('Login event failed:', loginEventRes.status);
-        } catch (err) {
-          console.error('Error logging login event:', err);
-        }
-      }
-
       // Skip OTP if both email and password are provided
       if (!body.mfaRequired) {
-        await recordLoginEvent();
+        if (!serverSynced) {
+          await syncServerSession(body.session);
+        }
+
+        await recordLoginEvent(body.session);
 
         const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
         const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
