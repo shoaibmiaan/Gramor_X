@@ -16,15 +16,16 @@ import PlanPicker, { type PlanPickerProps } from '@/components/payments/PlanPick
 import CheckoutForm from '@/components/payments/CheckoutForm';
 import RedeemBox from '@/components/referrals/RedeemBox';
 import SocialProofStrip from '@/components/marketing/SocialProofStrip';
+import {
+  PLAN_LABEL,
+  PLANS as CANONICAL_PLANS,
+  getPlanBillingAmount,
+  getPlanDisplayPrice,
+  type Cycle,
+  type PlanKey,
+} from '@/lib/pricing';
 
-type PlanKey = 'starter' | 'booster' | 'master';
-type Cycle = 'monthly' | 'annual';
-
-const PLAN_LABEL: Record<PlanKey, string> = {
-  starter: 'Seedling 🌱',
-  booster: 'Rocket 🚀',
-  master: 'Owl 👑',
-};
+const toUsdCents = (amount: number) => Math.round(amount * 100);
 
 type PlanRow = {
   key: PlanKey;
@@ -36,30 +37,26 @@ type PlanRow = {
   badge?: string;
 };
 
+const PLAN_KEYS: readonly PlanKey[] = ['starter', 'booster', 'master'];
+
+const createPlanRow = (key: PlanKey): PlanRow => {
+  const plan = CANONICAL_PLANS[key];
+
+  return {
+    key,
+    title: plan.title,
+    priceMonthly: toUsdCents(getPlanDisplayPrice(key, 'monthly')),
+    priceAnnual: toUsdCents(getPlanDisplayPrice(key, 'annual')),
+    icon: plan.icon,
+    mostPopular: plan.mostPopular,
+    badge: plan.badge,
+  };
+};
+
 const PLANS: Record<PlanKey, PlanRow> = {
-  starter: {
-    key: 'starter',
-    title: 'Seedling',
-    priceMonthly: 999,
-    priceAnnual: 899,
-    icon: 'fa-seedling',
-  },
-  booster: {
-    key: 'booster',
-    title: 'Rocket',
-    priceMonthly: 1999,
-    priceAnnual: 1699,
-    icon: 'fa-rocket',
-    mostPopular: true,
-    badge: 'MOST POPULAR',
-  },
-  master: {
-    key: 'master',
-    title: 'Owl',
-    priceMonthly: 3999,
-    priceAnnual: 3499,
-    icon: 'fa-feather',
-  },
+  starter: createPlanRow('starter'),
+  booster: createPlanRow('booster'),
+  master: createPlanRow('master'),
 };
 
 const fmtUsd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
@@ -70,7 +67,7 @@ const CheckoutPage: NextPage = () => {
   const codeParam = router.query.code ? String(router.query.code) : undefined;
   const cycleParam = (String(router.query.billingCycle ?? 'monthly') as Cycle);
 
-  const hasPlan = (['starter', 'booster', 'master'] as PlanKey[]).includes(planParam as PlanKey);
+  const hasPlan = (PLAN_KEYS as PlanKey[]).includes(planParam as PlanKey);
   const plan = (hasPlan ? (planParam as PlanKey) : undefined);
   const selectedPlanData = plan ? PLANS[plan] : undefined;
 
@@ -82,8 +79,15 @@ const CheckoutPage: NextPage = () => {
     void router.push(`/checkout?${qs.toString()}`);
   };
 
-  const monthlyCents = selectedPlanData ? (cycleParam === 'monthly' ? selectedPlanData.priceMonthly : selectedPlanData.priceAnnual) : 0;
-  const billedAnnualTotalCents = selectedPlanData && cycleParam === 'annual' ? selectedPlanData.priceAnnual * 12 : 0;
+  const monthlyCents = selectedPlanData
+    ? cycleParam === 'monthly'
+      ? selectedPlanData.priceMonthly
+      : selectedPlanData.priceAnnual
+    : 0;
+  const billedAnnualTotalCents =
+    selectedPlanData && cycleParam === 'annual'
+      ? toUsdCents(getPlanBillingAmount(selectedPlanData.key, 'annual'))
+      : 0;
 
   return (
     <>
@@ -212,7 +216,7 @@ const CheckoutPage: NextPage = () => {
                               <i className={`fas ${selectedPlanData?.icon ?? 'fa-star'}`} aria-hidden="true" />
                             </div>
                             <div>
-                              <div className="font-medium text-foreground">{selectedPlanData?.title ?? PLAN_LABEL[plan]}</div>
+                              <div className="font-medium text-foreground">{selectedPlanData?.title ?? (plan ? PLAN_LABEL[plan] : 'Select a plan')}</div>
                               <div className="text-caption text-muted-foreground">{cycleParam === 'monthly' ? 'Billed monthly' : 'Billed annually'}</div>
                             </div>
                           </div>
