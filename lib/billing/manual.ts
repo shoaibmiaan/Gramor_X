@@ -1,9 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { PLANS, type PlanKey, type Cycle } from '@/lib/pricing';
+import { PLANS, getPlanBillingAmount, type PlanKey, type Cycle } from '@/lib/pricing';
 
 export function priceCents(plan: PlanKey, cycle: Cycle): number {
-  const card = PLANS[plan];
-  const major = cycle === 'monthly' ? card.displayPriceMonthly : card.displayPriceAnnual;
+  const major = getPlanBillingAmount(plan, cycle);
   // Stripe will also use 2dp for USD; if you ever support JPY, handle 0dp separately.
   return Math.round(major * 100);
 }
