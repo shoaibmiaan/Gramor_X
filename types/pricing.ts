@@ -81,7 +81,6 @@ export const PLANS: Record<PlanId, Plan> = {
       'All Starter features',
       'Advanced analytics & band predictor',
       'Mistake patterns + targeted drills',
-      'Priority support',
     ],
     aliases: ['rocket'],
   },

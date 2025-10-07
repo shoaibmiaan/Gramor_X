@@ -15,7 +15,7 @@ const DATA: Faq[] = [
   { q: 'How do I reset my password?', a: 'Go to Login → “Forgot password”. Follow the email link to set a new password.', cat: 'account', tags: ['login','email'] },
   { q: 'Where can I practice all 4 IELTS modules?', a: 'Use /listening, /reading, /writing, and /speaking. Each has practice + mocks + AI feedback.', cat: 'modules', tags: ['practice','mock'] },
   { q: 'How does AI scoring work?', a: 'We align feedback with IELTS descriptors to estimate a band range and give targeted suggestions.', cat: 'ai', tags: ['writing','speaking'] },
-  { q: 'What’s included in Premium?', a: 'Unlimited mocks, advanced AI evaluation, priority support, and human moderation on writing/speaking.', cat: 'billing', tags: ['pricing'] },
+  { q: 'What’s included in Premium?', a: 'Unlimited mocks, advanced AI evaluation, and human moderation on writing/speaking.', cat: 'billing', tags: ['pricing'] },
   { q: 'My mic does not record in Speaking.', a: 'Allow microphone permission for your browser/tab, then retry. Keep the tab active during recording.', cat: 'technical', tags: ['speaking','record'] },
   { q: 'Can I track my progress?', a: 'Yes. Visit Reports to view module-wise scores, trends, and weak areas.', cat: 'modules', tags: ['reports'] },
 ];
