@@ -172,19 +172,19 @@ export default function CourseDetailPage() {
         <Container>
           <div className="grid gap-6 lg:grid-cols-[1fr_.8fr]">
             <Card className="p-0 rounded-ds-2xl overflow-hidden">
-              <div className="h-64 w-full bg-gray-200 dark:bg-white/10 animate-pulse" />
+              <div className="h-64 w-full bg-muted dark:bg-white/10 animate-pulse" />
               <div className="p-6 space-y-3">
-                <div className="h-5 w-40 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
-                <div className="h-10 w-2/3 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
-                <div className="h-5 w-1/2 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
+                <div className="h-5 w-40 bg-muted dark:bg-white/10 rounded animate-pulse" />
+                <div className="h-10 w-2/3 bg-muted dark:bg-white/10 rounded animate-pulse" />
+                <div className="h-5 w-1/2 bg-muted dark:bg-white/10 rounded animate-pulse" />
               </div>
             </Card>
             <Card className="p-6 rounded-ds-2xl">
-              <div className="h-6 w-32 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
+              <div className="h-6 w-32 bg-muted dark:bg-white/10 rounded animate-pulse" />
               <div className="mt-4 space-y-3">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
-                    <div className="h-4 w-1/2 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
+                    <div className="h-4 w-1/2 bg-muted dark:bg-white/10 rounded animate-pulse" />
                   </div>
                 ))}
               </div>

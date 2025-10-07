@@ -264,7 +264,7 @@ export default function SpeakingPart3() {
                 {stage === 'error' && 'Error'}
               </div>
               {(stage === 'uploading' || stage === 'scoring') && (
-                <div className="mt-3 animate-pulse h-2 rounded bg-gray-200 dark:bg-white/10" />
+                <div className="mt-3 animate-pulse h-2 rounded bg-muted dark:bg-white/10" />
               )}
               {error && <div className="mt-3 text-small text-rose-600 break-words">{error}</div>}
             </div>

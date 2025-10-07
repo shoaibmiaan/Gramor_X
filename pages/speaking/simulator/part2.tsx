@@ -377,7 +377,7 @@ export default function SpeakingPart2() {
               </div>
 
               {(stage === 'uploading' || stage === 'scoring') && (
-                <div className="mt-3 animate-pulse h-2 rounded bg-gray-200 dark:bg-white/10" />
+                <div className="mt-3 animate-pulse h-2 rounded bg-muted dark:bg-white/10" />
               )}
 
               {error && (

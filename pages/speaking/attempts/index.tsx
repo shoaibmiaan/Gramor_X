@@ -76,7 +76,7 @@ export default function SpeakingAttemptsPage() {
             </thead>
             <tbody>
               {items.map((a) => (
-                <tr key={a.id} className="border-t border-gray-100 dark:border-white/10">
+                <tr key={a.id} className="border-t border-lightBorder/60 dark:border-white/10">
                   <td className="px-4 py-3">{new Date(a.created_at).toLocaleString()}</td>
                   <td className="px-4 py-3 uppercase">{a.section.replace('part', 'Part ')}</td>
                   <td className="px-4 py-3 font-medium">{a.overall ?? '—'}</td>

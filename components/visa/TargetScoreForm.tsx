@@ -24,10 +24,11 @@ export const TargetScoreForm: React.FC = () => {
       } = await supabaseBrowser.auth.getUser();
       if (!user) return;
       const { data } = await supabaseBrowser
-        .from<VisaTarget>('visa_targets')
-        .select('*')
+        .from('visa_targets')
+        .select('user_id, institution, target_band, deadline')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .maybeSingle()
+        .returns<VisaTarget>();
       if (data) {
         setInstitution(data.institution);
         setTargetBand(data.target_band?.toString() ?? '');

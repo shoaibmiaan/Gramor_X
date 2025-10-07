@@ -109,7 +109,7 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
                         <button
                           type="button"
                           onClick={() => onRemove(r.id)}
-                          className="rounded-md border border-border bg-background px-2 py-1 text-caption text-red-400 hover:bg-border/30"
+                          className="rounded-md border border-border bg-background px-2 py-1 text-caption text-danger hover:bg-border/30"
                         >
                           Remove
                         </button>

@@ -222,7 +222,7 @@ export default function AdminReviewsIndex() {
                     Array.from({ length: 6 }).map((_, i) => (
                       <tr key={`skeleton-${i}`} className="border-t border-lightBorder/40 dark:border-white/10">
                         <td colSpan={7} className="py-3">
-                          <div className="animate-pulse h-5 w-full bg-gray-200 dark:bg-white/10 rounded" />
+                          <div className="animate-pulse h-5 w-full bg-muted dark:bg-white/10 rounded" />
                         </td>
                       </tr>
                     ))

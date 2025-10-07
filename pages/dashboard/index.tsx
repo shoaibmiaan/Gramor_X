@@ -178,7 +178,7 @@ export default function Dashboard() {
             {[...Array(3)].map((_, i) => (
               <Card key={i} className="p-6 rounded-ds-2xl">
                 <div className="animate-pulse h-6 w-40 bg-gray-2 00 dark:bg-white/10 rounded" />
-                <div className="mt-4 animate-pulse h-24 bg-gray-200 dark:bg-white/10 rounded" />
+                <div className="mt-4 animate-pulse h-24 bg-muted dark:bg-white/10 rounded" />
               </Card>
             ))}
           </div>

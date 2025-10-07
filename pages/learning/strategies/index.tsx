@@ -323,10 +323,10 @@ export default function Strategies() {
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="p-6">
-                <div className="animate-pulse h-6 w-40 bg-gray-200 dark:bg-white/10 rounded mb-3" />
-                <div className="animate-pulse h-4 w-24 bg-gray-200 dark:bg-white/10 rounded mb-1.5" />
-                <div className="animate-pulse h-4 w-20 bg-gray-200 dark:bg-white/10 rounded mb-4" />
-                <div className="animate-pulse h-4 w-full bg-gray-200 dark:bg-white/10 rounded" />
+                <div className="animate-pulse h-6 w-40 bg-muted dark:bg-white/10 rounded mb-3" />
+                <div className="animate-pulse h-4 w-24 bg-muted dark:bg-white/10 rounded mb-1.5" />
+                <div className="animate-pulse h-4 w-20 bg-muted dark:bg-white/10 rounded mb-4" />
+                <div className="animate-pulse h-4 w-full bg-muted dark:bg-white/10 rounded" />
               </Card>
             ))}
           </div>

@@ -47,7 +47,7 @@ export const CourseCatalog: React.FC = () => {
 
         {loading && (
           <Card className="p-6 rounded-ds-2xl mt-6">
-            <div className="animate-pulse h-6 w-40 bg-gray-200 dark:bg-white/10 rounded" />
+            <div className="animate-pulse h-6 w-40 bg-muted dark:bg-white/10 rounded" />
           </Card>
         )}
 
