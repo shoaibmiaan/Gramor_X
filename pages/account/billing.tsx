@@ -1,8 +1,16 @@
 // pages/account/billing.tsx
 import * as React from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { Alert } from '@/components/design-system/Alert';
+import { Skeleton } from '@/components/design-system/Skeleton';
 
 type Invoice = {
   id: string;
@@ -58,6 +66,58 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   return { props: {} };
 };
 
+const toTitleCase = (value: string) =>
+  value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const getStatusVariant = (status: Summary['status']) => {
+  switch (status) {
+    case 'active':
+      return 'success';
+    case 'trialing':
+      return 'info';
+    case 'past_due':
+    case 'incomplete':
+      return 'warning';
+    case 'unpaid':
+      return 'danger';
+    case 'paused':
+      return 'secondary';
+    case 'canceled':
+    default:
+      return 'neutral';
+  }
+};
+
+const getInvoiceVariant = (status: Invoice['status']) => {
+  switch (status) {
+    case 'paid':
+      return 'success';
+    case 'open':
+      return 'info';
+    case 'draft':
+      return 'secondary';
+    case 'uncollectible':
+      return 'danger';
+    case 'void':
+    default:
+      return 'neutral';
+  }
+};
+
+const getDueVariant = (status: Due['status']) => {
+  switch (status) {
+    case 'due':
+      return 'warning';
+    case 'collected':
+      return 'success';
+    case 'canceled':
+    default:
+      return 'neutral';
+  }
+};
+
 // ------------------- Client component -------------------
 export default function BillingPage() {
   const [loading, setLoading] = React.useState(true);
@@ -67,6 +127,29 @@ export default function BillingPage() {
   const [dues, setDues] = React.useState<Due[]>([]);
   const [portalLoading, setPortalLoading] = React.useState(false);
   const [portalAvailable, setPortalAvailable] = React.useState(true);
+
+  const dateFormatter = React.useMemo(
+    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }),
+    []
+  );
+  const dateTimeFormatter = React.useMemo(
+    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
+    []
+  );
+  const currencyFormatter = React.useCallback(
+    (amount: number, currency: string) =>
+      new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount),
+    []
+  );
+
+  const formatDate = React.useCallback(
+    (value?: string | null) => (value ? dateFormatter.format(new Date(value)) : null),
+    [dateFormatter]
+  );
+  const formatDateTime = React.useCallback(
+    (value: string) => dateTimeFormatter.format(new Date(value)),
+    [dateTimeFormatter]
+  );
 
   React.useEffect(() => {
     (async () => {
@@ -108,133 +191,180 @@ export default function BillingPage() {
     }
   }
 
+  const renderPlanMeta = () => {
+    const renews = formatDate(summary?.renewsAt);
+    const trialEnds = formatDate(summary?.trialEndsAt);
+
+    if (!renews && !trialEnds) return null;
+
+    return (
+      <p className="text-small text-muted-foreground">
+        {renews && <span>Renews {renews}</span>}
+        {renews && trialEnds && <span aria-hidden="true"> · </span>}
+        {trialEnds && <span>Trial ends {trialEnds}</span>}
+      </p>
+    );
+  };
+
   return (
-    <div className="mx-auto max-w-3xl p-4">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">Billing</h1>
-        <p className="opacity-70">Manage your plan and invoices.</p>
-      </header>
+    <>
+      <Head>
+        <title>Billing · GramorX</title>
+        <meta name="description" content="Manage your subscription, invoices, and pending dues." />
+      </Head>
 
-      {loading && <div className="rounded-2xl p-4 ring-1 ring-inset">Loading billing…</div>}
+      <div className="py-8">
+        <Container className="max-w-4xl space-y-6">
+          <header className="space-y-1">
+            <h1 className="text-h2 font-semibold text-foreground">Billing</h1>
+            <p className="text-small text-muted-foreground">Manage your plan and invoices.</p>
+          </header>
 
-      {!loading && error && (
-        <div className="rounded-2xl p-4 ring-1 ring-inset">
-          <div className="font-medium">Couldn’t load billing</div>
-          <div className="text-sm opacity-70">{error}</div>
-          <div className="mt-3">
-            <Link className="underline" href="/pricing">
-              Go to Pricing
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {!loading && !error && summary && (
-        <>
-          {/* Current plan */}
-          <section className="mb-6 rounded-2xl p-4 ring-1 ring-inset">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-sm opacity-70">Current plan</div>
-                <div className="text-lg font-semibold capitalize">{summary.plan}</div>
-                <div className="text-sm opacity-70">
-                  Status: {summary.status}
-                  {summary.renewsAt && <> · Renews {new Date(summary.renewsAt).toLocaleDateString()}</>}
-                  {summary.trialEndsAt && <> · Trial ends {new Date(summary.trialEndsAt).toLocaleDateString()}</>}
-                </div>
+          {loading && (
+            <Card padding="lg" insetBorder aria-busy="true">
+              <div className="space-y-3">
+                <Skeleton className="h-6 w-1/3 rounded-ds-xl" />
+                <Skeleton className="h-10 w-full rounded-ds-xl" />
+                <Skeleton className="h-10 w-5/6 rounded-ds-xl" />
               </div>
-
-              {portalAvailable ? (
-                <button
-                  onClick={openPortal}
-                  disabled={portalLoading}
-                  className="rounded-xl px-4 py-2 ring-1 ring-inset"
-                  aria-busy={portalLoading}
-                >
-                  {portalLoading ? 'Opening…' : 'Change plan'}
-                </button>
-              ) : (
-                <Link href="/pricing" className="rounded-xl px-4 py-2 ring-1 ring-inset">
-                  Change plan
-                </Link>
-              )}
-            </div>
-
-            {!portalAvailable && (
-              <p className="mt-3 text-sm opacity-70">
-                Payments are temporarily unavailable. If you recently subscribed,
-                your card was <span className="font-medium">not charged</span> and the
-                amount is marked as <span className="font-medium">due</span>. We’ll notify
-                you before retrying payment.
-              </p>
-            )}
-          </section>
-
-          {/* Pending dues */}
-          {dues.length > 0 && (
-            <section className="mb-6 rounded-2xl p-4 ring-1 ring-inset">
-              <h2 className="mb-2 text-lg font-semibold">Pending dues</h2>
-              <ul className="space-y-2">
-                {dues.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between rounded-xl p-3 ring-1 ring-inset">
-                    <div>
-                      <div className="font-medium capitalize">
-                        {d.plan_key} · {d.cycle}
-                      </div>
-                      <div className="text-sm opacity-70">
-                        {new Date(d.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold">
-                        {d.currency} {(d.amount_cents / 100).toFixed(2)}
-                      </div>
-                      <div className="text-xs opacity-70">Not charged yet</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-sm opacity-70">
-                Due to a temporary technical issue, your card has not been charged. We’ll
-                notify you before retrying payment.
-              </p>
-            </section>
+            </Card>
           )}
 
-          {/* Invoices */}
-          <section className="rounded-2xl p-4 ring-1 ring-inset">
-            <h2 className="mb-3 text-lg font-semibold">Invoices</h2>
-            {invoices.length === 0 ? (
-              <p className="text-sm opacity-70">No invoices yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {invoices.map((inv) => (
-                  <li key={inv.id} className="flex items-center justify-between rounded-xl p-3 ring-1 ring-inset">
+          {!loading && error && (
+            <Alert variant="error" appearance="soft" title="Couldn’t load billing" role="alert">
+              <p className="mt-2 text-small text-muted-foreground">{error}</p>
+              <div className="mt-3">
+                <Button asChild variant="link" size="sm">
+                  <Link href="/pricing">Go to pricing</Link>
+                </Button>
+              </div>
+            </Alert>
+          )}
+
+          {!loading && !error && summary && (
+            <>
+              {/* Current plan */}
+              <Card as="section" padding="lg" insetBorder aria-labelledby="current-plan-heading">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-2">
                     <div>
-                      <div className="font-medium">{inv.status.toUpperCase()}</div>
-                      <div className="text-sm opacity-70">
-                        {new Date(inv.createdAt).toLocaleString()}
+                      <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">Current plan</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <h2 id="current-plan-heading" className="text-h3 font-semibold capitalize text-foreground">
+                          {toTitleCase(summary.plan)}
+                        </h2>
+                        <Badge variant={getStatusVariant(summary.status)}>{toTitleCase(summary.status)}</Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold">
-                        {inv.currency} {(inv.amount / 100).toFixed(2)}
-                      </div>
-                      {inv.hostedInvoiceUrl ? (
-                        <a className="text-sm underline" href={inv.hostedInvoiceUrl} target="_blank" rel="noreferrer">
-                          View invoice
-                        </a>
-                      ) : (
-                        <span className="text-sm opacity-70">No PDF</span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </>
-      )}
-    </div>
+                    {renderPlanMeta()}
+                  </div>
+
+                  {portalAvailable ? (
+                    <Button onClick={openPortal} loading={portalLoading} size="lg">
+                      {portalLoading ? 'Opening…' : 'Change plan'}
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline" size="lg">
+                      <Link href="/pricing">Change plan</Link>
+                    </Button>
+                  )}
+                </div>
+
+                {!portalAvailable && (
+                  <Alert variant="warning" className="mt-4" appearance="soft">
+                    Payments are temporarily unavailable. If you recently subscribed, your card was{' '}
+                    <span className="font-medium">not charged</span> and the amount is marked as{' '}
+                    <span className="font-medium">due</span>. We’ll notify you before retrying payment.
+                  </Alert>
+                )}
+              </Card>
+
+              {/* Pending dues */}
+              {dues.length > 0 && (
+                <Card as="section" padding="lg" insetBorder aria-labelledby="pending-dues">
+                  <div className="space-y-4">
+                    <h2 id="pending-dues" className="text-h4 font-semibold text-foreground">
+                      Pending dues
+                    </h2>
+                    <ul className="space-y-3">
+                      {dues.map((d) => (
+                        <li key={d.id} className="rounded-ds-xl border border-border/60 bg-background p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="space-y-2">
+                              <Badge variant={getDueVariant(d.status)}>{toTitleCase(d.status)}</Badge>
+                              <div className="text-small text-muted-foreground">
+                                {toTitleCase(d.plan_key)} · {toTitleCase(d.cycle)}
+                              </div>
+                              <div className="text-caption text-muted-foreground">
+                                {formatDateTime(d.created_at)}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-h4 font-semibold text-foreground">
+                                {currencyFormatter(d.amount_cents / 100, d.currency)}
+                              </p>
+                              <p className="text-caption text-muted-foreground">Not charged yet</p>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-small text-muted-foreground">
+                      Due to a temporary technical issue, your card has not been charged. We’ll notify you before retrying
+                      payment.
+                    </p>
+                  </div>
+                </Card>
+              )}
+
+              {/* Invoices */}
+              <Card as="section" padding="lg" insetBorder aria-labelledby="invoices-heading">
+                <div className="space-y-4">
+                  <h2 id="invoices-heading" className="text-h4 font-semibold text-foreground">
+                    Invoices
+                  </h2>
+                  {invoices.length === 0 ? (
+                    <p className="text-small text-muted-foreground">No invoices yet.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {invoices.map((inv) => (
+                        <li key={inv.id} className="rounded-ds-xl border border-border/60 bg-background p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="space-y-2">
+                              <Badge variant={getInvoiceVariant(inv.status)}>{toTitleCase(inv.status)}</Badge>
+                              <p className="text-caption text-muted-foreground">{formatDateTime(inv.createdAt)}</p>
+                            </div>
+                            <div className="text-right space-y-2">
+                              <p className="text-h4 font-semibold text-foreground">
+                                {currencyFormatter(inv.amount / 100, inv.currency)}
+                              </p>
+                              {inv.hostedInvoiceUrl ? (
+                                <Button asChild variant="link" size="sm">
+                                  <a href={inv.hostedInvoiceUrl} target="_blank" rel="noreferrer">
+                                    View invoice
+                                  </a>
+                                </Button>
+                              ) : (
+                                <span className="text-caption text-muted-foreground">No PDF</span>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </Card>
+            </>
+          )}
+
+          {!loading && !error && !summary && (
+            <Alert variant="info" appearance="soft" title="No subscription data">
+              We couldn’t find an active subscription yet. Start a plan from the pricing page when you’re ready.
+            </Alert>
+          )}
+        </Container>
+      </div>
+    </>
   );
 }

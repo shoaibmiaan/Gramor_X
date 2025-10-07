@@ -1,6 +1,7 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
@@ -26,6 +27,10 @@ import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import SidebarAI from '@/components/ai/SidebarAI';
 import AuthAssistant from '@/components/auth/AuthAssistant';
+import { Card } from '@/components/design-system/Card';
+import { Input } from '@/components/design-system/Input';
+import { Textarea } from '@/components/design-system/Textarea';
+import { Button } from '@/components/design-system/Button';
 
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import PublicMarketingLayout from '@/components/layouts/PublicMarketingLayout';
@@ -73,32 +78,59 @@ function GuardSkeleton() {
 
 // Minimal inline onboarding gate (no extra imports)
 function TeacherOnboardingGate() {
+  const router = useRouter();
+
+  const handleSubmit = React.useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      void router.push('/teacher/register');
+    },
+    [router]
+  );
+
   return (
-    <div className="mx-auto max-w-xl rounded-ds-2xl border border-border p-6 card-surface">
-      <h1 className="text-xl font-semibold">Complete Teacher Onboarding</h1>
-      <p className="mt-2 text-muted-foreground">
-        Your account is created but not approved yet. Please complete the onboarding form. After admin approval,
-        you&apos;ll get access to teacher tools.
-      </p>
-      <div className="mt-4 grid gap-3">
-        <div className="grid gap-2">
-          <label className="text-sm">Full Name</label>
-          <input className="input w-full" placeholder="Your name" />
+    <Card className="mx-auto max-w-2xl" padding="lg" insetBorder>
+      <form
+        className="space-y-5"
+        onSubmit={handleSubmit}
+        aria-describedby="teacher-onboarding-note"
+      >
+        <div className="space-y-2">
+          <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">Teacher onboarding</p>
+          <h2 className="text-h3 font-semibold text-foreground">Complete your profile</h2>
+          <p className="text-small text-muted-foreground">
+            Your account is created but not approved yet. Share a quick profile so our team can unlock the teacher
+            workspace for you.
+          </p>
         </div>
-        <div className="grid gap-2">
-          <label className="text-sm">Subject / Expertise</label>
-          <input className="input w-full" placeholder="e.g., IELTS Writing" />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input name="full-name" label="Full name" placeholder="Your name" autoComplete="name" />
+          <Input name="subject" label="Subject / expertise" placeholder="e.g., IELTS Writing" />
         </div>
-        <div className="grid gap-2">
-          <label className="text-sm">Experience</label>
-          <input className="input w-full" placeholder="Years / brief profile" />
+
+        <Textarea
+          name="experience"
+          label="Experience"
+          placeholder="Tell us about your IELTS teaching experience"
+          hint="This is a placeholder form. Connect it to your API when ready."
+          rows={4}
+        />
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Button type="submit" size="lg">
+            Open onboarding form
+          </Button>
+          <Button asChild variant="link" size="sm">
+            <Link href="/teacher/register">Fill it later</Link>
+          </Button>
         </div>
-        <button className="btn mt-2">Submit for Approval</button>
-      </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        Note: This is a placeholder form. Hook it to your real onboarding page or API when ready.
-      </p>
-    </div>
+
+        <p id="teacher-onboarding-note" className="text-caption text-muted-foreground">
+          Data entered here is not saved yet — you&apos;ll complete the official onboarding on the next screen.
+        </p>
+      </form>
+    </Card>
   );
 }
 

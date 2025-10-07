@@ -28,19 +28,28 @@ const ForbiddenPage: NextPage<Props> = ({ reason }) => {
       <Head>
         <title>403 — Forbidden</title>
       </Head>
-      <main className="min-h-[100dvh] flex items-center justify-center bg-background text-foreground px-6">
-        <Container>
-          <Card className="p-10 text-center space-y-6">
-            <h1 className="text-6xl font-bold text-primary">403</h1>
-            <p className="text-h4 text-mutedText">
-              You don’t have permission to access this page
-              {reason ? `: ${reason}` : '.'}
-            </p>
-            <p className="italic text-accent">{joke}</p>
-            <div className="mt-6">
-              <Link href="/" passHref legacyBehavior>
-                <Button variant="primary">Go Home</Button>
-              </Link>
+      <main
+        id="main"
+        aria-labelledby="forbidden-title"
+        className="flex min-h-[100dvh] items-center bg-background py-12 text-foreground"
+      >
+        <Container className="flex justify-center px-6">
+          <Card className="max-w-xl text-center" padding="lg">
+            <div className="space-y-6">
+              <p className="text-caption uppercase tracking-[0.2em] text-muted-foreground">Restricted area</p>
+              <h1 id="forbidden-title" className="text-display font-semibold text-primary">
+                403
+              </h1>
+              <p className="text-h4 text-muted-foreground">
+                You don’t have permission to access this page
+                {reason ? `: ${reason}` : '.'}
+              </p>
+              <p className="text-body italic text-accent">{joke}</p>
+              <div className="flex justify-center">
+                <Button asChild size="lg" variant="primary">
+                  <Link href="/">Back to dashboard</Link>
+                </Button>
+              </div>
             </div>
           </Card>
         </Container>
