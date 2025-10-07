@@ -6,7 +6,7 @@ type SupabaseSession = {
   access_token?: string;
   refresh_token?: string;
   expires_in?: number;
-  expires_at?: number;
+  expires_at?: number; // seconds since epoch
 };
 
 type CookieOptions = {
@@ -38,12 +38,10 @@ function appendSetCookie(res: NextApiResponse, value: string) {
     res.setHeader('Set-Cookie', value);
     return;
   }
-
   if (Array.isArray(existing)) {
     res.setHeader('Set-Cookie', [...existing, value]);
     return;
   }
-
   res.setHeader('Set-Cookie', [existing as string, value]);
 }
 
@@ -59,6 +57,7 @@ function writeSessionCookies(res: NextApiResponse, session: SupabaseSession | nu
   };
 
   const maxAge = typeof session.expires_in === 'number' ? session.expires_in : undefined;
+
   appendSetCookie(
     res,
     serializeCookie('sb-access-token', session.access_token, {
@@ -73,12 +72,11 @@ function writeSessionCookies(res: NextApiResponse, session: SupabaseSession | nu
       res,
       serializeCookie('sb-refresh-token', session.refresh_token, {
         ...baseOptions,
-        // refresh tokens are typically long-lived; fall back to 30 days if no expiry provided
+        // long-lived fallback if no expiry provided
         maxAge: session.expires_in ?? 60 * 60 * 24 * 30,
       }),
     );
   }
-
   return true;
 }
 
@@ -115,42 +113,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-      let needsFallback = true;
-
+      // Try helper first; fallback to manual cookies if missing or errors out
+      let usedFallback = false;
       if (typeof supabase.auth.setSession === 'function') {
         try {
           await supabase.auth.setSession(session as any);
-          needsFallback = false;
-        } catch (error) {
-          console.warn('Set-session API - setSession helper failed, using fallback cookies:', error);
+        } catch (err) {
+          console.warn('Set-session API - setSession failed, using fallback cookies:', err);
+          usedFallback = true;
         }
+      } else {
+        usedFallback = true;
       }
 
-      if (needsFallback) {
-        const wroteCookies = writeSessionCookies(res, session);
-        if (!wroteCookies) {
-          clearSessionCookies(res);
-        }
+      if (usedFallback) {
+        const wrote = writeSessionCookies(res, session);
+        if (!wrote) clearSessionCookies(res);
       }
 
       return res.status(200).json({ ok: true });
     }
 
     if (event === 'SIGNED_OUT') {
-      let needsFallback = true;
-
+      // Try helper; fallback to manual clear
+      let usedFallback = false;
       if (typeof supabase.auth.signOut === 'function') {
         try {
           await supabase.auth.signOut();
-          needsFallback = false;
-        } catch (error) {
-          console.warn('Set-session API - signOut helper failed, clearing cookies manually:', error);
+        } catch (err) {
+          console.warn('Set-session API - signOut failed, clearing cookies manually:', err);
+          usedFallback = true;
         }
+      } else {
+        usedFallback = true;
       }
 
-      if (needsFallback) {
-        clearSessionCookies(res);
-      }
+      if (usedFallback) clearSessionCookies(res);
 
       return res.status(200).json({ ok: true });
     }
