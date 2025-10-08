@@ -1,28 +1,41 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 
-import BandBreakdown from '@/components/predictor/BandBreakdown';
-import { percentToBand, runPredictor, type PredictorResult } from '@/lib/predictor';
-import { analyzeEssay, type EssayAnalysis } from '@/lib/coach/analyzeEssay';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { env } from '@/lib/env';
 import { flags } from '@/lib/flags';
 
-const MIN_WORDS = 80;
 const coachCanonical = env.NEXT_PUBLIC_SITE_URL
   ? `${env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')}/coach`
   : undefined;
 const coachEnabled = flags.enabled('coach');
 
-function formatNumber(value: number, fraction = 0) {
-  return value.toLocaleString(undefined, {
-    maximumFractionDigits: fraction,
-    minimumFractionDigits: fraction,
-  });
-}
+const quickPrompts = [
+  'How can I structure my IELTS Task 2 introduction?',
+  'Give me a 4-day plan to boost Listening section 3 scores.',
+  'What should I review before my speaking mock tomorrow?',
+];
+
+const moduleShortcuts = [
+  { href: '/study-plan', label: 'Study Plan' },
+  { href: '/mock-tests', label: 'Mock Tests' },
+  { href: '/predictor', label: 'Band Predictor' },
+  { href: '/speaking', label: 'Speaking Lab' },
+  { href: '/writing', label: 'Writing Coach' },
+];
+
+const INITIAL_ASSISTANT =
+  'Hi! I\'m your IELTS AI Coach. Ask me about planning, feedback, or skill drills and I\'ll point you to the right modules such as [Study Plan](/study-plan), [Mock Tests](/mock-tests), or [Writing Coach](/writing).';
+
+type ChatMessage = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+};
 
 function CoachComingSoon() {
   return (
@@ -41,8 +54,8 @@ function CoachComingSoon() {
           <Card className="max-w-2xl mx-auto space-y-5 p-6 rounded-ds-2xl text-center">
             <h1 className="font-slab text-h2">Coaching is almost here</h1>
             <p className="text-body text-mutedText">
-              We&apos;re putting the final polish on 1:1 coaching so that your essays get
-              thoughtful, human feedback. You&apos;ll see it first in your account once it&apos;s ready.
+              We&apos;re putting the final polish on 1:1 coaching so that your essays get thoughtful, human feedback.
+              You&apos;ll see it first in your account once it&apos;s ready.
             </p>
             <p className="text-body text-mutedText">
               In the meantime, keep building momentum with structured classes and practice plans.
@@ -62,219 +75,263 @@ function CoachComingSoon() {
   );
 }
 
-function CoachExperience() {
-  const [essay, setEssay] = useState('');
-  const [analysis, setAnalysis] = useState<EssayAnalysis | null>(null);
-  const [result, setResult] = useState<PredictorResult | null>(null);
+function CoachChatExperience() {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: 'assistant-initial', role: 'assistant', content: INITIAL_ASSISTANT },
+  ]);
+  const [input, setInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [quotaError, setQuotaError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const streamingIdRef = useRef<string | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
 
-  const liveWordCount = useMemo(() => {
-    const trimmed = essay.trim();
-    if (!trimmed) return 0;
-    return trimmed.split(/\s+/).length;
-  }, [essay]);
+  useEffect(() => {
+    viewportRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isSending]);
+
+  const submitPrompt = async (prompt?: string) => {
+    const value = (prompt ?? input).trim();
+    if (!value || isSending) return;
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: value,
+    };
+
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    setInput('');
+    setError(null);
+    setQuotaError(null);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setIsSending(true);
+
+    const payload = nextMessages.map(({ role, content }) => ({ role, content }));
+    let assistantId: string | null = null;
+
+    try {
+      const response = await fetch('/api/coach/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: payload }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok || !response.body) {
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 429) {
+          setQuotaError(
+            typeof data?.limit === 'number'
+              ? `Free plan limit reached (max ${data.limit} chats today).`
+              : 'Daily chat limit reached. Please try again tomorrow.'
+          );
+        } else {
+          setError(data?.error || 'Unable to fetch coaching feedback.');
+        }
+        throw new Error('chat_failed');
+      }
+
+      assistantId = `assistant-${Date.now()}`;
+      streamingIdRef.current = assistantId;
+      setMessages((prev) => [...prev, { id: assistantId!, role: 'assistant', content: '' }]);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { value: chunk, done } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(chunk, { stream: true });
+        if (!text) continue;
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId ? { ...message, content: message.content + text } : message,
+          ),
+        );
+      }
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        // noop: handled by stop handler
+      } else if (err?.message !== 'chat_failed') {
+        setError('We hit a snag generating feedback. Please try again.');
+      }
+      if (assistantId) {
+        const id = assistantId;
+        setMessages((prev) => prev.filter((message) => message.id !== id || message.content.trim().length > 0));
+      }
+    } finally {
+      streamingIdRef.current = null;
+      abortRef.current = null;
+      setIsSending(false);
+    }
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmed = essay.trim();
-    const words = trimmed ? trimmed.split(/\s+/).length : 0;
-    if (words < MIN_WORDS) {
-      setError(`Please enter at least ${MIN_WORDS} words.`);
-      setAnalysis(null);
-      setResult(null);
-      return;
-    }
-
-    const computed = analyzeEssay(trimmed);
-    const prediction = runPredictor(computed.predictorInput);
-
-    setAnalysis(computed);
-    setResult(prediction);
-    setError(null);
+    void submitPrompt();
   };
 
-  const writingBands = useMemo(() => {
-    if (!analysis) return null;
-    return {
-      task: percentToBand(analysis.writing.taskResponse),
-      coherence: percentToBand(analysis.writing.coherence),
-      lexical: percentToBand(analysis.writing.lexical),
-      grammar: percentToBand(analysis.writing.grammar),
-    };
-  }, [analysis]);
+  const stopGeneration = () => {
+    const controller = abortRef.current;
+    const streamingId = streamingIdRef.current;
+    if (controller) {
+      controller.abort();
+      abortRef.current = null;
+    }
+    if (streamingId) {
+      setMessages((prev) =>
+        prev.filter((message) => message.id !== streamingId || message.content.trim().length > 0),
+      );
+      streamingIdRef.current = null;
+    }
+    setIsSending(false);
+  };
 
-  const combinedAdvice = useMemo(() => {
-    if (!result || !analysis) return [] as string[];
-    const merged = new Set<string>([...analysis.suggestions, ...result.advice]);
-    return Array.from(merged);
-  }, [analysis, result]);
+  const lastAssistant = useMemo(() => messages.filter((m) => m.role === 'assistant').length, [messages]);
 
   return (
     <>
       <Head>
-        <title>Essay Coach</title>
+        <title>IELTS AI Coach</title>
+        {coachCanonical ? <link rel="canonical" href={coachCanonical} /> : null}
+        <meta
+          name="description"
+          content="Chat with the GramorX IELTS AI Coach for targeted prep tips, references to study modules, and daily accountability."
+        />
       </Head>
       <main className="min-h-screen bg-background text-foreground">
-        <div className="mx-auto max-w-5xl px-4 py-10">
-          <header className="max-w-3xl">
-            <h1 className="text-h1 font-semibold">Essay Coach</h1>
-            <p className="mt-2 text-small text-muted-foreground">
-              Paste a Task 2 style response to get an instant band estimate, writing breakdown, and coaching tips.
-            </p>
-          </header>
+        <section className="py-16">
+          <Container>
+            <div className="mx-auto flex max-w-4xl flex-col gap-6">
+              <header className="space-y-2">
+                <h1 className="text-h1 font-semibold">IELTS AI Coach</h1>
+                <p className="text-body text-muted-foreground">
+                  Get focused IELTS prep ideas, then jump straight into the right GramorX modules. Ask about study plans,
+                  mock feedback, or how to tackle a tricky skill.
+                </p>
+              </header>
 
-          <form onSubmit={handleSubmit} className="mt-8">
-            <label className="block">
-              <span className="text-small font-medium">Your essay</span>
-              <textarea
-                className="mt-2 h-60 w-full rounded-xl border border-border bg-background px-4 py-3 text-small leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                placeholder="Paste your IELTS Task 2 essay here..."
-                value={essay}
-                onChange={(event) => setEssay(event.target.value)}
-              />
-            </label>
+              <Card className="space-y-4 rounded-3xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur">
+                <div className="flex flex-wrap gap-2">
+                  {moduleShortcuts.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="rounded-xl border border-border px-3 py-1 text-caption text-muted-foreground hover:bg-muted"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
 
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-caption text-muted-foreground">
-              <span>Word count: {liveWordCount}</span>
-              <span>Minimum recommended: {MIN_WORDS} words</span>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button
-                type="submit"
-                className="rounded-xl bg-primary px-5 py-2.5 text-small font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                disabled={!essay.trim()}
-              >
-                Get feedback
-              </button>
-              <button
-                type="button"
-                className="rounded-xl border border-border px-4 py-2 text-small hover:bg-muted"
-                onClick={() => {
-                  setEssay('');
-                  setResult(null);
-                  setAnalysis(null);
-                  setError(null);
-                }}
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-
-          {error ? (
-            <div className="mt-4 rounded-xl border border-destructive/50 bg-destructive/10 p-4 text-small text-destructive">
-              {error}
-            </div>
-          ) : null}
-
-          {result && analysis ? (
-            <div className="mt-10 space-y-6">
-              <BandBreakdown
-                overall={result.overall}
-                breakdown={result.breakdown}
-                confidence={result.confidence}
-                className="border-border"
-              />
-
-              <section className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-xl border border-border p-4">
-                  <h2 className="text-h4 font-semibold">Writing breakdown</h2>
-                  <p className="mt-1 text-caption text-muted-foreground">
-                    Percent scores are mapped to approximate IELTS bands using our predictor heuristics.
-                  </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <MetricCard
-                      label="Task response"
-                      percent={analysis.writing.taskResponse}
-                      band={writingBands?.task ?? 0}
-                    />
-                    <MetricCard
-                      label="Coherence & cohesion"
-                      percent={analysis.writing.coherence}
-                      band={writingBands?.coherence ?? 0}
-                    />
-                    <MetricCard
-                      label="Lexical resource"
-                      percent={analysis.writing.lexical}
-                      band={writingBands?.lexical ?? 0}
-                    />
-                    <MetricCard
-                      label="Grammar range"
-                      percent={analysis.writing.grammar}
-                      band={writingBands?.grammar ?? 0}
-                    />
+                <div className="flex flex-col gap-3 rounded-2xl bg-muted/60 p-4">
+                  <span className="text-caption font-medium text-muted-foreground">Try asking:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {quickPrompts.map((prompt) => (
+                      <button
+                        key={prompt}
+                        type="button"
+                        onClick={() => {
+                          setInput(prompt);
+                        }}
+                        className="rounded-xl border border-border bg-background px-3 py-2 text-left text-small text-foreground transition hover:bg-muted"
+                      >
+                        {prompt}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border p-4">
-                  <h2 className="text-h4 font-semibold">Essay stats</h2>
-                  <ul className="mt-3 space-y-2 text-small text-muted-foreground">
-                    <li className="flex items-center justify-between gap-4">
-                      <span>Word count</span>
-                      <span className="font-medium text-foreground">{analysis.stats.wordCount}</span>
-                    </li>
-                    <li className="flex items-center justify-between gap-4">
-                      <span>Paragraphs</span>
-                      <span className="font-medium text-foreground">{analysis.stats.paragraphCount}</span>
-                    </li>
-                    <li className="flex items-center justify-between gap-4">
-                      <span>Sentences</span>
-                      <span className="font-medium text-foreground">{analysis.stats.sentenceCount}</span>
-                    </li>
-                    <li className="flex items-center justify-between gap-4">
-                      <span>Average sentence length</span>
-                      <span className="font-medium text-foreground">
-                        {formatNumber(analysis.stats.averageSentenceLength, 1)} words
-                      </span>
-                    </li>
-                    <li className="flex items-center justify-between gap-4">
-                      <span>Linking phrases spotted</span>
-                      <span className="font-medium text-foreground">{analysis.stats.connectorCount}</span>
-                    </li>
-                    <li className="flex items-center justify-between gap-4">
-                      <span>Unique word ratio</span>
-                      <span className="font-medium text-foreground">
-                        {(analysis.stats.uniqueWordRatio * 100).toFixed(1)}%
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </section>
+                <div className="space-y-4">
+                  <div className="h-[420px] overflow-y-auto rounded-2xl border border-border bg-background/70 p-4">
+                    <ul className="space-y-4">
+                      {messages.map((message) => (
+                        <li
+                          key={message.id}
+                          className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse text-right' : ''}`}
+                        >
+                          <div
+                            className={`max-w-[75%] rounded-2xl px-4 py-3 text-small leading-relaxed ${
+                              message.role === 'user'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-foreground'
+                            }`}
+                          >
+                            {message.role === 'assistant' ? (
+                              <ReactMarkdown className="prose prose-sm dark:prose-invert">{message.content}</ReactMarkdown>
+                            ) : (
+                              <span>{message.content}</span>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                      {isSending ? (
+                        <li className="flex gap-3 text-muted-foreground">
+                          <div className="h-3 w-3 animate-bounce rounded-full bg-muted-foreground" />
+                          <div className="h-3 w-3 animate-bounce rounded-full bg-muted-foreground [animation-delay:0.1s]" />
+                          <div className="h-3 w-3 animate-bounce rounded-full bg-muted-foreground [animation-delay:0.2s]" />
+                        </li>
+                      ) : null}
+                    </ul>
+                    <div ref={viewportRef} />
+                  </div>
 
-              {combinedAdvice.length ? (
-                <section className="rounded-xl border border-border p-4">
-                  <h2 className="text-h4 font-semibold">Coaching tips</h2>
-                  <ul className="mt-2 list-disc space-y-2 pl-5 text-small text-muted-foreground">
-                    {combinedAdvice.map((tip, index) => (
-                      <li key={index}>{tip}</li>
-                    ))}
-                  </ul>
-                </section>
-              ) : null}
+                  {error ? (
+                    <p className="text-caption text-danger">{error}</p>
+                  ) : null}
+                  {quotaError ? (
+                    <p className="text-caption text-warning">{quotaError}</p>
+                  ) : null}
+
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                    <textarea
+                      value={input}
+                      onChange={(event) => setInput(event.target.value)}
+                      placeholder="Ask for IELTS tips, accountability nudges, or module recommendations..."
+                      className="h-28 w-full resize-none rounded-2xl border border-border bg-background px-4 py-3 text-small focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="text-caption text-muted-foreground">
+                        {lastAssistant > 1 ? 'Let\'s keep the conversation flowing!' : 'Your first tip unlocks quick wins.'}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isSending ? (
+                          <Button type="button" variant="secondary" onClick={stopGeneration} className="rounded-xl">
+                            Stop
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="submit"
+                          disabled={!input.trim() || isSending}
+                          className="rounded-xl"
+                        >
+                          {isSending ? 'Sending...' : 'Send'}
+                        </Button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+
+                <p className="text-caption text-muted-foreground">
+                  The AI Coach keeps chats private, references only the modules listed above, and won&apos;t override safety
+                  rules.
+                </p>
+              </Card>
             </div>
-          ) : null}
-        </div>
+          </Container>
+        </section>
       </main>
     </>
   );
 }
 
-export default function CoachIndexPage() {
+export default function CoachPage() {
   if (!coachEnabled) {
     return <CoachComingSoon />;
   }
-
-  return <CoachExperience />;
+  return <CoachChatExperience />;
 }
-
-function MetricCard({ label, percent, band }: { label: string; percent: number; band: number }) {
-  return (
-    <div className="rounded-lg border border-lightBorder bg-card/60 p-3">
-      <p className="text-caption text-muted-foreground uppercase tracking-wide">{label}</p>
-      <p className="mt-2 text-h4 font-semibold">{Math.round(percent)}%</p>
-      <p className="text-caption text-muted-foreground">≈ Band {band.toFixed(1)}</p>
-    </div>
-  );
-}
-
