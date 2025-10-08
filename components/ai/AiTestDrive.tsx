@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
 import { Alert } from '@/components/design-system/Alert';
+import { Loader } from '@/components/common/Loader';
 
 export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }) => {
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [longWait, setLongWait] = useState(false);
+  const waitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (waitTimer.current) {
+        window.clearTimeout(waitTimer.current);
+        waitTimer.current = null;
+      }
+    };
+  }, []);
 
   async function handleAsk(e?: React.FormEvent) {
     e?.preventDefault();
@@ -19,6 +31,13 @@ export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }
       return;
     }
     setLoading(true);
+    setLongWait(false);
+    if (waitTimer.current) {
+      window.clearTimeout(waitTimer.current);
+    }
+    waitTimer.current = window.setTimeout(() => setLongWait(true), 10000);
+    const jitter = 200 + Math.floor(Math.random() * 400);
+    await new Promise((resolve) => setTimeout(resolve, jitter));
     try {
       const r = await fetch('/api/ai/test-drive', {
         method: 'POST',
@@ -34,7 +53,12 @@ export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }
     } catch (err: any) {
       setError(err?.message || 'Network error.');
     } finally {
+      if (waitTimer.current) {
+        window.clearTimeout(waitTimer.current);
+        waitTimer.current = null;
+      }
       setLoading(false);
+      setLongWait(false);
     }
   }
 
@@ -56,6 +80,13 @@ export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }
           {loading ? 'Thinking…' : 'Ask'}
         </Button>
       </form>
+
+      {loading ? <Loader label="Asking the AI…" className="mt-3" /> : null}
+      {loading && longWait ? (
+        <Alert variant="info" className="mt-3" title="This is taking a little longer">
+          Hang tight—our AI is still generating a reply. You can keep waiting or try again in a moment.
+        </Alert>
+      ) : null}
 
       {error && (
         <Alert variant="warning" className="mt-4" title="Couldn’t get an answer">
