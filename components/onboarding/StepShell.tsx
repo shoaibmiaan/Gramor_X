@@ -55,8 +55,14 @@ const StepShell: React.FC<StepShellProps> = ({
   const isLast = step >= total;
 
   // Keyboard shortcuts: ← / → / Enter / Esc
+  const headingRef = React.useRef<HTMLHeadingElement>(null);
+
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag && ['input', 'textarea', 'select'].includes(tag)) return;
+      if (target?.isContentEditable) return;
       if (e.key === 'Enter' || e.key === 'ArrowRight') onNext?.();
       if (e.key === 'ArrowLeft') onBack?.();
       if (e.key === 'Escape') onSkip?.();
@@ -64,6 +70,10 @@ const StepShell: React.FC<StepShellProps> = ({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onNext, onBack, onSkip]);
+
+  React.useEffect(() => {
+    headingRef.current?.focus();
+  }, [step]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -73,7 +83,13 @@ const StepShell: React.FC<StepShellProps> = ({
         <div className="header-glass rounded-ds-2xl border border-border p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-h2 font-semibold tracking-tight">{title}</h1>
+              <h1
+                ref={headingRef}
+                className="text-h2 font-semibold tracking-tight focus:outline-none"
+                tabIndex={-1}
+              >
+                {title}
+              </h1>
               {subtitle && <p className="mt-1 text-small text-foreground/70">{subtitle}</p>}
             </div>
             <div className="shrink-0 rounded-full px-3 py-1 text-caption bg-primary/10 text-primary tabular-nums">
@@ -96,12 +112,21 @@ const StepShell: React.FC<StepShellProps> = ({
                 ].join(' ');
 
                 return s.href ? (
-                  <Link key={s.label + i} href={s.href} className={pillClasses}>
+                  <Link
+                    key={s.label + i}
+                    href={s.href}
+                    className={pillClasses}
+                    aria-current={active ? 'step' : undefined}
+                  >
                     <span className="opacity-80">Step {idx} · </span>
                     <span className="font-medium">{s.label}</span>
                   </Link>
                 ) : (
-                  <div key={s.label + i} className={pillClasses}>
+                  <div
+                    key={s.label + i}
+                    className={pillClasses}
+                    aria-current={active ? 'step' : undefined}
+                  >
                     <span className="opacity-80">Step {idx} · </span>
                     <span className="font-medium">{s.label}</span>
                   </div>

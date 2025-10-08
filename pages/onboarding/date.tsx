@@ -3,35 +3,36 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 import StepShell from '@/components/onboarding/StepShell';
 import { Input } from '@/components/design-system/Input';
+import { markStep, persistDraft, readDraft } from '@/lib/onboarding';
 
 const STEPS = [
   { label: 'Target Band', href: '/onboarding/goal', done: true },
   { label: 'Exam Date', href: '/onboarding/date' },
-  { label: 'Weak Areas', href: '/onboarding/skills' },
-  { label: 'Schedule', href: '/onboarding/schedule' },
+  { label: 'WhatsApp Updates', href: '/onboarding/whatsapp' },
 ];
 
 export default function Page() {
   const router = useRouter();
   const [examDate, setExamDate] = React.useState<string>('');
 
-  // Restore & persist
   React.useEffect(() => {
-    const saved = window.localStorage.getItem('onboarding.date');
-    if (saved) setExamDate(saved);
+    markStep('date');
+    const draft = readDraft();
+    if (draft.examDate) setExamDate(draft.examDate);
   }, []);
+
   React.useEffect(() => {
-    if (examDate) window.localStorage.setItem('onboarding.date', examDate);
+    persistDraft({ examDate: examDate || null });
   }, [examDate]);
 
   const back = () => router.push('/onboarding/goal');
-  const next = () => router.push('/onboarding/skills');
+  const next = () => router.push('/onboarding/whatsapp');
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <StepShell
         step={2}
-        total={4}
+        total={3}
         title="Your Exam Date"
         subtitle="We’ll back-calculate a plan that fits your deadline."
         onBack={back}

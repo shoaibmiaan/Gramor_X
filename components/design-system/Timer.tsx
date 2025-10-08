@@ -72,6 +72,10 @@ export const Timer: React.FC<TimerProps> = ({
   }, [running, mode, onTick, onComplete]);
 
   const label = useMemo(() => format(seconds), [seconds]);
+  const liveMode = useMemo<"polite" | "assertive">(
+    () => (mode === "countdown" && seconds <= 60 ? "assertive" : "polite"),
+    [mode, seconds],
+  );
 
   const intent =
     mode === "countdown" && seconds <= 60
@@ -81,7 +85,8 @@ export const Timer: React.FC<TimerProps> = ({
   return (
     <div
       role="timer"
-      aria-live="polite"
+      aria-live={liveMode}
+      aria-atomic="true"
       aria-label={ariaLabel}
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-ds border border-border dark:border-vibrantPurple/20 ${className}`}
     >

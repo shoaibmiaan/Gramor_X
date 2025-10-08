@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { routes } from '@/lib/routes';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export type Command = {
   id: string;
@@ -122,6 +123,9 @@ export function CommandCenter({
   if (!mounted) return null;
   if (!open) return null;
 
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  useFocusTrap(open, panelRef);
+
   return createPortal(
     <div
       className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm"
@@ -130,8 +134,10 @@ export function CommandCenter({
       aria-modal="true"
     >
       <div
+        ref={panelRef}
         className="mx-auto mt-24 w-full max-w-xl rounded-2xl border border-border bg-card text-foreground shadow-card"
         onClick={(e) => e.stopPropagation()}
+        tabIndex={-1}
       >
         <div className="flex items-center gap-2 border-b border-border px-3 py-2">
           <span className="text-caption text-foreground/60">⌘/Ctrl K</span>

@@ -30,6 +30,7 @@
     "ui:scan": "node scripts/fix-ui-inconsistencies.js scan",
     "ui:fix": "node scripts/fix-ui-inconsistencies.js fix",
     "inventory": "tsx scripts/inventory.ts",
+    "i18n:check": "node scripts/i18n-coverage.mjs",
     "screens": "BASE_URL=https://gramorx.com node scripts/capture-screens.mjs",
     "screens:readme": "node scripts/build-screens-readme.mjs",
     "lh:ci": "lhci autorun --config=lighthouserc.json",

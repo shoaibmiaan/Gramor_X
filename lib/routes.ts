@@ -8,8 +8,7 @@ export const routes = {
   onboarding: {
     goal: () => '/onboarding/goal',
     date: () => '/onboarding/date',
-    skills: () => '/onboarding/skills',
-    schedule: () => '/onboarding/schedule',
+    whatsapp: () => '/onboarding/whatsapp',
   },
 
   // Mocks

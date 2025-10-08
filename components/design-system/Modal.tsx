@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Button } from "./Button";
+import { useFocusTrap } from "@/hooks/useFocusTrap";
 
 function cn(...a: Array<string | false | undefined | null>) {
   return a.filter(Boolean).join(" ");
@@ -23,6 +24,9 @@ const sizes: Record<NonNullable<ModalProps["size"]>, string> = {
 
 export function Modal({ open, onClose, title, children, size = "md", className }: ModalProps) {
   const dialogRef = React.useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = React.useState(false);
+
+  useFocusTrap(open, dialogRef);
 
   // Close on ESC
   React.useEffect(() => {
@@ -31,7 +35,11 @@ export function Modal({ open, onClose, title, children, size = "md", className }
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    setMounted(true);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      setMounted(false);
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -53,6 +61,7 @@ export function Modal({ open, onClose, title, children, size = "md", className }
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
         ref={dialogRef}
+        tabIndex={-1}
         className={cn(
           // mobile = full screen sheet-like
           "absolute inset-x-0 bottom-0 top-auto h-auto max-h-[85vh] rounded-t-ds-2xl",
