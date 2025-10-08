@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
+import { Loader } from '@/components/common/Loader';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,9 +20,11 @@ export default function AuthAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [longWait, setLongWait] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const waitTimerRef = useRef<number | null>(null);
 
   // drag state
   const pointerIdRef = useRef<number | null>(null);
@@ -87,6 +90,15 @@ export default function AuthAssistant() {
     }
   }, [messages, loading]);
 
+  useEffect(() => {
+    return () => {
+      if (waitTimerRef.current) {
+        window.clearTimeout(waitTimerRef.current);
+        waitTimerRef.current = null;
+      }
+    };
+  }, []);
+
   async function send(e?: FormEvent) {
     e?.preventDefault();
     const text = input.trim();
@@ -94,6 +106,13 @@ export default function AuthAssistant() {
     setMessages((prev) => [...prev, { role: 'user', content: text }]);
     setInput('');
     setLoading(true);
+    setLongWait(false);
+    if (waitTimerRef.current) {
+      window.clearTimeout(waitTimerRef.current);
+    }
+    waitTimerRef.current = window.setTimeout(() => setLongWait(true), 10000);
+    const jitter = 200 + Math.floor(Math.random() * 400);
+    await new Promise((resolve) => setTimeout(resolve, jitter));
     try {
       const res = await fetch('/api/ai/test-drive', {
         method: 'POST',
@@ -109,7 +128,12 @@ export default function AuthAssistant() {
         { role: 'assistant', content: 'Sorry, something went wrong.' },
       ]);
     } finally {
+      if (waitTimerRef.current) {
+        window.clearTimeout(waitTimerRef.current);
+        waitTimerRef.current = null;
+      }
       setLoading(false);
+      setLongWait(false);
     }
   }
 
@@ -276,7 +300,16 @@ export default function AuthAssistant() {
             )}
           </div>
         ))}
-        {loading && <div className="text-caption text-muted-foreground">Thinking…</div>}
+        {loading ? (
+          <div className="rounded-md bg-card px-2 py-1">
+            <Loader label="Thinking…" />
+          </div>
+        ) : null}
+        {loading && longWait ? (
+          <div className="rounded-md bg-card px-2 py-1 text-caption text-muted-foreground">
+            This is taking a little longer than usual. You can keep waiting or try again soon.
+          </div>
+        ) : null}
       </div>
 
       {/* Composer */}
