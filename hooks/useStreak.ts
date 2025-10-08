@@ -64,6 +64,7 @@ export function useStreak() {
         shields: data.shields ?? s.shields,
         error: null,
       }));
+      return data;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to update';
       setState((s) => ({ ...s, error: message }));

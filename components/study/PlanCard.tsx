@@ -1,3 +1,87 @@
-export default function Component() {
-  return <div className="p-2 text-small opacity-70">Component Stub</div>;
+import React from 'react';
+import { Card } from '@/components/design-system/Card';
+import { Checkbox } from '@/components/design-system/Checkbox';
+import { Badge } from '@/components/design-system/Badge';
+import { Icon } from '@/components/design-system/Icon';
+import type { StudyDay, StudyTask } from '@/types/plan';
+import { totalMinutesForDay } from '@/utils/studyPlan';
+
+type Props = {
+  day: StudyDay;
+  onToggleTask: (taskId: string, checked: boolean) => void;
+  busyTaskId?: string | null;
+  isToday?: boolean;
+};
+
+function formatDateLabel(dateISO: string) {
+  const date = new Date(dateISO);
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
 }
+
+function typeBadge(task: StudyTask) {
+  const label = task.type.charAt(0).toUpperCase() + task.type.slice(1);
+  const variant: React.ComponentProps<typeof Badge>['variant'] =
+    task.type === 'mock'
+      ? 'warning'
+      : task.type === 'review'
+      ? 'info'
+      : task.type === 'rest'
+      ? 'secondary'
+      : 'primary';
+  return (
+    <Badge variant={variant} size="sm">
+      {label}
+    </Badge>
+  );
+}
+
+export const PlanCard: React.FC<Props> = ({ day, onToggleTask, busyTaskId, isToday }) => {
+  const totalMinutes = totalMinutesForDay(day);
+  return (
+    <Card className="rounded-ds-2xl p-6">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-small text-muted-foreground">{isToday ? 'Today' : 'Scheduled'}</p>
+          <h3 className="font-slab text-h3 leading-snug">{formatDateLabel(day.dateISO)}</h3>
+        </div>
+        <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-small font-semibold text-primary">
+          <Icon name="clock" size={16} aria-hidden />
+          <span>{totalMinutes} min</span>
+        </div>
+      </div>
+
+      {day.tasks.length === 0 ? (
+        <p className="mt-6 text-small text-muted-foreground">No tasks scheduled for this day.</p>
+      ) : (
+        <ul className="mt-6 space-y-4">
+          {day.tasks.map((task) => (
+            <li key={task.id} className="flex items-start gap-3 rounded-2xl border border-border/60 p-4">
+              <Checkbox
+                checked={task.completed}
+                onCheckedChange={(checked) => onToggleTask(task.id, Boolean(checked))}
+                disabled={busyTaskId === task.id}
+                aria-label={`Mark ${task.title} as ${task.completed ? 'incomplete' : 'complete'}`}
+                className="mt-1"
+              />
+              <div className="flex-1 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-body font-medium text-foreground">{task.title}</span>
+                  {typeBadge(task)}
+                </div>
+                <p className="text-small text-muted-foreground">
+                  Estimated {task.estMinutes} min • {task.type === 'rest' ? 'Take a break' : 'Stay focused and complete the task'}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+};
+
+export default PlanCard;

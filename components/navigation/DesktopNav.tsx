@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { NavLink } from '@/components/design-system/NavLink';
 import { UserMenu } from '@/components/design-system/UserMenu';
 import { NotificationBell } from '@/components/design-system/NotificationBell';
-import { FireStreak } from './FireStreak';
+import { StreakChip } from '@/components/user/StreakChip';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
 import { navigationSchema } from '@/config/navigation';
 import { filterNavItems } from '@/lib/navigation/utils';
@@ -230,7 +230,7 @@ export function DesktopNav({
         {/* Right cluster */}
         <ul className="flex items-center gap-2">
           <li>
-            <FireStreak value={streak} />
+          <StreakChip value={streak} href="/profile/streak" className="shrink-0" />
           </li>
           {headerOptional.notifications && (
             <li>
