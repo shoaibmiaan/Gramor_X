@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      await supabaseAdmin.from('profiles').delete().eq('user_id', user.id);
+      await supabaseAdmin.from('profiles').delete().eq('id', user.id);
       await supabaseAdmin.from('user_bookmarks').delete().eq('user_id', user.id);
       await supabaseAdmin.auth.admin.deleteUser(user.id);
       return res.status(200).json({ success: true });
