@@ -64,6 +64,7 @@ export interface MockCheckpoint {
   payload: MockCheckpointPayload;
   elapsed: number;
   duration?: number | null;
+  completed: boolean;
   updatedAt: string;
 }
 
@@ -101,11 +102,13 @@ export async function saveMockCheckpoint(input: SaveCheckpointInput): Promise<bo
 export async function fetchMockCheckpoint(params: {
   attemptId?: string;
   section?: MockSection;
+  includeCompleted?: boolean;
 }): Promise<MockCheckpoint | null> {
   try {
     const search = new URLSearchParams();
     if (params.attemptId) search.set('attemptId', params.attemptId);
     if (params.section) search.set('section', params.section);
+    if (params.includeCompleted) search.set('includeCompleted', 'true');
     const qs = search.toString();
     const url = `/api/mock/checkpoint${qs ? `?${qs}` : ''}`;
     const res = await fetch(url, { method: 'GET' });
