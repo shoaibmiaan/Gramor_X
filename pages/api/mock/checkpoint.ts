@@ -15,7 +15,7 @@ type PostBody = {
 type PostResponse = { ok: true } | { ok: false; error: string };
 
 type GetResponse =
-  | { ok: true; checkpoint: { attemptId: string; section: MockSection; mockId: string; payload: Record<string, unknown>; elapsed: number; duration?: number | null; updatedAt: string } | null }
+  | { ok: true; checkpoint: { attemptId: string; section: MockSection; mockId: string; payload: Record<string, unknown>; elapsed: number; duration?: number | null; completed: boolean; updatedAt: string } | null }
   | { ok: false; error: string };
 
 const isSection = (value: unknown): value is MockSection =>
@@ -87,10 +87,16 @@ async function postHandler(req: NextApiRequest, res: NextApiResponse<PostRespons
 }
 
 async function getHandler(req: NextApiRequest, res: NextApiResponse<GetResponse>) {
-  const { attemptId, section } = req.query as { attemptId?: string; section?: string };
+  const { attemptId, section, includeCompleted } = req.query as {
+    attemptId?: string;
+    section?: string;
+    includeCompleted?: string;
+  };
   if (section && !isSection(section)) {
     return res.status(400).json({ ok: false, error: 'section is invalid' });
   }
+
+  const includeCompletedBool = includeCompleted === 'true';
 
   const supabase = createSupabaseServerClient({ req, res });
   const { data: userData, error: userErr } = await supabase.auth.getUser();
@@ -101,7 +107,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse<GetResponse>
   try {
     let query = supabase
       .from('mock_attempts')
-      .select('attempt_id, section, mock_id, payload, elapsed_sec, duration_sec, updated_at')
+      .select('attempt_id, section, mock_id, payload, elapsed_sec, duration_sec, completed, updated_at')
       .eq('user_id', userData.user.id)
       .order('updated_at', { ascending: false })
       .limit(1);
@@ -111,6 +117,9 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse<GetResponse>
     }
     if (section) {
       query = query.eq('section', section);
+    }
+    if (!includeCompletedBool) {
+      query = query.eq('completed', false);
     }
 
     const { data, error } = await query;
@@ -130,6 +139,7 @@ async function getHandler(req: NextApiRequest, res: NextApiResponse<GetResponse>
         payload: (row.payload as Record<string, unknown>) ?? {},
         elapsed: typeof row.elapsed_sec === 'number' ? row.elapsed_sec : 0,
         duration: typeof row.duration_sec === 'number' ? row.duration_sec : null,
+        completed: Boolean(row.completed),
         updatedAt: row.updated_at as string,
       },
     });

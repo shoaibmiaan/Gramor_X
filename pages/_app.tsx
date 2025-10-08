@@ -31,6 +31,7 @@ import { Card } from '@/components/design-system/Card';
 import { Input } from '@/components/design-system/Input';
 import { Textarea } from '@/components/design-system/Textarea';
 import { Button } from '@/components/design-system/Button';
+import UpgradeModal from '@/components/premium/UpgradeModal';
 
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import PublicMarketingLayout from '@/components/layouts/PublicMarketingLayout';
@@ -445,6 +446,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
         )}
         <AuthAssistant />
         <SidebarAI />
+        <UpgradeModal />
       </div>
     </ThemeProvider>
   );

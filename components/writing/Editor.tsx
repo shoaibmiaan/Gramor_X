@@ -5,6 +5,7 @@ import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Card, CardContent, CardHeader } from '@/components/design-system/Card';
 import { Modal } from '@/components/design-system/Modal';
+import { EditorStatusBar } from '@/components/writing/EditorStatusBar';
 import {
   clearDraft,
   countWords,
@@ -285,9 +286,6 @@ export const WritingEditor: React.FC<WritingEditorProps> = ({ paper }) => {
               onChange={(event) => setTask1(event.target.value)}
               onBlur={persistNow}
             />
-            <span className="text-caption text-muted-foreground">
-              {wordCount1} words • minimum {paper.task1.minWords}
-            </span>
           </label>
         </CardContent>
       </Card>
@@ -331,12 +329,17 @@ export const WritingEditor: React.FC<WritingEditorProps> = ({ paper }) => {
               onChange={(event) => setTask2(event.target.value)}
               onBlur={persistNow}
             />
-            <span className="text-caption text-muted-foreground">
-              {wordCount2} words • minimum {paper.task2.minWords}
-            </span>
           </label>
         </CardContent>
       </Card>
+
+      <EditorStatusBar
+        task1Count={wordCount1}
+        task2Count={wordCount2}
+        minTask1={paper.task1.minWords}
+        minTask2={paper.task2.minWords}
+        defaultTimerMinutes={paper.task2.maxTimeMinutes ?? 40}
+      />
 
       <div className="flex justify-end">
         <Button variant="secondary" onClick={handleClearAll}>

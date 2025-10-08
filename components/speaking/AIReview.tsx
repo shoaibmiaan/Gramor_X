@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { ScoreCard } from '@/components/design-system/ScoreCard';
+import { Button } from '@/components/design-system/Button';
+import { Loader } from '@/components/common/Loader';
+import { AISkeleton } from '@/components/common/Skeleton';
 
 /**
  * Parse AI annotations in the same `[g]..[/g]` / `[v]..[/v]` format used by
@@ -31,7 +34,7 @@ function renderAnnotated(text: string): React.ReactNode {
   return <>{out}</>;
 }
 
-async function annotate(text: string): Promise<string> {
+async function annotate(text: string, signal?: AbortSignal): Promise<string> {
   try {
     const res = await fetch('/api/ai/chat?p=openai', {
       method: 'POST',
@@ -45,7 +48,8 @@ async function annotate(text: string): Promise<string> {
           },
           { role: 'user', content: text }
         ]
-      })
+      }),
+      signal,
     });
     if (!res.body) return text;
     const reader = res.body.getReader();
@@ -91,41 +95,111 @@ export const AIReview: React.FC<SpeakingAIReviewProps> = ({ attemptId }) => {
   const [annotated, setAnnotated] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [longWait, setLongWait] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+
+  const handleRetry = React.useCallback(() => {
+    if (loading) return;
+    setRetryKey((value) => value + 1);
+  }, [loading]);
 
   useEffect(() => {
     let active = true;
-    (async () => {
+    let jitterTimer: ReturnType<typeof setTimeout> | null = null;
+    let longWaitTimer: ReturnType<typeof setTimeout> | null = null;
+    const abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+
+    const clearTimers = () => {
+      if (jitterTimer) {
+        window.clearTimeout(jitterTimer);
+        jitterTimer = null;
+      }
+      if (longWaitTimer) {
+        window.clearTimeout(longWaitTimer);
+        longWaitTimer = null;
+      }
+    };
+
+    const load = async () => {
       try {
-        setLoading(true);
         setError(null);
         const resp = await fetch('/api/speaking/score', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ attemptId })
+          body: JSON.stringify({ attemptId }),
+          signal: abort?.signal,
         });
         if (!resp.ok) throw new Error('Scoring failed');
         const json = await resp.json();
         if (!active) return;
         setData(json);
-        const ann = await annotate(json.transcript);
+        const ann = await annotate(json.transcript, abort?.signal);
         if (!active) return;
         setAnnotated(ann);
       } catch (e: any) {
         if (active) setError(e.message || 'Failed to score attempt');
       } finally {
-        if (active) setLoading(false);
+        clearTimers();
+        if (active) {
+          setLoading(false);
+          setLongWait(false);
+        }
       }
-    })();
+    };
+
+    setData(null);
+    setAnnotated('');
+    setLoading(true);
+    setLongWait(false);
+
+    const start = () => {
+      if (!active) return;
+      longWaitTimer = window.setTimeout(() => {
+        if (active) setLongWait(true);
+      }, 10000);
+      void load();
+    };
+
+    const jitter = 200 + Math.floor(Math.random() * 400);
+    jitterTimer = window.setTimeout(start, jitter);
+
     return () => {
       active = false;
+      clearTimers();
+      abort?.abort();
     };
-  }, [attemptId]);
+  }, [attemptId, retryKey]);
 
   if (loading) {
-    return <Card className="card-surface p-6 rounded-ds-2xl">Scoring…</Card>;
+    return (
+      <AISkeleton rows={6} showHeader={false}>
+        <Loader label="Scoring your speaking attempt…" />
+        {longWait ? (
+          <Alert variant="info" title="This is taking longer than usual" className="mt-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-body text-muted-foreground">
+                Our AI needs a little more time. You can keep waiting or retry.
+              </p>
+              <Button size="sm" variant="secondary" onClick={handleRetry} disabled={loading}>
+                Retry
+              </Button>
+            </div>
+          </Alert>
+        ) : null}
+      </AISkeleton>
+    );
   }
   if (error) {
-    return <Alert variant="warning" title="AI review failed">{error}</Alert>;
+    return (
+      <Alert variant="warning" title="AI review failed">
+        <div className="flex flex-wrap items-center gap-3">
+          <span>{error}</span>
+          <Button size="sm" variant="secondary" onClick={handleRetry} disabled={loading}>
+            Retry
+          </Button>
+        </div>
+      </Alert>
+    );
   }
   if (!data) return null;
 
