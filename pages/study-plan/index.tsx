@@ -1,130 +1,293 @@
-// pages/study-plan.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+// pages/study-plan/index.tsx
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { Skeleton } from '@/components/design-system/Skeleton';
+import { useToast } from '@/components/design-system/Toaster';
+
+import { useStreak } from '@/hooks/useStreak';
+import { getDayKeyInTZ } from '@/lib/streak';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { generateStudyPlan } from '@/lib/studyPlan';
 
-type Module = 'listening' | 'reading' | 'writing' | 'speaking';
-type Task = { module: Module; minutes: number };
-type PlanDay = { date: string; tasks: Task[] };
-type StudyPlan = { start_date?: string; end_date?: string; plan_json?: { days: PlanDay[] } };
+import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
+import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
+import { PlanCard } from '@/components/study/PlanCard';
+import { WeekGrid } from '@/components/study/WeekGrid';
+import { StreakChip } from '@/components/user/StreakChip';
+import { coerceStudyPlan, planDayKey } from '@/utils/studyPlan';
 
-const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.ReactNode }> = ({ title, children, right }) => (
-  <div className="min-h-screen bg-background text-foreground">
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-h1 font-bold">{title}</h1>
-        {right}
-      </header>
-      {/* MAIN landmark here */}
-      <main role="main" className="rounded-2xl border border-border bg-background/50 p-5 shadow-sm">
-        {children}
-      </main>
-    </div>
-  </div>
-);
+const PRESETS: ReadonlyArray<StudyPlanPreset> = [
+  {
+    id: 'balanced-4w',
+    title: 'Balanced focus',
+    description: 'Four weeks of daily IELTS tasks evenly split across all skills.',
+    weeks: 4,
+    highlight: 'Recommended',
+  },
+  {
+    id: 'speaking-boost',
+    title: 'Speaking boost',
+    description: 'Two-week plan focused on speaking drills and writing prompts.',
+    weeks: 2,
+  },
+  {
+    id: 'listening-sprint',
+    title: 'Listening sprint',
+    description: 'One-week reset with intensive listening practice.',
+    weeks: 1,
+    highlight: 'Great for jump-starts',
+  },
+];
 
-export default function StudyPlanPage() {
-  const [plan, setPlan] = useState<StudyPlan | null>(null);
-  const [loading, setLoading] = useState(true);
+function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType {
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.id) return setLoading(false);
-        const { data } = await supabase.from('study_plans').select('*').eq('user_id', user.id).single();
-        setPlan((data as unknown as StudyPlan) || null);
-      } catch {
-        setPlan(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  const weaknesses =
+    preset.id === 'speaking-boost'
+      ? ['speaking:fluency', 'writing:task2 coherence']
+      : preset.id === 'listening-sprint'
+      ? ['listening:maps', 'listening:matching']
+      : undefined;
 
-  const days = useMemo<PlanDay[]>(() => {
-    const all = plan?.plan_json?.days ?? [];
-    const todayISO = new Date().toISOString().slice(0, 10);
-    const idx = all.findIndex((d) => d.date >= todayISO);
-    const start = Math.max(0, idx);
-    return all.slice(start, start + 7);
-  }, [plan]);
-
-  const none = !loading && (!plan || !plan.plan_json?.days?.length);
-
-  return (
-    <Shell
-      title="Your Study Plan"
-      right={<Link href="/progress" className="text-small underline decoration-2 underline-offset-4">Progress</Link>}
-    >
-      {loading ? (
-        <div className="rounded-xl border border-border p-4 text-small text-foreground/70" aria-live="polite">
-          Loading your plan…
-        </div>
-      ) : none ? (
-        <div className="grid gap-3">
-          <div className="rounded-xl border border-border p-4 text-small">
-            No active plan found. Complete{' '}
-            <Link href="/onboarding/goal" className="underline decoration-2 underline-offset-4">
-              Onboarding
-            </Link>{' '}
-            to generate a plan.
-          </div>
-          <div className="flex justify-end">
-            <Link
-              href="/onboarding/goal"
-              className="rounded-xl bg-primary px-4 py-2 font-medium text-background hover:opacity-90"
-            >
-              Start onboarding
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {days.map((d) => (
-            <article key={d.date} className="rounded-xl border border-border p-4">
-              <div className="mb-2 text-small font-medium">
-                <time dateTime={d.date}>{formatHuman(d.date)}</time>
-              </div>
-              <ul className="text-small text-foreground/80">
-                {d.tasks.map((t, i) => (
-                  <li key={i} className="flex items-center justify-between">
-                    <span className="capitalize">{t.module}</span>
-                    <span className="text-foreground/70">{t.minutes} min</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {d.tasks.some(t => t.module === 'listening') && (
-                  <Link href="/listening" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Listening
-                  </Link>
-                )}
-                {d.tasks.some(t => t.module === 'reading') && (
-                  <Link href="/reading" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Reading
-                  </Link>
-                )}
-                {d.tasks.some(t => t.module === 'writing') && (
-                  <Link href="/writing" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Writing
-                  </Link>
-                )}
-                {d.tasks.some(t => t.module === 'speaking') && (
-                  <Link href="/speaking/simulator" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Speaking
-                  </Link>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-    </Shell>
-  );
+  return generateStudyPlan({
+    userId,
+    startISO: start.toISOString(),
+    weeks: preset.weeks,
+    weaknesses,
+  });
 }
 
-function formatHuman(iso: string) {
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+export default function StudyPlanPage() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<PlanType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [creatingId, setCreatingId] = useState<string | null>(null);
+  const [busyTask, setBusyTask] = useState<string | null>(null);
+
+  const { success: toastSuccess, error: toastError } = useToast();
+  const { current: streak, loading: streakLoading, completeToday, reload: reloadStreak } = useStreak();
+
+  const loadPlan = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        setUserId(null);
+        setPlan(null);
+        return;
+      }
+      setUserId(user.id);
+
+      const { data, error } = await supabase
+        .from('study_plans')
+        .select('plan_json,start_iso,weeks,goal_band')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (!data) {
+        setPlan(null);
+      } else {
+        const normalised = coerceStudyPlan(data.plan_json ?? data, user.id, {
+          startISO: data.start_iso ?? undefined,
+          weeks: data.weeks ?? undefined,
+          goalBand: data.goal_band ?? undefined,
+        });
+        setPlan(normalised);
+      }
+    } catch (err) {
+      console.error('Failed to load study plan', err);
+      setPlan(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadPlan();
+  }, [loadPlan]);
+
+  const todayKey = getDayKeyInTZ();
+
+  const today = useMemo<StudyDay | null>(() => {
+    if (!plan) return null;
+    return plan.days.find((d) => planDayKey(d) === todayKey) ?? null;
+  }, [plan, todayKey]);
+
+  const upcomingDays = useMemo<StudyDay[]>(() => {
+    if (!plan) return [];
+    return plan.days.filter((d) => planDayKey(d) >= todayKey).slice(0, 7);
+  }, [plan, todayKey]);
+
+  const persistPlan = useCallback(
+    async (next: PlanType) => {
+      if (!userId) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('study_plans')
+        .upsert(
+          {
+            user_id: userId,
+            plan_json: next as unknown as Record<string, unknown>,
+            start_iso: next.startISO,
+            weeks: next.weeks,
+            goal_band: next.goalBand ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        );
+      if (error) throw error;
+    },
+    [userId],
+  );
+
+  const handleCreatePlan = useCallback(
+    async (preset: StudyPlanPreset) => {
+      if (!userId) {
+        toastError('Please sign in to create a study plan.');
+        return;
+      }
+      setCreatingId(preset.id);
+      try {
+        const nextPlan = createPlanFromPreset(preset, userId);
+        await persistPlan(nextPlan);
+        setPlan(nextPlan);
+        toastSuccess('Plan ready', 'Your new study plan is live. Start with today’s tasks!');
+      } catch (err) {
+        console.error('Failed to create plan', err);
+        toastError(err instanceof Error ? err.message : 'Could not create plan.');
+      } finally {
+        setCreatingId(null);
+      }
+    },
+    [persistPlan, toastError, toastSuccess, userId],
+  );
+
+  const handleTaskToggle = useCallback(
+    async (day: StudyDay, taskId: string, checked: boolean) => {
+      if (!plan || !userId) return;
+
+      const dayKey = planDayKey(day);
+      const target = day.tasks.find((t) => t.id === taskId);
+      const wasComplete = target?.completed ?? false;
+      const hadOtherCompleted = day.tasks.some((t) => t.completed && t.id !== taskId);
+
+      const next: PlanType = {
+        ...plan,
+        days: plan.days.map((d) =>
+          d.dateISO === day.dateISO
+            ? { ...d, tasks: d.tasks.map((t) => (t.id === taskId ? { ...t, completed: checked } : t)) }
+            : d,
+        ),
+      };
+
+      setBusyTask(taskId);
+      setPlan(next);
+
+      try {
+        await persistPlan(next);
+        const shouldStartStreak = checked && !wasComplete && !hadOtherCompleted && dayKey === todayKey;
+        if (shouldStartStreak) {
+          try {
+            const data = await completeToday();
+            if (!data) await reloadStreak();
+          } catch (err) {
+            console.error('Streak update failed', err);
+          }
+        }
+        toastSuccess('Progress saved');
+      } catch (err) {
+        console.error('Failed to update task', err);
+        toastError(err instanceof Error ? err.message : 'Could not update task.');
+        setPlan(plan); // rollback
+      } finally {
+        setBusyTask(null);
+      }
+    },
+    [plan, userId, persistPlan, completeToday, reloadStreak, toastSuccess, toastError, todayKey],
+  );
+
+  const hasPlan = !!plan && plan.days.length > 0;
+
+  return (
+    <section className="bg-lightBg py-16 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+      <Container>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="font-slab text-display">Your study plan</h1>
+            <p className="text-body text-muted-foreground">
+              Keep a daily rhythm to build momentum for your IELTS goal.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <StreakChip value={streakLoading ? 0 : streak} loading={streakLoading} href="/profile/streak" />
+            <Button variant="soft" tone="info" asChild>
+              <Link href="/progress">View progress</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-10 space-y-8">
+          {loading ? (
+            <Card className="rounded-ds-2xl p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            </Card>
+          ) : !hasPlan ? (
+            <StudyPlanEmptyState
+              presets={PRESETS}
+              onSelect={handleCreatePlan}
+              busyId={creatingId}
+              disabled={!!creatingId}
+              showOnboardingCta
+            />
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+              <div className="space-y-6">
+                <PlanCard
+                  day={today ?? plan!.days[0]}
+                  onToggleTask={(taskId, checked) =>
+                    handleTaskToggle(today ?? plan!.days[0], taskId, checked)
+                  }
+                  busyTaskId={busyTask}
+                  isToday={planDayKey(today ?? plan!.days[0]) === todayKey}
+                />
+                <WeekGrid days={upcomingDays} />
+              </div>
+
+              <Card className="rounded-ds-2xl p-6 space-y-4">
+                <h3 className="font-slab text-h4">Need a change?</h3>
+                <p className="text-small text-muted-foreground">
+                  Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets
+                  below.
+                </p>
+                <div className="space-y-3">
+                  {PRESETS.map((preset) => (
+                    <Button
+                      key={preset.id}
+                      variant="ghost"
+                      className="w-full justify-between"
+                      onClick={() => handleCreatePlan(preset)}
+                      loading={creatingId === preset.id}
+                    >
+                      {preset.title}
+                      <span className="text-small text-muted-foreground">{preset.weeks} wk</span>
+                    </Button>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
+      </Container>
+    </section>
+  );
 }
