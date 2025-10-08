@@ -13,8 +13,10 @@ import type { SubscriptionTier } from '@/lib/navigation/types';
 export const QuickAccessWidget: React.FC = () => {
   const { user } = useUserContext();
   const [open, setOpen] = React.useState(false);
+
   const isAuthenticated = Boolean(user?.id);
 
+  // Read tier from user metadata (typed), default to 'free'
   const metadata = (user?.user_metadata ?? {}) as { tier?: SubscriptionTier };
   const subscriptionTier: SubscriptionTier = metadata.tier ?? 'free';
 
@@ -37,6 +39,7 @@ export const QuickAccessWidget: React.FC = () => {
         <div
           id="quick-actions-menu"
           className="w-72 rounded-2xl border border-border bg-card/95 p-4 shadow-xl"
+          role="menu"
         >
           <div className="mb-3 flex items-center justify-between">
             <div>
@@ -57,6 +60,7 @@ export const QuickAccessWidget: React.FC = () => {
                 <Link
                   href={item.href}
                   className="flex items-center gap-3 rounded-xl border border-border/60 px-3 py-2.5 text-sm transition hover:border-border hover:bg-muted"
+                  onClick={() => setOpen(false)}
                 >
                   {item.icon && <Icon name={item.icon} className="h-5 w-5 text-primary" />}
                   <span>{item.label}</span>

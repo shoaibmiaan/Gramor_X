@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { clearMockAttemptId, ensureMockAttemptId, fetchMockCheckpoint, saveMockCheckpoint } from '@/lib/mock/state';
 
 type QBase = { id: string; prompt?: string; type: 'mcq' | 'gap' | 'map' | 'short'; options?: string[]; answer: string };
 type Section = { id: string; title: string; audioUrl?: string; questions: QBase[] };
@@ -38,10 +39,11 @@ const loadPaper = async (id: string): Promise<ListeningPaper> => {
   }
 };
 
-const saveDraft = (id: string, data: { answers: AnswerMap; startedAt: string }) => {
+type DraftState = { answers: AnswerMap; startedAt: string; sectionIdx?: number };
+const saveDraft = (id: string, data: DraftState) => {
   try { localStorage.setItem(DRAFT_KEY(id), JSON.stringify(data)); } catch {}
 };
-const loadDraft = (id: string): { answers: AnswerMap; startedAt?: string } | null => {
+const loadDraft = (id: string): DraftState | null => {
   try {
     const raw = localStorage.getItem(DRAFT_KEY(id));
     return raw ? JSON.parse(raw) : null;
@@ -69,6 +71,17 @@ export default function ListeningMockPage() {
   const [secIdx, setSecIdx] = useState(0);
   const [timeLeft, setTimeLeft] = useState<number>(1800);
   const startRef = useRef<string>('');
+  const attemptRef = useRef<string>('');
+  const [attemptReady, setAttemptReady] = useState(false);
+  const [checkpointHydrated, setCheckpointHydrated] = useState(false);
+  const latestRef = useRef<{ answers: AnswerMap; secIdx: number; timeLeft: number }>({ answers: {}, secIdx: 0, timeLeft: 0 });
+
+  useEffect(() => {
+    if (!id) return;
+    const attempt = ensureMockAttemptId('listening', id);
+    attemptRef.current = attempt;
+    setAttemptReady(true);
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -77,11 +90,38 @@ export default function ListeningMockPage() {
       setPaper(p);
       setTimeLeft(p.durationSec);
       const draft = loadDraft(id);
-      if (draft?.answers) setAnswers(draft.answers);
+      if (draft?.answers) {
+        setAnswers(draft.answers);
+        if (typeof draft.sectionIdx === 'number') setSecIdx(draft.sectionIdx);
+      }
       startRef.current = draft?.startedAt ?? new Date().toISOString();
-      if (!draft) saveDraft(id, { answers: {}, startedAt: startRef.current });
+      if (!draft) saveDraft(id, { answers: {}, startedAt: startRef.current, sectionIdx: 0 });
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (!paper || !attemptReady) return;
+    let cancelled = false;
+
+    (async () => {
+      const checkpoint = await fetchMockCheckpoint({ attemptId: attemptRef.current, section: 'listening' });
+      if (cancelled) return;
+      if (checkpoint && checkpoint.mockId === paper.id) {
+        const payload = (checkpoint.payload || {}) as { answers?: AnswerMap; sectionIdx?: number; startedAt?: string };
+        if (payload.answers) setAnswers(payload.answers);
+        if (typeof payload.sectionIdx === 'number') setSecIdx(payload.sectionIdx);
+        if (typeof payload.startedAt === 'string') startRef.current = payload.startedAt;
+        const duration = typeof checkpoint.duration === 'number' ? checkpoint.duration : paper.durationSec;
+        const remaining = Math.max(0, duration - checkpoint.elapsed);
+        setTimeLeft(Math.max(0, Math.min(paper.durationSec, remaining)));
+      }
+      setCheckpointHydrated(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [paper, attemptReady]);
 
   useEffect(() => {
     if (!id || !paper) return;
@@ -91,8 +131,54 @@ export default function ListeningMockPage() {
 
   useEffect(() => {
     if (!id) return;
-    saveDraft(id, { answers, startedAt: startRef.current });
-  }, [id, answers]);
+    saveDraft(id, { answers, startedAt: startRef.current, sectionIdx: secIdx });
+  }, [id, answers, secIdx]);
+
+  useEffect(() => {
+    latestRef.current = { answers, secIdx, timeLeft };
+  }, [answers, secIdx, timeLeft]);
+
+  const persistCheckpoint = useCallback(
+    (opts?: { completed?: boolean }) => {
+      if (!paper || !attemptReady || !checkpointHydrated || !attemptRef.current) return;
+      const state = latestRef.current;
+      const elapsed = Math.max(0, Math.min(paper.durationSec, paper.durationSec - state.timeLeft));
+      void saveMockCheckpoint({
+        attemptId: attemptRef.current,
+        section: 'listening',
+        mockId: paper.id,
+        payload: {
+          paperId: paper.id,
+          answers: state.answers,
+          sectionIdx: state.secIdx,
+          startedAt: startRef.current,
+        },
+        elapsed,
+        duration: paper.durationSec,
+        completed: opts?.completed,
+      });
+    },
+    [paper, attemptReady, checkpointHydrated]
+  );
+
+  useEffect(() => {
+    if (!paper || !attemptReady || !checkpointHydrated) return;
+    const handler = () => persistCheckpoint();
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint]);
+
+  useEffect(() => {
+    if (!paper || !attemptReady || !checkpointHydrated) return;
+    const timeout = setTimeout(() => persistCheckpoint(), 1000);
+    return () => clearTimeout(timeout);
+  }, [answers, secIdx, paper, attemptReady, checkpointHydrated, persistCheckpoint]);
+
+  useEffect(() => {
+    if (!paper || !attemptReady || !checkpointHydrated) return;
+    const interval = setInterval(() => persistCheckpoint(), 15000);
+    return () => clearInterval(interval);
+  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint]);
 
   const current = paper?.sections[secIdx];
   const percent = useMemo(() => {
@@ -135,6 +221,23 @@ export default function ListeningMockPage() {
       attemptId = `local-${Date.now()}`;
       try { localStorage.setItem(`listen:attempt-res:${attemptId}`, JSON.stringify({ paper, answers })); } catch {}
     } finally {
+      if (attemptRef.current) {
+        void saveMockCheckpoint({
+          attemptId: attemptRef.current,
+          section: 'listening',
+          mockId: paper.id,
+          payload: {
+            paperId: paper.id,
+            answers,
+            sectionIdx: secIdx,
+            startedAt: startRef.current,
+          },
+          elapsed: paper.durationSec - timeLeft,
+          duration: paper.durationSec,
+          completed: true,
+        });
+        clearMockAttemptId('listening', paper.id);
+      }
       clearDraft(id);
       router.replace(`/review/listening/${id}?attempt=${encodeURIComponent(attemptId)}`);
     }
