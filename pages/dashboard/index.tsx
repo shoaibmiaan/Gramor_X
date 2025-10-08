@@ -25,7 +25,6 @@ import dynamic from 'next/dynamic';
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
 import GapToGoal from '@/components/visa/GapToGoal';
-import MotivationCoach from '@/components/coach/MotivationCoach';
 import type { Profile, AIPlan } from '@/types/profile';
 import { SavedItems } from '@/components/dashboard/SavedItems';
 import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
@@ -418,11 +417,6 @@ export default function Dashboard() {
               </Link>
             </div>
           </Card>
-        </div>
-
-        {/* Motivation coach */}
-        <div className="mt-10">
-          <MotivationCoach />
         </div>
 
         {/* Coach notes */}
