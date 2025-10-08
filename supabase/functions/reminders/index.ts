@@ -95,7 +95,7 @@ Deno.serve(async () => {
       .select(
         "email, phone, notification_channels, quiet_hours_start, quiet_hours_end"
       )
-      .eq("user_id", userId)
+      .eq("id", userId)
       .maybeSingle();
     if (!profile) continue;
     if (isQuiet(now, profile.quiet_hours_start, profile.quiet_hours_end)) continue;
