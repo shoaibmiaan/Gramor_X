@@ -42,7 +42,12 @@ export default function Onboarding() {
     }
   }, []);
 
-  const nextHref = resumeStep === 'date' ? '/onboarding/date' : resumeStep === 'whatsapp' ? '/onboarding/whatsapp' : '/onboarding/goal';
+  const nextHref =
+    resumeStep === 'date'
+      ? '/onboarding/date'
+      : resumeStep === 'whatsapp'
+      ? '/onboarding/whatsapp'
+      : '/onboarding/goal';
   const stepIndex = resumeStep === 'date' ? 2 : resumeStep === 'whatsapp' ? 3 : 1;
   const next = () => router.push(nextHref);
 
