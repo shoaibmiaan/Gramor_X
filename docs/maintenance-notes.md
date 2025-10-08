@@ -5,7 +5,7 @@
 - Workaround: execute the install in an environment that can reach `googlechromelabs.github.io` or temporarily remove the `@axe-core/cli` dependency. Long term, consider replacing the CLI with a Playwright-only workflow so `chromedriver` is no longer required.
 
 ## Deprecated dependencies
-- `@supabase/auth-helpers-nextjs` and `@supabase/auth-helpers-shared` are deprecated in favor of `@supabase/ssr`. Plan to migrate to the new package to avoid depending on unsupported helpers.【858707†L43-L135】
+- Replaced the deprecated `@supabase/auth-helpers-*` packages with `@supabase/ssr` across API routes and SSR paths.【858707†L43-L135】
 - Multiple transitive dependencies emit deprecation warnings during install (`glob`, `rimraf`, `rollup-plugin-terser`, etc.). Audit and upgrade the packages that pull in these versions to keep the toolchain current.【f404f4†L1-L12】【e76e09†L1-L13】
 
 ## Engine configuration mismatch

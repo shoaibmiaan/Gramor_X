@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const attemptId = String(req.query.attemptId || '');
   if (!attemptId) return res.status(400).json({ error: 'Missing attemptId' });
 
-  const supabase = createServerSupabaseClient({ req, res });
+  const supabase = getServerClient(req, res);
   const {
     data: { user },
     error: authErr,

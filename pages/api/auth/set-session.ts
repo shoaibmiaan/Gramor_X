@@ -1,6 +1,7 @@
 // pages/api/auth/set-session.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 
 type SupabaseSession = {
   access_token?: string;
@@ -103,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let supabase;
   try {
-    supabase = createPagesServerClient({ req, res });
+    supabase = getServerClient(req, res);
   } catch (error) {
     console.error('Set-session API - Supabase client creation failed:', error);
     return res.status(503).json({ ok: false, error: 'service_unavailable' });

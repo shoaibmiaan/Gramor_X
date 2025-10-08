@@ -1,6 +1,7 @@
 // middleware.ts
 import { NextResponse, type NextRequest } from 'next/server';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+
+import { getMiddlewareClient } from '@/lib/supabaseServer';
 
 // Pages that should be accessible without being logged in
 const AUTH_PAGES = [
@@ -78,7 +79,7 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
   // Auth-helpers client that works in Edge middleware and handles cookies correctly
-  const supabase = createMiddlewareClient({ req, res });
+  const supabase = getMiddlewareClient(req, res);
   const {
     data: { user },
   } = await supabase.auth.getUser();
