@@ -12,6 +12,7 @@ import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { COUNTRIES, LEVELS, TIME, PREFS, WEAKNESSES, GOAL_REASONS, LEARNING_STYLES } from '@/lib/profile-options';
+import type { AIPlan } from '@/types/profile';
 
 /** ——— UI helpers ——— */
 const Section: React.FC<{ title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean }> = ({
@@ -66,7 +67,9 @@ export default function ProfileSetup() {
   const [lang, setLang] = useState('en');
   const [explanationLang, setExplanationLang] = useState('en');
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
-  const [ai, setAi] = useState<{ suggestedGoal: number; etaWeeks: number; sequence: string[] } | null>(null);
+  const [ai, setAi] = useState<(AIPlan & { source?: string }) | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [phoneCode, setPhoneCode] = useState('');
   const [phoneStage, setPhoneStage] = useState<'request' | 'verify' | 'verified'>('request');
@@ -160,8 +163,8 @@ export default function ProfileSetup() {
         setExplanationLocale(data.language_preference ?? 'en');
         setAvatarUrl(data.avatar_url ?? undefined);
         try {
-          const rec = data.ai_recommendation ?? {};
-          if (rec.suggestedGoal) setAi(rec);
+          const rec = (data.ai_recommendation as AIPlan | null) ?? null;
+          if (rec && (rec.suggestedGoal || rec.sequence?.length)) setAi(rec);
         } catch {}
       }
 
@@ -182,13 +185,98 @@ export default function ProfileSetup() {
     };
     const suggestedGoal = base[level] ?? 7.0;
     const sequence = prefs.length ? prefs : [...PREFS];
-    const etaWeeks = Math.max(4, Math.round((suggestedGoal - 5) * 6));
-    return { suggestedGoal, etaWeeks, sequence };
-  }, [level, prefs]);
+    const etaWeeks = Math.max(
+      4,
+      Math.round((suggestedGoal - 5) * (time === '2h/day' ? 4 : time === '1h/day' ? 6 : 5))
+    );
+    const focusOrder = sequence.join(' → ');
+    const cadence = time || '1–2h/day';
+    return {
+      suggestedGoal,
+      etaWeeks,
+      sequence,
+      notes: [
+        `Focus order: ${focusOrder}`,
+        `Consistency over intensity — aim for ${cadence}.`,
+        'Benchmark every 2 weeks and adjust your goal if you are ahead.',
+      ],
+      source: 'local',
+    } satisfies AIPlan & { source: string };
+  }, [level, prefs, time]);
+
+  const aiPayload = useMemo(() => {
+    if (!level) return null;
+    const normalizedPrefs = prefs.length ? prefs : undefined;
+    const normalizedGoal = Number.isFinite(goal) ? goal : undefined;
+    return {
+      english_level: level,
+      study_prefs: normalizedPrefs,
+      time_commitment: time || undefined,
+      current_band: normalizedGoal,
+    };
+  }, [level, prefs, time, goal]);
 
   useEffect(() => {
-    setAi(localAISuggest);
-  }, [localAISuggest]);
+    if (!aiPayload) {
+      setAi(null);
+      setAiError(null);
+      setAiLoading(false);
+      return;
+    }
+
+    const fallback = localAISuggest;
+    if (fallback) {
+      setAi(fallback);
+    }
+    setAiError(null);
+
+    const controller = new AbortController();
+    let active = true;
+
+    const fetchPlan = async () => {
+      setAiLoading(true);
+      try {
+        const res = await fetch('/api/ai/profile-suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(aiPayload),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error('Failed to generate AI plan');
+        }
+        const data = await res.json();
+        if (!active) return;
+        setAi({
+          suggestedGoal: typeof data.suggestedGoal === 'number' ? data.suggestedGoal : fallback?.suggestedGoal,
+          etaWeeks: typeof data.etaWeeks === 'number' ? data.etaWeeks : fallback?.etaWeeks,
+          sequence:
+            Array.isArray(data.sequence) && data.sequence.length
+              ? data.sequence
+              : fallback?.sequence ?? [],
+          notes:
+            Array.isArray(data.notes) && data.notes.length ? data.notes : fallback?.notes ?? [],
+          source: data.source ?? 'ai',
+        });
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return;
+        if (!active) return;
+        setAiError(e?.message || 'Unable to fetch AI plan');
+        if (fallback) {
+          setAi(fallback);
+        }
+      } finally {
+        if (active) setAiLoading(false);
+      }
+    };
+
+    fetchPlan();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [aiPayload, localAISuggest]);
 
   const togglePref = (p: typeof PREFS[number]) => {
     setPrefs((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
@@ -322,6 +410,8 @@ export default function ProfileSetup() {
             suggestedGoal: ai.suggestedGoal,
             etaWeeks: ai.etaWeeks,
             sequence: ai.sequence,
+            notes: ai.notes,
+            source: ai.source,
           }
         : {},
       setup_complete: finalize,
@@ -821,29 +911,74 @@ export default function ProfileSetup() {
             <Card className="card-surface p-5 rounded-ds-2xl">
               <h3 className="font-slab text-h3 mb-2">AI study plan</h3>
               {ai ? (
-                <div className="space-y-2 text-body">
+                <div className="space-y-3 text-body">
                   <div>
-                    Suggested goal: <span className="font-semibold text-electricBlue">{ai.suggestedGoal.toFixed(1)}</span>
+                    Suggested goal:{' '}
+                    <span className="font-semibold text-electricBlue">
+                      {typeof ai.suggestedGoal === 'number' ? ai.suggestedGoal.toFixed(1) : '—'}
+                    </span>
                   </div>
                   <div>
-                    Estimated prep time: <span className="font-semibold">{ai.etaWeeks} weeks</span>
+                    Estimated prep time:{' '}
+                    <span className="font-semibold">
+                      {typeof ai.etaWeeks === 'number' ? `${ai.etaWeeks} weeks` : '—'}
+                    </span>
                   </div>
                   <div className="mt-2">
                     Focus sequence:
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {ai.sequence.map((s) => (
-                        <Badge key={s} variant="info" size="sm">
-                          {s}
-                        </Badge>
-                      ))}
+                      {(ai.sequence ?? []).length ? (
+                        (ai.sequence ?? []).map((s) => (
+                          <Badge key={s} variant="info" size="sm">
+                            {s}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-grayish">Waiting for AI priorities…</span>
+                      )}
                     </div>
                   </div>
-                  <Alert variant="info" className="mt-3">
-                    This is a local suggestion. Connect server-side AI to refine it.
-                  </Alert>
+                  {ai.notes?.length ? (
+                    <div>
+                      <span className="text-small font-semibold text-muted uppercase tracking-wide">Tips</span>
+                      <ul className="mt-2 space-y-1 text-small text-muted">
+                        {ai.notes.map((note) => (
+                          <li key={note} className="flex items-start gap-2">
+                            <span aria-hidden="true" className="mt-0.5 text-electricBlue">
+                              •
+                            </span>
+                            <span>{note}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {!aiError && (
+                    <Alert
+                      variant={ai.source === 'openai' ? 'info' : 'success'}
+                      className="mt-2"
+                      aria-live="polite"
+                    >
+                      {ai.source === 'openai'
+                        ? 'Plan generated with OpenAI.'
+                        : ai.source === 'ai'
+                        ? 'Plan generated with our AI study coach.'
+                        : 'Using on-device recommendation while AI personalises your plan.'}
+                    </Alert>
+                  )}
                 </div>
               ) : (
                 <p className="text-grayish">Pick your level and preferences to see recommendations.</p>
+              )}
+              {aiLoading && (
+                <p className="mt-3 text-small text-muted" aria-live="polite">
+                  Generating your personalised study plan…
+                </p>
+              )}
+              {aiError && (
+                <Alert variant="warning" className="mt-3" aria-live="assertive">
+                  {aiError}. Showing local guidance for now.
+                </Alert>
               )}
             </Card>
 
