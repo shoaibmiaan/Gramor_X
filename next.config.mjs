@@ -42,11 +42,6 @@ const baseConfig = {
   async redirects() {
     return [
       {
-        source: '/quick',
-        destination: '/study-plan',
-        permanent: false,
-      },
-      {
         source: '/mock',
         destination: '/mock-tests',
         permanent: false,
