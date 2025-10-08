@@ -30,6 +30,7 @@ import type { Profile, AIPlan } from '@/types/profile';
 import { SavedItems } from '@/components/dashboard/SavedItems';
 import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
 import WhatsAppOptIn from '@/components/dashboard/WhatsAppOptIn';
+import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeCard';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -273,6 +274,10 @@ export default function Dashboard() {
         {/* Word of the day */}
         <div className="mt-10">
           <WordOfTheDayCard />
+        </div>
+
+        <div className="mt-10">
+          <JoinWeeklyChallengeCard />
         </div>
 
         {/* Top summary cards */}
