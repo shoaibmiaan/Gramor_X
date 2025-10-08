@@ -22,13 +22,6 @@ const headerMain: NavItemConfig[] = [
 
 const aiTools: NavItemConfig[] = [
   {
-    id: 'ai-coach',
-    label: 'AI Coach',
-    href: '/coach',
-    icon: 'Bot',
-    featureGate: { featureToggle: 'aiCoach' },
-  },
-  {
     id: 'study-buddy',
     label: 'Study Buddy',
     href: '/study-plan',
@@ -80,11 +73,11 @@ export const navigationSchema: AppNavigationSchema = {
       guest: { label: 'Start Practicing', href: '/signup' },
       authed: { label: 'Continue Study', href: '/dashboard' },
     },
-    optional: {
-      themeToggle: true,
-      localeSwitch: false,
-      notifications: true,
-    },
+  optional: {
+    themeToggle: true,
+    localeSwitch: false,
+    notifications: false,
+  },
   },
   sidebar: [
     {
@@ -113,12 +106,6 @@ export const navigationSchema: AppNavigationSchema = {
       label: 'AI & Tools',
       icon: 'Sparkles',
       items: [
-        {
-          id: 'ai-coach',
-          label: 'AI Coach',
-          href: '/coach',
-          featureGate: { featureToggle: 'aiCoach' },
-        },
         {
           id: 'band-predictor',
           label: 'Band Predictor',
@@ -165,12 +152,6 @@ export const navigationSchema: AppNavigationSchema = {
           label: 'WhatsApp Tasks',
           href: '/dashboard#whatsapp',
           featureGate: { featureToggle: 'whatsappTasks', requiresAuth: true },
-        },
-        {
-          id: 'notifications',
-          label: 'Notifications',
-          href: '/notifications',
-          featureGate: authenticatedGate,
         },
       ],
     },
@@ -258,13 +239,6 @@ export const navigationSchema: AppNavigationSchema = {
   ],
   floating: {
     quickActions: [
-      {
-        id: 'ai-coach-chat',
-        label: 'Chat with AI Coach',
-        href: '/coach',
-        icon: 'Bot',
-        featureGate: { featureToggle: 'aiCoach', requiresAuth: true },
-      },
       {
         id: 'daily-task',
         label: 'Daily Task',
