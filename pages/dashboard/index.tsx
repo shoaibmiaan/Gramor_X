@@ -25,12 +25,13 @@ import dynamic from 'next/dynamic';
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
 import GapToGoal from '@/components/visa/GapToGoal';
-import MotivationCoach from '@/components/coach/MotivationCoach';
 import type { Profile, AIPlan } from '@/types/profile';
 import { SavedItems } from '@/components/dashboard/SavedItems';
 import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
 import WhatsAppOptIn from '@/components/dashboard/WhatsAppOptIn';
 import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeCard';
+import DashboardSidebar from '@/components/navigation/DashboardSidebar';
+import type { SubscriptionTier } from '@/lib/navigation/types';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -189,30 +190,34 @@ export default function Dashboard() {
   }
 
   const ai: AIPlan = (profile?.ai_recommendation ?? {}) as AIPlan;
+  const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
 
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        {/* Setup banner instead of redirect */}
-        {needsSetup && (
-          <Alert variant="warning" className="mb-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="font-medium">Complete your profile to unlock a personalized plan.</div>
-                <div className="text-small opacity-80">It only takes a minute—target band, exam date and study prefs.</div>
-              </div>
-              <Link href="/profile/setup" className="shrink-0">
-                <Button variant="secondary" className="rounded-ds-xl">
-                  Continue setup
-                </Button>
-              </Link>
-            </div>
-          </Alert>
-        )}
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <DashboardSidebar subscriptionTier={subscriptionTier} />
+          <div className="flex-1 space-y-8">
+            {/* Setup banner instead of redirect */}
+            {needsSetup && (
+              <Alert variant="warning" className="mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="font-medium">Complete your profile to unlock a personalized plan.</div>
+                    <div className="text-small opacity-80">It only takes a minute—target band, exam date and study prefs.</div>
+                  </div>
+                  <Link href="/profile/setup" className="shrink-0">
+                    <Button variant="secondary" className="rounded-ds-xl">
+                      Continue setup
+                    </Button>
+                  </Link>
+                </div>
+              </Alert>
+            )}
 
-        <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="font-slab text-display text-gradient-primary">
               Welcome, {profile?.full_name || 'Learner'}!
@@ -425,11 +430,6 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Motivation coach */}
-        <div className="mt-10">
-          <MotivationCoach />
-        </div>
-
         {/* Coach notes */}
         <div className="mt-10">
           <Card className="p-6 rounded-ds-2xl">
@@ -453,6 +453,8 @@ export default function Dashboard() {
               </Link>
             </div>
           </Card>
+        </div>
+          </div>
         </div>
       </Container>
     </section>
