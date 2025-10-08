@@ -1,9 +1,13 @@
 // components/paywall/PaywallGate.tsx
 import * as React from 'react';
+import Link from 'next/link';
+
 import { flags } from '@/lib/flags';
 import { routes } from '@/lib/routes';
 import { canUse, type UsageKey } from '@/lib/usage';
 import { getPlan, type PlanId } from '@/types/pricing';
+import { Button } from '@/components/design-system/Button';
+import { emitUpgradePrompt } from '@/components/premium/UpgradeModal';
 
 type Feature =
   | 'mock'
@@ -17,6 +21,25 @@ const usageKeyMap = {
   'ai.speaking': 'ai.speaking.grade',
   'ai.explain': 'ai.explain',
 } as const satisfies Record<Feature, UsageKey>;
+
+const featureCopy: Record<Feature, { title: string; description: string }> = {
+  mock: {
+    title: 'mock exams',
+    description: 'Premium unlocks unlimited mock exam starts with pacing analytics.',
+  },
+  'ai.writing': {
+    title: 'AI writing feedback',
+    description: 'Upgrade for deeper Task 1 & 2 coaching, grammar breakdowns, and vocab boosts.',
+  },
+  'ai.speaking': {
+    title: 'AI speaking feedback',
+    description: 'Premium gives you full speaking evaluations with filler tracking and fluency tips.',
+  },
+  'ai.explain': {
+    title: 'AI explanations',
+    description: 'Upgrade for unlimited “why is this answer correct?” explanations and strategy nudges.',
+  },
+};
 
 function limitFor(feature: Feature, planId: PlanId) {
   const plan = getPlan(planId);
@@ -55,6 +78,7 @@ export function PaywallGate({
   const [loading, setLoading] = React.useState<boolean>(true);
   const [count, setCount] = React.useState<number>(0);
   const [limit, setLimit] = React.useState<number>(limitOverride ?? limitFor(feature, planId));
+  const promptSentRef = React.useRef(false);
 
   React.useEffect(() => {
     let mounted = true;
@@ -103,35 +127,53 @@ export function PaywallGate({
     );
   }
 
+  React.useEffect(() => {
+    if (loading) return;
+    if (!allowed) {
+      if (!promptSentRef.current) {
+        const copy = featureCopy[feature];
+        emitUpgradePrompt({ feature: copy ? copy.title : undefined });
+        promptSentRef.current = true;
+      }
+    } else {
+      promptSentRef.current = false;
+    }
+  }, [allowed, feature, loading]);
+
   if (allowed) return <>{children}</>;
 
   if (fallback) return <div className={className}>{fallback}</div>;
 
+  const copy = featureCopy[feature];
+  const featureTitle = copy?.title ?? 'this premium feature';
+
   return (
     <div className={className}>
-      <div className="rounded-2xl border border-border bg-card text-foreground p-5 shadow-card">
+      <div className="rounded-2xl border border-border bg-card p-5 text-foreground shadow-card">
         <div className="flex items-start gap-3">
-          <div className="mt-1 h-2.5 w-2.5 rounded-full bg-warning" />
-          <div className="flex-1">
-            <h3 className="text-body font-semibold">Limit reached on Free plan</h3>
-            <p className="mt-1 text-small text-foreground/80">
-              You used <span className="font-medium">{count}</span> of{' '}
-              <span className="font-medium">{limit}</span> free{' '}
-              {feature.startsWith('ai') ? 'AI evaluations' : 'mock starts'} today.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <a
-                href={routes.pricing()}
-                className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-small font-semibold text-primary-foreground"
+          <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-warning" />
+          <div className="flex-1 space-y-3">
+            <div>
+              <h3 className="text-body font-semibold">Upgrade to continue</h3>
+              <p className="mt-1 text-small text-muted-foreground">
+                {copy?.description ?? 'Premium removes the daily limit so you can keep going without interruption.'}
+              </p>
+              <p className="text-caption text-muted-foreground">
+                Used {count} of {limit}{' '}
+                {feature.startsWith('ai') ? 'free AI evaluations' : 'free mock starts'} today.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() => emitUpgradePrompt({ feature: featureTitle })}
+                elevateOnHover
               >
-                Upgrade to Premium
-              </a>
-              <a
-                href={routes.billing()}
-                className="inline-flex items-center rounded-xl border border-border px-4 py-2 text-small font-semibold"
-              >
-                Manage billing
-              </a>
+                View upgrade options
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`${routes.pricing()}?from=paywall`}>Go to pricing</Link>
+              </Button>
             </div>
           </div>
         </div>
