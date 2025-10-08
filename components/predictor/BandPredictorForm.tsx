@@ -1,27 +1,9 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
 
-type PredictorInput = Readonly<{
-  readingWpm?: number;
-  readingAccuracy?: number;
-  listeningAccuracy?: number;
-  speakingFluency?: number;
-  speakingPronunciation?: number;
-  writingTaskResponse?: number;
-  writingCoherence?: number;
-  writingGrammar?: number;
-  writingLexical?: number;
-  studyHoursPerWeek?: number;
-  pastBand?: number;
-}>;
+import type { PredictorInput, PredictorResult } from '@/lib/predictor';
 
-type PredictorSuccess = Readonly<{
-  ok: true;
-  overall: number;
-  breakdown: { reading: number; listening: number; speaking: number; writing: number };
-  confidence: number;
-  advice: string[];
-}>;
+type PredictorSuccess = Readonly<{ ok: true } & PredictorResult>;
 
 type PredictorFailure = Readonly<{ ok: false; error: string }>;
 type PredictorResponse = PredictorSuccess | PredictorFailure;
