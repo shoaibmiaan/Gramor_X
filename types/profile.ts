@@ -3,6 +3,7 @@ export interface AIPlan {
   etaWeeks?: number;
   sequence?: string[];
   notes?: string[];
+  source?: string;
 }
 
 export interface Profile {
