@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import type { SubscriptionTier } from '@/lib/navigation/types';
+import { defaultTier } from '@/config/navigation';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 interface UserInfo {
@@ -19,6 +21,7 @@ export function useHeaderState(initialStreak?: number) {
   const [role, setRole] = useState<string | null>(null);
   const [user, setUser] = useState<UserInfo>({ id: null, email: null, name: null, avatarUrl: null });
   const [streak, setStreak] = useState<number>(initialStreak ?? 0);
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>(defaultTier);
 
   // Streak (prop wins; otherwise fetch)
   useEffect(() => {
@@ -77,17 +80,26 @@ export function useHeaderState(initialStreak?: number) {
 
   useEffect(() => {
     let cancelled = false;
-    const computeRole = async (uid: string | null, appMeta?: any, userMeta?: any) => {
-      let r: any = appMeta?.role ?? userMeta?.role ?? null;
-      if (!r && uid) {
-        const { data: prof, error } = await supabase.from('profiles').select('role').eq('id', uid).single();
+    const computeIdentity = async (uid: string | null, appMeta?: any, userMeta?: any) => {
+      let nextRole: any = appMeta?.role ?? userMeta?.role ?? null;
+      let nextTier: SubscriptionTier | null = null;
+      if (!nextRole && uid) {
+        const { data: prof, error } = await supabase
+          .from('profiles')
+          .select('role, tier')
+          .eq('id', uid)
+          .single();
         if (error) {
-          console.error('Failed to fetch profile role:', error);
-          return null;
+          console.error('Failed to fetch profile role/tier:', error);
+        } else {
+          nextRole = prof?.role ?? null;
+          nextTier = (prof?.tier as SubscriptionTier | null) ?? null;
         }
-        r = prof?.role ?? null;
       }
-      return r ? String(r).toLowerCase() : null;
+
+      const normalizedRole = nextRole ? String(nextRole).toLowerCase() : null;
+      const normalizedTier = (userMeta?.tier as SubscriptionTier | undefined) ?? nextTier ?? defaultTier;
+      return { role: normalizedRole, tier: normalizedTier };
     };
 
     const sync = async () => {
@@ -106,8 +118,11 @@ export function useHeaderState(initialStreak?: number) {
             name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
             avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
           });
-          const r = await computeRole(s?.id ?? null, s?.app_metadata, userMeta);
-          if (!cancelled) setRole(r);
+          const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
+          if (!cancelled) {
+            setRole(identity.role);
+            setSubscriptionTier(identity.tier ?? defaultTier);
+          }
           setReady(true);
         }
       } catch (err) {
@@ -127,8 +142,9 @@ export function useHeaderState(initialStreak?: number) {
             name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
             avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
           });
-          const r = await computeRole(s?.id ?? null, s?.app_metadata, userMeta);
-          setRole(r);
+          const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
+          setRole(identity.role);
+          setSubscriptionTier(identity.tier ?? defaultTier);
           if (!s) setStreak(0);
         } catch (err) {
           console.error('Auth state change error:', err);
@@ -161,5 +177,5 @@ export function useHeaderState(initialStreak?: number) {
     }
   }, [router]);
 
-  return { user, role, streak, ready, signOut };
+  return { user, role, streak, ready, signOut, subscriptionTier };
 }
