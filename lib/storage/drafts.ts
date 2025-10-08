@@ -34,8 +34,8 @@ const clampNumber = (value: unknown, fallback: number) => {
 const sanitizeContent = (payload: any): WritingDraftContent => {
   const task1 = typeof payload?.task1 === 'string' ? payload.task1 : '';
   const task2 = typeof payload?.task2 === 'string' ? payload.task2 : '';
-  const task1WordCount = clampNumber(payload?.task1WordCount, countWords(task1));
-  const task2WordCount = clampNumber(payload?.task2WordCount, countWords(task2));
+  const task1WordCount = Math.max(0, Math.round(clampNumber(payload?.task1WordCount, countWords(task1))));
+  const task2WordCount = Math.max(0, Math.round(clampNumber(payload?.task2WordCount, countWords(task2))));
   return {
     task1,
     task2,
@@ -129,8 +129,17 @@ export function shouldSyncServer(draft: WritingDraftRecord, now: number, minimum
 
 export function countWords(text: string): number {
   if (!text) return 0;
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  return words.length;
+  const normalized = text
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[-\u2010-\u2015/_]+/g, ' ')
+    .replace(/[\u00ad]/g, '')
+    .trim();
+  if (!normalized) return 0;
+  const tokens = normalized
+    .split(/\s+/)
+    .map((token) => token.replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu, ''))
+    .filter((token) => token && /[\p{L}\p{N}]/u.test(token));
+  return tokens.length;
 }
 
 export type WritingDraftSyncPayload = {

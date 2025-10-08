@@ -1,51 +1,80 @@
-import { describe, expect, it } from 'vitest';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
 import {
-  countWords,
   deserializeDraft,
   markDraftSynced,
   serializeDraft,
   shouldSyncServer,
+  countWords,
   type WritingDraftRecord,
 } from '../../../lib/storage/drafts';
 
-describe('storage/drafts serializer', () => {
-  const baseDraft: WritingDraftRecord = {
-    attemptId: 'draft-1',
-    startedAt: 1_000,
-    updatedAt: 2_000,
+test('serializeDraft/deserialiseDraft round trip preserves fields', () => {
+  const draft: WritingDraftRecord = {
+    attemptId: 'attempt-123',
+    startedAt: 1000,
+    updatedAt: 5000,
+    syncedAt: 4000,
     content: {
-      task1: 'First task content',
-      task2: 'Second task response',
-      task1WordCount: 3,
-      task2WordCount: 3,
+      task1: 'Intro paragraph',
+      task2: 'Body paragraph',
+      task1WordCount: 2,
+      task2WordCount: 2,
     },
   };
 
-  it('round-trips a draft', () => {
-    const raw = serializeDraft(baseDraft);
-    const parsed = deserializeDraft(raw);
-    expect(parsed).toEqual(baseDraft);
+  const payload = serializeDraft(draft);
+  const restored = deserializeDraft(payload);
+
+  assert.deepEqual(restored, draft);
+});
+
+test('deserializeDraft sanitises malformed payloads', () => {
+  const raw = JSON.stringify({
+    v: 1,
+    attemptId: 'draft-1',
+    startedAt: 'not-a-number',
+    updatedAt: null,
+    content: {
+      task1: ' Leading and trailing ',
+      task2: '',
+      task1WordCount: 'not numeric',
+      task2WordCount: -4,
+    },
   });
 
-  it('ignores malformed payloads', () => {
-    expect(deserializeDraft('not-json')).toBeNull();
-    expect(deserializeDraft('{"attemptId": ""}')).toBeNull();
-  });
+  const restored = deserializeDraft(raw);
+  assert.ok(restored);
+  assert.equal(restored?.attemptId, 'draft-1');
+  assert.equal(restored?.startedAt > 0, true);
+  assert.equal(restored?.content.task1.trim(), 'Leading and trailing');
+  assert.equal(restored?.content.task2, '');
+  assert.equal(restored?.content.task1WordCount, countWords(' Leading and trailing '));
+  assert.equal(restored?.content.task2WordCount, 0);
+});
 
-  it('marks a draft as synced and prevents re-sync until updated', () => {
-    const synced = markDraftSynced(baseDraft, 2_000);
-    expect(shouldSyncServer(synced, 2_000 + 200_000)).toBe(false);
+test('markDraftSynced updates syncedAt and shouldSyncServer obeys thresholds', () => {
+  const base: WritingDraftRecord = {
+    attemptId: 'sync-1',
+    startedAt: 0,
+    updatedAt: 10_000,
+    content: { task1: '', task2: '', task1WordCount: 0, task2WordCount: 0 },
+  };
 
-    const updated: WritingDraftRecord = { ...synced, updatedAt: synced.updatedAt + 10_000 };
-    const almostThreeMinutes = updated.startedAt + 180_000 - 1;
-    expect(shouldSyncServer(updated, almostThreeMinutes)).toBe(false);
-    expect(shouldSyncServer(updated, almostThreeMinutes + 2)).toBe(true);
-  });
+  const synced = markDraftSynced(base, 12_000);
+  assert.equal(synced.syncedAt, 12_000);
 
-  it('counts words robustly', () => {
-    expect(countWords('')).toBe(0);
-    expect(countWords(' one  two three ')).toBe(3);
-    expect(countWords('\n spaced\nwords \t tabs')).toBe(3);
-  });
+  const soon = 60_000;
+  assert.equal(shouldSyncServer({ ...synced, updatedAt: soon }, soon), false);
+
+  const threshold = 3 * 60 * 1000 + 1;
+  assert.equal(shouldSyncServer({ ...synced, updatedAt: threshold, syncedAt: threshold }, threshold), false);
+  assert.equal(shouldSyncServer({ ...synced, updatedAt: threshold + 1000, syncedAt: threshold }, threshold + 1000), true);
+});
+
+test('countWords handles punctuation, unicode and dashes', () => {
+  assert.equal(countWords("Hello, world! It's me—again."), 5);
+  assert.equal(countWords('co-operate re-entry'), 4);
+  assert.equal(countWords('  multiple\nlines   and\tspaces '), 4);
 });
