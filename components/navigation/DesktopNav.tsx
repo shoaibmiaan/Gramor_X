@@ -53,9 +53,11 @@ export function DesktopNav({
   ...rest
 }: DesktopNavProps) {
   const uid = user?.id ?? null;
+
   const canSeePartners = role === 'partner' || role === 'admin';
   const canSeeAdmin = role === 'admin' && showAdmin;
   const isTeacher = role === 'teacher';
+
   const navigationCtx = React.useMemo(
     () => ({ isAuthenticated: Boolean(uid), tier: subscriptionTier }),
     [uid, subscriptionTier]
@@ -75,6 +77,7 @@ export function DesktopNav({
   const mainNavItems = React.useMemo(() => {
     if (isTeacher) return [];
     const items = filterNavItems(navigationSchema.header.main, navigationCtx);
+    // If authed, hide the "Home" duplicate
     return items.filter((item) => !(item.id === 'home' && uid));
   }, [navigationCtx, isTeacher, uid]);
 
@@ -84,10 +87,10 @@ export function DesktopNav({
   }, [navigationCtx, isTeacher]);
 
   const headerCta = uid ? navigationSchema.header.cta.authed : navigationSchema.header.cta.guest;
-
   const headerOptional = navigationSchema.header.optional ?? {};
 
   const aiMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = React.useRef<HTMLButtonElement | null>(null);
 
   React.useEffect(() => {
     if (!openModules) return;
@@ -120,21 +123,25 @@ export function DesktopNav({
               </li>
             ))}
 
+          {/* AI & Tools: gated by subscription tier + feature flags via filterNavItems */}
           {!isTeacher && aiToolItems.length > 0 && (
             <li className="relative" ref={modulesRef}>
               <button
+                ref={menuButtonRef}
                 onClick={() => setOpenModules(!openModules)}
                 className={`nav-pill gap-2 text-small font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background ${openModules ? 'is-active' : ''}`}
                 aria-haspopup="menu"
                 aria-expanded={openModules}
+                aria-controls="ai-tools-menu"
               >
                 <span>AI &amp; Tools</span>
-                <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path d={openModules ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
                 </svg>
               </button>
               {openModules && (
                 <div
+                  id="ai-tools-menu"
                   ref={aiMenuRef}
                   className="absolute right-0 top-full z-50 mt-3 w-64 rounded-xl border border-border bg-card p-3 shadow-xl"
                   role="menu"
@@ -176,21 +183,20 @@ export function DesktopNav({
           {/* Premium Access Status */}
           {hasPremiumAccess && (
             <li className="relative group">
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-medium">
-                <span>⭐</span>
+              <div className="flex items-center gap-1 rounded-full px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-medium">
+                <span aria-hidden="true">⭐</span>
                 <span>Premium</span>
               </div>
-              {/* Premium Access Tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 z-50 hidden group-hover:block">
-                <div className="bg-card border border-border rounded-lg shadow-lg p-3">
-                  <div className="text-xs font-medium text-green-600 mb-1">Premium Access Active</div>
-                  <div className="text-xs text-muted-foreground mb-2">
+              <div className="absolute top-full right-0 z-50 mt-2 hidden w-56 group-hover:block">
+                <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
+                  <div className="mb-1 text-xs font-medium text-green-600">Premium Access Active</div>
+                  <div className="mb-2 text-xs text-muted-foreground">
                     Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
                   </div>
                   {premiumRooms.length > 0 && (
-                    <div className="text-xs text-muted-foreground max-h-20 overflow-y-auto">
-                      {premiumRooms.slice(0, 3).map((room, index) => (
-                        <div key={index} className="truncate">• {room}</div>
+                    <div className="max-h-20 overflow-y-auto text-xs text-muted-foreground">
+                      {premiumRooms.slice(0, 3).map((room, idx) => (
+                        <div key={idx} className="truncate">• {room}</div>
                       ))}
                       {premiumRooms.length > 3 && (
                         <div className="text-xs">+{premiumRooms.length - 3} more</div>
@@ -200,7 +206,7 @@ export function DesktopNav({
                   {onClearPremiumAccess && (
                     <button
                       onClick={onClearPremiumAccess}
-                      className="text-xs text-red-500 hover:text-red-700 mt-2"
+                      className="mt-2 text-xs text-destructive hover:opacity-80"
                     >
                       Clear All Access
                     </button>
