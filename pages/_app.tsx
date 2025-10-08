@@ -50,6 +50,7 @@ import TeacherProfile from '@/components/teacher/TeacherProfile';
 
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
+import { HighContrastProvider } from '@/context/HighContrastContext';
 
 // ✅ NEW: global plan guard (client-side gating + ribbon)
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
@@ -418,36 +419,38 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      {/* Load the compiled premium DS stylesheet globally */}
-      <Head>
-        <link rel="preload" href="/premium.css" as="style" />
-        <link rel="stylesheet" href="/premium.css" />
-      </Head>
+      <HighContrastProvider>
+        {/* Load the compiled premium DS stylesheet globally */}
+        <Head>
+          <link rel="preload" href="/premium.css" as="style" />
+          <link rel="stylesheet" href="/premium.css" />
+        </Head>
 
-      <div className={`${poppins.className} ${slab.className} min-h-[100dvh] bg-background text-foreground`}>
-        {/* ✅ NEW: Client-side plan guard + ribbon + route protection */}
-        <GlobalPlanGuard />
+        <div className={`${poppins.className} ${slab.className} min-h-[100dvh] bg-background text-foreground`}>
+          {/* ✅ NEW: Client-side plan guard + ribbon + route protection */}
+          <GlobalPlanGuard />
 
-        {forceLayoutOnAuthPage ? (
-          <Layout>
-            <ImpersonationBanner />
-            {nakedContent}
-          </Layout>
-        ) : showLayout ? (
-          <Layout>
-            <ImpersonationBanner />
-            {content}
-          </Layout>
-        ) : (
-          <>
-            <ImpersonationBanner />
-            {nakedContent}
-          </>
-        )}
-        <AuthAssistant />
-        <SidebarAI />
-        <UpgradeModal />
-      </div>
+          {forceLayoutOnAuthPage ? (
+            <Layout>
+              <ImpersonationBanner />
+              {nakedContent}
+            </Layout>
+          ) : showLayout ? (
+            <Layout>
+              <ImpersonationBanner />
+              {content}
+            </Layout>
+          ) : (
+            <>
+              <ImpersonationBanner />
+              {nakedContent}
+            </>
+          )}
+          <AuthAssistant />
+          <SidebarAI />
+          <UpgradeModal />
+        </div>
+      </HighContrastProvider>
     </ThemeProvider>
   );
 }
