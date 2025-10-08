@@ -2,6 +2,7 @@
 import type { IconName } from '@/components/design-system/Icon';
 import { Icon as DSIcon } from '@/components/design-system/Icon';
 import type * as React from 'react';
+import { flags } from '@/lib/flags';
 
 // Keep consumer compatibility: expose a React component under `Icon`
 type IconComponent = React.FC<React.SVGProps<SVGSVGElement>>;
@@ -34,11 +35,16 @@ export const NAV: ReadonlyArray<{ href: string; label: string }> = [
   { href: '/pricing',   label: 'Pricing' },
 ];
 
-export const USER_MENU_LINKS: ReadonlyArray<{ id: string; href: string; label: string }> = [
-  { id: 'account',      href: '/account',           label: 'Account' },
-  { id: 'saved',        href: '/saved',             label: 'Saved items' },
-  { id: 'settings',     href: '/settings',          label: 'Settings' },
-  { id: 'notifications', href: '/notifications',    label: 'Notifications' },
-  { id: 'billing',      href: '/account/billing',   label: 'Billing' },
-  { id: 'referrals',    href: '/account/referrals', label: 'Referrals' },
+const baseUserMenuLinks: { id: string; href: string; label: string }[] = [
+  { id: 'account',   href: '/account',           label: 'Account' },
+  { id: 'saved',     href: '/saved',             label: 'Saved items' },
+  { id: 'settings',  href: '/settings',          label: 'Settings' },
+  { id: 'billing',   href: '/account/billing',   label: 'Billing' },
+  { id: 'referrals', href: '/account/referrals', label: 'Referrals' },
 ];
+
+if (flags.enabled('notifications')) {
+  baseUserMenuLinks.splice(3, 0, { id: 'notifications', href: '/notifications', label: 'Notifications' });
+}
+
+export const USER_MENU_LINKS: ReadonlyArray<{ id: string; href: string; label: string }> = baseUserMenuLinks;
