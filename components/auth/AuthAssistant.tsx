@@ -133,6 +133,15 @@ export default function AuthAssistant() {
 
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
     if (!panelRef.current) return;
+    const target = event.target as HTMLElement | null;
+    if (target) {
+      const interactive = target.closest(
+        'button, a, input, textarea, select, [role="button"], [role="link"]'
+      );
+      if (interactive) {
+        return;
+      }
+    }
     event.preventDefault();
     const panel = panelRef.current;
     const rect = panel.getBoundingClientRect();
