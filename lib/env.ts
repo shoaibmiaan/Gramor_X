@@ -17,6 +17,13 @@ const envSchema = z.object({
   NEXT_PUBLIC_FEATURE_PARTNER: z.string().optional(),
   NEXT_PUBLIC_FEATURE_PREDICTOR: z.string().optional(),
   NEXT_PUBLIC_FEATURE_CHALLENGE: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_AI_COACH: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_STUDY_BUDDY: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_MISTAKES_BOOK: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_WHATSAPP_TASKS: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_FLOATING_WIDGET: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_COACH: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_NOTIFICATIONS: z.string().optional(),
 
   // Optional analytics/monitoring
   NEXT_PUBLIC_GA4_ID: z.string().optional(),
@@ -25,11 +32,9 @@ const envSchema = z.object({
 
   // Optional client-side toggles/util
   NEXT_PUBLIC_TWILIO_BYPASS: z.string().optional(),
-  NEXT_PUBLIC_PAYMENTS_PROVIDER: z
-    .enum(['none', 'stripe', 'easypaisa', 'jazzcash'])
-    .optional(),
+  NEXT_PUBLIC_PAYMENTS_PROVIDER: z.enum(['none', 'stripe', 'easypaisa', 'jazzcash']).optional(),
 
-  // Server-only vars (required)
+  // Server-only vars (required in prod)
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
@@ -97,6 +102,13 @@ const raw = {
   NEXT_PUBLIC_FEATURE_PARTNER: process.env.NEXT_PUBLIC_FEATURE_PARTNER,
   NEXT_PUBLIC_FEATURE_PREDICTOR: process.env.NEXT_PUBLIC_FEATURE_PREDICTOR,
   NEXT_PUBLIC_FEATURE_CHALLENGE: process.env.NEXT_PUBLIC_FEATURE_CHALLENGE,
+  NEXT_PUBLIC_FEATURE_AI_COACH: process.env.NEXT_PUBLIC_FEATURE_AI_COACH,
+  NEXT_PUBLIC_FEATURE_STUDY_BUDDY: process.env.NEXT_PUBLIC_FEATURE_STUDY_BUDDY,
+  NEXT_PUBLIC_FEATURE_MISTAKES_BOOK: process.env.NEXT_PUBLIC_FEATURE_MISTAKES_BOOK,
+  NEXT_PUBLIC_FEATURE_WHATSAPP_TASKS: process.env.NEXT_PUBLIC_FEATURE_WHATSAPP_TASKS,
+  NEXT_PUBLIC_FEATURE_FLOATING_WIDGET: process.env.NEXT_PUBLIC_FEATURE_FLOATING_WIDGET,
+  NEXT_PUBLIC_FEATURE_COACH: process.env.NEXT_PUBLIC_FEATURE_COACH,
+  NEXT_PUBLIC_FEATURE_NOTIFICATIONS: process.env.NEXT_PUBLIC_FEATURE_NOTIFICATIONS,
 
   NEXT_PUBLIC_GA4_ID: process.env.NEXT_PUBLIC_GA4_ID,
   NEXT_PUBLIC_META_PIXEL_ID: process.env.NEXT_PUBLIC_META_PIXEL_ID,
@@ -174,7 +186,7 @@ if (!parsed.success && typeof window === 'undefined') {
       .join('\n');
     console.warn(
       'Skipping strict environment validation (non-prod or SKIP_ENV_VALIDATION=true). Falling back to safe defaults:\n' +
-        warnings,
+        warnings
     );
   } else {
     const errors = parsed.error.issues
@@ -204,13 +216,12 @@ export const env = (parsed.success
   : {
       ...defaults,
       ...raw,
-      NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: Number(
-        raw.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30,
-      ),
+      NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: Number(raw.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30),
     });
 
 export const isBrowser = typeof window !== 'undefined';
 export const isServer = !isBrowser;
+
 export function bool(val?: string, fallback = false) {
   if (val == null) return fallback;
   return ['1', 'true', 'yes', 'on'].includes(String(val).toLowerCase());

@@ -3,6 +3,7 @@ export interface AIPlan {
   etaWeeks?: number;
   sequence?: string[];
   notes?: string[];
+  source?: string;
 }
 
 export interface Profile {
@@ -30,4 +31,5 @@ export interface Profile {
   notification_channels?: string[] | null;
   quiet_hours_start?: string | null;
   quiet_hours_end?: string | null;
+  tier?: 'free' | 'seedling' | 'rocket' | 'owl' | null;
 }

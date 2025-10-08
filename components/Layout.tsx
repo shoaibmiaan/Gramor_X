@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
 import FooterMini from '@/components/navigation/FooterMini';
+import QuickAccessWidget from '@/components/navigation/QuickAccessWidget';
 import dynamic from 'next/dynamic';
 
 // Load BottomNav only on client (mobile)
@@ -36,6 +37,7 @@ export default function Layout({ children }: Props) {
       <main className="min-h-[60vh]">{children}</main>
       {useMiniFooter ? <FooterMini /> : <Footer />}
       {showBottomNav && <BottomNav />}
+      <QuickAccessWidget />
     </>
   );
 }

@@ -1,4 +1,6 @@
 // components/auth/AuthAssistant.tsx
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
@@ -17,14 +19,19 @@ export default function AuthAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
   const listRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // drag state
   const pointerIdRef = useRef<number | null>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+
   const router = useRouter();
 
+  // Seed assistant message based on route
   useEffect(() => {
     const path = router.pathname;
     const isLogin = path.startsWith('/login');
@@ -73,6 +80,7 @@ export default function AuthAssistant() {
     ]);
   }, [router.pathname]);
 
+  // Autoscroll on new messages/loading
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -105,6 +113,7 @@ export default function AuthAssistant() {
     }
   }
 
+  // Clamp position on viewport resize
   useEffect(() => {
     if (!position) return;
     if (typeof window === 'undefined') return;
@@ -126,13 +135,14 @@ export default function AuthAssistant() {
     }
 
     window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, [position]);
 
+  // Only start dragging from the header; ignore interactive targets
   function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
     if (!panelRef.current) return;
+
+    // prevent drag-start on interactive elements (buttons, links, inputs...)
     const target = event.target as HTMLElement | null;
     if (target) {
       const interactive = target.closest(
@@ -142,6 +152,7 @@ export default function AuthAssistant() {
         return;
       }
     }
+
     event.preventDefault();
     const panel = panelRef.current;
     const rect = panel.getBoundingClientRect();
@@ -152,6 +163,8 @@ export default function AuthAssistant() {
     pointerIdRef.current = event.pointerId;
     panel.setPointerCapture(event.pointerId);
     setIsDragging(true);
+
+    // If first drag, initialize position from current fixed bottom/right
     if (!position) {
       setPosition({ x: rect.left, y: rect.top });
     }
@@ -160,8 +173,10 @@ export default function AuthAssistant() {
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!isDragging || !panelRef.current) return;
     if (typeof window === 'undefined') return;
+
     event.preventDefault();
     const panel = panelRef.current;
+
     const width = panel.offsetWidth;
     const height = panel.offsetHeight;
     const viewportWidth = window.innerWidth;
@@ -180,7 +195,10 @@ export default function AuthAssistant() {
   }
 
   function endDrag() {
-    if (pointerIdRef.current !== null && panelRef.current?.hasPointerCapture(pointerIdRef.current)) {
+    if (
+      pointerIdRef.current !== null &&
+      panelRef.current?.hasPointerCapture(pointerIdRef.current)
+    ) {
       panelRef.current.releasePointerCapture(pointerIdRef.current);
     }
     pointerIdRef.current = null;
@@ -200,9 +218,10 @@ export default function AuthAssistant() {
   return (
     <div
       ref={panelRef}
-      className="fixed bottom-4 right-4 z-50 w-80 rounded-md border border-border bg-background shadow-lg flex flex-col"
+      className="fixed bottom-4 right-4 z-50 flex w-80 flex-col rounded-md border border-border bg-background shadow-lg"
       role="region"
       aria-label="Authentication assistant"
+      // Positioning: when dragged, we switch from bottom/right pinning to absolute top/left coordinates.
       style={
         position
           ? {
@@ -210,14 +229,16 @@ export default function AuthAssistant() {
               left: position.x,
               bottom: 'auto',
               right: 'auto',
+              position: 'fixed',
             }
           : undefined
       }
     >
+      {/* Drag handle (header) */}
       <div
-        className={`flex items-center justify-between p-2 border-b border-border select-none touch-none ${
+        className={`select-none touch-none border-b border-border p-2 ${
           isDragging ? 'cursor-grabbing' : 'cursor-grab'
-        }`}
+        } flex items-center justify-between`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
@@ -229,12 +250,14 @@ export default function AuthAssistant() {
         <button
           onClick={() => setOpen(false)}
           aria-label="Close assistant"
-          className="text-small px-2"
+          className="px-2 text-small hover:opacity-80"
         >
           ✕
         </button>
       </div>
-      <div ref={listRef} className="flex-1 overflow-y-auto p-2 space-y-2" aria-live="polite">
+
+      {/* Messages */}
+      <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto p-2" aria-live="polite">
         {messages.map((m, i) => (
           <div
             key={i}
@@ -255,7 +278,9 @@ export default function AuthAssistant() {
         ))}
         {loading && <div className="text-caption text-muted-foreground">Thinking…</div>}
       </div>
-      <form onSubmit={send} className="flex gap-2 p-2 border-t border-border">
+
+      {/* Composer */}
+      <form onSubmit={send} className="flex gap-2 border-t border-border p-2">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
