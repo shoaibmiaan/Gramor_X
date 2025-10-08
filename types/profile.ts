@@ -32,4 +32,7 @@ export interface Profile {
   quiet_hours_start?: string | null;
   quiet_hours_end?: string | null;
   tier?: 'free' | 'seedling' | 'rocket' | 'owl' | null;
+  onboarding_step?: number | null;
+  onboarding_complete?: boolean | null;
+  whatsapp_opt_in?: boolean | null;
 }

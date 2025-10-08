@@ -21,7 +21,7 @@ export default function VerifyEmailPage() {
     const qs = new URLSearchParams();
     if (role) qs.set('role', role);
     if (ref)  qs.set('ref', ref);
-    const path = '/onboarding/goal';
+    const path = '/onboarding';
     const s = qs.toString();
     return s ? `${path}?${s}` : path;
   }, [role, ref]);
