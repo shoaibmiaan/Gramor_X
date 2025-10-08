@@ -26,7 +26,7 @@ export default function NotificationSettings() {
         const { data, error } = await supabase
           .from('profiles')
           .select('notification_channels, quiet_hours_start, quiet_hours_end')
-          .eq('user_id', session.user.id)
+          .eq('id', session.user.id)
           .maybeSingle()
 
         if (error) throw new Error(error.message)
@@ -63,7 +63,7 @@ export default function NotificationSettings() {
           quiet_hours_start: start || null,
           quiet_hours_end: end || null,
         })
-        .eq('user_id', session.user.id)
+        .eq('id', session.user.id)
 
       if (error) throw new Error(error.message)
       toastSuccess('Settings saved')
