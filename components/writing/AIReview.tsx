@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { ScoreCard } from '@/components/design-system/ScoreCard';
+import { Button } from '@/components/design-system/Button';
+import { Loader } from '@/components/common/Loader';
+import { AISkeleton } from '@/components/common/Skeleton';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 /**
@@ -41,7 +44,7 @@ function renderAnnotated(text: string): React.ReactNode {
 }
 
 // Read server-sent events from /api/ai/chat and accumulate the delta text.
-async function annotateText(original: string): Promise<string> {
+async function annotateText(original: string, signal?: AbortSignal): Promise<string> {
   try {
     const res = await fetch('/api/ai/chat?p=openai', {
       method: 'POST',
@@ -55,7 +58,8 @@ async function annotateText(original: string): Promise<string> {
           },
           { role: 'user', content: original }
         ]
-      })
+      }),
+      signal,
     });
     if (!res.body) return original;
     const reader = res.body.getReader();
@@ -108,12 +112,33 @@ export const AIReview: React.FC<WritingAIReviewProps> = ({ attemptId }) => {
   const [annotated, setAnnotated] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [longWait, setLongWait] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+
+  const handleRetry = React.useCallback(() => {
+    if (loading) return;
+    setRetryKey((value) => value + 1);
+  }, [loading]);
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    let jitterTimer: ReturnType<typeof setTimeout> | null = null;
+    let longWaitTimer: ReturnType<typeof setTimeout> | null = null;
+    const abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+
+    const clearTimers = () => {
+      if (jitterTimer) {
+        window.clearTimeout(jitterTimer);
+        jitterTimer = null;
+      }
+      if (longWaitTimer) {
+        window.clearTimeout(longWaitTimer);
+        longWaitTimer = null;
+      }
+    };
+
+    const load = async () => {
       try {
-        setLoading(true);
         setError(null);
         const { data, error } = await supabaseBrowser
           .from('writing_attempts')
@@ -123,29 +148,73 @@ export const AIReview: React.FC<WritingAIReviewProps> = ({ attemptId }) => {
         if (error) throw error;
         if (!mounted) return;
         setAttempt(data as AttemptRow);
-        const a = await annotateText(data.essay_text);
+        const a = await annotateText(data.essay_text, abort?.signal);
         if (!mounted) return;
         setAnnotated(a);
       } catch (e: any) {
         if (mounted) setError(e.message || 'Failed to load review');
       } finally {
-        if (mounted) setLoading(false);
+        clearTimers();
+        if (mounted) {
+          setLoading(false);
+          setLongWait(false);
+        }
       }
-    })();
+    };
+
+    setAttempt(null);
+    setAnnotated('');
+    setLoading(true);
+    setLongWait(false);
+
+    const start = () => {
+      if (!mounted) return;
+      longWaitTimer = window.setTimeout(() => {
+        if (mounted) setLongWait(true);
+      }, 10000);
+      void load();
+    };
+
+    const jitter = 200 + Math.floor(Math.random() * 400);
+    jitterTimer = window.setTimeout(start, jitter);
+
     return () => {
       mounted = false;
+      clearTimers();
+      abort?.abort();
     };
-  }, [attemptId]);
+  }, [attemptId, retryKey]);
 
   if (loading) {
     return (
-      <Card className="card-surface p-6 rounded-ds-2xl">Loading…</Card>
+      <AISkeleton rows={6} showHeader={false}>
+        <Loader label="Generating AI review…" />
+        {longWait ? (
+          <Alert variant="info" title="This is taking longer than usual" className="mt-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-body text-muted-foreground">
+                Our AI is still working. You can wait a little longer or retry now.
+              </p>
+              <Button size="sm" variant="secondary" onClick={handleRetry} disabled={loading}>
+                Retry
+              </Button>
+            </div>
+          </Alert>
+        ) : null}
+      </AISkeleton>
     );
   }
 
   if (error) {
     return (
-      <Alert variant="warning" title="AI review failed">{error}</Alert>
+      <Alert variant="warning" title="AI review failed">
+        <div className="flex flex-wrap items-center gap-3">
+          <span>{error}</span>
+          <Button size="sm" variant="secondary" onClick={handleRetry} disabled={loading}>
+            Retry
+          </Button>
+        </div>
+      </Alert>
     );
   }
 

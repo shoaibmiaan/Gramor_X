@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { Container } from "@/components/design-system/Container";
 import { Button } from "@/components/design-system/Button";
+import { Badge } from "@/components/design-system/Badge";
 import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser";
 
 export default function SettingsHubPage() {
@@ -157,6 +158,20 @@ export default function SettingsHubPage() {
                     Add an email to your account first.
                   </span>
                 )}
+              </div>
+            </div>
+
+            {/* Premium PIN */}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <h2 className="text-small font-medium text-foreground">Premium PIN</h2>
+              <p className="mt-1 text-small text-muted-foreground">
+                Redeem a one-time access PIN shared by the GramorX team to unlock premium features
+                without entering payment details.
+              </p>
+              <div className="mt-3">
+                <Button asChild variant="soft">
+                  <Link href="/account/redeem">Redeem PIN</Link>
+                </Button>
               </div>
             </div>
           </section>

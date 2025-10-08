@@ -18,7 +18,7 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
   const secretKey = env.STRIPE_SECRET_KEY;
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
-  const supabase = createSupabaseServerClient({ req });
+  const supabase = createSupabaseServerClient({ serviceRole: true });
 
   // If Stripe not configured, accept as no-op (useful when testing local gateways)
   if (!secretKey || !webhookSecret) {
@@ -72,6 +72,9 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
               membership: plan,
               subscription_status: 'active',
               stripe_customer_id: session.customer,
+              subscription_renews_at: null,
+              trial_ends_at: null,
+              premium_until: null,
               updated_at: new Date().toISOString(),
             })
             .eq('id', userId);
@@ -112,16 +115,38 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
           if (customerId) {
             const { data: prof } = await supabase
               .from('profiles')
-              .select('id')
+              .select('id, membership')
               .eq('stripe_customer_id', customerId)
               .maybeSingle();
             if (prof?.id) {
+              const status = (sub.status as string | undefined) || 'canceled';
+              const periodEnd =
+                typeof sub.current_period_end === 'number'
+                  ? new Date(sub.current_period_end * 1000).toISOString()
+                  : null;
+              const trialEnd =
+                typeof sub.trial_end === 'number'
+                  ? new Date(sub.trial_end * 1000).toISOString()
+                  : null;
+
+              const shouldDowngrade =
+                status === 'canceled' || status === 'past_due' || status === 'unpaid';
+
+              const updates: Record<string, any> = {
+                subscription_status: status,
+                subscription_renews_at: periodEnd,
+                trial_ends_at: trialEnd,
+                updated_at: new Date().toISOString(),
+              };
+
+              if (shouldDowngrade) {
+                updates.membership = 'free';
+                updates.premium_until = null;
+              }
+
               await supabase
                 .from('profiles')
-                .update({
-                  subscription_status: sub.status,
-                  updated_at: new Date().toISOString(),
-                })
+                .update(updates)
                 .eq('id', prof.id);
             }
           }

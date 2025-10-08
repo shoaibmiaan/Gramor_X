@@ -9,7 +9,8 @@ export type FeatureFlag =
   | 'predictor'
   | 'challenge'
   | 'coach'
-  | 'notifications';
+  | 'notifications'
+  | 'quickTen';
 
 const map: Record<FeatureFlag, boolean> = {
   trial: bool(env.NEXT_PUBLIC_FEATURE_TRIAL, true),
@@ -20,6 +21,7 @@ const map: Record<FeatureFlag, boolean> = {
   challenge: bool(env.NEXT_PUBLIC_FEATURE_CHALLENGE, false),
   coach: bool(env.NEXT_PUBLIC_FEATURE_COACH, false),
   notifications: bool(env.NEXT_PUBLIC_FEATURE_NOTIFICATIONS, false),
+  quickTen: bool(env.NEXT_PUBLIC_FEATURE_QUICK_TEN, false),
 };
 
 export const flags = {

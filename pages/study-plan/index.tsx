@@ -1,5 +1,4 @@
-'use client';
-
+// pages/study-plan/index.tsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
@@ -8,18 +7,20 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { useToast } from '@/components/design-system/Toaster';
+
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { generateStudyPlan } from '@/lib/studyPlan';
+
 import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
-import { StudyPlanEmptyState, type PlanPreset } from '@/components/study/EmptyState';
+import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
 import { PlanCard } from '@/components/study/PlanCard';
 import { WeekGrid } from '@/components/study/WeekGrid';
 import { StreakChip } from '@/components/user/StreakChip';
 import { coerceStudyPlan, planDayKey } from '@/utils/studyPlan';
 
-const PRESETS: PlanPreset[] = [
+const PRESETS: ReadonlyArray<StudyPlanPreset> = [
   {
     id: 'balanced-4w',
     title: 'Balanced focus',
@@ -30,21 +31,22 @@ const PRESETS: PlanPreset[] = [
   {
     id: 'speaking-boost',
     title: 'Speaking boost',
-    description: 'Two-week plan that doubles down on speaking drills and writing prompts.',
+    description: 'Two-week plan focused on speaking drills and writing prompts.',
     weeks: 2,
   },
   {
     id: 'listening-sprint',
     title: 'Listening sprint',
-    description: 'One-week reset with focused listening practice and quick reviews.',
+    description: 'One-week reset with intensive listening practice.',
     weeks: 1,
     highlight: 'Great for jump-starts',
   },
 ];
 
-function createPlanFromPreset(preset: PlanPreset, userId: string): PlanType {
+function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType {
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
+
   const weaknesses =
     preset.id === 'speaking-boost'
       ? ['speaking:fluency', 'writing:task2 coherence']
@@ -64,21 +66,19 @@ export default function StudyPlanPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [plan, setPlan] = useState<PlanType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState<string | null>(null);
-  const [updatingTask, setUpdatingTask] = useState<string | null>(null);
+  const [creatingId, setCreatingId] = useState<string | null>(null);
+  const [busyTask, setBusyTask] = useState<string | null>(null);
+
   const { success: toastSuccess, error: toastError } = useToast();
   const { current: streak, loading: streakLoading, completeToday, reload: reloadStreak } = useStreak();
 
   const loadPlan = useCallback(async () => {
     setLoading(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) {
         setUserId(null);
         setPlan(null);
-        setLoading(false);
         return;
       }
       setUserId(user.id);
@@ -113,19 +113,17 @@ export default function StudyPlanPage() {
     void loadPlan();
   }, [loadPlan]);
 
-  const upcomingDays = useMemo(() => {
-    if (!plan) return [];
-    const todayKey = getDayKeyInTZ();
-    return plan.days
-      .filter((day) => planDayKey(day) >= todayKey)
-      .slice(0, 7);
-  }, [plan]);
+  const todayKey = getDayKeyInTZ();
 
-  const today = useMemo(() => {
+  const today = useMemo<StudyDay | null>(() => {
     if (!plan) return null;
-    const todayKey = getDayKeyInTZ();
-    return plan.days.find((day) => planDayKey(day) === todayKey) ?? null;
-  }, [plan]);
+    return plan.days.find((d) => planDayKey(d) === todayKey) ?? null;
+  }, [plan, todayKey]);
+
+  const upcomingDays = useMemo<StudyDay[]>(() => {
+    if (!plan) return [];
+    return plan.days.filter((d) => planDayKey(d) >= todayKey).slice(0, 7);
+  }, [plan, todayKey]);
 
   const persistPlan = useCallback(
     async (next: PlanType) => {
@@ -149,12 +147,12 @@ export default function StudyPlanPage() {
   );
 
   const handleCreatePlan = useCallback(
-    async (preset: PlanPreset) => {
+    async (preset: StudyPlanPreset) => {
       if (!userId) {
         toastError('Please sign in to create a study plan.');
         return;
       }
-      setCreating(preset.id);
+      setCreatingId(preset.id);
       try {
         const nextPlan = createPlanFromPreset(preset, userId);
         await persistPlan(nextPlan);
@@ -164,7 +162,7 @@ export default function StudyPlanPage() {
         console.error('Failed to create plan', err);
         toastError(err instanceof Error ? err.message : 'Could not create plan.');
       } finally {
-        setCreating(null);
+        setCreatingId(null);
       }
     },
     [persistPlan, toastError, toastSuccess, userId],
@@ -173,56 +171,45 @@ export default function StudyPlanPage() {
   const handleTaskToggle = useCallback(
     async (day: StudyDay, taskId: string, checked: boolean) => {
       if (!plan || !userId) return;
+
       const dayKey = planDayKey(day);
-      const todayKey = getDayKeyInTZ();
-      const target = day.tasks.find((task) => task.id === taskId);
+      const target = day.tasks.find((t) => t.id === taskId);
       const wasComplete = target?.completed ?? false;
-      const hadOtherCompleted = day.tasks.some((task) => task.completed && task.id !== taskId);
-      const nextPlan: PlanType = {
+      const hadOtherCompleted = day.tasks.some((t) => t.completed && t.id !== taskId);
+
+      const next: PlanType = {
         ...plan,
-        days: plan.days.map((existing) =>
-          existing.dateISO === day.dateISO
-            ? {
-                ...existing,
-                tasks: existing.tasks.map((task) =>
-                  task.id === taskId ? { ...task, completed: checked } : task,
-                ),
-              }
-            : existing,
+        days: plan.days.map((d) =>
+          d.dateISO === day.dateISO
+            ? { ...d, tasks: d.tasks.map((t) => (t.id === taskId ? { ...t, completed: checked } : t)) }
+            : d,
         ),
       };
 
-      setUpdatingTask(taskId);
-      setPlan(nextPlan);
+      setBusyTask(taskId);
+      setPlan(next);
 
       try {
-        await persistPlan(nextPlan);
-        const shouldStartStreak =
-          checked && !wasComplete && !hadOtherCompleted && dayKey === todayKey;
+        await persistPlan(next);
+        const shouldStartStreak = checked && !wasComplete && !hadOtherCompleted && dayKey === todayKey;
         if (shouldStartStreak) {
           try {
             const data = await completeToday();
-            if (data?.current_streak != null) {
-              window.dispatchEvent(
-                new CustomEvent('streak:changed', { detail: { value: data.current_streak } }),
-              );
-            } else {
-              await reloadStreak();
-            }
+            if (!data) await reloadStreak();
           } catch (err) {
-            console.error('Failed to update streak', err);
+            console.error('Streak update failed', err);
           }
         }
         toastSuccess('Progress saved');
       } catch (err) {
         console.error('Failed to update task', err);
         toastError(err instanceof Error ? err.message : 'Could not update task.');
-        setPlan(plan);
+        setPlan(plan); // rollback
       } finally {
-        setUpdatingTask(null);
+        setBusyTask(null);
       }
     },
-    [plan, userId, persistPlan, completeToday, reloadStreak, toastSuccess, toastError],
+    [plan, userId, persistPlan, completeToday, reloadStreak, toastSuccess, toastError, todayKey],
   );
 
   const hasPlan = !!plan && plan.days.length > 0;
@@ -255,18 +242,27 @@ export default function StudyPlanPage() {
               </div>
             </Card>
           ) : !hasPlan ? (
-            <StudyPlanEmptyState presets={PRESETS} onSelect={handleCreatePlan} loadingId={creating} disabled={!!creating} />
+            <StudyPlanEmptyState
+              presets={PRESETS}
+              onSelect={handleCreatePlan}
+              busyId={creatingId}
+              disabled={!!creatingId}
+              showOnboardingCta
+            />
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
               <div className="space-y-6">
                 <PlanCard
-                  day={today ?? plan.days[0]}
-                  onToggleTask={(taskId, checked) => handleTaskToggle(today ?? plan.days[0], taskId, checked)}
-                  busyTaskId={updatingTask}
-                  isToday={planDayKey(today ?? plan.days[0]) === getDayKeyInTZ()}
+                  day={today ?? plan!.days[0]}
+                  onToggleTask={(taskId, checked) =>
+                    handleTaskToggle(today ?? plan!.days[0], taskId, checked)
+                  }
+                  busyTaskId={busyTask}
+                  isToday={planDayKey(today ?? plan!.days[0]) === todayKey}
                 />
                 <WeekGrid days={upcomingDays} />
               </div>
+
               <Card className="rounded-ds-2xl p-6 space-y-4">
                 <h3 className="font-slab text-h4">Need a change?</h3>
                 <p className="text-small text-muted-foreground">
@@ -280,7 +276,7 @@ export default function StudyPlanPage() {
                       variant="ghost"
                       className="w-full justify-between"
                       onClick={() => handleCreatePlan(preset)}
-                      loading={creating === preset.id}
+                      loading={creatingId === preset.id}
                     >
                       {preset.title}
                       <span className="text-small text-muted-foreground">{preset.weeks} wk</span>
