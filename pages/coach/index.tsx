@@ -1,11 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 
 import BandBreakdown from '@/components/predictor/BandBreakdown';
 import { percentToBand, runPredictor, type PredictorResult } from '@/lib/predictor';
 import { analyzeEssay, type EssayAnalysis } from '@/lib/coach/analyzeEssay';
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { env } from '@/lib/env';
+import { flags } from '@/lib/flags';
 
 const MIN_WORDS = 80;
+const coachCanonical = env.NEXT_PUBLIC_SITE_URL
+  ? `${env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')}/coach`
+  : undefined;
+const coachEnabled = flags.enabled('coach');
 
 function formatNumber(value: number, fraction = 0) {
   return value.toLocaleString(undefined, {
@@ -14,7 +24,45 @@ function formatNumber(value: number, fraction = 0) {
   });
 }
 
-export default function CoachIndexPage() {
+function CoachComingSoon() {
+  return (
+    <>
+      <Head>
+        <title>Coaching coming soon</title>
+        {coachCanonical ? <link rel="canonical" href={coachCanonical} /> : null}
+        <meta name="robots" content="noindex, nofollow" />
+        <meta
+          name="description"
+          content="Personalised coaching sessions are rolling out soon. Explore live classes while we finish the experience."
+        />
+      </Head>
+      <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Container>
+          <Card className="max-w-2xl mx-auto space-y-5 p-6 rounded-ds-2xl text-center">
+            <h1 className="font-slab text-h2">Coaching is almost here</h1>
+            <p className="text-body text-mutedText">
+              We&apos;re putting the final polish on 1:1 coaching so that your essays get
+              thoughtful, human feedback. You&apos;ll see it first in your account once it&apos;s ready.
+            </p>
+            <p className="text-body text-mutedText">
+              In the meantime, keep building momentum with structured classes and practice plans.
+            </p>
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <Button asChild size="lg">
+                <Link href="/classes">Explore live classes</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/study-plan">Open your study plan</Link>
+              </Button>
+            </div>
+          </Card>
+        </Container>
+      </section>
+    </>
+  );
+}
+
+function CoachExperience() {
   const [essay, setEssay] = useState('');
   const [analysis, setAnalysis] = useState<EssayAnalysis | null>(null);
   const [result, setResult] = useState<PredictorResult | null>(null);
@@ -210,6 +258,14 @@ export default function CoachIndexPage() {
       </main>
     </>
   );
+}
+
+export default function CoachIndexPage() {
+  if (!coachEnabled) {
+    return <CoachComingSoon />;
+  }
+
+  return <CoachExperience />;
 }
 
 function MetricCard({ label, percent, band }: { label: string; percent: number; band: number }) {
