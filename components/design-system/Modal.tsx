@@ -45,15 +45,9 @@ export function Modal({ open, onClose, title, children, size = "md", className }
   if (!open) return null;
 
   return (
-    <div
-      aria-hidden={!open}
-      className="fixed inset-0 z-50"
-    >
+    <div aria-hidden={!open} className="fixed inset-0 z-50">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
 
       {/* Panel */}
       <div
@@ -69,6 +63,7 @@ export function Modal({ open, onClose, title, children, size = "md", className }
           // desktop = centered card
           "sm:inset-0 sm:m-auto sm:h-auto sm:rounded-ds-2xl sm:border sm:shadow-2xl",
           sizes[size],
+          mounted ? "opacity-100" : "opacity-0",
           "focus-visible:outline-none",
           className
         )}
@@ -97,3 +92,5 @@ export function Modal({ open, onClose, title, children, size = "md", className }
     </div>
   );
 }
+
+export default Modal;

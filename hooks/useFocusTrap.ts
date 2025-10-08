@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 const FOCUSABLE = [
   'a[href]',
@@ -12,7 +12,7 @@ const FOCUSABLE = [
 /**
  * Trap focus within a container while `active` is true. Restores focus when deactivated.
  */
-export function useFocusTrap<T extends HTMLElement>(active: boolean, ref: React.RefObject<T>) {
+export function useFocusTrap<T extends HTMLElement>(active: boolean, ref: RefObject<T>) {
   const previous = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
