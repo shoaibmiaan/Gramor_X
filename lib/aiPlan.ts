@@ -23,6 +23,7 @@ export function generateAIPlan(profile: Profile): AIPlan {
   return {
     sequence: prioritized,
     notes: [`Focus order: ${prioritized.join(' → ')}`],
+    source: 'local',
   };
 }
 
