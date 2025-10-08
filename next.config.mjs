@@ -36,6 +36,28 @@ const baseConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
+      {
+        source: '/audio/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+          },
+          { key: 'Accept-Ranges', value: 'bytes' },
+          { key: 'Access-Control-Expose-Headers', value: 'Accept-Ranges, Content-Length' },
+        ],
+      },
+      {
+        source: '/placement/audio/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+          },
+          { key: 'Accept-Ranges', value: 'bytes' },
+          { key: 'Access-Control-Expose-Headers', value: 'Accept-Ranges, Content-Length' },
+        ],
+      },
     ];
   },
 
