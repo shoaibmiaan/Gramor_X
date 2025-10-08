@@ -27,8 +27,12 @@ export interface Profile {
   ai_recommendation?: AIPlan | null;
   marketing_opt_in?: boolean | null;
   draft?: boolean;
-  phone?: string | null;
   notification_channels?: string[] | null;
+  notifications_opt_in?: {
+    whatsapp?: boolean;
+    email?: boolean;
+    sms?: boolean;
+  } | null;
   quiet_hours_start?: string | null;
   quiet_hours_end?: string | null;
   tier?: 'free' | 'seedling' | 'rocket' | 'owl' | null;

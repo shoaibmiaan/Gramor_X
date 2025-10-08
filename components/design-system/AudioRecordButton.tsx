@@ -61,20 +61,25 @@ export const AudioRecordButton: React.FC<AudioRecordButtonProps> = ({
   }
 
   return (
-    <button
-      type="button"
-      onClick={recording ? stop : start}
-      disabled={disabled}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-ds border border-border dark:border-border/20
+    <>
+      <button
+        type="button"
+        onClick={recording ? stop : start}
+        disabled={disabled}
+        className={`inline-flex items-center gap-2 px-4 py-2 rounded-ds border border-border dark:border-border/20
         ${recording ? "bg-sunsetOrange/20 text-sunsetOrange" : "bg-card dark:bg-dark/40 text-foreground dark:text-foreground"}
         hover:bg-border/20 dark:hover:bg-border/20 ${className}`}
-      aria-pressed={recording}
-      aria-label={recording ? "Stop recording" : "Start recording"}
-    >
-      <span
-        className={`inline-block h-2.5 w-2.5 rounded-sm ${recording ? "bg-sunsetOrange" : "bg-success"}`}
-      />
-      {recording ? "Stop" : "Record"}
-    </button>
+        aria-pressed={recording}
+        aria-label={recording ? "Stop recording" : "Start recording"}
+      >
+        <span
+          className={`inline-block h-2.5 w-2.5 rounded-sm ${recording ? "bg-sunsetOrange" : "bg-success"}`}
+        />
+        {recording ? "Stop" : "Record"}
+      </button>
+      <span className="sr-only" role="status" aria-live={recording ? "assertive" : "polite"}>
+        {recording ? "Recording in progress" : "Recorder ready"}
+      </span>
+    </>
   );
 };

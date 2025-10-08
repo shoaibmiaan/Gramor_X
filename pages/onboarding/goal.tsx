@@ -4,25 +4,29 @@ import { useRouter } from 'next/router';
 import StepShell from '@/components/onboarding/StepShell';
 import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
+import { markStep, persistDraft, readDraft } from '@/lib/onboarding';
 
 const STEPS = [
   { label: 'Target Band', href: '/onboarding/goal' },
   { label: 'Exam Date', href: '/onboarding/date' },
-  { label: 'Weak Areas', href: '/onboarding/skills' },
-  { label: 'Schedule', href: '/onboarding/schedule' },
+  { label: 'WhatsApp Updates', href: '/onboarding/whatsapp' },
 ];
 
 export default function Page() {
   const router = useRouter();
   const [goal, setGoal] = React.useState<string>('7.0');
 
-  // Restore & persist
   React.useEffect(() => {
-    const saved = window.localStorage.getItem('onboarding.goal');
-    if (saved) setGoal(saved);
+    markStep('band');
+    const draft = readDraft();
+    if (draft.goalBand) {
+      setGoal(draft.goalBand.toFixed(1));
+    }
   }, []);
+
   React.useEffect(() => {
-    window.localStorage.setItem('onboarding.goal', goal);
+    const value = Number(goal);
+    if (!Number.isNaN(value)) persistDraft({ goalBand: value });
   }, [goal]);
 
   const next = () => router.push('/onboarding/date');
@@ -33,7 +37,7 @@ export default function Page() {
     <div className="min-h-screen bg-background text-foreground">
       <StepShell
         step={1}
-        total={4}
+        total={3}
         title="Your Target Band"
         subtitle="Pick the overall band you’re aiming for. You can adjust later."
         onNext={next}

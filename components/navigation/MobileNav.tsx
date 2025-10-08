@@ -12,6 +12,7 @@ import { navigationSchema } from '@/config/navigation';
 import { filterNavItems, filterNavSections } from '@/lib/navigation/utils';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { Icon } from '@/components/design-system/Icon';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface UserInfo {
   id: string | null;
@@ -60,6 +61,9 @@ export function MobileNav({
   const mobileItemClass = 'block rounded-lg px-3 py-3 hover:bg-muted';
 
   const closeMenu = React.useCallback(() => setMobileOpen(false), [setMobileOpen]);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  useFocusTrap(mobileOpen, panelRef);
 
   const navigationCtx = React.useMemo(
     () => ({ isAuthenticated: Boolean(user?.id), tier: subscriptionTier }),
@@ -98,6 +102,8 @@ export function MobileNav({
       role="dialog"
       aria-modal="true"
       aria-label="Mobile navigation"
+      ref={panelRef}
+      tabIndex={-1}
       {...rest}
     >
       <Container>

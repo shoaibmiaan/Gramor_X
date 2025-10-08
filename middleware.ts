@@ -86,6 +86,7 @@ export async function middleware(req: NextRequest) {
 
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
+  const needsOnboarding = !!user && user.user_metadata?.onboarding_complete === false;
 
   // ----- Premium PIN gate (takes precedence over generic auth) -----
   const isPremiumSection = pathname.startsWith('/premium');
@@ -117,6 +118,13 @@ export async function middleware(req: NextRequest) {
     return res;
   }
   // ----- end Premium PIN gate -----
+
+  if (needsOnboarding && !pathname.startsWith('/onboarding')) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/onboarding';
+    url.search = '';
+    return redirectWithCookies(res, url);
+  }
 
   // If not signed in and trying to view a protected route -> redirect to login
   if (!user && isProtected && !isAuthPage) {

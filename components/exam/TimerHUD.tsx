@@ -30,6 +30,7 @@ export function TimerHUD({ seconds, onTimeUp, warnAtSec = 5 * 60, className }: T
 
   const tense = remaining <= warnAtSec;
   const critical = remaining <= 60;
+  const liveMode: 'polite' | 'assertive' = critical ? 'assertive' : 'polite';
 
   return (
     <div
@@ -38,7 +39,10 @@ export function TimerHUD({ seconds, onTimeUp, warnAtSec = 5 * 60, className }: T
         className || '',
       ].join(' ')}
       title="Remaining time"
-      aria-live="polite"
+      role="timer"
+      aria-live={liveMode}
+      aria-atomic="true"
+      aria-label={`Remaining time ${label}`}
     >
       <div
         className={[
@@ -47,6 +51,11 @@ export function TimerHUD({ seconds, onTimeUp, warnAtSec = 5 * 60, className }: T
         ].join(' ')}
       />
       <span className="tabular-nums font-semibold tracking-wide">{label}</span>
+      {critical && (
+        <span className="sr-only" role="status" aria-live="assertive">
+          Less than a minute remaining
+        </span>
+      )}
     </div>
   );
 }
