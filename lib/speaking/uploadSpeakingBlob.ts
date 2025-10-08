@@ -1,39 +1,52 @@
 // /lib/speaking/uploadSpeakingBlob.ts
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { uploadWithRetry } from '@/lib/upload/supabase';
+
+export type SpeakingUploadResult = {
+  signedUrl: string;
+  path: string;
+  attemptId: string;
+  clipId?: string;
+};
 
 /**
- * Uploads an audio blob to Supabase Storage and returns a signed URL.
- * Bucket: "speaking"   Path: speaking/<userId>/<attemptId>/<ctx>/<timestamp>.webm
- *
- * ctx: 'p1'|'p2'|'p3'|'chat'
+ * Uploads an audio blob to Supabase Storage and returns the storage path with a signed URL.
+ * Bucket: "speaking"   Default path: <userId>/<attemptId>/<ctx>/<timestamp>.webm
  */
 export async function uploadSpeakingBlob(
   blob: Blob,
   ctx: 'p1' | 'p2' | 'p3' | 'chat',
-  attemptId: string
-): Promise<string> {
+  attemptId: string,
+  pathOverride?: string,
+): Promise<SpeakingUploadResult> {
   const { data: sess } = await supabaseBrowser.auth.getSession();
   const userId = sess.session?.user?.id;
   if (!userId) throw new Error('Unauthorized');
 
-  const ts = Date.now();
-  const path = `speaking/${userId}/${attemptId}/${ctx}/${ts}.webm`;
+  const bucket = 'speaking';
+  const timestamp = Date.now();
+  const safeCtx = ctx || 'p1';
+  const relativePath = pathOverride?.replace(/^\/+/, '') || `${userId}/${attemptId}/${safeCtx}/${timestamp}.webm`;
 
-  const { data, error } = await supabaseBrowser.storage
-    .from('speaking')
-    .upload(path, blob, {
-      contentType: 'audio/webm',
-      upsert: false,
-    });
+  await uploadWithRetry(
+    () =>
+      supabaseBrowser.storage.from(bucket).upload(relativePath, blob, {
+        contentType: blob.type || 'audio/webm',
+        upsert: Boolean(pathOverride),
+      }),
+    { maxAttempts: 4, baseDelayMs: 500 },
+  );
 
-  if (error) throw error;
-
-  // Signed URL for playback in UI
   const { data: signed, error: signedErr } = await supabaseBrowser.storage
-    .from('speaking')
-    .createSignedUrl(data.path, 60 * 60 * 24); // 24h
+    .from(bucket)
+    .createSignedUrl(relativePath, 60 * 60 * 24);
 
   if (signedErr) throw signedErr;
 
-  return signed.signedUrl;
+  return {
+    signedUrl: signed.signedUrl,
+    path: relativePath,
+    attemptId,
+    clipId: undefined,
+  };
 }
