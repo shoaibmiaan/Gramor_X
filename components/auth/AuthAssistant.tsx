@@ -18,6 +18,11 @@ export default function AuthAssistant() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const pointerIdRef = useRef<number | null>(null);
+  const offsetRef = useRef({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -100,6 +105,79 @@ export default function AuthAssistant() {
     }
   }
 
+  useEffect(() => {
+    if (!position) return;
+    if (typeof window === 'undefined') return;
+
+    function handleResize() {
+      if (!panelRef.current) return;
+      setPosition((prev) => {
+        if (!prev) return prev;
+        const panel = panelRef.current;
+        const width = panel.offsetWidth;
+        const height = panel.offsetHeight;
+        const maxX = Math.max(0, window.innerWidth - width);
+        const maxY = Math.max(0, window.innerHeight - height);
+        return {
+          x: Math.min(Math.max(0, prev.x), maxX),
+          y: Math.min(Math.max(0, prev.y), maxY),
+        };
+      });
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [position]);
+
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (!panelRef.current) return;
+    event.preventDefault();
+    const panel = panelRef.current;
+    const rect = panel.getBoundingClientRect();
+    offsetRef.current = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+    pointerIdRef.current = event.pointerId;
+    panel.setPointerCapture(event.pointerId);
+    setIsDragging(true);
+    if (!position) {
+      setPosition({ x: rect.left, y: rect.top });
+    }
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging || !panelRef.current) return;
+    if (typeof window === 'undefined') return;
+    event.preventDefault();
+    const panel = panelRef.current;
+    const width = panel.offsetWidth;
+    const height = panel.offsetHeight;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const nextX = event.clientX - offsetRef.current.x;
+    const nextY = event.clientY - offsetRef.current.y;
+
+    const maxX = Math.max(0, viewportWidth - width);
+    const maxY = Math.max(0, viewportHeight - height);
+
+    const clampedX = Math.min(Math.max(0, nextX), maxX);
+    const clampedY = Math.min(Math.max(0, nextY), maxY);
+
+    setPosition({ x: clampedX, y: clampedY });
+  }
+
+  function endDrag() {
+    if (pointerIdRef.current !== null && panelRef.current?.hasPointerCapture(pointerIdRef.current)) {
+      panelRef.current.releasePointerCapture(pointerIdRef.current);
+    }
+    pointerIdRef.current = null;
+    setIsDragging(false);
+  }
+
   if (!open) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
@@ -112,11 +190,32 @@ export default function AuthAssistant() {
 
   return (
     <div
+      ref={panelRef}
       className="fixed bottom-4 right-4 z-50 w-80 rounded-md border border-border bg-background shadow-lg flex flex-col"
       role="region"
       aria-label="Authentication assistant"
+      style={
+        position
+          ? {
+              top: position.y,
+              left: position.x,
+              bottom: 'auto',
+              right: 'auto',
+            }
+          : undefined
+      }
     >
-      <div className="flex items-center justify-between p-2 border-b border-border">
+      <div
+        className={`flex items-center justify-between p-2 border-b border-border select-none touch-none ${
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        }`}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        aria-label="Assistant drag handle"
+        role="presentation"
+      >
         <h2 className="text-small font-semibold">Assistant</h2>
         <button
           onClick={() => setOpen(false)}
