@@ -29,6 +29,20 @@
   --gx-muted-foreground: 180 180 200;
 }
 
+[data-theme='hc'] {
+  --gx-background: 0 0 0;
+  --gx-foreground: 255 255 255;
+  --gx-card:       0 0 0;
+  --gx-card-foreground: 255 255 255;
+  --gx-popover:    0 0 0;
+  --gx-popover-foreground: 255 255 255;
+  --gx-border:     255 255 255;
+  --gx-input:      255 255 255;
+  --gx-ring:       255 209 0;
+  --gx-muted:      30 30 30;
+  --gx-muted-foreground: 220 220 220;
+}
+
 /* Optional seasonal themes override selectively */
 @import './spring.css';
 @import './summer.css';

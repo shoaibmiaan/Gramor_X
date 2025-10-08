@@ -1,175 +1,142 @@
-// pages/progress/index.tsx
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link';
-import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
+'use client';
+
+import React from 'react';
+import dynamic from 'next/dynamic';
+import useSWR from 'swr';
+
 import { Button } from '@/components/design-system/Button';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { Card } from '@/components/design-system/Card';
+import { Container } from '@/components/design-system/Container';
+import { EmptyState } from '@/components/design-system/EmptyState';
+import type { ProgressTrendPayload, SkillAverage } from '@/lib/analytics/progress';
 
-type Skill = 'reading' | 'listening' | 'writing' | 'speaking';
+const TrendLineChart = dynamic(
+  () => import('@/components/progress/TrendCharts').then((mod) => mod.TrendLineChart),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const SkillAreaChart = dynamic(
+  () => import('@/components/progress/TrendCharts').then((mod) => mod.SkillAreaChart),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
 
-interface BandRow {
-  attempt_date: string; // ISO
-  skill: Skill;
-  band: number;
-}
+const fetcher = (url: string) => fetch(url).then((res) => {
+  if (!res.ok) throw new Error('Failed to load progress trends');
+  return res.json();
+});
 
-interface AccuracyRow {
-  question_type: string;
-  accuracy_pct: number;
-}
+const numberFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 
-interface TimeRow {
-  skill: Skill;
-  total_minutes: number;
-}
+export default function ProgressPage() {
+  const { data, error, isLoading } = useSWR<ProgressTrendPayload>('/api/progress', fetcher);
 
-type BandDay = { date: string } & Partial<Record<Skill, number>>;
-
-export default function Progress() {
-  const router = useRouter();
-  const [bandData, setBandData] = useState<BandDay[]>([]);
-  const [accuracyData, setAccuracyData] = useState<AccuracyRow[]>([]);
-  const [timeData, setTimeData] = useState<TimeRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const { data: { session } } = await supabaseBrowser.auth.getSession();
-      if (!session?.user) {
-        router.replace('/login');
-        return;
-      }
-      const uid = session.user.id;
-
-      const [{ data: bt }, { data: acc }, { data: tt }] = await Promise.all([
-        supabaseBrowser
-          .from('progress_band_trajectory')
-          .select('attempt_date,skill,band')
-          .eq('user_id', uid)
-          .order('attempt_date'),
-        supabaseBrowser
-          .from('progress_accuracy_per_type')
-          .select('question_type,accuracy_pct')
-          .eq('user_id', uid),
-        supabaseBrowser
-          .from('progress_time_spent')
-          .select('skill,total_minutes')
-          .eq('user_id', uid),
-      ]);
-
-      if (!mounted) return;
-      setBandData(groupBand((bt ?? []) as BandRow[]));
-      setAccuracyData((acc ?? []) as AccuracyRow[]);
-      setTimeData((tt ?? []) as TimeRow[]);
-      setLoading(false);
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [router]);
+  const timeline = data?.timeline ?? [];
+  const perSkill = data?.perSkill ?? [];
+  const totalAttempts = data?.totalAttempts ?? 0;
+  const hasData = timeline.length > 0 || perSkill.length > 0;
 
   const exportJSON = () => {
-    const blob = new Blob(
-      [JSON.stringify({ bandData, accuracyData, timeData }, null, 2)],
-      { type: 'application/json' }
-    );
+    if (!data) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'progress.json';
-    a.click();
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'progress-trends.json';
+    anchor.click();
     URL.revokeObjectURL(url);
   };
 
   const exportCSV = () => {
+    if (!data) return;
     const lines: string[] = [];
-    lines.push('band_trajectory');
-    lines.push('date,reading,listening,writing,speaking');
-    bandData.forEach((row) => {
-      lines.push(
-        `${row.date || ''},${row.reading ?? ''},${row.listening ?? ''},${
-          row.writing ?? ''
-        },${row.speaking ?? ''}`
-      );
+    lines.push('timeline');
+    lines.push('week_start,reading,listening,writing,speaking');
+    data.timeline.forEach((point) => {
+      lines.push([
+        point.weekStart,
+        formatCsvValue(point.reading),
+        formatCsvValue(point.listening),
+        formatCsvValue(point.writing),
+        formatCsvValue(point.speaking),
+      ].join(','));
     });
     lines.push('');
-    lines.push('accuracy_per_question_type');
-    lines.push('question_type,accuracy_pct');
-    accuracyData.forEach((r) =>
-      lines.push(`${safeCsv(r.question_type)},${r.accuracy_pct}`)
-    );
-    lines.push('');
-    lines.push('time_spent');
-    lines.push('skill,total_minutes');
-    timeData.forEach((r) =>
-      lines.push(`${r.skill},${Math.round(r.total_minutes)}`)
-    );
+    lines.push('per_skill');
+    lines.push('skill,average,delta,samples');
+    data.perSkill.forEach((entry) => {
+      lines.push([
+        entry.skill,
+        entry.average.toFixed(2),
+        entry.delta.toFixed(2),
+        String(entry.samples),
+      ].join(','));
+    });
+
     const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'progress.csv';
-    a.click();
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'progress-trends.csv';
+    anchor.click();
     URL.revokeObjectURL(url);
   };
-
-  const hasAnyData =
-    bandData.length > 0 || accuracyData.length > 0 || timeData.length > 0;
 
   return (
     <section className="py-10">
       <Container>
-        <Card className="p-6 rounded-ds-2xl">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-slab text-h2">Progress</h1>
+        <Card className="rounded-ds-2xl border border-border bg-card p-6 text-card-foreground">
+          <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="font-slab text-h2 text-foreground">Progress trends</h1>
+              <p className="text-small text-muted-foreground">
+                Weekly band averages and per-skill momentum from your recent practice.
+              </p>
+            </div>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={exportCSV}>
+              <Button variant="secondary" onClick={exportCSV} disabled={!data}>
                 Export CSV
               </Button>
-              <Button variant="secondary" onClick={exportJSON}>
+              <Button variant="secondary" onClick={exportJSON} disabled={!data}>
                 Export JSON
               </Button>
             </div>
-          </div>
+          </header>
 
-          {loading ? (
-            <div className="rounded-xl border border-border p-4 text-small text-foreground/70">
-              Loading your analytics…
+          {isLoading ? (
+            <ChartSkeleton large />
+          ) : error ? (
+            <div className="rounded-ds-xl border border-danger/30 bg-danger/10 p-4 text-danger">
+              Unable to load progress trends. Please try again later.
             </div>
-          ) : !hasAnyData ? (
-            <EmptyState />
+          ) : !hasData ? (
+            <EmptyState
+              title="No progress yet"
+              description="Complete a mock or quick drill to start tracking your weekly trends."
+              actionLabel="Browse practice"
+              onAction={() => window.open('/learning', '_self')}
+            />
           ) : (
-            <>
-              <div className="mb-8">
-                <h2 className="font-slab text-h3 mb-2">Band trajectory</h2>
-                <BandChart data={bandData} />
-                <p className="mt-2 text-caption text-foreground/70">
-                  Tip: Complete a{' '}
-                  <Link
-                    href="/mock/listening/sample-001"
-                    className="underline underline-offset-4"
-                  >
-                    Listening mock
-                  </Link>{' '}
-                  today to update this graph.
-                </p>
-              </div>
+            <div className="space-y-10">
+              <section className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="font-slab text-h3 text-foreground">Weekly band trend</h2>
+                  <span className="text-caption text-muted-foreground">
+                    Aggregated from {totalAttempts} recent attempts.
+                  </span>
+                </div>
+                <TrendLineChart data={timeline} />
+              </section>
 
-              <div className="mb-8">
-                <h2 className="font-slab text-h3 mb-2">
-                  Accuracy per question type
-                </h2>
-                <AccuracyChart data={accuracyData} />
-              </div>
-
-              <div>
-                <h2 className="font-slab text-h3 mb-2">Total time spent</h2>
-                <TimeChart data={timeData} />
-              </div>
-            </>
+              <section className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="font-slab text-h3 text-foreground">Per-skill averages</h2>
+                  <span className="text-caption text-muted-foreground">
+                    Change compares the latest week with the one before it.
+                  </span>
+                </div>
+                <SkillAreaChart data={perSkill} />
+                <SkillSummary data={perSkill} />
+              </section>
+            </div>
           )}
         </Card>
       </Container>
@@ -177,254 +144,65 @@ export default function Progress() {
   );
 }
 
-/* ---------- local EmptyState (DS tokens only) ---------- */
-function EmptyState() {
+function SkillSummary({ data }: { data: SkillAverage[] }) {
+  if (!data || data.length === 0) return null;
   return (
-    <div className="rounded-ds border border-border p-8 text-center bg-card text-card-foreground">
-      <h3 className="font-slab text-h4 mb-2">No progress yet</h3>
-      <p className="text-small text-foreground/70 mb-4">
-        Start a mock to see your band trajectory, accuracy and time charts here.
-      </p>
-      <div className="flex gap-2 justify-center">
-        <Link href="/listening" className="btn">
-          Start Listening
-        </Link>
-        <Link href="/reading" className="btn">
-          Start Reading
-        </Link>
-      </div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {data.map((entry) => {
+        const trend = classifyDelta(entry.delta);
+        return (
+          <div
+            key={entry.skill}
+            className="rounded-ds-xl border border-border/60 bg-card/40 p-4"
+            aria-label={`${formatSkill(entry.skill)} average ${numberFormatter.format(entry.average)} band`}
+          >
+            <div className="text-caption uppercase tracking-[0.12em] text-muted-foreground">
+              {formatSkill(entry.skill)}
+            </div>
+            <div className="mt-1 text-h3 font-semibold text-foreground">
+              {numberFormatter.format(entry.average)}
+            </div>
+            <div
+              className={`text-caption ${
+                trend === 'up' ? 'text-success' : trend === 'down' ? 'text-danger' : 'text-muted-foreground'
+              }`}
+            >
+              {trend === 'flat'
+                ? 'No week-over-week change'
+                : `${trend === 'up' ? '+' : ''}${numberFormatter.format(entry.delta)} vs previous week`}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-/* ---------- helpers ---------- */
-
-function groupBand(rows: BandRow[]): BandDay[] {
-  const map = new Map<string, BandDay>();
-  rows.forEach((r) => {
-    const date = r.attempt_date.slice(0, 10);
-    const entry = map.get(date) || { date };
-    (entry as any)[r.skill] = r.band;
-    map.set(date, entry);
-  });
-  return Array.from(map.values());
+function classifyDelta(delta: number): 'up' | 'down' | 'flat' {
+  const threshold = 0.05;
+  if (delta > threshold) return 'up';
+  if (delta < -threshold) return 'down';
+  return 'flat';
 }
 
-function safeCsv(s: string) {
-  return /[,"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+function formatSkill(skill: string): string {
+  return skill
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
-/* ---------- charts (token-only colors) ---------- */
-/**
- * Notes:
- * - No hex/inline colors. Use token classes + currentColor.
- * - Axes: text-border → stroke="currentColor".
- * - Series tokens: reading=primary, listening=secondary, writing=accent, speaking=foreground.
- */
+function formatCsvValue(value: number | undefined): string {
+  return typeof value === 'number' && !Number.isNaN(value) ? value.toFixed(2) : '';
+}
 
-function BandChart({ data }: { data: BandDay[] }) {
-  const skills: Skill[] = ['reading', 'listening', 'writing', 'speaking'];
-  const seriesClass: Record<Skill, string> = {
-    reading: 'text-primary',
-    listening: 'text-secondary',
-    writing: 'text-accent',
-    speaking: 'text-foreground',
-  };
-
-  const width = 600;
-  const height = 220;
-  const n = Math.max(1, data.length - 1);
-  const pointsFor = (skill: Skill) =>
-    data
-      .map((d, i) => {
-        const x = (i / Math.max(1, n)) * width;
-        const band = Number((d as any)[skill] ?? 0);
-        const y = height - (Math.min(9, Math.max(0, band)) / 9) * height;
-        return `${x},${y}`;
-      })
-      .join(' ');
-
+function ChartSkeleton({ large = false }: { large?: boolean }) {
   return (
-    <svg
-      role="img"
-      aria-label="Band trajectory across skills"
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="rounded-ds border border-border"
-    >
-      {/* axes */}
-      <g className="text-border">
-        <line
-          x1={0}
-          y1={height}
-          x2={width}
-          y2={height}
-          stroke="currentColor"
-          strokeWidth={1}
-        />
-        <line
-          x1={0}
-          y1={0}
-          x2={0}
-          y2={height}
-          stroke="currentColor"
-          strokeWidth={1}
-        />
-      </g>
-
-      {/* series */}
-      {skills.map((s) => (
-        <polyline
-          key={s}
-          className={seriesClass[s]}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          points={pointsFor(s)}
-        />
-      ))}
-
-      {/* legend */}
-      <g transform={`translate(8,8)`} className="text-foreground/80">
-        {skills.map((s, i) => (
-          <g key={s} transform={`translate(${i * 130},0)`}>
-            <line
-              x1={0}
-              y1={6}
-              x2={20}
-              y2={6}
-              className={seriesClass[s]}
-              stroke="currentColor"
-              strokeWidth={3}
-            />
-            <text x={26} y={10} fontSize={12} className="fill-current">
-              {cap(s)}
-            </text>
-          </g>
-        ))}
-      </g>
-    </svg>
+    <div className={`w-full ${large ? 'space-y-4' : ''}`}>
+      <div className="h-8 w-32 animate-pulse rounded bg-border/50" />
+      <div className="h-64 w-full animate-pulse rounded-ds-xl bg-border/30" />
+      {large && <div className="h-64 w-full animate-pulse rounded-ds-xl bg-border/20" />}
+    </div>
   );
 }
-
-function AccuracyChart({ data }: { data: AccuracyRow[] }) {
-  const width = 600;
-  const height = 220;
-  const gap = 10;
-  const barWidth = data.length ? width / data.length - gap : 0;
-
-  return (
-    <svg
-      role="img"
-      aria-label="Accuracy per question type"
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="rounded-ds border border-border"
-    >
-      {/* axis */}
-      <g className="text-border">
-        <line
-          x1={0}
-          y1={height - 1}
-          x2={width}
-          y2={height - 1}
-          stroke="currentColor"
-          strokeWidth={1}
-        />
-      </g>
-
-      {/* bars */}
-      {data.map((d, i) => {
-        const h = (Math.max(0, Math.min(100, d.accuracy_pct)) / 100) * (height - 20);
-        const x = i * (barWidth + gap) + gap / 2;
-        const y = height - 1 - h;
-        return (
-          <g key={d.question_type}>
-            <rect
-              x={x}
-              y={y}
-              width={barWidth}
-              height={h}
-              className="text-primary"
-              fill="currentColor"
-              rx={6}
-            />
-            <text
-              x={x + barWidth / 2}
-              y={height - 5}
-              textAnchor="middle"
-              fontSize={11}
-              className="fill-current text-foreground/70"
-            >
-              {d.question_type}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-function TimeChart({ data }: { data: TimeRow[] }) {
-  const width = 600;
-  const rowH = 32;
-  const height = Math.max(1, data.length) * rowH + 8;
-  const max = Math.max(...data.map((d) => d.total_minutes), 1);
-
-  const barClass: Record<Skill, string> = {
-    reading: 'text-primary',
-    listening: 'text-secondary',
-    writing: 'text-accent',
-    speaking: 'text-foreground',
-  };
-
-  return (
-    <svg
-      role="img"
-      aria-label="Total time spent per skill"
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="rounded-ds border border-border"
-    >
-      {data.map((d, i) => {
-        const barW = (d.total_minutes / max) * (width - 120);
-        const y = i * rowH + 8;
-        return (
-          <g key={d.skill}>
-            <text
-              x={0}
-              y={y + 16}
-              fontSize={12}
-              className="fill-current text-foreground/70"
-            >
-              {cap(d.skill)}
-            </text>
-            <rect
-              x={100}
-              y={y}
-              width={barW}
-              height={20}
-              className={barClass[d.skill]}
-              fill="currentColor"
-              rx={8}
-            />
-            <text
-              x={100 + barW + 8}
-              y={y + 15}
-              fontSize={12}
-              className="fill-current text-foreground/80"
-            >
-              {`${Math.round(d.total_minutes)} min`}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
-/* ---------- small utils ---------- */
-const cap = (s: string) => s.slice(0, 1).toUpperCase() + s.slice(1);
