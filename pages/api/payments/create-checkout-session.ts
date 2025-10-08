@@ -3,10 +3,7 @@ import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
 import { createClient as createSbClient } from '@supabase/supabase-js';
-
-// ---- Types (I/O) ----
-type PlanKey = 'starter' | 'booster' | 'master';
-type Cycle = 'monthly' | 'annual';
+import { getPlanBillingAmount, type Cycle, type PlanKey } from '@/lib/pricing';
 
 type CreateCheckoutBody = Readonly<{
   plan: PlanKey;
@@ -46,14 +43,6 @@ const priceMap: Record<PlanKey, Record<Cycle, string | undefined>> = {
   },
 };
 
-// Temporary display pricing used for manual fallback (major units, e.g. 9 → $9)
-// TODO: unify with lib/pricing.ts to avoid duplication.
-const DISPLAY_PRICE_MAJOR_USD: Record<PlanKey, Record<Cycle, number>> = {
-  starter: { monthly: 9,  annual: 8  },
-  booster: { monthly: 19, annual: 16 },
-  master:  { monthly: 39, annual: 35 },
-};
-
 const methodNotAllowed = (res: NextApiResponse<ResBody>) =>
   res.status(405).json({ ok: false, error: 'method_not_allowed' });
 const badRequest = (res: NextApiResponse<ResBody>, msg: string) =>
@@ -69,7 +58,7 @@ async function provisionManually(opts: {
   cycle: Cycle;
   userEmail?: string | null;
 }) {
-  const amountMajor = DISPLAY_PRICE_MAJOR_USD[opts.plan][opts.cycle];
+  const amountMajor = getPlanBillingAmount(opts.plan, opts.cycle);
   const amount_cents = Math.round(amountMajor * 100);
   const currency = 'USD';
 
