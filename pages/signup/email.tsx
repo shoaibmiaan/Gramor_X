@@ -56,7 +56,7 @@ export default function SignUpWithEmail() {
       const nextQS = new URLSearchParams();
       if (role) nextQS.set('role', role);
       if (ref)  nextQS.set('ref', ref);
-      const next = `/onboarding/goal${nextQS.toString() ? `?${nextQS.toString()}` : ''}`;
+      const next = `/onboarding${nextQS.toString() ? `?${nextQS.toString()}` : ''}`;
 
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
