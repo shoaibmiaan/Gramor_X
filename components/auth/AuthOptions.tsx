@@ -136,7 +136,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
         if (selectedRole) qs.set('role', selectedRole);
         if (ref) qs.set('ref', ref);
         const suffix = qs.toString();
-        next = `/onboarding/goal${suffix ? `?${suffix}` : ''}`;
+        next = `/onboarding${suffix ? `?${suffix}` : ''}`;
       }
 
       const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;

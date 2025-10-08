@@ -6,10 +6,7 @@ export const routes = {
 
   // Onboarding
   onboarding: {
-    goal: () => '/onboarding/goal',
-    date: () => '/onboarding/date',
-    skills: () => '/onboarding/skills',
-    schedule: () => '/onboarding/schedule',
+    root: () => '/onboarding',
   },
 
   // Mocks

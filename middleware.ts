@@ -86,6 +86,7 @@ export async function middleware(req: NextRequest) {
 
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
+  const isOnboardingRoute = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 
   // ----- Premium PIN gate (takes precedence over generic auth) -----
   const isPremiumSection = pathname.startsWith('/premium');
@@ -133,6 +134,44 @@ export async function middleware(req: NextRequest) {
     url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/';
     url.search = '';
     return redirectWithCookies(res, url);
+  }
+
+  if (user) {
+    const role =
+      (user.app_metadata?.role as string | undefined) ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ((user.user_metadata as any)?.role as string | undefined);
+
+    const skipOnboardingGuard = role === 'teacher' || role === 'admin';
+
+    if (!skipOnboardingGuard) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('onboarding_complete,onboarding_step')
+        .or(`user_id.eq.${user.id},id.eq.${user.id}`)
+        .maybeSingle();
+
+      const loadFailed = !!profileError && profileError.code !== 'PGRST116';
+      if (!loadFailed) {
+        const noProfile = profileError?.code === 'PGRST116' || !profile;
+        const onboardingComplete = profile?.onboarding_complete === true;
+
+        if (!onboardingComplete) {
+          if (!isOnboardingRoute && (isProtected || pathname === '/dashboard')) {
+            const url = req.nextUrl.clone();
+            url.pathname = '/onboarding';
+            url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
+            return redirectWithCookies(res, url);
+          }
+        } else if (isOnboardingRoute && !noProfile) {
+          const url = req.nextUrl.clone();
+          const nextParam = req.nextUrl.searchParams.get('next');
+          url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
+          url.search = '';
+          return redirectWithCookies(res, url);
+        }
+      }
+    }
   }
 
   // Otherwise continue (with any refreshed cookies attached)
