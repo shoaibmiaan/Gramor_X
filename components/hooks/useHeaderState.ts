@@ -167,6 +167,19 @@ export function useHeaderState(initialStreak?: number) {
     return () => window.removeEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
   }, []);
 
+  useEffect(() => {
+    const onTierUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ tier?: SubscriptionTier; role?: string | null }>).detail;
+      if (detail?.tier) setSubscriptionTier(detail.tier);
+      if (Object.prototype.hasOwnProperty.call(detail ?? {}, 'role')) {
+        setRole(detail?.role ?? null);
+      }
+    };
+
+    window.addEventListener('subscription:tier-updated', onTierUpdated as EventListener);
+    return () => window.removeEventListener('subscription:tier-updated', onTierUpdated as EventListener);
+  }, []);
+
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
