@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import { z } from 'zod';
+
+import { getServerClient } from '@/lib/supabaseServer';
 
 const BodySchema = z.object({
   attemptId: z.string().uuid(),
@@ -14,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!parse.success) return res.status(400).json({ error: 'Invalid body', details: parse.error.flatten() });
   const { attemptId, type } = parse.data;
 
-  const supabase = createServerSupabaseClient({ req, res });
+  const supabase = getServerClient(req, res);
   const { data: userResp, error: authErr } = await supabase.auth.getUser();
   if (authErr || !userResp?.user) return res.status(401).json({ error: 'Unauthorized' });
   const userId = userResp.user.id;

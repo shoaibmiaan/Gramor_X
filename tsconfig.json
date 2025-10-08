@@ -14,9 +14,7 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["*"],
-      "@supabase/auth-helpers-nextjs": ["shims/auth-helpers-nextjs.ts"],
-      "@supabase/ssr": ["shims/ssr.ts"]
+      "@/*": ["*"]
     },
     "verbatimModuleSyntax": false,
     "forceConsistentCasingInFileNames": true,

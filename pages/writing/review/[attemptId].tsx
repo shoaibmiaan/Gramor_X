@@ -1,7 +1,8 @@
 // pages/writing/review/[attemptId].tsx
 import React, { useState } from 'react';
 import type { GetServerSideProps } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
@@ -24,7 +25,7 @@ type Attempt = {
 type Props = { attempt: Attempt; reevals: ReevalRow[]; isAdmin: boolean };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
-  const supa = createServerSupabaseClient(ctx);
+  const supa = getServerClient(ctx.req as any, ctx.res as any);
   const { data: auth } = await supa.auth.getUser();
   const userId = auth.user?.id ?? null;
 
