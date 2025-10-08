@@ -42,16 +42,18 @@ export default function MockResumePage() {
     return Math.max(0, checkpoint.duration - checkpoint.elapsed);
   }, [checkpoint]);
 
+  const canResume = checkpoint ? !checkpoint.completed : false;
+
   const resumeHref = useMemo(() => {
     if (!checkpoint) return '#';
     return `/mock/${checkpoint.section}/${checkpoint.mockId}`;
   }, [checkpoint]);
 
   const handleResume = useCallback(async () => {
-    if (!checkpoint) return;
+    if (!checkpoint || !canResume) return;
     setMockAttemptId(checkpoint.section, checkpoint.mockId, checkpoint.attemptId);
     await router.push(resumeHref);
-  }, [checkpoint, router, resumeHref]);
+  }, [checkpoint, router, resumeHref, canResume]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -102,19 +104,31 @@ export default function MockResumePage() {
                   <dd>{formatDuration(remaining)}</dd>
                 </div>
               )}
+              {checkpoint.completed && (
+                <div className="flex items-center justify-between text-foreground/70">
+                  <dt>Status</dt>
+                  <dd>Completed</dd>
+                </div>
+              )}
             </dl>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={handleResume}
-                className="rounded-xl bg-primary px-4 py-2 font-medium text-background hover:opacity-90"
+                disabled={!canResume}
+                className="rounded-xl bg-primary px-4 py-2 font-medium text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Continue
+                {canResume ? 'Continue' : 'Start a new attempt'}
               </button>
               <Link href="/mock" className="text-small underline underline-offset-4">
                 Start a different test
               </Link>
             </div>
+            {!canResume && (
+              <p className="mt-3 text-caption text-foreground/70">
+                This attempt has been submitted already. Start a new test from the mock library to practice again.
+              </p>
+            )}
           </div>
         )}
       </div>
