@@ -1,6 +1,7 @@
 // lib/apiGuard.ts
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 
 type PlanId = 'free' | 'starter' | 'booster' | 'master';
 type Role = 'user' | 'admin' | 'teacher' | 'org' | null;
@@ -32,7 +33,7 @@ export function withPlan(
     // Public endpoints
     if (required === 'free') return handler(req, res);
 
-    const supabase = createPagesServerClient({ req, res });
+    const supabase = getServerClient(req, res);
 
     // Must be authenticated for non-free
     const { data: userData, error: authErr } = await supabase.auth.getUser();

@@ -21,6 +21,7 @@ require.cache[envPath] = {
 const supabaseUser = {
   auth: {
     getUser: async () => ({ data: { user: { id: 'user1', email: 'u1@example.com' } } }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } }, error: null }),
   },
 };
 require.cache[require.resolve('@supabase/supabase-js')] = {

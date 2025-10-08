@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { GetServerSideProps } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
@@ -20,7 +21,7 @@ interface Attempt {
 }
 
 export const getServerSideProps: GetServerSideProps<{ attempt: Attempt }> = async (ctx) => {
-  const supa = createServerSupabaseClient(ctx);
+  const supa = getServerClient(ctx.req as any, ctx.res as any);
   const { data: auth } = await supa.auth.getUser();
   const userId = auth.user?.id ?? null;
   const id = String(ctx.params!.id);

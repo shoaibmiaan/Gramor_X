@@ -3,7 +3,8 @@ import * as React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -49,7 +50,7 @@ type Due = {
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const { req, res, resolvedUrl } = ctx;
 
-  const supabase = createPagesServerClient({ req, res });
+  const supabase = getServerClient(req, res);
   const { data, error } = await supabase.auth.getUser();
 
   // If no user, bounce to login (preserve return path)

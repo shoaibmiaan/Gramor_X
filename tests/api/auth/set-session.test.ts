@@ -2,7 +2,7 @@
 import { strict as assert } from 'node:assert';
 
 function withAuthStub(auth: Record<string, any>) {
-  const helperPath = require.resolve('@supabase/auth-helpers-nextjs');
+  const helperPath = require.resolve('../../../../lib/supabaseServer');
   const handlerPath = require.resolve('../../../pages/api/auth/set-session');
 
   delete require.cache[helperPath];
@@ -10,7 +10,7 @@ function withAuthStub(auth: Record<string, any>) {
 
   require.cache[helperPath] = {
     exports: {
-      createPagesServerClient: () => ({ auth }),
+      getServerClient: () => ({ auth }),
     },
   } as any;
 
