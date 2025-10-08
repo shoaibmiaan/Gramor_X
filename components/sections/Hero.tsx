@@ -131,25 +131,25 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
   };
 
   return (
-    <section className="min-h-[100vh] flex items-center justify-center py-20 sm:py-24 relative">
+    <section className="relative flex min-h-[100vh] items-center justify-center py-16 sm:py-24">
       <Container>
-        <div className="relative z-10 max-w-2xl mx-auto text-center">
-          <h1 className="font-slab text-display sm:text-displayLg md:text-6xl font-bold mb-5 leading-tight">
+        <div className="relative z-10 mx-auto max-w-2xl text-center">
+          <h1 className="font-slab text-display sm:text-displayLg md:text-6xl font-bold leading-tight">
             <span className="text-gradient-primary">ACHIEVE YOUR DREAM IELTS SCORE WITH AI-POWERED PREP</span>
           </h1>
-          <p className="text-h4 text-muted-foreground mb-8 max-w-xl mx-auto">
+          <p className="mx-auto mt-4 max-w-xl text-h5 text-muted-foreground sm:text-h4">
             Master all four modules with adaptive paths, realistic mocks, and instant AI feedback.
           </p>
 
           {/* Countdown */}
-          <Card className="inline-block p-6 rounded-2xl">
-            <div className="text-primary font-semibold mb-3">PRE-LAUNCH ACCESS IN</div>
-            <div className="flex gap-5 justify-center" aria-live="polite">
+          <Card className="mt-8 w-full rounded-2xl p-6 sm:inline-block sm:w-auto">
+            <div className="mb-3 font-semibold text-primary">PRE-LAUNCH ACCESS IN</div>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6" aria-live="polite">
               {(['Days', 'Hours', 'Minutes', 'Seconds'] as const).map((label, i) => {
                 const v = [diff.days, diff.hours, diff.minutes, diff.seconds][i] || 0;
                 return (
-                  <div key={label} className="text-center">
-                    <div className="font-slab text-display md:text-displayLg font-bold text-gradient-vertical">
+                  <div key={label} className="min-w-[5.5rem] text-center">
+                    <div className="font-slab text-4xl font-bold text-gradient-vertical sm:text-display md:text-displayLg">
                       {String(v).padStart(2, '0')}
                     </div>
                     <div className="uppercase tracking-wide text-muted-foreground text-small mt-1">{label}</div>
@@ -160,7 +160,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
           </Card>
 
           {/* Word of the Day + streak */}
-          <Card className="mt-6 max-w-md p-6 rounded-2xl mx-auto">
+          <Card className="mx-auto mt-6 w-full max-w-md rounded-2xl p-6">
             <h3 className="text-primary font-semibold text-h3 mb-4">
               <Icon name="book" /> Word of the Day
             </h3>
@@ -219,11 +219,11 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
             ) : null}
           </Card>
 
-          <div className="flex gap-4 mt-8 justify-center">
-            <Button href="/waitlist" variant="primary">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
+            <Button href="/waitlist" variant="primary" className="w-full sm:w-auto">
               Join Exclusive Waitlist
             </Button>
-            <Button href="/pricing" variant="secondary">
+            <Button href="/pricing" variant="secondary" className="w-full sm:w-auto">
               See Plans
             </Button>
           </div>

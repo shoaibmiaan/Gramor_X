@@ -20,7 +20,7 @@ export const Section: React.FC<SectionProps> = ({
   children,
   ...rest
 }) => {
-  const base = 'py-24'
+  const base = 'py-16 sm:py-24'
   const toneCls = tone === 'dark' ? 'section-dark' : 'bg-background text-foreground'
   const dividerCls =
     divider === 'top' ? 'border-t border-border' :
