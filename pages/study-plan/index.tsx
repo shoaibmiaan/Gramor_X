@@ -1,268 +1,293 @@
-// pages/saved/index.tsx
+// pages/study-plan/index.tsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { Skeleton } from '@/components/design-system/Skeleton';
 import { useToast } from '@/components/design-system/Toaster';
 
-type SavedType = 'listening' | 'reading' | 'writing' | 'speaking' | 'other';
+import { useStreak } from '@/hooks/useStreak';
+import { getDayKeyInTZ } from '@/lib/streak';
+import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { generateStudyPlan } from '@/lib/studyPlan';
 
-type SavedItem = {
-  id: string;
-  user_id: string;
-  title: string;
-  url: string;
-  type: SavedType;
-  created_at: string;
-};
+import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
+import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
+import { PlanCard } from '@/components/study/PlanCard';
+import { WeekGrid } from '@/components/study/WeekGrid';
+import { StreakChip } from '@/components/user/StreakChip';
+import { coerceStudyPlan, planDayKey } from '@/utils/studyPlan';
 
-const PAGE_SIZE = 20;
+const PRESETS: ReadonlyArray<StudyPlanPreset> = [
+  {
+    id: 'balanced-4w',
+    title: 'Balanced focus',
+    description: 'Four weeks of daily IELTS tasks evenly split across all skills.',
+    weeks: 4,
+    highlight: 'Recommended',
+  },
+  {
+    id: 'speaking-boost',
+    title: 'Speaking boost',
+    description: 'Two-week plan focused on speaking drills and writing prompts.',
+    weeks: 2,
+  },
+  {
+    id: 'listening-sprint',
+    title: 'Listening sprint',
+    description: 'One-week reset with intensive listening practice.',
+    weeks: 1,
+    highlight: 'Great for jump-starts',
+  },
+];
 
-export default function SavedItemsPage() {
-  const toast = useToast();
-  const [items, setItems] = useState<SavedItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<SavedType | 'all'>('all');
-  const [page, setPage] = useState(0);
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
+function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType {
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+
+  const weaknesses =
+    preset.id === 'speaking-boost'
+      ? ['speaking:fluency', 'writing:task2 coherence']
+      : preset.id === 'listening-sprint'
+      ? ['listening:maps', 'listening:matching']
+      : undefined;
+
+  return generateStudyPlan({
+    userId,
+    startISO: start.toISOString(),
+    weeks: preset.weeks,
+    weaknesses,
+  });
+}
+
+export default function StudyPlanPage() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<PlanType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [creatingId, setCreatingId] = useState<string | null>(null);
+  const [busyTask, setBusyTask] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.id) {
-          if (active) {
-            setUserId(null);
-            setItems([]);
-            setLoading(false);
-          }
-          return;
-        }
-        if (active) setUserId(user.id);
-      } catch (e) {
-        console.error('[saved] auth lookup failed', e);
-        if (active) setUserId(null);
-      }
-    })();
-    return () => { active = false; };
-  }, []);
+  const { success: toastSuccess, error: toastError } = useToast();
+  const { current: streak, loading: streakLoading, completeToday, reload: reloadStreak } = useStreak();
 
-  const load = useCallback(async (uid: string, pageIndex: number, kind: SavedType | 'all') => {
+  const loadPlan = useCallback(async () => {
     setLoading(true);
     try {
-      const q = supabase
-        .from('saved_items')
-        .select('*')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: false })
-        .range(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE - 1);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        setUserId(null);
+        setPlan(null);
+        return;
+      }
+      setUserId(user.id);
 
-      const { data, error } = kind === 'all' ? await q : await q.eq('type', kind);
-      if (error) throw error;
-      setItems((data as SavedItem[]) || []);
-      setSelected({});
-    } catch (e) {
-      console.error('[saved] load failed', e);
-      toast.error('Could not load saved items', e instanceof Error ? e.message : 'Unknown error');
-      setItems([]);
+      const { data, error } = await supabase
+        .from('study_plans')
+        .select('plan_json,start_iso,weeks,goal_band')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (!data) {
+        setPlan(null);
+      } else {
+        const normalised = coerceStudyPlan(data.plan_json ?? data, user.id, {
+          startISO: data.start_iso ?? undefined,
+          weeks: data.weeks ?? undefined,
+          goalBand: data.goal_band ?? undefined,
+        });
+        setPlan(normalised);
+      }
+    } catch (err) {
+      console.error('Failed to load study plan', err);
+      setPlan(null);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
-
-  useEffect(() => {
-    if (!userId) return;
-    load(userId, page, filter);
-  }, [userId, page, filter, load]);
-
-  const anySelected = useMemo(() => Object.values(selected).some(Boolean), [selected]);
-
-  const toggleSelect = useCallback((id: string) => {
-    setSelected(prev => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const selectAll = useCallback(() => {
-    const map: Record<string, boolean> = {};
-    items.forEach(i => { map[i.id] = true; });
-    setSelected(map);
-  }, [items]);
+  useEffect(() => {
+    void loadPlan();
+  }, [loadPlan]);
 
-  const clearSelection = useCallback(() => setSelected({}), []);
+  const todayKey = getDayKeyInTZ();
 
-  const removeOne = useCallback(async (id: string) => {
-    const prev = items;
-    setItems(items.filter(i => i.id !== id));
-    try {
-      const { error } = await supabase.from('saved_items').delete().eq('id', id);
+  const today = useMemo<StudyDay | null>(() => {
+    if (!plan) return null;
+    return plan.days.find((d) => planDayKey(d) === todayKey) ?? null;
+  }, [plan, todayKey]);
+
+  const upcomingDays = useMemo<StudyDay[]>(() => {
+    if (!plan) return [];
+    return plan.days.filter((d) => planDayKey(d) >= todayKey).slice(0, 7);
+  }, [plan, todayKey]);
+
+  const persistPlan = useCallback(
+    async (next: PlanType) => {
+      if (!userId) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('study_plans')
+        .upsert(
+          {
+            user_id: userId,
+            plan_json: next as unknown as Record<string, unknown>,
+            start_iso: next.startISO,
+            weeks: next.weeks,
+            goal_band: next.goalBand ?? null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        );
       if (error) throw error;
-      toast.success('Removed from saved');
-    } catch (e) {
-      toast.error('Failed to remove item');
-      setItems(prev); // rollback
-    }
-  }, [items, toast]);
+    },
+    [userId],
+  );
 
-  const removeSelected = useCallback(async () => {
-    const ids = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
-    if (ids.length === 0) return;
-    const prev = items;
-    setItems(items.filter(i => !ids.includes(i.id)));
-    try {
-      const { error } = await supabase.from('saved_items').delete().in('id', ids);
-      if (error) throw error;
-      toast.success(`Removed ${ids.length} item(s)`);
-      setSelected({});
-    } catch (e) {
-      toast.error('Failed to remove selected');
-      setItems(prev); // rollback
-    }
-  }, [items, selected, toast]);
+  const handleCreatePlan = useCallback(
+    async (preset: StudyPlanPreset) => {
+      if (!userId) {
+        toastError('Please sign in to create a study plan.');
+        return;
+      }
+      setCreatingId(preset.id);
+      try {
+        const nextPlan = createPlanFromPreset(preset, userId);
+        await persistPlan(nextPlan);
+        setPlan(nextPlan);
+        toastSuccess('Plan ready', 'Your new study plan is live. Start with today’s tasks!');
+      } catch (err) {
+        console.error('Failed to create plan', err);
+        toastError(err instanceof Error ? err.message : 'Could not create plan.');
+      } finally {
+        setCreatingId(null);
+      }
+    },
+    [persistPlan, toastError, toastSuccess, userId],
+  );
 
-  const openTarget = (item: SavedItem) => {
-    if (item.url) {
-      // client-side open; rely on rel attributes for safety
-      window.open(item.url, '_blank', 'noopener,noreferrer');
-    }
-  };
+  const handleTaskToggle = useCallback(
+    async (day: StudyDay, taskId: string, checked: boolean) => {
+      if (!plan || !userId) return;
+
+      const dayKey = planDayKey(day);
+      const target = day.tasks.find((t) => t.id === taskId);
+      const wasComplete = target?.completed ?? false;
+      const hadOtherCompleted = day.tasks.some((t) => t.completed && t.id !== taskId);
+
+      const next: PlanType = {
+        ...plan,
+        days: plan.days.map((d) =>
+          d.dateISO === day.dateISO
+            ? { ...d, tasks: d.tasks.map((t) => (t.id === taskId ? { ...t, completed: checked } : t)) }
+            : d,
+        ),
+      };
+
+      setBusyTask(taskId);
+      setPlan(next);
+
+      try {
+        await persistPlan(next);
+        const shouldStartStreak = checked && !wasComplete && !hadOtherCompleted && dayKey === todayKey;
+        if (shouldStartStreak) {
+          try {
+            const data = await completeToday();
+            if (!data) await reloadStreak();
+          } catch (err) {
+            console.error('Streak update failed', err);
+          }
+        }
+        toastSuccess('Progress saved');
+      } catch (err) {
+        console.error('Failed to update task', err);
+        toastError(err instanceof Error ? err.message : 'Could not update task.');
+        setPlan(plan); // rollback
+      } finally {
+        setBusyTask(null);
+      }
+    },
+    [plan, userId, persistPlan, completeToday, reloadStreak, toastSuccess, toastError, todayKey],
+  );
+
+  const hasPlan = !!plan && plan.days.length > 0;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <header className="mb-6 flex items-center justify-between">
-          <h1 className="text-h1 font-bold">Saved Items</h1>
-          <Link
-            href="/onboarding"
-            className="text-small underline decoration-2 underline-offset-4"
-          >
-            Onboarding
-          </Link>
-        </header>
+    <section className="bg-lightBg py-16 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+      <Container>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="font-slab text-display">Your study plan</h1>
+            <p className="text-body text-muted-foreground">
+              Keep a daily rhythm to build momentum for your IELTS goal.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <StreakChip value={streakLoading ? 0 : streak} loading={streakLoading} href="/profile/streak" />
+            <Button variant="soft" tone="info" asChild>
+              <Link href="/progress">View progress</Link>
+            </Button>
+          </div>
+        </div>
 
-        <section className="mb-4 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <label htmlFor="filter" className="text-small text-muted-foreground">Filter</label>
-            <select
-              id="filter"
-              className="rounded-lg border border-border bg-background px-3 py-2 text-small"
-              value={filter}
-              onChange={(e) => { setPage(0); setFilter(e.target.value as any); }}
-            >
-              <option value="all">All</option>
-              <option value="listening">Listening</option>
-              <option value="reading">Reading</option>
-              <option value="writing">Writing</option>
-              <option value="speaking">Speaking</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+        <div className="mt-10 space-y-8">
+          {loading ? (
+            <Card className="rounded-ds-2xl p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            </Card>
+          ) : !hasPlan ? (
+            <StudyPlanEmptyState
+              presets={PRESETS}
+              onSelect={handleCreatePlan}
+              busyId={creatingId}
+              disabled={!!creatingId}
+              showOnboardingCta
+            />
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+              <div className="space-y-6">
+                <PlanCard
+                  day={today ?? plan!.days[0]}
+                  onToggleTask={(taskId, checked) =>
+                    handleTaskToggle(today ?? plan!.days[0], taskId, checked)
+                  }
+                  busyTaskId={busyTask}
+                  isToday={planDayKey(today ?? plan!.days[0]) === todayKey}
+                />
+                <WeekGrid days={upcomingDays} />
+              </div>
 
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              className="rounded-lg border border-border px-3 py-2 text-small hover:border-primary"
-              onClick={selectAll}
-              aria-label="Select all on this page"
-            >
-              Select all
-            </button>
-            <button
-              className="rounded-lg border border-border px-3 py-2 text-small hover:border-primary disabled:opacity-50"
-              onClick={clearSelection}
-              disabled={!anySelected}
-            >
-              Clear selection
-            </button>
-            <button
-              className="rounded-lg bg-destructive px-3 py-2 text-small text-destructive-foreground disabled:opacity-50"
-              onClick={removeSelected}
-              disabled={!anySelected}
-            >
-              Remove selected
-            </button>
-          </div>
-        </section>
-
-        {loading ? (
-          <div className="rounded-xl border border-border p-4 text-small text-muted-foreground" role="status" aria-live="polite">
-            Loading your saved items…
-          </div>
-        ) : items.length === 0 ? (
-          <div className="rounded-xl border border-border p-6 text-small text-muted-foreground">
-            Nothing saved yet. Browse modules and tap “Save” on lessons, questions, or articles to see them here.
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link href="/listening" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Listening</Link>
-              <Link href="/reading" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Reading</Link>
-              <Link href="/writing" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Writing</Link>
-              <Link href="/speaking/simulator" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">Speaking</Link>
-            </div>
-          </div>
-        ) : (
-          <ul className="grid gap-3">
-            {items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card/60 p-4"
-              >
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  <input
-                    aria-label={`Select ${item.title}`}
-                    type="checkbox"
-                    className="mt-1 h-4 w-4"
-                    checked={!!selected[item.id]}
-                    onChange={() => toggleSelect(item.id)}
-                  />
-                  <div className="min-w-0">
-                    <div className="truncate text-small font-medium">{item.title || item.url}</div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      {item.type} • {new Date(item.created_at).toLocaleString()}
-                    </div>
-                    <button
-                      className="mt-2 truncate text-left text-xs underline decoration-2 underline-offset-4"
-                      onClick={() => openTarget(item)}
+              <Card className="rounded-ds-2xl p-6 space-y-4">
+                <h3 className="font-slab text-h4">Need a change?</h3>
+                <p className="text-small text-muted-foreground">
+                  Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets
+                  below.
+                </p>
+                <div className="space-y-3">
+                  {PRESETS.map((preset) => (
+                    <Button
+                      key={preset.id}
+                      variant="ghost"
+                      className="w-full justify-between"
+                      onClick={() => handleCreatePlan(preset)}
+                      loading={creatingId === preset.id}
                     >
-                      {item.url}
-                    </button>
-                  </div>
+                      {preset.title}
+                      <span className="text-small text-muted-foreground">{preset.weeks} wk</span>
+                    </Button>
+                  ))}
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <button
-                    className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary"
-                    onClick={() => openTarget(item)}
-                    aria-label="Open"
-                  >
-                    Open
-                  </button>
-                  <button
-                    className="rounded-lg bg-destructive px-3 py-1 text-small text-destructive-foreground"
-                    onClick={() => removeOne(item.id)}
-                    aria-label="Remove"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <nav className="mt-6 flex items-center justify-between">
-          <button
-            className="rounded-lg border border-border px-3 py-2 text-small hover:border-primary disabled:opacity-50"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0 || loading}
-          >
-            Previous
-          </button>
-          <div className="text-small text-muted-foreground">Page {page + 1}</div>
-          <button
-            className="rounded-lg border border-border px-3 py-2 text-small hover:border-primary disabled:opacity-50"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={loading || items.length < PAGE_SIZE}
-          >
-            Next
-          </button>
-        </nav>
-      </div>
-    </div>
+              </Card>
+            </div>
+          )}
+        </div>
+      </Container>
+    </section>
   );
 }

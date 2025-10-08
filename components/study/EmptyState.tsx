@@ -1,30 +1,40 @@
+// components/study/EmptyState.tsx
+import React from 'react';
 import Link from 'next/link';
-
-import { EmptyState } from '@/components/design-system/EmptyState';
+import { EmptyState as DSEmptyState } from '@/components/design-system/EmptyState';
 import { Button } from '@/components/design-system/Button';
+import { Icon } from '@/components/design-system/Icon';
 
 export type StudyPlanPreset = {
-  id: 'lite' | 'focus' | 'intensive';
+  id: string;            // e.g., 'lite' | 'focus' | 'intensive' | custom
   title: string;
   description: string;
   weeks: number;
-  dailyMinutes: string;
-  highlight: string;
+  dailyMinutes?: string;
+  highlight?: string;
 };
 
-type StudyPlanEmptyStateProps = {
+type Props = {
+  /** Optional custom presets; if omitted we show sensible defaults. */
+  presets?: ReadonlyArray<StudyPlanPreset>;
+  /** When a preset is being created, pass its id to show loading state on that card. */
   busyId?: string | null;
+  /** Called when user selects a preset. */
   onSelect: (preset: StudyPlanPreset) => void | Promise<void>;
+  /** Disable all actions (e.g., while creating). */
+  disabled?: boolean;
+  /** Show an onboarding CTA under the EmptyState header (default true). */
+  showOnboardingCta?: boolean;
 };
 
-const PRESETS: ReadonlyArray<StudyPlanPreset> = [
+const DEFAULT_PRESETS: ReadonlyArray<StudyPlanPreset> = [
   {
     id: 'lite',
     title: 'Lite reset (2 weeks)',
     description: 'Ease back in with short daily sessions and vocabulary refreshers.',
     weeks: 2,
     dailyMinutes: '30 min/day',
-    highlight: 'Daily vocab and review blocks to rebuild momentum.',
+    highlight: 'Rebuild momentum quickly.',
   },
   {
     id: 'focus',
@@ -32,7 +42,7 @@ const PRESETS: ReadonlyArray<StudyPlanPreset> = [
     description: 'Structured mix of all four modules with weekly review checkpoints.',
     weeks: 4,
     dailyMinutes: '45–60 min/day',
-    highlight: 'Weekly mock slots and targeted weakness drills.',
+    highlight: 'Weekly mocks + targeted drills.',
   },
   {
     id: 'intensive',
@@ -40,25 +50,40 @@ const PRESETS: ReadonlyArray<StudyPlanPreset> = [
     description: 'Longer study blocks and extra mocks for a final exam sprint.',
     weeks: 6,
     dailyMinutes: '75 min/day',
-    highlight: 'Two mock exams per week plus nightly speaking prompts.',
+    highlight: 'Two mock exams per week.',
   },
-];
+] as const;
 
-export function StudyPlanEmptyState({ busyId, onSelect }: StudyPlanEmptyStateProps) {
+export function StudyPlanEmptyState({
+  presets,
+  busyId = null,
+  onSelect,
+  disabled,
+  showOnboardingCta = true,
+}: Props) {
+  const list = presets?.length ? presets : DEFAULT_PRESETS;
+
   return (
     <div className="space-y-8">
-      <EmptyState
+      <DSEmptyState
         title="Create your study plan"
-        description="Pick a quick preset to fill your calendar instantly. You can still customise tasks later."
+        description="Pick a quick preset to fill your calendar instantly. You can customise tasks later."
+        icon={<Icon name="fire" size={28} title="Streak" />}
         actions={
-          <Button asChild variant="outline">
-            <Link href="/onboarding">Build with onboarding</Link>
-          </Button>
+          showOnboardingCta ? (
+            <Button asChild variant="outline">
+              <Link href="/onboarding">Build with onboarding</Link>
+            </Button>
+          ) : (
+            <span className="text-small text-muted-foreground">
+              Plans auto-adjust after you complete a day.
+            </span>
+          )
         }
       />
 
       <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
-        {PRESETS.map((preset) => {
+        {list.map((preset) => {
           const isBusy = busyId === preset.id;
           return (
             <article
@@ -73,16 +98,26 @@ export function StudyPlanEmptyState({ busyId, onSelect }: StudyPlanEmptyStatePro
 
                 <dl className="grid grid-cols-2 gap-3 text-caption text-muted-foreground">
                   <div>
-                    <dt className="uppercase tracking-wide text-[0.7rem] text-muted-foreground/80">Duration</dt>
+                    <dt className="uppercase tracking-wide text-[0.7rem] text-muted-foreground/80">
+                      Duration
+                    </dt>
                     <dd className="text-small font-medium text-foreground">{preset.weeks} weeks</dd>
                   </div>
                   <div>
-                    <dt className="uppercase tracking-wide text-[0.7rem] text-muted-foreground/80">Daily time</dt>
-                    <dd className="text-small font-medium text-foreground">{preset.dailyMinutes}</dd>
+                    <dt className="uppercase tracking-wide text-[0.7rem] text-muted-foreground/80">
+                      Daily time
+                    </dt>
+                    <dd className="text-small font-medium text-foreground">
+                      {preset.dailyMinutes ?? 'Varies'}
+                    </dd>
                   </div>
                 </dl>
 
-                <p className="rounded-xl bg-primary/10 px-3 py-2 text-small text-primary">{preset.highlight}</p>
+                {preset.highlight && (
+                  <p className="rounded-xl bg-primary/10 px-3 py-2 text-small text-primary">
+                    {preset.highlight}
+                  </p>
+                )}
               </div>
 
               <Button
@@ -90,6 +125,7 @@ export function StudyPlanEmptyState({ busyId, onSelect }: StudyPlanEmptyStatePro
                 fullWidth
                 loading={isBusy}
                 loadingText="Creating…"
+                disabled={disabled}
                 onClick={() => onSelect(preset)}
               >
                 Start this plan
