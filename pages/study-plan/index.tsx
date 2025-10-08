@@ -1,14 +1,28 @@
 // pages/study-plan.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+
+import { useToast } from '@/components/design-system/Toaster';
+import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { isStudyPlan, type StudyDay, type StudyPlan } from '@/types/plan';
 
-type Module = 'listening' | 'reading' | 'writing' | 'speaking';
-type Task = { module: Module; minutes: number };
-type PlanDay = { date: string; tasks: Task[] };
-type StudyPlan = { start_date?: string; end_date?: string; plan_json?: { days: PlanDay[] } };
+const MODULE_SHORTCUTS: ReadonlyArray<{
+  type: 'listening' | 'reading' | 'writing' | 'speaking';
+  href: string;
+  label: string;
+}> = [
+  { type: 'listening', href: '/listening', label: 'Listening' },
+  { type: 'reading', href: '/reading', label: 'Reading' },
+  { type: 'writing', href: '/writing', label: 'Writing' },
+  { type: 'speaking', href: '/speaking/simulator', label: 'Speaking' },
+];
 
-const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.ReactNode }> = ({ title, children, right }) => (
+const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.ReactNode }> = ({
+  title,
+  children,
+  right,
+}) => (
   <div className="min-h-screen bg-background text-foreground">
     <div className="mx-auto max-w-5xl px-4 py-10">
       <header className="mb-6 flex items-center justify-between">
@@ -24,33 +38,98 @@ const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.
 );
 
 export default function StudyPlanPage() {
+  const toast = useToast();
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [creatingPreset, setCreatingPreset] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.id) return setLoading(false);
-        const { data } = await supabase.from('study_plans').select('*').eq('user_id', user.id).single();
-        setPlan((data as unknown as StudyPlan) || null);
-      } catch {
-        setPlan(null);
+        if (!user?.id) {
+          if (active) setPlan(null);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('study_plans')
+          .select('plan_json')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!active) return;
+
+        if (error) throw error;
+
+        const payload = (data as { plan_json?: unknown } | null)?.plan_json;
+        if (payload && isStudyPlan(payload)) {
+          setPlan(payload);
+        } else {
+          setPlan(null);
+        }
+      } catch (error) {
+        if (active) {
+          console.error('[study-plan] failed to load plan', error);
+          setPlan(null);
+        }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     })();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const days = useMemo<PlanDay[]>(() => {
-    const all = plan?.plan_json?.days ?? [];
-    const todayISO = new Date().toISOString().slice(0, 10);
-    const idx = all.findIndex((d) => d.date >= todayISO);
-    const start = Math.max(0, idx);
-    return all.slice(start, start + 7);
+  const days = useMemo<StudyDay[]>(() => {
+    if (!plan) return [];
+    const sorted = [...plan.days].sort(
+      (a, b) => new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime(),
+    );
+    if (sorted.length === 0) return [];
+
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const startIndex = sorted.findIndex((day) => day.dateISO.slice(0, 10) >= todayKey);
+    const start = startIndex >= 0 ? startIndex : Math.max(sorted.length - 7, 0);
+    return sorted.slice(start, start + 7);
   }, [plan]);
 
-  const none = !loading && (!plan || !plan.plan_json?.days?.length);
+  const showEmpty = !loading && !plan;
+  const showCaughtUp = !loading && !!plan && days.length === 0;
+
+  const handleQuickStart = useCallback(
+    async (preset: StudyPlanPreset) => {
+      setCreatingPreset(preset.id);
+      try {
+        const res = await fetch('/api/study-plan/quick-start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preset: preset.id, weeks: preset.weeks }),
+        });
+        const json = (await res.json()) as
+          | { ok: true; plan: StudyPlan }
+          | { ok: false; error: string };
+
+        if (!res.ok || !json?.ok) {
+          const message = !res.ok ? res.statusText : json?.error;
+          throw new Error(message || 'Failed to create plan');
+        }
+
+        setPlan(json.plan);
+        toast.success('Study plan ready', `We scheduled a ${preset.weeks}-week track starting today.`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to create plan';
+        toast.error('Could not create plan', message);
+      } finally {
+        setCreatingPreset(null);
+      }
+    },
+    [toast],
+  );
 
   return (
     <Shell
@@ -61,59 +140,41 @@ export default function StudyPlanPage() {
         <div className="rounded-xl border border-border p-4 text-small text-foreground/70" aria-live="polite">
           Loading your plan…
         </div>
-      ) : none ? (
-        <div className="grid gap-3">
-          <div className="rounded-xl border border-border p-4 text-small">
-            No active plan found. Complete{' '}
-            <Link href="/onboarding/goal" className="underline decoration-2 underline-offset-4">
-              Onboarding
-            </Link>{' '}
-            to generate a plan.
+      ) : showEmpty ? (
+        <StudyPlanEmptyState busyId={creatingPreset} onSelect={handleQuickStart} />
+      ) : showCaughtUp ? (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-card/70 p-4 text-small text-muted-foreground">
+            You’ve completed every task in this plan. Start a fresh preset to keep your streak climbing.
           </div>
-          <div className="flex justify-end">
-            <Link
-              href="/onboarding/goal"
-              className="rounded-xl bg-primary px-4 py-2 font-medium text-background hover:opacity-90"
-            >
-              Start onboarding
-            </Link>
-          </div>
+          <StudyPlanEmptyState busyId={creatingPreset} onSelect={handleQuickStart} />
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {days.map((d) => (
-            <article key={d.date} className="rounded-xl border border-border p-4">
+          {days.map((day) => (
+            <article key={day.dateISO} className="rounded-xl border border-border bg-card/60 p-4">
               <div className="mb-2 text-small font-medium">
-                <time dateTime={d.date}>{formatHuman(d.date)}</time>
+                <time dateTime={day.dateISO}>{formatHuman(day.dateISO)}</time>
               </div>
-              <ul className="text-small text-foreground/80">
-                {d.tasks.map((t, i) => (
-                  <li key={i} className="flex items-center justify-between">
-                    <span className="capitalize">{t.module}</span>
-                    <span className="text-foreground/70">{t.minutes} min</span>
+              <ul className="space-y-1 text-small text-foreground/80">
+                {day.tasks.map((task) => (
+                  <li key={task.id} className="flex items-center justify-between gap-3">
+                    <span className="flex-1 text-left">{task.title}</span>
+                    <span className="text-foreground/70">{task.estMinutes} min</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-3 flex flex-wrap gap-2">
-                {d.tasks.some(t => t.module === 'listening') && (
-                  <Link href="/listening" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Listening
-                  </Link>
-                )}
-                {d.tasks.some(t => t.module === 'reading') && (
-                  <Link href="/reading" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Reading
-                  </Link>
-                )}
-                {d.tasks.some(t => t.module === 'writing') && (
-                  <Link href="/writing" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Writing
-                  </Link>
-                )}
-                {d.tasks.some(t => t.module === 'speaking') && (
-                  <Link href="/speaking/simulator" className="rounded-lg border border-border px-3 py-1 text-small hover:border-primary">
-                    Speaking
-                  </Link>
+                {MODULE_SHORTCUTS.filter(({ type }) => day.tasks.some((task) => task.type === type)).map(
+                  (module) => (
+                    <Link
+                      key={module.type}
+                      href={module.href}
+                      className="rounded-lg border border-border px-3 py-1 text-small transition hover:border-primary"
+                    >
+                      {module.label}
+                    </Link>
+                  ),
                 )}
               </div>
             </article>
@@ -125,6 +186,7 @@ export default function StudyPlanPage() {
 }
 
 function formatHuman(iso: string) {
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
