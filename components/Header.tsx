@@ -20,7 +20,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [scrolled, setScrolled] = useState(false);
 
   const { user, role, loading } = useUserContext();
-  const { streak: streakState, ready, signOut } = useHeaderState(streak);
+  const { streak: streakState, ready, signOut, subscriptionTier } = useHeaderState(streak);
 
   // Check if user has access to any premium rooms
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
@@ -163,6 +163,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               hasPremiumAccess={hasPremiumAccess}
               premiumRooms={premiumRooms}
               onClearPremiumAccess={handleClearPremiumAccess}
+              subscriptionTier={subscriptionTier}
             />
 
             {user?.id && role && role !== 'guest' && (
@@ -231,6 +232,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               hasPremiumAccess={hasPremiumAccess}
               premiumRooms={premiumRooms}
               onClearPremiumAccess={handleClearPremiumAccess}
+              subscriptionTier={subscriptionTier}
             />
           </div>
         </div>

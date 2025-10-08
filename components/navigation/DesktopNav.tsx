@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { NavLink } from '@/components/design-system/NavLink';
 import { UserMenu } from '@/components/design-system/UserMenu';
 import { NotificationBell } from '@/components/design-system/NotificationBell';
-import { ModuleMenu } from './ModuleMenu';
 import { FireStreak } from './FireStreak';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
-import { NAV, USER_MENU_LINKS } from './constants';
+import { navigationSchema } from '@/config/navigation';
+import { filterNavItems } from '@/lib/navigation/utils';
+import type { SubscriptionTier } from '@/lib/navigation/types';
+import { Button } from '@/components/design-system/Button';
 
 interface UserInfo {
   id: string | null;
@@ -30,6 +32,7 @@ type DesktopNavProps = Omit<React.HTMLAttributes<HTMLElement>, 'role'> & {
   hasPremiumAccess?: boolean;
   premiumRooms?: string[];
   onClearPremiumAccess?: () => void;
+  subscriptionTier: SubscriptionTier;
 };
 
 export function DesktopNav({
@@ -45,6 +48,7 @@ export function DesktopNav({
   hasPremiumAccess = false,
   premiumRooms = [],
   onClearPremiumAccess,
+  subscriptionTier,
   className,
   ...rest
 }: DesktopNavProps) {
@@ -52,73 +56,125 @@ export function DesktopNav({
   const canSeePartners = role === 'partner' || role === 'admin';
   const canSeeAdmin = role === 'admin' && showAdmin;
   const isTeacher = role === 'teacher';
+  const navigationCtx = React.useMemo(
+    () => ({ isAuthenticated: Boolean(uid), tier: subscriptionTier }),
+    [uid, subscriptionTier]
+  );
 
   const navItemClass =
     'nav-pill text-small font-medium text-foreground/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
   // Teachers: only show Profile in menu; Sign out comes from UserMenu via onSignOut
-  const menuItems = isTeacher
-    ? [{ id: 'account', label: 'Profile', href: '/account' }]
-    : USER_MENU_LINKS;
-
-  // Add premium access info to menu items if user has premium access
-  const enhancedMenuItems = hasPremiumAccess ? [
-    ...menuItems,
-    {
-      id: 'premium-status',
-      label: `⭐ Premium Access (${premiumRooms.length} rooms)`,
-      href: '/premium-room',
-      isPremium: true
+  const profileMenu = React.useMemo(() => {
+    if (isTeacher) {
+      return [{ id: 'account', label: 'Profile', href: '/account' }];
     }
-  ] : menuItems;
+    return filterNavItems(navigationSchema.header.profile, navigationCtx);
+  }, [isTeacher, navigationCtx]);
+
+  const mainNavItems = React.useMemo(() => {
+    if (isTeacher) return [];
+    const items = filterNavItems(navigationSchema.header.main, navigationCtx);
+    return items.filter((item) => !(item.id === 'home' && uid));
+  }, [navigationCtx, isTeacher, uid]);
+
+  const aiToolItems = React.useMemo(() => {
+    if (isTeacher) return [];
+    return filterNavItems(navigationSchema.header.aiTools, navigationCtx);
+  }, [navigationCtx, isTeacher]);
+
+  const headerCta = uid ? navigationSchema.header.cta.authed : navigationSchema.header.cta.guest;
+
+  const headerOptional = navigationSchema.header.optional ?? {};
+
+  const aiMenuRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!openModules) return;
+    const firstLink = aiMenuRef.current?.querySelector<HTMLAnchorElement>('a,button');
+    firstLink?.focus();
+  }, [openModules]);
 
   return (
     <nav className={className} aria-label="Primary" {...rest}>
-      <ul className="relative flex items-center gap-2">
-        {/* Dashboard only if logged in and not teacher */}
-        {uid && !isTeacher && (
-          <li>
-            <NavLink href="/dashboard" className={navItemClass} label="Dashboard" />
-          </li>
-        )}
-
-        {/* Teacher role → show only teacher entry */}
-        {isTeacher && uid && (
-          <li>
-            <NavLink href="/teacher" className={navItemClass} label="Teacher" />
-          </li>
-        )}
-
-        {/* Hide module/learning/global nav for teacher */}
-        {!isTeacher && (
-          <ModuleMenu open={openModules} setOpen={setOpenModules} modulesRef={modulesRef} />
-        )}
-
-        {!isTeacher && (
-          <li>
-            <NavLink href="/learning" className={navItemClass} label="Learning" />
-          </li>
-        )}
-
-        {!isTeacher &&
-          NAV.map((n) => (
-            <li key={n.href}>
-              <NavLink href={n.href} className={navItemClass} label={n.label} />
+      <div className="flex items-center gap-4">
+        <ul className="relative flex items-center gap-2">
+          {/* Dashboard shortcut for authenticated learners */}
+          {uid && !isTeacher && (
+            <li>
+              <NavLink href="/dashboard" className={navItemClass} label="Dashboard" />
             </li>
-          ))}
+          )}
 
-        {canSeePartners && (
-          <li>
-            <NavLink href="/partners" className={navItemClass} label="Partners" />
-          </li>
-        )}
-        {canSeeAdmin && (
-          <li>
-            <NavLink href="/admin/partners" className={navItemClass} label="Admin" />
-          </li>
-        )}
+          {/* Teacher role → show only teacher entry */}
+          {isTeacher && uid && (
+            <li>
+              <NavLink href="/teacher" className={navItemClass} label="Teacher" />
+            </li>
+          )}
 
-        {/* Premium Access Status */}
+          {!isTeacher &&
+            mainNavItems.map((item) => (
+              <li key={item.id}>
+                <NavLink href={item.href} className={navItemClass} label={item.label} />
+              </li>
+            ))}
+
+          {!isTeacher && aiToolItems.length > 0 && (
+            <li className="relative" ref={modulesRef}>
+              <button
+                ref={menuButtonRef}
+                onClick={() => setOpenModules(!openModules)}
+                className={`nav-pill gap-2 text-small font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background ${openModules ? 'is-active' : ''}`}
+                aria-haspopup="menu"
+                aria-expanded={openModules}
+              >
+                <span>AI &amp; Tools</span>
+                <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d={openModules ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                </svg>
+              </button>
+              {openModules && (
+                <div
+                  ref={aiMenuRef}
+                  className="absolute right-0 top-full z-50 mt-3 w-64 rounded-xl border border-border bg-card p-3 shadow-xl"
+                  role="menu"
+                >
+                  <ul className="space-y-1">
+                    {aiToolItems.map((item) => (
+                      <li key={item.id}>
+                        <Link
+                          href={item.href}
+                          className="flex items-start gap-2 rounded-lg px-3 py-2 text-left text-small hover:bg-muted"
+                          onClick={() => setOpenModules(false)}
+                        >
+                          <span className="font-medium">{item.label}</span>
+                          {item.badge && (
+                            <span className="ml-auto inline-flex items-center rounded-full bg-muted px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </li>
+          )}
+
+          {canSeePartners && (
+            <li>
+              <NavLink href="/partners" className={navItemClass} label="Partners" />
+            </li>
+          )}
+          {canSeeAdmin && (
+            <li>
+              <NavLink href="/admin/partners" className={navItemClass} label="Admin" />
+            </li>
+          )}
+
+          {/* Premium Access Status */}
         {hasPremiumAccess && (
           <li className="relative group">
             <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-medium">
@@ -155,46 +211,62 @@ export function DesktopNav({
           </li>
         )}
 
-        {/* Right cluster */}
-        <li className="ml-2">
-          <FireStreak value={streak} />
-        </li>
-        <li>
-          <NotificationBell />
-        </li>
-        <li>
-          <IconOnlyThemeToggle />
-        </li>
-
-        <li className="ml-1">
-          {ready ? (
-            uid ? (
-              <UserMenu
-                userId={uid}
-                email={user?.email ?? undefined}
-                avatarUrl={user?.avatarUrl ?? undefined}
-                onSignOut={signOut}
-                isAdmin={role === 'admin'}
-                items={enhancedMenuItems.map((link) => ({
-                  id: link.id,
-                  label: link.label,
-                  href: link.href,
-                  isPremium: link.isPremium || false
-                }))}
-              />
-            ) : (
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-full px-4 py-2 font-semibold bg-primary text-primary-foreground hover:opacity-90 transition"
-              >
-                Sign in
+          {headerCta && (
+            <li>
+              <Link href={headerCta.href} className="hidden lg:block">
+                <Button variant="primary" className="shadow-lg">
+                  {headerCta.label}
+                </Button>
               </Link>
-            )
-          ) : (
-            <div className="h-9 w-24 animate-pulse rounded-full bg-muted" />
+            </li>
           )}
-        </li>
-      </ul>
+        </ul>
+
+        {/* Right cluster */}
+        <ul className="flex items-center gap-2">
+          <li>
+            <FireStreak value={streak} />
+          </li>
+          {headerOptional.notifications && (
+            <li>
+              <NotificationBell />
+            </li>
+          )}
+          {headerOptional.themeToggle && (
+            <li>
+              <IconOnlyThemeToggle />
+            </li>
+          )}
+
+          <li className="ml-1">
+            {ready ? (
+              uid ? (
+                <UserMenu
+                  userId={uid}
+                  email={user?.email ?? undefined}
+                  avatarUrl={user?.avatarUrl ?? undefined}
+                  onSignOut={signOut}
+                  isAdmin={role === 'admin'}
+                  items={profileMenu.map((link) => ({
+                    id: link.id,
+                    label: link.label,
+                    href: link.href,
+                  }))}
+                />
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center rounded-full px-4 py-2 font-semibold bg-primary text-primary-foreground hover:opacity-90 transition"
+                >
+                  Sign in
+                </Link>
+              )
+            ) : (
+              <div className="h-9 w-24 animate-pulse rounded-full bg-muted" />
+            )}
+          </li>
+        </ul>
+      </div>
     </nav>
   );
 }
