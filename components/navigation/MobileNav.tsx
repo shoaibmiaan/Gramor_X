@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { Container } from '@/components/design-system/Container';
 import { NavLink } from '@/components/design-system/NavLink';
 import { NotificationBell } from '@/components/design-system/NotificationBell';
-import { FireStreak } from './FireStreak';
+import { StreakChip } from '@/components/user/StreakChip';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
 import { navigationSchema } from '@/config/navigation';
 import { filterNavItems, filterNavSections } from '@/lib/navigation/utils';
@@ -108,7 +108,7 @@ export function MobileNav({
     >
       <Container>
         <div className="flex items-center justify-between py-3">
-          <FireStreak value={streak} />
+          <StreakChip value={streak} href="/profile/streak" />
           <div className="flex items-center gap-2">
             {headerOptional.notifications && <NotificationBell />}
             {headerOptional.themeToggle && <IconOnlyThemeToggle />}

@@ -2,6 +2,7 @@ import { Icon } from "@/components/design-system/Icon";
 // components/listening/AudioSectionsPlayer.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
+import AudioPlayer from '@/components/audio/Player';
 
 type MCQ = {
   id: string;
@@ -45,11 +46,13 @@ export type AudioSectionsPlayerProps = {
   initialSectionIndex?: number;
   autoAdvance?: boolean;       // default: true
   allowSeek?: boolean;         // default: false (exam-like)
-  isSubmitted?: boolean;       // unlocks transcript
   onReady?: () => void;
   onPlay?: (sectionIndex: number) => void;
   onPause?: (sectionIndex: number) => void;
   onSectionChange?: (sectionIndex: number) => void;
+  onTimeUpdate?: (payload: { sectionIndex: number; sectionMs: number; absoluteMs: number }) => void;
+  seekToMs?: number | null;
+  onExternalSeekResolved?: () => void;
   className?: string;
 };
 
@@ -63,11 +66,13 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
   initialSectionIndex = 0,
   autoAdvance = true,
   allowSeek = false,
-  isSubmitted = false,
   onReady,
   onPlay,
   onPause,
   onSectionChange,
+  onTimeUpdate,
+  seekToMs = null,
+  onExternalSeekResolved,
   className = '',
 }) => {
   // ---- SSR-safe mount gate (no conditional hooks) ----
@@ -77,6 +82,7 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
   // ---- refs & state ----
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number | null>(null);
+  const lastSeekRef = useRef<number | null>(null);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [sectionIndex, setSectionIndex] = useState<number>(clamp(initialSectionIndex, 0, Math.max(0, sections.length - 1)));
@@ -117,6 +123,7 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
     // update progress within section
     const within = clamp(nowMs - startMs, 0, Math.max(0, endMs - startMs));
     setLocalTimeMs(within);
+    onTimeUpdate?.({ sectionIndex, sectionMs: within, absoluteMs: nowMs });
 
     // stop/advance at section end
     if (nowMs >= endMs - 10) {
@@ -141,7 +148,17 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
     }
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [autoAdvance, current, loadToSection, onPause, onPlay, onSectionChange, sectionIndex, sections.length]);
+  }, [
+    autoAdvance,
+    current,
+    loadToSection,
+    onPause,
+    onPlay,
+    onSectionChange,
+    onTimeUpdate,
+    sectionIndex,
+    sections.length,
+  ]);
 
   const startRaf = useCallback(() => {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -155,54 +172,60 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
     }
   }, []);
 
-  // ---- audio lifecycle ----
-  useEffect(() => {
-    if (!mounted || !hasAudio) return;
-    const audio = new Audio(masterAudioUrl);
-    audioRef.current = audio;
+  const handleCanPlay = useCallback(() => {
+    setReady(true);
+    onReady?.();
+    loadToSection(sectionIndex);
+  }, [loadToSection, onReady, sectionIndex]);
 
-    const handleCanPlay = () => {
-      setReady(true);
-      onReady?.();
-      // ensure we are at current section start
-      loadToSection(sectionIndex);
-    };
+  const handlePlay = useCallback(() => {
+    setPlaying(true);
+    onPlay?.(sectionIndex);
+    startRaf();
+  }, [onPlay, sectionIndex, startRaf]);
 
-    const handlePlay = () => {
-      setPlaying(true);
-      onPlay?.(sectionIndex);
-      startRaf();
-    };
+  const handlePause = useCallback(() => {
+    setPlaying(false);
+    onPause?.(sectionIndex);
+    stopRaf();
+  }, [onPause, sectionIndex, stopRaf]);
 
-    const handlePause = () => {
-      setPlaying(false);
-      onPause?.(sectionIndex);
-      stopRaf();
-    };
-
-    audio.addEventListener('canplay', handleCanPlay);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-
-    // iOS: required attributes
-    audio.preload = 'auto';
-    audio.crossOrigin = 'anonymous';
-
-    return () => {
-      stopRaf();
-      audio.pause();
-      audio.removeEventListener('canplay', handleCanPlay);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-      audioRef.current = null;
-    };
-  }, [mounted, hasAudio, masterAudioUrl, onPause, onPlay, onReady, sectionIndex, startRaf, stopRaf, loadToSection]);
+  const handleEnded = useCallback(() => {
+    setPlaying(false);
+    stopRaf();
+  }, [stopRaf]);
 
   // jump audio when section changes (user nav)
   useEffect(() => {
     if (!ready) return;
     loadToSection(sectionIndex);
   }, [ready, sectionIndex, loadToSection]);
+
+  useEffect(() => () => stopRaf(), [stopRaf]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (seekToMs == null) return;
+    if (seekToMs === lastSeekRef.current) return;
+    lastSeekRef.current = seekToMs;
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const targetIndex = sections.findIndex((s) => seekToMs >= s.startMs && seekToMs <= s.endMs);
+    if (targetIndex !== -1) {
+      if (targetIndex !== sectionIndex) {
+        setSectionIndex(targetIndex);
+        onSectionChange?.(targetIndex);
+      }
+      const target = sections[targetIndex];
+      const within = clamp(seekToMs - target.startMs, 0, Math.max(0, target.endMs - target.startMs));
+      setLocalTimeMs(within);
+    }
+
+    audio.currentTime = seekToMs / 1000;
+    onExternalSeekResolved?.();
+  }, [mounted, onExternalSeekResolved, onSectionChange, sectionIndex, sections, seekToMs]);
 
   // ---- controls ----
   const play = useCallback(() => {
@@ -347,28 +370,18 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
         </div>
       </div>
 
-      {/* Transcript */}
-      <div className="mt-4">
-        <div className="text-small opacity-70 mb-1">Transcript</div>
-        <div
-          className={`p-3.5 rounded-ds border border-lightBorder dark:border-white/10 ${isSubmitted ? '' : 'blur-sm select-none pointer-events-none'}`}
-          aria-live="polite"
-        >
-          {current.transcript ? (
-            <p className="opacity-90">{current.transcript}</p>
-          ) : (
-            <p className="opacity-60">No transcript available for this section.</p>
-          )}
-        </div>
-        {!isSubmitted && (
-          <div className="text-small opacity-60 mt-1">
-            Transcript will unlock after you submit.
-          </div>
-        )}
-      </div>
-
       {/* Hidden audio element holder (managed via ref) */}
-      <div className="sr-only" aria-hidden="true" />
+      <AudioPlayer
+        ref={audioRef}
+        src={masterAudioUrl}
+        hidden
+        preload="metadata"
+        preferMetadataOnly
+        onCanPlay={handleCanPlay}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onEnded={handleEnded}
+      />
     </div>
   );
 };

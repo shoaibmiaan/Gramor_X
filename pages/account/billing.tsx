@@ -179,7 +179,7 @@ export default function BillingPage() {
   async function openPortal() {
     try {
       setPortalLoading(true);
-      const r = await fetch('/api/billing/portal', {
+      const r = await fetch('/api/billing/create-portal-session', {
         method: 'POST',
         credentials: 'include',
       });
@@ -262,7 +262,7 @@ export default function BillingPage() {
 
                   {portalAvailable ? (
                     <Button onClick={openPortal} loading={portalLoading} size="lg">
-                      {portalLoading ? 'Opening…' : 'Change plan'}
+                      {portalLoading ? 'Opening…' : 'Manage billing'}
                     </Button>
                   ) : (
                     <Button asChild variant="outline" size="lg">

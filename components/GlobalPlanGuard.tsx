@@ -83,6 +83,16 @@ export default function GlobalPlanGuard() {
     };
   }, [plan, router.asPath]);
 
+  useEffect(() => {
+    const onPlanChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ planId?: PlanId }>).detail;
+      if (detail?.planId) setPlan(detail.planId);
+    };
+
+    window.addEventListener('subscription:tier-updated', onPlanChanged as EventListener);
+    return () => window.removeEventListener('subscription:tier-updated', onPlanChanged as EventListener);
+  }, []);
+
   // Show ribbon when on a gated route and not allowed
   const showRibbon = useMemo(() => {
     if (!plan) return false;

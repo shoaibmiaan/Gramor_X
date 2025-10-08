@@ -9,9 +9,9 @@ const STEPS = [
   { label: 'Target Band', href: '/onboarding/goal', done: true },
   { label: 'Exam Date', href: '/onboarding/date' },
   { label: 'WhatsApp Updates', href: '/onboarding/whatsapp' },
-];
+] as const;
 
-export default function Page() {
+export default function OnboardingDate() {
   const router = useRouter();
   const [examDate, setExamDate] = React.useState<string>('');
 
@@ -39,7 +39,7 @@ export default function Page() {
         onNext={next}
         nextLabel="Continue"
         steps={STEPS}
-        hint="If you’re not sure, pick an approximate date — you can update anytime."
+        hint="Not sure? Pick an approximate date — you can update any time."
       >
         <div className="grid gap-4">
           <Input

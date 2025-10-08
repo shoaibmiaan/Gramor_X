@@ -1,10 +1,9 @@
-// Legacy redirect: /onboarding/skills → /onboarding/whatsapp
+// pages/onboarding/skills.tsx
 import * as React from 'react';
 import { useRouter } from 'next/router';
 
 export default function LegacySkillsRedirect() {
   const router = useRouter();
-
   React.useEffect(() => {
     void router.replace('/onboarding/whatsapp');
   }, [router]);
