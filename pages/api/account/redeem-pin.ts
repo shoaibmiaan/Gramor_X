@@ -95,7 +95,8 @@ function resolveExpiry(row: Record<string, any>) {
       const date = new Date(value);
       if (!Number.isNaN(date.getTime())) return date;
     } else if (typeof value === 'number') {
-      return new Date(value * (value > 1_000_000_000 ? 1 : 1000));
+      const isMilliseconds = value >= 1e11 || `${Math.trunc(value)}`.length >= 12;
+      return new Date(isMilliseconds ? value : value * 1000);
     }
   }
   return null;
