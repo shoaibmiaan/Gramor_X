@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { clearMockAttemptId, ensureMockAttemptId, fetchMockCheckpoint, saveMockCheckpoint } from '@/lib/mock/state';
 
 type SpeakingScript = {
   id: string;
@@ -55,14 +56,89 @@ export default function SpeakingMockPage() {
   const chunks = useRef<Blob[]>([]);
   const [recording, setRecording] = useState(false);
   const [attemptId, setAttemptId] = useState<string>('');
+  const attemptRef = useRef<string>('');
+  const [attemptReady, setAttemptReady] = useState(false);
+  const [checkpointHydrated, setCheckpointHydrated] = useState(false);
+  const latestRef = useRef<{ stage: typeof stage; timer: number }>({ stage: 'p1', timer: 0 });
+
+  useEffect(() => {
+    if (!id) return;
+    const attempt = ensureMockAttemptId('speaking', id);
+    attemptRef.current = attempt;
+    setAttemptReady(true);
+  }, [id]);
 
   useEffect(() => { if (!id) return; (async () => setScript(await loadScript(id)))(); }, [id]);
+
+  useEffect(() => {
+    if (!script || !attemptReady) return;
+    let cancelled = false;
+
+    (async () => {
+      const checkpoint = await fetchMockCheckpoint({ attemptId: attemptRef.current, section: 'speaking' });
+      if (cancelled) return;
+      if (checkpoint && checkpoint.mockId === script.id) {
+        const payload = (checkpoint.payload || {}) as { stage?: typeof stage; timer?: number };
+        if (payload.stage && payload.stage !== 'done') setStage(payload.stage);
+        if (typeof payload.timer === 'number') setTimer(payload.timer);
+      }
+      setCheckpointHydrated(true);
+    })();
+
+    return () => { cancelled = true; };
+  }, [script, attemptReady]);
 
   useEffect(() => {
     let interval: any;
     if (timer > 0) interval = setInterval(() => setTimer((x) => x - 1), 1000);
     return () => clearInterval(interval);
   }, [timer]);
+
+  useEffect(() => {
+    latestRef.current = { stage, timer };
+  }, [stage, timer]);
+
+  const persistCheckpoint = useCallback(
+    (opts?: { completed?: boolean }) => {
+      if (!script || !attemptReady || !checkpointHydrated || !attemptRef.current) return;
+      const state = latestRef.current;
+      void saveMockCheckpoint({
+        attemptId: attemptRef.current,
+        section: 'speaking',
+        mockId: script.id,
+        payload: { scriptId: script.id, stage: state.stage, timer: state.timer },
+        elapsed: 0,
+        completed: opts?.completed,
+      });
+    },
+    [script, attemptReady, checkpointHydrated]
+  );
+
+  useEffect(() => {
+    if (!script || !attemptReady || !checkpointHydrated) return;
+    const handler = () => persistCheckpoint();
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [script, attemptReady, checkpointHydrated, persistCheckpoint]);
+
+  useEffect(() => {
+    if (!script || !attemptReady || !checkpointHydrated) return;
+    const timeout = setTimeout(() => persistCheckpoint(), 800);
+    return () => clearTimeout(timeout);
+  }, [stage, script, attemptReady, checkpointHydrated, persistCheckpoint]);
+
+  useEffect(() => {
+    if (!script || !attemptReady || !checkpointHydrated) return;
+    const interval = setInterval(() => persistCheckpoint(), 15000);
+    return () => clearInterval(interval);
+  }, [script, attemptReady, checkpointHydrated, persistCheckpoint]);
+
+  useEffect(() => {
+    if (stage === 'done' && script && attemptRef.current) {
+      persistCheckpoint({ completed: true });
+      clearMockAttemptId('speaking', script.id);
+    }
+  }, [stage, script, persistCheckpoint]);
 
   const startRec = async () => {
     if (recording) return;
@@ -112,6 +188,17 @@ export default function SpeakingMockPage() {
       try { const url = URL.createObjectURL(blob); localStorage.setItem(`speak:rec:${idOut}`, url); } catch {}
     } finally {
       setAttemptId(idOut);
+      if (attemptRef.current && script) {
+        void saveMockCheckpoint({
+          attemptId: attemptRef.current,
+          section: 'speaking',
+          mockId: script.id,
+          payload: { scriptId: script.id, stage: 'done', timer: 0 },
+          elapsed: 0,
+          completed: true,
+        });
+        clearMockAttemptId('speaking', script.id);
+      }
     }
   };
 

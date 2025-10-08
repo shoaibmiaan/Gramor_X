@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { clearMockAttemptId, ensureMockAttemptId, fetchMockCheckpoint, saveMockCheckpoint } from '@/lib/mock/state';
 
 type QType = 'tfng' | 'yynn' | 'heading' | 'match' | 'mcq' | 'gap';
 type Q = { id: string; type: QType; prompt?: string; options?: string[]; answer: string };
@@ -54,18 +55,107 @@ export default function ReadingMockPage() {
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [passageIdx, setPassageIdx] = useState(0);
   const [timeLeft, setTimeLeft] = useState(3600);
+  const attemptRef = useRef<string>('');
+  const [attemptReady, setAttemptReady] = useState(false);
+  const [checkpointHydrated, setCheckpointHydrated] = useState(false);
+  const latestRef = useRef<{ answers: AnswerMap; passageIdx: number; timeLeft: number }>({ answers: {}, passageIdx: 0, timeLeft: 0 });
 
-  useEffect(() => { if (!id) return; (async () => {
-    const p = await loadPaper(id);
-    setPaper(p);
-    setTimeLeft(p.durationSec);
-    const dr = loadDraft(id);
-    if (dr) setAnswers(dr.answers || {});
-    if (!dr) saveDraft(id, { answers: {} });
-  })(); }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    const attempt = ensureMockAttemptId('reading', id);
+    attemptRef.current = attempt;
+    setAttemptReady(true);
+  }, [id]);
 
-  useEffect(() => { if (!paper) return; const t = setInterval(() => setTimeLeft((x) => (x > 0 ? x - 1 : 0)), 1000); return () => clearInterval(t); }, [paper]);
-  useEffect(() => { if (!id) return; saveDraft(id, { answers }); }, [id, answers]);
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const p = await loadPaper(id);
+      setPaper(p);
+      setTimeLeft(p.durationSec);
+      const dr = loadDraft(id);
+      if (dr) {
+        setAnswers(dr.answers || {});
+        if (typeof dr.passageIdx === 'number') setPassageIdx(dr.passageIdx);
+      }
+      if (!dr) saveDraft(id, { answers: {}, passageIdx: 0 });
+    })();
+  }, [id]);
+
+  useEffect(() => {
+    if (!paper || !attemptReady) return;
+    let cancelled = false;
+
+    (async () => {
+      const checkpoint = await fetchMockCheckpoint({ attemptId: attemptRef.current, section: 'reading' });
+      if (cancelled) return;
+      if (checkpoint && checkpoint.mockId === paper.id) {
+        const payload = (checkpoint.payload || {}) as { answers?: AnswerMap; passageIdx?: number };
+        if (payload.answers) setAnswers(payload.answers);
+        if (typeof payload.passageIdx === 'number') setPassageIdx(payload.passageIdx);
+        const duration = typeof checkpoint.duration === 'number' ? checkpoint.duration : paper.durationSec;
+        const remaining = Math.max(0, duration - checkpoint.elapsed);
+        setTimeLeft(Math.max(0, Math.min(paper.durationSec, remaining)));
+      }
+      setCheckpointHydrated(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [paper, attemptReady]);
+
+  useEffect(() => {
+    if (!paper) return;
+    const t = setInterval(() => setTimeLeft((x) => (x > 0 ? x - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, [paper]);
+
+  useEffect(() => {
+    latestRef.current = { answers, passageIdx, timeLeft };
+  }, [answers, passageIdx, timeLeft]);
+
+  useEffect(() => {
+    if (!id) return;
+    saveDraft(id, { answers, passageIdx });
+  }, [id, answers, passageIdx]);
+
+  const persistCheckpoint = useCallback(
+    (opts?: { completed?: boolean }) => {
+      if (!paper || !attemptReady || !checkpointHydrated || !attemptRef.current) return;
+      const state = latestRef.current;
+      const elapsed = Math.max(0, Math.min(paper.durationSec, paper.durationSec - state.timeLeft));
+      void saveMockCheckpoint({
+        attemptId: attemptRef.current,
+        section: 'reading',
+        mockId: paper.id,
+        payload: { paperId: paper.id, answers: state.answers, passageIdx: state.passageIdx },
+        elapsed,
+        duration: paper.durationSec,
+        completed: opts?.completed,
+      });
+    },
+    [paper, attemptReady, checkpointHydrated]
+  );
+
+  useEffect(() => {
+    if (!paper || !attemptReady || !checkpointHydrated) return;
+    const handler = () => persistCheckpoint();
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint]);
+
+  useEffect(() => {
+    if (!paper || !attemptReady || !checkpointHydrated) return;
+    const handle = setTimeout(() => persistCheckpoint(), 1000);
+    return () => clearTimeout(handle);
+  }, [answers, passageIdx, paper, attemptReady, checkpointHydrated, persistCheckpoint]);
+
+  useEffect(() => {
+    if (!paper || !attemptReady || !checkpointHydrated) return;
+    const interval = setInterval(() => persistCheckpoint(), 15000);
+    return () => clearInterval(interval);
+  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint]);
 
   const current = paper?.passages[passageIdx];
 
@@ -87,6 +177,18 @@ export default function ReadingMockPage() {
       attemptId = `local-${Date.now()}`;
       try { localStorage.setItem(`read:attempt-res:${attemptId}`, JSON.stringify({ paper, answers })); } catch {}
     } finally {
+      if (attemptRef.current) {
+        void saveMockCheckpoint({
+          attemptId: attemptRef.current,
+          section: 'reading',
+          mockId: paper.id,
+          payload: { paperId: paper.id, answers, passageIdx },
+          elapsed: paper.durationSec - timeLeft,
+          duration: paper.durationSec,
+          completed: true,
+        });
+        clearMockAttemptId('reading', paper.id);
+      }
       clearDraft(id);
       router.replace(`/review/reading/${id}?attempt=${attemptId}`);
     }
@@ -172,8 +274,9 @@ const Options: React.FC<{ options: string[]; value: string; onPick: (v: string) 
     ))}
   </div>
 );
-const saveDraft = (id: string, data: any) => { try { localStorage.setItem(DRAFT_KEY(id), JSON.stringify(data)); } catch {} };
-const loadDraft = (id: string) => { try { const raw = localStorage.getItem(DRAFT_KEY(id)); return raw ? JSON.parse(raw) : null; } catch { return null; } };
+type DraftState = { answers: AnswerMap; passageIdx?: number };
+const saveDraft = (id: string, data: DraftState) => { try { localStorage.setItem(DRAFT_KEY(id), JSON.stringify(data)); } catch {} };
+const loadDraft = (id: string): DraftState | null => { try { const raw = localStorage.getItem(DRAFT_KEY(id)); return raw ? JSON.parse(raw) : null; } catch { return null; } };
 const clearDraft = (id: string) => { try { localStorage.removeItem(DRAFT_KEY(id)); } catch {} };
 const hhmmss = (sec: number) => `${Math.floor(sec/60).toString().padStart(2,'0')}:${Math.floor(sec%60).toString().padStart(2,'0')}`;
 const normalize = (s: string) => s.trim().toLowerCase();
