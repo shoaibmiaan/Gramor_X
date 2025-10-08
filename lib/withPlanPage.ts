@@ -11,7 +11,7 @@ type GuardOpts = {
 async function getUserPlan(
   ctx: GetServerSidePropsContext
 ): Promise<{ userId: string | null; plan: PlanId }> {
-  const supabase = supabaseServer(ctx.req);
+  const supabase = supabaseServer(ctx.req as any, ctx.res as any);
   const { data: auth } = await supabase.auth.getUser();
   const user = auth?.user ?? null;
 

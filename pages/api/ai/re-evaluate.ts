@@ -1,6 +1,7 @@
 import { env } from '@/lib/env';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 import { recordReevaluationCredit } from '@/lib/credits';
@@ -35,7 +36,7 @@ function buildPrompt(args: { task_type: 'T1'|'T2'|'GT'; prompt: string; essay_te
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const supabase = createServerSupabaseClient({ req, res });
+  const supabase = getServerClient(req, res);
   const { data: userResp, error: authErr } = await supabase.auth.getUser();
   if (authErr || !userResp?.user) return res.status(401).json({ error: 'Unauthorized' });
   const userId = userResp.user.id;

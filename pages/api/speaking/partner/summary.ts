@@ -1,8 +1,9 @@
 import { env } from "@/lib/env";
 // pages/api/speaking/partner/summary.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import Groq from 'groq-sdk';
+
+import { getServerClient } from '@/lib/supabaseServer';
 
 export const config = { api: { bodyParser: true, sizeLimit: '1mb' } };
 
@@ -39,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { attemptId, force } = req.body as { attemptId?: string; force?: boolean };
     if (!attemptId) return res.status(400).json({ error: 'Missing attemptId' });
 
-    const supabase = createPagesServerClient({ req, res });
+    const supabase = getServerClient(req, res);
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;
     if (!user) return res.status(401).json({ error: 'Not authenticated' });

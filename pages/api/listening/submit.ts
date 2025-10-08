@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+
+import { getServerClient } from '@/lib/supabaseServer';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { rawToBand } from '@/lib/listening/band';
 import { scoreAll } from '@/lib/listening/score';
@@ -8,7 +9,7 @@ type Body = { test_slug: string; answers: { qno:number; answer:any }[]; meta?: a
 
 async function getUserId(req: NextApiRequest, res: NextApiResponse) {
   // Parse and verify the Supabase auth session from cookies
-  const supabase = createServerSupabaseClient({ req, res });
+  const supabase = getServerClient(req, res);
   const {
     data: { user },
     error,
