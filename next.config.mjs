@@ -1,9 +1,5 @@
 // next.config.mjs
 import withPWA from 'next-pwa';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // --- Security: CSP ---
 const csp = [
@@ -50,13 +46,6 @@ const baseConfig = {
   webpack: (config) => {
     // keep your existing wasm output tweak
     config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm';
-
-    // 🔐 alias @supabase/ssr to our shim so Vercel can resolve it
-    config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      '@supabase/ssr': path.resolve(__dirname, 'shims/ssr.ts'),
-    };
 
     return config;
   },
