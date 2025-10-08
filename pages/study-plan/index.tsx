@@ -65,14 +65,14 @@ export default function StudyPlanPage() {
         <div className="grid gap-3">
           <div className="rounded-xl border border-border p-4 text-small">
             No active plan found. Complete{' '}
-            <Link href="/onboarding/goal" className="underline decoration-2 underline-offset-4">
+            <Link href="/onboarding" className="underline decoration-2 underline-offset-4">
               Onboarding
             </Link>{' '}
             to generate a plan.
           </div>
           <div className="flex justify-end">
             <Link
-              href="/onboarding/goal"
+              href="/onboarding"
               className="rounded-xl bg-primary px-4 py-2 font-medium text-background hover:opacity-90"
             >
               Start onboarding
