@@ -14,6 +14,7 @@ import { scoreAll } from '@/lib/listening/score';
 import { rawToBand } from '@/lib/listening/band';
 import { SaveItemButton } from '@/components/SaveItemButton';
 import AudioSectionsPlayer from '@/components/listening/AudioSectionsPlayer';
+import Transcript from '@/components/listening/Transcript';
 
 type MCQ = {
   id: string;
@@ -63,6 +64,8 @@ export default function ListeningTestPage() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
   const [checked, setChecked] = useState(false);
+  const [sectionProgressMs, setSectionProgressMs] = useState(0);
+  const [pendingSeekMs, setPendingSeekMs] = useState<number | null>(null);
 
   // --- Save state ---
   const [saving, setSaving] = useState(false);
@@ -304,6 +307,11 @@ export default function ListeningTestPage() {
     ? Math.max(0, Math.round((currentSection.endMs - currentSection.startMs) / 1000))
     : 0;
 
+  useEffect(() => {
+    setSectionProgressMs(0);
+    setPendingSeekMs(null);
+  }, [currentIdx]);
+
   // --- Loading skeleton ---
   if (!test) {
     return (
@@ -365,7 +373,20 @@ export default function ListeningTestPage() {
             initialSectionIndex={currentIdx}
             autoAdvance={autoPlay}
             onSectionChange={setCurrentIdx}
+            onTimeUpdate={({ sectionMs }) => setSectionProgressMs(sectionMs)}
+            seekToMs={pendingSeekMs}
+            onExternalSeekResolved={() => setPendingSeekMs(null)}
             className="mt-8"
+          />
+          <Transcript
+            className="mt-4"
+            transcript={currentSection?.transcript}
+            locked={!checked}
+            currentTimeMs={sectionProgressMs}
+            onSeek={(relativeMs) => {
+              if (!currentSection) return;
+              setPendingSeekMs(currentSection.startMs + relativeMs);
+            }}
           />
           <div className="mt-4 text-small opacity-80">
             Section {currentSection?.orderNo} of {secCount} • {sliceSecs}s slice

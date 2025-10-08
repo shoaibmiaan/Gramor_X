@@ -1,13 +1,15 @@
 // lib/routes.ts
-
 export const routes = {
   home: () => '/',
   dashboard: () => '/dashboard',
 
   // Onboarding
   onboarding: {
+    root: () => '/onboarding',
     goal: () => '/onboarding/goal',
     date: () => '/onboarding/date',
+    skills: () => '/onboarding/skills',     // legacy -> redirects to whatsapp
+    schedule: () => '/onboarding/schedule', // legacy -> redirects to whatsapp
     whatsapp: () => '/onboarding/whatsapp',
   },
 

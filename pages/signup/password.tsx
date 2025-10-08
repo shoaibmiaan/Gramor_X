@@ -36,7 +36,7 @@ export default function SignupSetPassword() {
       setOk(true);
 
       // Continue onboarding
-      await router.replace('/onboarding/goal');
+      await router.replace('/onboarding');
     } catch (e: any) {
       setErr(e?.message || 'Unable to set password.');
     } finally {

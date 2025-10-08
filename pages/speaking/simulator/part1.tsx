@@ -126,7 +126,7 @@ export default function SpeakingSimPart1() {
       const id = await ensureAttempt();
       const path = `attempts/${id}/p1/q${qIdx + 1}-${Date.now()}.webm`;
 
-      const { path: savedPath, clipId } = await uploadSpeakingBlob(blob, 'p1', id, path);
+      const uploaded = await uploadSpeakingBlob(blob, 'p1', id, path);
 
       const b64 = await blobToBase64(blob);
       const r = await authedFetch('/api/speaking/score-save', {
@@ -136,8 +136,8 @@ export default function SpeakingSimPart1() {
           part: 'p1',
           audioBase64: b64,
           mime: blob.type || 'audio/webm',
-          path: savedPath || path,
-          clipId,
+          path: uploaded.path || path,
+          clipId: uploaded.clipId,
         }),
       }).then((r) => r.json());
 
