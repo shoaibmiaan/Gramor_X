@@ -250,8 +250,9 @@ export default function WritingHome() {
   };
 
   return (
-    <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-      <Container>
+    <>
+      <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Container>
         {/* 👇 New: quick AI tester */}
         <AiTestDrive className="mb-8" />
 
@@ -566,76 +567,77 @@ export default function WritingHome() {
             </Card>
           </div>
         </div>
-      </Container>
-    </section>
+        </Container>
+      </section>
 
-    <section className="py-20 bg-white dark:bg-dark/60">
-      <Container>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-h2 font-slab">Full exam practice sets</h2>
-            <p className="mt-2 max-w-3xl text-grayish">
-              Choose a complete IELTS Writing mock with both tasks, practise your response, and then launch the timed
-              exam to submit for AI scoring and feedback in the review portal.
-            </p>
+      <section className="py-20 bg-white dark:bg-dark/60">
+        <Container>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-h2 font-slab">Full exam practice sets</h2>
+              <p className="mt-2 max-w-3xl text-grayish">
+                Choose a complete IELTS Writing mock with both tasks, practise your response, and then launch the timed
+                exam to submit for AI scoring and feedback in the review portal.
+              </p>
+            </div>
+            <Badge variant="info" size="sm">
+              10 mock tests
+            </Badge>
           </div>
-          <Badge variant="info" size="sm">
-            10 mock tests
-          </Badge>
-        </div>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          {writingExamSummaries.map((paper) => (
-            <Card key={paper.id} className="card-surface h-full rounded-ds-2xl p-6">
-              <div className="flex h-full flex-col gap-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-h3 font-semibold">{paper.title}</h3>
-                    <p className="mt-1 text-grayish">{paper.description}</p>
-                  </div>
-                  <Badge variant="neutral" size="sm">
-                    {paper.task1Type}
-                  </Badge>
-                </div>
-
-                <div className="grid gap-1 text-caption text-grayish">
-                  <span>Task 1: {paper.task1Focus}</span>
-                  <span>Task 2: {paper.task2Focus}</span>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="neutral" size="sm">
-                    {paper.durationMinutes} min total
-                  </Badge>
-                  {paper.tags.map((tag) => (
-                    <Badge key={tag} variant="info" size="sm" className="capitalize">
-                      {tag}
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            {writingExamSummaries.map((paper) => (
+              <Card key={paper.id} className="card-surface h-full rounded-ds-2xl p-6">
+                <div className="flex h-full flex-col gap-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-h3 font-semibold">{paper.title}</h3>
+                      <p className="mt-1 text-grayish">{paper.description}</p>
+                    </div>
+                    <Badge variant="neutral" size="sm">
+                      {paper.task1Type}
                     </Badge>
-                  ))}
-                </div>
+                  </div>
 
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <Button
-                    href={`/writing/${paper.id}`}
-                    variant="secondary"
-                    className="rounded-ds-xl"
-                    elevateOnHover
-                  >
-                    Plan &amp; outline
-                  </Button>
-                  <Button
-                    href={`/mock/writing/${paper.id}`}
-                    className="rounded-ds-xl"
-                    elevateOnHover
-                  >
-                    Start timed mock
-                  </Button>
+                  <div className="grid gap-1 text-caption text-grayish">
+                    <span>Task 1: {paper.task1Focus}</span>
+                    <span>Task 2: {paper.task2Focus}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="neutral" size="sm">
+                      {paper.durationMinutes} min total
+                    </Badge>
+                    {paper.tags.map((tag) => (
+                      <Badge key={tag} variant="info" size="sm" className="capitalize">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <Button
+                      href={`/writing/${paper.id}`}
+                      variant="secondary"
+                      className="rounded-ds-xl"
+                      elevateOnHover
+                    >
+                      Plan &amp; outline
+                    </Button>
+                    <Button
+                      href={`/mock/writing/${paper.id}`}
+                      className="rounded-ds-xl"
+                      elevateOnHover
+                    >
+                      Start timed mock
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </Container>
-    </section>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+    </>
   );
 }
