@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 
 import { Container } from '@/components/design-system/Container';
 import { Card, CardContent, CardHeader } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
 import Recorder from '@/components/speaking/Recorder';
 import samplePrompt from '@/data/speaking/sample-001.json';
 import { uploadSpeakingBlob } from '@/lib/speaking/uploadSpeakingBlob';
@@ -41,6 +42,26 @@ type UploadRecord = {
   createdAt: string;
   durationSec: number;
 };
+
+type ScoreResult = {
+  attemptId: string;
+  transcript: string;
+  bandOverall: number;
+  criteria: {
+    fluency: number;
+    lexical: number;
+    grammar: number;
+    pronunciation: number;
+  };
+  notes: string;
+};
+
+const SCORE_CRITERIA: Array<{ key: keyof ScoreResult['criteria']; label: string }> = [
+  { key: 'fluency', label: 'Fluency & Coherence' },
+  { key: 'lexical', label: 'Lexical Resource' },
+  { key: 'grammar', label: 'Grammar' },
+  { key: 'pronunciation', label: 'Pronunciation' },
+];
 
 type MaybePromptRow = {
   id?: string;
@@ -165,6 +186,12 @@ export default function SpeakingPromptPage() {
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
   const [busy, setBusy] = useState(false);
 
+  const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null);
+  const [scoring, setScoring] = useState(false);
+  const [scoringError, setScoringError] = useState<string | null>(null);
+
+  const scoreMapRef = useRef<Partial<Record<AttemptPart, ScoreResult>>>({});
+
   const attemptMapRef = useRef<Record<AttemptPart, string>>({});
   const [currentAttemptId, setCurrentAttemptId] = useState<string | null>(null);
 
@@ -262,6 +289,16 @@ export default function SpeakingPromptPage() {
     setCurrentAttemptId(existing ?? null);
   }, [activePart]);
 
+  useEffect(() => {
+    if (!activePart) {
+      setScoreResult(null);
+      setScoringError(null);
+      return;
+    }
+    setScoreResult(scoreMapRef.current[activePart] ?? null);
+    setScoringError(null);
+  }, [activePart]);
+
   const ensureAttempt = useCallback(async () => {
     if (!activePart) throw new Error('Select a part before recording');
     const existing = attemptMapRef.current[activePart];
@@ -308,35 +345,160 @@ export default function SpeakingPromptPage() {
     return id;
   }, [activePart, promptId, prompt?.title, prompt]);
 
+  const setScoreForPart = useCallback(
+    (part: AttemptPart, result: ScoreResult | null) => {
+      if (result) {
+        scoreMapRef.current[part] = result;
+      } else {
+        delete scoreMapRef.current[part];
+      }
+      if (activePart === part) {
+        setScoreResult(result);
+        if (!result) setScoringError(null);
+      }
+    },
+    [activePart],
+  );
+
+  const registerAudio = useCallback(
+    async (attemptId: string, part: AttemptPart, path: string) => {
+      const res = await fetch('/api/speaking/attempts/add-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attemptId, part, path }),
+        credentials: 'include',
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || !payload?.ok) {
+        throw new Error(payload?.error || 'Failed to register audio clip');
+      }
+      return payload.audioUrls as Record<string, string[]>;
+    },
+    [],
+  );
+
+  const scoreAttempt = useCallback(
+    async (attemptId: string, part: AttemptPart) => {
+      setScoring(true);
+      if (activePart === part) setScoringError(null);
+
+      const parseScoreValue = (value: any) => {
+        const num =
+          typeof value === 'number'
+            ? value
+            : typeof value === 'string'
+            ? Number.parseFloat(value)
+            : Number.NaN;
+        return Number.isFinite(num) ? num : 0;
+      };
+
+      try {
+        const res = await fetch('/api/speaking/score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attemptId }),
+          credentials: 'include',
+        });
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(payload?.message || payload?.error || 'Failed to score attempt');
+        }
+
+        if (typeof payload.bandOverall !== 'number' || !payload?.criteria) {
+          throw new Error('Scoring response incomplete');
+        }
+
+        const clampScore = (value: number) => Math.min(9, Math.max(0, Math.round(value * 10) / 10));
+
+        const result: ScoreResult = {
+          attemptId,
+          transcript: typeof payload.transcript === 'string' ? payload.transcript.trim() : '',
+          bandOverall: clampScore(parseScoreValue(payload.bandOverall)),
+          criteria: {
+            fluency: clampScore(parseScoreValue(payload?.criteria?.fluency)),
+            lexical: clampScore(parseScoreValue(payload?.criteria?.lexical)),
+            grammar: clampScore(parseScoreValue(payload?.criteria?.grammar)),
+            pronunciation: clampScore(parseScoreValue(payload?.criteria?.pronunciation)),
+          },
+          notes: typeof payload.notes === 'string' ? payload.notes.trim() : '',
+        };
+
+        setScoreForPart(part, result);
+        if (activePart === part) setScoringError(null);
+        return result;
+      } catch (error: any) {
+        const message = error?.message || 'Failed to score attempt';
+        if (activePart === part) setScoringError(message);
+        throw error instanceof Error ? error : new Error(message);
+      } finally {
+        setScoring(false);
+      }
+    },
+    [activePart, setScoreForPart],
+  );
+
+  const handleManualScore = useCallback(async () => {
+    if (!activePart || !currentAttemptId) return;
+    setStatus('Scoring your answer…');
+    try {
+      await scoreAttempt(currentAttemptId, activePart);
+      setStatus('Scoring complete! Review your feedback below.');
+    } catch (error: any) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'AI scoring is unavailable right now.';
+      setStatus(message);
+    }
+  }, [activePart, currentAttemptId, scoreAttempt]);
+
   const handleRecordingComplete = useCallback(
     async (file: File, meta: { durationSec: number; mime: string }) => {
       if (!activePart) throw new Error('Select a part before uploading');
+      const part = activePart;
+      const existingAttemptId = attemptMapRef.current[part];
       setBusy(true);
-      setStatus(null);
+      setStatus('Uploading your recording…');
       setUploadError(null);
       try {
         const attemptId = await ensureAttempt();
-        const { signedUrl, path } = await uploadSpeakingBlob(file, activePart, attemptId);
+        if (!existingAttemptId || existingAttemptId !== attemptId) {
+          setScoreForPart(part, null);
+        }
+        const { signedUrl, path } = await uploadSpeakingBlob(file, part, attemptId);
+        await registerAudio(attemptId, part, path);
         const record: UploadRecord = {
           id: randomId(),
           attemptId,
-          part: activePart,
+          part,
           path,
           signedUrl,
           createdAt: new Date().toISOString(),
           durationSec: meta.durationSec,
         };
         setUploads((prev) => [...prev, record]);
-        setStatus('Upload complete. Your recording is saved to Supabase Storage.');
+        setStatus('Upload complete. Scoring your answer…');
+
+        try {
+          await scoreAttempt(attemptId, part);
+          setStatus('Scoring complete! Review your feedback below.');
+        } catch (scoreError: any) {
+          const failMessage =
+            scoreError instanceof Error && scoreError.message
+              ? scoreError.message
+              : 'AI scoring is unavailable right now.';
+          setStatus(`Recording saved. ${failMessage}`);
+        }
       } catch (error: any) {
         const message = error?.message || 'Failed to upload recording';
         setUploadError(message);
+        setStatus(null);
         throw error;
       } finally {
         setBusy(false);
       }
     },
-    [activePart, ensureAttempt],
+    [activePart, ensureAttempt, registerAudio, scoreAttempt, setScoreForPart],
   );
 
   const renderPartContent = useMemo(() => {
@@ -474,11 +636,78 @@ export default function SpeakingPromptPage() {
             </CardHeader>
             <CardContent>
               <Recorder onComplete={handleRecordingComplete} maxDurationSec={180} />
-              {status ? <p className="mt-4 text-sm text-success">{status}</p> : null}
+              {status ? <p className="mt-4 text-sm text-muted-foreground">{status}</p> : null}
               {uploadError ? <p className="mt-4 text-sm text-danger">{uploadError}</p> : null}
               <p className="mt-4 text-xs text-muted-foreground">
                 Audio uploads are stored securely in Supabase Storage for grading. You can re-record as many times as you like.
               </p>
+            </CardContent>
+          </Card>
+
+          <Card className="h-fit" aria-busy={scoring}>
+            <CardHeader>
+              <h2 className="text-lg font-semibold">AI feedback</h2>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {scoreResult ? (
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground">Overall band</span>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-3xl font-semibold text-foreground">
+                        {scoreResult.bandOverall.toFixed(1)}
+                      </span>
+                      <span className="text-sm text-muted-foreground">/ 9.0</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {SCORE_CRITERIA.map(({ key, label }) => (
+                      <div key={key} className="rounded-lg border border-border/60 p-3">
+                        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+                        <div className="mt-1 text-lg font-semibold text-foreground">
+                          {scoreResult.criteria[key].toFixed(1)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {scoreResult.notes ? (
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Feedback</h3>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                        {scoreResult.notes}
+                      </p>
+                    </div>
+                  ) : null}
+                  {scoreResult.transcript ? (
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Transcript</h3>
+                      <p className="mt-1 whitespace-pre-wrap rounded-md border border-border/60 p-3 text-sm text-muted-foreground">
+                        {scoreResult.transcript}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Record your answer to receive IELTS-style scoring and examiner feedback automatically.
+                </p>
+              )}
+              {scoring ? <p className="text-xs text-muted-foreground">Scoring in progress…</p> : null}
+              {scoringError ? <p className="text-sm text-danger">{scoringError}</p> : null}
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={handleManualScore}
+                  disabled={!currentAttemptId || scoring || busy}
+                  variant="outline"
+                  className="rounded-full"
+                >
+                  {scoring ? 'Scoring…' : 'Re-score this attempt'}
+                </Button>
+                {currentAttemptId ? (
+                  <span className="text-xs text-muted-foreground">Attempt {currentAttemptId.slice(0, 8)}…</span>
+                ) : null}
+              </div>
             </CardContent>
           </Card>
 
