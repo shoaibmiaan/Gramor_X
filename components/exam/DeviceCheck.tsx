@@ -21,7 +21,9 @@ export default function DeviceCheck() {
       <Button onClick={checkMic} variant="primary" className="mb-3">
         Check Microphone
       </Button>
-      {status && <p className="text-small">{status}</p>}
+      <div role="status" aria-live="polite" aria-atomic="true">
+        {status && <p className="text-small">{status}</p>}
+      </div>
     </Card>
   );
 }

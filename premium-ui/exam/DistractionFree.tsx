@@ -16,7 +16,12 @@ export function DistractionFreeBanner() {
 
   if (!blurred) return null;
   return (
-    <div className="fixed inset-x-0 top-0 z-50 bg-yellow-500 text-black text-center py-2 font-medium">
+    <div
+      className="fixed inset-x-0 top-0 z-50 bg-yellow-500 text-black text-center py-2 font-medium"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       You switched tabs or windows. For best results, stay focused in the exam window.
     </div>
   );

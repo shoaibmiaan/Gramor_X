@@ -37,12 +37,20 @@ export default function ExamLayout({
   questionPalette,
   children,
 }: ExamLayoutProps) {
+  const mainId = React.useId();
+
   return (
     <>
+      <a
+        href={`#${mainId}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-ds-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
       <DistractionFreeBanner />
       <FocusGuard exam={exam} slug={slug} />
       <div className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-40 border-b bg-background dark:bg-dark">
+        <header className="sticky top-0 z-40 border-b bg-background dark:bg-dark" role="banner">
           <Container className="flex items-center justify-between gap-4 py-3">
             <div className="flex items-center gap-4">
               <div className="leading-tight">
@@ -57,10 +65,12 @@ export default function ExamLayout({
           </Container>
         </header>
 
-        <main className="flex-1">
+        <main id={mainId} className="flex-1" tabIndex={-1}>
           <Container className="py-6 pb-safe md:pb-0 flex gap-4">
             {questionPalette && (
-              <aside className="hidden md:block w-60 shrink-0">{questionPalette}</aside>
+              <aside className="hidden md:block w-60 shrink-0" aria-label="Question navigation">
+                {questionPalette}
+              </aside>
             )}
             <section className="flex-1">{children}</section>
           </Container>
