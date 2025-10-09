@@ -31,9 +31,6 @@ type MobileNavProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'role'> & {
   setMobileModulesOpen: (open: boolean) => void;
   signOut: () => Promise<void>;
   showAdmin?: boolean;
-  hasPremiumAccess?: boolean;
-  premiumRooms?: string[];
-  onClearPremiumAccess?: () => void;
   subscriptionTier: SubscriptionTier;
 };
 
@@ -48,9 +45,6 @@ export function MobileNav({
   setMobileModulesOpen,
   signOut,
   showAdmin = true,
-  hasPremiumAccess = false,
-  premiumRooms = [],
-  onClearPremiumAccess,
   subscriptionTier,
   className,
   ...rest
@@ -73,7 +67,7 @@ export function MobileNav({
     () => filterNavSections(navigationSchema.sidebar, navigationCtx),
     [navigationCtx]
   );
-  const headerCta = user?.id ? navigationSchema.header.cta.authed : navigationSchema.header.cta.guest;
+  const headerCta = user?.id ? null : navigationSchema.header.cta.guest;
   const headerOptional = navigationSchema.header.optional ?? {};
 
   const overlay = (
@@ -119,51 +113,12 @@ export function MobileNav({
           </Link>
         )}
 
-        {/* Premium Access Status */}
-        {hasPremiumAccess && (
-          <div className="mb-4 rounded-lg border border-yellow-200/20 bg-gradient-to-r from-yellow-400/10 to-orange-500/10 p-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-yellow-700 dark:text-yellow-300">
-              <span>⭐</span>
-              <span>Premium Access Active</span>
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''} available
-            </div>
-            {onClearPremiumAccess && (
-              <button
-                onClick={() => {
-                  onClearPremiumAccess();
-                  setMobileOpen(false);
-                }}
-                className="mt-2 text-xs text-red-500 hover:text-red-700"
-              >
-                Clear All Access
-              </button>
-            )}
-          </div>
-        )}
-
         <nav className="pb-4">
           <ul className="flex flex-col gap-1">
             {user && user.id && (
               <li>
                 <NavLink href="/dashboard" className={mobileItemClass} onClick={closeMenu}>
                   Dashboard
-                </NavLink>
-              </li>
-            )}
-
-            {hasPremiumAccess && (
-              <li>
-                <NavLink
-                  href="/premium-room"
-                  className={`${mobileItemClass} border border-yellow-200/20 bg-gradient-to-r from-yellow-400/10 to-orange-500/10`}
-                  onClick={closeMenu}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>⭐</span>
-                    <span>Premium Room</span>
-                  </span>
                 </NavLink>
               </li>
             )}
