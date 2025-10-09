@@ -1,5 +1,5 @@
-import { env } from '@/lib/env';
 // pages/api/speaking/score.ts
+import { env } from '@/lib/env';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import OpenAI from 'openai';
@@ -98,7 +98,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabase = createSupabaseServerClient({ req });
 
   // Auth check
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
   // Verify ownership & load attempt
@@ -115,10 +117,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!env.OPENAI_API_KEY) throw new Error('Missing OpenAI API key');
 
     // ---- 1. Gather signed URLs for all audio ----
-    const audioPaths: string[] = Object.values(attempt.audio_urls || {}).flat() as string[];
-    if (!audioPaths.length) throw new Error('No audio clips found for this attempt');
-    const signedUrls: string[] = [];
+    const audioMap = (attempt.audio_urls as Record<string, unknown> | null) ?? {};
+    const sectionPriority: Record<string, number> = {
+      p1: 0,
+      p2: 1,
+      p3: 2,
+      chat: 3,
+      roleplay: 4,
+    };
 
+    const audioPaths: string[] = [];
+    Object.entries(audioMap)
+      .sort(([a], [b]) => {
+        const pa = sectionPriority[a] ?? 99;
+        const pb = sectionPriority[b] ?? 99;
+        return pa - pb || a.localeCompare(b);
+      })
+      .forEach(([, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (typeof item === 'string' && item.trim()) audioPaths.push(item);
+          });
+        } else if (typeof value === 'string' && value.trim()) {
+          audioPaths.push(value);
+        }
+      });
+
+    if (!audioPaths.length) {
+      return res.status(400).json({ error: 'No audio clips found for this attempt' });
+    }
+
+    const signedUrls: string[] = [];
     for (const path of audioPaths) {
       const { data: signed, error: signErr } = await supabaseAdmin.storage
         .from('speaking-audio')
@@ -146,25 +175,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     fullTranscript = fullTranscript.trim();
 
-    // ---- 3. Score transcript with GPT ----
     if (!fullTranscript) {
       throw new Error('Transcript could not be generated from the audio files');
     }
 
-    const prompt = `You are an IELTS Speaking examiner. Evaluate the candidate using the official IELTS rubric.
+    // ---- 3. Score transcript with GPT ----
+    const prompt = `
+You are an IELTS Speaking examiner. Score the candidate based on the transcript below.
+Return JSON with:
+- "bandOverall": number (0-9, 0.5 increments)
+- "criteria": { fluency, coherence, lexical, pronunciation }
+- "feedback": short paragraph (2-3 sentences)
 
-Return a concise JSON object with:
-- "bandOverall": number from 0 to 9 using 0.5 increments.
-- "criteria": an object with these keys and 0-9 (0.5 step) scores: fluency, coherence, lexical, pronunciation.
-- "feedback": a short paragraph (2-3 sentences) that references the candidate's speaking strengths and weaknesses.
-
-Transcript to evaluate:
+Transcript:
 """
 ${fullTranscript}
 """`;
 
     const gptResp = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // fast + good for rubric scoring
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0,
     });
@@ -195,6 +224,7 @@ ${fullTranscript}
         transcript: fullTranscript,
         band_overall: parsed.bandOverall,
         band_breakdown: breakdown,
+        status: 'completed',
       })
       .eq('id', attemptId);
 
