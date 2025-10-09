@@ -132,6 +132,13 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
               const shouldDowngrade =
                 status === 'canceled' || status === 'past_due' || status === 'unpaid';
 
+              const nickname =
+                (sub?.items?.data?.[0]?.price?.nickname as string | undefined)?.toLowerCase();
+              const normalizedPlan: 'starter' | 'booster' | 'master' | 'free' =
+                nickname && ['starter', 'booster', 'master'].includes(nickname)
+                  ? (nickname as 'starter' | 'booster' | 'master')
+                  : ((prof?.membership as 'starter' | 'booster' | 'master' | 'free' | undefined) || 'free');
+
               const updates: Record<string, any> = {
                 subscription_status: status,
                 subscription_renews_at: periodEnd,
@@ -142,6 +149,11 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
               if (shouldDowngrade) {
                 updates.membership = 'free';
                 updates.premium_until = null;
+              } else {
+                updates.membership = normalizedPlan;
+                if (normalizedPlan !== 'free') {
+                  updates.premium_until = null;
+                }
               }
 
               await supabase
