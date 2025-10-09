@@ -15,6 +15,9 @@ type TranscriptProps = {
   onSeek?: (relativeMs: number) => void;
   followActiveCue?: boolean;
   className?: string;
+  expanded?: boolean;
+  defaultExpanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 };
 
 function parseTimestamp(raw: string): number | null {
@@ -118,15 +121,26 @@ export const Transcript: React.FC<TranscriptProps> = ({
   onSeek,
   followActiveCue = true,
   className = '',
+  expanded,
+  defaultExpanded = false,
+  onExpandedChange,
 }) => {
   const cues = useMemo(() => parseTranscript(transcript), [transcript]);
-  const [expanded, setExpanded] = useState(false);
+  const isControlled = typeof expanded === 'boolean';
+  const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
+  const expandedState = isControlled ? expanded : internalExpanded;
   const contentId = useMemo(() => `transcript-panel-${Math.random().toString(36).slice(2, 8)}`, []);
   const cueRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    if (locked) setExpanded(false);
-  }, [locked]);
+    if (!locked) return;
+    if (expandedState) {
+      if (!isControlled) {
+        setInternalExpanded(false);
+      }
+      onExpandedChange?.(false);
+    }
+  }, [expandedState, isControlled, locked, onExpandedChange]);
 
   const activeIndex = useMemo(() => {
     if (!cues.length) return -1;
@@ -143,9 +157,16 @@ export const Transcript: React.FC<TranscriptProps> = ({
     }
   }, [activeIndex, expanded, followActiveCue]);
 
+  const setExpandedState = (next: boolean) => {
+    if (!isControlled) {
+      setInternalExpanded(next);
+    }
+    onExpandedChange?.(next);
+  };
+
   const handleToggle = () => {
     if (locked || !cues.length) return;
-    setExpanded((prev) => !prev);
+    setExpandedState(!expandedState);
   };
 
   const handleCueClick = (cue: Cue) => {
@@ -154,7 +175,14 @@ export const Transcript: React.FC<TranscriptProps> = ({
   };
 
   const disabled = locked || !cues.length;
-  const showContent = expanded && !locked && cues.length > 0;
+  const showContent = expandedState && !locked && cues.length > 0;
+  const controlLabel = locked
+    ? 'Transcript locked until you check your answers'
+    : cues.length
+    ? showContent
+      ? 'Hide transcript'
+      : 'Show transcript'
+    : 'Transcript unavailable';
 
   return (
     <div className={`card-surface rounded-ds p-4 ${className}`}>
@@ -165,6 +193,7 @@ export const Transcript: React.FC<TranscriptProps> = ({
         aria-expanded={showContent}
         aria-controls={contentId}
         disabled={disabled}
+        aria-label={controlLabel}
       >
         <span className="flex items-center gap-2 font-semibold">
           <Icon name={showContent ? 'chevron-up' : 'chevron-down'} />
