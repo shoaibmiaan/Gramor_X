@@ -102,13 +102,14 @@ export default function SpeakingMockPage() {
     (opts?: { completed?: boolean }) => {
       if (!script || !attemptReady || !checkpointHydrated || !attemptRef.current) return;
       const state = latestRef.current;
+      const completed = opts?.completed ?? state.stage === 'done';
       void saveMockCheckpoint({
         attemptId: attemptRef.current,
         section: 'speaking',
         mockId: script.id,
         payload: { scriptId: script.id, stage: state.stage, timer: state.timer },
         elapsed: 0,
-        completed: opts?.completed,
+        completed,
       });
     },
     [script, attemptReady, checkpointHydrated]
