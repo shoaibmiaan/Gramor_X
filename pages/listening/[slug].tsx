@@ -241,11 +241,23 @@ export default function ListeningTestPage() {
 
       if (rows.length === 0) return;
 
+      const nowIso = new Date().toISOString();
+      const rowsWithTimestamp = rows.map((row) => ({ ...row, updated_at: nowIso }));
+
       const { error } = await supabase
         .from('lm_listening_user_answers')
-        .upsert(rows, { onConflict: 'user_id,test_slug,q_no' });
+        .upsert(rowsWithTimestamp, { onConflict: 'user_id,test_slug,q_no' });
 
-      if (error) throw error;
+      if (error) {
+        const needsFallback = /column .*updated_at/i.test(error.message ?? '');
+        if (!needsFallback) throw error;
+
+        const { error: legacyError } = await supabase
+          .from('lm_listening_user_answers')
+          .upsert(rows, { onConflict: 'user_id,test_slug,q_no' });
+
+        if (legacyError) throw legacyError;
+      }
     } catch (e) {
       const msg = (e as { message?: string })?.message ?? 'Failed to save';
       setSaveError(msg);

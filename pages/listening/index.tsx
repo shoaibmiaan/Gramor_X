@@ -24,7 +24,7 @@ type SectionRow = {
 
 type AttemptRow = {
   test_slug: string;
-  updated_at: string | null;
+  last_activity_at: string | null;
 };
 
 type ListItem = {
@@ -88,21 +88,50 @@ export default function ListeningIndexPage() {
         // attempts (optional)
         let attempts: AttemptRow[] = [];
         if (userId) {
-          const aRes = await supabase
+          const attemptQuery = await supabase
             .from('lm_listening_user_answers')
             .select('test_slug, updated_at')
             .eq('user_id', userId);
-          if (aRes.error) throw aRes.error;
-          attempts = (aRes.data ?? []) as AttemptRow[];
+
+          if (attemptQuery.error) {
+            const needsFallback = /column .*updated_at/i.test(attemptQuery.error.message ?? '');
+            if (!needsFallback) throw attemptQuery.error;
+
+            const fallbackQuery = await supabase
+              .from('lm_listening_user_answers')
+              .select('test_slug, created_at')
+              .eq('user_id', userId);
+            if (fallbackQuery.error) throw fallbackQuery.error;
+
+            const fallbackRows = (fallbackQuery.data ?? []) as {
+              test_slug: string;
+              created_at?: string | null;
+            }[];
+            attempts = fallbackRows.map((row) => ({
+              test_slug: row.test_slug,
+              last_activity_at: row.created_at ?? null,
+            }));
+          } else {
+            const attemptRows = (attemptQuery.data ?? []) as {
+              test_slug: string;
+              updated_at?: string | null;
+              created_at?: string | null;
+            }[];
+            attempts = attemptRows.map((row) => ({
+              test_slug: row.test_slug,
+              last_activity_at: row.updated_at ?? row.created_at ?? null,
+            }));
+          }
         }
         const lastByTest = attempts.reduce<Record<string, string | null>>((acc, r) => {
           const prev = acc[r.test_slug];
+          const curr = r.last_activity_at;
           acc[r.test_slug] =
-            prev && r.updated_at
-              ? new Date(prev) > new Date(r.updated_at)
+            prev && curr
+              ? new Date(prev) > new Date(curr)
                 ? prev
-                : r.updated_at
-              : prev ?? r.updated_at;
+                : curr
+              : prev ?? curr;
           return acc;
         }, {});
 
