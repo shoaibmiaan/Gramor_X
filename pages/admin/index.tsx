@@ -281,10 +281,11 @@ export default function AdminIndex() {
 
         {/* Quick Nav */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
-          {[
+          {[ 
             { label: 'Students', href: '/admin/students?active=1', roles: ['admin', 'teacher'] },
             { label: 'Teachers', href: '/admin/teachers', roles: ['admin'] },
             { label: 'Reports', href: `/admin/reports?range=last-7d`, roles: ['admin', 'teacher'] },
+            { label: 'Writing Prompts', href: '/admin/writing', roles: ['admin', 'teacher'] },
             { label: 'AI Queue', href: '/admin/ai-queue?status=pending', roles: ['admin'] },
             { label: 'Blog Moderation', href: '/admin/blog/moderation', roles: ['admin', 'teacher'] },
             { label: 'Support', href: '/admin/support', roles: ['admin', 'teacher'] },
