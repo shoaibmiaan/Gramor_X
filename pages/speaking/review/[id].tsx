@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { env } from '@/lib/env';
 import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
-import { createClient } from '@supabase/supabase-js';
+
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
+import { Textarea } from '@/components/design-system/Textarea';
 import ChallengeScore from '@/components/review/ChallengeScore';
+import { createSupabaseServerClient, supabaseService } from '@/lib/supabaseServer';
+import type { AppRole } from '@/lib/requireRole';
 
 /** ─────────────────────────────
  * Minimal in-file Transcript with TTS (no external hooks)
@@ -85,19 +87,23 @@ type Attempt = {
   band_breakdown: Breakdown | null;
   audio_urls: Record<string, string[]>;
   created_at: string;
+  teacher_feedback: string | null;
+  teacher_feedback_at: string | null;
+  teacher_feedback_by: string | null;
+  teacher_feedback_author: string | null;
 };
-type Props = { attempt: Attempt | null };
+type ViewerRole = AppRole | 'user' | null;
+type Props = { attempt: Attempt | null; viewerRole: ViewerRole };
 
 /** ─────────────────────────────
  * SSR: fetch attempt (requires Supabase envs)
  * ────────────────────────────*/
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const { attemptId } = ctx.query as { attemptId: string };
-  const supabase = createClient(
-    env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    { auth: { persistSession: false } } // Added for server
-  );
+  const supabase = createSupabaseServerClient({
+    req: ctx.req as any,
+    res: ctx.res as any,
+  });
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -106,24 +112,89 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     };
   }
 
-  const { data, error } = await supabase
+  const service = supabaseService();
+
+  const { data, error } = await service
     .from('speaking_attempts')
-    .select('*')
+    .select(
+      'id,user_id,scenario,transcript,band_overall,band_breakdown,audio_urls,created_at,teacher_feedback,teacher_feedback_at,teacher_feedback_by'
+    )
     .eq('id', attemptId)
     .single();
 
-  if (error || !data) return { props: { attempt: null } };
-  return { props: { attempt: data as Attempt } };
+  const metaRole =
+    (user.app_metadata?.role as AppRole | undefined) ??
+    (user.user_metadata?.role as AppRole | undefined) ??
+    null;
+
+  let viewerRole: ViewerRole = metaRole ?? null;
+
+  if (!viewerRole) {
+    const { data: profile } = await service
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    viewerRole = (profile?.role as ViewerRole) ?? null;
+  }
+
+  if (error || !data) {
+    return { props: { attempt: null, viewerRole } };
+  }
+
+  const normalizedRole = viewerRole === 'user' ? 'student' : viewerRole;
+  const isStaff = normalizedRole === 'teacher' || normalizedRole === 'admin';
+  const isOwner = data.user_id === user.id;
+
+  if (!isOwner && !isStaff) {
+    return {
+      redirect: { destination: '/restricted', permanent: false },
+    };
+  }
+
+  let teacherName: string | null = null;
+  if (data.teacher_feedback_by) {
+    const { data: teacherProfile } = await service
+      .from('profiles')
+      .select('full_name')
+      .eq('id', data.teacher_feedback_by)
+      .single();
+    teacherName = (teacherProfile?.full_name as string | null | undefined) ?? null;
+  }
+
+  const rawAudio = (data as any).audio_urls;
+  const attempt: Attempt = {
+    id: data.id,
+    scenario: (data as any).scenario ?? null,
+    transcript: (data as any).transcript ?? null,
+    band_overall: (data as any).band_overall ?? null,
+    band_breakdown: (data as any).band_breakdown ?? null,
+    audio_urls: rawAudio && typeof rawAudio === 'object' ? rawAudio : {},
+    created_at: data.created_at,
+    teacher_feedback: (data as any).teacher_feedback ?? null,
+    teacher_feedback_at: (data as any).teacher_feedback_at ?? null,
+    teacher_feedback_by: (data as any).teacher_feedback_by ?? null,
+    teacher_feedback_author: teacherName,
+  };
+
+  return {
+    props: { attempt, viewerRole: normalizedRole ?? 'student' },
+  };
 };
 
 /** ─────────────────────────────
  * Page
  * ────────────────────────────*/
-export default function SpeakingReview({ attempt: initial }: Props) {
+export default function SpeakingReview({ attempt: initial, viewerRole }: Props) {
   const router = useRouter(); // kept to avoid changing surrounding logic
   const [attempt, setAttempt] = useState<Attempt | null>(initial);
   const [pending, setPending] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const viewerIsStaff = viewerRole === 'teacher' || viewerRole === 'admin';
+  const [feedbackDraft, setFeedbackDraft] = useState(initial?.teacher_feedback ?? '');
+  const [feedbackSaving, setFeedbackSaving] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
 
   function isError(x: unknown): x is Error {
     return typeof x === 'object' && x !== null && 'message' in x;
@@ -159,6 +230,43 @@ export default function SpeakingReview({ attempt: initial }: Props) {
       setErrMsg(isError(e) ? String((e as Error).message) : 'Something went wrong');
     } finally {
       setPending(false);
+    }
+  }
+
+  async function saveTeacherFeedback() {
+    if (!attempt?.id) return;
+    setFeedbackError(null);
+    setFeedbackSuccess(null);
+    setFeedbackSaving(true);
+    try {
+      const response = await fetch('/api/speaking/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attemptId: attempt.id, feedback: feedbackDraft }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || !json?.ok) {
+        throw new Error(json?.error || 'Failed to save feedback');
+      }
+
+      setAttempt((prev) =>
+        prev
+          ? {
+              ...prev,
+              teacher_feedback: json.feedback ?? null,
+              teacher_feedback_at: json.savedAt ?? null,
+              teacher_feedback_by: json.authorId ?? null,
+              teacher_feedback_author: json.authorName ?? prev.teacher_feedback_author ?? null,
+            }
+          : prev,
+      );
+
+      setFeedbackDraft(json.feedback ?? '');
+      setFeedbackSuccess('Feedback saved');
+    } catch (error) {
+      setFeedbackError(error instanceof Error ? error.message : 'Failed to save feedback');
+    } finally {
+      setFeedbackSaving(false);
     }
   }
 
@@ -255,6 +363,76 @@ export default function SpeakingReview({ attempt: initial }: Props) {
                 <Transcript text={attempt.transcript} />
               </div>
             )}
+
+            {/* Teacher feedback */}
+            <div className="mt-8">
+              <h2 className="text-h3 font-semibold">Teacher Feedback</h2>
+              {viewerIsStaff ? (
+                <>
+                  <p className="text-small text-grayish mt-1">
+                    Share guidance for the student. Updates are visible immediately on their review page.
+                  </p>
+                  <Textarea
+                    value={feedbackDraft}
+                    onChange={(event) => {
+                      setFeedbackDraft(event.target.value);
+                      setFeedbackSuccess(null);
+                      setFeedbackError(null);
+                    }}
+                    rows={6}
+                    className="mt-3"
+                    placeholder="E.g. Focus on slowing down in Part 2 and add more linking words."
+                  />
+                  {feedbackError && (
+                    <div className="mt-3 rounded-ds bg-sunsetOrange/10 text-sunsetOrange px-3 py-2 text-small">
+                      {feedbackError}
+                    </div>
+                  )}
+                  {feedbackSuccess && (
+                    <div className="mt-3 rounded-ds bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-3 py-2 text-small">
+                      {feedbackSuccess}
+                    </div>
+                  )}
+                  <div className="mt-4 flex flex-wrap items-center gap-3 text-small text-grayish">
+                    <Button
+                      onClick={saveTeacherFeedback}
+                      disabled={feedbackSaving}
+                      className="rounded-ds-xl"
+                    >
+                      {feedbackSaving ? 'Saving…' : 'Save feedback'}
+                    </Button>
+                    {attempt.teacher_feedback_at && (
+                      <span>
+                        Last updated {new Date(attempt.teacher_feedback_at).toLocaleString()}
+                        {attempt.teacher_feedback_author
+                          ? ` · ${attempt.teacher_feedback_author}`
+                          : ''}
+                      </span>
+                    )}
+                  </div>
+                </>
+              ) : attempt.teacher_feedback ? (
+                <div className="mt-3 rounded-ds-xl border border-border/60 bg-white/60 dark:bg-dark/40 p-4">
+                  <p className="whitespace-pre-wrap leading-relaxed text-body text-ink/90">
+                    {attempt.teacher_feedback}
+                  </p>
+                  <div className="mt-3 text-small text-grayish">
+                    {attempt.teacher_feedback_author ? (
+                      <span>{attempt.teacher_feedback_author}</span>
+                    ) : (
+                      <span>Your teacher</span>
+                    )}
+                    {attempt.teacher_feedback_at && (
+                      <span> · {new Date(attempt.teacher_feedback_at).toLocaleString()}</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-grayish mt-2">
+                  Teacher feedback will appear here after a review is completed.
+                </p>
+              )}
+            </div>
 
             <div className="mt-8 flex gap-3">
               <Button as="a" href="/speaking" variant="secondary" className="rounded-ds-xl">

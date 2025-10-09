@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import type { AppRole } from '@/lib/requireRole';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -21,7 +22,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (parts.length < 2) return res.status(400).json({ error: 'Invalid path format' });
     const [ownerId, attemptId] = parts;
 
-    if (ownerId !== user.id) {
+    const metaRole =
+      (user.app_metadata?.role as AppRole | undefined) ||
+      (user.user_metadata?.role as AppRole | undefined) ||
+      null;
+
+    let role = metaRole ?? null;
+    if (!role) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      role = (profile?.role as AppRole | undefined) ?? null;
+    }
+
+    const isOwner = ownerId === user.id;
+    const isStaff = role === 'teacher' || role === 'admin';
+    if (!isOwner && !isStaff) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
@@ -32,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('id', attemptId)
       .single();
 
-    if (error || !attempt || attempt.user_id !== user.id) {
+    if (error || !attempt || attempt.user_id !== ownerId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
