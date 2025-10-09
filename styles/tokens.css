@@ -54,11 +54,54 @@
   /* Fonts */
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial;
   --font-display: "Roboto Slab", Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Chart tokens */
+  --chart-reading: rgb(var(--color-primary) / 1);
+  --chart-listening: rgb(var(--color-secondary) / 1);
+  --chart-writing: rgb(var(--color-accent) / 1);
+  --chart-speaking: rgb(var(--color-foreground) / 1);
+  --chart-grid: rgb(var(--gx-border) / 0.35);
+  --chart-axis: rgb(var(--gx-muted-foreground) / 1);
+  --chart-tooltip-bg: rgb(var(--gx-card) / 1);
+  --chart-tooltip-border: rgb(var(--gx-border) / 0.6);
+  --chart-tooltip-fg: rgb(var(--gx-card-foreground) / 1);
+  --chart-area: rgb(var(--color-primary) / 1);
+  --chart-area-stroke: rgb(var(--color-primaryDark) / 1);
 }
 
 .dark {
   --color-background: var(--color-darker);
   --color-foreground: 255 255 255;
+}
+
+[data-theme='hc'] {
+  --color-background: 0 0 0;
+  --color-foreground: 255 255 255;
+  --color-primary: 255 209 0;
+  --color-primaryDark: 255 170 0;
+  --color-secondary: 0 255 255;
+  --color-accent: 255 105 180;
+  --color-success: 144 238 144;
+  --color-warning: 255 140 0;
+  --color-danger: 255 69 0;
+  --color-lightBg: 0 0 0;
+  --color-lightText: 255 255 255;
+  --color-grayish: 220 220 220;
+  --color-lightCard: 0 0 0;
+  --color-lightBorder: 255 255 255;
+  --color-mutedText: 200 200 200;
+
+  --chart-reading: #ffea00;
+  --chart-listening: #00ffff;
+  --chart-writing: #ff69b4;
+  --chart-speaking: #ffffff;
+  --chart-grid: rgba(255, 255, 255, 0.4);
+  --chart-axis: rgba(255, 255, 255, 0.85);
+  --chart-tooltip-bg: rgba(0, 0, 0, 0.95);
+  --chart-tooltip-border: rgba(255, 255, 255, 0.7);
+  --chart-tooltip-fg: rgba(255, 255, 255, 0.95);
+  --chart-area: rgba(255, 234, 0, 1);
+  --chart-area-stroke: rgba(255, 214, 0, 1);
 }
 
 /* NOTE:
