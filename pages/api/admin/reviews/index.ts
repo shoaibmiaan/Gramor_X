@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireRole } from '@/lib/requireRole';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { captureException } from '@/lib/monitoring/sentry';
 
 const supabase = createSupabaseServerClient({ serviceRole: true });
 
@@ -37,6 +38,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) throw error;
     return res.json({ ok: true, data });
   } catch (e: any) {
+    captureException(e, {
+      route: '/api/admin/reviews',
+      attemptId: attemptId ?? undefined,
+      method: req.method,
+    });
     return res.status(500).json({ ok: false, error: e.message ?? 'Server error' });
   }
 }

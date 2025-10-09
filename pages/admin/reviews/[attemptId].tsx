@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import { Container } from '@/components/design-system/Container';
@@ -9,6 +9,7 @@ import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { track } from '@/lib/analytics/track';
 
 type Role = 'student'|'teacher'|'admin';
 type ModuleKind = 'speaking'|'writing';
@@ -57,6 +58,7 @@ export default function ReviewAttemptPage() {
   const [reason, setReason] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const startedRef = useRef(false);
 
   // Guard (teacher/admin only)
   useEffect(() => {
@@ -93,6 +95,17 @@ export default function ReviewAttemptPage() {
     })();
   }, [attemptId]);
 
+  useEffect(() => {
+    if (!data || startedRef.current) return;
+    startedRef.current = true;
+    track('teacher_review_started', {
+      attempt_id: data.id,
+      module: data.module,
+      ai_band: data.ai_band,
+      overridden: Boolean(data.overridden),
+    });
+  }, [data]);
+
   const updatedAt = useMemo(
     () => (data ? new Date(data.last_activity).toLocaleString() : ''),
     [data]
@@ -115,6 +128,7 @@ export default function ReviewAttemptPage() {
     setSubmitting(true);
     setError(null);
     setSavedMsg(null);
+    const attemptMeta = data;
     try {
       const res = await fetch(`/api/admin/reviews/override`, {
         method: 'POST',
@@ -126,6 +140,20 @@ export default function ReviewAttemptPage() {
       setSavedMsg('Override saved.');
       // reflect in UI
       setData(prev => prev ? { ...prev, overridden: true, final_band: band, override_reason: reason } : prev);
+      if (attemptMeta) {
+        track('teacher_review_scored', {
+          attempt_id: attemptMeta.id,
+          module: attemptMeta.module,
+          ai_band: attemptMeta.ai_band,
+          final_band: band,
+          delta: Number((band - attemptMeta.ai_band).toFixed(2)),
+          had_previous_override: Boolean(attemptMeta.final_band),
+        });
+        track('teacher_review_completed', {
+          attempt_id: attemptMeta.id,
+          module: attemptMeta.module,
+        });
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to save override.');
     } finally {

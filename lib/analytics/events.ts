@@ -14,7 +14,10 @@ export type AnalyticsEventName =
   | 'partner_code_applied'
   | 'predictor_completed'
   | 'challenge_joined'
-  | 'certificate_shared';
+  | 'certificate_shared'
+  | 'teacher_review_started'
+  | 'teacher_review_completed'
+  | 'teacher_review_scored';
 
 export type AnalyticsProps = Record<
   string,
