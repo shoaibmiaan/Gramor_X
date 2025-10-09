@@ -3,34 +3,89 @@ import { z } from 'zod';
 
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { extractRole } from '@/lib/roles';
+import { extractRole, isTeacher } from '@/lib/roles';
 
-const MCQSchema = z.object({
-  type: z.literal('mcq'),
-  prompt: z.string().min(1, 'Prompt is required'),
-  options: z.array(z.string().min(1, 'Option cannot be empty')).min(2).max(6),
-  correctIndex: z.number().int().min(0),
-});
+const AnswerSchema = z.union([
+  z.string().min(1),
+  z.array(z.union([z.string().min(1), z.number()])).min(1),
+  z.record(z.union([z.string().min(1), z.number()])),
+]);
 
-const TFNGSchema = z.object({
-  type: z.literal('tfng'),
-  prompt: z.string().min(1, 'Prompt is required'),
-  answer: z.enum(['True', 'False', 'Not Given']),
-});
+const QuestionSchema = z
+  .object({
+    orderNo: z.number().int().min(1),
+    kind: z.enum(['tfng', 'mcq', 'short', 'matching']),
+    prompt: z.string().min(1),
+    options: z.union([z.array(z.any()), z.record(z.any())]).optional(),
+    answers: AnswerSchema,
+    points: z.number().int().min(0).max(100).optional(),
+    explanation: z.string().optional(),
+  })
+  .superRefine((q, ctx) => {
+    const answers = q.answers as any;
+    if (typeof answers === 'string' && answers.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['answers'],
+        message: 'Answer cannot be empty',
+      });
+    }
 
-const ShortSchema = z.object({
-  type: z.literal('short'),
-  prompt: z.string().min(1, 'Prompt is required'),
-  answers: z.array(z.string().min(1, 'Answer cannot be empty')).min(1),
-});
+    if (Array.isArray(answers) && answers.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['answers'],
+        message: 'Provide at least one answer value',
+      });
+    }
 
-const QuestionSchema = z.discriminatedUnion('type', [MCQSchema, TFNGSchema, ShortSchema]);
+    if (
+      answers &&
+      !Array.isArray(answers) &&
+      typeof answers === 'object' &&
+      Object.keys(answers).length === 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['answers'],
+        message: 'Provide at least one answer mapping',
+      });
+    }
+
+    if (q.kind === 'mcq') {
+      if (!Array.isArray(q.options) || q.options.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['options'],
+          message: 'MCQ questions require at least two options',
+        });
+      }
+    }
+
+    if (q.kind === 'matching') {
+      const pairs =
+        q.options && typeof q.options === 'object' && !Array.isArray(q.options)
+          ? (q.options as any).pairs
+          : null;
+      if (!Array.isArray(pairs) || pairs.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['options'],
+          message: 'Matching questions require a pairs array',
+        });
+      }
+    }
+  });
 
 const PayloadSchema = z.object({
+  slug: z.string().min(3).max(80).optional(),
   title: z.string().min(3, 'Title must be at least 3 characters'),
-  slug: z.string().optional(),
-  difficulty: z.string().min(1, 'Difficulty is required'),
-  passage: z.string().min(20, 'Passage text is required'),
+  summary: z.string().optional(),
+  passageText: z.string().min(20, 'Passage text is required'),
+  difficulty: z.enum(['Academic', 'General']).default('Academic'),
+  words: z.number().int().min(0).max(10000).optional(),
+  durationMinutes: z.number().int().min(0).max(180).optional(),
+  published: z.boolean().optional(),
   questions: z.array(QuestionSchema).min(1, 'At least one question is required'),
 });
 
@@ -50,7 +105,7 @@ async function ensureUniqueSlug(base: string) {
 
   while (true) {
     const { data, error } = await supabaseAdmin
-      .from('reading_passages')
+      .from('reading_tests')
       .select('slug')
       .eq('slug', slug)
       .maybeSingle();
@@ -68,32 +123,9 @@ async function ensureUniqueSlug(base: string) {
   }
 }
 
-type ExistingRow = {
-  slug: string;
-  title: string;
-  difficulty: string | null;
-  words: number | null;
-  created_at: string | null;
-};
-
-type QuestionRow = {
-  passage_slug: string;
-  order_no: number;
-  kind: 'mcq' | 'tfng' | 'short';
-  prompt: string;
-  options: string[] | null;
-  answers: string[];
-  points: number;
-};
-
-function countWords(text: string) {
-  return text
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
   const supabase = createSupabaseServerClient({ req, res });
   const {
     data: { user },
@@ -104,146 +136,103 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
-  const role = extractRole(user);
-  if (role !== 'admin' && role !== 'teacher') {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-
-  if (req.method === 'GET') {
-    try {
-      const { data: passages, error: passErr } = await supabaseAdmin
-        .from('reading_passages')
-        .select('slug,title,difficulty,words,created_at')
-        .order('created_at', { ascending: false });
-
-      if (passErr) {
-        return res.status(500).json({ error: passErr.message });
-      }
-
-      if (!passages || passages.length === 0) {
-        return res.json([]);
-      }
-
-      const slugs = passages.map((p: ExistingRow) => p.slug);
-
-      const { data: questionRows, error: qErr } = await supabaseAdmin
-        .from('reading_questions')
-        .select('passage_slug')
-        .in('passage_slug', slugs);
-
-      if (qErr) {
-        return res.status(500).json({ error: qErr.message });
-      }
-
-      const counts = new Map<string, number>();
-      for (const row of questionRows ?? []) {
-        const key = (row as { passage_slug: string }).passage_slug;
-        counts.set(key, (counts.get(key) ?? 0) + 1);
-      }
-
-      const payload = passages.map((p: ExistingRow) => ({
-        slug: p.slug,
-        title: p.title,
-        difficulty: p.difficulty ?? 'Academic',
-        words: typeof p.words === 'number' ? p.words : null,
-        questionCount: counts.get(p.slug) ?? 0,
-        createdAt: p.created_at,
-      }));
-
-      return res.json(payload);
-    } catch (error: any) {
-      return res.status(500).json({ error: error?.message || 'Failed to load passages' });
-    }
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (!isTeacher(user)) {
+    const role = extractRole(user);
+    return res.status(403).json({ error: 'Forbidden', role });
   }
 
   const parsed = PayloadSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid payload', issues: parsed.error.flatten() });
+    return res.status(400).json({
+      error: 'Invalid payload',
+      issues: parsed.error.flatten(),
+    });
   }
 
-  const { title, slug: providedSlug, difficulty, passage, questions } = parsed.data;
-
-  const trimmedTitle = title.trim();
-  const trimmedPassage = passage.trim();
-
-  if (!trimmedPassage) {
-    return res.status(400).json({ error: 'Passage text is required' });
-  }
+  const { slug: providedSlug, title, summary, passageText, difficulty, words, durationMinutes, published, questions } =
+    parsed.data;
 
   try {
-    const baseSlug = slugify(providedSlug ?? trimmedTitle);
+    const baseSlug = slugify(providedSlug ?? title);
     const slug = await ensureUniqueSlug(baseSlug);
 
-    const words = countWords(trimmedPassage);
-
-    const { data: insertedPassage, error: insertPassageError } = await supabaseAdmin
-      .from('reading_passages')
+    const { data: insertedTest, error: insertErr } = await supabaseAdmin
+      .from('reading_tests')
       .insert({
         slug,
-        title: trimmedTitle,
+        title: title.trim(),
+        summary: summary?.trim() || null,
+        passage_text: passageText.trim(),
         difficulty,
-        words: words > 0 ? words : null,
-        content: trimmedPassage,
+        words: typeof words === 'number' ? words : null,
+        duration_minutes: typeof durationMinutes === 'number' ? durationMinutes : null,
+        published: published ?? false,
+        created_by: user.id,
       })
       .select('slug')
       .single();
 
-    if (insertPassageError || !insertedPassage) {
-      return res.status(500).json({ error: insertPassageError?.message || 'Failed to save passage' });
+    if (insertErr || !insertedTest) {
+      return res.status(500).json({ error: insertErr?.message || 'Failed to create reading test' });
     }
 
-    const questionRows: QuestionRow[] = questions.map((q, idx) => {
-      if (q.type === 'mcq') {
-        const trimmedOptions = q.options.map((opt) => opt.trim());
-        const filteredOptions = trimmedOptions.filter(Boolean);
-        const answerCandidate = trimmedOptions[q.correctIndex]?.trim();
-        const answer = answerCandidate && answerCandidate.length > 0 ? answerCandidate : filteredOptions[0];
-        return {
-          passage_slug: slug,
-          order_no: idx + 1,
-          kind: 'mcq',
-          prompt: q.prompt.trim(),
-          options: filteredOptions,
-          answers: answer ? [answer] : [],
-          points: 1,
-        };
-      }
+    const sortedQuestions = [...questions].sort((a, b) => a.orderNo - b.orderNo);
+    const questionRows = sortedQuestions.map((q) => {
+      const normalizedOptions = Array.isArray(q.options)
+        ? q.options.map((opt) => (typeof opt === 'string' ? opt.trim() : opt))
+        : q.options && typeof q.options === 'object'
+        ? (() => {
+            const base: Record<string, any> = { ...q.options };
+            if (Array.isArray(base.options)) {
+              base.options = base.options.map((opt: any) =>
+                typeof opt === 'string' ? opt.trim() : opt,
+              );
+            }
+            if (Array.isArray(base.pairs)) {
+              base.pairs = base.pairs.map((pair: any) => ({
+                ...pair,
+                left: typeof pair?.left === 'string' ? pair.left.trim() : pair?.left,
+                right: Array.isArray(pair?.right)
+                  ? pair.right.map((r: any) => (typeof r === 'string' ? r.trim() : r))
+                  : typeof pair?.right === 'string'
+                  ? pair.right.trim()
+                  : pair?.right,
+              }));
+            }
+            return base;
+          })()
+        : null;
 
-      if (q.type === 'tfng') {
-        return {
-          passage_slug: slug,
-          order_no: idx + 1,
-          kind: 'tfng',
-          prompt: q.prompt.trim(),
-          options: null,
-          answers: [q.answer],
-          points: 1,
-        };
-      }
+      const normalizedAnswers = Array.isArray(q.answers)
+        ? q.answers.map((ans) => (typeof ans === 'string' ? ans.trim() : ans))
+        : typeof q.answers === 'string'
+        ? q.answers.trim()
+        : q.answers && typeof q.answers === 'object'
+        ? Object.fromEntries(
+            Object.entries(q.answers).map(([key, value]) => [
+              key,
+              typeof value === 'string' ? value.trim() : value,
+            ]),
+          )
+        : q.answers;
 
-      const acceptable = q.answers.map((ans) => ans.trim()).filter(Boolean);
       return {
         passage_slug: slug,
-        order_no: idx + 1,
-        kind: 'short',
+        order_no: q.orderNo,
+        kind: q.kind,
         prompt: q.prompt.trim(),
-        options: null,
-        answers: acceptable,
-        points: 1,
+        options: normalizedOptions,
+        answers: normalizedAnswers,
+        points: typeof q.points === 'number' ? q.points : 1,
+        explanation: q.explanation?.trim() || null,
       };
     });
 
-    const { error: questionsError } = await supabaseAdmin
-      .from('reading_questions')
-      .insert(questionRows);
+    const { error: qErr } = await supabaseAdmin.from('reading_questions').insert(questionRows);
 
-    if (questionsError) {
-      await supabaseAdmin.from('reading_passages').delete().eq('slug', slug);
-      return res.status(500).json({ error: questionsError.message || 'Failed to save questions' });
+    if (qErr) {
+      await supabaseAdmin.from('reading_tests').delete().eq('slug', slug);
+      return res.status(500).json({ error: qErr.message || 'Failed to save questions' });
     }
 
     return res.status(200).json({ ok: true, slug });
