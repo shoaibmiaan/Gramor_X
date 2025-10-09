@@ -10,14 +10,32 @@
     body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
     .wrap,.container{max-width:1200px;margin:0 auto;padding:20px}
     h1,h2{margin:0 0 12px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin:12px 0}
+    section{margin:28px 0}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin:12px 0}
+    .highlight{border-color:var(--acc);background:rgba(59,130,246,.08)}
     .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
     .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--border);border-radius:999px;background:#151826;font-size:12px;color:#cfd5e3}
     a.link{color:var(--acc);text-decoration:none;border-bottom:1px dashed var(--acc)}
     a.link:hover{opacity:.9}
-    .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border)}
+    .muted{color:var(--muted);font-size:14px;line-height:1.5}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .grid.two{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+    .task-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px}
+    .task-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .task-card .title{display:flex;flex-direction:column;gap:6px}
+    .task-card h3{margin:0;font-size:18px}
+    .task-card dl{margin:0;display:flex;flex-direction:column;gap:10px}
+    .task-card dl div{display:grid;grid-template-columns:120px 1fr;gap:8px}
+    .task-card dt{font-weight:600;color:#d1d7e6}
+    .task-card dd{margin:0;color:#c0c7d5}
+    .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:#151826;color:#d5dbec}
     .badge.ok{background:#0f1d17;color:#a9efd4}
     .badge.warn{background:#241c0f;color:#f5d39e}
+    .badge.owner{background:#182031;color:#9db7ff;border-color:#263452}
+    .badge.priority{font-weight:600}
+    .badge.priority.p1{background:#2b1521;border-color:#5f1f3a;color:#ff9ac1}
+    .badge.priority.p2{background:#1d201f;border-color:#32453e;color:#99f6d9}
+    .badge.priority.p3{background:#1b1d25;border-color:#32374c;color:#cdd5ff}
     ul{line-height:1.5}
     nav{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 16px}
     nav a{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);text-decoration:none}
@@ -40,7 +58,9 @@
 <a href="platform-ops.html">Platform Ops</a></nav>
 
 <h1>Writing Module</h1>
-  <div class="card"><b>Status:</b> Scaffolded. Populate with DS sections.</div>
+  <div class="card highlight">
+    <b>Status:</b> Sprint S3 focus on reliability &amp; exam-room UX. Deliver autosave resiliency, AI scoring fallback, and clarity for candidates hitting IELTS band requirements.
+  </div>
   <div class="chips">
     <span class="chip">Exam Room</span>
     <span class="chip">Practice</span>
@@ -48,11 +68,139 @@
     <span class="chip">Review</span>
     <span class="chip">Analytics</span>
   </div>
-  <p class="muted">Deep links:
-    <a class="link" href="/writing">/writing</a> ·
-    <a class="link" href="/writing/test/1">/writing/test/1</a> ·
-    <a class="link" href="/writing/test/1/review">/writing/test/1/review</a>
-  </p>
+
+  <section>
+    <h2>Focus Themes</h2>
+    <div class="grid two">
+      <div class="card">
+        <h3>Reliability Under Pressure</h3>
+        <p class="muted">Safeguard drafts against disconnects, crashes, and provider hiccups so attempts are never lost.</p>
+        <ul>
+          <li>Debounced autosave to both device and Supabase.</li>
+          <li>Recovery banner that can restore latest draft immediately after reload.</li>
+          <li>Clear "Saving…/Saved" indicator aligned with DS toast guidelines.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Scoring Confidence</h3>
+        <p class="muted">Keep AI feedback flowing even if OpenAI is degraded and surface actionable status to learners.</p>
+        <ul>
+          <li>Provider fallback chain: OpenAI → Groq → Google.</li>
+          <li>User-facing retry CTA with optimistic UI and preserved essay text.</li>
+          <li>Telemetry on retries, fallback branch, and score freshness.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>IELTS Score Readiness</h3>
+        <p class="muted">Make minimum word expectations explicit and reduce submission surprises.</p>
+        <ul>
+          <li>Live word counter with DS typography + contrast tokens.</li>
+          <li>Non-blocking warning state below 150 (Task 1) / 250 (Task 2).</li>
+          <li>Content guidance links into Writing Coach for fast remediation.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sprint Backlog</h2>
+    <div class="grid">
+      <article class="task-card">
+        <header>
+          <div class="title">
+            <span class="badge priority p1">P1</span>
+            <h3>S3-W1 · Draft autosave &amp; recovery</h3>
+          </div>
+          <span class="badge owner">FE+BE · 1.5d</span>
+        </header>
+        <p>Debounced autosave to local storage &amp; Supabase, status indicator, and full recovery flows.</p>
+        <dl>
+          <div><dt>Definition of Done</dt><dd>5s debounce, draft restores after crash, Saving/Saved states visible.</dd></div>
+          <div><dt>Labels</dt><dd>section:core-exam · module:writing · type:feature</dd></div>
+          <div><dt>Dependencies</dt><dd>S3-G1 (Guardrails instrumentation)</dd></div>
+        </dl>
+      </article>
+
+      <article class="task-card">
+        <header>
+          <div class="title">
+            <span class="badge priority p2">P2</span>
+            <h3>S3-W2 · AI scoring fallback &amp; retry</h3>
+          </div>
+          <span class="badge owner">BE · 0.5d</span>
+        </header>
+        <p>Fallback across scoring providers with a user-triggered retry that keeps essays intact.</p>
+        <dl>
+          <div><dt>Definition of Done</dt><dd>Fallback verified, retry surface wired, no data loss during error states.</dd></div>
+          <div><dt>Labels</dt><dd>section:core-exam · module:writing · type:reliability</dd></div>
+          <div><dt>Dependencies</dt><dd>None</dd></div>
+        </dl>
+      </article>
+
+      <article class="task-card">
+        <header>
+          <div class="title">
+            <span class="badge priority p2">P2</span>
+            <h3>S3-W3 · Word count &amp; min-length guard</h3>
+          </div>
+          <span class="badge owner">FE · 0.5d</span>
+        </header>
+        <p>Surface live word counts and gentle warnings for IELTS thresholds without blocking submissions.</p>
+        <dl>
+          <div><dt>Definition of Done</dt><dd>Counter visible, warnings under threshold, tasks remain submit-able.</dd></div>
+          <div><dt>Labels</dt><dd>section:core-exam · module:writing · type:ux</dd></div>
+          <div><dt>Dependencies</dt><dd>None</dd></div>
+        </dl>
+      </article>
+
+      <article class="task-card">
+        <header>
+          <div class="title">
+            <span class="badge priority p3">P3</span>
+            <h3>S3-W4 · Long-text robustness</h3>
+          </div>
+          <span class="badge owner">QA · 0.5d</span>
+        </header>
+        <p>Stress test essay inputs up to 10k characters, focused on mobile responsiveness and submission reliability.</p>
+        <dl>
+          <div><dt>Definition of Done</dt><dd>E2E suite passes on long-text scenarios, no lag reported.</dd></div>
+          <div><dt>Labels</dt><dd>section:core-exam · module:writing · type:qa · perf</dd></div>
+          <div><dt>Dependencies</dt><dd>None</dd></div>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Risk Watch &amp; Notes</h2>
+    <div class="grid two">
+      <div class="card">
+        <h3>Outstanding</h3>
+        <ul>
+          <li>Confirm DS treatment for Saving/Saved indicator matches Writing exam toolbar spec.</li>
+          <li>Groq scoring endpoint quota still pending final approval (track in Ops ticket OPS-221).</li>
+          <li>QA to align long-text scripts with mobile Safari 15 performance baseline.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Metrics &amp; Telemetry</h3>
+        <ul>
+          <li>Autosave success rate (supabase_writing_autosave_success) &gt; 99.5%.</li>
+          <li>Fallback usage funnel (openai_error → fallback_success) w/ retry_count.</li>
+          <li>Word count warning dismissals vs. submissions under threshold.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Deep links</h2>
+    <p class="muted">
+      <a class="link" href="/writing">/writing</a> ·
+      <a class="link" href="/writing/test/1">/writing/test/1</a> ·
+      <a class="link" href="/writing/test/1/review">/writing/test/1/review</a>
+    </p>
+  </section>
 
 </div>
 </body>
