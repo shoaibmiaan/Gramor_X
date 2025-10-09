@@ -11,7 +11,13 @@ export type SpeakingAttempt = {
 export type SpeakingFeedback = {
   attempt_id: string;
   band_overall: number;
-  bands: { fluency:number; coherence:number; lexical:number; grammar:number; pronunciation:number };
+  bands: {
+    fluency: number;
+    coherence: number;
+    lexical: number;
+    pronunciation: number;
+    grammar?: number;
+  };
   transcript: string;
   tips: string[];
   created_at: string;
