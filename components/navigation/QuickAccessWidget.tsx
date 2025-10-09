@@ -34,11 +34,11 @@ export const QuickAccessWidget: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+    <div className="fixed inset-x-4 bottom-24 z-40 flex flex-col items-stretch gap-3 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-auto sm:items-end">
       {open && (
         <div
           id="quick-actions-menu"
-          className="w-72 rounded-2xl border border-border bg-card/95 p-4 shadow-xl"
+          className="w-full max-w-xs rounded-2xl border border-border bg-card/95 p-4 shadow-xl sm:max-w-sm"
           role="menu"
         >
           <div className="mb-3 flex items-center justify-between">
@@ -76,15 +76,17 @@ export const QuickAccessWidget: React.FC = () => {
         </div>
       )}
 
-      <Button
-        variant="secondary"
-        className="rounded-full bg-primary text-primary-foreground shadow-xl hover:opacity-90"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-expanded={open}
-        aria-controls="quick-actions-menu"
-      >
-        {open ? 'Close' : 'Quick Access'}
-      </Button>
+      <div className="self-end sm:self-auto">
+        <Button
+          variant="secondary"
+          className="w-full rounded-full bg-primary text-primary-foreground shadow-xl hover:opacity-90 sm:w-auto"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-expanded={open}
+          aria-controls="quick-actions-menu"
+        >
+          {open ? 'Close' : 'Quick Access'}
+        </Button>
+      </div>
     </div>
   );
 };
