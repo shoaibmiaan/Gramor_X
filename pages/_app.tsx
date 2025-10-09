@@ -158,13 +158,15 @@ function InnerApp({ Component, pageProps }: AppProps) {
     [pathname]
   );
 
-  const isAuthPage = useMemo(
-    () =>
-      /^\/(login|signup|register)(\/|$)/.test(pathname) ||
-      /^\/auth\/(login|signup|register|mfa|verify)(\/|$)/.test(pathname) ||
-      pathname === '/forgot-password',
-    [pathname]
+  const isAuthPath = useCallback(
+    (path: string) =>
+      /^\/(login|signup|register)(\/|$)/.test(path) ||
+      /^\/auth\/(login|signup|register|mfa|verify)(\/|$)/.test(path) ||
+      path === '/forgot-password',
+    []
   );
+
+  const isAuthPage = useMemo(() => isAuthPath(pathname), [isAuthPath, pathname]);
 
   const isNoChromeRoute = useMemo(
     () =>
@@ -321,8 +323,12 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
             if (next && next.startsWith('/')) {
               router.replace(next);
-            } else if (isAuthPage) {
-              router.replace('/');
+            } else {
+              const currentPathname =
+                typeof window !== 'undefined' ? window.location.pathname : router.pathname;
+              if (isAuthPath(currentPathname)) {
+                router.replace('/');
+              }
             }
           }
 
@@ -346,7 +352,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
         }
       };
     }
-  }, [router, isAuthPage]);
+  }, [router, isAuthPage, isAuthPath]);
 
   // Hard redirect teachers away from non-teacher sections
   useEffect(() => {
