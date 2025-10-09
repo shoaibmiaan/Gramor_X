@@ -8,6 +8,7 @@ import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import ChallengeScore from '@/components/review/ChallengeScore';
+import { useToast } from '@/components/design-system/Toaster';
 
 /** ─────────────────────────────
  * Minimal in-file Transcript with TTS (no external hooks)
@@ -124,6 +125,8 @@ export default function SpeakingReview({ attempt: initial }: Props) {
   const [attempt, setAttempt] = useState<Attempt | null>(initial);
   const [pending, setPending] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [copying, setCopying] = useState(false);
+  const { success, error: toastError } = useToast();
 
   function isError(x: unknown): x is Error {
     return typeof x === 'object' && x !== null && 'message' in x;
@@ -159,6 +162,29 @@ export default function SpeakingReview({ attempt: initial }: Props) {
       setErrMsg(isError(e) ? String((e as Error).message) : 'Something went wrong');
     } finally {
       setPending(false);
+    }
+  }
+
+  async function handleShare() {
+    if (!attempt?.id) return;
+    if (typeof window === 'undefined') return;
+    const base = window.location.origin;
+    const studentLink = `${base}/speaking/review/${attempt.id}`;
+    const teacherLink = `${base}/admin/speaking?attempt=${attempt.id}`;
+    const payload = `Speaking attempt ID: ${attempt.id}\nStudent view: ${studentLink}\nTeacher view: ${teacherLink}`;
+
+    try {
+      setCopying(true);
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+        success('Share link copied to clipboard');
+      } else {
+        throw new Error('Clipboard not available');
+      }
+    } catch (e: unknown) {
+      toastError(e instanceof Error ? e.message : 'Unable to copy link');
+    } finally {
+      setCopying(false);
     }
   }
 
@@ -218,6 +244,24 @@ export default function SpeakingReview({ attempt: initial }: Props) {
                   {pending ? 'Scoring…' : 'Generate Score'}
                 </Button>
               </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-small text-grayish">
+              <Button
+                variant="outline"
+                className="rounded-ds-xl"
+                onClick={handleShare}
+                loading={copying}
+                loadingText="Copying…"
+              >
+                Share with teacher/partner
+              </Button>
+              <span>
+                Attempt ID: <code className="text-xs">{attempt.id}</code>
+              </span>
+              <span className="opacity-70">
+                Teachers can open Admin → Speaking with this link to review your audio.
+              </span>
             </div>
 
             {/* Error inline */}
