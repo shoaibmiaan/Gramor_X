@@ -10,8 +10,6 @@ import { Alert } from '@/components/design-system/Alert';
 import { Input } from '@/components/design-system/Input';
 import FocusGuard from '@/components/exam/FocusGuard';
 import { Timer } from '@/components/design-system/Timer';
-import { scoreAll } from '@/lib/listening/score';
-import { rawToBand } from '@/lib/listening/band';
 import { SaveItemButton } from '@/components/SaveItemButton';
 import AudioSectionsPlayer from '@/components/listening/AudioSectionsPlayer';
 import Transcript from '@/components/listening/Transcript';
@@ -72,7 +70,7 @@ export default function ListeningTestPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // answers: questionId -> value
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, any>>({});
 
   // --- Timer ---
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME_SEC);
@@ -190,6 +188,7 @@ export default function ListeningTestPage() {
   // --- Rehydrate WIP (answers + section) from localStorage ---
   useEffect(() => {
     if (!slug) return;
+    setSaveError(null);
     try {
       const raw = localStorage.getItem(LS_KEY(slug));
       if (!raw) return;
@@ -220,7 +219,7 @@ export default function ListeningTestPage() {
   };
   const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
   const isCorrect = (q: Question) => {
-    const a = answers[q.id] ?? '';
+    const a = String(answers[q.id] ?? '');
     return q.type === 'mcq'
       ? a === (q as MCQ).answer
       : normalize(a) === normalize((q as GAP).answer);
@@ -236,7 +235,7 @@ export default function ListeningTestPage() {
         .map(([qid, ans]) => {
           const q = test.sections.flatMap((s) => s.questions).find((qq) => qq.id === qid);
           if (!q) return null;
-          return { user_id: userId, test_slug: test.slug, q_no: q.qNo, answer: ans };
+          return { user_id: userId, test_slug: test.slug, q_no: q.qNo, answer: String(ans ?? '') };
         })
         .filter(Boolean) as Array<{ user_id: string; test_slug: string; q_no: number; answer: string }>;
 
@@ -256,14 +255,9 @@ export default function ListeningTestPage() {
   };
 
   // --- Submit attempt via RPC (score + band) ---
-  const submitAttempt = async () => {
-    if (!test || !userId) return;
+  const submitAttempt = async (): Promise<string | null> => {
+    if (!test || !userId) return null;
     const flat = test.sections.flatMap((s) => s.questions);
-    const questionsForScore = flat.map((q) =>
-      q.type === 'mcq'
-        ? { qno: q.qNo, type: 'mcq', answer_key: { value: q.answer } }
-        : { qno: q.qNo, type: 'gap', answer_key: { text: q.answer } }
-    );
     const answersArr = Object.entries(answers)
       .map(([qid, ans]) => {
         const q = flat.find((qq) => qq.id === qid);
@@ -272,17 +266,34 @@ export default function ListeningTestPage() {
       })
       .filter(Boolean) as { qno: number; answer: any }[];
 
-    const { total, perSection } = scoreAll(questionsForScore as any, answersArr);
-    const band = rawToBand(total);
-
-    await supabase.rpc('save_listening_attempt', {
-      test_slug: test.slug,
-      answers: answersArr,
-      score: total,
-      band,
-      section_scores: perSection,
-      duration_sec: TOTAL_TIME_SEC - Math.ceil(timeLeft),
-    });
+    setSaveError(null);
+    try {
+      const resp = await fetch('/api/listening/submit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          test_slug: test.slug,
+          answers: answersArr,
+          meta: {
+            duration_sec: TOTAL_TIME_SEC - Math.ceil(timeLeft),
+            auto_play: autoPlay,
+            section_index: currentIdx,
+          },
+        }),
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => null);
+        const message = body?.error ?? 'Failed to submit attempt';
+        throw new Error(message);
+      }
+      const body = await resp.json().catch(() => null);
+      return (body?.attemptId as string | undefined) ?? null;
+    } catch (e) {
+      const msg = (e as { message?: string })?.message ?? 'Failed to submit attempt';
+      setSaveError(msg);
+      return null;
+    }
   };
 
   const handleAutoSubmit = () => {
@@ -290,14 +301,24 @@ export default function ListeningTestPage() {
     submittedRef.current = true;
     setChecked(true);
     (async () => {
+      let attemptId: string | null = null;
       if (userId) {
         await persistAnswers();
-        await submitAttempt();
+        attemptId = await submitAttempt();
+        if (!attemptId) {
+          submittedRef.current = false;
+          return;
+        }
       }
       try {
         if (slug) localStorage.removeItem(LS_KEY(slug));
       } catch {}
-      if (test) router.push(`/listening/${test.slug}/review`);
+      if (test) {
+        const target = attemptId
+          ? `/listening/${test.slug}/review?attemptId=${attemptId}`
+          : `/listening/${test.slug}/review`;
+        router.push(target);
+      }
     })();
   };
 
@@ -493,17 +514,26 @@ export default function ListeningTestPage() {
                 </Button>
                 <Button
                   onClick={async () => {
-                    if (userId) {
-                      await persistAnswers();
-                      if (currentIdx >= secCount - 1) {
-                        await submitAttempt();
-                      }
-                    }
+                    if (!test) return;
+                    if (userId) await persistAnswers();
+
                     if (currentIdx >= secCount - 1) {
+                      let attemptId: string | null = null;
+                      if (userId) {
+                        attemptId = await submitAttempt();
+                        if (!attemptId) {
+                          submittedRef.current = false;
+                          return;
+                        }
+                      }
+                      submittedRef.current = true;
                       try {
                         if (slug) localStorage.removeItem(LS_KEY(slug));
                       } catch {}
-                      router.push(`/listening/${test.slug}/review`);
+                      const target = attemptId
+                        ? `/listening/${test.slug}/review?attemptId=${attemptId}`
+                        : `/listening/${test.slug}/review`;
+                      router.push(target);
                     } else {
                       setCurrentIdx((i) => i + 1);
                       setChecked(false);
