@@ -217,12 +217,15 @@ export function DesktopNav({
           )}
 
           {headerCta && (
-            <li>
-              <Link href={headerCta.href} className="hidden lg:block">
-                <Button variant="primary" className="shadow-lg">
-                  {headerCta.label}
-                </Button>
-              </Link>
+            <li className="hidden lg:block">
+              <Button
+                href={headerCta.href}
+                variant="primary"
+                size="sm"
+                className="shadow-sm"
+              >
+                {headerCta.label}
+              </Button>
             </li>
           )}
         </ul>
@@ -249,6 +252,8 @@ export function DesktopNav({
                 <UserMenu
                   userId={uid}
                   email={user?.email ?? undefined}
+                  name={user?.name ?? undefined}
+                  role={role ?? undefined}
                   avatarUrl={user?.avatarUrl ?? undefined}
                   onSignOut={signOut}
                   isAdmin={role === 'admin'}
@@ -259,12 +264,14 @@ export function DesktopNav({
                   }))}
                 />
               ) : (
-                <Link
+                <Button
                   href="/login"
-                  className="inline-flex items-center justify-center rounded-full px-4 py-2 font-semibold bg-primary text-primary-foreground hover:opacity-90 transition"
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
                 >
                   Sign in
-                </Link>
+                </Button>
               )
             ) : (
               <div className="h-9 w-24 animate-pulse rounded-full bg-muted" />

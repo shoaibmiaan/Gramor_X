@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { Container } from '@/components/design-system/Container';
 import { NavLink } from '@/components/design-system/NavLink';
 import { NotificationBell } from '@/components/design-system/NotificationBell';
+import { Button } from '@/components/design-system/Button';
 import { StreakChip } from '@/components/user/StreakChip';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
 import { navigationSchema } from '@/config/navigation';
@@ -110,13 +111,16 @@ export function MobileNav({
         </div>
 
         {headerCta && (
-          <Link
-            href={headerCta.href}
-            className="mb-4 inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 font-semibold text-primary-foreground hover:opacity-90"
-            onClick={closeMenu}
+          <Button
+            asChild
+            fullWidth
+            size="lg"
+            className="mb-4 font-semibold"
           >
-            {headerCta.label}
-          </Link>
+            <Link href={headerCta.href} onClick={closeMenu}>
+              {headerCta.label}
+            </Link>
+          </Button>
         )}
 
         {/* Premium Access Status */}
