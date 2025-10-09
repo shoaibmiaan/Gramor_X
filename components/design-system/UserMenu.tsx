@@ -13,6 +13,8 @@ export type UserMenuProps = {
   avatarUrl?: string | null;
   email?: string | null;
   userId?: string | null;
+  name?: string | null;
+  role?: string | null;
   items?: UserMenuItem[];
   onSignOut?: () => void;
 
@@ -26,6 +28,8 @@ export function UserMenu({
   avatarUrl = null,
   email = null,
   userId = null,
+  name = null,
+  role = null,
   items = [],
   onSignOut,
   isAdmin = false,
@@ -34,18 +38,18 @@ export function UserMenu({
   const [open, setOpen] = React.useState(false);
 
   const initials = React.useMemo(() => {
-    if (!email && !userId) return 'U';
-    const [name] = (email ?? userId).split('@');
-    if (!name) return 'U';
+    const source = (name && name.trim()) || email || userId;
+    if (!source) return 'U';
     return (
-      name
-        .split(/[._-]/)
+      source
+        .trim()
+        .split(/[\s._-]+/)
         .filter(Boolean)
-        .map((s) => s[0]?.toUpperCase())
+        .map((part) => part[0]?.toUpperCase())
         .join('')
         .slice(0, 2) || 'U'
     );
-  }, [email, userId]);
+  }, [email, name, userId]);
 
   // Build final menu items: caller items + conditional Admin Panel
   const safeItems: UserMenuItem[] = Array.isArray(items) ? items : [];
@@ -61,6 +65,20 @@ export function UserMenu({
 
   // Helper: internal link detection
   const isInternal = (href?: string) => !!href && href.startsWith('/');
+
+  const roleLabel = React.useMemo(() => {
+    if (!role) return null;
+    const normalized = role.trim().toLowerCase();
+    if (!normalized || normalized === 'guest') return null;
+    return normalized
+      .split(/[\s_-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }, [role]);
+
+  const primaryLabel = (name && name.trim()) || email || 'Learner';
+  const secondaryLabel = roleLabel || (name && email ? email : null);
 
   return (
     <div className="relative inline-block text-left">
@@ -97,8 +115,8 @@ export function UserMenu({
           onMouseLeave={() => setOpen(false)}
         >
           <div className="px-3 py-2 border-b border-white/10">
-            <div className="text-small font-medium">{email ?? 'User'}</div>
-            {userId && <div className="text-caption opacity-70">{userId}</div>}
+            <div className="text-small font-medium">{primaryLabel}</div>
+            {secondaryLabel ? <div className="text-caption opacity-70">{secondaryLabel}</div> : null}
           </div>
 
           <ul className="py-1">
