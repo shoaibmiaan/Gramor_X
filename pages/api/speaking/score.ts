@@ -1,87 +1,51 @@
-// pages/api/speaking/score.ts
 import { env } from '@/lib/env';
+// pages/api/speaking/score.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import OpenAI from 'openai';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { z } from 'zod';
+import { trackor } from '@/lib/analytics/trackor.server';
 
-type Breakdown = {
-  fluency: number;
-  coherence: number;
-  lexical: number;
-  pronunciation: number;
-  grammar?: number;
-};
+type Breakdown = { fluency: number; lexical: number; grammar: number; pronunciation: number };
 
-const isHalfBand = (val: number) => Math.abs(val * 2 - Math.round(val * 2)) < 1e-8;
+const MAX_RETRIES = 1;
+const RETRY_DELAY_MS = 750;
+const AUDIO_FETCH_TIMEOUT_MS = 45_000;
 
-const bandScoreSchema = z
-  .number({ required_error: 'Missing score' })
-  .min(0)
-  .max(9)
-  .refine(isHalfBand, 'Scores must use 0.5 band increments');
-
-const scoringSchema = z.object({
-  bandOverall: bandScoreSchema,
-  criteria: z.object({
-    fluency: bandScoreSchema,
-    coherence: bandScoreSchema,
-    lexical: bandScoreSchema,
-    pronunciation: bandScoreSchema,
-  }),
-  feedback: z.string().min(3, 'Feedback required'),
-});
-
-const coerceScore = (value: unknown) => {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') {
-    const numeric = Number(value.replace(/[^0-9.-]/g, ''));
-    if (!Number.isNaN(numeric)) return numeric;
+async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  let lastError: unknown = new Error('Unknown error');
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[speaking.score] ${label} failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}): ${message}`);
+      if (attempt < MAX_RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      }
+    }
   }
-  return value;
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+const normalizeScore = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const normalizeScoringPayload = (raw: unknown) => {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new Error('Invalid scoring payload');
+async function fetchWithTimeout(url: string, timeoutMs = AUDIO_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`Failed to fetch audio (${response.status})`);
+    return response;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const obj = raw as Record<string, unknown>;
-  const criteriaSource = (obj.criteria || obj.breakdown || obj.scores || obj.band_breakdown) as
-    | Record<string, unknown>
-    | undefined;
-
-  const normalized = {
-    bandOverall: coerceScore(obj.bandOverall ?? obj.band_overall ?? obj.overall ?? obj.band),
-    criteria: {
-      fluency: coerceScore(
-        criteriaSource?.fluency ??
-          criteriaSource?.fluency_coherence ??
-          criteriaSource?.fluencyAndCoherence ??
-          criteriaSource?.fluency_and_coherence,
-      ),
-      coherence: coerceScore(
-        criteriaSource?.coherence ??
-          criteriaSource?.organization ??
-          criteriaSource?.structure ??
-          criteriaSource?.fluency_coherence ??
-          criteriaSource?.fluencyAndCoherence ??
-          criteriaSource?.fluency_and_coherence,
-      ),
-      lexical: coerceScore(
-        criteriaSource?.lexical ??
-          criteriaSource?.lexical_resource ??
-          criteriaSource?.lexicalResource ??
-          criteriaSource?.vocabulary,
-      ),
-      pronunciation: coerceScore(criteriaSource?.pronunciation),
-    },
-    feedback: obj.feedback ?? obj.notes ?? obj.summary ?? obj.comment,
-  };
-
-  return scoringSchema.parse(normalized);
-};
+}
 
 export const config = {
   api: {
@@ -98,9 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabase = createSupabaseServerClient({ req });
 
   // Auth check
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
   // Verify ownership & load attempt
@@ -113,41 +75,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (error || !attempt) return res.status(404).json({ error: 'Attempt not found' });
   if (attempt.user_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
 
+  const audioPaths: string[] = Object.values(attempt.audio_urls || {}).flat() as string[];
+  if (audioPaths.length === 0) {
+    await trackor.log('speaking_attempt_scoring_failed', {
+      attempt_id: attemptId,
+      user_id: user.id,
+      stage: 'no_audio',
+      error: 'No audio attached to attempt',
+    });
+    return res.status(400).json({ error: 'no_audio', message: 'No audio was found for this attempt.' });
+  }
+
+  if (!env.OPENAI_API_KEY) {
+    await trackor.log('speaking_attempt_scoring_failed', {
+      attempt_id: attemptId,
+      user_id: user.id,
+      stage: 'config',
+      error: 'OPENAI_API_KEY missing',
+    });
+    return res.status(503).json({ error: 'service_unavailable', message: 'Speaking scoring is temporarily unavailable.' });
+  }
+
+  const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+  let stage = 'init';
+  let fullTranscript = '';
+
+  await trackor.log('speaking_attempt_scoring_started', {
+    attempt_id: attemptId,
+    user_id: user.id,
+    audio_segments: audioPaths.length,
+  });
+
   try {
-    if (!env.OPENAI_API_KEY) throw new Error('Missing OpenAI API key');
-
     // ---- 1. Gather signed URLs for all audio ----
-    const audioMap = (attempt.audio_urls as Record<string, unknown> | null) ?? {};
-    const sectionPriority: Record<string, number> = {
-      p1: 0,
-      p2: 1,
-      p3: 2,
-      chat: 3,
-      roleplay: 4,
-    };
-
-    const audioPaths: string[] = [];
-    Object.entries(audioMap)
-      .sort(([a], [b]) => {
-        const pa = sectionPriority[a] ?? 99;
-        const pb = sectionPriority[b] ?? 99;
-        return pa - pb || a.localeCompare(b);
-      })
-      .forEach(([, value]) => {
-        if (Array.isArray(value)) {
-          value.forEach((item) => {
-            if (typeof item === 'string' && item.trim()) audioPaths.push(item);
-          });
-        } else if (typeof value === 'string' && value.trim()) {
-          audioPaths.push(value);
-        }
-      });
-
-    if (!audioPaths.length) {
-      return res.status(400).json({ error: 'No audio clips found for this attempt' });
-    }
-
+    stage = 'sign_urls';
     const signedUrls: string[] = [];
+
     for (const path of audioPaths) {
       const { data: signed, error: signErr } = await supabaseAdmin.storage
         .from('speaking-audio')
@@ -157,101 +120,124 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // ---- 2. Transcribe all audio with Whisper ----
-    const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-    let fullTranscript = '';
-
-    for (const audioUrl of signedUrls) {
-      const audioResp = await fetch(audioUrl);
+    stage = 'transcribe';
+    for (let i = 0; i < signedUrls.length; i += 1) {
+      const audioUrl = signedUrls[i];
+      stage = `fetch_audio_${i}`;
+      const audioResp = await fetchWithTimeout(audioUrl);
       const audioBuffer = Buffer.from(await audioResp.arrayBuffer());
 
-      const transcription = await openai.audio.transcriptions.create({
-        file: new File([audioBuffer], 'audio.webm', { type: 'audio/webm' }),
-        model: 'whisper-1',
-        language: 'en',
-      });
+      stage = `transcribe_${i}`;
+      const transcription = await withRetry(
+        () =>
+          openai.audio.transcriptions.create({
+            file: new File([audioBuffer], 'audio.webm', { type: 'audio/webm' }),
+            model: 'whisper-1',
+            language: 'en',
+          }),
+        stage
+      );
 
-      fullTranscript += transcription.text.trim() + '\n';
+      const text = transcription.text?.trim();
+      if (text) fullTranscript += text + '\n';
     }
 
     fullTranscript = fullTranscript.trim();
 
-    if (!fullTranscript) {
-      throw new Error('Transcript could not be generated from the audio files');
-    }
-
     // ---- 3. Score transcript with GPT ----
     const prompt = `
 You are an IELTS Speaking examiner. Score the candidate based on the transcript below.
-Return JSON with:
-- "bandOverall": number (0-9, 0.5 increments)
-- "criteria": { fluency, coherence, lexical, pronunciation }
-- "feedback": short paragraph (2-3 sentences)
+Provide:
+- Overall band score (0-9, .5 increments)
+- Four criteria: fluency, lexical resource, grammatical range & accuracy, pronunciation
+- One short feedback paragraph
 
 Transcript:
 """
 ${fullTranscript}
-"""`;
+"""
 
-    const gptResp = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0,
-    });
+Return JSON in this format:
+{
+  "bandOverall": number,
+  "criteria": {
+    "fluency": number,
+    "lexical": number,
+    "grammar": number,
+    "pronunciation": number
+  },
+  "notes": "string"
+}
+`;
+
+    stage = 'score';
+    const gptResp = await withRetry(
+      () =>
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini', // fast + good for rubric scoring
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0,
+        }),
+      stage
+    );
 
     const raw = gptResp.choices[0].message?.content || '{}';
-    let parsed: { bandOverall: number; criteria: Breakdown; feedback: string };
+    let scoring: { bandOverall: number; criteria: Breakdown; notes: string };
     try {
-      const json = JSON.parse(raw);
-      parsed = normalizeScoringPayload(json);
-    } catch (error) {
-      console.error('GPT scoring parse failure', raw);
-      if (error instanceof Error) throw error;
-      throw new Error('Unable to parse scoring response');
+      scoring = JSON.parse(raw);
+    } catch {
+      throw new Error('Failed to parse GPT response: ' + raw);
     }
 
-    const breakdown: Breakdown = {
-      fluency: parsed.criteria.fluency,
-      coherence: parsed.criteria.coherence,
-      lexical: parsed.criteria.lexical,
-      pronunciation: parsed.criteria.pronunciation,
-      grammar: undefined,
+    if (!scoring || typeof scoring.bandOverall !== 'number' || typeof scoring.notes !== 'string' || !scoring.criteria) {
+      throw new Error('Incomplete scoring payload');
+    }
+
+    const normalizedCriteria: Breakdown = {
+      fluency: normalizeScore((scoring.criteria as Partial<Breakdown>).fluency),
+      lexical: normalizeScore((scoring.criteria as Partial<Breakdown>).lexical),
+      grammar: normalizeScore((scoring.criteria as Partial<Breakdown>).grammar),
+      pronunciation: normalizeScore((scoring.criteria as Partial<Breakdown>).pronunciation),
     };
 
     // ---- 4. Update DB ----
+    stage = 'persist';
     await supabaseAdmin
       .from('speaking_attempts')
       .update({
         transcript: fullTranscript,
-        band_overall: parsed.bandOverall,
-        band_breakdown: breakdown,
-        status: 'completed',
+        band_overall: scoring.bandOverall,
+        band_breakdown: normalizedCriteria,
       })
       .eq('id', attemptId);
 
-    const { error: responseErr } = await supabaseAdmin
-      .from('speaking_responses')
-      .upsert(
-        {
-          attempt_id: attemptId,
-          transcript: fullTranscript,
-          band_overall: parsed.bandOverall,
-          band_breakdown: breakdown,
-          feedback: parsed.feedback,
-        },
-        { onConflict: 'attempt_id' },
-      );
-
-    if (responseErr) throw new Error(responseErr.message);
+    await trackor.log('speaking_attempt_scoring_completed', {
+      attempt_id: attemptId,
+      user_id: user.id,
+      band_overall: scoring.bandOverall,
+      transcript_length: fullTranscript.length,
+      audio_segments: audioPaths.length,
+    });
 
     return res.status(200).json({
       attemptId,
       transcript: fullTranscript,
-      bandOverall: parsed.bandOverall,
-      criteria: breakdown,
-      feedback: parsed.feedback,
+      bandOverall: scoring.bandOverall,
+      criteria: normalizedCriteria,
+      notes: scoring.notes,
     });
   } catch (err: any) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    await trackor.log('speaking_attempt_scoring_failed', {
+      attempt_id: attemptId,
+      user_id: user.id,
+      stage,
+      error: message,
+    });
     console.error(err);
-    return res.status(500).json({ error: err.message || 'Server error' });
+    return res.status(502).json({
+      error: 'speaking_scoring_failed',
+      message: 'We could not score your attempt. Please try again shortly.',
+    });
   }
 }
