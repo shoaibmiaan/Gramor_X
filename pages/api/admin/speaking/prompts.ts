@@ -44,7 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthenticated' });
   }
 
-  if (extractRole(user) !== 'admin') {
+  const role = extractRole(user);
+  if (role !== 'admin' && role !== 'teacher') {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
