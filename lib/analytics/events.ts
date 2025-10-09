@@ -17,7 +17,8 @@ export type AnalyticsEventName =
   | 'certificate_shared'
   | 'teacher_review_started'
   | 'teacher_review_completed'
-  | 'teacher_review_scored';
+  | 'teacher_review_scored'
+  | 'writing_essay_scored';
 
 export type AnalyticsProps = Record<
   string,
