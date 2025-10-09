@@ -55,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           user_id: user.id,
           prompt_id: paperId,
           started_at: startedIso,
-          submitted_at: null,
           content_text: JSON.stringify({
             version: 1,
             updatedAt: updatedIso,
