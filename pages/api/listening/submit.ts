@@ -4,6 +4,8 @@ import { getServerClient } from '@/lib/supabaseServer';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { rawToBand } from '@/lib/listening/band';
 import { scoreAll } from '@/lib/listening/score';
+import { trackor } from '@/lib/analytics/trackor.server';
+import { normLetter, normText, sortPairs } from '@/lib/listening/normalize';
 
 type Body = { test_slug: string; answers: { qno:number; answer:any }[]; meta?: any };
 
@@ -39,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .order('qno');
 
   if (qErr) return res.status(500).json({ error: qErr.message });
+  if (!questions || questions.length === 0) return res.status(404).json({ error: 'Test not found' });
 
   // Score
   const { total, perSection } = scoreAll(
@@ -47,13 +50,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
   const band = rawToBand(total);
 
+  const submittedAt = new Date().toISOString();
+
   // Persist attempt
   const { data: attemptRow, error: aErr } = await supabaseAdmin
     .from('listening_attempts')
     .insert({
       user_id: userId,
       test_slug,
-      submitted_at: new Date().toISOString(),
+      submitted_at: submittedAt,
       score: total,
       band,
       section_scores: perSection,
@@ -65,25 +70,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (aErr || !attemptRow) return res.status(500).json({ error: aErr?.message || 'Insert failed' });
 
   // Persist answers (normalized correctness)
+  const answerByQno = new Map((questions ?? []).map(q => [q.qno, q] as const));
   const userAnswers = answers.map(a => {
-    const q = (questions ?? []).find(q => q.qno === a.qno);
+    const q = answerByQno.get(a.qno);
+    let isCorrect = false;
+    if (q) {
+      if (q.type === 'mcq') isCorrect = normLetter(a.answer) === normLetter(q.answer_key?.value);
+      else if (q.type === 'gap') isCorrect = normText(a.answer) === normText(q.answer_key?.text);
+      else if (q.type === 'match') {
+        const want = JSON.stringify(sortPairs(q.answer_key?.pairs ?? []));
+        const got = JSON.stringify(sortPairs(Array.isArray(a.answer) ? a.answer : []));
+        isCorrect = want === got && (q.answer_key?.pairs ?? []).length > 0;
+      }
+    }
     return {
       attempt_id: attemptRow.id,
       qno: a.qno,
       answer: a.answer,
-      is_correct: q ? ((): boolean => {
-        // tiny inline scorer to avoid second import
-        if (q.type === 'mcq') return String(a.answer ?? '').trim().toUpperCase() === String(q.answer_key?.value ?? '').trim().toUpperCase();
-        if (q.type === 'gap') {
-          const n = (s:any)=>String(s??'').toLowerCase().trim().replace(/\s+/g,' ').replace(/[.,/#!$%^&*;:{}=\-_`~()"]/g,'');
-          return n(a.answer) === n(q.answer_key?.text);
-        }
-        if (q.type === 'match') {
-          const sort = (p:any[]) => [...(p??[])].map((x:any)=>[Number(x[0]),Number(x[1])]).sort((A,B)=>(A[0]-B[0])||(A[1]-B[1]));
-          return JSON.stringify(sort(a.answer)) === JSON.stringify(sort(q.answer_key?.pairs ?? []));
-        }
-        return false;
-      })() : false,
+      is_correct: isCorrect,
     };
   });
 
@@ -92,6 +96,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .insert(userAnswers);
 
   if (uaErr) return res.status(500).json({ error: uaErr.message });
+
+  await trackor.log('listening_attempt_submitted', {
+    attempt_id: attemptRow.id,
+    user_id: userId,
+    test_slug,
+    score: total,
+    band,
+    section_scores: perSection,
+    question_count: questions.length,
+    submitted_at: submittedAt,
+    meta: meta ?? {},
+  });
 
   res.status(200).json({ attemptId: attemptRow.id, score: total, band, sectionScores: perSection });
 }
