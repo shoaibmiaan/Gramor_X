@@ -1,7 +1,8 @@
 // pages/listening/index.tsx
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { autosaveStorageKey } from '@/lib/autosave';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
@@ -35,13 +36,26 @@ type ListItem = {
   lastActivityAt?: string | null; // last attempt activity if any
 };
 
-const DRAFT_KEY = (slug: string) => `listen:${slug}`;
+const AUTOSAVE_KEY = (slug: string) => autosaveStorageKey('listening', slug);
+const LEGACY_DRAFT_KEY = (slug: string) => `listen:${slug}`;
+const AUTOSAVE_PREFIX = autosaveStorageKey('listening', '');
+const LEGACY_PREFIX = 'listen:';
 
 export default function ListeningIndexPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [items, setItems] = useState<ListItem[]>([]);
+
+  const hasDraftFor = useCallback((slug: string) => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const storage = window.localStorage;
+      return !!storage.getItem(AUTOSAVE_KEY(slug)) || !!storage.getItem(LEGACY_DRAFT_KEY(slug));
+    } catch {
+      return false;
+    }
+  }, []);
 
   // auth (client only)
   useEffect(() => {
@@ -138,8 +152,7 @@ export default function ListeningIndexPage() {
         const list: ListItem[] = tests.map((t) => {
           const span = byTest[t.slug];
           const durationSec = span ? Math.max(0, Math.round((span.max - span.min) / 1000)) : 0;
-          const hasDraft =
-            typeof window !== 'undefined' && !!localStorage.getItem(DRAFT_KEY(t.slug));
+          const hasDraft = hasDraftFor(t.slug);
           return {
             slug: t.slug,
             title: t.title,
@@ -160,21 +173,25 @@ export default function ListeningIndexPage() {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, hasDraftFor]);
 
   // keep hasDraft reactive if localStorage changes elsewhere
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (!e.key?.startsWith('listen:')) return;
+      const key = e.key;
+      if (!key) return;
+      if (!key.startsWith(AUTOSAVE_PREFIX) && !key.startsWith(LEGACY_PREFIX)) return;
       setItems((prev) =>
         prev.map((it) =>
-          e.key === DRAFT_KEY(it.slug) ? { ...it, hasDraft: !!localStorage.getItem(e.key) } : it,
+          key === AUTOSAVE_KEY(it.slug) || key === LEGACY_DRAFT_KEY(it.slug)
+            ? { ...it, hasDraft: hasDraftFor(it.slug) }
+            : it,
         ),
       );
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  }, [hasDraftFor]);
 
   const stats = useMemo(() => {
     const total = items.length;
@@ -272,11 +289,16 @@ export default function ListeningIndexPage() {
                         <Button
                           variant="secondary"
                           onClick={() => {
-                            localStorage.removeItem(DRAFT_KEY(it.slug));
+                            try {
+                              localStorage.removeItem(AUTOSAVE_KEY(it.slug));
+                              localStorage.removeItem(LEGACY_DRAFT_KEY(it.slug));
+                            } catch {}
                             // update state immediately
                             setItems((prev) =>
                               prev.map((x) =>
-                                x.slug === it.slug ? { ...x, hasDraft: false } : x,
+                                x.slug === it.slug
+                                  ? { ...x, hasDraft: hasDraftFor(it.slug) }
+                                  : x,
                               ),
                             );
                           }}
