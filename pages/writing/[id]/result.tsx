@@ -198,7 +198,7 @@ const normalizeAttempt = (row: AttemptRow): PageAttempt => {
 };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
-  const responseId = typeof ctx.params?.responseId === 'string' ? ctx.params.responseId : null;
+  const responseId = typeof ctx.params?.id === 'string' ? ctx.params.id : null;
   if (!responseId) return { notFound: true };
 
   const supabase = getServerClient(ctx.req as any, ctx.res as any);
