@@ -87,22 +87,23 @@ const buildPlan = (examDate?: string | null) => {
     return { key, weeks } as const;
   });
 
+  // Keep 'today' so timeline can anchor correctly
   return { exam, totalWeeks, totalDays, stages, today: now } as const;
 };
 
 export const GoalRoadmap: React.FC<GoalRoadmapProps> = ({ examDate }) => {
   const plan = useMemo(() => buildPlan(examDate), [examDate]);
 
+  // Expanded timeline computation (kept from codex branch)
   const timeline = useMemo(() => {
-    if (!plan) return [] as Array<
-      {
+    if (!plan)
+      return [] as Array<{
         key: StageKey;
         start: Date;
         end: Date;
         isActive: boolean;
         isComplete: boolean;
-      }
-    >;
+      }>;
 
     let weekCursor = 0;
 
@@ -118,13 +119,7 @@ export const GoalRoadmap: React.FC<GoalRoadmapProps> = ({ examDate }) => {
       const isComplete = todayTime > end.getTime();
       const isActive = !isComplete && todayTime >= start.getTime();
 
-      return {
-        key: stage.key,
-        start,
-        end,
-        isActive,
-        isComplete,
-      };
+      return { key: stage.key, start, end, isActive, isComplete };
     });
   }, [plan]);
 
@@ -134,9 +129,7 @@ export const GoalRoadmap: React.FC<GoalRoadmapProps> = ({ examDate }) => {
   );
 
   const formatRange = (start: Date, end: Date) => {
-    if (start.toDateString() === end.toDateString()) {
-      return formatDate(start);
-    }
+    if (start.toDateString() === end.toDateString()) return formatDate(start);
 
     const sameMonth = start.getMonth() === end.getMonth();
     const sameYear = start.getFullYear() === end.getFullYear();
@@ -227,6 +220,7 @@ export const GoalRoadmap: React.FC<GoalRoadmapProps> = ({ examDate }) => {
               <p className="mt-3 text-small text-muted-foreground">{meta.description}</p>
 
               <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted/60">
+                {/* width dynamic; keep gradient token classes */}
                 <div className={`h-full bg-gradient-to-r ${meta.gradient}`} style={{ width: `${width}%` }} />
               </div>
 

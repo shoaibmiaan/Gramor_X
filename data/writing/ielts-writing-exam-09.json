@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-09",
+  "title": "Academic Set 7 — Water Usage & Urbanisation",
+  "description": "Table showing water consumption by sector and an essay on urbanisation.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Water consumption by sector",
+    "type": "academic",
+    "prompt": "The table below shows the amount of water used per day (in millions of litres) by the agricultural, industrial and domestic sectors in four countries in 2010. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Compare which sector consumes the most water in each country.",
+      "Note any countries where water use is balanced across sectors.",
+      "Include overall observations before mentioning specific figures."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Advantages and disadvantages — Urbanisation",
+    "prompt": "More and more people are moving from rural areas to live in cities. Discuss the advantages and disadvantages of this trend.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: describe the trend and signal a balanced discussion.",
+      "Body paragraph 1: benefits of urbanisation for individuals and economies.",
+      "Body paragraph 2: negative consequences for cities and rural communities.",
+      "Conclusion: summarise both sides and present your view."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The table below shows the amount of water used per day (in millions of litres) by the agricultural, industrial and domestic sectors in four countries in 2010. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "More and more people are moving from rural areas to live in cities. Discuss the advantages and disadvantages of this trend.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

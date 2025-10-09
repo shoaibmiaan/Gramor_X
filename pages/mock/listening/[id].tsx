@@ -2,7 +2,16 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { clearMockAttemptId, ensureMockAttemptId, fetchMockCheckpoint, saveMockCheckpoint } from '@/lib/mock/state';
+import {
+  clearMockAttemptId,
+  clearMockDraft,
+  ensureMockAttemptId,
+  fetchMockCheckpoint,
+  loadMockDraft,
+  saveMockCheckpoint,
+  saveMockDraft,
+} from '@/lib/mock/state';
+import { useDebouncedCallback } from 'use-debounce';
 
 type QBase = { id: string; prompt?: string; type: 'mcq' | 'gap' | 'map' | 'short'; options?: string[]; answer: string };
 type Section = { id: string; title: string; audioUrl?: string; questions: QBase[] };
@@ -10,8 +19,7 @@ type ListeningPaper = { id: string; title: string; durationSec: number; transcri
 
 type AnswerMap = Record<string, string>;
 type ScoreSummary = { correct: number; total: number; percentage: number };
-
-const DRAFT_KEY = (id: string) => `listen:attempt:${id}`;
+type DraftState = { answers: AnswerMap; startedAt: string; sectionIdx?: number; timeLeft?: number };
 
 const samplePaper: ListeningPaper = {
   id: 'sample-001',
@@ -38,18 +46,6 @@ const loadPaper = async (id: string): Promise<ListeningPaper> => {
     return samplePaper;
   }
 };
-
-type DraftState = { answers: AnswerMap; startedAt: string; sectionIdx?: number };
-const saveDraft = (id: string, data: DraftState) => {
-  try { localStorage.setItem(DRAFT_KEY(id), JSON.stringify(data)); } catch {}
-};
-const loadDraft = (id: string): DraftState | null => {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY(id));
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-};
-const clearDraft = (id: string) => { try { localStorage.removeItem(DRAFT_KEY(id)); } catch {} };
 
 const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.ReactNode }> = ({ title, children, right }) => (
   <div className="min-h-screen bg-background text-foreground">
@@ -88,14 +84,27 @@ export default function ListeningMockPage() {
     (async () => {
       const p = await loadPaper(id);
       setPaper(p);
-      setTimeLeft(p.durationSec);
-      const draft = loadDraft(id);
-      if (draft?.answers) {
-        setAnswers(draft.answers);
-        if (typeof draft.sectionIdx === 'number') setSecIdx(draft.sectionIdx);
+      const draft = loadMockDraft<DraftState>('listening', id);
+      if (draft?.data?.answers) {
+        setAnswers(draft.data.answers);
+        if (typeof draft.data.sectionIdx === 'number') setSecIdx(draft.data.sectionIdx);
+        if (typeof draft.data.timeLeft === 'number') {
+          setTimeLeft(Math.max(0, Math.min(p.durationSec, Math.round(draft.data.timeLeft))));
+        } else {
+          setTimeLeft(p.durationSec);
+        }
+      } else {
+        setTimeLeft(p.durationSec);
       }
-      startRef.current = draft?.startedAt ?? new Date().toISOString();
-      if (!draft) saveDraft(id, { answers: {}, startedAt: startRef.current, sectionIdx: 0 });
+      startRef.current = draft?.data?.startedAt ?? new Date().toISOString();
+      if (!draft) {
+        saveMockDraft('listening', id, {
+          answers: {},
+          startedAt: startRef.current,
+          sectionIdx: 0,
+          timeLeft: p.durationSec,
+        });
+      }
     })();
   }, [id]);
 
@@ -107,13 +116,22 @@ export default function ListeningMockPage() {
       const checkpoint = await fetchMockCheckpoint({ attemptId: attemptRef.current, section: 'listening' });
       if (cancelled) return;
       if (checkpoint && checkpoint.mockId === paper.id) {
-        const payload = (checkpoint.payload || {}) as { answers?: AnswerMap; sectionIdx?: number; startedAt?: string };
+        const payload = (checkpoint.payload || {}) as {
+          answers?: AnswerMap;
+          sectionIdx?: number;
+          startedAt?: string;
+          timeLeft?: number;
+        };
         if (payload.answers) setAnswers(payload.answers);
         if (typeof payload.sectionIdx === 'number') setSecIdx(payload.sectionIdx);
         if (typeof payload.startedAt === 'string') startRef.current = payload.startedAt;
-        const duration = typeof checkpoint.duration === 'number' ? checkpoint.duration : paper.durationSec;
-        const remaining = Math.max(0, duration - checkpoint.elapsed);
-        setTimeLeft(Math.max(0, Math.min(paper.durationSec, remaining)));
+        if (typeof payload.timeLeft === 'number') {
+          setTimeLeft(Math.max(0, Math.min(paper.durationSec, Math.round(payload.timeLeft))));
+        } else {
+          const duration = typeof checkpoint.duration === 'number' ? checkpoint.duration : paper.durationSec;
+          const remaining = Math.max(0, duration - checkpoint.elapsed);
+          setTimeLeft(Math.max(0, Math.min(paper.durationSec, remaining)));
+        }
       }
       setCheckpointHydrated(true);
     })();
@@ -129,10 +147,22 @@ export default function ListeningMockPage() {
     return () => clearInterval(t);
   }, [id, paper]);
 
+  const debouncedLocalDraft = useDebouncedCallback(
+    (payload: DraftState) => {
+      if (!id) return;
+      saveMockDraft('listening', id, payload);
+    },
+    500,
+    { maxWait: 3000 }
+  );
+
   useEffect(() => {
     if (!id) return;
-    saveDraft(id, { answers, startedAt: startRef.current, sectionIdx: secIdx });
-  }, [id, answers, secIdx]);
+    debouncedLocalDraft({ answers, startedAt: startRef.current, sectionIdx: secIdx, timeLeft });
+    return () => {
+      debouncedLocalDraft.flush();
+    };
+  }, [id, answers, secIdx, timeLeft, debouncedLocalDraft]);
 
   useEffect(() => {
     latestRef.current = { answers, secIdx, timeLeft };
@@ -152,6 +182,7 @@ export default function ListeningMockPage() {
           answers: state.answers,
           sectionIdx: state.secIdx,
           startedAt: startRef.current,
+          timeLeft: state.timeLeft,
         },
         elapsed,
         duration: paper.durationSec,
@@ -163,10 +194,13 @@ export default function ListeningMockPage() {
 
   useEffect(() => {
     if (!paper || !attemptReady || !checkpointHydrated) return;
-    const handler = () => persistCheckpoint();
+    const handler = () => {
+      debouncedLocalDraft.flush();
+      persistCheckpoint();
+    };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint]);
+  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint, debouncedLocalDraft]);
 
   useEffect(() => {
     if (!paper || !attemptReady || !checkpointHydrated) return;
@@ -231,6 +265,7 @@ export default function ListeningMockPage() {
             answers,
             sectionIdx: secIdx,
             startedAt: startRef.current,
+            timeLeft,
           },
           elapsed: paper.durationSec - timeLeft,
           duration: paper.durationSec,
@@ -238,7 +273,7 @@ export default function ListeningMockPage() {
         });
         clearMockAttemptId('listening', paper.id);
       }
-      clearDraft(id);
+      clearMockDraft('listening', id);
       router.replace(`/review/listening/${id}?attempt=${encodeURIComponent(attemptId)}`);
     }
   };

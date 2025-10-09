@@ -2,9 +2,24 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { clearMockAttemptId, ensureMockAttemptId, fetchMockCheckpoint, saveMockCheckpoint } from '@/lib/mock/state';
+import {
+  clearMockAttemptId,
+  clearMockDraft,
+  ensureMockAttemptId,
+  fetchMockCheckpoint,
+  loadMockDraft,
+  saveMockCheckpoint,
+  saveMockDraft,
+} from '@/lib/mock/state';
+import samplePaper from '@/data/writing/sample-001.json';
+import {
+  findExamSummary,
+  normalizeWritingPaper,
+  toMockPaper,
+} from '@/data/writing/exam-index';
+import { useDebouncedCallback } from 'use-debounce';
 
-type WritingPaper = {
+type MockWritingPaper = {
   id: string;
   title: string;
   task1Prompt: string;
@@ -14,20 +29,15 @@ type WritingPaper = {
   durationSec: number;
 };
 
-const DRAFT_KEY = (id: string) => `write:attempt:${id}`;
+const fallbackPaper: MockWritingPaper = toMockPaper(normalizeWritingPaper(samplePaper));
 
-const sampleWriting: WritingPaper = {
-  id: 'sample-001',
-  title: 'Writing Sample 001',
-  task1Prompt: 'Summarize the information presented in the chart in at least 150 words.',
-  task2Prompt: 'Some people think technology makes life more complex. Others think it makes life easier. Discuss both views and give your opinion. (250+ words)',
-  minWordsTask1: 150,
-  minWordsTask2: 250,
-  durationSec: 3600,
-};
-
-const loadPaper = async (id: string): Promise<WritingPaper> => {
-  try { const mod = await import(`@/data/writing/${id}.json`); return mod.default as WritingPaper; } catch { return sampleWriting; }
+const loadPaper = async (id: string): Promise<MockWritingPaper> => {
+  try {
+    const mod = await import(`@/data/writing/${id}.json`);
+    return toMockPaper(normalizeWritingPaper(mod.default));
+  } catch {
+    return fallbackPaper;
+  }
 };
 
 const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.ReactNode }> = ({ title, right, children }) => (
@@ -45,7 +55,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
 export default function WritingMockPage() {
   const router = useRouter();
   const { id } = router.query as { id?: string };
-  const [paper, setPaper] = useState<WritingPaper | null>(null);
+  const [paper, setPaper] = useState<MockWritingPaper | null>(null);
   const [task1, setTask1] = useState('');
   const [task2, setTask2] = useState('');
   const [timeLeft, setTimeLeft] = useState(3600);
@@ -66,10 +76,19 @@ export default function WritingMockPage() {
     (async () => {
       const p = await loadPaper(id);
       setPaper(p);
-      setTimeLeft(p.durationSec);
-      const dr = loadDraft(id);
-      if (dr) { setTask1(dr.task1 || ''); setTask2(dr.task2 || ''); }
-      if (!dr) saveDraft(id, { task1: '', task2: '' });
+      const draft = loadMockDraft<{ task1?: string; task2?: string; timeLeft?: number }>('writing', id);
+      if (draft?.data) {
+        if (typeof draft.data.task1 === 'string') setTask1(draft.data.task1);
+        if (typeof draft.data.task2 === 'string') setTask2(draft.data.task2);
+        if (typeof draft.data.timeLeft === 'number') {
+          setTimeLeft(Math.max(0, Math.min(p.durationSec, Math.round(draft.data.timeLeft))));
+        } else {
+          setTimeLeft(p.durationSec);
+        }
+      } else {
+        setTimeLeft(p.durationSec);
+        saveMockDraft('writing', id, { task1: '', task2: '', timeLeft: p.durationSec });
+      }
     })();
   }, [id]);
 
@@ -81,12 +100,16 @@ export default function WritingMockPage() {
       const checkpoint = await fetchMockCheckpoint({ attemptId: attemptRef.current, section: 'writing' });
       if (cancelled) return;
       if (checkpoint && checkpoint.mockId === paper.id) {
-        const payload = (checkpoint.payload || {}) as { task1?: string; task2?: string };
+        const payload = (checkpoint.payload || {}) as { task1?: string; task2?: string; timeLeft?: number };
         if (typeof payload.task1 === 'string') setTask1(payload.task1);
         if (typeof payload.task2 === 'string') setTask2(payload.task2);
-        const duration = typeof checkpoint.duration === 'number' ? checkpoint.duration : paper.durationSec;
-        const remaining = Math.max(0, duration - checkpoint.elapsed);
-        setTimeLeft(Math.max(0, Math.min(paper.durationSec, remaining)));
+        if (typeof payload.timeLeft === 'number') {
+          setTimeLeft(Math.max(0, Math.min(paper.durationSec, Math.round(payload.timeLeft))));
+        } else {
+          const duration = typeof checkpoint.duration === 'number' ? checkpoint.duration : paper.durationSec;
+          const remaining = Math.max(0, duration - checkpoint.elapsed);
+          setTimeLeft(Math.max(0, Math.min(paper.durationSec, remaining)));
+        }
       }
       setCheckpointHydrated(true);
     })();
@@ -102,7 +125,22 @@ export default function WritingMockPage() {
   useEffect(() => {
     latestRef.current = { task1, task2, timeLeft };
   }, [task1, task2, timeLeft]);
-  useEffect(() => { if (!id) return; saveDraft(id, { task1, task2 }); }, [id, task1, task2]);
+  const debouncedLocalDraft = useDebouncedCallback(
+    (payload: { task1: string; task2: string; timeLeft: number }) => {
+      if (!id) return;
+      saveMockDraft('writing', id, payload);
+    },
+    500,
+    { maxWait: 3000 }
+  );
+
+  useEffect(() => {
+    if (!id) return;
+    debouncedLocalDraft({ task1, task2, timeLeft });
+    return () => {
+      debouncedLocalDraft.flush();
+    };
+  }, [id, task1, task2, timeLeft, debouncedLocalDraft]);
 
   const persistCheckpoint = useCallback(
     (opts?: { completed?: boolean }) => {
@@ -113,7 +151,7 @@ export default function WritingMockPage() {
         attemptId: attemptRef.current,
         section: 'writing',
         mockId: paper.id,
-        payload: { paperId: paper.id, task1: state.task1, task2: state.task2 },
+        payload: { paperId: paper.id, task1: state.task1, task2: state.task2, timeLeft: state.timeLeft },
         elapsed,
         duration: paper.durationSec,
         completed: opts?.completed,
@@ -124,10 +162,13 @@ export default function WritingMockPage() {
 
   useEffect(() => {
     if (!paper || !attemptReady || !checkpointHydrated) return;
-    const handler = () => persistCheckpoint();
+    const handler = () => {
+      debouncedLocalDraft.flush();
+      persistCheckpoint();
+    };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint]);
+  }, [paper, attemptReady, checkpointHydrated, persistCheckpoint, debouncedLocalDraft]);
 
   useEffect(() => {
     if (!paper || !attemptReady || !checkpointHydrated) return;
@@ -174,19 +215,36 @@ export default function WritingMockPage() {
         });
         clearMockAttemptId('writing', paper.id);
       }
-      clearDraft(id);
+      clearMockDraft('writing', id);
       router.replace(`/review/writing/${id}?attempt=${attemptId}`);
     }
   };
+
+  const summary = findExamSummary(id);
 
   if (!paper) return <Shell title="Loading…"><div>Loading…</div></Shell>;
 
   return (
     <Shell
-      title={`Writing — ${paper.title}`}
+      title={`Writing — ${summary?.title ?? paper.title}`}
       right={<div className="rounded-full border border-border px-3 py-1 text-small">⏱ {hhmmss(timeLeft)}</div>}
     >
       <div className="grid gap-6">
+        {summary ? (
+          <section className="rounded-xl border border-border bg-muted/20 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-h4 font-semibold">{summary.title}</h2>
+                <p className="mt-1 text-small text-foreground/80">{summary.description}</p>
+              </div>
+              <div className="text-caption text-foreground/70">~{summary.durationMinutes} min</div>
+            </div>
+            <div className="mt-3 grid gap-1 text-caption text-foreground/70">
+              <span>Task 1: {summary.task1Focus}</span>
+              <span>Task 2: {summary.task2Focus}</span>
+            </div>
+          </section>
+        ) : null}
         <section className="rounded-xl border border-border p-4">
           <h2 className="mb-2 text-body font-semibold">Task 1</h2>
           <p className="mb-2 text-small text-foreground/80">{paper.task1Prompt}</p>
@@ -209,9 +267,5 @@ export default function WritingMockPage() {
     </Shell>
   );
 }
-type DraftState = { task1: string; task2: string };
-const saveDraft = (id: string, data: DraftState) => { try { localStorage.setItem(DRAFT_KEY(id), JSON.stringify(data)); } catch {} };
-const loadDraft = (id: string): DraftState | null => { try { const raw = localStorage.getItem(DRAFT_KEY(id)); return raw ? JSON.parse(raw) : null; } catch { return null; } };
-const clearDraft = (id: string) => { try { localStorage.removeItem(DRAFT_KEY(id)); } catch {} };
 const countWords = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 const hhmmss = (sec: number) => `${Math.floor(sec/60).toString().padStart(2,'0')}:${Math.floor(sec%60).toString().padStart(2,'0')}`;
