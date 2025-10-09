@@ -8,6 +8,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { env } from '@/lib/env';
 import {
   useReadingAnswers,
   type AnswerValue,

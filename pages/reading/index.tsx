@@ -13,6 +13,7 @@ type Kind = 'tfng' | 'mcq' | 'matching' | 'short';
 type ReadingListItem = {
   slug: string;
   title: string;
+  summary?: string | null;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   qCount: number;
   estMinutes: number;
@@ -26,28 +27,33 @@ export default function ReadingListPage() {
   const activeType = (router.query.type as string) || 'all';
 
   useEffect(() => {
-    try {
-      setItems([
-        {
-          slug: 'sample-reading-1',
-          title: 'The Honey Bee Ecosystem',
-          difficulty: 'Medium',
-          qCount: 14,
-          estMinutes: 20,
-          types: ['tfng', 'mcq', 'matching', 'short'],
-        },
-        {
-          slug: 'sample-reading-2',
-          title: 'Migration Patterns',
-          difficulty: 'Easy',
-          qCount: 8,
-          estMinutes: 12,
-          types: ['mcq', 'short'],
-        },
-      ]);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load');
-    }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const resp = await fetch('/api/reading/tests');
+        if (!resp.ok) throw new Error(`Failed to load catalog (${resp.status})`);
+        const json = await resp.json();
+        if (!cancelled) {
+          const mapped: ReadingListItem[] = (json?.items ?? []).map((item: any) => ({
+            slug: String(item.slug),
+            title: String(item.title ?? 'Reading Passage'),
+            summary: item.summary ?? null,
+            difficulty: (item.difficulty ?? 'Medium') as ReadingListItem['difficulty'],
+            qCount: Number(item.qCount ?? 0),
+            estMinutes: Number(item.estMinutes ?? 20),
+            types: ['tfng', 'mcq', 'matching', 'short'],
+          }));
+          setItems(mapped);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || 'Failed to load');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -86,6 +92,7 @@ export default function ReadingListPage() {
               <Card key={t.slug} className="p-6 flex flex-col justify-between">
                 <div>
                   <h3 className="text-h3 font-semibold mb-1">{t.title}</h3>
+                  {t.summary && <p className="text-small text-muted-foreground mb-2">{t.summary}</p>}
                   <div className="flex items-center gap-2 text-small text-grayish">
                     <Badge
                       variant={
@@ -120,6 +127,15 @@ export default function ReadingListPage() {
               </Card>
             ))}
           </div>
+
+          {items && filtered.length === 0 && !error && (
+            <Card className="mt-8 p-6">
+              <h3 className="text-h4 font-semibold mb-1">No passages match this filter yet</h3>
+              <p className="text-body text-muted-foreground">
+                Try a different question type or check back soon as we add more full-length IELTS readings.
+              </p>
+            </Card>
+          )}
         )}
       </Container>
     </section>

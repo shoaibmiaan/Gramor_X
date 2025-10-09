@@ -21,6 +21,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "seed:challenge": "tsx scripts/seed_challenge.ts",
+    "seed:reading": "tsx scripts/seed_reading_test.ts",
     "gen:cert-template": "tsx scripts/generate_certificate_template.ts",
     "l10n:extract": "tsx scripts/l10n_extract.ts",
     "test:a11y": "vitest run tests/a11y/wcag-axe.test.ts",
