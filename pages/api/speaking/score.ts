@@ -1,11 +1,87 @@
-import { env } from "@/lib/env";
+import { env } from '@/lib/env';
 // pages/api/speaking/score.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import OpenAI from 'openai';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { z } from 'zod';
 
-type Breakdown = { fluency: number; lexical: number; grammar: number; pronunciation: number };
+type Breakdown = {
+  fluency: number;
+  coherence: number;
+  lexical: number;
+  pronunciation: number;
+  grammar?: number;
+};
+
+const isHalfBand = (val: number) => Math.abs(val * 2 - Math.round(val * 2)) < 1e-8;
+
+const bandScoreSchema = z
+  .number({ required_error: 'Missing score' })
+  .min(0)
+  .max(9)
+  .refine(isHalfBand, 'Scores must use 0.5 band increments');
+
+const scoringSchema = z.object({
+  bandOverall: bandScoreSchema,
+  criteria: z.object({
+    fluency: bandScoreSchema,
+    coherence: bandScoreSchema,
+    lexical: bandScoreSchema,
+    pronunciation: bandScoreSchema,
+  }),
+  feedback: z.string().min(3, 'Feedback required'),
+});
+
+const coerceScore = (value: unknown) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const numeric = Number(value.replace(/[^0-9.-]/g, ''));
+    if (!Number.isNaN(numeric)) return numeric;
+  }
+  return value;
+};
+
+const normalizeScoringPayload = (raw: unknown) => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('Invalid scoring payload');
+  }
+
+  const obj = raw as Record<string, unknown>;
+  const criteriaSource = (obj.criteria || obj.breakdown || obj.scores || obj.band_breakdown) as
+    | Record<string, unknown>
+    | undefined;
+
+  const normalized = {
+    bandOverall: coerceScore(obj.bandOverall ?? obj.band_overall ?? obj.overall ?? obj.band),
+    criteria: {
+      fluency: coerceScore(
+        criteriaSource?.fluency ??
+          criteriaSource?.fluency_coherence ??
+          criteriaSource?.fluencyAndCoherence ??
+          criteriaSource?.fluency_and_coherence,
+      ),
+      coherence: coerceScore(
+        criteriaSource?.coherence ??
+          criteriaSource?.organization ??
+          criteriaSource?.structure ??
+          criteriaSource?.fluency_coherence ??
+          criteriaSource?.fluencyAndCoherence ??
+          criteriaSource?.fluency_and_coherence,
+      ),
+      lexical: coerceScore(
+        criteriaSource?.lexical ??
+          criteriaSource?.lexical_resource ??
+          criteriaSource?.lexicalResource ??
+          criteriaSource?.vocabulary,
+      ),
+      pronunciation: coerceScore(criteriaSource?.pronunciation),
+    },
+    feedback: obj.feedback ?? obj.notes ?? obj.summary ?? obj.comment,
+  };
+
+  return scoringSchema.parse(normalized);
+};
 
 export const config = {
   api: {
@@ -36,8 +112,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (attempt.user_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
 
   try {
+    if (!env.OPENAI_API_KEY) throw new Error('Missing OpenAI API key');
+
     // ---- 1. Gather signed URLs for all audio ----
     const audioPaths: string[] = Object.values(attempt.audio_urls || {}).flat() as string[];
+    if (!audioPaths.length) throw new Error('No audio clips found for this attempt');
     const signedUrls: string[] = [];
 
     for (const path of audioPaths) {
@@ -68,30 +147,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fullTranscript = fullTranscript.trim();
 
     // ---- 3. Score transcript with GPT ----
-    const prompt = `
-You are an IELTS Speaking examiner. Score the candidate based on the transcript below.
-Provide:
-- Overall band score (0-9, .5 increments)
-- Four criteria: fluency, lexical resource, grammatical range & accuracy, pronunciation
-- One short feedback paragraph
+    if (!fullTranscript) {
+      throw new Error('Transcript could not be generated from the audio files');
+    }
 
-Transcript:
+    const prompt = `You are an IELTS Speaking examiner. Evaluate the candidate using the official IELTS rubric.
+
+Return a concise JSON object with:
+- "bandOverall": number from 0 to 9 using 0.5 increments.
+- "criteria": an object with these keys and 0-9 (0.5 step) scores: fluency, coherence, lexical, pronunciation.
+- "feedback": a short paragraph (2-3 sentences) that references the candidate's speaking strengths and weaknesses.
+
+Transcript to evaluate:
 """
 ${fullTranscript}
-"""
-
-Return JSON in this format:
-{
-  "bandOverall": number,
-  "criteria": {
-    "fluency": number,
-    "lexical": number,
-    "grammar": number,
-    "pronunciation": number
-  },
-  "notes": "string"
-}
-`;
+"""`;
 
     const gptResp = await openai.chat.completions.create({
       model: 'gpt-4o-mini', // fast + good for rubric scoring
@@ -100,27 +170,55 @@ Return JSON in this format:
     });
 
     const raw = gptResp.choices[0].message?.content || '{}';
-    let scoring: { bandOverall: number; criteria: Breakdown; notes: string };
+    let parsed: { bandOverall: number; criteria: Breakdown; feedback: string };
     try {
-      scoring = JSON.parse(raw);
-    } catch {
-      throw new Error('Failed to parse GPT response: ' + raw);
+      const json = JSON.parse(raw);
+      parsed = normalizeScoringPayload(json);
+    } catch (error) {
+      console.error('GPT scoring parse failure', raw);
+      if (error instanceof Error) throw error;
+      throw new Error('Unable to parse scoring response');
     }
+
+    const breakdown: Breakdown = {
+      fluency: parsed.criteria.fluency,
+      coherence: parsed.criteria.coherence,
+      lexical: parsed.criteria.lexical,
+      pronunciation: parsed.criteria.pronunciation,
+      grammar: undefined,
+    };
 
     // ---- 4. Update DB ----
     await supabaseAdmin
       .from('speaking_attempts')
       .update({
         transcript: fullTranscript,
-        band_overall: scoring.bandOverall,
-        band_breakdown: scoring.criteria,
+        band_overall: parsed.bandOverall,
+        band_breakdown: breakdown,
       })
       .eq('id', attemptId);
+
+    const { error: responseErr } = await supabaseAdmin
+      .from('speaking_responses')
+      .upsert(
+        {
+          attempt_id: attemptId,
+          transcript: fullTranscript,
+          band_overall: parsed.bandOverall,
+          band_breakdown: breakdown,
+          feedback: parsed.feedback,
+        },
+        { onConflict: 'attempt_id' },
+      );
+
+    if (responseErr) throw new Error(responseErr.message);
 
     return res.status(200).json({
       attemptId,
       transcript: fullTranscript,
-      ...scoring,
+      bandOverall: parsed.bandOverall,
+      criteria: breakdown,
+      feedback: parsed.feedback,
     });
   } catch (err: any) {
     console.error(err);
