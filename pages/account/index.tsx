@@ -118,19 +118,19 @@ export default function SettingsHubPage() {
             <div className="rounded-xl border border-border bg-card p-4">
               <h2 className="text-small font-medium text-foreground">Accessibility</h2>
               <p className="mt-1 text-small text-muted-foreground">
-                Keyboard checks, screen reader hints, and live region demo.
+                High contrast themes, keyboard checks, and screen reader hints.
               </p>
               <div className="mt-3">
                 <Button
                   variant="soft"
                   onClick={(e) => {
                     e.preventDefault();
-                    safePush("/accessibility");
+                    safePush("/settings/accessibility");
                   }}
                 >
                   Open Accessibility
                 </Button>
-                <Link href="/accessibility" prefetch={false} className="sr-only">
+                <Link href="/settings/accessibility" prefetch={false} className="sr-only">
                   Accessibility (link for SEO)
                 </Link>
               </div>
