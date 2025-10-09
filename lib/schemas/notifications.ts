@@ -1,9 +1,24 @@
 import { z } from 'zod';
 
+const notificationUrlSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (value) => {
+      try {
+        const parsed = new URL(value, 'https://example.com');
+        return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+      } catch {
+        return false;
+      }
+    },
+    { message: 'Must be a relative path or absolute HTTP(S) URL' },
+  );
+
 export const NotificationNudgeSchema = z.object({
   id: z.string().min(1),
   message: z.string(),
-  url: z.string().url().nullable(),
+  url: notificationUrlSchema.nullable(),
   read: z.boolean(),
   createdAt: z.string().datetime(),
 });
@@ -44,5 +59,5 @@ export const CreateNudgeSchema = z.object({
 
 export const CreateNotificationSchema = z.object({
   message: z.string().min(1),
-  url: z.string().url().optional().nullable(),
+  url: notificationUrlSchema.optional().nullable(),
 });
