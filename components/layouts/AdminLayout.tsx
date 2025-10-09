@@ -55,6 +55,7 @@ const AdminLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
             <AdminItem href="/admin/partners" label="Partners" />
             <AdminItem href="/admin/students" label="Students" />
             <AdminItem href="/admin/reviews" label="Reviews" />
+            <AdminItem href="/admin/reading" label="Reading Builder" />
             <AdminItem href="/admin/content/reading" label="Content" />
 
             {/* Teacher */}
