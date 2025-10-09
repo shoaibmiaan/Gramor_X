@@ -240,7 +240,7 @@ export default function SpeakingReview({ attempt: initial, viewerRole }: Props) 
     if (typeof window === 'undefined') return;
     const base = window.location.origin;
     const studentLink = `${base}/speaking/review/${attempt.id}`;
-    const teacherLink = `${base}/admin/speaking?attempt=${attempt.id}`;
+    const teacherLink = `${base}/admin/speaking/attempts?attempt=${attempt.id}`;
     const payload = `Speaking attempt ID: ${attempt.id}\nStudent view: ${studentLink}\nTeacher view: ${teacherLink}`;
 
     try {
