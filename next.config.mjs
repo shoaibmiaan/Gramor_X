@@ -22,41 +22,38 @@ try {
   if (SUPABASE_URL) supabaseHost = new URL(SUPABASE_URL).host;
 } catch { /* ignore */ }
 
+const securityHeaders = [
+  { key: 'Content-Security-Policy', value: csp },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+];
+
+const audioCacheHeaders = [
+  {
+    key: 'Cache-Control',
+    value: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+  },
+  { key: 'Accept-Ranges', value: 'bytes' },
+  { key: 'Access-Control-Expose-Headers', value: 'Accept-Ranges, Content-Length' },
+];
+
 const baseConfig = {
   experimental: { esmExternals: false },
 
   async headers() {
     return [
       {
-        source: '/(.*)',
-        headers: [
-          { key: 'Content-Security-Policy', value: csp },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-        ],
-      },
-      {
         source: '/audio/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
-          },
-          { key: 'Accept-Ranges', value: 'bytes' },
-          { key: 'Access-Control-Expose-Headers', value: 'Accept-Ranges, Content-Length' },
-        ],
+        headers: [...securityHeaders, ...audioCacheHeaders],
       },
       {
         source: '/placement/audio/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
-          },
-          { key: 'Accept-Ranges', value: 'bytes' },
-          { key: 'Access-Control-Expose-Headers', value: 'Accept-Ranges, Content-Length' },
-        ],
+        headers: [...securityHeaders, ...audioCacheHeaders],
+      },
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
       },
     ];
   },
