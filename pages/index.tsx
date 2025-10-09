@@ -2,6 +2,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
+import { Icon } from '@/components/design-system/Icon';
+import { Container } from '@/components/design-system/Container';
 import { useLocale } from '@/lib/locale';
 
 /**
@@ -35,6 +37,24 @@ const Waitlist = dynamic(
   () => import('@/components/sections/Waitlist').then((m: any) => m.Waitlist ?? m.default),
   { ssr: true, loading: () => <SectionSkeleton /> }
 );
+
+const statHighlights = [
+  {
+    icon: 'Trophy',
+    label: 'Average 1.5 band jump',
+    description: 'Learners who follow the adaptive plan for 6 weeks or more.',
+  },
+  {
+    icon: 'Clock',
+    label: '45-minute smart sessions',
+    description: 'Blend of skills, strategy, and exam drills to fit busy schedules.',
+  },
+  {
+    icon: 'MessageCircle',
+    label: '24/7 AI + human feedback',
+    description: 'Instant scoring plus teacher review queues when you need nuance.',
+  },
+] as const;
 
 function SectionSkeleton() {
   return (
@@ -99,6 +119,22 @@ export default function HomePage() {
 
       <main id="main" className="min-h-[100dvh]">
         <Hero streak={streak} onStreakChange={onStreakChange} />
+
+        <section className="border-y border-border/40 bg-white/80 py-12 backdrop-blur dark:bg-dark/60">
+          <Container>
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {statHighlights.map((stat) => (
+                <div key={stat.label} className="flex flex-col gap-3">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-electricBlue/10 text-electricBlue">
+                    <Icon name={stat.icon} size={26} />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">{stat.label}</h3>
+                  <p className="text-sm text-muted-foreground">{stat.description}</p>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
 
         <section
           id="modules"
