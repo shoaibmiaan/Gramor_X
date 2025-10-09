@@ -1,7 +1,9 @@
 // pages/listening/[slug].tsx
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
+import type { AutosaveSession } from '@/lib/autosave';
+import { createAutosaveSession } from '@/lib/autosave';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
@@ -46,7 +48,14 @@ type ListeningTest = {
   sections: Section[];
 };
 
-const LS_KEY = (slug?: string) => (slug ? `listen:${slug}` : '');
+type AnswersMap = Record<string, string>;
+
+type ListeningAutosaveDraft = {
+  answers?: AnswersMap;
+  currentIdx?: number;
+};
+
+const LEGACY_LISTEN_KEY = (slug: string) => `listen:${slug}`;
 const TOTAL_TIME_SEC = 30 * 60; // 30 minutes
 
 export default function ListeningTestPage() {
@@ -59,7 +68,7 @@ export default function ListeningTestPage() {
 
   // --- Test + UI state ---
   const [test, setTest] = useState<ListeningTest | null>(null);
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [currentIdx, setCurrentIdxState] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
   const [checked, setChecked] = useState(false);
   const [sectionProgressMs, setSectionProgressMs] = useState(0);
@@ -70,7 +79,26 @@ export default function ListeningTestPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // answers: questionId -> value
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<AnswersMap>({});
+  const autosaveRef = useRef<AutosaveSession<ListeningAutosaveDraft> | null>(null);
+
+  const patchAutosave = useCallback((partial: Partial<ListeningAutosaveDraft>) => {
+    const session = autosaveRef.current;
+    if (!session) return;
+    session.patch(partial);
+  }, []);
+
+  const setSectionIndex = useCallback(
+    (value: number | ((prev: number) => number)) => {
+      setCurrentIdxState((prev) => {
+        const resolved = typeof value === 'function' ? (value as (prev: number) => number)(prev) : value;
+        const clamped = Number.isFinite(resolved) ? Math.max(0, Math.trunc(resolved)) : 0;
+        patchAutosave({ currentIdx: clamped });
+        return clamped;
+      });
+    },
+    [patchAutosave],
+  );
 
   // --- Timer ---
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME_SEC);
@@ -185,37 +213,56 @@ export default function ListeningTestPage() {
     };
   }, [slug]);
 
-  // --- Rehydrate WIP (answers + section) from localStorage ---
+  // --- Rehydrate WIP (answers + section) from autosave ---
   useEffect(() => {
     if (!slug) return;
-    setSaveError(null);
-    try {
-      const raw = localStorage.getItem(LS_KEY(slug));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { answers?: Record<string, string>; currentIdx?: number };
-      if (parsed.answers) setAnswers(parsed.answers);
-      if (typeof parsed.currentIdx === 'number') setCurrentIdx(Math.max(0, parsed.currentIdx));
-    } catch {
-      // ignore parse errors
+    setAnswers({});
+    setCurrentIdxState(0);
+    const session = createAutosaveSession<ListeningAutosaveDraft>({
+      scope: 'listening',
+      id: slug,
+      version: 1,
+      legacyKeys: [LEGACY_LISTEN_KEY(slug)],
+    });
+    autosaveRef.current = session;
+    const snapshot = session.load();
+    const draft = snapshot?.data;
+    if (draft?.answers && typeof draft.answers === 'object') {
+      setAnswers({ ...(draft.answers as AnswersMap) });
     }
+    if (typeof draft?.currentIdx === 'number') {
+      setCurrentIdxState(Math.max(0, draft.currentIdx));
+    }
+    return () => {
+      autosaveRef.current = null;
+    };
   }, [slug]);
-
-  // --- Persist WIP to localStorage (light debounce) ---
-  useEffect(() => {
-    if (!slug) return;
-    const id = window.setTimeout(() => {
-      const payload = JSON.stringify({ answers, currentIdx });
-      localStorage.setItem(LS_KEY(slug), payload);
-    }, 250);
-    return () => clearTimeout(id);
-  }, [answers, currentIdx, slug]);
 
   // --- Answer helpers ---
   const handleMCQ = (q: MCQ, val: string) => {
-    setAnswers((prev) => ({ ...prev, [q.id]: val }));
+    setAnswers((prev) => {
+      const next = { ...prev, [q.id]: val };
+      patchAutosave({ answers: next });
+      return next;
+    });
   };
-  const handleGap = (q: GAP, val: string) => {
-    setAnswers((prev) => ({ ...prev, [q.id]: val.trim() }));
+  const handleGapChange = (q: GAP, val: string) => {
+    setAnswers((prev) => {
+      const next = { ...prev, [q.id]: val };
+      patchAutosave({ answers: next });
+      return next;
+    });
+  };
+  const handleGapBlur = (q: GAP) => {
+    setAnswers((prev) => {
+      const current = prev[q.id];
+      if (typeof current !== 'string') return prev;
+      const trimmed = current.trim();
+      if (trimmed === current) return prev;
+      const next = { ...prev, [q.id]: trimmed };
+      patchAutosave({ answers: next });
+      return next;
+    });
   };
   const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
   const isCorrect = (q: Question) => {
@@ -235,7 +282,8 @@ export default function ListeningTestPage() {
         .map(([qid, ans]) => {
           const q = test.sections.flatMap((s) => s.questions).find((qq) => qq.id === qid);
           if (!q) return null;
-          return { user_id: userId, test_slug: test.slug, q_no: q.qNo, answer: String(ans ?? '') };
+          const cleaned = typeof ans === 'string' ? ans.trim() : String(ans ?? '');
+          return { user_id: userId, test_slug: test.slug, q_no: q.qNo, answer: cleaned };
         })
         .filter(Boolean) as Array<{ user_id: string; test_slug: string; q_no: number; answer: string }>;
 
@@ -274,7 +322,8 @@ export default function ListeningTestPage() {
       .map(([qid, ans]) => {
         const q = flat.find((qq) => qq.id === qid);
         if (!q) return null;
-        return { qno: q.qNo, answer: ans };
+        const cleaned = typeof ans === 'string' ? ans.trim() : String(ans ?? '');
+        return { qno: q.qNo, answer: cleaned };
       })
       .filter(Boolean) as { qno: number; answer: any }[];
 
@@ -323,7 +372,8 @@ export default function ListeningTestPage() {
         }
       }
       try {
-        if (slug) localStorage.removeItem(LS_KEY(slug));
+        autosaveRef.current?.clear();
+        if (slug) localStorage.removeItem(LEGACY_LISTEN_KEY(slug));
       } catch {}
       if (test) {
         const target = attemptId
@@ -339,6 +389,14 @@ export default function ListeningTestPage() {
   const sliceSecs = currentSection
     ? Math.max(0, Math.round((currentSection.endMs - currentSection.startMs) / 1000))
     : 0;
+
+  useEffect(() => {
+    if (!test) return;
+    setSectionIndex((idx) => {
+      const max = Math.max(0, test.sections.length - 1);
+      return Math.min(Math.max(0, idx), max);
+    });
+  }, [test, setSectionIndex]);
 
   useEffect(() => {
     setSectionProgressMs(0);
@@ -405,7 +463,7 @@ export default function ListeningTestPage() {
             sections={test.sections}
             initialSectionIndex={currentIdx}
             autoAdvance={autoPlay}
-            onSectionChange={setCurrentIdx}
+            onSectionChange={setSectionIndex}
             onTimeUpdate={({ sectionMs }) => setSectionProgressMs(sectionMs)}
             seekToMs={pendingSeekMs}
             onExternalSeekResolved={() => setPendingSeekMs(null)}
@@ -486,7 +544,8 @@ export default function ListeningTestPage() {
                         label=""
                         placeholder="Type your answer"
                         value={answers[q.id] ?? ''}
-                        onChange={(e) => handleGap(q as GAP, (e.target as HTMLInputElement).value)}
+                        onChange={(e) => handleGapChange(q as GAP, (e.target as HTMLInputElement).value)}
+                        onBlur={() => handleGapBlur(q as GAP)}
                       />
                     ) : (
                       <Alert variant={isCorrect(q) ? 'success' : 'warning'}>
@@ -540,14 +599,15 @@ export default function ListeningTestPage() {
                       }
                       submittedRef.current = true;
                       try {
-                        if (slug) localStorage.removeItem(LS_KEY(slug));
+                        autosaveRef.current?.clear();
+                        if (slug) localStorage.removeItem(LEGACY_LISTEN_KEY(slug));
                       } catch {}
                       const target = attemptId
                         ? `/listening/${test.slug}/review?attemptId=${attemptId}`
                         : `/listening/${test.slug}/review`;
                       router.push(target);
                     } else {
-                      setCurrentIdx((i) => i + 1);
+                      setSectionIndex((i) => i + 1);
                       setChecked(false);
                     }
                   }}
