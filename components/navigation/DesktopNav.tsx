@@ -8,7 +8,7 @@ import { NotificationBell } from '@/components/design-system/NotificationBell';
 import { StreakChip } from '@/components/user/StreakChip';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
 import { navigationSchema } from '@/config/navigation';
-import { filterNavItems } from '@/lib/navigation/utils';
+import { filterNavItems, filterNavSections } from '@/lib/navigation/utils';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { Button } from '@/components/design-system/Button';
 
@@ -27,11 +27,11 @@ type DesktopNavProps = Omit<React.HTMLAttributes<HTMLElement>, 'role'> & {
   openModules: boolean;
   setOpenModules: (open: boolean) => void;
   modulesRef: React.RefObject<HTMLLIElement>;
+  openPractice: boolean;
+  setOpenPractice: (open: boolean) => void;
+  practiceRef: React.RefObject<HTMLLIElement>;
   signOut: () => Promise<void>;
   showAdmin?: boolean;
-  hasPremiumAccess?: boolean;
-  premiumRooms?: string[];
-  onClearPremiumAccess?: () => void;
   subscriptionTier: SubscriptionTier;
 };
 
@@ -43,11 +43,11 @@ export function DesktopNav({
   openModules,
   setOpenModules,
   modulesRef,
+  openPractice,
+  setOpenPractice,
+  practiceRef,
   signOut,
   showAdmin = true,
-  hasPremiumAccess = false,
-  premiumRooms = [],
-  onClearPremiumAccess,
   subscriptionTier,
   className,
   ...rest
@@ -86,17 +86,77 @@ export function DesktopNav({
     return filterNavItems(navigationSchema.header.aiTools, navigationCtx);
   }, [navigationCtx, isTeacher]);
 
-  const headerCta = uid ? navigationSchema.header.cta.authed : navigationSchema.header.cta.guest;
+  const headerCta = uid ? null : navigationSchema.header.cta.guest;
   const headerOptional = navigationSchema.header.optional ?? {};
 
   const aiMenuRef = React.useRef<HTMLDivElement | null>(null);
   const menuButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const practiceMenuRef = React.useRef<HTMLDivElement | null>(null);
+
+  const sidebarSections = React.useMemo(
+    () => filterNavSections(navigationSchema.sidebar, navigationCtx),
+    [navigationCtx]
+  );
+  const learningSection = React.useMemo(
+    () => sidebarSections.find((section) => section.id === 'learning'),
+    [sidebarSections]
+  );
+
+  const practiceDropdownItems = React.useMemo(() => {
+    const defaults = [
+      {
+        id: 'practice-home',
+        label: 'Practice Home',
+        href: '/learning',
+        description: 'Open the main practice dashboard.',
+      },
+      {
+        id: 'practice-drills',
+        label: 'Quick Drills',
+        href: '/learning/drills',
+        description: 'Short exercises to sharpen specific skills.',
+      },
+      {
+        id: 'practice-skills',
+        label: 'Skills Library',
+        href: '/learning/skills',
+        description: 'Browse lessons by skill focus and difficulty.',
+      },
+      {
+        id: 'practice-strategies',
+        label: 'Strategies & Tips',
+        href: '/learning/strategies',
+        description: 'Expert guidance for each IELTS module.',
+      },
+    ];
+
+    const gatedItems = (learningSection?.items ?? []).map((item) => ({
+      id: `learning-${item.id}`,
+      label: item.label,
+      href: item.href,
+      description: item.description,
+    }));
+
+    const merged = [...defaults, ...gatedItems];
+    const seen = new Set<string>();
+    return merged.filter((item) => {
+      if (seen.has(item.href)) return false;
+      seen.add(item.href);
+      return true;
+    });
+  }, [learningSection]);
 
   React.useEffect(() => {
     if (!openModules) return;
     const firstLink = aiMenuRef.current?.querySelector<HTMLAnchorElement>('a,button');
     firstLink?.focus();
   }, [openModules]);
+
+  React.useEffect(() => {
+    if (!openPractice) return;
+    const firstLink = practiceMenuRef.current?.querySelector<HTMLAnchorElement>('a,button');
+    firstLink?.focus();
+  }, [openPractice]);
 
   return (
     <nav className={className} aria-label="Primary" {...rest}>
@@ -117,18 +177,77 @@ export function DesktopNav({
           )}
 
           {!isTeacher &&
-            mainNavItems.map((item) => (
-              <li key={item.id}>
-                <NavLink href={item.href} className={navItemClass} label={item.label} />
-              </li>
-            ))}
+            mainNavItems.map((item) => {
+              if (item.id === 'practice' && practiceDropdownItems.length > 0) {
+                return (
+                  <li key={item.id} className="relative" ref={practiceRef}>
+                    <button
+                      onClick={() => {
+                        const next = !openPractice;
+                        setOpenPractice(next);
+                        if (!next) return;
+                        setOpenModules(false);
+                      }}
+                      className={`nav-pill gap-2 text-small font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background ${openPractice ? 'is-active' : ''}`}
+                      aria-haspopup="menu"
+                      aria-expanded={openPractice}
+                      aria-controls="practice-menu"
+                    >
+                      <span>{item.label}</span>
+                      <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path d={openPractice ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                      </svg>
+                    </button>
+                    {openPractice && (
+                      <div
+                        id="practice-menu"
+                        ref={practiceMenuRef}
+                        className="absolute left-0 top-full z-50 mt-3 w-[18rem] rounded-xl border border-border bg-card p-3 shadow-xl"
+                        role="menu"
+                      >
+                        <ul className="space-y-1">
+                          {practiceDropdownItems.map((link) => (
+                            <li key={link.id}>
+                              <Link
+                                href={link.href}
+                                className="flex items-start gap-2 rounded-lg px-3 py-2 text-left text-small hover:bg-muted"
+                                onClick={() => setOpenPractice(false)}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-foreground">{link.label}</span>
+                                  {link.description && (
+                                    <span className="text-xs text-muted-foreground">{link.description}</span>
+                                  )}
+                                </div>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                );
+              }
+
+              return (
+                <li key={item.id}>
+                  <NavLink href={item.href} className={navItemClass} label={item.label} />
+                </li>
+              );
+            })}
 
           {/* AI & Tools: gated by subscription tier + feature flags via filterNavItems */}
           {!isTeacher && aiToolItems.length > 0 && (
             <li className="relative" ref={modulesRef}>
               <button
                 ref={menuButtonRef}
-                onClick={() => setOpenModules(!openModules)}
+                onClick={() => {
+                  const next = !openModules;
+                  setOpenModules(next);
+                  if (next) {
+                    setOpenPractice(false);
+                  }
+                }}
                 className={`nav-pill gap-2 text-small font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background ${openModules ? 'is-active' : ''}`}
                 aria-haspopup="menu"
                 aria-expanded={openModules}
@@ -177,42 +296,6 @@ export function DesktopNav({
           {canSeeAdmin && (
             <li>
               <NavLink href="/admin/partners" className={navItemClass} label="Admin" />
-            </li>
-          )}
-
-          {/* Premium Access Status */}
-          {hasPremiumAccess && (
-            <li className="relative group">
-              <div className="flex items-center gap-1 rounded-full px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-medium">
-                <span aria-hidden="true">⭐</span>
-                <span>Premium</span>
-              </div>
-              <div className="absolute top-full right-0 z-50 mt-2 hidden w-56 group-hover:block">
-                <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
-                  <div className="mb-1 text-xs font-medium text-green-600">Premium Access Active</div>
-                  <div className="mb-2 text-xs text-muted-foreground">
-                    Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
-                  </div>
-                  {premiumRooms.length > 0 && (
-                    <div className="max-h-20 overflow-y-auto text-xs text-muted-foreground">
-                      {premiumRooms.slice(0, 3).map((room, idx) => (
-                        <div key={idx} className="truncate">• {room}</div>
-                      ))}
-                      {premiumRooms.length > 3 && (
-                        <div className="text-xs">+{premiumRooms.length - 3} more</div>
-                      )}
-                    </div>
-                  )}
-                  {onClearPremiumAccess && (
-                    <button
-                      onClick={onClearPremiumAccess}
-                      className="mt-2 text-xs text-destructive hover:opacity-80"
-                    >
-                      Clear All Access
-                    </button>
-                  )}
-                </div>
-              </div>
             </li>
           )}
 

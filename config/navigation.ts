@@ -17,7 +17,6 @@ const headerMain: NavItemConfig[] = [
     href: '/challenge',
     featureGate: { featureToggle: 'weeklyChallenge' },
   },
-  { id: 'premium', label: 'Premium', href: '/premium' },
 ];
 
 const aiTools: NavItemConfig[] = [
