@@ -17,6 +17,7 @@
     "pin:hash": "ts-node tools/hash-pin.ts",
     "diagnose": "powershell -ExecutionPolicy Bypass -File .\\\\tools\\\\report-build-issues.ps1",
     "test": "TWILIO_BYPASS=1 tsx tools/run-tests.ts",
+    "test:i18n": "tsx scripts/i18n-check.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "seed:challenge": "tsx scripts/seed_challenge.ts",
