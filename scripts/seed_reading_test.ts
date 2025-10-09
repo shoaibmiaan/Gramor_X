@@ -118,7 +118,7 @@ function mapQuestion(raw: RawQuestion, order: number) {
     const choices = normaliseChoices(raw.options);
     return {
       order_no: order,
-      kind: 'mcq',
+      kind: 'matching',
       prompt: basePrompt,
       options: { choices, variant: 'matching-single' },
       answers: normaliseAnswer(raw.answer),
