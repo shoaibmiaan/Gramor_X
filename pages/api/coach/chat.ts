@@ -84,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: profile } = await supabase
     .from('profiles')
     .select('tier')
-    .eq('id', userId)
+    .or(`user_id.eq.${userId},id.eq.${userId}`)
     .maybeSingle<{ tier: SubscriptionTier | null }>();
 
   const tier = (profile?.tier ?? 'free') as SubscriptionTier;
