@@ -68,6 +68,7 @@ const envSchema = z.object({
 
   SPEAKING_DAILY_LIMIT: z.coerce.number().optional(),
   SPEAKING_BUCKET: z.string().optional(),
+  LIMIT_FREE_SPEAKING: z.coerce.number().optional(),
 
   TWILIO_ACCOUNT_SID: z.string().min(1),
   TWILIO_AUTH_TOKEN: z.string().min(1),
@@ -151,6 +152,7 @@ const raw = {
 
   SPEAKING_DAILY_LIMIT: process.env.SPEAKING_DAILY_LIMIT,
   SPEAKING_BUCKET: process.env.SPEAKING_BUCKET,
+  LIMIT_FREE_SPEAKING: process.env.LIMIT_FREE_SPEAKING,
 
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
