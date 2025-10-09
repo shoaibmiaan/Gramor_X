@@ -55,6 +55,13 @@ export interface Invoices extends TableBase {
   meta?: Record<string, any>;
 }
 
+export interface WritingPrompts extends TableBase {
+  title: string;
+  prompt: string;
+  task_type?: 'task1' | 'task2' | 'general' | 'other' | null;
+  created_by?: string | null;
+}
+
 /** Handy union for typed upserts/selects */
 export interface DBSchema {
   profiles: Profiles;
@@ -62,6 +69,7 @@ export interface DBSchema {
   usage_counters: UsageCounters;
   attempts: Attempts;
   invoices: Invoices;
+  writing_prompts: WritingPrompts;
 }
 
 export type TableName = keyof DBSchema;
