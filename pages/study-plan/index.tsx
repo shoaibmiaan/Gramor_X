@@ -5,7 +5,13 @@ import Link from 'next/link';
 import { useToast } from '@/components/design-system/Toaster';
 import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { isStudyPlan, type StudyDay, type StudyPlan } from '@/types/plan';
+import {
+  isStudyPlan,
+  type StudyDay,
+  type StudyPlan,
+  type StudyTask,
+  type TaskType,
+} from '@/types/plan';
 
 const MODULE_SHORTCUTS: ReadonlyArray<{
   type: 'listening' | 'reading' | 'writing' | 'speaking';
@@ -65,8 +71,9 @@ export default function StudyPlanPage() {
         if (error) throw error;
 
         const payload = (data as { plan_json?: unknown } | null)?.plan_json;
-        if (payload && isStudyPlan(payload)) {
-          setPlan(payload);
+        if (payload) {
+          const normalized = normalizePlan(payload, user.id);
+          setPlan(normalized);
         } else {
           setPlan(null);
         }
@@ -189,4 +196,105 @@ function formatHuman(iso: string) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+type LegacyTask = { module: TaskType; minutes: number };
+type LegacyDay = { date: string; tasks: LegacyTask[] };
+type LegacyPlan = { days?: LegacyDay[] };
+
+function normalizePlan(payload: unknown, userId: string): StudyPlan | null {
+  if (isStudyPlan(payload)) return payload;
+  if (!isLegacyPlan(payload)) return null;
+
+  const days = payload.days
+    .map((legacyDay) => convertLegacyDay(legacyDay))
+    .filter(Boolean) as StudyDay[];
+
+  if (days.length === 0) return null;
+
+  const sorted = [...days].sort((a, b) => new Date(a.dateISO).getTime() - new Date(b.dateISO).getTime());
+  const startISO = sorted[0]?.dateISO ?? new Date().toISOString();
+  const weeks = Math.max(1, Math.ceil(days.length / 7));
+
+  return {
+    userId,
+    startISO,
+    weeks,
+    days,
+  } satisfies StudyPlan;
+}
+
+function isLegacyPlan(payload: unknown): payload is Required<LegacyPlan> {
+  if (!payload || typeof payload !== 'object') return false;
+  const maybeDays = (payload as LegacyPlan).days;
+  if (!Array.isArray(maybeDays)) return false;
+  return maybeDays.every((day) => isLegacyDay(day));
+}
+
+function isLegacyDay(day: unknown): day is LegacyDay {
+  if (!day || typeof day !== 'object') return false;
+  const date = (day as LegacyDay).date;
+  const tasks = (day as LegacyDay).tasks;
+  if (typeof date !== 'string' || !Array.isArray(tasks)) return false;
+  return tasks.every((task) => isLegacyTask(task));
+}
+
+function isLegacyTask(task: unknown): task is LegacyTask {
+  if (!task || typeof task !== 'object') return false;
+  const module = (task as LegacyTask).module;
+  const minutes = (task as LegacyTask).minutes;
+  return (
+    typeof module === 'string' &&
+    LEGACY_MODULES.has(module as TaskType) &&
+    typeof minutes === 'number' &&
+    Number.isFinite(minutes) &&
+    minutes > 0
+  );
+}
+
+const LEGACY_MODULES: ReadonlySet<TaskType> = new Set(['listening', 'reading', 'writing', 'speaking']);
+
+function convertLegacyDay(day: LegacyDay): StudyDay | null {
+  const date = ensureISODate(day.date);
+  if (!date) return null;
+
+  const tasks: StudyTask[] = day.tasks.map((task, taskIndex) => ({
+    id: `${date}::${taskIndex}`,
+    type: task.module,
+    title: legacyTitleFor(task.module),
+    estMinutes: clampMinutes(task.minutes),
+    completed: false,
+  }));
+
+  if (tasks.length === 0) return null;
+
+  return { dateISO: date, tasks } satisfies StudyDay;
+}
+
+function ensureISODate(date: string): string | null {
+  if (typeof date !== 'string' || date.length === 0) return null;
+  const iso = date.includes('T') ? date : `${date}T00:00:00Z`;
+  const time = new Date(iso).getTime();
+  if (Number.isNaN(time)) return null;
+  return new Date(time).toISOString();
+}
+
+function legacyTitleFor(module: TaskType): string {
+  switch (module) {
+    case 'listening':
+      return 'Listening practice';
+    case 'reading':
+      return 'Reading practice';
+    case 'writing':
+      return 'Writing practice';
+    case 'speaking':
+      return 'Speaking practice';
+    default:
+      return 'Study task';
+  }
+}
+
+function clampMinutes(minutes: number): number {
+  if (!Number.isFinite(minutes)) return 25;
+  return Math.max(5, Math.min(240, Math.round(minutes)));
 }
