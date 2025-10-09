@@ -318,8 +318,12 @@ function InnerApp({ Component, pageProps }: AppProps) {
           if (event === 'SIGNED_IN' && sessionNow?.user) {
             const url = new URL(window.location.href);
             const next = url.searchParams.get('next');
-            const target = next && next.startsWith('/') ? next : '/';
-            router.replace(target);
+
+            if (next && next.startsWith('/')) {
+              router.replace(next);
+            } else if (isAuthPage) {
+              router.replace('/');
+            }
           }
 
           if (event === 'SIGNED_OUT') {
