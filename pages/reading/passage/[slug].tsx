@@ -119,7 +119,7 @@ export default function ReadingRunner({ slug, title, difficulty, words, content,
 
     const json = await r.json();
     if (json?.attemptId) {
-      window.location.href = `/reading/review/${json.attemptId}`;
+      window.location.href = `/reading/${encodeURIComponent(slug)}/review?attemptId=${json.attemptId}`;
     } else if (json?.score) {
       alert(`Score: ${json.score.correct} / ${json.score.total}`);
     } else {

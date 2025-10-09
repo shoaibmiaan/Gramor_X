@@ -125,7 +125,10 @@ export function ReadingStatsCard() {
           {recent.map(a => (
             <li key={a.id} className="flex items-center justify-between">
               <div className="truncate">
-                <Link href={`/reading/review/${a.id}`} className="underline">
+                <Link
+                  href={`/reading/${encodeURIComponent(a.passage_slug)}/review?attemptId=${a.id}`}
+                  className="underline"
+                >
                   {a.passage_slug}
                 </Link>
                 <span className="ml-2 text-small text-grayish dark:text-muted-foreground">
