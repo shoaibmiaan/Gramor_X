@@ -1,6 +1,7 @@
 // pages/api/speaking/signed-url.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { resolveUserRole, isStaffRole } from '@/lib/serverRole';
 
 // Server client for storage signing + DB auth checks
 const svc = createSupabaseServerClient({ serviceRole: true });
@@ -65,6 +66,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = userData?.user;
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
+    const role = await resolveUserRole(user);
+
     // Resolve secure source: by clipId, or by (attemptId + path), or by path only (last option)
     let finalPath = path;
 
@@ -82,7 +85,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('id', clip.attempt_id)
         .single();
       if (aErr || !attempt) return res.status(404).json({ error: 'Attempt not found' });
-      if (attempt.user_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+      if (attempt.user_id !== user.id && !isStaffRole(role))
+        return res.status(403).json({ error: 'Forbidden' });
 
       finalPath = finalPath || clip.audio_url;
     } else if (attemptId) {
@@ -92,7 +96,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('id', attemptId)
         .single();
       if (aErr || !attempt) return res.status(404).json({ error: 'Attempt not found' });
-      if (attempt.user_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
+      if (attempt.user_id !== user.id && !isStaffRole(role))
+        return res.status(403).json({ error: 'Forbidden' });
       if (!finalPath) return res.status(400).json({ error: 'path required with attemptId' });
     } else {
       // Path only — allow if it looks like a signed URL already; otherwise block to avoid abuse
