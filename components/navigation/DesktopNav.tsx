@@ -88,6 +88,7 @@ export function DesktopNav({
   const headerOptional = navigationSchema.header.optional ?? {};
 
   const aiMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = React.useRef<HTMLButtonElement | null>(null);
 
   React.useEffect(() => {
     if (!openModules) return;
