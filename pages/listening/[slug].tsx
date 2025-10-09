@@ -62,6 +62,7 @@ export default function ListeningTestPage() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
   const [checked, setChecked] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [sectionProgressMs, setSectionProgressMs] = useState(0);
   const [pendingSeekMs, setPendingSeekMs] = useState<number | null>(null);
 
@@ -192,9 +193,14 @@ export default function ListeningTestPage() {
     try {
       const raw = localStorage.getItem(LS_KEY(slug));
       if (!raw) return;
-      const parsed = JSON.parse(raw) as { answers?: Record<string, string>; currentIdx?: number };
+      const parsed = JSON.parse(raw) as {
+        answers?: Record<string, string>;
+        currentIdx?: number;
+        transcriptOpen?: boolean;
+      };
       if (parsed.answers) setAnswers(parsed.answers);
       if (typeof parsed.currentIdx === 'number') setCurrentIdx(Math.max(0, parsed.currentIdx));
+      if (typeof parsed.transcriptOpen === 'boolean') setTranscriptOpen(parsed.transcriptOpen);
     } catch {
       // ignore parse errors
     }
@@ -204,11 +210,11 @@ export default function ListeningTestPage() {
   useEffect(() => {
     if (!slug) return;
     const id = window.setTimeout(() => {
-      const payload = JSON.stringify({ answers, currentIdx });
+      const payload = JSON.stringify({ answers, currentIdx, transcriptOpen });
       localStorage.setItem(LS_KEY(slug), payload);
     }, 250);
     return () => clearTimeout(id);
-  }, [answers, currentIdx, slug]);
+  }, [answers, currentIdx, slug, transcriptOpen]);
 
   // --- Answer helpers ---
   const handleMCQ = (q: MCQ, val: string) => {
@@ -416,6 +422,8 @@ export default function ListeningTestPage() {
             transcript={currentSection?.transcript}
             locked={!checked}
             currentTimeMs={sectionProgressMs}
+            expanded={checked ? transcriptOpen : false}
+            onExpandedChange={(next) => setTranscriptOpen(next)}
             onSeek={(relativeMs) => {
               if (!currentSection) return;
               setPendingSeekMs(currentSection.startMs + relativeMs);
