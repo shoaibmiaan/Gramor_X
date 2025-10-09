@@ -1,6 +1,7 @@
 // pages/api/notifications/[id].ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { MarkNotificationReadParamsSchema } from '@/lib/schemas/notifications';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createSupabaseServerClient({ req });
@@ -9,8 +10,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } = await supabase.auth.getUser();
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  const { id } = req.query;
-  if (typeof id !== 'string') return res.status(400).json({ error: 'Invalid id' });
+  const paramsResult = MarkNotificationReadParamsSchema.safeParse({ id: req.query.id });
+  if (!paramsResult.success) {
+    return res.status(400).json({ error: 'Invalid id' });
+  }
+
+  const { id } = paramsResult.data;
 
   if (req.method === 'PATCH') {
     const { error } = await supabase
