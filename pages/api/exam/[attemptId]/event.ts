@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+
+import { trackor } from '@/lib/analytics/trackor.server';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -34,6 +36,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (error) {
     return res.status(500).json({ error: error.message });
+  }
+
+  if (type === 'start') {
+    await trackor.log('core_exam_start', {
+      attemptId,
+      duration: 0,
+      score: null,
+    });
   }
 
   return res.status(200).json({ success: true });
