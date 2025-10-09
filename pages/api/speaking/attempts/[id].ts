@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { resolveUserRole, isStaffRole } from '@/lib/serverRole';
 
 type Breakdown = {
   fluency?: number | null;
@@ -113,7 +114,10 @@ export default async function handler(
     return res.status(404).json({ ok: false, error: 'Attempt not found' });
   }
 
-  if (data.user_id !== user.id) {
+  const role = await resolveUserRole(user);
+  const canReview = data.user_id === user.id || isStaffRole(role);
+
+  if (!canReview) {
     return res.status(403).json({ ok: false, error: 'Forbidden' });
   }
 
