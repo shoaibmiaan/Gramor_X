@@ -46,12 +46,19 @@ export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }
       });
       const data = await r.json();
       if (!r.ok || !data.ok) {
-        setError(data?.error || 'Failed to get a response.');
+        const rawMessage = typeof data?.error === 'string' ? data.error : null;
+        const friendly = !rawMessage
+          ? "We couldn't get an answer this time. Please try again in a few seconds."
+          : /404/.test(rawMessage)
+            ? 'The AI service is temporarily unavailable. Please try again shortly.'
+            : rawMessage;
+        setError(friendly);
       } else {
         setAnswer(data.answer);
       }
     } catch (err: any) {
-      setError(err?.message || 'Network error.');
+      const message = typeof err?.message === 'string' ? err.message : null;
+      setError(message ? `We couldn't get an answer: ${message}` : 'Network error. Please try again.');
     } finally {
       if (waitTimer.current) {
         window.clearTimeout(waitTimer.current);
@@ -89,7 +96,7 @@ export const AiTestDrive: React.FC<{ className?: string }> = ({ className = '' }
       ) : null}
 
       {error && (
-        <Alert variant="warning" className="mt-4" title="Couldn’t get an answer">
+        <Alert variant="warning" className="mt-4" title="Couldn't get an answer">
           {error}
         </Alert>
       )}

@@ -24,7 +24,9 @@ const toneClassMap: Record<NonNullable<ModuleLink['tone']>, string> = {
 };
 
 const getToneClass = (tone?: ModuleLink['tone']) =>
-  tone ? toneClassMap[tone] : 'bg-primary/10 text-primary ring-primary/15 group-hover:bg-primary group-hover:text-primary-foreground group-hover:ring-primary/40';
+  tone
+    ? toneClassMap[tone]
+    : 'bg-primary/10 text-primary ring-primary/15 group-hover:bg-primary group-hover:text-primary-foreground group-hover:ring-primary/40';
 
 interface UserInfo {
   id: string | null;
@@ -81,20 +83,14 @@ export function MobileNav({
   );
 
   const mainNavItems = React.useMemo(() => filterNavItems(navigationSchema.header.main, navigationCtx), [navigationCtx]);
-  const practiceNavItem = React.useMemo(
-    () => mainNavItems.find((item) => item.id === 'practice'),
-    [mainNavItems]
-  );
+  const practiceNavItem = React.useMemo(() => mainNavItems.find((item) => item.id === 'practice'), [mainNavItems]);
   const mainNavWithoutPractice = React.useMemo(
     () => mainNavItems.filter((item) => item.id !== 'practice'),
     [mainNavItems]
   );
   const aiToolItems = React.useMemo(() => filterNavItems(navigationSchema.header.aiTools, navigationCtx), [navigationCtx]);
   const profileMenu = React.useMemo(() => filterNavItems(navigationSchema.header.profile, navigationCtx), [navigationCtx]);
-  const sidebarSections = React.useMemo(
-    () => filterNavSections(navigationSchema.sidebar, navigationCtx),
-    [navigationCtx]
-  );
+  const sidebarSections = React.useMemo(() => filterNavSections(navigationSchema.sidebar, navigationCtx), [navigationCtx]);
   const headerCtaConfig = navigationSchema.header.cta ?? {};
   const headerCta = user?.id ? headerCtaConfig.authed : headerCtaConfig.guest;
   const headerOptional = navigationSchema.header.optional ?? {};
@@ -178,211 +174,204 @@ export function MobileNav({
                 <li>
                   <NavLink href="/dashboard" className={mobileItemClass} onClick={closeMenu}>
                     Dashboard
-                </NavLink>
-              </li>
-            )}
+                  </NavLink>
+                </li>
+              )}
 
-            {hasPremiumAccess && (
-              <li>
-                <NavLink
-                  href="/premium-room"
-                  className={`${mobileItemClass} border border-yellow-200/20 bg-gradient-to-r from-yellow-400/10 to-orange-500/10`}
-                  onClick={closeMenu}
-                >
-                  <span className="flex items-center gap-2">
-                    <span>⭐</span>
-                    <span>Premium Room</span>
-                  </span>
-                </NavLink>
-              </li>
-            )}
+              {hasPremiumAccess && (
+                <li>
+                  <NavLink
+                    href="/premium-room"
+                    className={`${mobileItemClass} border border-yellow-200/20 bg-gradient-to-r from-yellow-400/10 to-orange-500/10`}
+                    onClick={closeMenu}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>⭐</span>
+                      <span>Premium Room</span>
+                    </span>
+                  </NavLink>
+                </li>
+              )}
 
-            {practiceNavItem && (
-              <li key={practiceNavItem.id}>
-                <button
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-3 hover:bg-muted"
-                  onClick={() => {
-                    const next = !mobileModulesOpen;
-                    setMobileModulesOpen(next);
-                    if (next) setMobileAiToolsOpen(false);
-                  }}
-                  aria-expanded={mobileModulesOpen}
-                  aria-controls="mobile-practice"
-                >
-                  <span className="font-medium">{practiceNavItem.label}</span>
-                  <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <path d={mobileModulesOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-                  </svg>
-                </button>
+              {practiceNavItem && (
+                <li key={practiceNavItem.id}>
+                  <button
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-3 hover:bg-muted"
+                    onClick={() => {
+                      const next = !mobileModulesOpen;
+                      setMobileModulesOpen(next);
+                      if (next) setMobileAiToolsOpen(false);
+                    }}
+                    aria-expanded={mobileModulesOpen}
+                    aria-controls="mobile-practice"
+                  >
+                    <span className="font-medium">{practiceNavItem.label}</span>
+                    <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d={mobileModulesOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                    </svg>
+                  </button>
 
-                {mobileModulesOpen && (
-                  <div id="mobile-practice" className="mt-2 space-y-3 rounded-xl border border-border bg-muted/40 p-3">
-                    <p className="text-small text-muted-foreground">
-                      Pick a room to dive straight into skill-specific drills.
-                    </p>
-                    <ul className="space-y-2">
-                      {MODULE_LINKS.map(({ href, label, desc, Icon, tone }) => (
-                        <li key={href}>
-                          <Link
-                            href={href}
+                  {mobileModulesOpen && (
+                    <div id="mobile-practice" className="mt-2 space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+                      <p className="text-small text-muted-foreground">
+                        Pick a room to dive straight into skill-specific drills.
+                      </p>
+                      <ul className="space-y-2">
+                        {MODULE_LINKS.map(({ href, label, desc, Icon: RoomIcon, tone }) => (
+                          <li key={href}>
+                            <Link
+                              href={href}
+                              onClick={() => {
+                                setMobileModulesOpen(false);
+                                closeMenu();
+                              }}
+                              className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background px-3 py-3 transition hover:-translate-y-0.5 hover:border-transparent hover:bg-primary/10 hover:shadow-glow dark:bg-dark/60 dark:hover:bg-purpleVibe/20"
+                            >
+                              <span
+                                className={`mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-lg ring-2 transition ${getToneClass(tone)}`}
+                                aria-hidden="true"
+                              >
+                                {RoomIcon ? <RoomIcon className="h-5 w-5" /> : null}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block font-medium">{label}</span>
+                                {desc && <span className="text-small text-muted-foreground">{desc}</span>}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+              )}
+
+              {mainNavWithoutPractice.map((item) => (
+                <li key={item.id}>
+                  <NavLink href={item.href} className={mobileItemClass} onClick={closeMenu}>
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+
+              {aiToolItems.length > 0 && (
+                <li>
+                  <button
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-3 hover:bg-muted"
+                    onClick={() => setMobileAiToolsOpen(!mobileAiToolsOpen)}
+                    aria-expanded={mobileAiToolsOpen}
+                    aria-controls="mobile-ai-tools"
+                  >
+                    <span className="font-medium">AI &amp; Tools</span>
+                    <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d={mobileAiToolsOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                    </svg>
+                  </button>
+
+                  {mobileAiToolsOpen && (
+                    <ul id="mobile-ai-tools" className="mt-1 ml-2 overflow-hidden rounded-lg border border-border">
+                      {aiToolItems.map((item) => (
+                        <li key={item.id}>
+                          <NavLink
+                            href={item.href}
+                            className="block px-4 py-3 hover:bg-muted"
                             onClick={() => {
-                              setMobileModulesOpen(false);
+                              setMobileAiToolsOpen(false);
                               closeMenu();
                             }}
-                            className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background px-3 py-3 transition hover:-translate-y-0.5 hover:border-transparent hover:bg-primary/10 hover:shadow-glow dark:bg-dark/60 dark:hover:bg-purpleVibe/20"
                           >
-                            <span
-                              className={`mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-lg ring-2 transition ${getToneClass(tone)}`}
-                              aria-hidden="true"
-                            >
-                              {Icon ? <Icon className="h-5 w-5" /> : null}
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block font-medium">{label}</span>
-                              {desc && <span className="text-small text-muted-foreground">{desc}</span>}
-                            </span>
-                          </Link>
+                            {item.label}
+                          </NavLink>
                         </li>
                       ))}
                     </ul>
+                  )}
+                </li>
+              )}
+
+              {canSeePartners && (
+                <li>
+                  <NavLink href="/partners" className={mobileItemClass} onClick={closeMenu}>
+                    Partners
+                  </NavLink>
+                </li>
+              )}
+              {canSeeAdmin && (
+                <li>
+                  <NavLink href="/admin/partners" className={mobileItemClass} onClick={closeMenu}>
+                    Admin
+                  </NavLink>
+                </li>
+              )}
+            </ul>
+
+            <div className="mt-6 space-y-4">
+              {sidebarSections.map((section) => (
+                <div key={section.id}>
+                  <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {section.icon && <Icon name={section.icon} className="h-4 w-4" />}
+                    <span>{section.label}</span>
                   </div>
-                )}
-              </li>
-            )}
-
-            {mainNavWithoutPractice.map((item) => (
-              <li key={item.id}>
-                <NavLink href={item.href} className={mobileItemClass} onClick={closeMenu}>
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
-
-            {aiToolItems.length > 0 && (
-              <li>
-                <button
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-3 hover:bg-muted"
-                  onClick={() => setMobileAiToolsOpen(!mobileAiToolsOpen)}
-                  aria-expanded={mobileAiToolsOpen}
-                  aria-controls="mobile-ai-tools"
-                >
-                  <span className="font-medium">AI &amp; Tools</span>
-                  <svg
-                    className="h-3.5 w-3.5 opacity-80"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    aria-hidden="true"
-                  >
-                    <path d={mobileAiToolsOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-                  </svg>
-                </button>
-
-                {mobileAiToolsOpen && (
-                  <ul id="mobile-ai-tools" className="mt-1 ml-2 overflow-hidden rounded-lg border border-border">
-                    {aiToolItems.map((item) => (
+                  <ul className="space-y-1">
+                    {section.items.map((item) => (
                       <li key={item.id}>
-                        <NavLink
-                          href={item.href}
-                          className="block px-4 py-3 hover:bg-muted"
-                          onClick={() => {
-                            setMobileAiToolsOpen(false);
-                            closeMenu();
-                          }}
-                        >
+                        <NavLink href={item.href} className={mobileItemClass} onClick={closeMenu}>
                           {item.label}
                         </NavLink>
                       </li>
                     ))}
                   </ul>
-                )}
-              </li>
-            )}
-
-            {canSeePartners && (
-              <li>
-                <NavLink href="/partners" className={mobileItemClass} onClick={closeMenu}>
-                  Partners
-                </NavLink>
-              </li>
-            )}
-            {canSeeAdmin && (
-              <li>
-                <NavLink href="/admin/partners" className={mobileItemClass} onClick={closeMenu}>
-                  Admin
-                </NavLink>
-              </li>
-            )}
-          </ul>
-
-          <div className="mt-6 space-y-4">
-            {sidebarSections.map((section) => (
-              <div key={section.id}>
-                <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {section.icon && <Icon name={section.icon} className="h-4 w-4" />}
-                  <span>{section.label}</span>
                 </div>
+              ))}
+            </div>
+
+            {profileMenu.length > 0 && user?.id && (
+              <div className="mt-6">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</div>
                 <ul className="space-y-1">
-                  {section.items.map((item) => (
+                  {profileMenu.map((item) => (
                     <li key={item.id}>
                       <NavLink href={item.href} className={mobileItemClass} onClick={closeMenu}>
                         {item.label}
                       </NavLink>
                     </li>
                   ))}
+                  <li>
+                    <button
+                      onClick={() => {
+                        closeMenu();
+                        void signOut();
+                      }}
+                      className="w-full rounded-lg px-3 py-3 text-left font-medium text-danger hover:bg-danger/10"
+                    >
+                      Sign out
+                    </button>
+                  </li>
                 </ul>
               </div>
-            ))}
-          </div>
+            )}
 
-          {profileMenu.length > 0 && user?.id && (
-            <div className="mt-6">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</div>
-              <ul className="space-y-1">
-                {profileMenu.map((item) => (
-                  <li key={item.id}>
-                    <NavLink href={item.href} className={mobileItemClass} onClick={closeMenu}>
-                      {item.label}
-                    </NavLink>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    onClick={() => {
-                      closeMenu();
-                      void signOut();
-                    }}
-                    className="w-full rounded-lg px-3 py-3 text-left font-medium text-danger hover:bg-danger/10"
-                  >
-                    Sign out
-                  </button>
-                </li>
-              </ul>
-            </div>
-          )}
+            {!user?.id && ready && (
+              <div className="mt-6 grid gap-2">
+                <Link
+                  href="/login"
+                  className="inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 font-semibold text-primary-foreground hover:opacity-90"
+                  onClick={closeMenu}
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-primary px-5 py-3 font-semibold text-primary hover:bg-primary/10"
+                  onClick={closeMenu}
+                >
+                  Create account
+                </Link>
+              </div>
+            )}
 
-          {!user?.id && ready && (
-            <div className="mt-6 grid gap-2">
-              <Link
-                href="/login"
-                className="inline-flex w-full items-center justify-center rounded-full bg-primary px-5 py-3 font-semibold text-primary-foreground hover:opacity-90"
-                onClick={closeMenu}
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex w-full items-center justify-center rounded-full border border-primary px-5 py-3 font-semibold text-primary hover:bg-primary/10"
-                onClick={closeMenu}
-              >
-                Create account
-              </Link>
-            </div>
-          )}
-
-          {!ready && <div className="mt-4 h-10 w-full animate-pulse rounded-full bg-muted" />}
-        </nav>
+            {!ready && <div className="mt-4 h-10 w-full animate-pulse rounded-full bg-muted" />}
+          </nav>
         </div>
       </Container>
     </div>
