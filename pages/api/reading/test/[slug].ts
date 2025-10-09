@@ -1,93 +1,231 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// Rich 14-question sample (no DB). Later swap to Supabase.
-// Types: 5 x TFNG, 4 x MCQ, 3 x GAP, 2 x MATCH
-const SAMPLE = {
-  slug: 'sample-reading-1',
-  title: 'The Honey Bee Ecosystem',
-  durationMinutes: 20,
-  passage: `Honey bees play a critical role in pollination, supporting global food supply and biodiversity.
-However, stressors including habitat loss, pesticide exposure, and disease have contributed to declines.
-While urban beekeeping can raise awareness, it can also create competition with native pollinators if mismanaged.
-Conservation strategies focus on diverse planting, reducing harmful chemicals, and improving habitats through corridors.
-(Shortened for demo)`,
-  sections: [
-    {
-      orderNo: 1,
-      title: 'True / False / Not Given',
-      instructions: 'Do the statements agree with the information in the passage?',
-      questions: [
-        { id: 'q1', qNo: 1, type: 'tfng', prompt: 'Honey bees contribute significantly to pollination.', correct: 'True' },
-        { id: 'q2', qNo: 2, type: 'tfng', prompt: 'All pollinators in cities are honey bees.', correct: 'False' },
-        { id: 'q3', qNo: 3, type: 'tfng', prompt: 'Urban beekeeping always benefits native pollinators.', correct: 'False' },
-        { id: 'q4', qNo: 4, type: 'tfng', prompt: 'Every decline in bee numbers is solely due to pesticides.', correct: 'Not Given' },
-        { id: 'q5', qNo: 5, type: 'tfng', prompt: 'Habitat corridors can support pollination.', correct: 'True' },
-      ]
-    },
-    {
-      orderNo: 2,
-      title: 'Multiple Choice Questions',
-      instructions: 'Choose the best answer A–D.',
-      questions: [
-        { id: 'q6',  qNo: 6,  type: 'mcq', prompt: 'The passage suggests a key threat is…', options: ['Climate cycles','Habitat loss','Overproduction of honey','Winter migration'], correct: 'Habitat loss' },
-        { id: 'q7',  qNo: 7,  type: 'mcq', prompt: 'A benefit of urban beekeeping is…', options: ['Guaranteed higher yields','Raising awareness','Eliminating disease','Replacing wild bees'], correct: 'Raising awareness' },
-        { id: 'q8',  qNo: 8,  type: 'mcq', prompt: 'An effective conservation action is…', options: ['Monoculture planting','Increasing hive density','Diverse planting','Routine pesticide use'], correct: 'Diverse planting' },
-        { id: 'q9',  qNo: 9,  type: 'mcq', prompt: 'The passage portrays pesticide exposure as…', options: ['Irrelevant','One of multiple stressors','The only cause','Always banned'], correct: 'One of multiple stressors' },
-      ]
-    },
-    {
-      orderNo: 3,
-      title: 'Gap-fill',
-      instructions: 'Write NO MORE THAN TWO WORDS.',
-      questions: [
-        { id: 'q10', qNo: 10, type: 'gap', prompt: 'Bees are essential for ______ security.', correct: 'food', acceptable: ['food'] },
-        { id: 'q11', qNo: 11, type: 'gap', prompt: 'Conservation uses ______ to connect habitats.', correct: 'corridors', acceptable: ['corridor','corridors'] },
-        { id: 'q12', qNo: 12, type: 'gap', prompt: 'Urban hives should avoid excessive ______ with native insects.', correct: 'competition', acceptable: ['competition'] },
-      ]
-    },
-    {
-      orderNo: 4,
-      title: 'Matching (Factors → Effects)',
-      instructions: 'Match each factor (A–C) with its effect (i–iii).',
-      questions: [
-        {
-          id: 'q13', qNo: 13, type: 'match',
-          options: ['i) habitat loss', 'ii) pesticide exposure', 'iii) disease spread'],
-          pairs: [
-            { left: 'A. Monoculture', right: '' },
-            { left: 'B. Neonicotinoids', right: '' },
-            { left: 'C. Varroa mite', right: '' },
-          ],
-          correct: {
-            'A. Monoculture': 'i) habitat loss',
-            'B. Neonicotinoids': 'ii) pesticide exposure',
-            'C. Varroa mite': 'iii) disease spread'
-          }
-        },
-        {
-          id: 'q14', qNo: 14, type: 'match',
-          options: ['i) awareness', 'ii) competition risk', 'iii) floral diversity'],
-          pairs: [
-            { left: 'A. Urban beekeeping', right: '' },
-            { left: 'B. Dense apiaries', right: '' },
-            { left: 'C. Mixed planting', right: '' },
-          ],
-          correct: {
-            'A. Urban beekeeping': 'i) awareness',
-            'B. Dense apiaries': 'ii) competition risk',
-            'C. Mixed planting': 'iii) floral diversity'
-          }
-        }
-      ]
-    }
-  ]
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
+
+type DbQuestion = {
+  id: string;
+  order_no: number | null;
+  kind: string | null;
+  prompt: string | null;
+  options: Record<string, any> | null;
+  answers: unknown;
+  points: number | null;
 };
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { slug } = req.query as { slug?: string };
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-  if (slug !== SAMPLE.slug) return res.status(404).json({ error: 'Test not found' });
+type DbTest = {
+  slug: string;
+  title: string | null;
+  summary: string | null;
+  passage_text: string | null;
+  difficulty: string | null;
+  words: number | null;
+  duration_minutes: number | null;
+  published: boolean | null;
+};
 
-  // Attach passage so explain API can use it later (kept lightweight)
-  return res.json(SAMPLE);
+type RunnerQuestion =
+  | { id: string; qNo: number; type: 'tfng'; prompt: string }
+  | { id: string; qNo: number; type: 'ynng'; prompt: string }
+  | { id: string; qNo: number; type: 'gap'; prompt: string; acceptable?: string[] }
+  | { id: string; qNo: number; type: 'mcq'; prompt: string; options: string[] }
+  | { id: string; qNo: number; type: 'match'; prompt: string; options: string[]; pairs: { left: string; right: string[] }[] };
+
+type RunnerSection = {
+  orderNo: number;
+  title?: string;
+  instructions?: string;
+  questions: RunnerQuestion[];
+};
+
+type RunnerResponse = {
+  slug: string;
+  title: string;
+  summary?: string | null;
+  difficulty?: string | null;
+  words?: number | null;
+  passage: string;
+  durationMinutes: number;
+  sections: RunnerSection[];
+};
+
+type RunnerWithAnswers = RunnerResponse & {
+  sections: Array<RunnerSection & { questions: Array<RunnerQuestion & { correct: unknown }> }>;
+};
+
+function normaliseChoices(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => (typeof item === 'string' ? item.trim() : String(item ?? ''))).filter(Boolean);
+}
+
+function asArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (value == null) return [];
+  return [value];
+}
+
+function mapQuestion(row: DbQuestion, includeAnswer: boolean): RunnerQuestion & { correct?: unknown } {
+  const id = row.id;
+  const qNo = typeof row.order_no === 'number' ? row.order_no : Number(row.order_no ?? 0) || 0;
+  const prompt = String(row.prompt ?? '').trim();
+  const kind = (row.kind ?? '').toLowerCase();
+  const options = (row.options && typeof row.options === 'object' ? row.options : {}) as Record<string, any>;
+  const choices = normaliseChoices(options.choices);
+  const variant = typeof options.variant === 'string' ? options.variant.toLowerCase() : null;
+
+  const baseAnswer = includeAnswer ? row.answers ?? null : undefined;
+  const acceptableFromOptions = Array.isArray(options.acceptable)
+    ? options.acceptable.map((item: any) => (typeof item === 'string' ? item : String(item ?? '')))
+    : null;
+
+  if (kind === 'tfng') {
+    const qType = variant === 'ynng' ? 'ynng' : 'tfng';
+    return includeAnswer
+      ? ({ id, qNo, type: qType, prompt, correct: Array.isArray(baseAnswer) ? baseAnswer[0] : baseAnswer } as any)
+      : ({ id, qNo, type: qType, prompt } as any);
+  }
+
+  if (kind === 'short') {
+    const acceptableAnswers = acceptableFromOptions ?? (Array.isArray(baseAnswer) ? baseAnswer : asArray(baseAnswer));
+    return includeAnswer
+      ? ({ id, qNo, type: 'gap', prompt, acceptable: acceptableAnswers as string[], correct: baseAnswer } as any)
+      : ({ id, qNo, type: 'gap', prompt } as any);
+  }
+
+  if (kind === 'matching') {
+    const pairs = Array.isArray(options.pairs) ? options.pairs : [];
+    return includeAnswer
+      ? ({
+          id,
+          qNo,
+          type: 'match',
+          prompt,
+          options: choices,
+          pairs: pairs.map((pair) => ({
+            left: typeof pair?.left === 'string' ? pair.left : String(pair?.left ?? ''),
+            right: Array.isArray(pair?.right)
+              ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
+              : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
+          })),
+          correct: baseAnswer,
+        } as any)
+      : ({
+          id,
+          qNo,
+          type: 'match',
+          prompt,
+          options: choices,
+          pairs: pairs.map((pair) => ({
+            left: typeof pair?.left === 'string' ? pair.left : String(pair?.left ?? ''),
+            right: Array.isArray(pair?.right)
+              ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
+              : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
+          })),
+        } as any);
+  }
+
+  // default MCQ
+  const asMatch = variant === 'matching-single' && Array.isArray(options.pairs);
+  if (asMatch) {
+    const pairs = Array.isArray(options.pairs) ? options.pairs : [];
+    return includeAnswer
+      ? ({
+          id,
+          qNo,
+          type: 'match',
+          prompt,
+          options: choices,
+          pairs: pairs.map((pair) => ({
+            left: typeof pair?.left === 'string' ? pair.left : String(pair?.left ?? ''),
+            right: Array.isArray(pair?.right)
+              ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
+              : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
+          })),
+          correct: baseAnswer,
+        } as any)
+      : ({
+          id,
+          qNo,
+          type: 'match',
+          prompt,
+          options: choices,
+          pairs: pairs.map((pair) => ({
+            left: typeof pair?.left === 'string' ? pair.left : String(pair?.left ?? ''),
+            right: Array.isArray(pair?.right)
+              ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
+              : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
+          })),
+        } as any);
+  }
+
+  return includeAnswer
+    ? ({ id, qNo, type: 'mcq', prompt, options: choices, correct: baseAnswer } as any)
+    : ({ id, qNo, type: 'mcq', prompt, options: choices } as any);
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<RunnerResponse | RunnerWithAnswers | { error: string }>,
+) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const { slug } = req.query as { slug?: string };
+  if (!slug) return res.status(400).json({ error: 'Missing slug' });
+
+  const includeAnswers = req.query.answers === '1' || req.query.answers === 'true';
+
+  const { data: test, error: testError } = await supabaseAdmin
+    .from<DbTest>('reading_tests')
+    .select('slug,title,summary,passage_text,difficulty,words,duration_minutes,published')
+    .eq('slug', slug)
+    .maybeSingle();
+
+  if (testError) {
+    return res.status(500).json({ error: testError.message || 'Failed to load reading test' });
+  }
+  if (!test || test.published === false) {
+    return res.status(404).json({ error: 'Test not found' });
+  }
+
+  const { data: questionRows, error: qError } = await supabaseAdmin
+    .from<DbQuestion>('reading_questions')
+    .select('id,order_no,kind,prompt,options,answers,points')
+    .eq('passage_slug', slug)
+    .order('order_no', { ascending: true });
+
+  if (qError) {
+    return res.status(500).json({ error: qError.message || 'Failed to load questions' });
+  }
+
+  if (!questionRows || questionRows.length === 0) {
+    return res.status(404).json({ error: 'Questions not found' });
+  }
+
+  const mappedQuestions = questionRows.map((row) => mapQuestion(row, includeAnswers));
+
+  const response: RunnerResponse = {
+    slug: test.slug,
+    title: test.title ?? 'Reading Passage',
+    summary: test.summary,
+    difficulty: test.difficulty,
+    words: test.words,
+    passage: test.passage_text ?? '',
+    durationMinutes: typeof test.duration_minutes === 'number' ? test.duration_minutes : 20,
+    sections: [
+      {
+        orderNo: 1,
+        title: test.summary ?? test.title ?? undefined,
+        instructions: undefined,
+        questions: mappedQuestions as RunnerQuestion[],
+      },
+    ],
+  };
+
+  if (includeAnswers) {
+    return res.status(200).json(response as RunnerWithAnswers);
+  }
+
+  return res.status(200).json(response);
 }

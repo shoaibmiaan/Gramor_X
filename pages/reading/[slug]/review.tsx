@@ -46,6 +46,15 @@ type ReviewPageProps = {
   questions?: ReviewQuestion[];
 };
 
+type AIExplanation = {
+  id?: string;
+  correct: string;
+  user: string;
+  isCorrect: boolean;
+  explanation: string;
+  tip: string;
+};
+
 export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ctx) => {
   const slug = ctx.params?.slug ? String(ctx.params.slug) : '';
   const attemptId = (ctx.query.attemptId as string) ?? (ctx.query.attempt as string) ?? null;
@@ -81,7 +90,7 @@ export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ct
     if (host) {
       try {
         const baseUrl = `${protocol}://${host}`;
-        const resp = await fetch(`${baseUrl}/api/reading/test/${encodeURIComponent(slug)}`);
+        const resp = await fetch(`${baseUrl}/api/reading/test/${encodeURIComponent(slug)}?answers=1`);
         if (resp.ok) {
           const json = await resp.json();
           paper = json;
@@ -245,6 +254,63 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
 
   const accuracy = summary.total ? Math.round((summary.correctCount / summary.total) * 100) : null;
 
+  const [aiState, setAiState] = React.useState<{
+    loading: boolean;
+    data: Record<string, AIExplanation> | null;
+    error: string | null;
+  }>({ loading: false, data: null, error: null });
+
+  const stringifyAnswer = React.useCallback((value: any): string => {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.map((item) => stringifyAnswer(item)).join(', ');
+    if (typeof value === 'object') {
+      return Object.entries(value)
+        .map(([key, val]) => `${key}: ${stringifyAnswer(val)}`)
+        .join('; ');
+    }
+    return String(value);
+  }, []);
+
+  const requestAI = React.useCallback(async () => {
+    if (!questions?.length) return;
+
+    setAiState((prev) => ({ loading: true, data: prev.data, error: null }));
+
+    try {
+      const items = questions.map((q) => ({
+        id: q.id,
+        prompt: q.prompt,
+        options: Array.isArray(q.options) ? q.options : undefined,
+        answer: stringifyAnswer(q.correct ?? q.acceptable ?? ''),
+        userAnswer: stringifyAnswer(q.user),
+        passage,
+      }));
+
+      const resp = await fetch('/api/ai/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ module: 'reading', items }),
+      });
+
+      const json = await resp.json();
+      if (!resp.ok || !json?.ok) {
+        throw new Error(json?.error || `Failed to generate feedback (${resp.status})`);
+      }
+
+      const map: Record<string, AIExplanation> = {};
+      (json.explanations as AIExplanation[]).forEach((exp, idx) => {
+        const fallback = questions[idx]?.id ?? `q-${idx}`;
+        const key = exp.id || fallback;
+        map[key] = { ...exp, id: key };
+      });
+
+      setAiState({ loading: false, data: map, error: null });
+    } catch (aiErr: any) {
+      setAiState({ loading: false, data: null, error: aiErr?.message ?? 'Unable to generate AI feedback.' });
+    }
+  }, [passage, questions, stringifyAnswer]);
+
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
@@ -287,6 +353,20 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
           ))}
         </div>
 
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="primary"
+            className="rounded-ds-xl"
+            onClick={requestAI}
+            disabled={aiState.loading}
+          >
+            {aiState.data ? 'Refresh AI feedback' : 'Generate AI feedback'}
+          </Button>
+          {aiState.loading && <span className="text-small text-muted-foreground">Generating smart tips…</span>}
+          {aiState.error && <span className="text-small text-sunsetOrange">{aiState.error}</span>}
+        </div>
+
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.6fr)]">
           <Card className="p-6 lg:sticky lg:top-28 h-fit">
             <h2 className="text-h3 font-semibold mb-3">Passage</h2>
@@ -302,6 +382,7 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
           <div className="space-y-6">
             {questions.map((q) => {
               const Icon = q.isCorrect ? CheckCircle2 : XCircle;
+              const ai = aiState.data?.[q.id];
               return (
                 <Card
                   key={q.id}
@@ -358,6 +439,13 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
                       </span>
                     </div>
                   </div>
+                  {ai && (
+                    <div className="mt-4 rounded-ds border border-primary/40 bg-primary/5 p-4">
+                      <p className="text-small font-semibold text-primary">AI feedback</p>
+                      <p className="mt-2 text-body text-pretty">{ai.explanation}</p>
+                      <p className="mt-2 text-small text-muted-foreground">Tip: {ai.tip}</p>
+                    </div>
+                  )}
                 </Card>
               );
             })}
