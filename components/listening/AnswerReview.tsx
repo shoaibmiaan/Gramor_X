@@ -228,3 +228,5 @@ export default function AnswerReview({ questions, answers, className = '' }: Pro
   );
 }
 
+export type { Question, Answer, MatchPair };
+
