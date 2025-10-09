@@ -7,6 +7,7 @@ import { UserMenu } from '@/components/design-system/UserMenu';
 import { NotificationBell } from '@/components/design-system/NotificationBell';
 import { StreakChip } from '@/components/user/StreakChip';
 import { IconOnlyThemeToggle } from './IconOnlyThemeToggle';
+import ModuleMenu from './ModuleMenu';
 import { navigationSchema } from '@/config/navigation';
 import { filterNavItems } from '@/lib/navigation/utils';
 import type { SubscriptionTier } from '@/lib/navigation/types';
@@ -86,16 +87,48 @@ export function DesktopNav({
     return filterNavItems(navigationSchema.header.aiTools, navigationCtx);
   }, [navigationCtx, isTeacher]);
 
-  const headerCta = uid ? navigationSchema.header.cta.authed : navigationSchema.header.cta.guest;
+  const headerCtaConfig = navigationSchema.header.cta ?? {};
+  const headerCta = uid ? headerCtaConfig.authed : headerCtaConfig.guest;
   const headerOptional = navigationSchema.header.optional ?? {};
 
+  const [openAiTools, setOpenAiTools] = React.useState(false);
   const aiMenuRef = React.useRef<HTMLDivElement | null>(null);
-  const menuButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const aiButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const aiToolsRef = React.useRef<HTMLLIElement | null>(null);
 
   React.useEffect(() => {
-    if (!openModules) return;
+    if (!openAiTools) return;
     const firstLink = aiMenuRef.current?.querySelector<HTMLAnchorElement>('a,button');
     firstLink?.focus();
+  }, [openAiTools]);
+
+  React.useEffect(() => {
+    if (!openAiTools) return;
+
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!aiToolsRef.current?.contains(target)) {
+        setOpenAiTools(false);
+      }
+    };
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenAiTools(false);
+        aiButtonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [openAiTools]);
+
+  React.useEffect(() => {
+    if (openModules) setOpenAiTools(false);
   }, [openModules]);
 
   return (
@@ -117,29 +150,43 @@ export function DesktopNav({
           )}
 
           {!isTeacher &&
-            mainNavItems.map((item) => (
-              <li key={item.id}>
-                <NavLink href={item.href} className={navItemClass} label={item.label} />
-              </li>
-            ))}
+            mainNavItems.map((item) =>
+              item.id === 'practice' ? (
+                <ModuleMenu
+                  key={item.id}
+                  open={openModules}
+                  setOpen={setOpenModules}
+                  modulesRef={modulesRef}
+                  label={item.label}
+                />
+              ) : (
+                <li key={item.id}>
+                  <NavLink href={item.href} className={navItemClass} label={item.label} />
+                </li>
+              )
+            )}
 
           {/* AI & Tools: gated by subscription tier + feature flags via filterNavItems */}
           {!isTeacher && aiToolItems.length > 0 && (
-            <li className="relative" ref={modulesRef}>
+            <li className="relative" ref={aiToolsRef}>
               <button
-                ref={menuButtonRef}
-                onClick={() => setOpenModules(!openModules)}
-                className={`nav-pill gap-2 text-small font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background ${openModules ? 'is-active' : ''}`}
+                ref={aiButtonRef}
+                onClick={() => {
+                  const next = !openAiTools;
+                  if (next) setOpenModules(false);
+                  setOpenAiTools(next);
+                }}
+                className={`nav-pill gap-2 text-small font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background ${openAiTools ? 'is-active' : ''}`}
                 aria-haspopup="menu"
-                aria-expanded={openModules}
+                aria-expanded={openAiTools}
                 aria-controls="ai-tools-menu"
               >
                 <span>AI &amp; Tools</span>
                 <svg className="h-3.5 w-3.5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path d={openModules ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                  <path d={openAiTools ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
                 </svg>
               </button>
-              {openModules && (
+              {openAiTools && (
                 <div
                   id="ai-tools-menu"
                   ref={aiMenuRef}
@@ -152,7 +199,7 @@ export function DesktopNav({
                         <Link
                           href={item.href}
                           className="flex items-start gap-2 rounded-lg px-3 py-2 text-left text-small hover:bg-muted"
-                          onClick={() => setOpenModules(false)}
+                          onClick={() => setOpenAiTools(false)}
                         >
                           <span className="font-medium">{item.label}</span>
                           {item.badge && (

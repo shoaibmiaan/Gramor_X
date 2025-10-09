@@ -42,13 +42,15 @@ export type NavSectionConfig = {
   items: NavItemConfig[];
 };
 
+type HeaderCtaItem = { label: string; href: string };
+
 export type HeaderNavigationSchema = {
   main: NavItemConfig[];
   aiTools: NavItemConfig[];
   profile: NavItemConfig[];
-  cta: {
-    guest: { label: string; href: string };
-    authed: { label: string; href: string };
+  cta?: {
+    guest?: HeaderCtaItem | null;
+    authed?: HeaderCtaItem | null;
   };
   optional?: {
     themeToggle?: boolean;
