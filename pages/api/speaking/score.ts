@@ -37,7 +37,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // ---- 1. Gather signed URLs for all audio ----
-    const audioPaths: string[] = Object.values(attempt.audio_urls || {}).flat() as string[];
+    const audioMap = (attempt.audio_urls as Record<string, unknown> | null) ?? {};
+    const sectionPriority: Record<string, number> = {
+      p1: 0,
+      p2: 1,
+      p3: 2,
+      chat: 3,
+      roleplay: 4,
+    };
+
+    const audioPaths: string[] = [];
+    Object.entries(audioMap)
+      .sort(([a], [b]) => {
+        const pa = sectionPriority[a] ?? 99;
+        const pb = sectionPriority[b] ?? 99;
+        return pa - pb || a.localeCompare(b);
+      })
+      .forEach(([, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (typeof item === 'string' && item.trim()) audioPaths.push(item);
+          });
+        } else if (typeof value === 'string' && value.trim()) {
+          audioPaths.push(value);
+        }
+      });
+
+    if (!audioPaths.length) {
+      return res.status(400).json({ error: 'No audio clips found for this attempt' });
+    }
     const signedUrls: string[] = [];
 
     for (const path of audioPaths) {
@@ -73,7 +101,7 @@ You are an IELTS Speaking examiner. Score the candidate based on the transcript 
 Provide:
 - Overall band score (0-9, .5 increments)
 - Four criteria: fluency, lexical resource, grammatical range & accuracy, pronunciation
-- One short feedback paragraph
+- One short feedback paragraph that includes comments on vocal delivery (pronunciation, clarity, volume/energy as observed or note if unavailable)
 
 Transcript:
 """
@@ -114,6 +142,7 @@ Return JSON in this format:
         transcript: fullTranscript,
         band_overall: scoring.bandOverall,
         band_breakdown: scoring.criteria,
+        status: 'completed',
       })
       .eq('id', attemptId);
 
