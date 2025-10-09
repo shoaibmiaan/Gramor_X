@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-05",
+  "title": "Academic Set 5 — Town Development & Online Shopping",
+  "description": "Map showing town development over time and an essay on the impact of online shopping.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Development of Riversdale town centre",
+    "type": "academic",
+    "prompt": "The maps below show the town centre of Riversdale in 1990 and the present day. Summarise the information by selecting and reporting the main changes, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Organise the description by areas (north, south, east, west) rather than individual items.",
+      "Highlight features that were replaced, removed or added over time.",
+      "Include an overall summary of the most significant developments."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Advantages and disadvantages — Online shopping",
+    "prompt": "Nowadays many people prefer to shop online rather than in physical stores. Discuss the advantages and disadvantages of this trend.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the trend and introduce both sides.",
+      "Body paragraph 1: benefits of online shopping for consumers and businesses.",
+      "Body paragraph 2: drawbacks of relying heavily on e-commerce.",
+      "Conclusion: summarise and state your overall view."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The maps below show the town centre of Riversdale in 1990 and the present day. Summarise the information by selecting and reporting the main changes, and make comparisons where relevant.",
+  "task2Prompt": "Nowadays many people prefer to shop online rather than in physical stores. Discuss the advantages and disadvantages of this trend.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}
