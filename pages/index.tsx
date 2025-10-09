@@ -2,6 +2,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
+import { Icon } from '@/components/design-system/Icon';
+import { Container } from '@/components/design-system/Container';
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
 import { useLocale } from '@/lib/locale';
 
 /**
@@ -35,6 +40,27 @@ const Waitlist = dynamic(
   () => import('@/components/sections/Waitlist').then((m: any) => m.Waitlist ?? m.default),
   { ssr: true, loading: () => <SectionSkeleton /> }
 );
+
+const statHighlights = [
+  {
+    icon: 'Trophy',
+    label: 'Average band lift',
+    metric: '+1.5',
+    description: 'Achieved by learners who complete 6 weeks of the adaptive pathway.',
+  },
+  {
+    icon: 'Clock',
+    label: 'Weekly time saved',
+    metric: '4 hrs',
+    description: 'Compared to traditional prep by batching 45-minute smart sessions.',
+  },
+  {
+    icon: 'MessageCircle',
+    label: 'Feedback turnaround',
+    metric: '< 4h',
+    description: 'AI instant scoring plus teacher escalations in dedicated queues.',
+  },
+] as const;
 
 function SectionSkeleton() {
   return (
@@ -99,6 +125,50 @@ export default function HomePage() {
 
       <main id="main" className="min-h-[100dvh]">
         <Hero streak={streak} onStreakChange={onStreakChange} />
+
+        <section className="border-y border-border/40 bg-white/85 py-16 backdrop-blur dark:bg-dark/70">
+          <Container>
+            <div className="mx-auto max-w-4xl text-center">
+              <Badge variant="info" size="sm" className="inline-flex items-center gap-2">
+                <Icon name="Activity" size={16} className="text-electricBlue" />
+                Outcomes we obsess over
+              </Badge>
+              <h2 className="mt-4 font-slab text-3xl font-semibold text-foreground sm:text-4xl">
+                Built to convert daily effort into predictable band jumps
+              </h2>
+              <p className="mt-3 text-base text-muted-foreground sm:text-lg">
+                Our learning scientists measure every drill and feedback loop, so you know the time you invest has compounding returns.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {statHighlights.map((stat) => (
+                <Card
+                  key={stat.label}
+                  className="border border-border/60 bg-background/80 p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-electricBlue/10 text-electricBlue">
+                      <Icon name={stat.icon} size={24} />
+                    </div>
+                    <span className="font-slab text-3xl font-semibold text-gradient-primary">{stat.metric}</span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-foreground">{stat.label}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{stat.description}</p>
+                </Card>
+              ))}
+            </div>
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
+              <Button href="#testimonials" variant="ghost" className="rounded-full border border-border px-5 py-2 text-sm font-semibold text-electricBlue hover:border-electricBlue/40 hover:text-electricBlue">
+                Explore learner case studies
+              </Button>
+              <span className="inline-flex items-center gap-2 rounded-full bg-muted/60 px-4 py-2 text-xs uppercase tracking-[0.3em]">
+                <Icon name="ShieldCheck" size={14} /> Score-improvement guarantee
+              </span>
+            </div>
+          </Container>
+        </section>
 
         <section
           id="modules"

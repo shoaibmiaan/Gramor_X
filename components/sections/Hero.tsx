@@ -8,6 +8,25 @@ import { Alert } from '@/components/design-system/Alert';
 import { Icon } from '@/components/design-system/Icon';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 
+const highlightFeatures = [
+  {
+    icon: 'Target',
+    label: 'Adaptive study plan',
+    description:
+      'Start with a band diagnostic and receive daily lessons aligned to your goal score.',
+  },
+  {
+    icon: 'Sparkles',
+    label: 'Real exam simulation',
+    description: 'Timed mocks with speaking + writing AI grading so you know exactly where you stand.',
+  },
+  {
+    icon: 'Heart',
+    label: 'Human & AI coaching',
+    description: 'Ask mentors, get instant feedback, and keep your streak alive with gentle nudges.',
+  },
+] as const;
+
 type WOD = {
   word: { id: string; word: string; meaning: string; example: string | null };
   learnedToday: boolean;
@@ -20,7 +39,6 @@ type HeroProps = {
 };
 
 export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
-  const [mounted, setMounted] = useState(false);
   const [target, setTarget] = useState<Date | null>(null);
   const [now, setNow] = useState<Date | null>(null);
   const [data, setData] = useState<WOD | null>(null);
@@ -28,7 +46,6 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
   const [auth, setAuth] = useState<'unknown' | 'authed' | 'guest'>('unknown');
 
   useEffect(() => {
-    setMounted(true);
     const t = new Date();
     t.setDate(t.getDate() + 7);
     setTarget(t);
@@ -49,7 +66,10 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
 
   const load = useCallback(async (): Promise<WOD | null> => {
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (error) {
         console.error('Failed to get session:', error);
         setAuth('guest');
@@ -100,7 +120,10 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
     if (!data || data.learnedToday) return;
     setBusy(true);
     try {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
       if (error || !session?.access_token) {
         console.error('No session for marking word learned:', error);
         setBusy(false);
@@ -131,101 +154,153 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
   };
 
   return (
-    <section className="relative flex min-h-[100vh] items-center justify-center py-16 sm:py-24">
-      <Container>
-        <div className="relative z-10 mx-auto max-w-2xl text-center">
-          <h1 className="font-slab text-display sm:text-displayLg md:text-6xl font-bold leading-tight">
-            <span className="text-gradient-primary">ACHIEVE YOUR DREAM IELTS SCORE WITH AI-POWERED PREP</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-h5 text-muted-foreground sm:text-h4">
-            Master all four modules with adaptive paths, realistic mocks, and instant AI feedback.
-          </p>
-
-          {/* Countdown */}
-          <Card className="mt-8 w-full rounded-2xl p-6 sm:inline-block sm:w-auto">
-            <div className="mb-3 font-semibold text-primary">PRE-LAUNCH ACCESS IN</div>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6" aria-live="polite">
-              {(['Days', 'Hours', 'Minutes', 'Seconds'] as const).map((label, i) => {
-                const v = [diff.days, diff.hours, diff.minutes, diff.seconds][i] || 0;
-                return (
-                  <div key={label} className="min-w-[5.5rem] text-center">
-                    <div className="font-slab text-4xl font-bold text-gradient-vertical sm:text-display md:text-displayLg">
-                      {String(v).padStart(2, '0')}
-                    </div>
-                    <div className="uppercase tracking-wide text-muted-foreground text-small mt-1">{label}</div>
-                  </div>
-                );
-              })}
+    <section className="relative overflow-hidden bg-gradient-to-b from-surface via-lightBg to-white/40 dark:from-dark/95 dark:via-dark/80 dark:to-dark/90">
+      <div className="absolute inset-x-0 top-[-12rem] z-0 flex justify-center blur-3xl">
+        <div className="h-[28rem] w-[32rem] rounded-full bg-gradient-to-br from-electricBlue/40 via-purpleVibe/30 to-neonGreen/40 opacity-80" />
+      </div>
+      <Container className="relative z-10 pb-20 pt-28 md:pt-32 lg:pb-32">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-electricBlue/30 bg-white/80 px-4 py-1 text-sm font-medium text-electricBlue shadow-sm backdrop-blur dark:bg-dark/40">
+              <Icon name="Sparkles" className="text-electricBlue" />
+              Built with IELTS experts + AI coaches
             </div>
-          </Card>
+            <h1 className="mt-6 font-slab text-4xl font-bold leading-tight text-foreground sm:text-5xl md:text-6xl">
+              <span className="text-gradient-primary">Your personalized IELTS launchpad</span>
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg text-muted-foreground sm:text-xl">
+              Replace piecemeal prep with one platform that diagnoses your level, adapts daily lessons, and keeps you accountable until test day.
+            </p>
 
-          {/* Word of the Day + streak */}
-          <Card className="mx-auto mt-6 w-full max-w-md rounded-2xl p-6">
-            <h3 className="text-primary font-semibold text-h3 mb-4">
-              <Icon name="book" /> Word of the Day
-            </h3>
-
-            {auth === 'guest' && (
-              <Alert variant="info" className="mb-4">
-                Sign in to track your streak and unlock daily rewards.
-              </Alert>
-            )}
-
-            {data ? (
-              <>
-                <div className="mb-4">
-                  <h4 className="text-h1 mb-1 text-primary">{data.word.word}</h4>
-                  <div className="text-body text-muted-foreground mb-3">{data.word.meaning}</div>
-                  {data.word.example && (
-                    <div className="italic text-muted-foreground border-l-4 pl-4 border-border">
-                      “{data.word.example}”
-                    </div>
-                  )}
-                </div>
-
-                <Button
-                  variant={data.learnedToday ? 'secondary' : 'accent'}
-                  onClick={markLearned}
-                  disabled={busy || data.learnedToday}
+            <div className="mt-8 grid gap-6 sm:grid-cols-2">
+              {highlightFeatures.map((feature) => (
+                <div
+                  key={feature.label}
+                  className="flex items-start gap-4 rounded-2xl border border-border/60 bg-white/60 p-5 shadow-sm backdrop-blur dark:bg-dark/60"
                 >
-                  <Icon name="check-circle" />
-                  {data.learnedToday ? 'Learned today' : 'Mark as Learned'}
-                </Button>
-
-                <div className="mt-4 rounded-xl p-4 bg-card border border-border text-left">
-                  <div className="flex items-center gap-4">
-                    <div className="text-h2" aria-hidden="true">
-                      <Icon name="fire" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">Your Learning Streak</h4>
-                      <div className="text-muted-foreground">
-                        Current streak:{' '}
-                        <span className="font-bold">
-                          {data.streakDays} {data.streakDays === 1 ? 'day' : 'days'}
-                        </span>
-                      </div>
-                      <div className="text-muted-foreground">
-                        Value at launch: <span className="font-bold">${(data.streakValueUSD ?? 0).toFixed(2)}</span>
-                      </div>
-                    </div>
+                  <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-electricBlue to-purpleVibe text-white">
+                    <Icon name={feature.icon} />
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-foreground">{feature.label}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{feature.description}</p>
                   </div>
                 </div>
+              ))}
+            </div>
 
-                <Alert variant="info" className="mt-4">
-                  Maintain your streak! Your days convert into credits at launch.
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+              <Button href="/waitlist" variant="primary" className="w-full sm:w-auto">
+                Start free with the waitlist
+              </Button>
+              <Button href="/pricing" variant="ghost" className="w-full sm:w-auto border border-border/60">
+                Explore premium plans
+              </Button>
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Icon name="Users" className="text-electricBlue" />
+                Trusted by 18k+ learners
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon name="ShieldCheck" className="text-purpleVibe" />
+                CEFR aligned curriculum
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon name="Calendar" className="text-neonGreen" />
+                Daily accountability rituals
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="border border-electricBlue/30 bg-white/80 p-6 shadow-lg backdrop-blur dark:bg-dark/70">
+              <div className="mb-3 flex items-center justify-between text-sm font-semibold text-electricBlue">
+                <span className="uppercase tracking-wide">Pre-launch access</span>
+                <span className="rounded-full bg-electricBlue/10 px-3 py-1 text-electricBlue">Opens in</span>
+              </div>
+              <div className="flex flex-wrap justify-center gap-4 sm:gap-6" aria-live="polite">
+                {(['Days', 'Hours', 'Minutes', 'Seconds'] as const).map((label, i) => {
+                  const v = [diff.days, diff.hours, diff.minutes, diff.seconds][i] || 0;
+                  return (
+                    <div key={label} className="min-w-[5.5rem] text-center">
+                      <div className="font-slab text-4xl font-bold text-gradient-vertical sm:text-5xl">
+                        {String(v).padStart(2, '0')}
+                      </div>
+                      <div className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card className="border border-border/60 bg-white/80 p-6 shadow-lg backdrop-blur dark:bg-dark/70">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground">
+                  <Icon name="Book" /> Word of the day
+                </h3>
+                {auth === 'guest' ? (
+                  <span className="text-xs font-semibold uppercase tracking-wide text-electricBlue">Sign in for streaks</span>
+                ) : null}
+              </div>
+
+              {auth === 'guest' && (
+                <Alert variant="info" className="mb-4">
+                  Sign in to track your streak and unlock daily rewards.
                 </Alert>
-              </>
-            ) : null}
-          </Card>
+              )}
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
-            <Button href="/waitlist" variant="primary" className="w-full sm:w-auto">
-              Join Exclusive Waitlist
-            </Button>
-            <Button href="/pricing" variant="secondary" className="w-full sm:w-auto">
-              See Plans
-            </Button>
+              {data ? (
+                <>
+                  <div className="mb-4">
+                    <h4 className="text-3xl font-semibold text-electricBlue">{data.word.word}</h4>
+                    <div className="mt-2 text-sm text-muted-foreground">{data.word.meaning}</div>
+                    {data.word.example && (
+                      <div className="mt-3 border-l-2 border-electricBlue/30 pl-3 text-sm italic text-muted-foreground">
+                        “{data.word.example}”
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    variant={data.learnedToday ? 'secondary' : 'accent'}
+                    onClick={markLearned}
+                    disabled={busy || data.learnedToday}
+                    className="w-full"
+                  >
+                    <Icon name="CheckCircle" />
+                    {data.learnedToday ? 'Learned today' : 'Mark as learned'}
+                  </Button>
+
+                  <div className="mt-4 rounded-xl border border-border/60 bg-card/60 p-4 text-left">
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl text-neonGreen" aria-hidden="true">
+                        <Icon name="Flame" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">Your learning streak</p>
+                        <p className="text-sm text-muted-foreground">
+                          Current streak{' '}
+                          <span className="font-semibold text-foreground">
+                            {data.streakDays} {data.streakDays === 1 ? 'day' : 'days'}
+                          </span>
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Launch credits:{' '}
+                          <span className="font-semibold text-foreground">${(data.streakValueUSD ?? 0).toFixed(2)}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <Alert variant="info" className="mt-3">
+                      Keep the streak alive to multiply your launch bonuses.
+                    </Alert>
+                  </div>
+                </>
+              ) : (
+                <div className="text-sm text-muted-foreground">Loading today's challenge…</div>
+              )}
+            </Card>
           </div>
         </div>
       </Container>
