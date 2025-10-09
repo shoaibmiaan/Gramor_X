@@ -4,7 +4,13 @@ import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
-type Breakdown = { fluency?: number; lexical?: number; grammar?: number; pronunciation?: number };
+type Breakdown = {
+  fluency?: number;
+  coherence?: number;
+  lexical?: number;
+  pronunciation?: number;
+  grammar?: number;
+};
 type Attempt = { id: string; created_at: string; band_overall: number | null; band_breakdown: Breakdown | null };
 
 export default function SpeakingReportPage() {
@@ -31,13 +37,14 @@ export default function SpeakingReportPage() {
     const base = { sum: 0, count: 0 };
     const out = {
       fluency: { ...base },
+      coherence: { ...base },
       lexical: { ...base },
-      grammar: { ...base },
       pronunciation: { ...base },
+      grammar: { ...base },
     };
     rows.forEach(r => {
       const b = r.band_breakdown || {};
-      (['fluency','lexical','grammar','pronunciation'] as const).forEach(k => {
+      (['fluency', 'coherence', 'lexical', 'pronunciation', 'grammar'] as const).forEach(k => {
         const v = (b as any)[k];
         if (typeof v === 'number') { out[k].sum += v; out[k].count += 1; }
       });
@@ -45,9 +52,10 @@ export default function SpeakingReportPage() {
     const avg = (k: keyof typeof out) => out[k].count ? (out[k].sum / out[k].count).toFixed(1) : '—';
     return {
       fluency: avg('fluency'),
+      coherence: avg('coherence'),
       lexical: avg('lexical'),
-      grammar: avg('grammar'),
       pronunciation: avg('pronunciation'),
+      grammar: avg('grammar'),
     };
   }, [rows]);
 
@@ -58,11 +66,12 @@ export default function SpeakingReportPage() {
         {error && <p className="text-danger mb-4">{error}</p>}
         <Card className="card-surface p-6 rounded-ds-2xl">
           <h2 className="text-h3 mb-4">Averages</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
             <Badge variant="secondary" className="rounded-ds-xl justify-center">Fluency: {agg.fluency}</Badge>
-            <Badge variant="secondary" className="rounded-ds-xl justify-center">Vocabulary: {agg.lexical}</Badge>
-            <Badge variant="secondary" className="rounded-ds-xl justify-center">Grammar: {agg.grammar}</Badge>
+            <Badge variant="secondary" className="rounded-ds-xl justify-center">Coherence: {agg.coherence}</Badge>
+            <Badge variant="secondary" className="rounded-ds-xl justify-center">Lexical Resource: {agg.lexical}</Badge>
             <Badge variant="secondary" className="rounded-ds-xl justify-center">Pronunciation: {agg.pronunciation}</Badge>
+            <Badge variant="secondary" className="rounded-ds-xl justify-center">Grammar: {agg.grammar}</Badge>
           </div>
 
           <table className="w-full text-small">
@@ -71,9 +80,10 @@ export default function SpeakingReportPage() {
                 <th className="pb-2">Date</th>
                 <th className="pb-2">Overall</th>
                 <th className="pb-2">Fluency</th>
-                <th className="pb-2">Vocab</th>
-                <th className="pb-2">Grammar</th>
+                <th className="pb-2">Coherence</th>
+                <th className="pb-2">Lexical</th>
                 <th className="pb-2">Pron.</th>
+                <th className="pb-2">Grammar</th>
               </tr>
             </thead>
             <tbody>
@@ -84,14 +94,15 @@ export default function SpeakingReportPage() {
                     <td className="py-2 pr-2">{new Date(r.created_at).toLocaleString()}</td>
                     <td className="py-2 pr-2">{r.band_overall ?? '—'}</td>
                     <td className="py-2 pr-2">{b.fluency ?? '—'}</td>
+                    <td className="py-2 pr-2">{b.coherence ?? b.grammar ?? '—'}</td>
                     <td className="py-2 pr-2">{b.lexical ?? '—'}</td>
-                    <td className="py-2 pr-2">{b.grammar ?? '—'}</td>
                     <td className="py-2 pr-2">{b.pronunciation ?? '—'}</td>
+                    <td className="py-2 pr-2">{b.grammar ?? '—'}</td>
                   </tr>
                 );
               })}
               {!rows.length && (
-                <tr><td className="pt-4" colSpan={6}>No attempts yet.</td></tr>
+                <tr><td className="pt-4" colSpan={7}>No attempts yet.</td></tr>
               )}
             </tbody>
           </table>
