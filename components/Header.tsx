@@ -146,16 +146,24 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                   IELTS Mission Control is now in private beta. <span className="font-semibold">Request early access</span>
                 </span>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
                 <Button
                   href="/roadmap"
-                  variant="ghost"
+                  variant="soft"
+                  tone="info"
                   size="sm"
-                  className="border border-transparent text-electricBlue hover:border-electricBlue/30 hover:bg-electricBlue/10"
+                  fullWidth
+                  className="sm:w-auto"
                 >
                   View roadmap
                 </Button>
-                <Button href="/waitlist" size="sm" variant="accent" className="shadow-sm">
+                <Button
+                  href="/waitlist"
+                  size="sm"
+                  variant="primary"
+                  fullWidth
+                  className="shadow-sm sm:w-auto"
+                >
                   Claim invite
                 </Button>
                 <button
@@ -217,7 +225,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               </span>
             </Link>
 
-            <div className="flex items-center gap-2.5 md:gap-4">
+            <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:gap-3 lg:gap-4">
               {typeof streakState === 'number' && streakState > 0 ? (
                 <div className="hidden items-center gap-2 rounded-full border border-neonGreen/40 bg-neonGreen/10 px-3 py-1 text-xs font-semibold text-neonGreen sm:flex">
                   <Icon name="Flame" size={16} />
@@ -255,11 +263,13 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               {!user?.id ? (
                 <Button
                   href="/waitlist"
-                  variant="primary"
+                  variant="soft"
+                  tone="primary"
                   size="sm"
-                  className="hidden items-center gap-2 rounded-full px-5 py-2 font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg lg:inline-flex"
+                  leadingIcon={<Icon name="Sparkles" size={16} />}
+                  fullWidth
+                  className="order-10 w-full font-semibold sm:order-none sm:w-auto"
                 >
-                  <Icon name="Sparkles" size={16} />
                   Join waitlist
                 </Button>
               ) : null}
