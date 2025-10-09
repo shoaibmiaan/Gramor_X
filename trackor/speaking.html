@@ -18,6 +18,18 @@
     .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border)}
     .badge.ok{background:#0f1d17;color:#a9efd4}
     .badge.warn{background:#241c0f;color:#f5d39e}
+    .section{margin-top:20px}
+    .section-title{font-weight:600;margin-bottom:12px;font-size:18px}
+    .task-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .task{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+    .task h3{margin:0;font-size:16px}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted)}
+    .meta span{display:inline-flex;align-items:center;gap:4px}
+    .labels{display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+    .labels .chip{background:#151826;color:#cfd5e3;border-color:#2a2f3d}
+    .deps{font-size:12px;color:var(--muted)}
+    .summary{font-size:14px;line-height:1.45}
+    .dod{font-size:13px;color:#c9d4e4}
     ul{line-height:1.5}
     nav{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 16px}
     nav a{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);text-decoration:none}
@@ -53,6 +65,83 @@
     <a class="link" href="/speaking/test/1">/speaking/test/1</a> ·
     <a class="link" href="/speaking/test/1/review">/speaking/test/1/review</a>
   </p>
+
+  <section class="section">
+    <div class="card">
+      <div class="section-title">Sprint 3 — Speaking Core Exam focus</div>
+      <div class="task-grid">
+        <article class="task">
+          <div class="meta"><span class="badge warn">P1</span><span>ID: S3-S1</span><span>Owner: FE</span><span>Estimate: 0.5d</span></div>
+          <h3>Explicit retry before submit</h3>
+          <p class="summary">Introduce a clear “Record again” path and keep the submit button disabled until the learner reviews their recording.</p>
+          <p class="dod"><strong>DoD:</strong> Retry pathway visible; submit remains disabled until the review step is acknowledged.</p>
+          <div class="labels">
+            <span class="chip">section:core-exam</span>
+            <span class="chip">module:speaking</span>
+            <span class="chip">type:ux</span>
+          </div>
+        </article>
+        <article class="task">
+          <div class="meta"><span class="badge warn">P1</span><span>ID: S3-S2</span><span>Owner: FE</span><span>Estimate: 1d</span></div>
+          <h3>Upload retry with exponential backoff</h3>
+          <p class="summary">Harden chunk uploads with exponential backoff, expose progress, and provide a graceful failure state with retry controls.</p>
+          <p class="dod"><strong>DoD:</strong> 3 retry attempts executed; progress UI surfaces status; failures show message with retry CTA.</p>
+          <div class="deps">Depends on: S3-G1</div>
+          <div class="labels">
+            <span class="chip">section:core-exam</span>
+            <span class="chip">module:speaking</span>
+            <span class="chip">type:reliability</span>
+            <span class="chip">perf</span>
+          </div>
+        </article>
+        <article class="task">
+          <div class="meta"><span class="badge warn">P2</span><span>ID: S3-S3</span><span>Owner: FE</span><span>Estimate: 1d</span></div>
+          <h3>Optional transcript visibility</h3>
+          <p class="summary">After submission, display an AI transcript for self-review with copy support while keeping it private by default.</p>
+          <p class="dod"><strong>DoD:</strong> Transcript renders post-submit, can be copied, and respects privacy defaults.</p>
+          <div class="labels">
+            <span class="chip">section:core-exam</span>
+            <span class="chip">module:speaking</span>
+            <span class="chip">type:ux</span>
+            <span class="chip">a11y</span>
+          </div>
+        </article>
+        <article class="task">
+          <div class="meta"><span class="badge warn">P2</span><span>ID: S3-S4</span><span>Owner: FE</span><span>Estimate: 0.5d</span></div>
+          <h3>Microphone permission UX</h3>
+          <p class="summary">Detect when microphone access is denied or blocked and guide learners with browser/OS-specific enablement help.</p>
+          <p class="dod"><strong>DoD:</strong> Permission states detected reliably; contextual guidance surfaced for recovery.</p>
+          <div class="labels">
+            <span class="chip">section:core-exam</span>
+            <span class="chip">module:speaking</span>
+            <span class="chip">type:ux</span>
+          </div>
+        </article>
+        <article class="task">
+          <div class="meta"><span class="badge warn">P2</span><span>ID: S3-S5</span><span>Owner: FE</span><span>Estimate: 0.25d</span></div>
+          <h3>ARIA live recording announcements</h3>
+          <p class="summary">Add an ARIA live region to announce when recording starts and stops so screen reader users stay informed.</p>
+          <p class="dod"><strong>DoD:</strong> Screen readers announce recording transitions consistently.</p>
+          <div class="labels">
+            <span class="chip">section:core-exam</span>
+            <span class="chip">module:speaking</span>
+            <span class="chip">type:a11y</span>
+          </div>
+        </article>
+        <article class="task">
+          <div class="meta"><span class="badge">P3</span><span>ID: S3-S6</span><span>Owner: QA</span><span>Estimate: 0.5d</span></div>
+          <h3>Mobile Safari chunking QA</h3>
+          <p class="summary">Validate 60–120s MediaRecorder chunking and upload flows on iOS Safari, ensuring cleanup and no stuck states.</p>
+          <p class="dod"><strong>DoD:</strong> Mobile Safari flows remain stable, retries and cleanup verified without residual blobs.</p>
+          <div class="labels">
+            <span class="chip">section:core-exam</span>
+            <span class="chip">module:speaking</span>
+            <span class="chip">type:qa</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
 
 </div>
 </body>
