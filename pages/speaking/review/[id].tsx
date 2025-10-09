@@ -8,8 +8,7 @@ import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Textarea } from '@/components/design-system/Textarea';
 import ChallengeScore from '@/components/review/ChallengeScore';
-import { createSupabaseServerClient, supabaseService } from '@/lib/supabaseServer';
-import type { AppRole } from '@/lib/requireRole';
+import { useToast } from '@/components/design-system/Toaster';
 
 /** ─────────────────────────────
  * Minimal in-file Transcript with TTS (no external hooks)
@@ -196,11 +195,8 @@ export default function SpeakingReview({ attempt: initial, viewerRole }: Props) 
   const [attempt, setAttempt] = useState<Attempt | null>(initial);
   const [pending, setPending] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
-  const viewerIsStaff = viewerRole === 'teacher' || viewerRole === 'admin';
-  const [feedbackDraft, setFeedbackDraft] = useState(initial?.teacher_feedback ?? '');
-  const [feedbackSaving, setFeedbackSaving] = useState(false);
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
-  const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
+  const [copying, setCopying] = useState(false);
+  const { success, error: toastError } = useToast();
 
   function isError(x: unknown): x is Error {
     return typeof x === 'object' && x !== null && 'message' in x;
@@ -239,40 +235,26 @@ export default function SpeakingReview({ attempt: initial, viewerRole }: Props) 
     }
   }
 
-  async function saveTeacherFeedback() {
+  async function handleShare() {
     if (!attempt?.id) return;
-    setFeedbackError(null);
-    setFeedbackSuccess(null);
-    setFeedbackSaving(true);
+    if (typeof window === 'undefined') return;
+    const base = window.location.origin;
+    const studentLink = `${base}/speaking/review/${attempt.id}`;
+    const teacherLink = `${base}/admin/speaking?attempt=${attempt.id}`;
+    const payload = `Speaking attempt ID: ${attempt.id}\nStudent view: ${studentLink}\nTeacher view: ${teacherLink}`;
+
     try {
-      const response = await fetch('/api/speaking/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attemptId: attempt.id, feedback: feedbackDraft }),
-      });
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok || !json?.ok) {
-        throw new Error(json?.error || 'Failed to save feedback');
+      setCopying(true);
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+        success('Share link copied to clipboard');
+      } else {
+        throw new Error('Clipboard not available');
       }
-
-      setAttempt((prev) =>
-        prev
-          ? {
-              ...prev,
-              teacher_feedback: json.feedback ?? null,
-              teacher_feedback_at: json.savedAt ?? null,
-              teacher_feedback_by: json.authorId ?? null,
-              teacher_feedback_author: json.authorName ?? prev.teacher_feedback_author ?? null,
-            }
-          : prev,
-      );
-
-      setFeedbackDraft(json.feedback ?? '');
-      setFeedbackSuccess('Feedback saved');
-    } catch (error) {
-      setFeedbackError(error instanceof Error ? error.message : 'Failed to save feedback');
+    } catch (e: unknown) {
+      toastError(e instanceof Error ? e.message : 'Unable to copy link');
     } finally {
-      setFeedbackSaving(false);
+      setCopying(false);
     }
   }
 
@@ -332,6 +314,24 @@ export default function SpeakingReview({ attempt: initial, viewerRole }: Props) 
                   {pending ? 'Scoring…' : 'Generate Score'}
                 </Button>
               </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-small text-grayish">
+              <Button
+                variant="outline"
+                className="rounded-ds-xl"
+                onClick={handleShare}
+                loading={copying}
+                loadingText="Copying…"
+              >
+                Share with teacher/partner
+              </Button>
+              <span>
+                Attempt ID: <code className="text-xs">{attempt.id}</code>
+              </span>
+              <span className="opacity-70">
+                Teachers can open Admin → Speaking with this link to review your audio.
+              </span>
             </div>
 
             {/* Error inline */}
