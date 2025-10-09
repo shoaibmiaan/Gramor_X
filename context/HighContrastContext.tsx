@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 type HighContrastContextValue = {
   enabled: boolean;
@@ -24,17 +24,19 @@ function applyDocumentTheme(enabled: boolean) {
 }
 
 export const HighContrastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [enabled, setEnabledState] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
+  const [enabled, setEnabledState] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       const initial = stored === '1';
-      if (initial) applyDocumentTheme(true);
-      return initial;
+      applyDocumentTheme(initial);
+      setEnabledState(initial);
     } catch {
-      return false;
+      // ignore storage errors
     }
-  });
+  }, []);
 
   const setEnabled = (value: boolean) => {
     setEnabledState((prev) => {

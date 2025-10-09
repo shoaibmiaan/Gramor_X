@@ -39,11 +39,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: error.message });
   }
 
-  const payload = buildProgressTrends(((data ?? []) as BandRow[]).map((row) => ({
-    attempt_date: row.attempt_date,
-    skill: row.skill,
-    band: typeof row.band === 'number' ? row.band : Number(row.band ?? 0),
-  })));
+  const payload = buildProgressTrends(((data ?? []) as BandRow[]).map((row) => {
+    const bandValue = row.band == null ? null : Number(row.band);
+    return {
+      attempt_date: row.attempt_date,
+      skill: row.skill,
+      band: bandValue == null || Number.isNaN(bandValue) ? null : bandValue,
+    };
+  }));
 
   return res.status(200).json(payload);
 }
