@@ -30,8 +30,10 @@ import { SavedItems } from '@/components/dashboard/SavedItems';
 import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
 import WhatsAppOptIn from '@/components/dashboard/WhatsAppOptIn';
 import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeCard';
+import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCard';
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
+import type { ChallengeTaskStatus } from '@/types/challenge';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -39,6 +41,12 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [challengeLoading, setChallengeLoading] = useState(true);
+  const [challengeEnrollment, setChallengeEnrollment] = useState<{
+    cohort: string;
+    progress: Record<string, ChallengeTaskStatus> | null;
+  } | null>(null);
 
   // Hook now exposes: nextRestart + shields + claimShield + useShield
   const {
@@ -83,7 +91,10 @@ export default function Dashboard() {
           data: { session },
         } = await supabaseBrowser.auth.getSession();
 
-        if (!session?.user) {
+        const authUser = session?.user ?? null;
+        setSessionUserId(authUser?.id ?? null);
+
+        if (!authUser) {
           await router.replace('/login?next=/dashboard');
           return;
         }
@@ -92,7 +103,7 @@ export default function Dashboard() {
         const { data, error } = await supabaseBrowser
           .from('profiles')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('user_id', authUser.id)
           .maybeSingle();
 
         if (cancelled) return;
@@ -108,8 +119,8 @@ export default function Dashboard() {
         // If the profile row doesn't exist yet, create a minimal one so we don't bounce
         if (!p) {
           const minimal = {
-            user_id: session.user.id,
-            email: session.user.email,
+            user_id: authUser.id,
+            email: authUser.email,
             preferred_language: 'en',
             onboarding_complete: false,
           } as any;
@@ -149,6 +160,54 @@ export default function Dashboard() {
       cancelled = true;
     };
   }, [router]);
+
+  useEffect(() => {
+    if (!sessionUserId) {
+      setChallengeEnrollment(null);
+      setChallengeLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setChallengeLoading(true);
+
+    (async () => {
+      try {
+        const { data, error } = await supabaseBrowser
+          .from('challenge_enrollments')
+          .select('cohort, progress, enrolled_at')
+          .eq('user_id', sessionUserId)
+          .order('enrolled_at', { ascending: false })
+          .limit(1);
+
+        if (cancelled) return;
+
+        if (error) {
+          console.error('[dashboard] challenge enrollment fetch error:', error);
+          setChallengeEnrollment(null);
+        } else {
+          const record = Array.isArray(data) ? (data as any)[0] ?? null : (data as any) ?? null;
+          if (record) {
+            setChallengeEnrollment({
+              cohort: record.cohort as string,
+              progress: (record.progress as Record<string, ChallengeTaskStatus> | null) ?? null,
+            });
+          } else {
+            setChallengeEnrollment(null);
+          }
+        }
+      } catch (err) {
+        console.error('[dashboard] challenge enrollment error:', err);
+        if (!cancelled) setChallengeEnrollment(null);
+      } finally {
+        if (!cancelled) setChallengeLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionUserId]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -282,7 +341,19 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-10">
-          <JoinWeeklyChallengeCard />
+          {challengeLoading ? (
+            <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+              <div className="h-6 w-40 animate-pulse rounded bg-border" />
+              <div className="mt-4 h-24 w-full animate-pulse rounded bg-border" />
+            </Card>
+          ) : challengeEnrollment ? (
+            <ChallengeSpotlightCard
+              cohortId={challengeEnrollment.cohort}
+              progress={challengeEnrollment.progress ?? null}
+            />
+          ) : (
+            <JoinWeeklyChallengeCard />
+          )}
         </div>
 
         {/* Top summary cards */}
