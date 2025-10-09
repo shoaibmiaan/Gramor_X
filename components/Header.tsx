@@ -251,15 +251,6 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                 subscriptionTier={subscriptionTier}
               />
 
-              {user?.id && role && role !== 'guest' ? (
-                <span
-                  aria-label={`Role: ${role}`}
-                  className="hidden rounded-full bg-muted/70 px-3 py-1 text-xs font-medium text-muted-foreground/90 ring-1 ring-border/60 md:inline-flex"
-                >
-                  {role}
-                </span>
-              ) : null}
-
               {!user?.id ? (
                 <Button
                   href="/waitlist"

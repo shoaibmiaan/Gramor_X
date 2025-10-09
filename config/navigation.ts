@@ -17,7 +17,6 @@ const headerMain: NavItemConfig[] = [
     href: '/challenge',
     featureGate: { featureToggle: 'weeklyChallenge' },
   },
-  { id: 'premium', label: 'Premium', href: '/premium' },
 ];
 
 const aiTools: NavItemConfig[] = [
@@ -71,13 +70,13 @@ export const navigationSchema: AppNavigationSchema = {
     profile: profileMenu,
     cta: {
       guest: { label: 'Start Practicing', href: '/signup' },
-      authed: { label: 'Continue Study', href: '/dashboard' },
+      authed: null,
     },
-  optional: {
-    themeToggle: true,
-    localeSwitch: false,
-    notifications: false,
-  },
+    optional: {
+      themeToggle: true,
+      localeSwitch: false,
+      notifications: false,
+    },
   },
   sidebar: [
     {
