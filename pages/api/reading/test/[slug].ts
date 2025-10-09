@@ -24,11 +24,19 @@ type DbTest = {
 };
 
 type RunnerQuestion =
-  | { id: string; qNo: number; type: 'tfng'; prompt: string }
-  | { id: string; qNo: number; type: 'ynng'; prompt: string }
-  | { id: string; qNo: number; type: 'gap'; prompt: string; acceptable?: string[] }
-  | { id: string; qNo: number; type: 'mcq'; prompt: string; options: string[] }
-  | { id: string; qNo: number; type: 'match'; prompt: string; options: string[]; pairs: { left: string; right: string[] }[] };
+  | { id: string; qNo: number; type: 'tfng'; prompt: string; rationale?: string | null }
+  | { id: string; qNo: number; type: 'ynng'; prompt: string; rationale?: string | null }
+  | { id: string; qNo: number; type: 'gap'; prompt: string; acceptable?: string[]; rationale?: string | null }
+  | { id: string; qNo: number; type: 'mcq'; prompt: string; options: string[]; rationale?: string | null }
+  | {
+      id: string;
+      qNo: number;
+      type: 'match';
+      prompt: string;
+      options: string[];
+      pairs: { left: string; right: string[] }[];
+      rationale?: string | null;
+    };
 
 type RunnerSection = {
   orderNo: number;
@@ -51,6 +59,14 @@ type RunnerResponse = {
 type RunnerWithAnswers = RunnerResponse & {
   sections: Array<RunnerSection & { questions: Array<RunnerQuestion & { correct: unknown }> }>;
 };
+
+function extractRationale(raw: unknown): string | null {
+  if (typeof raw === 'string') return raw;
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, any>;
+  const candidate = obj.rationale ?? obj.explanation ?? obj.feedback ?? null;
+  return typeof candidate === 'string' ? candidate : null;
+}
 
 function normaliseChoices(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -78,21 +94,24 @@ function mapQuestion(row: DbQuestion, includeAnswer: boolean): RunnerQuestion & 
     : null;
 
   if (kind === 'tfng') {
+    const rationale = extractRationale(options);
     const qType = variant === 'ynng' ? 'ynng' : 'tfng';
     return includeAnswer
-      ? ({ id, qNo, type: qType, prompt, correct: Array.isArray(baseAnswer) ? baseAnswer[0] : baseAnswer } as any)
-      : ({ id, qNo, type: qType, prompt } as any);
+      ? ({ id, qNo, type: qType, prompt, rationale, correct: Array.isArray(baseAnswer) ? baseAnswer[0] : baseAnswer } as any)
+      : ({ id, qNo, type: qType, prompt, rationale } as any);
   }
 
   if (kind === 'short') {
     const acceptableAnswers = acceptableFromOptions ?? (Array.isArray(baseAnswer) ? baseAnswer : asArray(baseAnswer));
+    const rationale = extractRationale(options);
     return includeAnswer
-      ? ({ id, qNo, type: 'gap', prompt, acceptable: acceptableAnswers as string[], correct: baseAnswer } as any)
-      : ({ id, qNo, type: 'gap', prompt } as any);
+      ? ({ id, qNo, type: 'gap', prompt, acceptable: acceptableAnswers as string[], rationale, correct: baseAnswer } as any)
+      : ({ id, qNo, type: 'gap', prompt, rationale } as any);
   }
 
   if (kind === 'matching') {
     const pairs = Array.isArray(options.pairs) ? options.pairs : [];
+    const rationale = extractRationale(options);
     return includeAnswer
       ? ({
           id,
@@ -106,6 +125,7 @@ function mapQuestion(row: DbQuestion, includeAnswer: boolean): RunnerQuestion & 
               ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
               : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
           })),
+          rationale,
           correct: baseAnswer,
         } as any)
       : ({
@@ -120,6 +140,7 @@ function mapQuestion(row: DbQuestion, includeAnswer: boolean): RunnerQuestion & 
               ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
               : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
           })),
+          rationale,
         } as any);
   }
 
@@ -127,6 +148,7 @@ function mapQuestion(row: DbQuestion, includeAnswer: boolean): RunnerQuestion & 
   const asMatch = variant === 'matching-single' && Array.isArray(options.pairs);
   if (asMatch) {
     const pairs = Array.isArray(options.pairs) ? options.pairs : [];
+    const rationale = extractRationale(options);
     return includeAnswer
       ? ({
           id,
@@ -140,6 +162,7 @@ function mapQuestion(row: DbQuestion, includeAnswer: boolean): RunnerQuestion & 
               ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
               : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
           })),
+          rationale,
           correct: baseAnswer,
         } as any)
       : ({
@@ -154,12 +177,14 @@ function mapQuestion(row: DbQuestion, includeAnswer: boolean): RunnerQuestion & 
               ? pair.right.map((r: any) => (typeof r === 'string' ? r : String(r ?? '')))
               : [typeof pair?.right === 'string' ? pair.right : String(pair?.right ?? '')].filter(Boolean),
           })),
+          rationale,
         } as any);
   }
 
+  const rationale = extractRationale(options);
   return includeAnswer
-    ? ({ id, qNo, type: 'mcq', prompt, options: choices, correct: baseAnswer } as any)
-    : ({ id, qNo, type: 'mcq', prompt, options: choices } as any);
+    ? ({ id, qNo, type: 'mcq', prompt, options: choices, rationale, correct: baseAnswer } as any)
+    : ({ id, qNo, type: 'mcq', prompt, options: choices, rationale } as any);
 }
 
 export default async function handler(

@@ -14,6 +14,14 @@ type Body = {
   meta?: Record<string, unknown>;
 };
 
+function extractRationale(raw: unknown): string | null {
+  if (typeof raw === 'string') return raw;
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, any>;
+  const candidate = obj.rationale ?? obj.explanation ?? obj.feedback ?? null;
+  return typeof candidate === 'string' ? candidate : null;
+}
+
 function coerceDuration(value: unknown): number | null {
   if (typeof value !== 'number') return null;
   if (!Number.isFinite(value)) return null;
@@ -49,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { data: questionRows, error: qErr } = await supabaseAdmin
     .from('reading_questions')
-    .select('id,order_no,kind,prompt,answers,options,points')
+    .select('id,order_no,kind,prompt,answers,options,points,rationale')
     .eq('passage_slug', testSlug)
     .order('order_no', { ascending: true });
 
@@ -61,23 +69,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(404).json({ error: 'Test not found' });
   }
 
-  const normalizedQuestions = (questionRows ?? []).map((row: any) => ({
-    id: String(row.id),
-    order_no:
-      typeof row.order_no === 'number'
-        ? row.order_no
-        : Number.isFinite(Number(row.order_no))
-        ? Number(row.order_no)
-        : 0,
-    kind: String(row.kind ?? 'short') as any,
-    prompt: String(row.prompt ?? ''),
-    answers: row.answers,
-    options: row.options,
-    points:
-      typeof row.points === 'number' && !Number.isNaN(row.points)
-        ? row.points
-        : null,
-  }));
+  const normalizedQuestions = (questionRows ?? []).map((row: any) => {
+    const options = row.options;
+    const rationale = extractRationale(row.rationale ?? options);
+    return {
+      id: String(row.id),
+      order_no:
+        typeof row.order_no === 'number'
+          ? row.order_no
+          : Number.isFinite(Number(row.order_no))
+          ? Number(row.order_no)
+          : 0,
+      kind: String(row.kind ?? 'short') as any,
+      prompt: String(row.prompt ?? ''),
+      answers: row.answers,
+      options,
+      points:
+        typeof row.points === 'number' && !Number.isNaN(row.points)
+          ? row.points
+          : null,
+      rationale,
+    };
+  });
 
   const result = gradeReadingAttempt(normalizedQuestions, answers);
   const attemptId = randomUUID();

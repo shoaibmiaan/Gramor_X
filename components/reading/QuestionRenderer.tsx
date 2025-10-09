@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
-import {
-  useReadingAnswers,
-  type AnswerValue,
-} from '@/components/reading/useReadingAnswers';
+import type { AnswerValue, ReadingAnswersStore } from '@/components/reading/useReadingAnswers';
 
 export type TFNGQuestion = {
   kind: 'tfng';
@@ -41,8 +38,7 @@ export type Question =
 type Props = {
   index?: number;
   question: Question;
-  /** passage slug for namespacing the draft store */
-  slug: string;
+  store: ReadingAnswersStore;
   /** optional: external change handler if you ever need it */
   onChange?: (id: string, value: AnswerValue) => void;
 };
@@ -58,60 +54,21 @@ type Props = {
 export const QuestionRenderer: React.FC<Props> = ({
   index,
   question,
-  slug,
+  store,
   onChange,
 }) => {
-  // Ensure that store is typed correctly, and its methods are callable
-  const store = useReadingAnswers(slug) as ReturnType<typeof useReadingAnswers> & {
-    answer?: (id: string) => AnswerValue | undefined;
-    get?: (id: string) => AnswerValue | undefined;
-    answers?: Record<string, AnswerValue>;
-    setAnswer?: (id: string, value: AnswerValue) => void;
-    set?: (id: string, value: AnswerValue) => void;
-    update?: (id: string, value: AnswerValue) => void;
-    setAnswers?: (updateFn: (prev: Record<string, AnswerValue>) => Record<string, AnswerValue>) => void;
-    allAnswers?: () => Record<string, AnswerValue>;
-  };
-
-  const initialFromStore =
-    (store?.answer && store.answer(question.id)) ??
-    (store?.get && store.get(question.id)) ??
-    (store?.answers && store.answers[question.id]) ??
-    undefined;
-
   const [value, setValue] = useState<AnswerValue | undefined>(
-    initialFromStore as AnswerValue | undefined,
+    store.answers?.[question.id],
   );
 
   useEffect(() => {
-    // hydrate if store changes (e.g., restoring a draft)
-    if (initialFromStore !== undefined) setValue(initialFromStore);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question.id]);
+    setValue(store.answers?.[question.id]);
+  }, [store.answers, question.id]);
 
   const commit = (v: AnswerValue) => {
     setValue(v);
-    // best-effort to call whatever API the hook exposes
-    if (typeof store?.setAnswer === 'function') store.setAnswer(question.id, v);
-    else if (typeof store?.set === 'function') store.set(question.id, v);
-    else if (typeof store?.update === 'function') store.update(question.id, v);
-    else if (typeof store?.setAnswers === 'function') {
-      store.setAnswers((prev: Record<string, AnswerValue>) => ({
-        ...(prev ?? {}),
-        [question.id]: v,
-      }));
-    }
+    store.setAnswer(question.id, v);
     onChange?.(question.id, v);
-    // lightweight local fallback so user never loses a selection
-    try {
-      const all = (typeof store?.allAnswers === 'function'
-        ? store.allAnswers()
-        : {}) || {};
-      const merged: Record<string, AnswerValue> = { ...all, [question.id]: v };
-      localStorage.setItem(`readingAnswers:${slug}`, JSON.stringify(merged));
-    } catch {
-      // ignore
-    }
   };
 
   // ---------- Renderers ----------

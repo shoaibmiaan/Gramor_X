@@ -10,6 +10,7 @@ type QuestionRow = {
   answers: unknown;
   options?: unknown;
   points?: number | null;
+  rationale?: unknown;
 };
 
 type Breakdown = Record<string, { correct: number; total: number; pct: number }>;
@@ -23,6 +24,7 @@ type ScoreItem = {
   user: unknown;
   isCorrect: boolean;
   points: number;
+  rationale?: string | null;
 };
 
 type GradeResult = {
@@ -77,6 +79,15 @@ export function gradeReadingAttempt(
 
     const userAnswer = answers?.[row.id];
     const correctValue = ensureArray(row.answers ?? []).map(v => v);
+    const rationale = typeof row.rationale === 'string'
+      ? row.rationale
+      : row.options && typeof row.options === 'object'
+        ? (() => {
+            const opts = row.options as Record<string, any>;
+            const candidate = opts?.rationale ?? opts?.explanation ?? opts?.feedback ?? null;
+            return typeof candidate === 'string' ? candidate : null;
+          })()
+        : null;
 
     let isCorrect = false;
 
@@ -120,6 +131,7 @@ export function gradeReadingAttempt(
       user: userAnswer ?? null,
       isCorrect,
       points,
+      rationale,
     });
   }
 
