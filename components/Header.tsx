@@ -115,25 +115,24 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
       role="banner"
       data-solid={solidHeader}
       className={cn(
-        'relative sticky top-0 z-50 w-full border-b transition-[background,box-shadow,border-color] duration-300',
-        'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:bg-background/70',
+        'relative sticky top-0 z-50 w-full border-b transition-[background,border-color,box-shadow] duration-500 ease-out',
+        'supports-[backdrop-filter]:backdrop-blur-xl supports-[backdrop-filter]:bg-background/60',
         solidHeader
-          ? 'bg-background/95 border-border shadow-[0_12px_30px_-24px_rgba(67,97,238,0.35)] dark:shadow-[0_12px_30px_-24px_rgba(128,255,219,0.25)]'
-          : 'header-glass border-border/40 dark:border-vibrantPurple/25',
-        'before:pointer-events-none before:absolute before:inset-x-6 before:bottom-0 before:h-px before:rounded-full before:content-[""]',
-        'before:bg-gradient-to-r before:from-transparent before:via-border/70 before:to-transparent before:transition-opacity before:duration-300',
-        'data-[solid=true]:before:opacity-0'
+          ? 'bg-background/92 border-border/80 shadow-[0_10px_32px_-24px_rgba(15,23,42,0.35)] dark:shadow-[0_10px_32px_-24px_rgba(2,6,23,0.7)]'
+          : 'bg-background/45 border-border/35 shadow-none',
+        'after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:bg-[radial-gradient(ellipse_at_top,rgba(104,117,245,0.16),transparent_60%)]',
+        'after:opacity-0 after:transition-opacity after:duration-700 data-[solid=true]:after:opacity-100'
       )}
     >
       <Container>
-        <div className="relative flex items-center justify-between gap-4 py-3 md:gap-6 md:py-4">
+        <div className="relative flex items-center justify-between gap-4 py-3.5 md:gap-8 md:py-5">
           <Link
             href={user?.id ? '/dashboard' : '/'}
             className="group flex items-center gap-3 rounded-ds focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label="Go to home"
           >
-            <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-card/80 ring-1 ring-border transition group-hover:ring-primary/30 dark:bg-dark/70">
-              <span className="relative h-8 w-8 overflow-hidden rounded-lg md:h-9 md:w-9">
+            <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/50 ring-1 ring-border/60 transition group-hover:ring-primary/25">
+              <span className="relative h-7 w-7 overflow-hidden rounded-xl md:h-8 md:w-8">
                 <Image
                   src="/brand/logo.png"
                   alt="GramorX logo"
@@ -144,19 +143,17 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                 />
               </span>
             </span>
-            <span className="flex flex-col gap-0.5">
-              <span className="font-slab text-h2 font-bold leading-none md:text-h1" role="heading" aria-level={1}>
-                <span className="text-foreground transition-colors duration-200 group-hover:text-primary">
-                  GramorX
-                </span>
+            <span className="flex flex-col gap-1">
+              <span className="font-slab text-[1.45rem] font-semibold leading-tight tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary md:text-[1.65rem]">
+                GramorX
               </span>
-              <span className="hidden text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/80 transition-opacity group-hover:text-muted-foreground sm:block">
-                Calm your practice
+              <span className="hidden text-[0.75rem] font-medium uppercase tracking-[0.3em] text-muted-foreground/90 transition-colors duration-300 group-hover:text-muted-foreground sm:block">
+                Practice, peacefully
               </span>
             </span>
           </Link>
 
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2.5 md:gap-4">
             <DesktopNav
               user={user}
               role={role ?? 'guest'}
@@ -178,7 +175,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
             {user?.id && role && role !== 'guest' && (
               <span
                 aria-label={`Role: ${role}`}
-                className="rounded-ds bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border"
+                className="hidden rounded-full bg-muted/70 px-3 py-1 text-xs font-medium text-muted-foreground/90 ring-1 ring-border/60 md:inline-flex"
               >
                 {role}
               </span>
@@ -189,36 +186,42 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               <div className="relative group">
                 {hasPremiumAccess ? (
                   <div className="flex items-center gap-2">
-                    <Button asChild variant="default" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white border-0">
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="border-border/60 bg-background/70 text-foreground hover:bg-background"
+                    >
                       <Link href="/premium-room">
-                        <span className="flex items-center gap-2">
-                          <span>⭐</span>
-                          <span>Premium Room</span>
+                        <span className="flex items-center gap-2 text-sm">
+                          <span aria-hidden>⭐</span>
+                          <span>Premium room</span>
                         </span>
                       </Link>
                     </Button>
                     {/* Premium Access Indicator */}
-                    <div className="hidden group-hover:block absolute top-full right-0 mt-2 w-48 z-50">
-                      <div className="bg-card border border-border rounded-lg shadow-lg p-3">
-                        <div className="text-xs font-medium text-green-600 mb-1">Premium Access Active</div>
-                        <div className="text-xs text-muted-foreground">
-                          Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
-                        </div>
-                        <button
-                          onClick={handleClearPremiumAccess}
-                          className="text-xs text-red-500 hover:text-red-700 mt-2"
-                        >
-                          Clear All Access
-                        </button>
+                    <div className="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-xl border border-border/60 bg-card/95 p-3 text-left shadow-lg shadow-black/5 backdrop-blur group-hover:block">
+                      <div className="text-xs font-medium text-emerald-500">Premium access active</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
                       </div>
+                      <button
+                        onClick={handleClearPremiumAccess}
+                        className="mt-2 text-xs font-medium text-red-500 transition-colors hover:text-red-600"
+                      >
+                        Clear all access
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <Button asChild variant="outline">
+                  <Button
+                    asChild
+                    variant="ghost"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
                     <Link href="/premium/pin">
                       <span className="flex items-center gap-2">
-                        <span>🔒</span>
-                        <span>Enter Premium</span>
+                        <span aria-hidden>🔒</span>
+                        <span>Unlock premium</span>
                       </span>
                     </Link>
                   </Button>
