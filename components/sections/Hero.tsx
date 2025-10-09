@@ -12,18 +12,17 @@ const highlightFeatures = [
   {
     icon: 'Target',
     label: 'Adaptive study plan',
-    description:
-      'Start with a band diagnostic and receive daily lessons aligned to your goal score.',
+    description: 'Daily lessons flex to your target band.',
   },
   {
     icon: 'Sparkles',
     label: 'Real exam simulation',
-    description: 'Timed mocks with speaking + writing AI grading so you know exactly where you stand.',
+    description: 'Timed mocks with instant AI scoring.',
   },
   {
     icon: 'Heart',
     label: 'Human & AI coaching',
-    description: 'Ask mentors, get instant feedback, and keep your streak alive with gentle nudges.',
+    description: 'Mentors + AI reply fast to keep you moving.',
   },
 ] as const;
 
@@ -163,13 +162,13 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-electricBlue/30 bg-white/80 px-4 py-1 text-sm font-medium text-electricBlue shadow-sm backdrop-blur dark:bg-dark/40">
               <Icon name="Sparkles" className="text-electricBlue" />
-              Built with IELTS experts + AI coaches
+              Built with IELTS experts & AI
             </div>
             <h1 className="mt-6 font-slab text-4xl font-bold leading-tight text-foreground sm:text-5xl md:text-6xl">
               <span className="text-gradient-primary">Your personalized IELTS launchpad</span>
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              Replace piecemeal prep with one platform that diagnoses your level, adapts daily lessons, and keeps you accountable until test day.
+              See your starting band, follow a daily plan, and stay on pace for test day.
             </p>
 
             <div className="mt-8 grid gap-6 sm:grid-cols-2">
@@ -201,15 +200,15 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
             <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Icon name="Users" className="text-electricBlue" />
-                Trusted by 18k+ learners
+                18k+ learners
               </div>
               <div className="flex items-center gap-2">
                 <Icon name="ShieldCheck" className="text-purpleVibe" />
-                CEFR aligned curriculum
+                CEFR aligned
               </div>
               <div className="flex items-center gap-2">
                 <Icon name="Calendar" className="text-neonGreen" />
-                Daily accountability rituals
+                Daily rituals
               </div>
             </div>
           </div>
@@ -217,7 +216,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
           <div className="space-y-6">
             <Card className="border border-electricBlue/30 bg-white/80 p-6 shadow-lg backdrop-blur dark:bg-dark/70">
               <div className="mb-3 flex items-center justify-between text-sm font-semibold text-electricBlue">
-                <span className="uppercase tracking-wide">Pre-launch access</span>
+                <span className="uppercase tracking-wide">Beta access</span>
                 <span className="rounded-full bg-electricBlue/10 px-3 py-1 text-electricBlue">Opens in</span>
               </div>
               <div className="flex flex-wrap justify-center gap-4 sm:gap-6" aria-live="polite">
@@ -247,7 +246,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
 
               {auth === 'guest' && (
                 <Alert variant="info" className="mb-4">
-                  Sign in to track your streak and unlock daily rewards.
+                  Sign in to track streaks and rewards.
                 </Alert>
               )}
 
@@ -293,7 +292,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
                       </div>
                     </div>
                     <Alert variant="info" className="mt-3">
-                      Keep the streak alive to multiply your launch bonuses.
+                      Keep the streak alive to grow your launch credit.
                     </Alert>
                   </div>
                 </>

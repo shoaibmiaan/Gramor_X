@@ -25,19 +25,17 @@ const testimonials: readonly Testimonial[] = [
     id: 't1',
     name: 'Hina S.',
     band: '7.5',
-    quote:
-      'I knew exactly which cohesion mistakes to fix after every Task 2 submission. The rubric-level feedback felt like working with an examiner.',
+    quote: 'Task 2 feedback called out cohesion gaps in plain language.',
     context: 'Academic',
     location: 'Lahore, PK',
     improvement: '+1.0 band in writing',
-    modules: ['Writing studio', 'Performance intelligence', 'Mock exam centre'],
+    modules: ['Writing studio', 'Performance intelligence', 'Mock exam center'],
   },
   {
     id: 't2',
     name: 'Umair R.',
     band: '8.0',
-    quote:
-      'Speaking drills mirrored the actual interview. Getting transcripts instantly showed every filler phrase so I could replace them before test day.',
+    quote: 'Speaking drills felt like the real thing and the transcript flagged every filler word.',
     context: 'General Training',
     location: 'Dubai, UAE',
     improvement: 'From 7.0 → 8.0 overall',
@@ -47,8 +45,7 @@ const testimonials: readonly Testimonial[] = [
     id: 't3',
     name: 'Ayesha T.',
     band: '7.0',
-    quote:
-      'The reading vault decoded True/False traps for me. Combining that with the adaptive plan finally stabilised my timing.',
+    quote: 'The reading vault finally made True/False predictable and my timing steadied.',
     context: 'Academic',
     location: 'Islamabad, PK',
     improvement: 'Consistent 8.5 reading section',
@@ -60,17 +57,17 @@ const proofPoints = [
   {
     icon: 'TrendingUp',
     label: '1.5 band average lift',
-    description: 'Across 1,400 tracked learners who completed 6+ weeks of the adaptive pathway.',
+    description: 'Based on 1,400 learners who stayed on the adaptive path for 6+ weeks.',
   },
   {
     icon: 'Clock',
     label: '92% stay on plan',
-    description: 'Daily accountability streaks and nudges keep learners showing up for micro sessions.',
+    description: 'Streak nudges keep learners showing up for micro sessions.',
   },
   {
     icon: 'Users',
     label: 'Mentors & AI in sync',
-    description: 'When AI flags an issue, teachers review the same rubric-ready notes for faster coaching.',
+    description: 'AI notes match what teachers see, so coaching is faster.',
   },
 ] as const;
 
@@ -87,7 +84,7 @@ export const Testimonials: React.FC = () => {
           </Badge>
           <h2 className="font-slab text-display tracking-tight text-gradient-primary">Proof the system works</h2>
           <p className="mt-3 text-lg text-muted-foreground">
-            Every story here started with a diagnostic, an adaptive plan, and relentless feedback loops.
+            Each journey kicked off with a quick diagnostic and tight feedback loop.
           </p>
         </div>
 
@@ -118,7 +115,7 @@ export const Testimonials: React.FC = () => {
 
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-2 rounded-full border border-electricBlue/30 bg-electricBlue/10 px-4 py-1 font-medium text-electricBlue">
-                  <Icon name="Compass" size={16} /> Adaptive pathway
+                  <Icon name="Compass" size={16} /> Adaptive path
                 </span>
                 {spotlight.modules.map((m) => (
                   <span key={m} className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium">
@@ -189,7 +186,7 @@ export const Testimonials: React.FC = () => {
               variant="primary"
               className="rounded-full px-6 shadow-md shadow-electricBlue/20 hover:-translate-y-0.5 hover:shadow-xl"
             >
-              <Icon name="Play" size={18} /> Watch learner stories
+              <Icon name="Play" size={18} /> Watch stories
             </Button>
             <Link
               href="/reviews"

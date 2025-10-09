@@ -264,49 +264,34 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
                 </Button>
               ) : null}
 
-              {user?.id ? (
+              {user?.id && hasPremiumAccess ? (
                 <div className="relative group">
-                  {hasPremiumAccess ? (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="border-border/60 bg-background/70 text-foreground hover:bg-background"
-                      >
-                        <Link href="/premium-room">
-                          <span className="flex items-center gap-2 text-sm">
-                            <span aria-hidden>⭐</span>
-                            <span>Premium room</span>
-                          </span>
-                        </Link>
-                      </Button>
-                      <div className="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-xl border border-border/60 bg-card/95 p-3 text-left shadow-lg shadow-black/5 backdrop-blur group-hover:block">
-                        <div className="text-xs font-medium text-emerald-500">Premium access active</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
-                        </div>
-                        <button
-                          onClick={handleClearPremiumAccess}
-                          className="mt-2 text-xs font-medium text-red-500 transition-colors hover:text-red-600"
-                        >
-                          Clear all access
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
+                  <div className="flex items-center gap-2">
                     <Button
                       asChild
-                      variant="ghost"
-                      className="text-sm text-muted-foreground hover:text-foreground"
+                      variant="outline"
+                      className="border-border/60 bg-background/70 text-foreground hover:bg-background"
                     >
-                      <Link href="/premium/pin">
-                        <span className="flex items-center gap-2">
-                          <span aria-hidden>🔒</span>
-                          <span>Unlock premium</span>
+                      <Link href="/premium-room">
+                        <span className="flex items-center gap-2 text-sm">
+                          <span aria-hidden>⭐</span>
+                          <span>Premium room</span>
                         </span>
                       </Link>
                     </Button>
-                  )}
+                    <div className="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-xl border border-border/60 bg-card/95 p-3 text-left shadow-lg shadow-black/5 backdrop-blur group-hover:block">
+                      <div className="text-xs font-medium text-emerald-500">Premium access active</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Access to {premiumRooms.length} room{premiumRooms.length !== 1 ? 's' : ''}
+                      </div>
+                      <button
+                        onClick={handleClearPremiumAccess}
+                        className="mt-2 text-xs font-medium text-red-500 transition-colors hover:text-red-600"
+                      >
+                        Clear all access
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : null}
 
