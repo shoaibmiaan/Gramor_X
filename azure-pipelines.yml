@@ -20,5 +20,14 @@ steps:
 - script: npm ci
   displayName: 'Install'
 
+- script: npm run lint
+  displayName: 'Lint'
+
+- script: npm run lint:styles
+  displayName: 'Stylelint'
+
+- script: npm run ds:guard
+  displayName: 'Design system guard'
+
 - script: npm run build
   displayName: 'Build'
