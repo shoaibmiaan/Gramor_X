@@ -1,4 +1,4 @@
-import { Icon } from "@/components/design-system/Icon";
+import { Icon } from '@/components/design-system/Icon';
 // components/listening/AudioSectionsPlayer.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
@@ -280,6 +280,61 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
     return `${m}:${s}`;
   }, [localTimeMs]);
 
+  const handleSliderKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!allowSeek) return;
+
+      let nextPct: number | null = null;
+      const step = 0.05; // 5%
+      const bigStep = 0.1; // 10%
+
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'ArrowDown':
+          nextPct = clamp(pct - step, 0, 1);
+          break;
+        case 'ArrowRight':
+        case 'ArrowUp':
+          nextPct = clamp(pct + step, 0, 1);
+          break;
+        case 'PageDown':
+          nextPct = clamp(pct - bigStep, 0, 1);
+          break;
+        case 'PageUp':
+          nextPct = clamp(pct + bigStep, 0, 1);
+          break;
+        case 'Home':
+          nextPct = 0;
+          break;
+        case 'End':
+          nextPct = 1;
+          break;
+        default:
+          break;
+      }
+
+      if (nextPct == null) return;
+
+      event.preventDefault();
+      onSeek(nextPct);
+    },
+    [allowSeek, onSeek, pct]
+  );
+
+  const focusRing =
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+  const togglePlayPause = useCallback(() => {
+    if (playing) {
+      pause();
+    } else {
+      play();
+    }
+  }, [pause, play, playing]);
+
+  const playPauseLabel = playing ? 'Pause' : 'Play';
+  const playPauseIcon = playing ? 'pause' : 'play';
+
   // ---- render ----
   if (!mounted) {
     return (
@@ -309,35 +364,25 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
           <button
             type="button"
             onClick={prevSection}
-            className="px-3 py-2 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-white/5"
+            className={`px-3 py-2 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-white/5 ${focusRing}`}
             aria-label="Previous section"
           >
             <Icon name="step-backward" />
           </button>
-          {playing ? (
-            <button
-              type="button"
-              onClick={pause}
-              className="px-4 py-2 rounded-ds-xl bg-primary text-white hover:opacity-90"
-              aria-label="Pause"
-            >
-              <Icon name="pause" /> <span className="ml-2">Pause</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={play}
-              disabled={!ready}
-              className="px-4 py-2 rounded-ds-xl bg-primary text-white disabled:opacity-50 hover:opacity-90"
-              aria-label="Play"
-            >
-              <Icon name="play" /> <span className="ml-2">Play</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={togglePlayPause}
+            disabled={!ready && !playing}
+            className={`px-4 py-2 rounded-ds-xl bg-primary text-white disabled:opacity-50 hover:opacity-90 ${focusRing}`}
+            aria-label={playPauseLabel}
+            aria-pressed={playing}
+          >
+            <Icon name={playPauseIcon} /> <span className="ml-2">{playPauseLabel}</span>
+          </button>
           <button
             type="button"
             onClick={nextSection}
-            className="px-3 py-2 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-white/5"
+            className={`px-3 py-2 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-white/5 ${focusRing}`}
             aria-label="Next section"
           >
             <Icon name="step-forward" />
@@ -358,10 +403,16 @@ export const AudioSectionsPlayer: React.FC<AudioSectionsPlayerProps> = ({
             const p = clamp((e.clientX - rect.left) / rect.width, 0, 1);
             onSeek(p);
           }}
+          onKeyDown={handleSliderKeyDown}
           role={allowSeek ? 'slider' : undefined}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(pct * 100)}
+          aria-label={allowSeek ? 'Section progress' : undefined}
+          aria-valuemin={allowSeek ? 0 : undefined}
+          aria-valuemax={allowSeek ? 100 : undefined}
+          aria-valuenow={allowSeek ? Math.round(pct * 100) : undefined}
+          aria-valuetext={allowSeek ? `${mmss} elapsed` : undefined}
+          tabIndex={allowSeek ? 0 : undefined}
+          aria-disabled={allowSeek ? undefined : true}
+          className={allowSeek ? `rounded-ds ${focusRing}` : undefined}
         >
           <ProgressBar
             value={pct * 100}
