@@ -84,9 +84,20 @@ export default function SpeakingAttemptsPage() {
                     {a.duration_sec ? `${Math.floor(a.duration_sec / 60)}m ${a.duration_sec % 60}s` : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/speaking/review/${a.id}`} className="px-3 py-1.5 rounded-lg bg-electricBlue text-white">
-                      Review
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/speaking/attempts/${a.id}/result`}
+                        className="px-3 py-1.5 rounded-lg border border-lightBorder dark:border-white/10"
+                      >
+                        Result
+                      </Link>
+                      <Link
+                        href={`/speaking/review/${a.id}`}
+                        className="px-3 py-1.5 rounded-lg bg-electricBlue text-white"
+                      >
+                        Review
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
