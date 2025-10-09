@@ -76,7 +76,13 @@ const Transcript: React.FC<TranscriptProps> = ({ text }) => {
 /** ─────────────────────────────
  * Types
  * ────────────────────────────*/
-type Breakdown = { fluency?: number; lexical?: number; grammar?: number; pronunciation?: number };
+type Breakdown = {
+  fluency?: number;
+  coherence?: number;
+  lexical?: number;
+  pronunciation?: number;
+  grammar?: number;
+};
 type Attempt = {
   id: string;
   scenario: string | null;
@@ -179,11 +185,11 @@ export default function SpeakingReview({ attempt: initial }: Props) {
   }
 
   const b = attempt.band_breakdown || {};
-  const groups: Array<[label: string, key: keyof Breakdown]> = [
-    ['Fluency', 'fluency'],
-    ['Lexical', 'lexical'],
-    ['Grammar', 'grammar'],
-    ['Pronunciation', 'pronunciation'],
+  const groups: Array<{ label: string; key: keyof Breakdown; fallback?: keyof Breakdown }> = [
+    { label: 'Fluency', key: 'fluency' },
+    { label: 'Coherence', key: 'coherence', fallback: 'grammar' },
+    { label: 'Lexical Resource', key: 'lexical' },
+    { label: 'Pronunciation', key: 'pronunciation' },
   ];
 
   return (
@@ -231,8 +237,8 @@ export default function SpeakingReview({ attempt: initial }: Props) {
 
             {/* Criteria badges grid */}
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {groups.map(([label, key]) => {
-                const val = b[key];
+              {groups.map(({ label, key, fallback }) => {
+                const val = b[key] ?? (fallback ? b[fallback] : undefined);
                 if (val == null) {
                   return (
                     <Badge key={key} variant="neutral" className="rounded-ds-xl justify-center">
