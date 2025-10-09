@@ -26,51 +26,50 @@ const tiers: readonly Tier[] = [
   {
     name: 'Compass',
     headline: 'Kickstart your prep',
-    description: 'Foundation modules plus daily vocab and accountability rituals to get momentum.',
+    description: 'Core modules plus daily streak nudges to build momentum.',
     price: { monthly: 'Free', quarterly: 'Free' },
     featured: false,
     features: [
-      'Full IELTS basics across listening, reading, writing & speaking',
-      'Daily vocab challenge with streak rewards',
-      'One grammar micro-drill each week',
-      'Two AI essay evaluations every month',
-      'Read-only community lounge',
+      'IELTS basics across all four skills',
+      'Daily vocab streak challenge',
+      'Weekly grammar micro-drill',
+      'Two AI essay checks per month',
     ],
-    guarantee: 'Perfect to experience the adaptive system before upgrading.',
+    guarantee: 'Preview the adaptive system before upgrading.',
   },
   {
     name: 'Seedling',
     headline: 'Guided growth',
-    description: 'Adaptive study plans, twice-monthly mocks, and AI feedback to build consistency.',
+    description: 'Adaptive plans, twice-monthly mocks, and AI feedback for steady gains.',
     price: { monthly: '$9.99', quarterly: '$25.50' },
     savings: 'Save 15% billed quarterly',
     featured: false,
     features: [
-      'Adaptive daily lesson path + progress diagnostics',
-      'Two full mock tests every month',
-      'Five AI writing evaluations each month',
-      'Speaking partner sessions (3/mo) with transcripts',
+      'Adaptive daily lessons with diagnostics',
+      'Two full mock tests each month',
+      'Five AI writing reviews per month',
+      'Three speaking partner sessions with transcripts',
       'Skill analytics dashboard',
-      'Email and community Q&A support',
+      'Email + community support',
     ],
-    guarantee: 'Switch plans or cancel anytime in two clicks—no lock-in.',
+    guarantee: 'Switch or cancel anytime—no lock-in.',
   },
   {
     name: 'Rocket',
     headline: 'Exam sprint',
-    description: 'Unlimited exam simulations, deep analytics, and human coaching when it matters most.',
+    description: 'Unlimited mocks, deeper analytics, and human coaching when it counts.',
     price: { monthly: '$14.99', quarterly: '$38.25' },
     savings: 'Includes priority teacher reviews',
     featured: true,
     features: [
-      'Unlimited full-length mock exams with invigilated mode',
-      'Unlimited AI writing evaluations & speaking transcripts',
-      'Weekly teacher review on writing & speaking (2/mo)',
-      'Advanced performance intelligence with weakest-skill sprints',
-      'Premium rooms, live workshops, and accountability concierge',
-      'Band predictor with personalised score reports',
+      'Unlimited full-length mock exams',
+      'Unlimited AI writing + speaking transcripts',
+      'Weekly teacher review on writing & speaking',
+      'Advanced performance intelligence sprints',
+      'Premium rooms and live workshops',
+      'Band predictor with personalised reports',
     ],
-    guarantee: 'Score-improvement guarantee or your next month is on us.',
+    guarantee: 'Score-improvement guarantee or next month free.',
   },
 ];
 
@@ -78,23 +77,23 @@ const valueProps = [
   {
     icon: 'ShieldCheck',
     title: '14-day satisfaction',
-    description: 'Upgrade with confidence—if the platform is not for you within 14 days, we will refund the most recent charge.',
+    description: 'Not a fit within 14 days? We refund the latest charge.',
   },
   {
     icon: 'Sparkles',
     title: 'All plans include',
-    description: 'AI lesson feedback, speaking transcripts, exam-day UI, and a roadmap tailored to your target band.',
+    description: 'AI feedback, speaking transcripts, and an exam-day style UI.',
   },
   {
     icon: 'Headphones',
     title: 'Human help when stuck',
-    description: 'Our mentors monitor escalations and step in with rubric-based advice within 24 hours on paid tiers.',
+    description: 'Mentors reply with rubric notes within 24 hours on paid tiers.',
   },
 ] as const;
 
 const billingCopy: Record<BillingCycle, { label: string; helper: string }> = {
-  monthly: { label: 'Monthly', helper: 'Pause or switch anytime' },
-  quarterly: { label: 'Quarterly', helper: 'Save 15% vs monthly' },
+  monthly: { label: 'Monthly', helper: 'Pause anytime' },
+  quarterly: { label: 'Quarterly', helper: 'Save 15%' },
 };
 
 const planSlug = (name: Tier['name']) => name.toLowerCase();
@@ -112,7 +111,7 @@ export const Pricing: React.FC = () => {
           </Badge>
           <h2 className="font-slab text-display tracking-tight text-gradient-primary">Choose your launch velocity</h2>
           <p className="mt-3 text-lg text-muted-foreground">
-            Start free, upgrade when you need unlimited mocks, deep analytics, and human review.
+            Start free, upgrade when you need unlimited mocks and coaching.
           </p>
         </div>
 

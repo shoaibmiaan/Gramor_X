@@ -23,8 +23,8 @@ const items: Item[] = [
     statusVariant: 'success',
     icon: 'Headphones',
     title: 'Listening labs',
-    subtitle: 'Interactive transcripts reveal traps in every section.',
-    bullets: ['Band-specific playlists', 'Instant transcript reveal', 'AI catches careless mistakes'],
+    subtitle: 'Spot traps fast with guided transcripts.',
+    bullets: ['Band playlists', 'Instant transcript reveal'],
     href: '/listening',
   },
   {
@@ -32,8 +32,8 @@ const items: Item[] = [
     statusVariant: 'success',
     icon: 'BookOpen',
     title: 'Reading vault',
-    subtitle: 'Skim smarter with guided scanning drills and question breakdowns.',
-    bullets: ['Cambridge-style passages', 'True/False decoders', 'Keyword tracker overlays'],
+    subtitle: 'Scan smarter with short decoding drills.',
+    bullets: ['Cambridge-style passages', 'Trap decoders'],
     href: '/reading',
   },
   {
@@ -41,8 +41,8 @@ const items: Item[] = [
     statusVariant: 'info',
     icon: 'PenSquare',
     title: 'Writing studio',
-    subtitle: 'Structure tasks with AI outlines, banded feedback, and model answers.',
-    bullets: ['Task 1 visuals annotated', 'Band-descriptor scoring', 'Rewrite with AI suggestions'],
+    subtitle: 'Build answers with AI outlines and rubrics.',
+    bullets: ['Task visuals annotated', 'Band-based scoring'],
     href: '/writing',
   },
   {
@@ -50,8 +50,8 @@ const items: Item[] = [
     statusVariant: 'success',
     icon: 'Mic',
     title: 'Speaking partner',
-    subtitle: 'Simulate the exam with timed prompts and pronunciation analytics.',
-    bullets: ['Part-by-part timer', 'Confidence scoreboard', 'Accent & pacing insights'],
+    subtitle: 'Run full interviews with instant transcripts.',
+    bullets: ['Timed prompts', 'Accent & pacing notes'],
     href: '/speaking',
   },
   {
@@ -59,8 +59,8 @@ const items: Item[] = [
     statusVariant: 'info',
     icon: 'ClipboardList',
     title: 'Mock exam center',
-    subtitle: 'Full-length tests with AI invigilation and score projections.',
-    bullets: ['Exam-day interface', 'Tab-switch monitoring', 'Band predictor reports'],
+    subtitle: 'Full mocks with score projections.',
+    bullets: ['Exam-day interface', 'Band predictor reports'],
     href: '/mock',
   },
   {
@@ -68,8 +68,8 @@ const items: Item[] = [
     statusVariant: 'success',
     icon: 'BarChart3',
     title: 'Performance intelligence',
-    subtitle: 'See what’s holding your band back and focus on the right drills.',
-    bullets: ['Weak skill spotlight', 'Weekly improvement sprints', 'Goal-aligned study plan'],
+    subtitle: 'Know what to fix next, without guessing.',
+    bullets: ['Weak skill spotlight', 'Goal-led plan'],
     href: '/progress',
   },
 ];
@@ -83,9 +83,9 @@ export const Modules: React.FC = () => {
             <Icon name="Sparkles" className="text-electricBlue" />
             End-to-end IELTS journey
           </Badge>
-          <h2 className="font-slab text-display mb-3 text-gradient-primary">Everything you need in one playbook</h2>
+          <h2 className="font-slab text-display mb-3 text-gradient-primary">All the key rooms, one platform</h2>
           <p className="text-muted-foreground text-lg sm:text-xl">
-            Each module is designed with examiners and teachers so your practice matches the test-day experience while still fitting your schedule.
+            Jump into focused drills without juggling apps.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">

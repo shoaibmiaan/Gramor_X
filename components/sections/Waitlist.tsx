@@ -39,34 +39,34 @@ const perks = [
   {
     icon: 'Gift',
     title: 'Founding member perks',
-    description: 'First 500 learners receive 30% off their first 3 months plus priority onboarding.',
+    description: 'First 500 learners get 30% off the first 3 months plus priority onboarding.',
   },
   {
     icon: 'ClipboardList',
     title: 'Tailored launch plan',
-    description: 'Submit your goals and we design a 4-week action sprint before public release.',
+    description: 'Share your goals and receive a 4-week action sprint before launch.',
   },
   {
     icon: 'MessageCircle',
     title: 'Direct line to product team',
-    description: 'Share feedback inside a private channel and influence what ships next.',
+    description: 'Drop feedback in a private channel and shape what ships next.',
   },
 ] as const;
 
 const timeline = [
   {
     title: 'Reserve your spot',
-    detail: 'Fill the quick form and tell us your target band + exam month.',
+    detail: 'Submit the form with your target band and exam month.',
     time: '2 minutes',
   },
   {
     title: 'Get onboarding kit',
-    detail: 'Receive diagnostics, a planner template, and bonus speaking prompts.',
+    detail: 'Receive diagnostics, a planner, and bonus speaking prompts.',
     time: 'Within 24 hours',
   },
   {
     title: 'Access beta rooms',
-    detail: 'Unlock modules in waves and join live walkthroughs with our mentors.',
+    detail: 'Unlock modules in waves and join live mentor walkthroughs.',
     time: 'Staggered invites',
   },
 ] as const;
@@ -193,7 +193,7 @@ export function Waitlist() {
                 Join the mission control waitlist
               </h2>
               <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-                Secure your invite to the private beta and unlock personalised launch plans, exclusive discounts, and direct feedback loops with our product team.
+                Secure a beta invite for personalised launch plans, exclusive discounts, and fast feedback loops.
               </p>
             </div>
 
@@ -211,7 +211,7 @@ export function Waitlist() {
                 />
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                Founding members lock pricing for 12 months and vote on the next releases.
+                Founding members lock pricing for 12 months and help pick releases.
               </p>
             </Card>
 
@@ -301,10 +301,10 @@ export function Waitlist() {
 
               <div className="md:col-span-2 pt-1">
                 <Button type="submit" variant="primary" disabled={!canSubmit} className="w-full rounded-full py-4 text-base font-semibold">
-                  <Icon name="Lock" /> {loading ? 'Securing…' : 'Claim your invite'}
+                  <Icon name="Lock" /> {loading ? 'Securing…' : 'Claim invite'}
                 </Button>
                 <div className="mt-3 text-center text-xs text-muted-foreground">
-                  By joining, you agree to receive early-access updates. Unsubscribe anytime.
+                  We’ll send early-access updates. Unsubscribe anytime.
                 </div>
               </div>
             </form>

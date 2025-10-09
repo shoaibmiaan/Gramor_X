@@ -249,6 +249,8 @@ export function DesktopNav({
                 <UserMenu
                   userId={uid}
                   email={user?.email ?? undefined}
+                  name={user?.name ?? undefined}
+                  role={role ?? undefined}
                   avatarUrl={user?.avatarUrl ?? undefined}
                   onSignOut={signOut}
                   isAdmin={role === 'admin'}
