@@ -86,9 +86,14 @@ export function StudyPlanEmptyState({
         {list.map((preset) => {
           const isBusy = busyId === preset.id;
           return (
-            <article
+            <button
               key={preset.id}
-              className="flex h-full flex-col justify-between rounded-ds-2xl border border-border bg-card/70 p-5 shadow-sm transition hover:border-primary/40 hover:shadow-lg"
+              type="button"
+              className="group flex h-full flex-col justify-between rounded-ds-2xl border border-border bg-card/70 p-5 text-left shadow-sm transition hover:border-primary/40 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-80"
+              onClick={() => onSelect(preset)}
+              disabled={disabled || isBusy}
+              aria-busy={isBusy ? 'true' : undefined}
+              data-busy={isBusy ? 'true' : undefined}
             >
               <div className="space-y-3">
                 <header className="space-y-1">
@@ -120,17 +125,26 @@ export function StudyPlanEmptyState({
                 )}
               </div>
 
-              <Button
-                className="mt-6"
-                fullWidth
-                loading={isBusy}
-                loadingText="Creating…"
-                disabled={disabled}
-                onClick={() => onSelect(preset)}
-              >
-                Start this plan
-              </Button>
-            </article>
+              <div className="mt-6">
+                <Button
+                  asChild
+                  fullWidth
+                  className="pointer-events-none"
+                  variant="primary"
+                >
+                  <span>
+                    {isBusy ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                        <span>Creating…</span>
+                      </span>
+                    ) : (
+                      'Start this plan'
+                    )}
+                  </span>
+                </Button>
+              </div>
+            </button>
           );
         })}
       </div>
