@@ -12,12 +12,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'GET') {
-    const { resource_id, type, category, limit: limitParam, cursor } = req.query as {
+    const {
+      resource_id,
+      type,
+      category,
+      limit: limitParam,
+      cursor,
+      search,
+      module: moduleParam,
+      start,
+      end,
+    } = req.query as {
       resource_id?: string;
       type?: string;
       category?: string;
       limit?: string;
       cursor?: string;
+      search?: string;
+      module?: string;
+      start?: string;
+      end?: string;
     };
 
     const parsedLimit = limitParam ? Number.parseInt(limitParam, 10) : NaN;
@@ -31,6 +45,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (resource_id) query = query.eq('resource_id', resource_id);
     if (type) query = query.eq('type', type);
     if (category) query = query.eq('category', category);
+
+    if (moduleParam && moduleParam.toLowerCase() !== 'all') {
+      const module = moduleParam.toLowerCase();
+      query = query.or(`type.eq.${module},category.eq.${module}`);
+    }
+
+    if (search) {
+      query = query.ilike('resource_id', `%${search}%`);
+    }
+
+    if (start) {
+      const parsed = new Date(start);
+      if (!Number.isNaN(parsed.getTime())) {
+        query = query.gte('created_at', parsed.toISOString());
+      }
+    }
+
+    if (end) {
+      const parsed = new Date(end);
+      if (!Number.isNaN(parsed.getTime())) {
+        const endDate = new Date(parsed);
+        endDate.setDate(endDate.getDate() + 1);
+        query = query.lt('created_at', endDate.toISOString());
+      }
+    }
 
     if (usePagination) {
       const pageLimit = limit || SAVED_DEFAULT_LIMIT;

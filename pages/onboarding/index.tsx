@@ -1,104 +1,138 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
-import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
-import { Button } from '@/components/design-system/Button';
-import { Input } from '@/components/design-system/Input';
-import { Checkbox } from '@/components/design-system/Checkbox';
+import StepShell from '@/components/onboarding/StepShell';
 import { Alert } from '@/components/design-system/Alert';
+import { UpgradeBanner } from '@/components/premium/UpgradeBanner';
 
 import type { Profile } from '@/types/profile';
 import { fetchProfile, markOnboardingComplete, upsertProfile } from '@/lib/profile';
+import { usePlan } from '@/hooks/usePlan';
 
-type StepId = 1 | 2 | 3;
+const STEP_COPIES = [
+  {
+    title: 'Pick your learning language',
+    subtitle: 'We’ll translate prompts, reminders, and nudges so everything feels familiar.',
+    hint: 'You can switch languages later from Settings → Preferences.',
+  },
+  {
+    title: 'Set your target band',
+    subtitle: 'A clear goal helps us pace mocks, AI feedback, and review sessions.',
+  },
+  {
+    title: 'When is your IELTS exam?',
+    subtitle: 'We’ll reverse-engineer the study plan so you peak near test day.',
+  },
+  {
+    title: 'Shape your weekly rhythm',
+    subtitle: 'Tell us when you can put in focused time so we can schedule smarter.',
+    hint: 'We’ll schedule AI-graded tasks and mocks on the days you pick.',
+  },
+  {
+    title: 'Stay on track with WhatsApp',
+    subtitle: 'Opt in for gentle reminders and quick wins (totally optional).',
+    hint: 'We send at most three nudges per week and you can opt out anytime.',
+  },
+] as const;
 
-const STEPS: { id: StepId; title: string; description: string }[] = [
-  { id: 1, title: 'Target band', description: 'What score are you aiming for?' },
-  { id: 2, title: 'Exam date', description: 'When is your IELTS exam?' },
-  { id: 3, title: 'WhatsApp updates', description: 'Get gentle reminders and nudges.' },
-];
+const LANGUAGE_COPY: Record<(typeof languageOptions)[number], { title: string; description: string }> = {
+  en: {
+    title: 'English',
+    description: 'Interface, reminders, and lessons in English.',
+  },
+  ur: {
+    title: 'اردو',
+    description: 'Interface in Urdu with IELTS practice kept bilingual.',
+  },
+};
 
-const quickBands = ['6.5', '7.0', '7.5', '8.0'];
+const quickBands = ['6.5', '7.0', '7.5', '8.0'] as const;
 
 const phoneRegex = /^\+?[1-9]\d{7,14}$/;
 
-const skeletonLines = [
-  'h-5 w-32',
-  'h-4 w-3/4',
-  'h-4 w-full',
-  'h-4 w-2/3',
-];
+const dayOrder = [...weekdayOptions];
+
+type Language = (typeof languageOptions)[number];
+type Weekday = (typeof weekdayOptions)[number];
+
+type FormState = {
+  preferredLanguage: Language;
+  goalBand: string;
+  examDate: string;
+  studyDays: Weekday[];
+  minutesPerDay: string;
+  whatsappOptIn: boolean;
+  phone: string;
+};
+
+const defaultFormState: FormState = {
+  preferredLanguage: 'en',
+  goalBand: '7.0',
+  examDate: '',
+  studyDays: [],
+  minutesPerDay: '45',
+  whatsappOptIn: false,
+  phone: '',
+};
 
 export default function OnboardingWizard() {
   const router = useRouter();
 
+  const [form, setForm] = useState<FormState>(defaultFormState);
+  const [profileState, setProfileState] = useState<OnboardingState | null>(null);
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  const [step, setStep] = useState<StepId>(1);
-  const [band, setBand] = useState('7.0');
-  const [examDate, setExamDate] = useState('');
-  const [optIn, setOptIn] = useState(false);
-  const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const startTracked = useRef(false);
 
   const nextPath = useMemo(() => {
     const qNext = typeof router.query.next === 'string' ? router.query.next : null;
     return qNext && qNext.startsWith('/') ? qNext : '/dashboard';
   }, [router.query.next]);
 
+  const { plan, loading: planLoading } = usePlan();
+  const showUpgradeBanner = !planLoading && plan === 'free';
+
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
 
     (async () => {
       try {
-        const data = await fetchProfile();
-        if (!active) return;
-
-        if (!data) {
-          setProfile(null);
-          setBand('7.0');
-          setExamDate('');
-          setOptIn(false);
-          setPhone('');
-          setStep(1);
-          return;
-        }
-
-        setProfile(data);
-        if (data.goal_band != null) {
-          setBand(Number(data.goal_band).toFixed(1));
-        }
-        if (data.exam_date) {
-          setExamDate(data.exam_date.slice(0, 10));
-        }
-
-        const channels = new Set<string>(data.notification_channels ?? []);
-        const initialOptIn = channels.has('whatsapp') || data.whatsapp_opt_in === true;
-        setOptIn(initialOptIn);
-        if (data.phone) setPhone(data.phone);
-
-        const completed = data.onboarding_complete === true;
-        const completedStep = Number(data.onboarding_step ?? 0);
-        if (completed) {
-          setStep(3);
-        } else {
-          const nextStep = Math.min(3, Math.max(1, completedStep + 1)) as StepId;
-          setStep(nextStep);
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to load profile';
-        if (message === 'Not authenticated') {
+        const res = await fetch('/api/onboarding', { signal: controller.signal });
+        if (res.status === 401) {
           const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
           await router.replace(`/login${suffix}`);
           return;
         }
-        if (active) setError(message);
+
+        const body = await res.json();
+        if (!res.ok) {
+          const message = typeof body?.error === 'string' ? body.error : 'Unable to load onboarding data';
+          throw new Error(message);
+        }
+
+        const parsed = onboardingStateSchema.parse(body);
+        if (!active) return;
+
+        setProfileState(parsed);
+        syncForm(parsed);
+        const nextStepValue = determineStep(parsed);
+        setStep(nextStepValue);
+
+        if (parsed.onboardingComplete) {
+          await router.replace(nextPath);
+        }
+      } catch (err) {
+        if (!active) return;
+        if (err instanceof Error && err.name === 'AbortError') return;
+        const message = err instanceof Error ? err.message : 'Unable to load onboarding data';
+        setError(message);
       } finally {
         if (active) setLoading(false);
       }
@@ -106,25 +140,22 @@ export default function OnboardingWizard() {
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [router, nextPath]);
+  }, [determineStep, nextPath, router, syncForm]);
+
+  useEffect(() => {
+    if (loading || startTracked.current) return;
+    startTracked.current = true;
+    void emitUserEvent('onboarding_start', { step, delta: 0 });
+  }, [loading, step]);
 
   const updateProfile = useCallback(
     async (patch: Parameters<typeof upsertProfile>[0], nextStep?: StepId) => {
       setSaving(true);
       setError(null);
-      try {
-        const updated = await upsertProfile(patch);
-        setProfile(updated as Profile);
-        if (typeof nextStep === 'number') {
-          setStep(nextStep);
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to save changes';
-        setError(message);
-        throw err;
-      } finally {
-        setSaving(false);
+      if (key === 'phone' || (key === 'whatsappOptIn' && value === false)) {
+        setPhoneError(null);
       }
     },
     [],
@@ -136,31 +167,60 @@ export default function OnboardingWizard() {
       setError('Choose a band between 4.0 and 9.0.');
       return;
     }
+    const prev = step;
     await updateProfile({ goal_band: parsed, onboarding_step: 1, onboarding_complete: false }, 2);
+    const delta = Math.max(0, 2 - prev);
+    void emitUserEvent('onboarding_step_complete', { step: prev, delta });
   };
 
   const handleDateNext = async () => {
+    const prev = step;
     await updateProfile({ exam_date: examDate || null, onboarding_step: 2 }, 3);
+    const delta = Math.max(0, 3 - prev);
+    void emitUserEvent('onboarding_step_complete', { step: prev, delta });
   };
 
-  const finish = async () => {
-    setPhoneError(null);
-    const baseChannels = new Set<string>(profile?.notification_channels ?? []);
-    let phoneValue: string | null = null;
+        if (res.status === 401) {
+          const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
+          await router.replace(`/login${suffix}`);
+          throw new Error('Not authenticated');
+        }
 
-    if (optIn) {
-      const trimmed = phone.trim();
-      if (!phoneRegex.test(trimmed)) {
-        setPhoneError('Enter a valid phone number in international format (e.g. +14155552671).');
-        return;
+        const body = await res.json();
+        if (!res.ok) {
+          const message = typeof body?.error === 'string' ? body.error : 'Unable to save onboarding step';
+          throw new Error(message);
+        }
+
+        const parsed = onboardingStateSchema.parse(body);
+        setProfileState(parsed);
+        syncForm(parsed);
+        setStep(determineStep(parsed));
+        return parsed;
+      } finally {
+        setSaving(false);
       }
-      phoneValue = trimmed;
-      baseChannels.add('whatsapp');
-    } else {
-      baseChannels.delete('whatsapp');
-    }
+    },
+    [determineStep, nextPath, router, syncForm],
+  );
+
+  const handleBack = useCallback(() => {
+    if (loading || saving) return;
+    setError(null);
+    setStep((prev) => Math.max(1, prev - 1));
+  }, [loading, saving]);
+
+  const handleNext = useCallback(async () => {
+    if (loading || saving) return;
 
     try {
+      if (step === 1) {
+        await persistStep({ step: 1, data: { preferredLanguage: form.preferredLanguage } });
+        return;
+      }
+
+    try {
+      const prev = step;
       await updateProfile(
         {
           phone: phoneValue,
@@ -169,27 +229,38 @@ export default function OnboardingWizard() {
           onboarding_step: 3,
           onboarding_complete: true,
         },
+        3,
       );
       await markOnboardingComplete();
+      const delta = 3 - prev;
+      if (delta > 0) {
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+      }
+      void emitUserEvent('onboarding_done', { step: 3, delta: 0 });
       await router.replace(nextPath);
     } catch (err) {
       if (err instanceof Error && err.message === 'Not authenticated') {
-        const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
-        await router.replace(`/login${suffix}`);
+        return;
       }
     }
   };
 
   const skip = async () => {
     try {
-      await updateProfile({ onboarding_step: 3, onboarding_complete: true });
+      const prev = step;
+      await updateProfile({ onboarding_step: 3, onboarding_complete: true }, 3);
       await markOnboardingComplete();
+      const delta = 3 - prev;
+      if (delta > 0) {
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+      }
+      void emitUserEvent('onboarding_done', { step: 3, delta: 0 });
       await router.replace(nextPath);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to skip onboarding';
       setError(message);
     }
-  };
+  }, [form, loading, nextPath, persistStep, router, saving, step]);
 
   const back = () => {
     if (step === 1) return;
@@ -216,6 +287,17 @@ export default function OnboardingWizard() {
           </header>
 
           <Stepper current={step} />
+
+          {showUpgradeBanner && (
+            <UpgradeBanner
+              className="mt-4"
+              pillLabel="Explorer · Free plan"
+              title="Unlock the full onboarding coach"
+              description="Premium keeps your study plan adaptive, unlocks unlimited AI writing and speaking feedback, and powers WhatsApp nudges that follow your real progress."
+              href="/pricing?from=onboarding-upgrade"
+              feature="Personalised onboarding coach"
+            />
+          )}
 
           {error && (
             <Alert variant="error" className="mt-4" role="alert">
@@ -292,156 +374,196 @@ export default function OnboardingWizard() {
       </Container>
     </div>
   );
-}
 
-function Stepper({ current }: { current: StepId }) {
+  const copy = STEP_COPIES[step - 1] ?? STEP_COPIES[0];
+
   return (
-    <ol className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Onboarding steps">
-      {STEPS.map((step) => {
-        const isActive = step.id === current;
-        const isDone = step.id < current;
-        return (
-          <li
-            key={step.id}
-            className={[
-              'rounded-ds-xl border px-3 py-3 transition',
-              isActive
-                ? 'border-primary/60 bg-primary/10 shadow-glow'
-                : isDone
-                  ? 'border-success/40 bg-success/10'
-                  : 'border-border/60 bg-card/70',
-            ].join(' ')}
-          >
-            <div className="flex items-center gap-2 text-caption font-medium uppercase tracking-[0.2em] text-mutedText">
-              <span
-                className={[
-                  'flex h-6 w-6 items-center justify-center rounded-full border text-caption tabular-nums',
-                  isDone
-                    ? 'border-success/40 bg-success/20 text-success'
-                    : isActive
-                      ? 'border-primary/60 bg-primary text-primary-foreground'
-                      : 'border-border bg-card/60 text-mutedText',
-                ].join(' ')}
-              >
-                {step.id}
-              </span>
-              {isDone ? 'Done' : isActive ? 'Now' : 'Next'}
-            </div>
-            <div className="mt-2 font-semibold text-foreground">{step.title}</div>
-            <p className="text-small text-mutedText">{step.description}</p>
-          </li>
-        );
-      })}
-    </ol>
+    <StepShell
+      step={step}
+      total={TOTAL_ONBOARDING_STEPS}
+      title={copy.title}
+      subtitle={copy.subtitle}
+      hint={copy.hint}
+      steps={stepMeta}
+      onBack={handleBack}
+      onNext={handleNext}
+      nextLabel={saving ? 'Saving…' : 'Continue'}
+      nextDisabled={saving || loading}
+    >
+      {error && (
+        <Alert variant="error" className="mb-4" role="alert">
+          {error}
+        </Alert>
+      )}
+
+      {loading ? (
+        <LoadingState />
+      ) : (
+        <StepContent
+          step={step}
+          form={form}
+          updateForm={updateForm}
+          toggleStudyDay={toggleStudyDay}
+          phoneError={phoneError}
+        />
+      )}
+    </StepShell>
   );
 }
 
 type StepContentProps = {
-  step: StepId;
-  band: string;
-  setBand: (value: string) => void;
-  examDate: string;
-  setExamDate: (value: string) => void;
-  optIn: boolean;
-  setOptIn: (value: boolean) => void;
-  phone: string;
-  setPhone: (value: string) => void;
+  step: number;
+  form: FormState;
+  updateForm: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+  toggleStudyDay: (day: Weekday) => void;
   phoneError: string | null;
 };
 
-function StepContent({
-  step,
-  band,
-  setBand,
-  examDate,
-  setExamDate,
-  optIn,
-  setOptIn,
-  phone,
-  setPhone,
-  phoneError,
-}: StepContentProps) {
+function StepContent({ step, form, updateForm, toggleStudyDay, phoneError }: StepContentProps) {
   if (step === 1) {
     return (
-      <div className="grid gap-4">
-        <div>
-          <Input
-            type="number"
-            label="Target overall band"
-            min="4"
-            max="9"
-            step="0.5"
-            value={band}
-            onChange={(e) => setBand(e.target.value)}
-            helperText="You can update this any time from your profile."
-          />
+      <div className="space-y-4">
+        <p className="text-small text-mutedText">Pick the language that feels most comfortable for instructions and reminders.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {languageOptions.map((option) => {
+            const selected = form.preferredLanguage === option;
+            const copy = LANGUAGE_COPY[option];
+            return (
+              <Button
+                key={option}
+                type="button"
+                variant={selected ? 'primary' : 'secondary'}
+                className="flex w-full flex-col items-start gap-1 rounded-ds-xl px-4 py-3 text-left"
+                onClick={() => updateForm('preferredLanguage', option)}
+              >
+                <span className="text-base font-semibold">{copy.title}</span>
+                <span className="text-small text-mutedText">{copy.description}</span>
+              </Button>
+            );
+          })}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {quickBands.map((value) => (
-            <Button
-              key={value}
-              type="button"
-              variant={band === value ? 'primary' : 'secondary'}
-              className="rounded-ds-xl"
-              onClick={() => setBand(value)}
-            >
-              {value}
-            </Button>
-          ))}
-        </div>
-        <p className="text-small text-mutedText">
-          Most universities ask for 6.5–7.0. Aim 0.5 higher to give yourself a buffer on test day.
-        </p>
       </div>
     );
   }
 
   if (step === 2) {
     return (
-      <div className="grid gap-4">
+      <div className="space-y-4">
+        <Input
+          type="number"
+          label="Target overall band"
+          min={4}
+          max={9}
+          step={0.5}
+          value={form.goalBand}
+          onChange={(event) => updateForm('goalBand', event.target.value)}
+          helperText="Most universities aim for 6.5–7.0. Setting your target 0.5 higher gives breathing room."
+        />
+        <div className="flex flex-wrap gap-2">
+          {quickBands.map((band) => {
+            const selected = form.goalBand === band;
+            return (
+              <Button
+                key={band}
+                type="button"
+                variant={selected ? 'primary' : 'secondary'}
+                className="rounded-ds-xl"
+                onClick={() => updateForm('goalBand', band)}
+              >
+                {band}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="space-y-4">
         <Input
           type="date"
           label="IELTS exam date"
-          value={examDate}
-          onChange={(e) => setExamDate(e.target.value)}
-          helperText="Not sure yet? Leave blank and we’ll suggest a four-week ramp-up."
+          value={form.examDate}
+          onChange={(event) => updateForm('examDate', event.target.value)}
+          helperText="Leave blank if you haven’t booked yet—we’ll suggest a four-week ramp."
         />
         <p className="text-small text-mutedText">
-          We’ll pace mocks and AI-evaluated writing tasks to help you peak at the right time.
+          We’ll pace mocks, AI-evaluated writing, and speaking drills so you peak near your exam.
         </p>
       </div>
     );
   }
 
-  return (
-    <div className="grid gap-4">
-      <label className="flex items-start gap-3 rounded-ds-xl border border-border/60 bg-card/60 p-4">
-        <Checkbox
-          checked={optIn}
-          onCheckedChange={(checked) => setOptIn(Boolean(checked))}
-        />
+  if (step === 4) {
+    return (
+      <div className="space-y-5">
         <div>
-          <div className="font-semibold">Send me WhatsApp nudges</div>
-          <p className="text-small text-mutedText">
-            2–3 gentle reminders per week with study prompts and quick wins. You can opt out any time.
-          </p>
+          <p className="text-small text-mutedText">Which days can you reliably dedicate to IELTS prep?</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {weekdayOptions.map((day) => {
+              const selected = form.studyDays.includes(day);
+              return (
+                <Button
+                  key={day}
+                  type="button"
+                  variant={selected ? 'primary' : 'secondary'}
+                  className="rounded-ds-xl px-3 py-2 font-semibold"
+                  onClick={() => toggleStudyDay(day)}
+                >
+                  {day}
+                </Button>
+              );
+            })}
+          </div>
         </div>
-      </label>
-      {optIn && (
+        <Input
+          type="number"
+          label="Minutes per study day"
+          min={15}
+          max={240}
+          step={5}
+          value={form.minutesPerDay}
+          onChange={(event) => updateForm('minutesPerDay', event.target.value)}
+          helperText="We recommend at least 45 focused minutes. Your plan will adapt to this budget."
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Checkbox
+        checked={form.whatsappOptIn}
+        onCheckedChange={(checked) => updateForm('whatsappOptIn', Boolean(checked))}
+        label="Send me WhatsApp nudges"
+        description="2–3 gentle reminders per week with prompts, checklists, and next steps."
+      />
+      {form.whatsappOptIn ? (
         <Input
           label="WhatsApp number"
           placeholder="+14155552671"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={form.phone}
+          onChange={(event) => updateForm('phone', event.target.value)}
+          helperText="Use your full international number including country code."
           error={phoneError ?? undefined}
-          helperText="We’ll only use this for study reminders. Standard carrier charges may apply."
         />
-      )}
-      {!optIn && (
+      ) : (
         <p className="text-small text-mutedText">
-          Prefer email? No problem — you can enable WhatsApp reminders later from Settings › Notifications.
+          Prefer email? Enable WhatsApp reminders later from Settings → Notifications.
         </p>
       )}
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="space-y-3">
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-10 w-3/4" />
+      <Skeleton className="h-6 w-1/2" />
     </div>
   );
 }

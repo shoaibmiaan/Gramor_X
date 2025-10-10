@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/design-system/Button';
+import { emitUserEvent } from '@/lib/analytics/user';
 
 type Props = {
   resourceId: string;
@@ -36,12 +37,15 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
     const body: Record<string, string> = { resource_id: resourceId };
     if (type) body.type = type;
     if (saved) {
-      await fetch(`/api/saved/${category}`, {
+      const res = await fetch(`/api/saved/${category}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      setSaved(false);
+      if (res.ok) {
+        setSaved(false);
+        void emitUserEvent('saved_remove', { step: null, delta: -1, category, resourceId });
+      }
     } else {
       await fetch(`/api/saved/${category}`, {
         method: 'POST',
