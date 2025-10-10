@@ -1,60 +1,145 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-/** ---- minimal message registry ---- */
-type Messages = Record<string, any>;
-const registry: Record<string, Messages> = {};   // e.g. { en: { home: { title: "…" } } }
-let currentLocale = "en";
+import { defaultLocale, supportedLocales, type SupportedLocale } from '@/lib/i18n/config';
 
-/** Deep lookup: "a.b.c" -> obj.a?.b?.c */
+export type Locale = SupportedLocale;
+export type Messages = Record<string, any>;
+
+const STORAGE_KEY = 'gramor:locale';
+const rtlLocales = new Set<Locale>(['ur']);
+
+const registry: Record<string, Messages> = {};
+let currentLocale: Locale = defaultLocale;
+
+function deepMerge(target: Messages, source: Messages): Messages {
+  const result = { ...target } as Messages;
+  for (const [key, value] of Object.entries(source)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      result[key] = deepMerge((target[key] as Messages) ?? {}, value as Messages);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+function toSupported(value?: string | null): Locale {
+  if (!value) return defaultLocale;
+  const normalised = value.toLowerCase().split('-')[0];
+  return (supportedLocales as string[]).includes(normalised) ? (normalised as Locale) : defaultLocale;
+}
+
+export const toSupportedLocale = toSupported;
+
+function applyDocumentAttributes(locale: Locale) {
+  if (typeof document === 'undefined') return;
+  const dir = rtlLocales.has(locale) ? 'rtl' : 'ltr';
+  document.documentElement.dir = dir;
+  document.documentElement.lang = locale;
+}
+
 function get(obj: any, path: string) {
-  return path.split(".").reduce((acc, p) => (acc != null ? acc[p] : undefined), obj);
+  return path.split('.').reduce((acc, part) => (acc != null ? acc[part] : undefined), obj);
 }
 
-/** Public: register/merge messages at runtime (optional) */
 export function registerMessages(locale: string, messages: Messages) {
-  registry[locale] = { ...(registry[locale] || {}), ...messages };
+  const key = toSupported(locale);
+  registry[key] = deepMerge(registry[key] ?? {}, messages);
 }
 
-/** ---- core API (module-safe) ---- */
 export function setLocale(locale: string) {
-  currentLocale = locale || "en";
+  currentLocale = toSupported(locale);
+  applyDocumentAttributes(currentLocale);
 }
-export function getLocale() {
+
+export function getLocale(): Locale {
   return currentLocale;
 }
 
-/** Always-callable translator. Falls back to key or provided fallback. */
-export function t(key: string, fallback?: string): string {
-  const msg = get(registry[currentLocale] || {}, key);
-  if (typeof msg === "string") return msg;
-  return fallback ?? key;
+export function persistLocale(locale: string): Locale {
+  const next = toSupported(locale);
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // ignore storage failures (e.g. private mode)
+    }
+  }
+  setLocale(next);
+  return next;
 }
 
-/** ---- React context (optional) ---- */
-type Ctx = { locale: string; setLocale: (l: string) => void; t: typeof t };
+export function _detectLocale(fallback: string = defaultLocale): Locale {
+  if (typeof window === 'undefined') {
+    return toSupported(fallback);
+  }
+
+  const stored = window.localStorage?.getItem(STORAGE_KEY);
+  if (stored) return toSupported(stored);
+
+  const htmlLang = document.documentElement?.getAttribute('lang');
+  if (htmlLang) return toSupported(htmlLang);
+
+  const [firstChoice] = window.navigator.languages ?? [window.navigator.language];
+  if (firstChoice) return toSupported(firstChoice);
+
+  return toSupported(fallback);
+}
+
+export function isRtlLocale(locale: string): boolean {
+  return rtlLocales.has(toSupported(locale));
+}
+
+export function t(
+  key: string,
+  fallback?: string,
+  values?: Record<string, string | number>,
+): string {
+  const raw = get(registry[currentLocale] ?? {}, key);
+  const template = typeof raw === 'string' ? raw : fallback ?? key;
+  if (!values) return template;
+  return Object.entries(values).reduce(
+    (acc, [token, value]) => acc.replaceAll(`{${token}}`, String(value)),
+    template,
+  );
+}
+
+type Ctx = { locale: Locale; setLocale: (next: Locale) => void; t: typeof t };
 const LocaleCtx = createContext<Ctx | null>(null);
 
 export function useLocale(): Ctx {
-  // If not inside provider, fall back to module-level state so callers still work.
   return (
-    useContext(LocaleCtx) ?? { locale: currentLocale, setLocale, t }
+    useContext(LocaleCtx) ?? {
+      locale: currentLocale,
+      setLocale,
+      t,
+    }
   );
 }
 
 export function LocaleProvider({
-  initialLocale = "en",
+  initialLocale = defaultLocale,
   children,
 }: {
-  initialLocale?: string;
+  initialLocale?: Locale;
   children: React.ReactNode;
 }) {
-  const [locale, setLocaleState] = useState(initialLocale);
+  const [locale, setLocaleState] = useState<Locale>(toSupported(initialLocale));
 
-  // keep module-level locale in sync with provider state
   useEffect(() => {
-    currentLocale = locale;
+    const detected = _detectLocale(locale);
+    setLocaleState(detected);
+  }, []);
+
+  useEffect(() => {
+    persistLocale(locale);
   }, [locale]);
 
-  const value = useMemo<Ctx>(() => ({ locale, setLocale: setLocaleState, t }), [locale]);
+  const changeLocale = useCallback((next: Locale) => {
+    setLocaleState(toSupported(next));
+  }, []);
+
+  const value = useMemo<Ctx>(() => ({ locale, setLocale: changeLocale, t }), [locale, changeLocale]);
+
   return <LocaleCtx.Provider value={value}>{children}</LocaleCtx.Provider>;
 }

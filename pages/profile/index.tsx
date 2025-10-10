@@ -16,9 +16,11 @@ import type { Profile } from '@/types/profile';
 import { Badge } from '@/components/design-system/Badge';
 import type { Badge as BadgeType } from '@/data/badges';
 import { getUserBadges } from '@/lib/gamification';
+import { useLocale } from '@/lib/locale';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { t } = useLocale();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -80,11 +82,11 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      toastError('Please select a JPG, PNG, or WEBP image.');
+      toastError(t('profile.toasts.photo.invalidType'));
       return;
     }
     if (file.size > 3 * 1024 * 1024) {
-      toastError('Image too large. Max 3 MB.');
+      toastError(t('profile.toasts.photo.tooLarge'));
       return;
     }
     setUploading(true);
@@ -107,10 +109,10 @@ export default function ProfilePage() {
       if (profErr) throw profErr;
       setProfile((p) => (p ? { ...p, avatar_url: publicUrl } : p));
       window.dispatchEvent(new CustomEvent('profile:avatar-changed', { detail: { url: publicUrl } }));
-      toastSuccess('Photo updated');
+      toastSuccess(t('profile.toasts.photo.updated'));
     } catch (err: any) {
       console.error(err);
-      toastError(err?.message || 'Could not upload image. Please try again.');
+      toastError(err?.message || t('profile.toasts.photo.failure'));
     } finally {
       setUploading(false);
     }
@@ -130,21 +132,21 @@ export default function ProfilePage() {
       a.download = 'export.json';
       a.click();
       URL.revokeObjectURL(url);
-      toastSuccess('Export ready');
+      toastSuccess(t('profile.toasts.export.ready'));
     } catch (err: any) {
-      toastError(err?.message || 'Could not export data');
+      toastError(err?.message || t('profile.toasts.export.failure'));
     }
   };
 
   const requestDeletion = async () => {
-    if (!window.confirm('Delete your account? This cannot be undone.')) return;
+    if (!window.confirm(t('profile.confirm.delete'))) return;
     try {
       const res = await fetch('/api/account/delete', { method: 'POST' });
       if (!res.ok) throw new Error('Failed');
       await supabase.auth.signOut();
       router.replace('/');
     } catch (err: any) {
-      toastError(err?.message || 'Could not delete account');
+      toastError(err?.message || t('profile.toasts.delete.failure'));
     }
   };
 
@@ -152,7 +154,7 @@ export default function ProfilePage() {
     return (
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <Container>
-          <Card className="p-6 rounded-ds-2xl max-w-xl mx-auto">Loading…</Card>
+          <Card className="p-6 rounded-ds-2xl max-w-xl mx-auto">{t('profile.loading')}</Card>
         </Container>
       </section>
     );
@@ -164,7 +166,7 @@ export default function ProfilePage() {
         <div className="max-w-xl mx-auto space-y-6">
           <Card className="p-6 rounded-ds-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="font-slab text-display">Profile</h1>
+              <h1 className="font-slab text-display">{t('profile.title')}</h1>
               <div className="flex items-center gap-2">
                 <StreakIndicator value={streak} />
                 {earnedBadges.map((b) => (
@@ -177,7 +179,13 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4 mb-6">
               <div className="h-20 w-20 rounded-full bg-vibrantPurple/10 flex items-center justify-center overflow-hidden">
                 {profile?.avatar_url ? (
-                  <Image src={profile.avatar_url} alt="Avatar" width={80} height={80} className="h-20 w-20 object-cover" />
+                  <Image
+                    src={profile.avatar_url}
+                    alt={t('profile.photo.alt')}
+                    width={80}
+                    height={80}
+                    className="h-20 w-20 object-cover"
+                  />
                 ) : (
                   <span className="text-h2 font-semibold text-vibrantPurple">
                     {profile?.full_name?.[0] || 'U'}
@@ -190,7 +198,7 @@ export default function ProfilePage() {
                   className="text-small px-4 py-2 rounded-ds bg-vibrantPurple/10 hover:bg-vibrantPurple/15 font-medium"
                   disabled={uploading}
                 >
-                  {uploading ? 'Uploading…' : 'Change photo'}
+                  {uploading ? t('profile.photo.uploading') : t('profile.photo.change')}
                 </button>
                 <input
                   ref={fileRef}
@@ -202,32 +210,38 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="space-y-2 text-body">
-              <p><strong>Name:</strong> {profile?.full_name}</p>
-              <p><strong>Country:</strong> {profile?.country ?? '—'}</p>
-              <p><strong>English level:</strong> {profile?.english_level ?? '—'}</p>
               <p>
-                <strong>Goal band:</strong>{' '}
+                <strong>{t('profile.fields.name')}</strong> {profile?.full_name}
+              </p>
+              <p>
+                <strong>{t('profile.fields.country')}</strong> {profile?.country ?? '—'}
+              </p>
+              <p>
+                <strong>{t('profile.fields.englishLevel')}</strong> {profile?.english_level ?? '—'}
+              </p>
+              <p>
+                <strong>{t('profile.fields.goalBand')}</strong>{' '}
                 {profile?.goal_band ? profile.goal_band.toFixed(1) : '—'}
               </p>
               <p>
-                <strong>Study preferences:</strong>{' '}
+                <strong>{t('profile.fields.studyPreferences')}</strong>{' '}
                 {profile?.study_prefs?.join(', ') || '—'}
               </p>
               <p>
-                <strong>Time commitment:</strong> {profile?.time_commitment ?? '—'}
+                <strong>{t('profile.fields.timeCommitment')}</strong> {profile?.time_commitment ?? '—'}
               </p>
               <p>
-                <strong>Preferred language:</strong>{' '}
+                <strong>{t('profile.fields.language')}</strong>{' '}
                 {profile?.preferred_language ?? '—'}
               </p>
               {profile?.exam_date && (
                 <p>
-                  <strong>Exam date:</strong> {profile.exam_date}
+                  <strong>{t('profile.fields.examDate')}</strong> {profile.exam_date}
                 </p>
               )}
             </div>
             <Button href="/profile/setup" variant="secondary" className="mt-6">
-              Edit profile
+              {t('profile.actions.edit')}
             </Button>
           </Card>
 

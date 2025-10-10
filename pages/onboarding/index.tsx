@@ -10,13 +10,14 @@ import { Alert } from '@/components/design-system/Alert';
 
 import type { Profile } from '@/types/profile';
 import { fetchProfile, markOnboardingComplete, upsertProfile } from '@/lib/profile';
+import { useLocale } from '@/lib/locale';
 
 type StepId = 1 | 2 | 3;
 
-const STEPS: { id: StepId; title: string; description: string }[] = [
-  { id: 1, title: 'Target band', description: 'What score are you aiming for?' },
-  { id: 2, title: 'Exam date', description: 'When is your IELTS exam?' },
-  { id: 3, title: 'WhatsApp updates', description: 'Get gentle reminders and nudges.' },
+const STEP_CONFIG: { id: StepId; titleKey: string; descriptionKey: string }[] = [
+  { id: 1, titleKey: 'onboarding.steps.band.title', descriptionKey: 'onboarding.steps.band.description' },
+  { id: 2, titleKey: 'onboarding.steps.date.title', descriptionKey: 'onboarding.steps.date.description' },
+  { id: 3, titleKey: 'onboarding.steps.whatsapp.title', descriptionKey: 'onboarding.steps.whatsapp.description' },
 ];
 
 const quickBands = ['6.5', '7.0', '7.5', '8.0'];
@@ -32,6 +33,7 @@ const skeletonLines = [
 
 export default function OnboardingWizard() {
   const router = useRouter();
+  const { t } = useLocale();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -92,13 +94,12 @@ export default function OnboardingWizard() {
           setStep(nextStep);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to load profile';
-        if (message === 'Not authenticated') {
+        if (err instanceof Error && err.message === 'Not authenticated') {
           const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
           await router.replace(`/login${suffix}`);
           return;
         }
-        if (active) setError(message);
+        if (active) setError(t('onboarding.errors.loadProfile'));
       } finally {
         if (active) setLoading(false);
       }
@@ -120,8 +121,7 @@ export default function OnboardingWizard() {
           setStep(nextStep);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unable to save changes';
-        setError(message);
+        setError(t('onboarding.errors.saveProfile'));
         throw err;
       } finally {
         setSaving(false);
@@ -133,7 +133,7 @@ export default function OnboardingWizard() {
   const handleBandNext = async () => {
     const parsed = Number(band);
     if (Number.isNaN(parsed) || parsed < 4 || parsed > 9) {
-      setError('Choose a band between 4.0 and 9.0.');
+      setError(t('onboarding.errors.bandRange'));
       return;
     }
     await updateProfile({ goal_band: parsed, onboarding_step: 1, onboarding_complete: false }, 2);
@@ -151,7 +151,7 @@ export default function OnboardingWizard() {
     if (optIn) {
       const trimmed = phone.trim();
       if (!phoneRegex.test(trimmed)) {
-        setPhoneError('Enter a valid phone number in international format (e.g. +14155552671).');
+        setPhoneError(t('onboarding.errors.phoneFormat'));
         return;
       }
       phoneValue = trimmed;
@@ -186,8 +186,7 @@ export default function OnboardingWizard() {
       await markOnboardingComplete();
       await router.replace(nextPath);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to skip onboarding';
-      setError(message);
+      setError(t('onboarding.errors.skip'));
     }
   };
 
@@ -208,11 +207,11 @@ export default function OnboardingWizard() {
       <Container className="max-w-3xl">
         <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur">
           <header className="flex flex-col gap-2 border-b border-border/50 pb-4">
-            <span className="text-caption uppercase tracking-[0.18em] text-mutedText">Welcome aboard</span>
-            <h1 className="text-h2 font-slab">Let’s tailor your IELTS prep</h1>
-            <p className="text-small text-mutedText">
-              Three quick questions so we can personalise mocks, reminders, and feedback.
-            </p>
+            <span className="text-caption uppercase tracking-[0.18em] text-mutedText">
+              {t('onboarding.hero.eyebrow')}
+            </span>
+            <h1 className="text-h2 font-slab">{t('onboarding.hero.title')}</h1>
+            <p className="text-small text-mutedText">{t('onboarding.hero.subtitle')}</p>
           </header>
 
           <Stepper current={step} />
@@ -249,9 +248,7 @@ export default function OnboardingWizard() {
           <footer className="mt-8 flex flex-col gap-3 border-t border-border/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-caption text-mutedText">
               <span className="rounded border border-border px-1.5 py-0.5">{step}</span>
-              <span>
-                Step {step} of 3
-              </span>
+              <span>{t('onboarding.footer.step', undefined, { current: step, total: 3 })}</span>
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -262,7 +259,7 @@ export default function OnboardingWizard() {
                 disabled={step === 1 || saving}
                 onClick={back}
               >
-                Back
+                {t('onboarding.footer.back')}
               </Button>
               <Button
                 type="button"
@@ -271,7 +268,7 @@ export default function OnboardingWizard() {
                 disabled={saving}
                 onClick={skip}
               >
-                Skip for now
+                {t('onboarding.footer.skip')}
               </Button>
               <Button
                 type="button"
@@ -284,7 +281,11 @@ export default function OnboardingWizard() {
                 }}
                 disabled={loading || saving}
               >
-                {saving ? 'Saving…' : step === 3 ? 'Finish' : 'Continue'}
+                {saving
+                  ? t('onboarding.footer.saving')
+                  : step === 3
+                    ? t('onboarding.footer.finish')
+                    : t('onboarding.footer.next')}
               </Button>
             </div>
           </footer>
@@ -295,9 +296,10 @@ export default function OnboardingWizard() {
 }
 
 function Stepper({ current }: { current: StepId }) {
+  const { t } = useLocale();
   return (
-    <ol className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Onboarding steps">
-      {STEPS.map((step) => {
+    <ol className="mt-6 grid gap-3 sm:grid-cols-3" aria-label={t('onboarding.stepper.aria')}>
+      {STEP_CONFIG.map((step) => {
         const isActive = step.id === current;
         const isDone = step.id < current;
         return (
@@ -325,10 +327,14 @@ function Stepper({ current }: { current: StepId }) {
               >
                 {step.id}
               </span>
-              {isDone ? 'Done' : isActive ? 'Now' : 'Next'}
+              {isDone
+                ? t('onboarding.stepper.done')
+                : isActive
+                  ? t('onboarding.stepper.current')
+                  : t('onboarding.stepper.next')}
             </div>
-            <div className="mt-2 font-semibold text-foreground">{step.title}</div>
-            <p className="text-small text-mutedText">{step.description}</p>
+            <div className="mt-2 font-semibold text-foreground">{t(step.titleKey)}</div>
+            <p className="text-small text-mutedText">{t(step.descriptionKey)}</p>
           </li>
         );
       })}
@@ -361,19 +367,21 @@ function StepContent({
   setPhone,
   phoneError,
 }: StepContentProps) {
+  const { t } = useLocale();
+
   if (step === 1) {
     return (
       <div className="grid gap-4">
         <div>
           <Input
             type="number"
-            label="Target overall band"
+            label={t('onboarding.band.label')}
             min="4"
             max="9"
             step="0.5"
             value={band}
             onChange={(e) => setBand(e.target.value)}
-            helperText="You can update this any time from your profile."
+            helperText={t('onboarding.band.helper')}
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -389,9 +397,7 @@ function StepContent({
             </Button>
           ))}
         </div>
-        <p className="text-small text-mutedText">
-          Most universities ask for 6.5–7.0. Aim 0.5 higher to give yourself a buffer on test day.
-        </p>
+        <p className="text-small text-mutedText">{t('onboarding.band.tip')}</p>
       </div>
     );
   }
@@ -401,14 +407,12 @@ function StepContent({
       <div className="grid gap-4">
         <Input
           type="date"
-          label="IELTS exam date"
+          label={t('onboarding.date.label')}
           value={examDate}
           onChange={(e) => setExamDate(e.target.value)}
-          helperText="Not sure yet? Leave blank and we’ll suggest a four-week ramp-up."
+          helperText={t('onboarding.date.helper')}
         />
-        <p className="text-small text-mutedText">
-          We’ll pace mocks and AI-evaluated writing tasks to help you peak at the right time.
-        </p>
+        <p className="text-small text-mutedText">{t('onboarding.date.tip')}</p>
       </div>
     );
   }
@@ -421,26 +425,22 @@ function StepContent({
           onCheckedChange={(checked) => setOptIn(Boolean(checked))}
         />
         <div>
-          <div className="font-semibold">Send me WhatsApp nudges</div>
-          <p className="text-small text-mutedText">
-            2–3 gentle reminders per week with study prompts and quick wins. You can opt out any time.
-          </p>
+          <div className="font-semibold">{t('onboarding.whatsapp.optInTitle')}</div>
+          <p className="text-small text-mutedText">{t('onboarding.whatsapp.optInCopy')}</p>
         </div>
       </label>
       {optIn && (
         <Input
-          label="WhatsApp number"
+          label={t('onboarding.whatsapp.numberLabel')}
           placeholder="+14155552671"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           error={phoneError ?? undefined}
-          helperText="We’ll only use this for study reminders. Standard carrier charges may apply."
+          helperText={t('onboarding.whatsapp.numberHelper')}
         />
       )}
       {!optIn && (
-        <p className="text-small text-mutedText">
-          Prefer email? No problem — you can enable WhatsApp reminders later from Settings › Notifications.
-        </p>
+        <p className="text-small text-mutedText">{t('onboarding.whatsapp.emailFallback')}</p>
       )}
     </div>
   );

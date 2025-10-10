@@ -6,6 +6,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
+import { useLocale } from '@/lib/locale';
 
 import {
   SAVED_PAGE_SIZE,
@@ -17,8 +18,6 @@ import {
   type SavedItem,
 } from '@/lib/saved';
 
-const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
-
 type DecoratedItem = SavedItem & {
   moduleId: string;
   moduleLabel: string;
@@ -29,6 +28,7 @@ type DecoratedItem = SavedItem & {
 const keyFor = (item: SavedItem) => `${item.category || 'default'}:${item.type || 'all'}:${item.resource_id}`;
 
 export function SavedList() {
+  const { t, locale } = useLocale();
   const { data, error, isValidating, size, setSize, mutate } = useSWRInfinite(
     (pageIndex, previousPage) => {
       if (previousPage && !previousPage.hasMore) return null;
@@ -42,6 +42,40 @@ export function SavedList() {
   );
 
   const [removingKey, setRemovingKey] = useState<string | null>(null);
+
+  const formatter = useMemo(() => {
+    const resolvedLocale = locale === 'ur' ? 'ur-PK' : locale;
+    return new Intl.DateTimeFormat(resolvedLocale, { dateStyle: 'medium' });
+  }, [locale]);
+
+  const moduleLabels = useMemo(
+    () => ({
+      listening: t('saved.modules.listening'),
+      reading: t('saved.modules.reading'),
+      writing: t('saved.modules.writing'),
+      speaking: t('saved.modules.speaking'),
+      vocabulary: t('saved.modules.vocabulary'),
+      grammar: t('saved.modules.grammar'),
+      flagged: t('saved.modules.flagged'),
+      retake: t('saved.modules.retake'),
+      bookmark: t('saved.modules.bookmark'),
+      other: t('saved.modules.other'),
+    }),
+    [t],
+  );
+
+  const categoryLabels = useMemo(
+    () => ({
+      bookmark: t('saved.categories.bookmark'),
+      listening: t('saved.categories.listening'),
+      reading: t('saved.categories.reading'),
+      writing: t('saved.categories.writing'),
+      speaking: t('saved.categories.speaking'),
+      vocabulary: t('saved.categories.vocabulary'),
+      grammar: t('saved.categories.grammar'),
+    }),
+    [t],
+  );
 
   const isInitialLoading = !data && !error;
   const pages = data ?? [];
@@ -106,13 +140,11 @@ export function SavedList() {
       <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-h4 font-slab">Sign in to view saved items</h2>
-            <p className="text-small text-mutedText">
-              Bookmarks sync with your account so you can return to them anytime.
-            </p>
+            <h2 className="text-h4 font-slab">{t('saved.auth.title')}</h2>
+            <p className="text-small text-mutedText">{t('saved.auth.subtitle')}</p>
           </div>
           <Button href="/login" className="rounded-ds-xl">
-            Sign in
+            {t('saved.auth.signIn')}
           </Button>
         </div>
       </Card>
@@ -124,7 +156,7 @@ export function SavedList() {
       <Alert variant="error" className="rounded-ds-2xl" role="alert">
         {error.info && typeof error.info === 'object' && 'error' in (error.info as Record<string, unknown>)
           ? String((error.info as Record<string, unknown>).error)
-          : 'We couldn’t load your saved items right now. Please refresh and try again.'}
+          : t('saved.errors.http')}
       </Alert>
     );
   }
@@ -132,7 +164,7 @@ export function SavedList() {
   if (error && !(error instanceof HttpError)) {
     return (
       <Alert variant="error" className="rounded-ds-2xl" role="alert">
-        Something went wrong while loading your saved items. Please try again.
+        {t('saved.errors.generic')}
       </Alert>
     );
   }
@@ -156,16 +188,14 @@ export function SavedList() {
   if (empty) {
     return (
       <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
-        <h2 className="text-h4 font-slab">You haven’t saved anything yet</h2>
-        <p className="mt-2 text-small text-mutedText">
-          Bookmark practice passages, vocab lists, and AI feedback to revisit them faster.
-        </p>
+        <h2 className="text-h4 font-slab">{t('saved.empty.title')}</h2>
+        <p className="mt-2 text-small text-mutedText">{t('saved.empty.subtitle')}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button href="/reading" variant="secondary" className="rounded-ds-xl">
-            Browse reading practice
+            {t('saved.empty.actions.reading')}
           </Button>
           <Button href="/vocabulary" variant="ghost" className="rounded-ds-xl">
-            Explore vocabulary decks
+            {t('saved.empty.actions.vocabulary')}
           </Button>
         </div>
       </Card>
@@ -178,14 +208,20 @@ export function SavedList() {
         <Card key={group.id} className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
             <div>
-              <h2 className="text-h4 font-slab">{group.label}</h2>
-              <p className="text-small text-mutedText">{group.items.length} saved item{group.items.length === 1 ? '' : 's'}</p>
+              <h2 className="text-h4 font-slab">{moduleLabels[group.id] ?? group.label}</h2>
+              <p className="text-small text-mutedText">
+                {group.items.length === 1
+                  ? t('saved.group.count.one')
+                  : t('saved.group.count.other', undefined, { count: group.items.length })}
+              </p>
             </div>
           </div>
           <div className="divide-y divide-border/30">
             {group.items.map((item) => {
               const key = keyFor(item);
-              const categoryLabel = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
+              const categoryKey = (item.category ?? '').toLowerCase() || 'bookmark';
+              const defaultCategory = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
+              const categoryLabel = categoryLabels[categoryKey] ?? defaultCategory;
               return (
                 <div key={key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -197,12 +233,14 @@ export function SavedList() {
                         {categoryLabel}
                       </Badge>
                       <span aria-hidden="true">•</span>
-                      <span>Saved {formatter.format(item.createdDate)}</span>
+                      <span>
+                        {t('saved.items.savedOn', undefined, { date: formatter.format(item.createdDate) })}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button href={item.href} variant="ghost" className="rounded-ds-xl">
-                      Open
+                      {t('saved.items.open')}
                     </Button>
                     <Button
                       type="button"
@@ -210,9 +248,9 @@ export function SavedList() {
                       className="rounded-ds-xl"
                       onClick={() => handleRemove(item)}
                       loading={removingKey === key}
-                      loadingText="Removing"
+                      loadingText={t('saved.items.removing')}
                     >
-                      Remove
+                      {t('saved.items.remove')}
                     </Button>
                   </div>
                 </div>
@@ -230,9 +268,9 @@ export function SavedList() {
             className="rounded-ds-xl"
             onClick={() => setSize(size + 1)}
             loading={loadingMore}
-            loadingText="Loading"
+            loadingText={t('saved.pagination.loading')}
           >
-            Load more
+            {t('saved.pagination.more')}
           </Button>
         </div>
       )}
