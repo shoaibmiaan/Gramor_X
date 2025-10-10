@@ -19,7 +19,7 @@ import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { env } from '@/lib/env';
-import { LocaleProvider } from '@/lib/locale'; // ⬅️ UPDATED
+import { LocaleProvider, registerMessages } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 
@@ -54,6 +54,11 @@ import { HighContrastProvider } from '@/context/HighContrastContext';
 
 // ✅ NEW: global plan guard (client-side gating + ribbon)
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
+import enCommon from '@/locales/en/common.json';
+import urCommon from '@/locales/ur/common.json';
+
+registerMessages('en', enCommon as Record<string, unknown>);
+registerMessages('ur', urCommon as Record<string, unknown>);
 
 const poppins = Poppins({
   subsets: ['latin'],

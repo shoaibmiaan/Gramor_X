@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
+import clsx from 'clsx';
 import useSWRInfinite from 'swr/infinite';
 
 import { Card } from '@/components/design-system/Card';
@@ -16,12 +17,12 @@ import {
   removeSavedItem,
   type SavedItem,
 } from '@/lib/saved';
-
-const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
+import { useLocale } from '@/lib/locale';
 
 type DecoratedItem = SavedItem & {
   moduleId: string;
-  moduleLabel: string;
+  moduleLabelKey: string;
+  moduleLabelFallback: string;
   href: string;
   createdDate: Date;
 };
@@ -29,6 +30,7 @@ type DecoratedItem = SavedItem & {
 const keyFor = (item: SavedItem) => `${item.category || 'default'}:${item.type || 'all'}:${item.resource_id}`;
 
 export function SavedList() {
+  const { t, isRTL, locale } = useLocale();
   const { data, error, isValidating, size, setSize, mutate } = useSWRInfinite(
     (pageIndex, previousPage) => {
       if (previousPage && !previousPage.hasMore) return null;
@@ -43,6 +45,11 @@ export function SavedList() {
 
   const [removingKey, setRemovingKey] = useState<string | null>(null);
 
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale || undefined, { dateStyle: 'medium' }),
+    [locale],
+  );
+
   const isInitialLoading = !data && !error;
   const pages = data ?? [];
   const allItems = pages.flatMap((page) => page.items);
@@ -54,7 +61,8 @@ export function SavedList() {
         return {
           ...item,
           moduleId: module.id,
-          moduleLabel: module.label,
+          moduleLabelKey: module.labelKey,
+          moduleLabelFallback: module.fallback,
           href: buildSavedLink(item),
           createdDate: new Date(item.created_at),
         };
@@ -63,13 +71,17 @@ export function SavedList() {
   );
 
   const grouped = useMemo(() => {
-    const map = new Map<string, { label: string; items: DecoratedItem[] }>();
+    const map = new Map<string, { labelKey: string; labelFallback: string; items: DecoratedItem[] }>();
     for (const item of decorated) {
       const current = map.get(item.moduleId);
       if (current) {
         current.items.push(item);
       } else {
-        map.set(item.moduleId, { label: item.moduleLabel, items: [item] });
+        map.set(item.moduleId, {
+          labelKey: item.moduleLabelKey,
+          labelFallback: item.moduleLabelFallback,
+          items: [item],
+        });
       }
     }
     return Array.from(map.entries()).map(([id, value]) => ({ id, ...value }));
@@ -106,13 +118,11 @@ export function SavedList() {
       <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-h4 font-slab">Sign in to view saved items</h2>
-            <p className="text-small text-mutedText">
-              Bookmarks sync with your account so you can return to them anytime.
-            </p>
+            <h2 className="text-h4 font-slab">{t('saved.authRequired.title')}</h2>
+            <p className="text-small text-mutedText">{t('saved.authRequired.description')}</p>
           </div>
           <Button href="/login" className="rounded-ds-xl">
-            Sign in
+            {t('saved.actions.signIn')}
           </Button>
         </div>
       </Card>
@@ -124,7 +134,7 @@ export function SavedList() {
       <Alert variant="error" className="rounded-ds-2xl" role="alert">
         {error.info && typeof error.info === 'object' && 'error' in (error.info as Record<string, unknown>)
           ? String((error.info as Record<string, unknown>).error)
-          : 'We couldn’t load your saved items right now. Please refresh and try again.'}
+          : t('saved.errors.loadFailed')}
       </Alert>
     );
   }
@@ -132,7 +142,7 @@ export function SavedList() {
   if (error && !(error instanceof HttpError)) {
     return (
       <Alert variant="error" className="rounded-ds-2xl" role="alert">
-        Something went wrong while loading your saved items. Please try again.
+        {t('saved.errors.generic')}
       </Alert>
     );
   }
@@ -156,16 +166,14 @@ export function SavedList() {
   if (empty) {
     return (
       <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
-        <h2 className="text-h4 font-slab">You haven’t saved anything yet</h2>
-        <p className="mt-2 text-small text-mutedText">
-          Bookmark practice passages, vocab lists, and AI feedback to revisit them faster.
-        </p>
+        <h2 className="text-h4 font-slab">{t('saved.empty.title')}</h2>
+        <p className="mt-2 text-small text-mutedText">{t('saved.empty.description')}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button href="/reading" variant="secondary" className="rounded-ds-xl">
-            Browse reading practice
+            {t('saved.empty.cta.reading')}
           </Button>
           <Button href="/vocabulary" variant="ghost" className="rounded-ds-xl">
-            Explore vocabulary decks
+            {t('saved.empty.cta.vocabulary')}
           </Button>
         </div>
       </Card>
@@ -178,14 +186,16 @@ export function SavedList() {
         <Card key={group.id} className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
             <div>
-              <h2 className="text-h4 font-slab">{group.label}</h2>
-              <p className="text-small text-mutedText">{group.items.length} saved item{group.items.length === 1 ? '' : 's'}</p>
+              <h2 className="text-h4 font-slab">{t(group.labelKey, group.labelFallback)}</h2>
+              <p className="text-small text-mutedText">{t('saved.group.count', { count: group.items.length })}</p>
             </div>
           </div>
           <div className="divide-y divide-border/30">
             {group.items.map((item) => {
               const key = keyFor(item);
-              const categoryLabel = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
+              const categoryKey = item.category ? `saved.categories.${item.category}` : 'saved.categories.bookmark';
+              const fallbackCategory = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
+              const categoryLabel = t(categoryKey, fallbackCategory);
               return (
                 <div key={key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -193,16 +203,19 @@ export function SavedList() {
                       {item.resource_id}
                     </Link>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-caption text-mutedText">
-                      <Badge variant="neutral" className="uppercase tracking-[0.18em]">
+                      <Badge
+                        variant="neutral"
+                        className={clsx('tracking-[0.18em]', !isRTL && 'uppercase')}
+                      >
                         {categoryLabel}
                       </Badge>
                       <span aria-hidden="true">•</span>
-                      <span>Saved {formatter.format(item.createdDate)}</span>
+                      <span>{t('saved.item.savedOn', { date: dateFormatter.format(item.createdDate) })}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button href={item.href} variant="ghost" className="rounded-ds-xl">
-                      Open
+                      {t('saved.actions.open')}
                     </Button>
                     <Button
                       type="button"
@@ -210,9 +223,9 @@ export function SavedList() {
                       className="rounded-ds-xl"
                       onClick={() => handleRemove(item)}
                       loading={removingKey === key}
-                      loadingText="Removing"
+                      loadingText={t('saved.actions.removing')}
                     >
-                      Remove
+                      {t('saved.actions.remove')}
                     </Button>
                   </div>
                 </div>
@@ -230,9 +243,9 @@ export function SavedList() {
             className="rounded-ds-xl"
             onClick={() => setSize(size + 1)}
             loading={loadingMore}
-            loadingText="Loading"
+            loadingText={t('saved.actions.loading')}
           >
-            Load more
+            {t('saved.actions.loadMore')}
           </Button>
         </div>
       )}
