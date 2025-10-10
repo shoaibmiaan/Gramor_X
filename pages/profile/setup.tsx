@@ -12,6 +12,7 @@ import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { COUNTRIES, LEVELS, TIME, PREFS, WEAKNESSES, GOAL_REASONS, LEARNING_STYLES } from '@/lib/profile-options';
+import { resolveAvatarUrl } from '@/lib/avatar';
 import type { AIPlan } from '@/types/profile';
 
 /** ——— UI helpers ——— */
@@ -67,6 +68,7 @@ export default function ProfileSetup() {
   const [lang, setLang] = useState('en');
   const [explanationLang, setExplanationLang] = useState('en');
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
+  const [avatarPath, setAvatarPath] = useState<string | undefined>();
   const [ai, setAi] = useState<(AIPlan & { source?: string }) | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -161,7 +163,14 @@ export default function ProfileSetup() {
         setLocale(data.preferred_language ?? 'en');
         setExplanationLang(data.language_preference ?? 'en');
         setExplanationLocale(data.language_preference ?? 'en');
-        setAvatarUrl(data.avatar_url ?? undefined);
+        if (data.avatar_url) {
+          const resolved = await resolveAvatarUrl(data.avatar_url);
+          setAvatarUrl(resolved.signedUrl ?? undefined);
+          setAvatarPath(resolved.path ?? undefined);
+        } else {
+          setAvatarUrl(undefined);
+          setAvatarPath(undefined);
+        }
         try {
           const rec = (data.ai_recommendation as AIPlan | null) ?? null;
           if (rec && (rec.suggestedGoal || rec.sequence?.length)) setAi(rec);
@@ -402,7 +411,7 @@ export default function ProfileSetup() {
       days_per_week: daysPerWeek || null,
       preferred_language: lang || 'en',
       language_preference: explanationLang || 'en',
-      avatar_url: avatarUrl || null,
+      avatar_url: avatarPath || null,
       goal_reason: goalReasons,
       learning_style: learningStyle || null,
       ai_recommendation: ai
@@ -726,9 +735,11 @@ export default function ProfileSetup() {
                       <AvatarUploader
                         userId={userId}
                         initialUrl={avatarUrl}
-                        onUploaded={async (url) => {
-                          setAvatarUrl(url);
-                          await supabase.auth.updateUser({ data: { avatar_url: url } });
+                        initialPath={avatarPath}
+                        onUploaded={async ({ signedUrl, path }) => {
+                          setAvatarUrl(signedUrl ?? undefined);
+                          setAvatarPath(path);
+                          await supabase.auth.updateUser({ data: { avatar_path: path, avatar_url: path } });
                         }}
                       />
                     </div>

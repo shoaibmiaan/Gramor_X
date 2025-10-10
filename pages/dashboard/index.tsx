@@ -21,6 +21,7 @@ import { HeaderStreakChip } from '@/components/feature/HeaderStreakChip';
 
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
+import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 import dynamic from 'next/dynamic';
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
@@ -252,6 +253,7 @@ export default function Dashboard() {
   const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
+  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -306,9 +308,9 @@ export default function Dashboard() {
             )}
             {streak >= 7 && <Badge variant="success" size="sm">🔥 {streak}-day streak!</Badge>}
 
-            {profile?.avatar_url ? (
+            {profileAvatarUrl ? (
               <Image
-                src={profile.avatar_url}
+                src={profileAvatarUrl}
                 alt="Avatar"
                 width={56}
                 height={56}
