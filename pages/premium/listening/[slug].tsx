@@ -50,7 +50,14 @@ export default function ListeningExam() {
       answerSheet={answerSheet}
     >
       <div className="pr-space-y-4">
-        <PrAudioPlayer src="/audio/sample-listening.mp3" />
+        <PrAudioPlayer
+          src="/audio/sample-listening.mp3"
+          missingFixtureHint={
+            <span>
+              Sample audio missing. Run <code>./scripts/generate-listening-fixtures.sh</code> to recreate fixtures.
+            </span>
+          }
+        />
         <div className="pr-rounded-xl pr-border pr-border-[var(--pr-border)] pr-p-4 pr-bg-[var(--pr-card)]">
           <h3 className="pr-font-semibold">Questions (Part {part})</h3>
           <ol className="pr-list-decimal pr-ml-6 pr-mt-2 pr-space-y-2">
