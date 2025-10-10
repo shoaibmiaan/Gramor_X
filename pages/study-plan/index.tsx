@@ -7,6 +7,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { useToast } from '@/components/design-system/Toaster';
+import { UpgradeBanner } from '@/components/premium/UpgradeBanner';
 
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
@@ -19,6 +20,7 @@ import { PlanCard } from '@/components/study/PlanCard';
 import { WeekGrid } from '@/components/study/WeekGrid';
 import { StreakChip } from '@/components/user/StreakChip';
 import { coerceStudyPlan, planDayKey } from '@/utils/studyPlan';
+import { usePlan } from '@/hooks/usePlan';
 
 const PRESETS: ReadonlyArray<StudyPlanPreset> = [
   {
@@ -71,6 +73,8 @@ export default function StudyPlanPage() {
 
   const { success: toastSuccess, error: toastError } = useToast();
   const { current: streak, loading: streakLoading, completeToday, reload: reloadStreak } = useStreak();
+  const { plan: subscriptionPlan, loading: planLoading } = usePlan();
+  const showUpgradeBanner = !planLoading && subscriptionPlan === 'free';
 
   const loadPlan = useCallback(async () => {
     setLoading(true);
@@ -231,6 +235,17 @@ export default function StudyPlanPage() {
             </Button>
           </div>
         </div>
+
+        {showUpgradeBanner && (
+          <UpgradeBanner
+            className="mt-6"
+            pillLabel="Explorer · Free plan"
+            title="Refresh your study plan without limits"
+            description="Premium auto-adjusts your calendar, adds weekly mock recommendations, and sends WhatsApp nudges when you fall behind."
+            href="/pricing?from=study-plan-upgrade"
+            feature="Adaptive study plan"
+          />
+        )}
 
         <div className="mt-10 space-y-8">
           {loading ? (

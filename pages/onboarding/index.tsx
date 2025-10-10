@@ -7,9 +7,11 @@ import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
 import { Checkbox } from '@/components/design-system/Checkbox';
 import { Alert } from '@/components/design-system/Alert';
+import { UpgradeBanner } from '@/components/premium/UpgradeBanner';
 
 import type { Profile } from '@/types/profile';
 import { fetchProfile, markOnboardingComplete, upsertProfile } from '@/lib/profile';
+import { usePlan } from '@/hooks/usePlan';
 
 type StepId = 1 | 2 | 3;
 
@@ -49,6 +51,9 @@ export default function OnboardingWizard() {
     const qNext = typeof router.query.next === 'string' ? router.query.next : null;
     return qNext && qNext.startsWith('/') ? qNext : '/dashboard';
   }, [router.query.next]);
+
+  const { plan, loading: planLoading } = usePlan();
+  const showUpgradeBanner = !planLoading && plan === 'free';
 
   useEffect(() => {
     let active = true;
@@ -216,6 +221,17 @@ export default function OnboardingWizard() {
           </header>
 
           <Stepper current={step} />
+
+          {showUpgradeBanner && (
+            <UpgradeBanner
+              className="mt-4"
+              pillLabel="Explorer · Free plan"
+              title="Unlock the full onboarding coach"
+              description="Premium keeps your study plan adaptive, unlocks unlimited AI writing and speaking feedback, and powers WhatsApp nudges that follow your real progress."
+              href="/pricing?from=onboarding-upgrade"
+              feature="Personalised onboarding coach"
+            />
+          )}
 
           {error && (
             <Alert variant="error" className="mt-4" role="alert">
