@@ -18,6 +18,11 @@
     .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border)}
     .badge.ok{background:#0f1d17;color:#a9efd4}
     .badge.warn{background:#241c0f;color:#f5d39e}
+    table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+    th,td{padding:10px;border:1px solid var(--border);vertical-align:top}
+    th{background:#151826;text-align:left;color:#cfd5e3}
+    tbody tr:nth-child(odd){background:#10121a}
+    .status{display:inline-flex;align-items:center;gap:6px}
     ul{line-height:1.5}
     nav{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 16px}
     nav a{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);text-decoration:none}
@@ -117,7 +122,7 @@
     <li><strong>Streak Shield</strong> (<a href="/streak">/streak</a>): limited “sick‑day” tokens to protect long streaks without breaking habit psychology.</li>
   </ul>
 
-  <p class="muted">Deep links: 
+  <p class="muted">Deep links:
     <a href="/login">/login</a> · 
     <a href="/signup">/signup</a> · 
     <a href="/dashboard">/dashboard</a> · 
@@ -138,6 +143,54 @@
     <a href="/offline">/offline</a> · 
     <a href="/readiness">/readiness</a>
   </p>
+
+  <h3>Analytics QA — Event Verification</h3>
+  <p>Validated Trackor instrumentation for user journeys spanning onboarding, profile management, study plan adjustments, and saved items. All events fired with the expected schema in Amplitude (raw feed) and surfaced in QA dashboards.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Event</th>
+        <th>Trigger Surface</th>
+        <th>Payload Highlights</th>
+        <th>QA Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>onboarding_step_submitted</code></td>
+        <td>Signup wizard · steps: welcome → goals → schedule → review</td>
+        <td>user_id, step_id, completion_state, goal_band, exam_date, weak_skills[]</td>
+        <td class="status"><span class="badge ok">pass</span>Payload matches spec; verified sequencing and timers; appears in "Onboarding Funnel" board.</td>
+      </tr>
+      <tr>
+        <td><code>profile_updated</code></td>
+        <td>Profile &gt; About tab (avatar upload, timezone, preferences)</td>
+        <td>user_id, field_changed, previous_value, new_value, surface</td>
+        <td class="status"><span class="badge ok">pass</span>Observed diff payloads in QA logs; reflected on "User Pref Updates" dashboard cards.</td>
+      </tr>
+      <tr>
+        <td><code>study_plan_adjusted</code></td>
+        <td>Study Plan page (AI recommendation acceptance/decline)</td>
+        <td>user_id, adjustment_type, plan_id, reason_code, next_review_at</td>
+        <td class="status"><span class="badge ok">pass</span>Payload conforms; decline scenario captured and shows in "Plan Health" metrics.</td>
+      </tr>
+      <tr>
+        <td><code>saved_item_toggled</code></td>
+        <td>Any practice review (bookmark flag &amp; queue)</td>
+        <td>user_id, content_type, content_id, action (saved|removed), source</td>
+        <td class="status"><span class="badge ok">pass</span>Confirmed both add/remove fire; counts line up with Saved Items dashboard.</td>
+      </tr>
+      <tr>
+        <td><code>dashboard_widget_viewed</code></td>
+        <td>User dashboard (streaks, tasks, AI tips)</td>
+        <td>user_id, widget_id, time_on_widget, study_plan_day</td>
+        <td class="status"><span class="badge ok">pass</span>Time-on-task payload recorded; QA widget view chart updates within SLA.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Next QA Sweep</strong>: regression spot-check scheduled for next release (UO-G6 dependency) to ensure no schema drift when integrating referral prompts into onboarding.</p>
 </section>
 
 </div>
