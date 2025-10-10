@@ -21,6 +21,7 @@ import { HeaderStreakChip } from '@/components/feature/HeaderStreakChip';
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import dynamic from 'next/dynamic';
+import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
 import GapToGoal from '@/components/visa/GapToGoal';
@@ -188,6 +189,7 @@ export default function Dashboard() {
   const ai: AIPlan = (profile?.ai_recommendation ?? {}) as AIPlan;
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
+  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -237,9 +239,9 @@ export default function Dashboard() {
             )}
             {streak >= 7 && <Badge variant="success" size="sm">🔥 {streak}-day streak!</Badge>}
 
-            {profile?.avatar_url ? (
+            {profileAvatarUrl ? (
               <Image
-                src={profile.avatar_url}
+                src={profileAvatarUrl}
                 alt="Avatar"
                 width={56}
                 height={56}

@@ -1,15 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
-import { generateStudyPlan } from '@/lib/studyPlan';
+import { PlanGenOptionsSchema, generateStudyPlan } from '@/lib/studyPlan';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { StudyPlanSchema, type StudyPlan } from '@/types/plan';
 
-const bodySchema = z.object({
-  preset: z.string().min(1).max(32).optional(),
-  weeks: z.number().int().min(1).max(12).default(4),
-  startISO: z.string().datetime().optional(),
-});
+const bodySchema = z
+  .object({
+    preset: z.string().min(1).max(32).optional(),
+  })
+  .merge(PlanGenOptionsSchema.omit({ userId: true }));
 
 type QuickStartResponse =
   | { ok: true; plan: StudyPlan; preset?: string }
@@ -50,10 +50,11 @@ export default async function handler(
     return res.status(401).json({ ok: false, error: 'unauthorized' });
   }
 
+  const { preset, ...planInput } = parsed;
+
   const plan = generateStudyPlan({
     userId: user.id,
-    weeks: parsed.weeks,
-    startISO: parsed.startISO,
+    ...planInput,
   });
 
   let validPlan: StudyPlan;
@@ -82,5 +83,5 @@ export default async function handler(
     return res.status(500).json({ ok: false, error: 'plan_save_failed' });
   }
 
-  return res.status(200).json({ ok: true, plan: validPlan, preset: parsed.preset });
+  return res.status(200).json({ ok: true, plan: validPlan, preset });
 }
