@@ -1,44 +1,87 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
+
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
-import { Toggle } from '@/components/design-system/Toggle';
-import { StreakIndicator } from '@/components/design-system/StreakIndicator';
-import { SavedItems } from '@/components/dashboard/SavedItems';
-import { useStreak } from '@/hooks/useStreak';
-import Image from "next/image";
-import { supabase } from '@/lib/supabaseClient'; // Now using the single source of truth for supabase
-import { useToast } from '@/components/design-system/Toaster';
-import type { Profile } from '@/types/profile';
+import { Input } from '@/components/design-system/Input';
+import { Select } from '@/components/design-system/Select';
 import { Badge } from '@/components/design-system/Badge';
-import type { Badge as BadgeType } from '@/data/badges';
-import { getUserBadges } from '@/lib/gamification';
+import { StreakIndicator } from '@/components/design-system/StreakIndicator';
+import { AvatarUploader } from '@/components/design-system/AvatarUploader';
+import { useToast } from '@/components/design-system/Toaster';
+import { useStreak } from '@/hooks/useStreak';
+import { useSignedAvatar } from '@/hooks/useSignedAvatar';
+import { isStoragePath } from '@/lib/avatar';
+import { supabase } from '@/lib/supabaseClient';
+import type { Profile } from '@/types/profile';
+
+const LANGUAGE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'ur', label: 'Urdu' },
+  { value: 'ar', label: 'Arabic' },
+  { value: 'hi', label: 'Hindi' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'fr', label: 'French' },
+  { value: 'fa', label: 'Farsi' },
+];
+
+type FieldErrors = {
+  fullName?: string;
+  preferredLanguage?: string;
+  goalBand?: string;
+  examDate?: string;
+};
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [commOptIn, setCommOptIn] = useState(true);
-  const [historyText, setHistoryText] = useState('');
-  const fileRef = useRef<HTMLInputElement | null>(null);
   const { error: toastError, success: toastSuccess } = useToast();
   const { current: streak } = useStreak();
-  const [earnedBadges, setEarnedBadges] = useState<BadgeType[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [avatarPath, setAvatarPath] = useState<string | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState('en');
+  const [goalBand, setGoalBand] = useState('');
+  const [examDate, setExamDate] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const displayedLanguageOptions = useMemo(() => {
+    if (!preferredLanguage) return LANGUAGE_OPTIONS;
+    if (LANGUAGE_OPTIONS.some((option) => option.value === preferredLanguage)) {
+      return LANGUAGE_OPTIONS;
+    }
+    return [...LANGUAGE_OPTIONS, { value: preferredLanguage, label: preferredLanguage.toUpperCase() }];
+  }, [preferredLanguage]);
+
+  const rawAvatarValue = useMemo(() => {
+    if (avatarPath) return avatarPath;
+    return profile?.avatar_url ?? null;
+  }, [avatarPath, profile?.avatar_url]);
+
+  const { signedUrl: avatarUrl } = useSignedAvatar(rawAvatarValue);
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
+
     (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (!session?.user) {
           router.replace('/login');
           return;
         }
+
+        if (cancelled) return;
 
         setUserId(session.user.id);
 
@@ -53,100 +96,130 @@ export default function ProfilePage() {
           return;
         }
 
-        setProfile(data as Profile);
-        setCommOptIn((data as any).marketing_opt_in ?? true);
-        setHistoryText((data as any).study_history ?? '');
+        const nextProfile = data as Profile;
+        const rawGoal = nextProfile.goal_band;
+        const goalString = typeof rawGoal === 'number' ? rawGoal.toFixed(1) : '';
 
-        // Load user badges as well (from the other branch)
-        try {
-          const userBadges = await getUserBadges(session.user.id);
-          setEarnedBadges(userBadges);
-        } catch (e) {
-          console.warn('Failed to load badges', e);
-        }
-
-        setLoading(false);
-      } catch (e) {
-        console.error('Error during profile fetch:', e);
+        setProfile(nextProfile);
+        setFullName(nextProfile.full_name ?? '');
+        setPreferredLanguage(nextProfile.preferred_language ?? 'en');
+        setGoalBand(goalString);
+        setExamDate(nextProfile.exam_date?.slice?.(0, 10) ?? '');
+        setAvatarPath(isStoragePath(nextProfile.avatar_url ?? null) ? nextProfile.avatar_url ?? null : null);
+      } catch (error) {
+        console.error('Error during profile fetch:', error);
         router.replace('/profile/setup');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
-  const triggerUpload = () => fileRef.current?.click();
+  const validate = () => {
+    const errors: FieldErrors = {};
+    const trimmedName = fullName.trim();
+    if (!trimmedName) {
+      errors.fullName = 'Name is required.';
+    }
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      toastError('Please select a JPG, PNG, or WEBP image.');
+    if (!preferredLanguage) {
+      errors.preferredLanguage = 'Select a language.';
+    } else if (!LANGUAGE_OPTIONS.some((option) => option.value === preferredLanguage)) {
+      errors.preferredLanguage = 'Select a supported language.';
+    }
+
+    let parsedGoal: number | null = null;
+    if (goalBand.trim()) {
+      parsedGoal = Number(goalBand);
+      const isValidNumber = Number.isFinite(parsedGoal);
+      const isInRange = parsedGoal >= 4 && parsedGoal <= 9;
+      const isHalfStep = Math.abs(parsedGoal * 2 - Math.round(parsedGoal * 2)) < 0.001;
+      if (!isValidNumber || !isInRange || !isHalfStep) {
+        errors.goalBand = 'Target band must be between 4.0 and 9.0 in 0.5 steps.';
+      }
+    }
+
+    if (examDate) {
+      const parsedDate = new Date(examDate);
+      if (Number.isNaN(parsedDate.getTime())) {
+        errors.examDate = 'Enter a valid exam date.';
+      } else {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (parsedDate < today) {
+          errors.examDate = 'Exam date cannot be in the past.';
+        }
+      }
+    }
+
+    setFieldErrors(errors);
+
+    return { isValid: Object.keys(errors).length === 0, parsedGoal, trimmedName };
+  };
+
+  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!profile || !userId) return;
+
+    const { isValid, parsedGoal, trimmedName } = validate();
+    if (!isValid) {
+      toastError('Please fix the highlighted fields.');
       return;
     }
-    if (file.size > 3 * 1024 * 1024) {
-      toastError('Image too large. Max 3 MB.');
-      return;
-    }
-    setUploading(true);
+
+    const nextProfile: Profile = {
+      ...profile,
+      full_name: trimmedName,
+      preferred_language: preferredLanguage,
+      goal_band: parsedGoal,
+      exam_date: examDate || null,
+      avatar_url: avatarPath ?? profile.avatar_url ?? null,
+    };
+
+    const prevProfile = profile;
+
+    setProfile(nextProfile);
+    setSaving(true);
+
     try {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `${userId}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, {
-        upsert: true,
-        contentType: file.type,
-      });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
-      const publicUrl = pub.publicUrl;
-      const { error: updErr } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
-      if (updErr) throw updErr;
-      const { error: profErr } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({
+          full_name: trimmedName,
+          preferred_language: preferredLanguage,
+          goal_band: parsedGoal,
+          exam_date: examDate || null,
+          avatar_url: avatarPath ?? profile.avatar_url ?? null,
+        })
         .eq('user_id', userId);
-      if (profErr) throw profErr;
-      setProfile((p) => (p ? { ...p, avatar_url: publicUrl } : p));
-      window.dispatchEvent(new CustomEvent('profile:avatar-changed', { detail: { url: publicUrl } }));
-      toastSuccess('Photo updated');
-    } catch (err: any) {
-      console.error(err);
-      toastError(err?.message || 'Could not upload image. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  };
 
-  const requestExport = async () => {
-    try {
-      const res = await fetch('/api/account/export');
-      if (!res.ok) throw new Error('Failed');
-      const json = await res.json();
-      const blob = new Blob([JSON.stringify(json, null, 2)], {
-        type: 'application/json',
+      if (error) throw error;
+
+      await supabase.auth.updateUser({
+        data: {
+          full_name: trimmedName,
+          preferred_language: preferredLanguage,
+          avatar_path: avatarPath ?? null,
+          avatar_url: avatarPath ?? null,
+        },
       });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'export.json';
-      a.click();
-      URL.revokeObjectURL(url);
-      toastSuccess('Export ready');
-    } catch (err: any) {
-      toastError(err?.message || 'Could not export data');
+
+      setFieldErrors({});
+      toastSuccess('Profile updated.');
+    } catch (error) {
+      console.error('Profile update failed:', error);
+      setProfile(prevProfile);
+      toastError(error instanceof Error ? error.message : 'Could not update profile.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const requestDeletion = async () => {
-    if (!window.confirm('Delete your account? This cannot be undone.')) return;
-    try {
-      const res = await fetch('/api/account/delete', { method: 'POST' });
-      if (!res.ok) throw new Error('Failed');
-      await supabase.auth.signOut();
-      router.replace('/');
-    } catch (err: any) {
-      toastError(err?.message || 'Could not delete account');
-    }
-  };
+  const isPremium = profile?.role ? profile.role.toLowerCase() === 'premium' : false;
 
   if (loading) {
     return (
@@ -161,78 +234,116 @@ export default function ProfilePage() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <div className="max-w-xl mx-auto space-y-6">
-          <Card className="p-6 rounded-ds-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="font-slab text-display">Profile</h1>
-              <div className="flex items-center gap-2">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Card className="p-6 md:p-8 rounded-ds-2xl">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div>
+                <h1 className="font-slab text-display leading-tight">Profile</h1>
+                <p className="text-muted-foreground text-small">Update your essentials in one place.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {isPremium && <Badge variant="accent">Premium</Badge>}
                 <StreakIndicator value={streak} />
-                {earnedBadges.map((b) => (
-                  <Badge key={b.id} size="sm">
-                    {b.icon}
-                  </Badge>
-                ))}
               </div>
             </div>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-20 w-20 rounded-full bg-vibrantPurple/10 flex items-center justify-center overflow-hidden">
-                {profile?.avatar_url ? (
-                  <Image src={profile.avatar_url} alt="Avatar" width={80} height={80} className="h-20 w-20 object-cover" />
-                ) : (
-                  <span className="text-h2 font-semibold text-vibrantPurple">
-                    {profile?.full_name?.[0] || 'U'}
-                  </span>
-                )}
+
+            <form className="space-y-6" onSubmit={handleSave}>
+              <div className="flex flex-col gap-6 md:flex-row md:items-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-24 w-24 rounded-full overflow-hidden bg-vibrantPurple/10 flex items-center justify-center">
+                    {avatarUrl ? (
+                      <Image
+                        src={avatarUrl}
+                        alt="Avatar"
+                        width={96}
+                        height={96}
+                        className="h-24 w-24 object-cover"
+                      />
+                    ) : (
+                      <span className="text-h2 font-semibold text-vibrantPurple">
+                        {fullName ? fullName[0]?.toUpperCase() : 'U'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-caption text-muted-foreground">Upload a new photo below</p>
+                </div>
+                <div className="flex-1">
+                  <AvatarUploader
+                    userId={userId}
+                    initialUrl={avatarUrl ?? undefined}
+                    initialPath={avatarPath ?? (isStoragePath(profile?.avatar_url ?? null) ? profile?.avatar_url ?? null : null)}
+                    onUploaded={({ signedUrl, path }) => {
+                      setAvatarPath(path);
+                      setProfile((prev) => (prev ? { ...prev, avatar_url: path } : prev));
+                      void supabase.auth
+                        .updateUser({ data: { avatar_path: path, avatar_url: path } })
+                        .catch((error) => console.warn('Failed to persist avatar metadata', error));
+                      window.dispatchEvent(
+                        new CustomEvent('profile:avatar-changed', { detail: { url: signedUrl, path } }),
+                      );
+                      toastSuccess('Photo updated.');
+                    }}
+                    className="w-full"
+                  />
+                </div>
               </div>
-              <div>
-                <button
-                  onClick={triggerUpload}
-                  className="text-small px-4 py-2 rounded-ds bg-vibrantPurple/10 hover:bg-vibrantPurple/15 font-medium"
-                  disabled={uploading}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Full name"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  error={fieldErrors.fullName ?? null}
+                  required
+                />
+                <Select
+                  label="Preferred language"
+                  value={preferredLanguage}
+                  onChange={(event) => setPreferredLanguage(event.target.value)}
+                  error={fieldErrors.preferredLanguage ?? null}
+                  required
                 >
-                  {uploading ? 'Uploading…' : 'Change photo'}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="hidden"
-                  onChange={handleFile}
+                  <option value="" disabled>
+                    Select language
+                  </option>
+                  {displayedLanguageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  type="number"
+                  label="Target IELTS band"
+                  placeholder="e.g. 7.5"
+                  min={4}
+                  max={9}
+                  step={0.5}
+                  value={goalBand}
+                  onChange={(event) => setGoalBand(event.target.value)}
+                  error={fieldErrors.goalBand ?? null}
+                  helperText="4.0 – 9.0 in 0.5 steps"
+                />
+                <Input
+                  type="date"
+                  label="Exam date"
+                  value={examDate}
+                  onChange={(event) => setExamDate(event.target.value)}
+                  error={fieldErrors.examDate ?? null}
+                  helperText="Optional"
                 />
               </div>
-            </div>
-            <div className="space-y-2 text-body">
-              <p><strong>Name:</strong> {profile?.full_name}</p>
-              <p><strong>Country:</strong> {profile?.country ?? '—'}</p>
-              <p><strong>English level:</strong> {profile?.english_level ?? '—'}</p>
-              <p>
-                <strong>Goal band:</strong>{' '}
-                {profile?.goal_band ? profile.goal_band.toFixed(1) : '—'}
-              </p>
-              <p>
-                <strong>Study preferences:</strong>{' '}
-                {profile?.study_prefs?.join(', ') || '—'}
-              </p>
-              <p>
-                <strong>Time commitment:</strong> {profile?.time_commitment ?? '—'}
-              </p>
-              <p>
-                <strong>Preferred language:</strong>{' '}
-                {profile?.preferred_language ?? '—'}
-              </p>
-              {profile?.exam_date && (
-                <p>
-                  <strong>Exam date:</strong> {profile.exam_date}
-                </p>
-              )}
-            </div>
-            <Button href="/profile/setup" variant="secondary" className="mt-6">
-              Edit profile
-            </Button>
+
+              <div className="flex items-center justify-end gap-3">
+                <Button type="submit" variant="primary" className="rounded-ds-xl" disabled={saving}>
+                  {saving ? 'Saving…' : 'Save changes'}
+                </Button>
+              </div>
+            </form>
           </Card>
-
-          {/* Other components remain unchanged */}
-
         </div>
       </Container>
     </section>
