@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export type StreakState = {
   loading: boolean;
   current: number;
+  longest: number;
   lastDayKey: string | null;
   nextRestart: string | null;
   shields: number;
@@ -25,21 +26,67 @@ export const getDayKeyInTZ = (date: Date = new Date(), timeZone = 'Asia/Karachi'
   }
 };
 
-export const fetchStreak = async () => {
+type StreakResponse = {
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;
+  next_restart_date: string | null;
+  shields: number;
+};
+
+const emptyStreak = (): StreakResponse => ({
+  current_streak: 0,
+  longest_streak: 0,
+  last_activity_date: null,
+  next_restart_date: null,
+  shields: 0,
+});
+
+const normalizeStreak = (payload: Partial<StreakResponse> | null | undefined): StreakResponse => {
+  const fallback = emptyStreak();
+  const current = typeof payload?.current_streak === 'number' ? payload.current_streak : fallback.current_streak;
+  const longest =
+    typeof payload?.longest_streak === 'number'
+      ? payload.longest_streak
+      : typeof payload?.current_streak === 'number'
+        ? payload.current_streak
+        : fallback.longest_streak;
+
+  return {
+    current_streak: current,
+    longest_streak: Math.max(longest, current),
+    last_activity_date: typeof payload?.last_activity_date === 'string' ? payload.last_activity_date : fallback.last_activity_date,
+    next_restart_date: typeof payload?.next_restart_date === 'string' ? payload.next_restart_date : fallback.next_restart_date,
+    shields: typeof payload?.shields === 'number' ? payload.shields : fallback.shields,
+  };
+};
+
+export const fetchStreak = async (): Promise<StreakResponse> => {
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session) {
-      console.error('[fetchStreak] Session error:', sessionError?.message || 'No session');
-      throw new Error('Unauthorized');
+      if (sessionError) {
+        console.warn('[fetchStreak] Session error (treating as guest):', sessionError.message);
+      }
+      return emptyStreak();
     }
+
     const res = await fetch('/api/streak', {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
+
+    if (res.status === 401) {
+      console.info('[fetchStreak] Received 401 from streak API, defaulting to empty streak');
+      return emptyStreak();
+    }
+
     if (!res.ok) {
       console.error('[fetchStreak] API error:', res.status, res.statusText);
       throw new Error(`Failed to fetch streak: ${res.status}`);
     }
-    return res.json();
+
+    const raw = (await res.json().catch(() => null)) as Partial<StreakResponse> | null;
+    return normalizeStreak(raw);
   } catch (err) {
     console.error('[fetchStreak] Unexpected error:', err);
     throw err;
@@ -119,6 +166,7 @@ export function useStreak() {
   const [state, setState] = useState<StreakState>({
     loading: true,
     current: 0,
+    longest: 0,
     lastDayKey: null,
     nextRestart: null,
     shields: 0,
@@ -139,6 +187,7 @@ export function useStreak() {
       setState({
         loading: false,
         current: data.current_streak ?? 0,
+        longest: data.longest_streak ?? data.current_streak ?? 0,
         lastDayKey: data.last_activity_date ?? null,
         nextRestart: data.next_restart_date ?? null,
         shields: data.shields ?? 0,
@@ -176,6 +225,7 @@ export function useStreak() {
       setState((s) => ({
         ...s,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         shields: data.shields ?? s.shields,
@@ -197,6 +247,7 @@ export function useStreak() {
         ...s,
         shields: data.shields ?? s.shields,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         error: null,
@@ -215,6 +266,7 @@ export function useStreak() {
       setState((s) => ({
         ...s,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         shields: data.shields ?? s.shields,
@@ -228,12 +280,13 @@ export function useStreak() {
     }
   }, []);
 
-  const scheduleRecovery = useCallback(async (date: string) => {
+  const scheduleRecoveryAction = useCallback(async (date: string) => {
     try {
       const data = await scheduleRecovery(date);
       setState((s) => ({
         ...s,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         shields: data.shields ?? s.shields,
@@ -247,5 +300,12 @@ export function useStreak() {
     }
   }, []);
 
-  return { ...state, reload: load, completeToday, claimShield, useShield, scheduleRecovery };
+  return {
+    ...state,
+    reload: load,
+    completeToday,
+    claimShield,
+    useShield,
+    scheduleRecovery: scheduleRecoveryAction,
+  };
 }

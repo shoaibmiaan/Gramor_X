@@ -12,6 +12,7 @@ A Next.js (TypeScript) + Tailwind CSS portal with a separate **Premium “Exam E
 - Dual design systems (main portal + premium section)
 - Production-ready scripts (lint, format, build)
 - Vercel configuration included
+- Teacher and admin flows consolidated into a single rollout (see [Teacher & Admin Workflow Overview](docs/teacher-admin-overview.md))
 
 ## Getting Started
 

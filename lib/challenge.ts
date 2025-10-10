@@ -1,5 +1,6 @@
 // lib/challenge.ts
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { createSignedAvatarUrl, isStoragePath } from '@/lib/avatar';
 import {
   ChallengeEnrollment,
   ChallengeEnrollRequest,
@@ -92,22 +93,36 @@ export async function getChallengeLeaderboard(
 
   if (error) return { ok: false, error: error.message };
 
-  const leaderboard: ChallengeLeaderboardEntry[] = (data ?? []).map(
-    (row: any, idx: number) => {
+  const leaderboard: ChallengeLeaderboardEntry[] = await Promise.all(
+    (data ?? []).map(async (row: any, idx: number) => {
       const progress: ChallengeProgress = row.progress || {};
-      const completedTasks = Object.values(progress).filter(
-        (s) => s === "done"
-      ).length;
+      const completedTasks = Object.values(progress).filter((s) => s === 'done').length;
       const totalTasks = Object.keys(progress).length || 14; // assume 14-day challenge
+
+      const rawAvatar: string | null = row.profiles?.avatar_url ?? null;
+      let avatarUrl: string | undefined;
+      if (typeof rawAvatar === 'string') {
+        if (isStoragePath(rawAvatar)) {
+          try {
+            avatarUrl = (await createSignedAvatarUrl(rawAvatar)) ?? undefined;
+          } catch (error) {
+            console.warn('Failed to sign leaderboard avatar', error);
+            avatarUrl = undefined;
+          }
+        } else {
+          avatarUrl = rawAvatar;
+        }
+      }
+
       return {
         userId: row.user_id,
-        fullName: row.profiles?.full_name || "Anonymous",
-        avatarUrl: row.profiles?.avatar_url || undefined,
+        fullName: row.profiles?.full_name || 'Anonymous',
+        avatarUrl,
         completedTasks,
         totalTasks,
         rank: idx + 1,
       };
-    }
+    }),
   );
 
   // Sort by completed tasks desc

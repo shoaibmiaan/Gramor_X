@@ -7,6 +7,7 @@ import { Container } from "@/components/design-system/Container";
 import { CohortTable, type CohortRow } from "@/components/teacher/CohortTable";
 import { AssignTaskModal } from "@/components/teacher/AssignTaskModal";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { resolveAvatarUrl } from '@/lib/avatar';
 
 type Cohort = { id: string; name: string; created_at: string };
 
@@ -44,11 +45,12 @@ export default function CohortDetail() {
 
       if (e2) throw new Error(e2.message);
 
-      const normalized: CohortRow[] = (members as any[]).map((m) => {
+      const normalized: CohortRow[] = await Promise.all((members as any[]).map(async (m) => {
         const prog = m.progress || {};
         // crude completion: count truthy "done" values
         const completed = Object.values(prog).filter((v: any) => v === "done" || v === true).length;
         const total = Math.max(completed, 14); // assume 14-day track; adjust when real tasks exist
+        const resolvedAvatar = await resolveAvatarUrl(m.profiles?.avatar_url ?? null);
         return {
           id: m.id,
           cohortId: m.cohort_id,
@@ -57,11 +59,11 @@ export default function CohortDetail() {
           progress: prog,
           fullName: m.profiles?.full_name ?? "Student",
           email: m.profiles?.email ?? undefined,
-          avatarUrl: m.profiles?.avatar_url ?? undefined,
+          avatarUrl: resolvedAvatar.signedUrl ?? undefined,
           completed,
           total,
         };
-      });
+      }));
 
       setRows(normalized);
     } catch (e: any) {
