@@ -1,82 +1,391 @@
 // lib/studyPlan.ts
+import { z } from 'zod';
+
 import { StudyPlan, StudyDay, StudyTask, TaskType } from '@/types/plan';
+
 import { env } from './env';
 
-export type PlanGenOptions = {
-  userId: string;
-  startISO?: string;     // defaults to today 00:00Z
-  weeks?: number;        // default 4
-  goalBand?: number;     // 4..9
-  weaknesses?: string[]; // e.g., ['listening:map', 'reading:tfng']
+const MS_PER_DAY = 86_400_000;
+
+const WEEKDAY_NAMES = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
+
+type Weekday = (typeof WEEKDAY_NAMES)[number];
+
+const CORE_SKILLS: TaskType[] = ['listening', 'reading', 'writing', 'speaking'];
+
+const BASE_FOCUS_MINUTES: Record<(typeof CORE_SKILLS)[number], number> = {
+  listening: 35,
+  reading: 40,
+  writing: 45,
+  speaking: 30,
 };
 
-const MODULES: TaskType[] = ['listening', 'reading', 'writing', 'speaking'];
+const SUPPORT_MINUTES: Record<(typeof CORE_SKILLS)[number], number> = {
+  listening: 25,
+  reading: 30,
+  writing: 35,
+  speaking: 25,
+};
 
-function startOfDayISO(d = new Date()) {
-  const z = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  return z.toISOString();
+const MIN_PRACTICE_ON_MOCK_DAY = 25;
+
+const AvailabilitySlotSchema = z
+  .object({
+    day: z.enum(WEEKDAY_NAMES),
+    minutes: z.number().int().min(15).max(240),
+  })
+  .strict();
+
+export type AvailabilitySlot = z.infer<typeof AvailabilitySlotSchema>;
+
+const isoLike = z
+  .string()
+  .min(4)
+  .refine((value) => !Number.isNaN(new Date(value).valueOf()), 'invalid_date');
+
+export const PlanGenOptionsSchema = z
+  .object({
+    userId: z.string().min(1),
+    startISO: isoLike.optional(),
+    examDateISO: isoLike,
+    targetBand: z.number().min(4).max(9),
+    availability: z
+      .array(AvailabilitySlotSchema)
+      .min(1)
+      .refine(
+        (slots) => {
+          const seen = new Set<Weekday>();
+          for (const slot of slots) {
+            if (seen.has(slot.day)) return false;
+            seen.add(slot.day);
+          }
+          return true;
+        },
+        { message: 'duplicate_day' },
+      ),
+    weaknesses: z.array(z.string().min(1)).max(16).optional(),
+  })
+  .strict();
+
+export type PlanGenOptions = z.infer<typeof PlanGenOptionsSchema>;
+
+type ParsedOptions = Omit<PlanGenOptions, 'startISO' | 'examDateISO'> & {
+  start: Date;
+  exam: Date;
+};
+
+type DayBlueprint = {
+  iso: string;
+  weekIndex: number;
+  dayIndex: number;
+  minutes: number;
+  weekday: Weekday;
+};
+
+function normaliseToUTC(input: string | undefined, fallback: Date): Date {
+  if (!input) return truncateToUTC(fallback);
+  return truncateToUTC(new Date(input));
 }
 
-function mkTask(partial: Partial<StudyTask> & Pick<StudyTask, 'type' | 'title'>): StudyTask {
-  return {
-    id: crypto.randomUUID(),
-    estMinutes: partial.estMinutes ?? defaultMinutes(partial.type),
+function truncateToUTC(date: Date): Date {
+  const copy = new Date(date);
+  copy.setUTCHours(0, 0, 0, 0);
+  return copy;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function roundToFive(value: number): number {
+  if (value <= 0) return 0;
+  return Math.max(5, Math.round(value / 5) * 5);
+}
+
+function addDays(base: Date, days: number): Date {
+  const copy = new Date(base);
+  copy.setUTCDate(copy.getUTCDate() + days);
+  return copy;
+}
+
+function createTask(
+  dayIndex: number,
+  tasks: StudyTask[],
+  partial: Partial<StudyTask> & Pick<StudyTask, 'type' | 'title'>,
+): StudyTask {
+  const estMinutes = partial.estMinutes ?? defaultMinutes(partial.type);
+  const task: StudyTask = {
+    id: `task-${dayIndex}-${tasks.length}`,
+    estMinutes,
     completed: false,
     ...partial,
+    estMinutes,
   } as StudyTask;
+  return task;
 }
 
-function defaultMinutes(t: TaskType) {
-  if (t === 'mock') return 60;
-  if (t === 'review') return 30;
-  if (t === 'writing' || t === 'speaking') return 40;
-  return 25;
-}
-
-function planForDay(dateISO: string, dayIndex: number, weaknesses?: string[]): StudyDay {
-  // Simple rotation with one heavier focus; sprinkle review/vocab.
-  const mod = MODULES[dayIndex % MODULES.length];
-
-  const tasks: StudyTask[] = [
-    mkTask({ type: mod, title: `Practice: ${capitalize(mod)}` }),
-    mkTask({ type: 'review', title: 'Review yesterday’s mistakes', estMinutes: 20 }),
-    mkTask({ type: 'vocab', title: 'Vocabulary builder', estMinutes: 15 }),
-  ];
-
-  // Every 3rd day add writing/speaking alternate
-  if (dayIndex % 3 === 2) {
-    tasks.push(mkTask({ type: 'writing', title: 'Writing drill (Task 2 outline)', estMinutes: 35 }));
-  } else if (dayIndex % 3 === 1) {
-    tasks.push(mkTask({ type: 'speaking', title: 'Speaking prompts (2 x 2min)', estMinutes: 20 }));
+function defaultMinutes(type: TaskType): number {
+  switch (type) {
+    case 'mock':
+      return 60;
+    case 'review':
+      return 20;
+    case 'writing':
+      return 40;
+    case 'speaking':
+      return 30;
+    case 'vocab':
+      return 15;
+    default:
+      return 30;
   }
-
-  // Weakness-driven extra task (lightweight)
-  const weak = (weaknesses || [])[dayIndex % Math.max(1, (weaknesses || []).length)];
-  if (weak) tasks.push(mkTask({ type: 'review', title: `Targeted drill: ${weak}`, estMinutes: 15 }));
-
-  return { dateISO, tasks };
 }
 
-export function generateStudyPlan(opts: PlanGenOptions): StudyPlan {
-  const start = opts.startISO || startOfDayISO();
-  const weeks = Math.min(Math.max(opts.weeks ?? 4, 1), 12);
-  const days: StudyDay[] = [];
+function computeIntensity(targetBand: number): number {
+  // Around band 6 => neutral. Above => slightly more volume, below => gentler pace.
+  const delta = targetBand - 6;
+  return clamp(1 + delta * 0.15, 0.85, 1.35);
+}
 
-  for (let w = 0; w < weeks; w++) {
-    for (let d = 0; d < 7; d++) {
-      const idx = w * 7 + d;
-      const date = new Date(start);
-      date.setUTCDate(date.getUTCDate() + idx);
-      days.push(planForDay(date.toISOString(), idx, opts.weaknesses));
+type BuildDayOptions = {
+  dayIndex: number;
+  weekNumber: number;
+  availableMinutes: number;
+  focus: (typeof CORE_SKILLS)[number];
+  support: (typeof CORE_SKILLS)[number];
+  includeMock: boolean;
+  targetBand: number;
+  intensity: number;
+  weakness?: string;
+};
+
+function buildDayTasks({
+  dayIndex,
+  weekNumber,
+  availableMinutes,
+  focus,
+  support,
+  includeMock,
+  targetBand,
+  intensity,
+  weakness,
+}: BuildDayOptions): StudyTask[] {
+  const tasks: StudyTask[] = [];
+
+  if (availableMinutes <= 0) return tasks;
+
+  let reservedForMock = 0;
+  if (includeMock) {
+    const desiredMock = clamp(roundToFive(Math.round(70 * intensity)), 45, 90);
+    const maxAllowable = Math.max(0, availableMinutes - MIN_PRACTICE_ON_MOCK_DAY);
+    if (maxAllowable <= 0) {
+      reservedForMock = Math.min(desiredMock, availableMinutes);
+    } else {
+      reservedForMock = Math.min(desiredMock, maxAllowable);
+      if (reservedForMock < 45 && maxAllowable >= 45) reservedForMock = 45;
+      if (reservedForMock < 30) reservedForMock = Math.min(maxAllowable, 30);
     }
   }
 
+  let practiceBudget = Math.max(0, availableMinutes - reservedForMock);
+
+  if (includeMock && practiceBudget < MIN_PRACTICE_ON_MOCK_DAY && availableMinutes >= MIN_PRACTICE_ON_MOCK_DAY) {
+    const diff = MIN_PRACTICE_ON_MOCK_DAY - practiceBudget;
+    if (reservedForMock > diff) {
+      reservedForMock -= diff;
+      practiceBudget += diff;
+    }
+  }
+
+  const focusDesired = roundToFive(Math.round(BASE_FOCUS_MINUTES[focus] * intensity));
+  const focusMinutes = roundToFive(
+    clamp(focusDesired, Math.min(20, practiceBudget), Math.max(practiceBudget, 0)),
+  );
+
+  if (focusMinutes > 0 && practiceBudget > 0) {
+    tasks.push(
+      createTask(dayIndex, tasks, {
+        type: focus,
+        title: `${capitalize(focus)} focus – Band ${targetBand.toFixed(1)} goal`,
+        estMinutes: Math.min(focusMinutes, practiceBudget),
+      }),
+    );
+  }
+
+  let used = tasks.reduce((total, item) => total + item.estMinutes, 0);
+  let remainingPractice = Math.max(practiceBudget - used, 0);
+
+  if (remainingPractice >= 20) {
+    const supportDesired = roundToFive(Math.round(SUPPORT_MINUTES[support] * intensity));
+    const supportMinutes = roundToFive(clamp(supportDesired, 20, remainingPractice));
+    if (supportMinutes > 0) {
+      tasks.push(
+        createTask(dayIndex, tasks, {
+          type: support,
+          title: `Secondary drill: ${capitalize(support)}`,
+          estMinutes: Math.min(supportMinutes, remainingPractice),
+        }),
+      );
+      used = tasks.reduce((total, item) => total + item.estMinutes, 0);
+      remainingPractice = Math.max(practiceBudget - used, 0);
+    }
+  }
+
+  if (remainingPractice >= 15) {
+    const reviewMinutes = roundToFive(Math.min(remainingPractice, 20));
+    tasks.push(
+      createTask(dayIndex, tasks, {
+        type: 'review',
+        title: weakness ? `Targeted review: ${weakness}` : 'Error review + note check',
+        estMinutes: reviewMinutes,
+      }),
+    );
+    used = tasks.reduce((total, item) => total + item.estMinutes, 0);
+    remainingPractice = Math.max(practiceBudget - used, 0);
+  }
+
+  if (remainingPractice >= 10) {
+    const vocabMinutes = roundToFive(Math.min(remainingPractice, 15));
+    if (vocabMinutes > 0) {
+      tasks.push(
+        createTask(dayIndex, tasks, {
+          type: 'vocab',
+          title: 'Vocabulary refresh',
+          estMinutes: vocabMinutes,
+        }),
+      );
+      used = tasks.reduce((total, item) => total + item.estMinutes, 0);
+      remainingPractice = Math.max(practiceBudget - used, 0);
+    }
+  }
+
+  if (includeMock && reservedForMock > 0) {
+    const mockAvailable = Math.max(availableMinutes - used, 0);
+    const mockMinutes = roundToFive(Math.min(reservedForMock, mockAvailable));
+    if (mockMinutes > 0) {
+      tasks.push(
+        createTask(dayIndex, tasks, {
+          type: 'mock',
+          title: `Weekly mock checkpoint (Week ${weekNumber})`,
+          estMinutes: mockMinutes,
+        }),
+      );
+    }
+  }
+
+  return tasks;
+}
+
+function computeBlueprints(opts: ParsedOptions): DayBlueprint[] {
+  const availabilityMap = new Map<Weekday, number>();
+  for (const slot of opts.availability) {
+    availabilityMap.set(slot.day, slot.minutes);
+  }
+
+  const days: DayBlueprint[] = [];
+  const totalDays = Math.max(
+    1,
+    Math.floor((opts.exam.getTime() - opts.start.getTime()) / MS_PER_DAY) + 1,
+  );
+
+  for (let offset = 0; offset < totalDays; offset += 1) {
+    const date = addDays(opts.start, offset);
+    const iso = date.toISOString();
+    const weekday = WEEKDAY_NAMES[date.getUTCDay()];
+    const minutes = availabilityMap.get(weekday) ?? 0;
+    days.push({
+      iso,
+      weekIndex: Math.floor(offset / 7),
+      dayIndex: offset,
+      minutes,
+      weekday,
+    });
+  }
+
+  return days;
+}
+
+function determineMockTargets(blueprints: DayBlueprint[]): Set<string> {
+  const mockDays = new Set<string>();
+  const weekToCandidate = new Map<number, DayBlueprint>();
+
+  for (const blueprint of blueprints) {
+    if (blueprint.minutes <= 0) continue;
+    weekToCandidate.set(blueprint.weekIndex, blueprint);
+  }
+
+  for (const candidate of weekToCandidate.values()) {
+    mockDays.add(candidate.iso);
+  }
+
+  return mockDays;
+}
+
+export function generateStudyPlan(raw: PlanGenOptions): StudyPlan {
+  const parsed = PlanGenOptionsSchema.parse(raw);
+
+  const start = normaliseToUTC(parsed.startISO, new Date());
+  const exam = truncateToUTC(new Date(parsed.examDateISO));
+  const safeExam = exam.getTime() < start.getTime() ? start : exam;
+
+  const opts: ParsedOptions = {
+    ...parsed,
+    start,
+    exam: safeExam,
+  };
+
+  const blueprints = computeBlueprints(opts);
+  const mockTargets = determineMockTargets(blueprints);
+  const intensity = computeIntensity(parsed.targetBand);
+
+  const days: StudyDay[] = [];
+  let focusIndex = 0;
+
+  for (const blueprint of blueprints) {
+    if (blueprint.minutes <= 0) {
+      days.push({ dateISO: blueprint.iso, tasks: [] });
+      continue;
+    }
+
+    const focus = CORE_SKILLS[focusIndex % CORE_SKILLS.length];
+    const support = CORE_SKILLS[(focusIndex + 1) % CORE_SKILLS.length];
+    const weakness = parsed.weaknesses?.length
+      ? parsed.weaknesses[focusIndex % parsed.weaknesses.length]
+      : undefined;
+
+    const tasks = buildDayTasks({
+      dayIndex: blueprint.dayIndex,
+      weekNumber: blueprint.weekIndex + 1,
+      availableMinutes: blueprint.minutes,
+      focus,
+      support,
+      includeMock: mockTargets.has(blueprint.iso),
+      targetBand: parsed.targetBand,
+      intensity,
+      weakness,
+    });
+
+    days.push({ dateISO: blueprint.iso, tasks });
+    focusIndex += 1;
+  }
+
+  const totalDays = days.length;
+  const weeks = clamp(Math.ceil(totalDays / 7), 1, 12);
+
   return {
-    userId: opts.userId,
-    startISO: start,
+    userId: parsed.userId,
+    startISO: opts.start.toISOString(),
     weeks,
-    goalBand: opts.goalBand,
-    weaknesses: opts.weaknesses,
+    goalBand: parsed.targetBand,
+    weaknesses: parsed.weaknesses?.length ? parsed.weaknesses : undefined,
     days,
   };
 }
