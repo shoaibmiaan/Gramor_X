@@ -51,30 +51,48 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 export function deriveModule(item: SavedItem): { id: string; label: string } {
-  const module = (item.type || item.category || 'other').toLowerCase();
-  const label = MODULE_LABELS[module] ?? MODULE_LABELS.other;
-  return { id: module, label };
+  const moduleKey = (item.type || item.category || 'other').toLowerCase();
+  const label = MODULE_LABELS[moduleKey] ?? MODULE_LABELS.other;
+  return { id: moduleKey, label };
 }
 
 export function buildSavedLink(item: SavedItem): string {
-  const module = (item.type || '').toLowerCase();
+  const moduleKey = (item.type || '').toLowerCase();
   const category = (item.category || '').toLowerCase();
   const id = item.resource_id;
 
   if (category === 'vocabulary') return `/vocabulary/${id}?from=saved`;
   if (category === 'grammar') return `/grammar/${id}?from=saved`;
-  if (module === 'reading') return `/reading/${id}?from=saved`;
-  if (module === 'listening') return `/listening/${id}?from=saved`;
-  if (module === 'writing') return `/writing/${id}?from=saved`;
-  if (module === 'speaking') return `/speaking/${id}?from=saved`;
-  return `/${module || category || 'content'}/${id}?from=saved`;
+  if (moduleKey === 'reading') return `/reading/${id}?from=saved`;
+  if (moduleKey === 'listening') return `/listening/${id}?from=saved`;
+  if (moduleKey === 'writing') return `/writing/${id}?from=saved`;
+  if (moduleKey === 'speaking') return `/speaking/${id}?from=saved`;
+  return `/${moduleKey || category || 'content'}/${id}?from=saved`;
 }
 
 export async function removeSavedItem(item: SavedItem): Promise<void> {
   if (!item.category) return;
-  await fetch(`/api/saved/${item.category}`, {
+  const res = await fetch(`/api/saved/${item.category}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ resource_id: item.resource_id, type: item.type ?? undefined }),
   });
+  if (!res.ok) {
+    const info = await res.json().catch(() => undefined);
+    throw new HttpError(res.status, res.statusText, info);
+  }
+}
+
+export async function removeSavedItems(items: SavedItem[]): Promise<void> {
+  const tasks = items
+    .filter((item) => item.category)
+    .map((item) => removeSavedItem(item));
+
+  if (tasks.length === 0) return;
+
+  const results = await Promise.allSettled(tasks);
+  const failed = results.find((result) => result.status === 'rejected');
+  if (failed && failed.status === 'rejected') {
+    throw failed.reason;
+  }
 }
