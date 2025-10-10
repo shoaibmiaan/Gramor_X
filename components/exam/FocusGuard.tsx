@@ -37,7 +37,7 @@ export default function FocusGuard({ exam, slug }: Props) {
 
   return warn ? (
     <div className="fixed top-4 left-1/2 z-50 w-full max-w-md -translate-x-1/2">
-      <Alert variant="warning" title="Stay focused">
+      <Alert variant="warning" title="Stay focused" role="alert" aria-live="assertive">
         Switching tabs is recorded and may invalidate your attempt.
       </Alert>
     </div>
