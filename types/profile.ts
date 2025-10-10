@@ -19,6 +19,8 @@ export interface Profile {
   study_prefs?: string[] | null;
   time_commitment?: string | null;
   preferred_language?: string | null;
+  study_days?: string[] | null;
+  study_minutes_per_day?: number | null;
   phone?: string | null;
   weaknesses?: string[] | null;
   timezone?: string | null;
