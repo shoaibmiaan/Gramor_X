@@ -3,22 +3,11 @@ import { useRouter } from 'next/router';
 
 import StepShell from '@/components/onboarding/StepShell';
 import { Alert } from '@/components/design-system/Alert';
-import { Button } from '@/components/design-system/Button';
-import { Checkbox } from '@/components/design-system/Checkbox';
-import { Input } from '@/components/design-system/Input';
-import { Skeleton } from '@/components/design-system/Skeleton';
-import {
-  TOTAL_ONBOARDING_STEPS,
-  languageOptions,
-  onboardingStateSchema,
-  type OnboardingState,
-  type OnboardingStepPayload,
-  weekdayOptions,
-} from '@/lib/onboarding/schema';
+import { UpgradeBanner } from '@/components/premium/UpgradeBanner';
 
 import type { Profile } from '@/types/profile';
 import { fetchProfile, markOnboardingComplete, upsertProfile } from '@/lib/profile';
-import { emitUserEvent } from '@/lib/analytics/user';
+import { usePlan } from '@/hooks/usePlan';
 
 const STEP_COPIES = [
   {
@@ -104,31 +93,8 @@ export default function OnboardingWizard() {
     return qNext && qNext.startsWith('/') ? qNext : '/dashboard';
   }, [router.query.next]);
 
-  const determineStep = useCallback((data: OnboardingState | null) => {
-    if (!data) return 1;
-    if (data.onboardingComplete) return TOTAL_ONBOARDING_STEPS;
-    const current = Number.isFinite(data.onboardingStep) ? data.onboardingStep : 0;
-    return Math.min(TOTAL_ONBOARDING_STEPS, current + 1);
-  }, []);
-
-  const syncForm = useCallback((data: OnboardingState) => {
-    setForm((prev) => ({
-      preferredLanguage: (data.preferredLanguage as Language) ?? prev.preferredLanguage ?? 'en',
-      goalBand:
-        typeof data.goalBand === 'number'
-          ? data.goalBand.toFixed(1)
-          : prev.goalBand ?? defaultFormState.goalBand,
-      examDate: data.examDate ?? '',
-      studyDays: (data.studyDays as Weekday[] | null) ?? prev.studyDays ?? [],
-      minutesPerDay:
-        typeof data.studyMinutesPerDay === 'number'
-          ? String(data.studyMinutesPerDay)
-          : prev.minutesPerDay ?? defaultFormState.minutesPerDay,
-      whatsappOptIn: data.whatsappOptIn ?? prev.whatsappOptIn ?? false,
-      phone: data.phone ?? prev.phone ?? '',
-    }));
-    setPhoneError(null);
-  }, []);
+  const { plan, loading: planLoading } = usePlan();
+  const showUpgradeBanner = !planLoading && plan === 'free';
 
   useEffect(() => {
     let active = true;
@@ -296,13 +262,117 @@ export default function OnboardingWizard() {
     }
   }, [form, loading, nextPath, persistStep, router, saving, step]);
 
-  const stepMeta = useMemo(
-    () =>
-      STEP_LABELS.map((label, index) => ({
-        label,
-        done: (profileState?.onboardingStep ?? 0) >= index + 1,
-      })),
-    [profileState?.onboardingStep],
+  const back = () => {
+    if (step === 1) return;
+    setError(null);
+    setStep((step - 1) as StepId);
+  };
+
+  useEffect(() => {
+    if (!optIn) {
+      setPhoneError(null);
+    }
+  }, [optIn]);
+
+  return (
+    <div className="min-h-screen bg-lightBg/40 py-12 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+      <Container className="max-w-3xl">
+        <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur">
+          <header className="flex flex-col gap-2 border-b border-border/50 pb-4">
+            <span className="text-caption uppercase tracking-[0.18em] text-mutedText">Welcome aboard</span>
+            <h1 className="text-h2 font-slab">Let’s tailor your IELTS prep</h1>
+            <p className="text-small text-mutedText">
+              Three quick questions so we can personalise mocks, reminders, and feedback.
+            </p>
+          </header>
+
+          <Stepper current={step} />
+
+          {showUpgradeBanner && (
+            <UpgradeBanner
+              className="mt-4"
+              pillLabel="Explorer · Free plan"
+              title="Unlock the full onboarding coach"
+              description="Premium keeps your study plan adaptive, unlocks unlimited AI writing and speaking feedback, and powers WhatsApp nudges that follow your real progress."
+              href="/pricing?from=onboarding-upgrade"
+              feature="Personalised onboarding coach"
+            />
+          )}
+
+          {error && (
+            <Alert variant="error" className="mt-4" role="alert">
+              {error}
+            </Alert>
+          )}
+
+          <div className="mt-6">
+            {loading ? (
+              <div className="grid gap-3">
+                {skeletonLines.map((cls) => (
+                  <div key={cls} className={`animate-pulse rounded-md bg-muted/50 ${cls}`} />
+                ))}
+              </div>
+            ) : (
+              <StepContent
+                step={step}
+                band={band}
+                setBand={setBand}
+                examDate={examDate}
+                setExamDate={setExamDate}
+                optIn={optIn}
+                setOptIn={setOptIn}
+                phone={phone}
+                setPhone={setPhone}
+                phoneError={phoneError}
+              />
+            )}
+          </div>
+
+          <footer className="mt-8 flex flex-col gap-3 border-t border-border/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-caption text-mutedText">
+              <span className="rounded border border-border px-1.5 py-0.5">{step}</span>
+              <span>
+                Step {step} of 3
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Button
+                type="button"
+                variant="secondary"
+                className="rounded-ds-xl"
+                disabled={step === 1 || saving}
+                onClick={back}
+              >
+                Back
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="rounded-ds-xl"
+                disabled={saving}
+                onClick={skip}
+              >
+                Skip for now
+              </Button>
+              <Button
+                type="button"
+                className="rounded-ds-xl"
+                onClick={() => {
+                  if (loading || saving) return;
+                  if (step === 1) handleBandNext();
+                  else if (step === 2) handleDateNext();
+                  else finish();
+                }}
+                disabled={loading || saving}
+              >
+                {saving ? 'Saving…' : step === 3 ? 'Finish' : 'Continue'}
+              </Button>
+            </div>
+          </footer>
+        </Card>
+      </Container>
+    </div>
   );
 
   const copy = STEP_COPIES[step - 1] ?? STEP_COPIES[0];
