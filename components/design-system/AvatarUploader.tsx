@@ -1,11 +1,13 @@
 'use client';
-import { env } from "@/lib/env";
+
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+
 import { supabase } from "@/lib/supabaseClient"; // Import centralized client
+
 import { Alert } from "./Alert";
-import { Button } from "./Button";
 import { Badge } from "./Badge";
+import { Button } from "./Button";
 
 type Props = {
   userId: string | null;
@@ -41,8 +43,12 @@ export const AvatarUploader: React.FC<Props> = ({
       setError("Please choose an image file (JPG/PNG/WebP).");
       return;
     }
-    if (f.size > 3 * 1024 * 1024) {
-      setError("Max size is 3MB.");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(f.type)) {
+      setError("Please choose a JPG, PNG, or WebP image.");
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      setError("Max size is 5MB.");
       return;
     }
     setError(null);
@@ -54,29 +60,47 @@ export const AvatarUploader: React.FC<Props> = ({
     setBusy(true);
     setError(null);
 
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${userId}/avatar-${Date.now()}.${ext}`;
-
-    const { error: upErr } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: file.type,
+    try {
+      const res = await fetch("/api/profile/avatar-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          bucket,
+        }),
       });
 
-    if (upErr) {
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Could not start upload" }));
+        throw new Error(data.error || "Could not start upload");
+      }
+
+      const { uploadUrl, path } = (await res.json()) as { uploadUrl: string; path: string };
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text();
+        throw new Error(text || "Upload failed");
+      }
+
+      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+
+      onUploaded(publicUrl, path);
+      setPreview(publicUrl);
+      setFile(null);
+    } catch (err: any) {
+      setError(err?.message || "Upload failed");
+    } finally {
       setBusy(false);
-      setError(upErr.message);
-      return;
     }
-
-    // Public URL (switch to signed if bucket is private)
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    const publicUrl = data.publicUrl;
-
-    setBusy(false);
-    onUploaded(publicUrl, path);
   };
 
   return (
@@ -114,7 +138,7 @@ export const AvatarUploader: React.FC<Props> = ({
               Drag & drop or click to browse
             </div>
             <div className="mt-2">
-              <Badge size="sm">JPG • PNG • WebP • ≤3MB</Badge>
+              <Badge size="sm">JPG • PNG • WebP • ≤5MB</Badge>
             </div>
           </div>
         )}
