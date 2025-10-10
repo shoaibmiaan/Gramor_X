@@ -1,17 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import {
-  ResponsiveContainer,
-  ScatterChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  ZAxis,
-  Tooltip,
-  Scatter,
-  Cell,
-} from 'recharts';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 type Datum = {
   date: string;
@@ -23,68 +12,194 @@ type Props = {
   data: Datum[];
 };
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-type HeatmapPoint = Datum & {
-  week: number;
-  dayIndex: number;
-  label: string;
-  size: number;
+type HeatmapCell = Datum & {
+  column: number;
+  weekRow: number;
+  ariaLabel: string;
+  description: string;
+  displayDate: string;
+  globalIndex: number;
 };
 
-function toPoints(data: Datum[]): HeatmapPoint[] {
-  if (data.length === 0) return [];
-  const first = data[0];
-  const start = new Date(`${first.date}T00:00:00Z`);
-  return data.map((entry) => {
-    const current = new Date(`${entry.date}T00:00:00Z`);
-    const diffDays = Math.floor((current.getTime() - start.getTime()) / 86_400_000);
-    const week = Math.floor(diffDays / 7);
-    const dayIndex = ((current.getUTCDay() + 6) % 7); // convert Sun(0) -> 6
-    return {
-      ...entry,
-      week,
-      dayIndex,
-      label: new Intl.DateTimeFormat(undefined, {
-        month: 'short',
-        day: 'numeric',
-      }).format(current),
-      size: 16,
-    };
-  });
-}
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-function colorFor(entry: Datum) {
-  if (entry.total === 0) return '#E5E7EB';
-  const ratio = entry.completed / entry.total;
-  if (ratio === 0) return '#E5E7EB';
-  if (ratio < 0.5) return '#93C5FD';
-  if (ratio < 1) return '#3B82F6';
-  return '#0EA5E9';
-}
+const LEGEND_STEPS = [
+  { label: 'No tasks', className: 'bg-muted border border-border/40' },
+  { label: 'Started', className: 'bg-primary/20 border border-primary/20' },
+  { label: 'In progress', className: 'bg-primary/40 border border-primary/40' },
+  { label: 'On track', className: 'bg-primary/70 border border-primary/70' },
+  { label: 'Complete', className: 'bg-primary border border-primary' },
+];
 
-function CustomTooltip({ active, payload }: any) {
-  if (!active || !payload || !payload[0]) return null;
-  const point = payload[0].payload as HeatmapPoint;
-  return (
-    <div className="rounded-ds-2xl border border-border bg-card/95 p-3 text-small shadow-lg">
-      <p className="font-semibold">{point.label}</p>
-      {point.total === 0 ? (
-        <p className="text-muted-foreground">No tasks scheduled</p>
-      ) : (
-        <p className="text-muted-foreground">
-          {point.completed} of {point.total} completed
-        </p>
-      )}
-    </div>
-  );
+type MonthGroup = {
+  key: string;
+  label: string;
+  leading: number;
+  cells: HeatmapCell[];
+};
+
+function getColorClass(entry: Datum) {
+  if (entry.total === 0) {
+    return LEGEND_STEPS[0].className;
+  }
+
+  const ratio = entry.total === 0 ? 0 : entry.completed / entry.total;
+
+  if (ratio === 0) return LEGEND_STEPS[0].className;
+  if (ratio < 0.33) return LEGEND_STEPS[1].className;
+  if (ratio < 0.66) return LEGEND_STEPS[2].className;
+  if (ratio < 1) return LEGEND_STEPS[3].className;
+  return LEGEND_STEPS[4].className;
 }
 
 export const StreakHeatmap: React.FC<Props> = ({ data }) => {
-  const points = useMemo(() => toPoints(data), [data]);
-  const maxWeek = points.reduce((max, point) => Math.max(max, point.week), 0);
+  const monthFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: 'long',
+        year: 'numeric',
+      }),
+    [],
+  );
+  const dayFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: 'long',
+        day: 'numeric',
+      }),
+    [],
+  );
+  const shortFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+      }),
+    [],
+  );
 
-  if (points.length === 0) {
+  const months = useMemo<MonthGroup[]>(() => {
+    if (!data.length) return [];
+
+    const sorted = [...data].sort((a, b) => (a.date > b.date ? 1 : -1));
+    const map = new Map<string, MonthGroup>();
+
+    for (const entry of sorted) {
+      const current = new Date(`${entry.date}T00:00:00Z`);
+      const monthKey = `${current.getUTCFullYear()}-${current.getUTCMonth()}`;
+      let bucket = map.get(monthKey);
+
+      if (!bucket) {
+        const firstOfMonth = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), 1));
+        const leading = (firstOfMonth.getUTCDay() + 6) % 7;
+        bucket = {
+          key: monthKey,
+          label: monthFormatter.format(firstOfMonth),
+          leading,
+          cells: [],
+        };
+        map.set(monthKey, bucket);
+      }
+
+      bucket.cells.push({
+        ...entry,
+        column: 0,
+        weekRow: 0,
+        ariaLabel: '',
+        description: '',
+        displayDate: '',
+        globalIndex: -1,
+      });
+    }
+
+    const result: MonthGroup[] = [];
+    const groups = Array.from(map.values()).sort((a, b) => {
+      const firstA = a.cells[0]?.date ?? '';
+      const firstB = b.cells[0]?.date ?? '';
+      return firstA.localeCompare(firstB);
+    });
+
+    let runningIndex = 0;
+
+    for (const group of groups) {
+      group.cells.sort((a, b) => a.date.localeCompare(b.date));
+
+      group.cells = group.cells.map((cell, index) => {
+        const offset = group.leading + index;
+        const column = offset % 7;
+        const weekRow = Math.floor(offset / 7);
+        const dateObj = new Date(`${cell.date}T00:00:00Z`);
+        const description = cell.total === 0 ? 'No tasks scheduled' : `${cell.completed} of ${cell.total} completed`;
+        return {
+          ...cell,
+          column,
+          weekRow,
+          displayDate: shortFormatter.format(dateObj),
+          description,
+          ariaLabel: `${dayFormatter.format(dateObj)} — ${description}`,
+          globalIndex: runningIndex++,
+        };
+      });
+
+      result.push(group);
+    }
+
+    return result;
+  }, [data, dayFormatter, monthFormatter, shortFormatter]);
+
+  const allCells = useMemo(() => months.flatMap((month) => month.cells), [months]);
+  const totalCells = allCells.length;
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const ensureFocus = useCallback(
+    (index: number) => {
+      const next = Math.max(0, Math.min(index, totalCells - 1));
+      setFocusedIndex(next);
+      cellRefs.current[next]?.focus();
+    },
+    [totalCells],
+  );
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>, cell: HeatmapCell) => {
+      if (!totalCells) return;
+      let nextIndex: number | null = null;
+
+      switch (event.key) {
+        case 'ArrowRight':
+          nextIndex = Math.min(totalCells - 1, cell.globalIndex + 1);
+          break;
+        case 'ArrowLeft':
+          nextIndex = Math.max(0, cell.globalIndex - 1);
+          break;
+        case 'ArrowUp':
+          nextIndex = cell.globalIndex - 7;
+          if (nextIndex < 0) nextIndex = null;
+          break;
+        case 'ArrowDown':
+          nextIndex = cell.globalIndex + 7;
+          if (nextIndex >= totalCells) nextIndex = null;
+          break;
+        case 'Home':
+          nextIndex = 0;
+          break;
+        case 'End':
+          nextIndex = totalCells - 1;
+          break;
+        default:
+          break;
+      }
+
+      if (nextIndex !== null && nextIndex !== cell.globalIndex) {
+        event.preventDefault();
+        ensureFocus(nextIndex);
+      }
+    },
+    [ensureFocus, totalCells],
+  );
+
+  if (!totalCells) {
     return (
       <div className="flex h-64 items-center justify-center rounded-ds-2xl border border-dashed border-border text-small text-muted-foreground">
         Complete a task to start your streak calendar.
@@ -93,32 +208,75 @@ export const StreakHeatmap: React.FC<Props> = ({ data }) => {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <ScatterChart margin={{ top: 20, right: 12, bottom: 12, left: 12 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis
-          type="number"
-          dataKey="week"
-          tickFormatter={(value: number) => `Week ${value + 1}`}
-          domain={[0, Math.max(maxWeek, 5)]}
-          ticks={Array.from({ length: Math.max(maxWeek + 1, 6) }, (_, i) => i)}
-        />
-        <YAxis
-          type="number"
-          dataKey="dayIndex"
-          tickFormatter={(value: number) => WEEKDAYS[value]}
-          ticks={[0, 1, 2, 3, 4, 5, 6]}
-          width={48}
-        />
-        <ZAxis type="number" dataKey="size" range={[16, 16]} />
-        <Tooltip cursor={{ fill: 'transparent' }} content={<CustomTooltip />} />
-        <Scatter data={points} shape="square">
-          {points.map((point) => (
-            <Cell key={point.date} fill={colorFor(point)} />
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <span className="font-medium uppercase tracking-wide text-[10px] text-muted-foreground">Legend</span>
+          {LEGEND_STEPS.map((step) => (
+            <span key={step.label} className="flex items-center gap-1">
+              <span className={`h-3 w-3 rounded-sm ${step.className}`} aria-hidden />
+              {step.label}
+            </span>
           ))}
-        </Scatter>
-      </ScatterChart>
-    </ResponsiveContainer>
+        </div>
+        <div className="grid grid-cols-7 gap-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {WEEKDAYS.map((weekday) => (
+            <span key={weekday} className="text-center">
+              {weekday}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        {months.map((month) => (
+          <div key={month.key} className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <h3 className="font-semibold text-small text-foreground">{month.label}</h3>
+              <span className="text-xs text-muted-foreground">
+                {month.cells.filter((cell) => cell.completed > 0).length} productive days
+              </span>
+            </div>
+
+            <div
+              role="grid"
+              aria-label={`${month.label} study activity`}
+              className="grid grid-cols-7 gap-1 sm:gap-2"
+            >
+              {Array.from({ length: month.leading }).map((_, index) => (
+                <div
+                  key={`${month.key}-spacer-${index}`}
+                  aria-hidden
+                  className="h-8 w-8 rounded-md sm:h-9 sm:w-9"
+                />
+              ))}
+
+              {month.cells.map((cell) => {
+                const colorClass = getColorClass(cell);
+                const isFocused = focusedIndex === cell.globalIndex;
+                return (
+                  <button
+                    key={cell.date}
+                    type="button"
+                    ref={(ref) => {
+                      cellRefs.current[cell.globalIndex] = ref;
+                    }}
+                    role="gridcell"
+                    aria-label={cell.ariaLabel}
+                    tabIndex={isFocused ? 0 : -1}
+                    onFocus={() => setFocusedIndex(cell.globalIndex)}
+                    onKeyDown={(event) => handleKeyDown(event, cell)}
+                    className={`h-8 w-8 rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:h-9 sm:w-9 ${colorClass}`}
+                  >
+                    <span className="sr-only">{cell.displayDate}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
