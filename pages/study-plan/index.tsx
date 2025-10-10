@@ -1,22 +1,24 @@
 // pages/study-plan/index.tsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Skeleton } from '@/components/design-system/Skeleton';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 import { useToast } from '@/components/design-system/Toaster';
 
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { generateStudyPlan } from '@/lib/studyPlan';
+import { track } from '@/lib/analytics/track';
 
 import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
 import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
 import { PlanCard } from '@/components/study/PlanCard';
-import { WeekGrid } from '@/components/study/WeekGrid';
+import { PlanTimeline } from '@/components/study/PlanTimeline';
 import { StreakChip } from '@/components/user/StreakChip';
 import { coerceStudyPlan, planDayKey } from '@/utils/studyPlan';
 
@@ -42,6 +44,21 @@ const PRESETS: ReadonlyArray<StudyPlanPreset> = [
     highlight: 'Great for jump-starts',
   },
 ];
+
+type StudyPlanEvent = 'studyplan_create' | 'studyplan_update' | 'studyplan_task_complete';
+
+async function logStudyPlanEvent(event: StudyPlanEvent, payload: Record<string, unknown> = {}) {
+  try {
+    await fetch('/api/study-plan/events', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ event, payload }),
+      keepalive: true,
+    });
+  } catch (err) {
+    console.error('[study-plan] failed to log trackor event', err);
+  }
+}
 
 function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType {
   const start = new Date();
@@ -71,6 +88,7 @@ export default function StudyPlanPage() {
 
   const { success: toastSuccess, error: toastError } = useToast();
   const { current: streak, loading: streakLoading, completeToday, reload: reloadStreak } = useStreak();
+  const taskRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const loadPlan = useCallback(async () => {
     setLoading(true);
@@ -125,6 +143,42 @@ export default function StudyPlanPage() {
     return plan.days.filter((d) => planDayKey(d) >= todayKey).slice(0, 7);
   }, [plan, todayKey]);
 
+  const planTotals = useMemo(() => {
+    if (!plan) return { total: 0, completed: 0 };
+    return plan.days.reduce(
+      (acc, day) => {
+        acc.total += day.tasks.length;
+        acc.completed += day.tasks.filter((task) => task.completed).length;
+        return acc;
+      },
+      { total: 0, completed: 0 },
+    );
+  }, [plan]);
+
+  const planProgress = planTotals.total > 0 ? Math.round((planTotals.completed / planTotals.total) * 100) : 0;
+
+  const nextTaskToday = useMemo(() => {
+    if (!today) return null;
+    return today.tasks.find((task) => !task.completed) ?? null;
+  }, [today]);
+
+  const handleTaskRef = useCallback((taskId: string, element: HTMLInputElement | null) => {
+    if (element) {
+      taskRefs.current[taskId] = element;
+    } else {
+      delete taskRefs.current[taskId];
+    }
+  }, []);
+
+  const handleFocusNextTask = useCallback(() => {
+    if (!nextTaskToday) return;
+    const target = taskRefs.current[nextTaskToday.id];
+    if (target) {
+      target.focus();
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [nextTaskToday]);
+
   const persistPlan = useCallback(
     async (next: PlanType) => {
       if (!userId) throw new Error('Not authenticated');
@@ -158,6 +212,8 @@ export default function StudyPlanPage() {
         await persistPlan(nextPlan);
         setPlan(nextPlan);
         toastSuccess('Plan ready', 'Your new study plan is live. Start with today’s tasks!');
+        track('studyplan_create', { preset: preset.id, weeks: preset.weeks });
+        void logStudyPlanEvent('studyplan_create', { preset: preset.id, weeks: preset.weeks });
       } catch (err) {
         console.error('Failed to create plan', err);
         toastError(err instanceof Error ? err.message : 'Could not create plan.');
@@ -191,6 +247,8 @@ export default function StudyPlanPage() {
 
       try {
         await persistPlan(next);
+        track('studyplan_update', { day: dayKey, taskId, completed: checked });
+        void logStudyPlanEvent('studyplan_update', { day: dayKey, taskId, completed: checked });
         const shouldStartStreak = checked && !wasComplete && !hadOtherCompleted && dayKey === todayKey;
         if (shouldStartStreak) {
           try {
@@ -199,6 +257,10 @@ export default function StudyPlanPage() {
           } catch (err) {
             console.error('Streak update failed', err);
           }
+        }
+        if (checked && !wasComplete) {
+          track('studyplan_task_complete', { day: dayKey, taskId });
+          void logStudyPlanEvent('studyplan_task_complete', { day: dayKey, taskId });
         }
         toastSuccess('Progress saved');
       } catch (err) {
@@ -250,7 +312,7 @@ export default function StudyPlanPage() {
               showOnboardingCta
             />
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+            <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
               <div className="space-y-6">
                 <PlanCard
                   day={today ?? plan!.days[0]}
@@ -259,31 +321,63 @@ export default function StudyPlanPage() {
                   }
                   busyTaskId={busyTask}
                   isToday={planDayKey(today ?? plan!.days[0]) === todayKey}
+                  nextTaskId={nextTaskToday?.id ?? null}
+                  onStartNextTask={handleFocusNextTask}
+                  onTaskRef={handleTaskRef}
                 />
-                <WeekGrid days={upcomingDays} />
+                <PlanTimeline days={upcomingDays} todayKey={todayKey} />
               </div>
 
-              <Card className="rounded-ds-2xl p-6 space-y-4">
-                <h3 className="font-slab text-h4">Need a change?</h3>
-                <p className="text-small text-muted-foreground">
-                  Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets
-                  below.
-                </p>
-                <div className="space-y-3">
-                  {PRESETS.map((preset) => (
-                    <Button
-                      key={preset.id}
-                      variant="ghost"
-                      className="w-full justify-between"
-                      onClick={() => handleCreatePlan(preset)}
-                      loading={creatingId === preset.id}
-                    >
-                      {preset.title}
-                      <span className="text-small text-muted-foreground">{preset.weeks} wk</span>
-                    </Button>
-                  ))}
-                </div>
-              </Card>
+              <div className="space-y-6">
+                <Card className="rounded-ds-2xl p-6 space-y-4">
+                  <h3 className="font-slab text-h4">Plan progress</h3>
+                  <p className="text-small text-muted-foreground">
+                    {planProgress >= 100
+                      ? 'You’ve completed every task in this plan. Consider regenerating a new schedule to keep training.'
+                      : 'Stay on pace toward your IELTS goal by checking off the next task in your queue.'}
+                  </p>
+                  <div className="space-y-2">
+                    <ProgressBar value={planProgress} aria-label="Overall study plan progress" />
+                    <div className="flex items-center justify-between text-small font-medium text-foreground">
+                      <span>
+                        {planTotals.completed}/{planTotals.total} tasks complete
+                      </span>
+                      <span>{planProgress}%</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="soft"
+                    tone="info"
+                    size="sm"
+                    onClick={handleFocusNextTask}
+                    disabled={!nextTaskToday}
+                  >
+                    {nextTaskToday ? 'Jump to today’s next task' : 'All caught up for today'}
+                  </Button>
+                </Card>
+
+                <Card className="rounded-ds-2xl p-6 space-y-4">
+                  <h3 className="font-slab text-h4">Need a change?</h3>
+                  <p className="text-small text-muted-foreground">
+                    Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets
+                    below.
+                  </p>
+                  <div className="space-y-3">
+                    {PRESETS.map((preset) => (
+                      <Button
+                        key={preset.id}
+                        variant="ghost"
+                        className="w-full justify-between"
+                        onClick={() => handleCreatePlan(preset)}
+                        loading={creatingId === preset.id}
+                      >
+                        {preset.title}
+                        <span className="text-small text-muted-foreground">{preset.weeks} wk</span>
+                      </Button>
+                    ))}
+                  </div>
+                </Card>
+              </div>
             </div>
           )}
         </div>
