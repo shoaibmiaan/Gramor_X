@@ -51,6 +51,9 @@ const envSchema = z.object({
   GEMINI_MODEL: z.string().optional(),
   GX_AI_PROVIDER: z.string().optional(),
 
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
+
   PREMIUM_MASTER_PIN: z.string().optional(),
   PREMIUM_PIN_HASH: z.string().optional(),
   PREMIUM_PIN_SALT: z.string().optional(),
@@ -134,6 +137,9 @@ const raw = {
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   GEMINI_MODEL: process.env.GEMINI_MODEL,
   GX_AI_PROVIDER: process.env.GX_AI_PROVIDER,
+
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
 
   PREMIUM_MASTER_PIN: process.env.PREMIUM_MASTER_PIN,
   PREMIUM_PIN_HASH: process.env.PREMIUM_PIN_HASH,

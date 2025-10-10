@@ -120,8 +120,9 @@ export default function ProfilePage() {
     try {
       const res = await fetch('/api/account/export');
       if (!res.ok) throw new Error('Failed');
-      const json = await res.json();
-      const blob = new Blob([JSON.stringify(json, null, 2)], {
+      const payload = await res.json();
+      const exportData = payload?.export ?? payload;
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
         type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
@@ -130,7 +131,7 @@ export default function ProfilePage() {
       a.download = 'export.json';
       a.click();
       URL.revokeObjectURL(url);
-      toastSuccess('Export ready');
+      toastSuccess(payload?.emailed ? 'Export emailed and ready' : 'Export ready');
     } catch (err: any) {
       toastError(err?.message || 'Could not export data');
     }
@@ -138,9 +139,20 @@ export default function ProfilePage() {
 
   const requestDeletion = async () => {
     if (!window.confirm('Delete your account? This cannot be undone.')) return;
+    const second = window.prompt("Type DELETE to confirm.");
+    if ((second ?? '').trim().toUpperCase() !== 'DELETE') {
+      toastError('Deletion cancelled');
+      return;
+    }
     try {
-      const res = await fetch('/api/account/delete', { method: 'POST' });
-      if (!res.ok) throw new Error('Failed');
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE', acknowledge: true }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.error || 'Failed');
+      toastSuccess('Account scheduled for deletion');
       await supabase.auth.signOut();
       router.replace('/');
     } catch (err: any) {
