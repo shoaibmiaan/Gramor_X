@@ -11,7 +11,7 @@ import { useToast } from '@/components/design-system/Toaster';
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { generateStudyPlan } from '@/lib/studyPlan';
+import { type AvailabilitySlot, generateStudyPlan } from '@/lib/studyPlan';
 
 import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
 import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
@@ -43,9 +43,41 @@ const PRESETS: ReadonlyArray<StudyPlanPreset> = [
   },
 ];
 
+const PRESET_TARGETS: Record<string, number> = {
+  'balanced-4w': 7,
+  'speaking-boost': 6.5,
+  'listening-sprint': 6,
+};
+
+const PRESET_AVAILABILITY: Record<string, AvailabilitySlot[]> = {
+  'balanced-4w': [
+    { day: 'monday', minutes: 60 },
+    { day: 'tuesday', minutes: 45 },
+    { day: 'thursday', minutes: 55 },
+    { day: 'friday', minutes: 45 },
+    { day: 'saturday', minutes: 70 },
+  ],
+  'speaking-boost': [
+    { day: 'monday', minutes: 50 },
+    { day: 'wednesday', minutes: 45 },
+    { day: 'friday', minutes: 55 },
+    { day: 'saturday', minutes: 60 },
+  ],
+  'listening-sprint': [
+    { day: 'monday', minutes: 60 },
+    { day: 'tuesday', minutes: 50 },
+    { day: 'thursday', minutes: 55 },
+    { day: 'friday', minutes: 50 },
+    { day: 'saturday', minutes: 80 },
+  ],
+};
+
 function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType {
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
+
+  const exam = new Date(start);
+  exam.setUTCDate(exam.getUTCDate() + preset.weeks * 7 - 1);
 
   const weaknesses =
     preset.id === 'speaking-boost'
@@ -54,10 +86,15 @@ function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType
       ? ['listening:maps', 'listening:matching']
       : undefined;
 
+  const availability = PRESET_AVAILABILITY[preset.id] ?? PRESET_AVAILABILITY['balanced-4w'];
+  const targetBand = PRESET_TARGETS[preset.id] ?? 7;
+
   return generateStudyPlan({
     userId,
     startISO: start.toISOString(),
-    weeks: preset.weeks,
+    examDateISO: exam.toISOString(),
+    targetBand,
+    availability,
     weaknesses,
   });
 }
