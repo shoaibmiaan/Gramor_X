@@ -132,7 +132,7 @@ const StepShell: React.FC<StepShellProps> = ({
               transition={{ type: 'spring', stiffness: 120, damping: 18 }}
               className="h-full bg-gradient-to-r from-primary via-electricBlue to-vibrantPurple"
             />
-            <div className="pointer-events-none absolute inset-0 animate-[shimmer_2.2s_linear_infinite] bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.25),transparent)] [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]" />
+            <div className="pointer-events-none absolute inset-0 animate-[shimmer_2.2s_linear_infinite] ds-shimmer" />
           </div>
         </div>
 
@@ -221,20 +221,10 @@ const StepShell: React.FC<StepShellProps> = ({
             animate={{ opacity: 0.35 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
-            className="pointer-events-none fixed inset-0 bg-radial from-vibrantPurple/10 via-primary/5 to-transparent"
+            className="pointer-events-none fixed inset-0 bg-onboarding-radial"
           />
         )}
       </AnimatePresence>
-
-      <style jsx global>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .bg-radial {
-          background-image: radial-gradient(600px 300px at 50% 40%, rgba(157, 78, 221, 0.15), transparent 70%);
-        }
-      `}</style>
     </div>
   );
 };
