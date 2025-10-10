@@ -26,7 +26,8 @@ type DecoratedItem = SavedItem & {
   createdDate: Date;
 };
 
-const keyFor = (item: SavedItem) => `${item.category || 'default'}:${item.type || 'all'}:${item.resource_id}`;
+const keyFor = (item: SavedItem) =>
+  item.id ?? `${item.category || 'default'}:${item.type || 'all'}:${item.resource_id}`;
 
 export function SavedList() {
   const { data, error, isValidating, size, setSize, mutate } = useSWRInfinite(
