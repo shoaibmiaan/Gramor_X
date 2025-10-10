@@ -55,6 +55,34 @@ export interface Invoices extends TableBase {
   meta?: Record<string, any>;
 }
 
+export interface AccountAuditLog extends TableBase {
+  user_id: string;
+  action: string;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AccountDeletionQueue {
+  user_id: string;
+  requested_at: string;
+  confirmed_at?: string | null;
+  purge_after: string;
+  status: 'pending' | 'purging' | 'purged' | 'error';
+  attempts: number;
+  last_error?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface AccountExport extends TableBase {
+  user_id: string;
+  token_hash: string;
+  payload: Record<string, unknown>;
+  expires_at: string;
+  downloaded_at?: string | null;
+}
+
 export interface WritingPrompts extends TableBase {
   title: string;
   prompt: string;
@@ -70,6 +98,9 @@ export interface DBSchema {
   attempts: Attempts;
   invoices: Invoices;
   writing_prompts: WritingPrompts;
+  account_audit_log: AccountAuditLog;
+  account_deletion_queue: AccountDeletionQueue;
+  account_exports: AccountExport;
 }
 
 export type TableName = keyof DBSchema;
