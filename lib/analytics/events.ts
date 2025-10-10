@@ -27,9 +27,8 @@ export type AnalyticsEventName =
   | 'teacher_review_completed'
   | 'teacher_review_scored'
   | 'writing_essay_scored'
-  | 'studyplan_create'
-  | 'studyplan_update'
-  | 'studyplan_task_complete';
+  | 'saved_view'
+  | 'saved_remove';
 
 export type AnalyticsProps = Record<
   string,

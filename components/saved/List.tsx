@@ -6,6 +6,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
+import { Select } from '@/components/design-system/Select';
 
 import {
   SAVED_PAGE_SIZE,
@@ -14,9 +15,10 @@ import {
   deriveModule,
   buildSavedLink,
   removeSavedItem,
+  removeSavedItems,
   type SavedItem,
 } from '@/lib/saved';
-import { emitUserEvent } from '@/lib/analytics/user';
+import { track } from '@/lib/analytics/track';
 
 const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
@@ -28,6 +30,15 @@ type DecoratedItem = SavedItem & {
 };
 
 const keyFor = (item: SavedItem) => `${item.category || 'default'}:${item.type || 'all'}:${item.resource_id}`;
+
+const DATE_FILTER_OPTIONS = [
+  { value: 'any', label: 'Any time' },
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+] as const;
+
+type DateFilterValue = (typeof DATE_FILTER_OPTIONS)[number]['value'];
 
 export function SavedList() {
   const { data, error, isValidating, size, setSize, mutate } = useSWRInfinite(
@@ -43,7 +54,11 @@ export function SavedList() {
   );
 
   const [removingKey, setRemovingKey] = useState<string | null>(null);
-  const previousCountRef = useRef<number>(0);
+  const [moduleFilter, setModuleFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>('any');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
+  const viewTracked = useRef(false);
 
   const isInitialLoading = !data && !error;
   const pages = data ?? [];
@@ -52,11 +67,11 @@ export function SavedList() {
   const decorated = useMemo<DecoratedItem[]>(
     () =>
       allItems.map((item) => {
-        const module = deriveModule(item);
+        const moduleMeta = deriveModule(item);
         return {
           ...item,
-          moduleId: module.id,
-          moduleLabel: module.label,
+          moduleId: moduleMeta.id,
+          moduleLabel: moduleMeta.label,
           href: buildSavedLink(item),
           createdDate: new Date(item.created_at),
         };
@@ -64,9 +79,43 @@ export function SavedList() {
     [allItems],
   );
 
+  const moduleOptions = useMemo(
+    () => {
+      const modules = new Map<string, string>();
+      for (const item of decorated) {
+        modules.set(item.moduleId, item.moduleLabel);
+      }
+      const dynamicOptions = Array.from(modules.entries())
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .map(([value, label]) => ({ value, label }));
+      return [{ value: 'all', label: 'All modules' }, ...dynamicOptions];
+    },
+    [decorated],
+  );
+
+  const filteredItems = useMemo(() => {
+    let cutoff: Date | null = null;
+    if (dateFilter !== 'any') {
+      const days = Number.parseInt(dateFilter, 10);
+      if (!Number.isNaN(days)) {
+        cutoff = new Date();
+        cutoff.setHours(0, 0, 0, 0);
+        cutoff.setDate(cutoff.getDate() - days);
+      }
+    }
+
+    return decorated.filter((item) => {
+      if (moduleFilter !== 'all' && item.moduleId !== moduleFilter) {
+        return false;
+      }
+      if (!cutoff) return true;
+      return item.createdDate >= cutoff;
+    });
+  }, [decorated, moduleFilter, dateFilter]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, { label: string; items: DecoratedItem[] }>();
-    for (const item of decorated) {
+    for (const item of filteredItems) {
       const current = map.get(item.moduleId);
       if (current) {
         current.items.push(item);
@@ -75,11 +124,52 @@ export function SavedList() {
       }
     }
     return Array.from(map.entries()).map(([id, value]) => ({ id, ...value }));
-  }, [decorated]);
+  }, [filteredItems]);
 
   const hasMore = pages.length > 0 ? pages[pages.length - 1].hasMore : false;
   const loadingMore = isValidating && pages.length > 0;
   const empty = !isInitialLoading && decorated.length === 0;
+  const filteredEmpty = !isInitialLoading && decorated.length > 0 && filteredItems.length === 0;
+  const hasFilters = moduleFilter !== 'all' || dateFilter !== 'any';
+  const selectedCount = selected.size;
+  const allSelected = filteredItems.length > 0 && selectedCount === filteredItems.length;
+  const hasSelection = selectedCount > 0;
+
+  useEffect(() => {
+    if (viewTracked.current || isInitialLoading) return;
+    track('saved_view', { total: decorated.length });
+    viewTracked.current = true;
+  }, [decorated.length, isInitialLoading]);
+
+  useEffect(() => {
+    setSelected((prev) => {
+      if (prev.size === 0) return prev;
+      const visibleKeys = new Set(filteredItems.map((item) => keyFor(item)));
+      let changed = false;
+      const next = new Set<string>();
+      prev.forEach((key) => {
+        if (visibleKeys.has(key)) {
+          next.add(key);
+        } else {
+          changed = true;
+        }
+      });
+      if (!changed && next.size === prev.size) return prev;
+      return next;
+    });
+  }, [filteredItems]);
+
+  const removeOptimistically = useCallback(
+    (keys: Set<string>) =>
+      mutate((current) => {
+        if (!current) return current;
+        return current.map((page) => ({
+          ...page,
+          items: page.items.filter((candidate) => !keys.has(keyFor(candidate))),
+        }));
+      }, { revalidate: false }),
+    [mutate],
+  );
 
   useEffect(() => {
     if (isInitialLoading) return;
@@ -94,31 +184,76 @@ export function SavedList() {
     async (item: DecoratedItem) => {
       const key = keyFor(item);
       setRemovingKey(key);
-      await mutate((current) => {
-        if (!current) return current;
-        return current.map((page) => ({
-          ...page,
-          items: page.items.filter((candidate) => keyFor(candidate) !== key),
-        }));
-      }, { revalidate: false });
+      const keys = new Set<string>([key]);
+      await removeOptimistically(keys);
+      setSelected((prev) => {
+        if (!prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
 
       try {
         await removeSavedItem(item);
-        const refreshed = await mutate();
-        const pagesAfter = Array.isArray(refreshed) ? refreshed : data ?? [];
-        const total = pagesAfter.reduce<number>((count, page) => count + page.items.length, 0);
-        previousCountRef.current = total;
-        void emitUserEvent('saved_remove', {
-          step: total,
-          delta: -1,
+        track('saved_remove', {
+          count: 1,
+          module: item.moduleId,
           category: item.category ?? undefined,
         });
+      } catch (removeError) {
+        console.error('Failed to remove saved item', removeError);
       } finally {
+        await mutate();
         setRemovingKey((prev) => (prev === key ? null : prev));
       }
     },
-    [data, mutate],
+    [mutate, removeOptimistically],
   );
+
+  const handleBulkRemove = useCallback(async () => {
+    if (selected.size === 0) return;
+    const itemsToRemove = filteredItems.filter((item) => selected.has(keyFor(item)));
+    if (itemsToRemove.length === 0) return;
+
+    const keys = new Set(itemsToRemove.map((item) => keyFor(item)));
+    setIsBulkRemoving(true);
+    await removeOptimistically(keys);
+    setSelected((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Set(prev);
+      keys.forEach((key) => next.delete(key));
+      return next;
+    });
+
+    try {
+      await removeSavedItems(itemsToRemove);
+      const modules = Array.from(new Set(itemsToRemove.map((item) => item.moduleId)));
+      track('saved_remove', {
+        count: itemsToRemove.length,
+        modules: modules.join(','),
+      });
+    } catch (removeError) {
+      console.error('Failed to remove saved items', removeError);
+    } finally {
+      await mutate();
+      setIsBulkRemoving(false);
+    }
+  }, [filteredItems, mutate, removeOptimistically, selected]);
+
+  const toggleSelectAll = useCallback(() => {
+    if (filteredItems.length === 0) return;
+    setSelected((prev) => {
+      if (prev.size === filteredItems.length) {
+        return new Set();
+      }
+      return new Set(filteredItems.map((item) => keyFor(item)));
+    });
+  }, [filteredItems]);
+
+  const handleClearFilters = useCallback(() => {
+    setModuleFilter('all');
+    setDateFilter('any');
+  }, []);
 
   if (error instanceof HttpError && error.status === 401) {
     return (
@@ -193,53 +328,167 @@ export function SavedList() {
 
   return (
     <div className="grid gap-6">
-      {grouped.map((group) => (
-        <Card key={group.id} className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
-            <div>
-              <h2 className="text-h4 font-slab">{group.label}</h2>
-              <p className="text-small text-mutedText">{group.items.length} saved item{group.items.length === 1 ? '' : 's'}</p>
-            </div>
+      <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-3 sm:grid-cols-2 sm:items-end sm:gap-4">
+            <Select
+              label="Module"
+              value={moduleFilter}
+              onChange={(event) => setModuleFilter(event.target.value)}
+              options={moduleOptions}
+              className="sm:w-56"
+            />
+            <Select
+              label="Date saved"
+              value={dateFilter}
+              onChange={(event) => setDateFilter(event.target.value as DateFilterValue)}
+              options={DATE_FILTER_OPTIONS}
+              className="sm:w-56"
+            />
           </div>
-          <div className="divide-y divide-border/30">
-            {group.items.map((item) => {
-              const key = keyFor(item);
-              const categoryLabel = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
-              return (
-                <div key={key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <Link href={item.href} className="font-medium text-foreground hover:text-primary">
-                      {item.resource_id}
-                    </Link>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-caption text-mutedText">
-                      <Badge variant="neutral" className="uppercase tracking-[0.18em]">
-                        {categoryLabel}
-                      </Badge>
-                      <span aria-hidden="true">•</span>
-                      <span>Saved {formatter.format(item.createdDate)}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasFilters && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="rounded-ds-xl"
+                onClick={handleClearFilters}
+                disabled={isBulkRemoving}
+              >
+                Reset filters
+              </Button>
+            )}
+            {hasSelection && (
+              <span className="text-small text-mutedText">{selectedCount} selected</span>
+            )}
+            <Button
+              type="button"
+              variant="soft"
+              tone="default"
+              className="rounded-ds-xl"
+              onClick={toggleSelectAll}
+              disabled={filteredItems.length === 0 || isBulkRemoving}
+            >
+              {allSelected ? 'Clear selection' : 'Select all'}
+            </Button>
+            {hasSelection && (
+              <Button
+                type="button"
+                variant="soft"
+                tone="danger"
+                className="rounded-ds-xl"
+                onClick={handleBulkRemove}
+                loading={isBulkRemoving}
+                loadingText="Removing"
+              >
+                Remove selected ({selectedCount})
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {filteredEmpty ? (
+        <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
+          <h2 className="text-h4 font-slab">No saved items match your filters</h2>
+          <p className="mt-2 text-small text-mutedText">
+            Try selecting a different module or date range to see your bookmarks.
+          </p>
+          {hasFilters && (
+            <div className="mt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                className="rounded-ds-xl"
+                onClick={handleClearFilters}
+                disabled={isBulkRemoving}
+              >
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </Card>
+      ) : (
+        grouped.map((group) => (
+          <Card key={group.id} className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
+              <div>
+                <h2 className="text-h4 font-slab">{group.label}</h2>
+                <p className="text-small text-mutedText">
+                  {group.items.length} saved item{group.items.length === 1 ? '' : 's'}
+                </p>
+              </div>
+            </div>
+            <div className="divide-y divide-border/30">
+              {group.items.map((item) => {
+                const key = keyFor(item);
+                const categoryLabel = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
+                return (
+                  <div
+                    key={key}
+                    className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex flex-1 items-start gap-3">
+                      <input
+                        type="checkbox"
+                        className="mt-1 h-5 w-5 shrink-0 rounded border border-border bg-card text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-label={`Select ${item.resource_id}`}
+                        checked={selected.has(key)}
+                        onChange={() => setSelected((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(key)) {
+                            next.delete(key);
+                          } else {
+                            next.add(key);
+                          }
+                          return next;
+                        })}
+                        disabled={isBulkRemoving || removingKey === key}
+                      />
+                      <div>
+                        <Link
+                          href={item.href}
+                          className="font-medium text-foreground hover:text-primary"
+                        >
+                          {item.resource_id}
+                        </Link>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-caption text-mutedText">
+                          <Badge variant="neutral" className="uppercase tracking-[0.18em]">
+                            {categoryLabel}
+                          </Badge>
+                          <span aria-hidden="true">•</span>
+                          <span>Saved {formatter.format(item.createdDate)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        href={item.href}
+                        variant="ghost"
+                        className="rounded-ds-xl"
+                        disabled={isBulkRemoving}
+                      >
+                        Open
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="rounded-ds-xl"
+                        onClick={() => handleRemove(item)}
+                        loading={removingKey === key}
+                        loadingText="Removing"
+                        disabled={isBulkRemoving}
+                      >
+                        Remove
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button href={item.href} variant="ghost" className="rounded-ds-xl">
-                      Open
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="rounded-ds-xl"
-                      onClick={() => handleRemove(item)}
-                      loading={removingKey === key}
-                      loadingText="Removing"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      ))}
+                );
+              })}
+            </div>
+          </Card>
+        ))
+      )}
 
       {hasMore && (
         <div className="flex justify-center">
