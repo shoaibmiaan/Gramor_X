@@ -45,6 +45,11 @@ Got it. I’ve converted your checklist into tables with three columns: **Item**
 | [x] Real-time test timer & tab-switch detection                         | Countdown timers run for each section and log tab switches when visibility changes. The system cannot currently block switching or enforce fullscreen mode.                                | 2025-08-27 |
 | [x] Auto-save test state                                                | Answers and elapsed time are saved locally to allow resume after reload. There is no server-side backup or cross-device sync.                                                             | 2025-08-27 |
 | [x] Performance analytics per mock                                      | Stores band score, time spent, and tab switches for each attempt, enabling later review. Visual trend charts and comparative analytics are not yet implemented.                             | 2025-08-27 |
+| [ ] Mock — Section checkpoints & resume                                 | Persist server-side section completion markers and provide a resumable token so /mock/resume can continue at the next section without data loss.                          |         |
+| [ ] Mock — Instructions & rules screen                                  | Introduce a pre-exam modal detailing timing and navigation rules that requires explicit user confirmation before the mock test begins.                                    |         |
+| [ ] Mock — Distraction-free mode                                        | Add an optional distraction-free experience with minimal chrome, fullscreen guidance, and navigation guards to prevent accidental exits.                                 |         |
+| [ ] Mock — Timer accuracy tests                                         | Automate QA coverage for timer drift and verify auto-advance triggers exactly at section cutoff within ±1 second tolerance.                                              |         |
+| [ ] Mock — Partial submission safeguards                                | Implement backend protections against orphaned attempts, warn users before exiting mid-section, and log partial submissions for support teams.                           |         |
 
 ---
 ## 🤖 4. AI Evaluation Module

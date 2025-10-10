@@ -5,3 +5,7 @@ schedule = "0 9 * * *"
 [functions.reminders]
 verify_jwt = false
 schedule = "0 * * * *"
+
+[functions.daily-plan-reminders]
+verify_jwt = false
+schedule = "0 7 * * *"
