@@ -1,9 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
+import { trackor } from '@/lib/analytics/trackor.server';
 import { getServerClient } from '@/lib/supabaseServer';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { env } from '@/lib/env';
+import { calculateDurationSeconds, getExamAttemptStart } from '@/lib/exam/telemetry';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -30,8 +32,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (aErr || !attempt) return res.status(404).json({ error: 'Attempt not found' });
   if (attempt.user_id !== user.id) return res.status(403).json({ error: 'Forbidden' });
 
+  const startAt = await getExamAttemptStart(attemptId);
+
   // If already scored, return cached result
   if (attempt.band_overall && attempt.band_breakdown && attempt.feedback) {
+    const duration = calculateDurationSeconds(startAt, new Date());
+    await trackor.log('core_exam_review', {
+      attemptId,
+      duration,
+      score: attempt.band_overall,
+    });
+
     return res.status(200).json({
       attemptId,
       band: attempt.band_overall,
@@ -64,6 +75,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         feedback: parsed.feedback,
       })
       .eq('id', attemptId);
+
+    const duration = calculateDurationSeconds(startAt, new Date());
+    await trackor.log('core_exam_review', {
+      attemptId,
+      duration,
+      score: parsed.band ?? null,
+    });
 
     return res.status(200).json({ attemptId, ...parsed });
   } catch (err: any) {
