@@ -2,10 +2,20 @@ import * as React from 'react';
 import { Button } from '@/components/design-system/Button';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
+type WordInfo = {
+  id: string;
+  word: string;
+  meaning: string;
+  example: string | null;
+  synonyms: string[];
+  interest: string | null;
+};
+
 type WOD = {
-  word: { id: string; word: string; meaning: string; example: string | null };
+  word: WordInfo;
   learnedToday: boolean;
   streakDays: number;
+  longestStreak: number;
   streakValueUSD: number;
 };
 
@@ -29,14 +39,16 @@ export function WordOfTheDayCard() {
       if (!res.ok) {
         setError('Could not load Word of the Day.');
         setData(null);
-        return;
+        return null;
       }
 
       const json = (await res.json()) as WOD;
       setData(json);
+      return json;
     } catch {
       setError('Network error. Please retry.');
       setData(null);
+      return null;
     }
   }, []);
 
@@ -60,7 +72,16 @@ export function WordOfTheDayCard() {
       });
 
       if (!r.ok) throw new Error('mark-failed');
-      await load();
+      const payload = (await r.json()) as {
+        ok?: true;
+        streakDays?: number;
+        longestStreak?: number;
+      };
+      const updated = await load();
+      const nextValue = (payload?.streakDays ?? updated?.streakDays) ?? 0;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value: nextValue } }));
+      }
     } catch {
       setError('Could not update. Please try again.');
     } finally {
@@ -83,13 +104,28 @@ export function WordOfTheDayCard() {
   return (
     <div className="rounded-2xl border border-border bg-card p-6">
       <div className="text-small text-muted-foreground mb-2">📘 Word of the Day</div>
-      <div className="text-h2 font-semibold">{data.word.word}</div>
+      <div className="text-h2 font-semibold capitalize">{data.word.word}</div>
       <p className="mt-2 text-muted-foreground">{data.word.meaning}</p>
+      {data.word.synonyms.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {data.word.synonyms.map((synonym) => (
+            <span
+              key={synonym}
+              className="rounded-full bg-muted/60 px-3 py-1 font-medium text-foreground/70"
+            >
+              {synonym}
+            </span>
+          ))}
+        </div>
+      )}
       {data.word.example && (
-        <p className="mt-1 italic text-muted-foreground">&ldquo;{data.word.example}&rdquo;</p>
+        <p className="mt-3 italic text-muted-foreground">&ldquo;{data.word.example}&rdquo;</p>
+      )}
+      {data.word.interest && (
+        <p className="mt-3 text-small text-primary">{data.word.interest}</p>
       )}
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-4">
         <Button
           variant={data.learnedToday ? 'secondary' : 'primary'}
           onClick={mark}
@@ -97,9 +133,16 @@ export function WordOfTheDayCard() {
         >
           {data.learnedToday ? 'Learned today' : busy ? 'Saving…' : 'Mark as Learned'}
         </Button>
-        <div className="text-small text-muted-foreground">
-          🔥 <span className="font-medium">{data.streakDays}</span> days &nbsp;•&nbsp; value $
-          {Number.isFinite(data.streakValueUSD) ? data.streakValueUSD.toFixed(2) : '0.00'}
+        <div className="text-small text-muted-foreground space-y-1">
+          <div>
+            🔥 <span className="font-medium">{data.streakDays}</span> day
+            {data.streakDays === 1 ? '' : 's'} &nbsp;•&nbsp; value $
+            {Number.isFinite(data.streakValueUSD) ? data.streakValueUSD.toFixed(2) : '0.00'}
+          </div>
+          <div className="text-xs text-muted-foreground/80">
+            Personal best: {Math.max(data.longestStreak, data.streakDays)} day
+            {Math.max(data.longestStreak, data.streakDays) === 1 ? '' : 's'}
+          </div>
         </div>
       </div>
 
