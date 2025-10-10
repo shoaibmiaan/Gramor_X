@@ -686,7 +686,7 @@
   },
   {
     "type": "page",
-    "name_or_route": "pages/api/saved/[category].ts",
+    "name_or_route": "pages/api/saved/category/[category].ts",
     "components_used_guess": ""
   },
   {
