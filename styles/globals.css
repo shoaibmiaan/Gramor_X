@@ -178,3 +178,34 @@ html.gx-ai-open #__next { padding-right: var(--gx-ai-right); box-sizing: border-
   --ds-progress-fill: rgb(var(--color-danger));
   --ds-progress-fill-dark: rgb(var(--color-danger));
 }
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@layer utilities {
+  .ds-shimmer {
+    background-image: linear-gradient(
+      110deg,
+      transparent,
+      rgb(var(--gx-card) / 0.35),
+      transparent
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      rgb(var(--gx-card-foreground) / 0.1),
+      rgb(var(--gx-card-foreground) / 0.9),
+      transparent
+    );
+  }
+
+  .bg-onboarding-radial {
+    background-image: radial-gradient(
+      600px 300px at 50% 40%,
+      rgb(var(--color-vibrantPurple) / 0.15),
+      transparent 70%
+    );
+  }
+}
