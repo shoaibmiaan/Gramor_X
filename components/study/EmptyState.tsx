@@ -1,9 +1,10 @@
 // components/study/EmptyState.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { EmptyState as DSEmptyState } from '@/components/design-system/EmptyState';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
+import { useLocale } from '@/lib/locale';
 
 export type StudyPlanPreset = {
   id: string;            // e.g., 'lite' | 'focus' | 'intensive' | custom
@@ -27,30 +28,30 @@ type Props = {
   showOnboardingCta?: boolean;
 };
 
-const DEFAULT_PRESETS: ReadonlyArray<StudyPlanPreset> = [
+const DEFAULT_PRESET_CONFIG = [
   {
     id: 'lite',
-    title: 'Lite reset (2 weeks)',
-    description: 'Ease back in with short daily sessions and vocabulary refreshers.',
     weeks: 2,
-    dailyMinutes: '30 min/day',
-    highlight: 'Rebuild momentum quickly.',
+    titleKey: 'studyPlan.empty.presets.lite.title',
+    descriptionKey: 'studyPlan.empty.presets.lite.description',
+    dailyMinutesKey: 'studyPlan.empty.presets.lite.daily',
+    highlightKey: 'studyPlan.empty.presets.lite.highlight',
   },
   {
     id: 'focus',
-    title: 'Balanced focus (4 weeks)',
-    description: 'Structured mix of all four modules with weekly review checkpoints.',
     weeks: 4,
-    dailyMinutes: '45–60 min/day',
-    highlight: 'Weekly mocks + targeted drills.',
+    titleKey: 'studyPlan.empty.presets.focus.title',
+    descriptionKey: 'studyPlan.empty.presets.focus.description',
+    dailyMinutesKey: 'studyPlan.empty.presets.focus.daily',
+    highlightKey: 'studyPlan.empty.presets.focus.highlight',
   },
   {
     id: 'intensive',
-    title: 'Intensive push (6 weeks)',
-    description: 'Longer study blocks and extra mocks for a final exam sprint.',
     weeks: 6,
-    dailyMinutes: '75 min/day',
-    highlight: 'Two mock exams per week.',
+    titleKey: 'studyPlan.empty.presets.intensive.title',
+    descriptionKey: 'studyPlan.empty.presets.intensive.description',
+    dailyMinutesKey: 'studyPlan.empty.presets.intensive.daily',
+    highlightKey: 'studyPlan.empty.presets.intensive.highlight',
   },
 ] as const;
 
@@ -61,22 +62,37 @@ export function StudyPlanEmptyState({
   disabled,
   showOnboardingCta = true,
 }: Props) {
-  const list = presets?.length ? presets : DEFAULT_PRESETS;
+  const { t } = useLocale();
+
+  const fallbackPresets = useMemo<ReadonlyArray<StudyPlanPreset>>(
+    () =>
+      DEFAULT_PRESET_CONFIG.map((preset) => ({
+        id: preset.id,
+        weeks: preset.weeks,
+        title: t(preset.titleKey),
+        description: t(preset.descriptionKey),
+        dailyMinutes: preset.dailyMinutesKey ? t(preset.dailyMinutesKey) : undefined,
+        highlight: preset.highlightKey ? t(preset.highlightKey) : undefined,
+      })),
+    [t],
+  );
+
+  const list = presets?.length ? presets : fallbackPresets;
 
   return (
     <div className="space-y-8">
       <DSEmptyState
-        title="Create your study plan"
-        description="Pick a quick preset to fill your calendar instantly. You can customise tasks later."
-        icon={<Icon name="fire" size={28} title="Streak" />}
+        title={t('studyPlan.empty.title')}
+        description={t('studyPlan.empty.description')}
+        icon={<Icon name="fire" size={28} title={t('studyPlan.empty.iconTitle')} />}
         actions={
           showOnboardingCta ? (
             <Button asChild variant="outline">
-              <Link href="/onboarding">Build with onboarding</Link>
+              <Link href="/onboarding">{t('studyPlan.empty.actions.onboarding')}</Link>
             </Button>
           ) : (
             <span className="text-small text-muted-foreground">
-              Plans auto-adjust after you complete a day.
+              {t('studyPlan.empty.actions.autoAdjust')}
             </span>
           )
         }
@@ -99,16 +115,18 @@ export function StudyPlanEmptyState({
                 <dl className="grid grid-cols-2 gap-3 text-caption text-muted-foreground">
                   <div>
                     <dt className="uppercase tracking-wide text-[0.7rem] text-muted-foreground/80">
-                      Duration
+                      {t('studyPlan.empty.labels.duration')}
                     </dt>
-                    <dd className="text-small font-medium text-foreground">{preset.weeks} weeks</dd>
+                    <dd className="text-small font-medium text-foreground">
+                      {t('studyPlan.empty.labels.weeks', undefined, { count: preset.weeks })}
+                    </dd>
                   </div>
                   <div>
                     <dt className="uppercase tracking-wide text-[0.7rem] text-muted-foreground/80">
-                      Daily time
+                      {t('studyPlan.empty.labels.dailyTime')}
                     </dt>
                     <dd className="text-small font-medium text-foreground">
-                      {preset.dailyMinutes ?? 'Varies'}
+                      {preset.dailyMinutes ?? t('studyPlan.empty.labels.varies')}
                     </dd>
                   </div>
                 </dl>
@@ -124,11 +142,11 @@ export function StudyPlanEmptyState({
                 className="mt-6"
                 fullWidth
                 loading={isBusy}
-                loadingText="Creating…"
+                loadingText={t('studyPlan.empty.actions.creating')}
                 disabled={disabled}
                 onClick={() => onSelect(preset)}
               >
-                Start this plan
+                {t('studyPlan.empty.actions.start')}
               </Button>
             </article>
           );
@@ -136,7 +154,7 @@ export function StudyPlanEmptyState({
       </div>
 
       <p className="text-center text-small text-muted-foreground">
-        Your daily streak starts counting after you complete the first task in your plan.
+        {t('studyPlan.empty.footer')}
       </p>
     </div>
   );

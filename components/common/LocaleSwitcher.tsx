@@ -1,7 +1,7 @@
 // components/common/LocaleSwitcher.tsx
 import React from 'react';
-import { persistLocale as setLocale, getLocale, type Locale } from '@/lib/locale';
-import { loadTranslations } from "@/lib/i18n";
+import { persistLocale, getLocale, toSupportedLocale, useLocale, type Locale } from '@/lib/locale';
+import { loadTranslations } from '@/lib/i18n';
 
 type Props = {
   value?: Locale;
@@ -11,21 +11,20 @@ type Props = {
 
 export default function LocaleSwitcher({ value, onChanged, options }: Props) {
   const [busy, setBusy] = React.useState(false);
-  const [local, setLocal] = React.useState<Locale>(value ?? getLocale('en'));
+  const { t } = useLocale();
+  const [local, setLocal] = React.useState<Locale>(value ?? getLocale());
 
   const langs = options ?? [
-    { value: 'en', label: 'English' },
-    { value: 'ur', label: 'اردو' },
-    { value: 'ar', label: 'العربية' },
-    { value: 'fr', label: 'Français' },
+    { value: 'en', label: t('common.languages.en', 'English') },
+    { value: 'ur', label: t('common.languages.ur', 'اردو') },
   ];
 
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = e.target.value as Locale;
+    const next = toSupportedLocale(e.target.value);
     try {
       setBusy(true);
-      await loadTranslations(toSupported(next));
-      setLocale(next);
+      await loadTranslations(next);
+      persistLocale(next);
       setLocal(next);
       onChanged?.(next);
     } finally {
@@ -35,7 +34,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
 
   return (
     <label className="inline-flex items-center gap-2 text-small">
-      <span className="text-mutedText">Language</span>
+      <span className="text-mutedText">{t('Language')}</span>
       <select
         className="rounded-ds border border-border bg-card px-3 py-2 text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         value={local}
@@ -46,7 +45,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
           <option key={l.value} value={l.value}>{l.label}</option>
         ))}
       </select>
-      {busy && <span className="text-mutedText text-caption">…updating</span>}
+      {busy && <span className="text-mutedText text-caption">{t('common.status.updating')}</span>}
     </label>
   );
 }
