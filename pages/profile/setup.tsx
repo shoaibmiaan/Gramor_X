@@ -774,11 +774,9 @@ export default function ProfileSetup() {
                       <AvatarUploader
                         userId={userId}
                         initialUrl={avatarUrl}
-                        initialPath={avatarPath}
-                        onUploaded={async ({ signedUrl, path }) => {
-                          setAvatarUrl(signedUrl ?? undefined);
-                          setAvatarPath(path);
-                          await supabase.auth.updateUser({ data: { avatar_path: path, avatar_url: path } });
+                        onUploaded={async (url, _path) => {
+                          setAvatarUrl(url);
+                          await supabase.auth.updateUser({ data: { avatar_url: url } });
                         }}
                       />
                     </div>
