@@ -14,17 +14,28 @@ async function postToEndpoint(event: string, payload: TrackorPayload) {
     return;
   }
 
-  try {
-    await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ event, payload, timestamp: new Date().toISOString() }),
-      keepalive: true,
-    });
-  } catch (error) {
-    if (isDebug && typeof console !== 'undefined') {
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[trackor] failed to log ${event}: ${message}`);
+  const maxAttempts = 3;
+  const body = JSON.stringify({ event, payload, timestamp: new Date().toISOString() });
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+        keepalive: true,
+      });
+      return;
+    } catch (error) {
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 200 * attempt));
+        continue;
+      }
+
+      if (isDebug && typeof console !== 'undefined') {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`[trackor] failed to log ${event}: ${message}`);
+      }
     }
   }
 }
