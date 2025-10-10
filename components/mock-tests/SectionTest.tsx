@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useId } from 'react';
 import { Card } from '@/components/design-system/Card';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
@@ -34,6 +34,8 @@ export const SectionTest = forwardRef<SectionTestHandle, Props>(
     const [result, setResult] = useState<SectionResult | null>(null);
     const [tabSwitches, setTabSwitches] = useState(0);
     const startRef = useRef(Date.now());
+    const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+    const formId = useId();
 
     useImperativeHandle(ref, () => ({ submit: handleSubmit }));
 
@@ -122,10 +124,22 @@ export const SectionTest = forwardRef<SectionTestHandle, Props>(
       onComplete?.(res);
     }
 
+    useEffect(() => {
+      if (result) {
+        resultHeadingRef.current?.focus();
+      }
+    }, [result]);
+
     if (result) {
       return (
-        <Card className="p-6 rounded-ds-2xl">
-          <h2 className="font-slab text-h3 capitalize">{section} Results</h2>
+        <Card className="p-6 rounded-ds-2xl" role="status" aria-live="polite" aria-atomic="true">
+          <h2
+            ref={resultHeadingRef}
+            tabIndex={-1}
+            className="font-slab text-h3 capitalize focus:outline-none"
+          >
+            {section} Results
+          </h2>
           <p className="mt-4">Band score: {result.band}</p>
           <p>Correct: {result.correct} / {result.total}</p>
           <p>Time taken: {result.timeTaken}s</p>
@@ -143,24 +157,34 @@ export const SectionTest = forwardRef<SectionTestHandle, Props>(
           }}
           className="space-y-6"
         >
-          {questions.map((q, qi) => (
-            <div key={q.id}>
-              <p className="mb-2">{q.question}</p>
-              <div className="space-y-1">
-                {q.options.map((opt, oi) => (
-                  <label key={oi} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name={`q${qi}`}
-                      checked={answers[qi] === oi}
-                      onChange={() => handleAnswer(qi, oi)}
-                    />
-                    {opt}
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
+          {questions.map((q, qi) => {
+            const fieldsetId = `${formId}-question-${qi}`;
+            return (
+              <fieldset key={q.id} className="space-y-2">
+                <legend className="mb-2 font-semibold text-foreground">
+                  <span className="sr-only">Question {qi + 1}: </span>
+                  {q.question}
+                </legend>
+                <div className="space-y-1">
+                  {q.options.map((opt, oi) => {
+                    const optionId = `${fieldsetId}-option-${oi}`;
+                    return (
+                      <label key={optionId} htmlFor={optionId} className="flex items-center gap-2">
+                        <input
+                          id={optionId}
+                          type="radio"
+                          name={`${formId}-q${qi}`}
+                          checked={answers[qi] === oi}
+                          onChange={() => handleAnswer(qi, oi)}
+                        />
+                        <span>{opt}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            );
+          })}
           <button
             type="submit"
             className="mt-4 px-4 py-2 bg-primary text-white rounded"
