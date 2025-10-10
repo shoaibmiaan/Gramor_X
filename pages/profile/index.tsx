@@ -16,6 +16,7 @@ import type { Profile } from '@/types/profile';
 import { Badge } from '@/components/design-system/Badge';
 import type { Badge as BadgeType } from '@/data/badges';
 import { getUserBadges } from '@/lib/gamification';
+import { StreakCounter } from '@/components/streak/StreakCounter';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function ProfilePage() {
   const [historyText, setHistoryText] = useState('');
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { error: toastError, success: toastSuccess } = useToast();
-  const { current: streak } = useStreak();
+  const { current: streak, longest, loading: streakLoading } = useStreak();
   const [earnedBadges, setEarnedBadges] = useState<BadgeType[]>([]);
 
   useEffect(() => {
@@ -162,6 +163,8 @@ export default function ProfilePage() {
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
         <div className="max-w-xl mx-auto space-y-6">
+          <StreakCounter current={streak} longest={longest} loading={streakLoading} />
+
           <Card className="p-6 rounded-ds-2xl">
             <div className="flex items-center justify-between mb-6">
               <h1 className="font-slab text-display">Profile</h1>
