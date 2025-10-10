@@ -172,29 +172,49 @@ export default function ProfilePage() {
         })
         .eq('user_id', userId);
 
-      if (error) throw error;
-
-      await supabase.auth.updateUser({
-        data: {
-          full_name: trimmedName,
-          preferred_language: preferredLanguage,
-          avatar_path: avatarPath ?? null,
-          avatar_url: avatarPath ?? null,
-        },
+  const requestExport = async () => {
+    try {
+      const res = await fetch('/api/account/export');
+      if (!res.ok) throw new Error('Failed');
+      const payload = await res.json();
+      const exportData = payload?.export ?? payload;
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: 'application/json',
       });
-
-      setFieldErrors({});
-      toastSuccess('Profile updated.');
-    } catch (error) {
-      console.error('Profile update failed:', error);
-      setProfile(prevProfile);
-      toastError(error instanceof Error ? error.message : 'Could not update profile.');
-    } finally {
-      setSaving(false);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toastSuccess(payload?.emailed ? 'Export emailed and ready' : 'Export ready');
+    } catch (err: any) {
+      toastError(err?.message || 'Could not export data');
     }
   };
 
-  const isPremium = profile?.role ? profile.role.toLowerCase() === 'premium' : false;
+  const requestDeletion = async () => {
+    if (!window.confirm('Delete your account? This cannot be undone.')) return;
+    const second = window.prompt("Type DELETE to confirm.");
+    if ((second ?? '').trim().toUpperCase() !== 'DELETE') {
+      toastError('Deletion cancelled');
+      return;
+    }
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE', acknowledge: true }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(payload?.error || 'Failed');
+      toastSuccess('Account scheduled for deletion');
+      await supabase.auth.signOut();
+      router.replace('/');
+    } catch (err: any) {
+      toastError(err?.message || 'Could not delete account');
+    }
+  };
 
   if (loading) {
     return (
