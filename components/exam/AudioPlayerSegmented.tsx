@@ -1,5 +1,6 @@
 // components/exam/AudioPlayerSegmented.tsx
 import * as React from 'react';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 
 export type AudioSegment = {
   label?: string;
@@ -119,7 +120,8 @@ export function AudioPlayerSegmented({
   }
 
   const dur = ref.current?.duration ?? 0;
-  const progress = dur > 0 ? Math.min(100, (time / dur) * 100) : 0;
+  const progress = dur > 0 ? (time / dur) * 100 : 0;
+  const progressPct = Math.max(0, Math.min(100, progress));
 
   return (
     <div className={['rounded-2xl border border-border bg-card p-3 shadow-card', className || ''].join(' ')}>
@@ -185,9 +187,7 @@ export function AudioPlayerSegmented({
       </div>
 
       {/* Progress */}
-      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-border">
-        <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
-      </div>
+      <ProgressBar value={progressPct} className="mt-3" ariaLabel="Playback progress" />
 
       {/* Segment rail */}
       {segments.length > 0 && (
