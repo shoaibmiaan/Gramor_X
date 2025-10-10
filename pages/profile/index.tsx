@@ -10,62 +10,15 @@ import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
 import { Select } from '@/components/design-system/Select';
 import { Badge } from '@/components/design-system/Badge';
-import { StreakIndicator } from '@/components/design-system/StreakIndicator';
-import { AvatarUploader } from '@/components/design-system/AvatarUploader';
-import { useToast } from '@/components/design-system/Toaster';
-import { useStreak } from '@/hooks/useStreak';
-import { useSignedAvatar } from '@/hooks/useSignedAvatar';
-import { isStoragePath } from '@/lib/avatar';
-import { supabase } from '@/lib/supabaseClient';
-import type { Profile } from '@/types/profile';
-
-const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'ur', label: 'Urdu' },
-  { value: 'ar', label: 'Arabic' },
-  { value: 'hi', label: 'Hindi' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'fr', label: 'French' },
-  { value: 'fa', label: 'Farsi' },
-];
-
-type FieldErrors = {
-  fullName?: string;
-  preferredLanguage?: string;
-  goalBand?: string;
-  examDate?: string;
-};
+import type { Badge as BadgeType } from '@/data/badges';
+import { getUserBadges } from '@/lib/gamification';
+import { StreakCounter } from '@/components/streak/StreakCounter';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { error: toastError, success: toastSuccess } = useToast();
-  const { current: streak } = useStreak();
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [avatarPath, setAvatarPath] = useState<string | null>(null);
-  const [fullName, setFullName] = useState('');
-  const [preferredLanguage, setPreferredLanguage] = useState('en');
-  const [goalBand, setGoalBand] = useState('');
-  const [examDate, setExamDate] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-
-  const displayedLanguageOptions = useMemo(() => {
-    if (!preferredLanguage) return LANGUAGE_OPTIONS;
-    if (LANGUAGE_OPTIONS.some((option) => option.value === preferredLanguage)) {
-      return LANGUAGE_OPTIONS;
-    }
-    return [...LANGUAGE_OPTIONS, { value: preferredLanguage, label: preferredLanguage.toUpperCase() }];
-  }, [preferredLanguage]);
-
-  const rawAvatarValue = useMemo(() => {
-    if (avatarPath) return avatarPath;
-    return profile?.avatar_url ?? null;
-  }, [avatarPath, profile?.avatar_url]);
-
-  const { signedUrl: avatarUrl } = useSignedAvatar(rawAvatarValue);
+  const { current: streak, longest, loading: streakLoading } = useStreak();
+  const [earnedBadges, setEarnedBadges] = useState<BadgeType[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -234,15 +187,13 @@ export default function ProfilePage() {
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <div className="max-w-2xl mx-auto space-y-6">
-          <Card className="p-6 md:p-8 rounded-ds-2xl">
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <div>
-                <h1 className="font-slab text-display leading-tight">Profile</h1>
-                <p className="text-muted-foreground text-small">Update your essentials in one place.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                {isPremium && <Badge variant="accent">Premium</Badge>}
+        <div className="max-w-xl mx-auto space-y-6">
+          <StreakCounter current={streak} longest={longest} loading={streakLoading} />
+
+          <Card className="p-6 rounded-ds-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="font-slab text-display">Profile</h1>
+              <div className="flex items-center gap-2">
                 <StreakIndicator value={streak} />
               </div>
             </div>
