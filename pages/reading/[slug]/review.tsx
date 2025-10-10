@@ -24,6 +24,7 @@ type ReviewQuestion = {
   options?: string[] | null;
   pairs?: { left: string; right: string | string[] }[] | null;
   isCorrect: boolean;
+  rationale?: string | null;
 };
 
 type ReviewSummary = {
@@ -110,6 +111,13 @@ export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ct
     answers = derived;
   }
 
+  const attemptItemMap = new Map<string, any>();
+  if (attempt?.result?.items) {
+    for (const item of attempt.result.items) {
+      attemptItemMap.set(String(item.id), item);
+    }
+  }
+
   if (!answers || !paper) {
     return {
       props: {
@@ -176,6 +184,8 @@ export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ct
       }
       breakdown[bucketKey] = bucket;
 
+      const attemptMeta = attemptItemMap.get(String(id));
+      const rationale = extractRationale(raw, attemptMeta);
       questions.push({
         id,
         qNo,
@@ -188,6 +198,7 @@ export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ct
         options,
         pairs,
         isCorrect,
+        rationale,
       });
     });
   });
@@ -431,6 +442,12 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
                           <div className="text-body">{formatCorrectAnswer(q)}</div>
                         </div>
                       </div>
+                      {!q.isCorrect && q.rationale && (
+                        <div className="mt-4 rounded-ds border border-lightBorder/70 bg-muted/20 p-4 text-body dark:border-white/10 dark:bg-white/5">
+                          <p className="text-small font-semibold text-muted-foreground">Rationale</p>
+                          <p className="mt-1 text-pretty">{q.rationale}</p>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 text-success">
                       <Icon className={clsx('h-6 w-6', q.isCorrect ? 'text-success' : 'text-sunsetOrange')} aria-hidden="true" />
@@ -557,6 +574,17 @@ function extractPairs(raw: any): { left: string; right: string | string[] }[] | 
   if (Array.isArray(raw)) return raw as { left: string; right: string | string[] }[];
   if (Array.isArray(raw.pairs)) return raw.pairs as { left: string; right: string | string[] }[];
   return null;
+}
+
+function extractRationale(raw: any, attemptItem?: any): string | null {
+  if (typeof raw?.rationale === 'string') return raw.rationale;
+  if (typeof raw === 'string') return raw;
+  if (typeof raw?.options?.rationale === 'string') return raw.options.rationale;
+  if (typeof raw?.options?.explanation === 'string') return raw.options.explanation;
+  if (typeof raw?.options?.feedback === 'string') return raw.options.feedback;
+  if (attemptItem && typeof attemptItem.rationale === 'string') return attemptItem.rationale;
+  const metaRationale = attemptItem?.why ?? attemptItem?.explanation ?? null;
+  return typeof metaRationale === 'string' ? metaRationale : null;
 }
 
 function formatAnswer(question: ReviewQuestion, value: any, showPlaceholder = true): React.ReactNode {

@@ -1,34 +1,75 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /**
  * Minimal client store for Reading answers (per passage).
- * - Persists to localStorage under key `reading:<slug>`
- * - API: getAnswer, setAnswer, clear, allAnswers
+ * - Persists to localStorage under key `reading:<slug>:answers`
+ * - API: setAnswer, clear, allAnswers
  */
 export type AnswerValue = string | number | boolean | string[] | null;
 
 export function useReadingAnswers(slug: string) {
-  const key = useMemo(() => `reading:${slug}`, [slug]);
+  const storageKey = useMemo(() => `reading:${slug}:answers`, [slug]);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
-      if (raw) setAnswers(JSON.parse(raw));
-    } catch {}
-  }, [key]);
+      const merged: Record<string, AnswerValue> = {};
+      const legacyKeys = [storageKey, `reading:${slug}`, `readingAnswers:${slug}`];
+      legacyKeys.forEach((key) => {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            Object.assign(merged, parsed as Record<string, AnswerValue>);
+          }
+        } catch {
+          // ignore malformed payloads
+        }
+      });
 
-  const persist = (next: Record<string, AnswerValue>) => {
-    setAnswers(next);
-    try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
-  };
+      setAnswers(merged);
 
-  const getAnswer = (id: string): AnswerValue => answers[id] ?? null;
-  const setAnswer = (id: string, value: AnswerValue) =>
-    persist({ ...answers, [id]: value });
-  const clear = () => persist({});
-  const allAnswers = () => answers;
+      if (Object.keys(merged).length) {
+        try { localStorage.setItem(storageKey, JSON.stringify(merged)); } catch {}
+      }
 
-  return { answers, getAnswer, setAnswer, clear, allAnswers };
+      legacyKeys
+        .filter((key) => key !== storageKey)
+        .forEach((key) => {
+          try { localStorage.removeItem(key); } catch {}
+        });
+    } catch {
+      // ignore hydration failures
+    }
+  }, [slug, storageKey]);
+
+  const persist = useCallback((
+    next: Record<string, AnswerValue> | ((prev: Record<string, AnswerValue>) => Record<string, AnswerValue>),
+  ) => {
+    setAnswers((prev) => {
+      const computed = typeof next === 'function' ? next(prev) : next;
+      try {
+        if (Object.keys(computed).length) localStorage.setItem(storageKey, JSON.stringify(computed));
+        else localStorage.removeItem(storageKey);
+      } catch {}
+      return computed;
+    });
+  }, [storageKey]);
+
+  const setAnswer = useCallback((id: string, value: AnswerValue) => {
+    persist((prev) => ({ ...prev, [id]: value }));
+  }, [persist]);
+
+  const clear = useCallback(() => {
+    persist({});
+  }, [persist]);
+
+  const allAnswers = useCallback(() => answers, [answers]);
+
+  return { answers, setAnswer, clear, allAnswers };
 }
+
+export type ReadingAnswersStore = ReturnType<typeof useReadingAnswers>;
