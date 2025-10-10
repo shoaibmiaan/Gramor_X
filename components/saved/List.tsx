@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 
@@ -16,6 +16,7 @@ import {
   removeSavedItem,
   type SavedItem,
 } from '@/lib/saved';
+import { emitUserEvent } from '@/lib/analytics/user';
 
 const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
@@ -42,6 +43,7 @@ export function SavedList() {
   );
 
   const [removingKey, setRemovingKey] = useState<string | null>(null);
+  const previousCountRef = useRef<number>(0);
 
   const isInitialLoading = !data && !error;
   const pages = data ?? [];
@@ -79,6 +81,15 @@ export function SavedList() {
   const loadingMore = isValidating && pages.length > 0;
   const empty = !isInitialLoading && decorated.length === 0;
 
+  useEffect(() => {
+    if (isInitialLoading) return;
+    const prev = previousCountRef.current;
+    const next = decorated.length;
+    if (prev === next) return;
+    previousCountRef.current = next;
+    void emitUserEvent('saved_view', { step: next, delta: next - prev });
+  }, [decorated.length, isInitialLoading]);
+
   const handleRemove = useCallback(
     async (item: DecoratedItem) => {
       const key = keyFor(item);
@@ -93,12 +104,20 @@ export function SavedList() {
 
       try {
         await removeSavedItem(item);
-        await mutate();
+        const refreshed = await mutate();
+        const pagesAfter = Array.isArray(refreshed) ? refreshed : data ?? [];
+        const total = pagesAfter.reduce<number>((count, page) => count + page.items.length, 0);
+        previousCountRef.current = total;
+        void emitUserEvent('saved_remove', {
+          step: total,
+          delta: -1,
+          category: item.category ?? undefined,
+        });
       } finally {
         setRemovingKey((prev) => (prev === key ? null : prev));
       }
     },
-    [mutate],
+    [data, mutate],
   );
 
   if (error instanceof HttpError && error.status === 401) {

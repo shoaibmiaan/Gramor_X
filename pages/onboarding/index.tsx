@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import { Container } from '@/components/design-system/Container';
@@ -10,6 +10,7 @@ import { Alert } from '@/components/design-system/Alert';
 
 import type { Profile } from '@/types/profile';
 import { fetchProfile, markOnboardingComplete, upsertProfile } from '@/lib/profile';
+import { emitUserEvent } from '@/lib/analytics/user';
 
 type StepId = 1 | 2 | 3;
 
@@ -44,6 +45,8 @@ export default function OnboardingWizard() {
   const [optIn, setOptIn] = useState(false);
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const startTracked = useRef(false);
 
   const nextPath = useMemo(() => {
     const qNext = typeof router.query.next === 'string' ? router.query.next : null;
@@ -109,6 +112,12 @@ export default function OnboardingWizard() {
     };
   }, [router, nextPath]);
 
+  useEffect(() => {
+    if (loading || startTracked.current) return;
+    startTracked.current = true;
+    void emitUserEvent('onboarding_start', { step, delta: 0 });
+  }, [loading, step]);
+
   const updateProfile = useCallback(
     async (patch: Parameters<typeof upsertProfile>[0], nextStep?: StepId) => {
       setSaving(true);
@@ -136,11 +145,17 @@ export default function OnboardingWizard() {
       setError('Choose a band between 4.0 and 9.0.');
       return;
     }
+    const prev = step;
     await updateProfile({ goal_band: parsed, onboarding_step: 1, onboarding_complete: false }, 2);
+    const delta = Math.max(0, 2 - prev);
+    void emitUserEvent('onboarding_step_complete', { step: prev, delta });
   };
 
   const handleDateNext = async () => {
+    const prev = step;
     await updateProfile({ exam_date: examDate || null, onboarding_step: 2 }, 3);
+    const delta = Math.max(0, 3 - prev);
+    void emitUserEvent('onboarding_step_complete', { step: prev, delta });
   };
 
   const finish = async () => {
@@ -161,6 +176,7 @@ export default function OnboardingWizard() {
     }
 
     try {
+      const prev = step;
       await updateProfile(
         {
           phone: phoneValue,
@@ -169,8 +185,14 @@ export default function OnboardingWizard() {
           onboarding_step: 3,
           onboarding_complete: true,
         },
+        3,
       );
       await markOnboardingComplete();
+      const delta = 3 - prev;
+      if (delta > 0) {
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+      }
+      void emitUserEvent('onboarding_done', { step: 3, delta: 0 });
       await router.replace(nextPath);
     } catch (err) {
       if (err instanceof Error && err.message === 'Not authenticated') {
@@ -182,8 +204,14 @@ export default function OnboardingWizard() {
 
   const skip = async () => {
     try {
-      await updateProfile({ onboarding_step: 3, onboarding_complete: true });
+      const prev = step;
+      await updateProfile({ onboarding_step: 3, onboarding_complete: true }, 3);
       await markOnboardingComplete();
+      const delta = 3 - prev;
+      if (delta > 0) {
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+      }
+      void emitUserEvent('onboarding_done', { step: 3, delta: 0 });
       await router.replace(nextPath);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to skip onboarding';
