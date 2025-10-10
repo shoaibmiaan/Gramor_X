@@ -123,23 +123,45 @@ export default function ProfilePage() {
       toastError('Please fix the highlighted fields.');
       return;
     }
-
-    const nextProfile: Profile = {
-      ...profile,
-      full_name: trimmedName,
-      preferred_language: preferredLanguage,
-      goal_band: parsedGoal,
-      exam_date: examDate || null,
-      avatar_url: avatarPath ?? profile.avatar_url ?? null,
-    };
-
-    const prevProfile = profile;
-
-    setProfile(nextProfile);
-    setSaving(true);
-
+    if (file.size > 5 * 1024 * 1024) {
+      toastError('Image too large. Max 5 MB.');
+      return;
+    }
+    setUploading(true);
     try {
-      const { error } = await supabase
+      const signedRes = await fetch('/api/profile/avatar-upload-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        }),
+      });
+
+      if (!signedRes.ok) {
+        const data = await signedRes.json().catch(() => ({ error: 'Could not start upload' }));
+        throw new Error(data.error || 'Could not start upload');
+      }
+
+      const { uploadUrl, path } = (await signedRes.json()) as { uploadUrl: string; path: string };
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        const text = await uploadRes.text();
+        throw new Error(text || 'Upload failed');
+      }
+
+      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+      const publicUrl = pub.publicUrl;
+      const { error: updErr } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
+      if (updErr) throw updErr;
+      const { error: profErr } = await supabase
         .from('profiles')
         .update({
           full_name: trimmedName,
