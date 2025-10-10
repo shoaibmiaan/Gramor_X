@@ -88,7 +88,7 @@ export async function removeSavedItem(item: SavedItem): Promise<void> {
   }
 
   if (!item.category) return;
-  await fetch(`/api/saved/${item.category}`, {
+  await fetch(`/api/saved/category/${item.category}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ resource_id: item.resource_id, type: item.type ?? undefined }),
