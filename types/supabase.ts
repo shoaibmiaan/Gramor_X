@@ -19,6 +19,9 @@ export interface Profiles extends TableBase {
   role?: 'student' | 'teacher' | 'admin';
   membership?: 'free' | 'starter' | 'booster' | 'master';
   locale?: string;
+  preferred_language?: string | null;
+  study_days?: string[] | null;
+  study_minutes_per_day?: number | null;
 }
 
 export interface StudyPlans extends TableBase {
