@@ -33,5 +33,230 @@
       "location": "Houston, USA",
       "supportHours": "Support: 24/7"
     }
+  },
+  "onboarding": {
+    "header": {
+      "badge": "Welcome aboard",
+      "title": "Let’s tailor your IELTS prep",
+      "subtitle": "Three quick questions so we can personalise mocks, reminders, and feedback."
+    },
+    "steps": {
+      "band": {
+        "title": "Target band",
+        "description": "What score are you aiming for?"
+      },
+      "date": {
+        "title": "Exam date",
+        "description": "When is your IELTS exam?"
+      },
+      "whatsapp": {
+        "title": "WhatsApp updates",
+        "description": "Get gentle reminders and nudges."
+      }
+    },
+    "stepper": {
+      "aria": "Onboarding steps",
+      "status": {
+        "done": "Done",
+        "current": "Now",
+        "next": "Next"
+      }
+    },
+    "progressLabel": "Step {{current}} of {{total}}",
+    "buttons": {
+      "back": "Back",
+      "skip": "Skip for now",
+      "saving": "Saving…",
+      "finish": "Finish",
+      "continue": "Continue"
+    },
+    "band": {
+      "inputLabel": "Target overall band",
+      "helper": "You can update this any time from your profile.",
+      "tip": "Most universities ask for 6.5–7.0. Aim 0.5 higher to give yourself a buffer on test day."
+    },
+    "date": {
+      "inputLabel": "IELTS exam date",
+      "helper": "Not sure yet? Leave blank and we’ll suggest a four-week ramp-up.",
+      "tip": "We’ll pace mocks and AI-evaluated writing tasks to help you peak at the right time."
+    },
+    "whatsapp": {
+      "optInTitle": "Send me WhatsApp nudges",
+      "optInDescription": "2–3 gentle reminders per week with study prompts and quick wins. You can opt out any time.",
+      "phoneLabel": "WhatsApp number",
+      "placeholder": "+14155552671",
+      "helper": "We’ll only use this for study reminders. Standard carrier charges may apply.",
+      "emailFallback": "Prefer email? No problem — you can enable WhatsApp reminders later from Settings › Notifications."
+    },
+    "errors": {
+      "bandRange": "Choose a band between 4.0 and 9.0.",
+      "loadProfile": "We couldn’t load your profile right now. Please refresh and try again.",
+      "notAuthenticated": "Your session has expired. Please sign in again.",
+      "saveGeneric": "We couldn’t save your changes right now. Try again in a moment.",
+      "invalidPhone": "Enter a valid phone number in international format (e.g. +14155552671).",
+      "skip": "Unable to skip onboarding. Please try again."
+    }
+  },
+  "studyPlan": {
+    "page": {
+      "title": "Your study plan",
+      "subtitle": "Keep a daily rhythm to build momentum for your IELTS goal.",
+      "viewProgress": "View progress"
+    },
+    "sidebar": {
+      "title": "Need a change?",
+      "description": "Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets below.",
+      "weekShort": "{{count}} wk"
+    },
+    "presets": {
+      "balanced": {
+        "title": "Balanced focus",
+        "description": "Four weeks of daily IELTS tasks evenly split across all skills.",
+        "highlight": "Recommended"
+      },
+      "speaking": {
+        "title": "Speaking boost",
+        "description": "Two-week plan focused on speaking drills and writing prompts.",
+        "highlight": "Sharpen your speaking skills"
+      },
+      "listening": {
+        "title": "Listening sprint",
+        "description": "One-week reset with intensive listening practice.",
+        "highlight": "Great for jump-starts"
+      }
+    },
+    "toast": {
+      "signInRequired": "Please sign in to create a study plan.",
+      "planReady": {
+        "title": "Plan ready",
+        "description": "Your new study plan is live. Start with today’s tasks!"
+      },
+      "createError": "Could not create plan.",
+      "progressSaved": "Progress saved",
+      "updateError": "Could not update task."
+    },
+    "emptyState": {
+      "title": "Create your study plan",
+      "description": "Pick a quick preset to fill your calendar instantly. You can customise tasks later.",
+      "actions": {
+        "onboarding": "Build with onboarding",
+        "autoAdjust": "Plans auto-adjust after you complete a day."
+      },
+      "dailyTimeVaries": "Varies",
+      "durationLabel": "Duration",
+      "durationValue": "{{weeks}} weeks",
+      "dailyTimeLabel": "Daily time",
+      "creating": "Creating…",
+      "startPlan": "Start this plan",
+      "streakNote": "Your daily streak starts counting after you complete the first task in your plan.",
+      "presets": {
+        "lite": {
+          "title": "Lite reset (2 weeks)",
+          "description": "Ease back in with short daily sessions and vocabulary refreshers.",
+          "dailyMinutes": "30 min/day",
+          "highlight": "Rebuild momentum quickly."
+        },
+        "focus": {
+          "title": "Balanced focus (4 weeks)",
+          "description": "Structured mix of all four modules with weekly review checkpoints.",
+          "dailyMinutes": "45–60 min/day",
+          "highlight": "Weekly mocks + targeted drills."
+        },
+        "intensive": {
+          "title": "Intensive push (6 weeks)",
+          "description": "Longer study blocks and extra mocks for a final exam sprint.",
+          "dailyMinutes": "75 min/day",
+          "highlight": "Two mock exams per week."
+        }
+      }
+    },
+    "planCard": {
+      "today": "Today",
+      "scheduled": "Scheduled",
+      "totalMinutes": "{{minutes}} min",
+      "noTasks": "No tasks scheduled for this day.",
+      "toggleAria": "Mark {{title}} as {{state}}",
+      "state": {
+        "complete": "complete",
+        "incomplete": "incomplete"
+      },
+      "taskType": {
+        "listening": "Listening",
+        "reading": "Reading",
+        "writing": "Writing",
+        "speaking": "Speaking",
+        "vocab": "Vocabulary",
+        "review": "Review",
+        "mock": "Mock",
+        "rest": "Rest"
+      },
+      "estimateMinutes": "Estimated {{minutes}} min",
+      "hints": {
+        "rest": "Take a break",
+        "focus": "Stay focused and complete the task"
+      },
+      "estimateWithHint": "{{estimate}} • {{hint}}"
+    }
+  },
+  "saved": {
+    "page": {
+      "badge": "Library",
+      "title": "Saved items",
+      "subtitle": "All of your bookmarked lessons, practice sets, and AI feedback in one place. Open items to resume where you left off or remove them when you’re done."
+    },
+    "authRequired": {
+      "title": "Sign in to view saved items",
+      "description": "Bookmarks sync with your account so you can return to them anytime."
+    },
+    "errors": {
+      "loadFailed": "We couldn’t load your saved items right now. Please refresh and try again.",
+      "generic": "Something went wrong while loading your saved items. Please try again."
+    },
+    "empty": {
+      "title": "You haven’t saved anything yet",
+      "description": "Bookmark practice passages, vocab lists, and AI feedback to revisit them faster.",
+      "cta": {
+        "reading": "Browse reading practice",
+        "vocabulary": "Explore vocabulary decks"
+      }
+    },
+    "group": {
+      "count": "{{count}} saved items"
+    },
+    "item": {
+      "savedOn": "Saved {{date}}"
+    },
+    "actions": {
+      "signIn": "Sign in",
+      "open": "Open",
+      "remove": "Remove",
+      "removing": "Removing",
+      "loadMore": "Load more",
+      "loading": "Loading"
+    },
+    "modules": {
+      "listening": "Listening",
+      "reading": "Reading",
+      "writing": "Writing",
+      "speaking": "Speaking",
+      "vocabulary": "Vocabulary",
+      "grammar": "Grammar",
+      "flagged": "Flagged",
+      "retake": "Retake queue",
+      "bookmarks": "Bookmarks",
+      "other": "Other"
+    },
+    "categories": {
+      "bookmark": "Bookmark",
+      "reading": "Reading",
+      "listening": "Listening",
+      "writing": "Writing",
+      "speaking": "Speaking",
+      "vocabulary": "Vocabulary",
+      "grammar": "Grammar",
+      "mock": "Mock",
+      "review": "Review",
+      "rest": "Rest"
+    }
   }
 }

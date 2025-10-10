@@ -34,7 +34,9 @@ function extractKeys(filePath: string): string[] {
   const regex = /\bt\(\s*(["'`])([^"'`]+?)\1\s*(?:,\s*[^)]*)?\)/g;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(source))) {
-    matches.push(match[2]);
+    const key = match[2];
+    if (key.includes('${')) continue;
+    matches.push(key);
   }
   return matches;
 }

@@ -37,23 +37,23 @@ export async function fetchSavedPage(url: string): Promise<SavedItemsPage> {
   return body as SavedItemsPage;
 }
 
-const MODULE_LABELS: Record<string, string> = {
-  listening: 'Listening',
-  reading: 'Reading',
-  writing: 'Writing',
-  speaking: 'Speaking',
-  vocabulary: 'Vocabulary',
-  grammar: 'Grammar',
-  flagged: 'Flagged',
-  retake: 'Retake queue',
-  bookmark: 'Bookmarks',
-  other: 'Other',
+const MODULE_LABELS: Record<string, { labelKey: string; fallback: string }> = {
+  listening: { labelKey: 'saved.modules.listening', fallback: 'Listening' },
+  reading: { labelKey: 'saved.modules.reading', fallback: 'Reading' },
+  writing: { labelKey: 'saved.modules.writing', fallback: 'Writing' },
+  speaking: { labelKey: 'saved.modules.speaking', fallback: 'Speaking' },
+  vocabulary: { labelKey: 'saved.modules.vocabulary', fallback: 'Vocabulary' },
+  grammar: { labelKey: 'saved.modules.grammar', fallback: 'Grammar' },
+  flagged: { labelKey: 'saved.modules.flagged', fallback: 'Flagged' },
+  retake: { labelKey: 'saved.modules.retake', fallback: 'Retake queue' },
+  bookmark: { labelKey: 'saved.modules.bookmarks', fallback: 'Bookmarks' },
+  other: { labelKey: 'saved.modules.other', fallback: 'Other' },
 };
 
-export function deriveModule(item: SavedItem): { id: string; label: string } {
+export function deriveModule(item: SavedItem): { id: string; labelKey: string; fallback: string } {
   const module = (item.type || item.category || 'other').toLowerCase();
-  const label = MODULE_LABELS[module] ?? MODULE_LABELS.other;
-  return { id: module, label };
+  const meta = MODULE_LABELS[module] ?? MODULE_LABELS.other;
+  return { id: module, labelKey: meta.labelKey, fallback: meta.fallback };
 }
 
 export function buildSavedLink(item: SavedItem): string {
