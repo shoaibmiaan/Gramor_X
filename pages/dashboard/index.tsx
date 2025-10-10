@@ -18,9 +18,11 @@ import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
 import QuickDrillButton from '@/components/quick/QuickDrillButton';
 import { WordOfTheDayCard } from '@/components/feature/WordOfTheDayCard';
 import { HeaderStreakChip } from '@/components/feature/HeaderStreakChip';
+import { StreakCounter } from '@/components/streak/StreakCounter';
 
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
+import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 import dynamic from 'next/dynamic';
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
@@ -51,6 +53,7 @@ export default function Dashboard() {
   // Hook now exposes: nextRestart + shields + claimShield + useShield
   const {
     current: streak,
+    longest,
     lastDayKey,
     loading: streakLoading,
     completeToday,
@@ -252,6 +255,7 @@ export default function Dashboard() {
   const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
+  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -277,48 +281,50 @@ export default function Dashboard() {
             )}
 
             <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="font-slab text-display text-gradient-primary">
-              Welcome, {profile?.full_name || 'Learner'}!
-            </h1>
-            <p className="text-grayish">Let’s hit your target band with a personalized plan.</p>
-          </div>
+              <div>
+                <h1 className="font-slab text-display text-gradient-primary">
+                  Welcome, {profile?.full_name || 'Learner'}!
+                </h1>
+                <p className="text-grayish">Let’s hit your target band with a personalized plan.</p>
+              </div>
 
-          <div className="flex flex-wrap items-center gap-3 md:gap-4">
-            <HeaderStreakChip />
-            <StreakIndicator value={streak} />
-            {earnedBadges.map((b) => (
-              <Badge key={b.id} size="sm">
-                {b.icon}
-              </Badge>
-            ))}
-            <Badge size="sm" variant="secondary">
-              {(profile?.preferred_language ?? 'en').toUpperCase()}
-            </Badge>
-            <Badge size="sm">🛡 {shields}</Badge>
-            <Button onClick={claimShield} variant="secondary" className="rounded-ds-xl">
-              Claim Shield
-            </Button>
-            {shields > 0 && (
-              <Button onClick={useShield} variant="secondary" className="rounded-ds-xl">
-                Use Shield
-              </Button>
-            )}
-            {streak >= 7 && <Badge variant="success" size="sm">🔥 {streak}-day streak!</Badge>}
+              <div className="flex flex-wrap items-center gap-3 md:gap-4">
+                <HeaderStreakChip />
+                <StreakIndicator value={streak} />
+                {earnedBadges.map((b) => (
+                  <Badge key={b.id} size="sm">
+                    {b.icon}
+                  </Badge>
+                ))}
+                <Badge size="sm" variant="secondary">
+                  {(profile?.preferred_language ?? 'en').toUpperCase()}
+                </Badge>
+                <Badge size="sm">🛡 {shields}</Badge>
+                <Button onClick={claimShield} variant="secondary" className="rounded-ds-xl">
+                  Claim Shield
+                </Button>
+                {shields > 0 && (
+                  <Button onClick={useShield} variant="secondary" className="rounded-ds-xl">
+                    Use Shield
+                  </Button>
+                )}
+                {streak >= 7 && <Badge variant="success" size="sm">🔥 {streak}-day streak!</Badge>}
 
-            {profile?.avatar_url ? (
-              <Image
-                src={profile.avatar_url}
-                alt="Avatar"
-                width={56}
-                height={56}
-                className="rounded-full ring-2 ring-primary/40"
-              />
-            ) : null}
-          </div>
-        </div>
+                {profile?.avatar_url ? (
+                  <Image
+                    src={profile.avatar_url}
+                    alt="Avatar"
+                    width={56}
+                    height={56}
+                    className="rounded-full ring-2 ring-primary/40"
+                  />
+                ) : null}
+              </div>
+            </div>
 
-        {nextRestart && (
+            <StreakCounter current={streak} longest={longest} loading={streakLoading} />
+
+            {nextRestart && (
           <Alert variant="info" className="mt-6">
             Streak will restart on {nextRestart}.
           </Alert>

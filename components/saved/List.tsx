@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import useSWRInfinite from 'swr/infinite';
 
 import { Card } from '@/components/design-system/Card';
@@ -16,8 +17,11 @@ import {
   deriveModule,
   buildSavedLink,
   removeSavedItem,
+  removeSavedItems,
   type SavedItem,
+  MODULE_LABELS,
 } from '@/lib/saved';
+import { track } from '@/lib/analytics/track';
 
 const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
@@ -30,20 +34,153 @@ type DecoratedItem = SavedItem & {
 
 const keyFor = (item: SavedItem) => `${item.category || 'default'}:${item.type || 'all'}:${item.resource_id}`;
 
+type Filters = {
+  search: string;
+  module: string;
+  start: string;
+  end: string;
+};
+
+const controlledQueryKeys = ['search', 'module', 'start', 'end'] as const;
+
+const MODULE_OPTIONS = [{ value: 'all', label: 'All modules' }].concat(
+  Object.entries(MODULE_LABELS).map(([value, label]) => ({ value, label })),
+);
+
 export function SavedList() {
+  const router = useRouter();
+  const [filters, setFilters] = useState<Filters>({ search: '', module: 'all', start: '', end: '' });
+  const [tags, setTags] = useState<Record<string, string[]>>({});
+  const [searchInput, setSearchInput] = useState('');
+
+  const syncFiltersFromQuery = useCallback(() => {
+    if (!router.isReady) return;
+    const next: Filters = {
+      search: typeof router.query.search === 'string' ? router.query.search : '',
+      module: typeof router.query.module === 'string' ? router.query.module : 'all',
+      start: typeof router.query.start === 'string' ? router.query.start : '',
+      end: typeof router.query.end === 'string' ? router.query.end : '',
+    };
+    setFilters((prev) => {
+      if (
+        prev.search === next.search &&
+        prev.module === next.module &&
+        prev.start === next.start &&
+        prev.end === next.end
+      ) {
+        return prev;
+      }
+      return next;
+    });
+    setSearchInput(next.search);
+  }, [router.isReady, router.query.end, router.query.module, router.query.search, router.query.start]);
+
+  useEffect(() => {
+    syncFiltersFromQuery();
+  }, [syncFiltersFromQuery]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = window.localStorage.getItem('saved-tags');
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, string[]>;
+        setTags(parsed);
+      }
+    } catch {
+      // ignore parse errors
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'saved-tags') {
+        try {
+          const parsed = event.newValue ? (JSON.parse(event.newValue) as Record<string, string[]>) : {};
+          setTags(parsed);
+        } catch {
+          setTags({});
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const replaceQuery = useCallback(
+    (next: Filters) => {
+      if (!router.isReady) return;
+      const params = new URLSearchParams();
+      if (next.search.trim()) params.set('search', next.search.trim());
+      if (next.module && next.module !== 'all') params.set('module', next.module);
+      if (next.start) params.set('start', next.start);
+      if (next.end) params.set('end', next.end);
+
+      const current = new URLSearchParams();
+      for (const key of controlledQueryKeys) {
+        const value = router.query[key];
+        if (typeof value === 'string') current.set(key, value);
+      }
+
+      if (current.toString() === params.toString()) return;
+
+      const queryObject = Object.fromEntries(params.entries()) as Record<string, string>;
+      void router.replace(
+        {
+          pathname: router.pathname,
+          query: queryObject,
+        },
+        undefined,
+        { shallow: true },
+      );
+    },
+    [router],
+  );
+
+  const handleFilterChange = useCallback(
+    (updates: Partial<Filters>) => {
+      setFilters((prev) => {
+        const next = { ...prev, ...updates };
+        replaceQuery(next);
+        return next;
+      });
+    },
+    [replaceQuery],
+  );
+
+  const activeFilters = useMemo(() => filters, [filters]);
+
   const { data, error, isValidating, size, setSize, mutate } = useSWRInfinite(
     (pageIndex, previousPage) => {
       if (previousPage && !previousPage.hasMore) return null;
-      if (pageIndex === 0) return `/api/saved?limit=${SAVED_PAGE_SIZE}`;
+      const params = new URLSearchParams();
+      params.set('limit', String(SAVED_PAGE_SIZE));
+      if (activeFilters.search.trim()) params.set('search', activeFilters.search.trim());
+      if (activeFilters.module && activeFilters.module !== 'all') params.set('module', activeFilters.module);
+      if (activeFilters.start) params.set('start', activeFilters.start);
+      if (activeFilters.end) params.set('end', activeFilters.end);
+
+      if (pageIndex === 0) {
+        return `/api/saved?${params.toString()}`;
+      }
       const cursor = previousPage?.nextCursor;
       if (!cursor) return null;
-      return `/api/saved?limit=${SAVED_PAGE_SIZE}&cursor=${encodeURIComponent(cursor)}`;
+      params.set('cursor', cursor);
+      return `/api/saved?${params.toString()}`;
     },
     fetchSavedPage,
     { revalidateOnFocus: false },
   );
 
+  useEffect(() => {
+    setSize(1);
+  }, [activeFilters.search, activeFilters.module, activeFilters.start, activeFilters.end, setSize]);
+
   const [removingKey, setRemovingKey] = useState<string | null>(null);
+  const [moduleFilter, setModuleFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>('any');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isBulkRemoving, setIsBulkRemoving] = useState(false);
+  const viewTracked = useRef(false);
 
   const isInitialLoading = !data && !error;
   const pages = data ?? [];
@@ -52,11 +189,11 @@ export function SavedList() {
   const decorated = useMemo<DecoratedItem[]>(
     () =>
       allItems.map((item) => {
-        const module = deriveModule(item);
+        const moduleMeta = deriveModule(item);
         return {
           ...item,
-          moduleId: module.id,
-          moduleLabel: module.label,
+          moduleId: moduleMeta.id,
+          moduleLabel: moduleMeta.label,
           href: buildSavedLink(item),
           createdDate: new Date(item.created_at),
         };
@@ -64,9 +201,31 @@ export function SavedList() {
     [allItems],
   );
 
+  const filtered = useMemo(() => {
+    const searchTerm = activeFilters.search.trim().toLowerCase();
+    const startDate = activeFilters.start ? new Date(activeFilters.start) : null;
+    const endDate = activeFilters.end ? new Date(activeFilters.end) : null;
+    if (endDate) {
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    return decorated.filter((item) => {
+      if (activeFilters.module !== 'all' && item.moduleId !== activeFilters.module) return false;
+      if (startDate && item.createdDate < startDate) return false;
+      if (endDate && item.createdDate > endDate) return false;
+
+      if (!searchTerm) return true;
+      const key = keyFor(item);
+      const itemTags = tags[key] ?? [];
+      const matchesTitle = item.resource_id.toLowerCase().includes(searchTerm);
+      const matchesTags = itemTags.some((tag) => tag.toLowerCase().includes(searchTerm));
+      return matchesTitle || matchesTags;
+    });
+  }, [activeFilters, decorated, tags]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, { label: string; items: DecoratedItem[] }>();
-    for (const item of decorated) {
+    for (const item of filtered) {
       const current = map.get(item.moduleId);
       if (current) {
         current.items.push(item);
@@ -75,11 +234,24 @@ export function SavedList() {
       }
     }
     return Array.from(map.entries()).map(([id, value]) => ({ id, ...value }));
-  }, [decorated]);
+  }, [filtered]);
 
   const hasMore = pages.length > 0 ? pages[pages.length - 1].hasMore : false;
   const loadingMore = isValidating && pages.length > 0;
-  const empty = !isInitialLoading && decorated.length === 0;
+  const empty = !isInitialLoading && filtered.length === 0;
+
+  const { plan, loading: planLoading } = usePlan();
+  const isUnauthorized = error instanceof HttpError && error.status === 401;
+  const showUpgrade = !planLoading && plan === 'free' && !isUnauthorized;
+  const upgradeBanner = showUpgrade ? (
+    <UpgradeBanner
+      pillLabel="Explorer · Free plan"
+      title="Keep every bookmark in sync"
+      description="Premium unlocks unlimited saved lessons, cross-device sync, and AI-powered recap suggestions."
+      href="/pricing?from=saved-upgrade"
+      feature="Saved library"
+    />
+  ) : null;
 
   const { plan, loading: planLoading } = usePlan();
   const isUnauthorized = error instanceof HttpError && error.status === 401;
@@ -98,22 +270,30 @@ export function SavedList() {
     async (item: DecoratedItem) => {
       const key = keyFor(item);
       setRemovingKey(key);
-      await mutate((current) => {
-        if (!current) return current;
-        return current.map((page) => ({
-          ...page,
-          items: page.items.filter((candidate) => keyFor(candidate) !== key),
-        }));
-      }, { revalidate: false });
+      const keys = new Set<string>([key]);
+      await removeOptimistically(keys);
+      setSelected((prev) => {
+        if (!prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
 
       try {
         await removeSavedItem(item);
-        await mutate();
+        track('saved_remove', {
+          count: 1,
+          module: item.moduleId,
+          category: item.category ?? undefined,
+        });
+      } catch (removeError) {
+        console.error('Failed to remove saved item', removeError);
       } finally {
+        await mutate();
         setRemovingKey((prev) => (prev === key ? null : prev));
       }
     },
-    [mutate],
+    [mutate, removeOptimistically],
   );
 
   if (isUnauthorized) {
