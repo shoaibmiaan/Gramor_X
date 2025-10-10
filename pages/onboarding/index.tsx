@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import StepShell from '@/components/onboarding/StepShell';
@@ -16,7 +16,9 @@ import {
   weekdayOptions,
 } from '@/lib/onboarding/schema';
 
-const STEP_LABELS = ['Language', 'Band goal', 'Exam date', 'Study plan', 'WhatsApp'] as const;
+import type { Profile } from '@/types/profile';
+import { fetchProfile, markOnboardingComplete, upsertProfile } from '@/lib/profile';
+import { emitUserEvent } from '@/lib/analytics/user';
 
 const STEP_COPIES = [
   {
@@ -94,6 +96,8 @@ export default function OnboardingWizard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  const startTracked = useRef(false);
 
   const nextPath = useMemo(() => {
     const qNext = typeof router.query.next === 'string' ? router.query.next : null;
@@ -174,9 +178,15 @@ export default function OnboardingWizard() {
     };
   }, [determineStep, nextPath, router, syncForm]);
 
-  const updateForm = useCallback(
-    <K extends keyof FormState>(key: K, value: FormState[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    if (loading || startTracked.current) return;
+    startTracked.current = true;
+    void emitUserEvent('onboarding_start', { step, delta: 0 });
+  }, [loading, step]);
+
+  const updateProfile = useCallback(
+    async (patch: Parameters<typeof upsertProfile>[0], nextStep?: StepId) => {
+      setSaving(true);
       setError(null);
       if (key === 'phone' || (key === 'whatsappOptIn' && value === false)) {
         setPhoneError(null);
@@ -185,32 +195,24 @@ export default function OnboardingWizard() {
     [],
   );
 
-  const toggleStudyDay = useCallback(
-    (day: Weekday) => {
-      setForm((prev) => {
-        const exists = prev.studyDays.includes(day);
-        const nextDays = exists
-          ? prev.studyDays.filter((d) => d !== day)
-          : [...prev.studyDays, day].sort(
-              (a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b),
-            );
-        return { ...prev, studyDays: nextDays };
-      });
-      setError(null);
-    },
-    [],
-  );
+  const handleBandNext = async () => {
+    const parsed = Number(band);
+    if (Number.isNaN(parsed) || parsed < 4 || parsed > 9) {
+      setError('Choose a band between 4.0 and 9.0.');
+      return;
+    }
+    const prev = step;
+    await updateProfile({ goal_band: parsed, onboarding_step: 1, onboarding_complete: false }, 2);
+    const delta = Math.max(0, 2 - prev);
+    void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+  };
 
-  const persistStep = useCallback(
-    async (payload: OnboardingStepPayload) => {
-      setSaving(true);
-      setError(null);
-      try {
-        const res = await fetch('/api/onboarding', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+  const handleDateNext = async () => {
+    const prev = step;
+    await updateProfile({ exam_date: examDate || null, onboarding_step: 2 }, 3);
+    const delta = Math.max(0, 3 - prev);
+    void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+  };
 
         if (res.status === 401) {
           const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
@@ -251,66 +253,45 @@ export default function OnboardingWizard() {
         return;
       }
 
-      if (step === 2) {
-        const parsed = Number(form.goalBand);
-        if (Number.isNaN(parsed) || parsed < 4 || parsed > 9) {
-          setError('Choose a band between 4.0 and 9.0.');
-          return;
-        }
-        const normalized = Math.round(parsed * 2) / 2;
-        await persistStep({ step: 2, data: { goalBand: normalized } });
-        setForm((prev) => ({ ...prev, goalBand: normalized.toFixed(1) }));
-        return;
+    try {
+      const prev = step;
+      await updateProfile(
+        {
+          phone: phoneValue,
+          notification_channels: Array.from(baseChannels),
+          whatsapp_opt_in: optIn,
+          onboarding_step: 3,
+          onboarding_complete: true,
+        },
+        3,
+      );
+      await markOnboardingComplete();
+      const delta = 3 - prev;
+      if (delta > 0) {
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
       }
-
-      if (step === 3) {
-        const trimmed = form.examDate.trim();
-        if (trimmed && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-          setError('Enter a valid date in YYYY-MM-DD format.');
-          return;
-        }
-        await persistStep({ step: 3, data: { examDate: trimmed || '' } });
-        return;
-      }
-
-      if (step === 4) {
-        if (form.studyDays.length === 0) {
-          setError('Select at least one day you can dedicate to studying.');
-          return;
-        }
-        const minutes = Number.parseInt(form.minutesPerDay, 10);
-        if (Number.isNaN(minutes) || minutes < 15 || minutes > 240) {
-          setError('Choose a daily study target between 15 and 240 minutes.');
-          return;
-        }
-        await persistStep({ step: 4, data: { studyDays: form.studyDays, minutesPerDay: minutes } });
-        setForm((prev) => ({ ...prev, minutesPerDay: String(minutes) }));
-        return;
-      }
-
-      if (step === 5) {
-        setPhoneError(null);
-        const trimmed = form.phone.trim();
-        if (form.whatsappOptIn && !phoneRegex.test(trimmed)) {
-          setPhoneError('Enter a valid phone number in international format (e.g. +14155552671).');
-          return;
-        }
-        const result = await persistStep({
-          step: 5,
-          data: {
-            whatsappOptIn: form.whatsappOptIn,
-            phone: form.whatsappOptIn ? trimmed : '',
-          },
-        });
-        if (result.onboardingComplete) {
-          await router.replace(nextPath);
-        }
-      }
+      void emitUserEvent('onboarding_done', { step: 3, delta: 0 });
+      await router.replace(nextPath);
     } catch (err) {
       if (err instanceof Error && err.message === 'Not authenticated') {
         return;
       }
-      const message = err instanceof Error ? err.message : 'Unable to save onboarding step';
+    }
+  };
+
+  const skip = async () => {
+    try {
+      const prev = step;
+      await updateProfile({ onboarding_step: 3, onboarding_complete: true }, 3);
+      await markOnboardingComplete();
+      const delta = 3 - prev;
+      if (delta > 0) {
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+      }
+      void emitUserEvent('onboarding_done', { step: 3, delta: 0 });
+      await router.replace(nextPath);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to skip onboarding';
       setError(message);
     }
   }, [form, loading, nextPath, persistStep, router, saving, step]);
