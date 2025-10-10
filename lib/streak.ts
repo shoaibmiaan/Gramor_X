@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export type StreakState = {
   loading: boolean;
   current: number;
+  longest: number;
   lastDayKey: string | null;
   nextRestart: string | null;
   shields: number;
@@ -119,6 +120,7 @@ export function useStreak() {
   const [state, setState] = useState<StreakState>({
     loading: true,
     current: 0,
+    longest: 0,
     lastDayKey: null,
     nextRestart: null,
     shields: 0,
@@ -139,6 +141,7 @@ export function useStreak() {
       setState({
         loading: false,
         current: data.current_streak ?? 0,
+        longest: data.longest_streak ?? data.current_streak ?? 0,
         lastDayKey: data.last_activity_date ?? null,
         nextRestart: data.next_restart_date ?? null,
         shields: data.shields ?? 0,
@@ -176,6 +179,7 @@ export function useStreak() {
       setState((s) => ({
         ...s,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         shields: data.shields ?? s.shields,
@@ -197,6 +201,7 @@ export function useStreak() {
         ...s,
         shields: data.shields ?? s.shields,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         error: null,
@@ -215,6 +220,7 @@ export function useStreak() {
       setState((s) => ({
         ...s,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         shields: data.shields ?? s.shields,
@@ -228,12 +234,13 @@ export function useStreak() {
     }
   }, []);
 
-  const scheduleRecovery = useCallback(async (date: string) => {
+  const scheduleRecoveryAction = useCallback(async (date: string) => {
     try {
       const data = await scheduleRecovery(date);
       setState((s) => ({
         ...s,
         current: data.current_streak ?? s.current,
+        longest: data.longest_streak ?? s.longest,
         lastDayKey: data.last_activity_date ?? s.lastDayKey,
         nextRestart: data.next_restart_date ?? s.nextRestart,
         shields: data.shields ?? s.shields,
@@ -247,5 +254,12 @@ export function useStreak() {
     }
   }, []);
 
-  return { ...state, reload: load, completeToday, claimShield, useShield, scheduleRecovery };
+  return {
+    ...state,
+    reload: load,
+    completeToday,
+    claimShield,
+    useShield,
+    scheduleRecovery: scheduleRecoveryAction,
+  };
 }
