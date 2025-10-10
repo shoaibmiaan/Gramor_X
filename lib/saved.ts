@@ -37,7 +37,7 @@ export async function fetchSavedPage(url: string): Promise<SavedItemsPage> {
   return body as SavedItemsPage;
 }
 
-const MODULE_LABELS: Record<string, string> = {
+export const MODULE_LABELS: Record<string, string> = {
   listening: 'Listening',
   reading: 'Reading',
   writing: 'Writing',

@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import useSWRInfinite from 'swr/infinite';
 
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
+import { Input } from '@/components/design-system/Input';
 import { Select } from '@/components/design-system/Select';
 
 import {
@@ -17,6 +19,7 @@ import {
   removeSavedItem,
   removeSavedItems,
   type SavedItem,
+  MODULE_LABELS,
 } from '@/lib/saved';
 import { track } from '@/lib/analytics/track';
 
@@ -31,27 +34,146 @@ type DecoratedItem = SavedItem & {
 
 const keyFor = (item: SavedItem) => `${item.category || 'default'}:${item.type || 'all'}:${item.resource_id}`;
 
-const DATE_FILTER_OPTIONS = [
-  { value: 'any', label: 'Any time' },
-  { value: '7', label: 'Last 7 days' },
-  { value: '30', label: 'Last 30 days' },
-  { value: '90', label: 'Last 90 days' },
-] as const;
+type Filters = {
+  search: string;
+  module: string;
+  start: string;
+  end: string;
+};
 
-type DateFilterValue = (typeof DATE_FILTER_OPTIONS)[number]['value'];
+const controlledQueryKeys = ['search', 'module', 'start', 'end'] as const;
+
+const MODULE_OPTIONS = [{ value: 'all', label: 'All modules' }].concat(
+  Object.entries(MODULE_LABELS).map(([value, label]) => ({ value, label })),
+);
 
 export function SavedList() {
+  const router = useRouter();
+  const [filters, setFilters] = useState<Filters>({ search: '', module: 'all', start: '', end: '' });
+  const [tags, setTags] = useState<Record<string, string[]>>({});
+  const [searchInput, setSearchInput] = useState('');
+
+  const syncFiltersFromQuery = useCallback(() => {
+    if (!router.isReady) return;
+    const next: Filters = {
+      search: typeof router.query.search === 'string' ? router.query.search : '',
+      module: typeof router.query.module === 'string' ? router.query.module : 'all',
+      start: typeof router.query.start === 'string' ? router.query.start : '',
+      end: typeof router.query.end === 'string' ? router.query.end : '',
+    };
+    setFilters((prev) => {
+      if (
+        prev.search === next.search &&
+        prev.module === next.module &&
+        prev.start === next.start &&
+        prev.end === next.end
+      ) {
+        return prev;
+      }
+      return next;
+    });
+    setSearchInput(next.search);
+  }, [router.isReady, router.query.end, router.query.module, router.query.search, router.query.start]);
+
+  useEffect(() => {
+    syncFiltersFromQuery();
+  }, [syncFiltersFromQuery]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = window.localStorage.getItem('saved-tags');
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, string[]>;
+        setTags(parsed);
+      }
+    } catch {
+      // ignore parse errors
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'saved-tags') {
+        try {
+          const parsed = event.newValue ? (JSON.parse(event.newValue) as Record<string, string[]>) : {};
+          setTags(parsed);
+        } catch {
+          setTags({});
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const replaceQuery = useCallback(
+    (next: Filters) => {
+      if (!router.isReady) return;
+      const params = new URLSearchParams();
+      if (next.search.trim()) params.set('search', next.search.trim());
+      if (next.module && next.module !== 'all') params.set('module', next.module);
+      if (next.start) params.set('start', next.start);
+      if (next.end) params.set('end', next.end);
+
+      const current = new URLSearchParams();
+      for (const key of controlledQueryKeys) {
+        const value = router.query[key];
+        if (typeof value === 'string') current.set(key, value);
+      }
+
+      if (current.toString() === params.toString()) return;
+
+      const queryObject = Object.fromEntries(params.entries()) as Record<string, string>;
+      void router.replace(
+        {
+          pathname: router.pathname,
+          query: queryObject,
+        },
+        undefined,
+        { shallow: true },
+      );
+    },
+    [router],
+  );
+
+  const handleFilterChange = useCallback(
+    (updates: Partial<Filters>) => {
+      setFilters((prev) => {
+        const next = { ...prev, ...updates };
+        replaceQuery(next);
+        return next;
+      });
+    },
+    [replaceQuery],
+  );
+
+  const activeFilters = useMemo(() => filters, [filters]);
+
   const { data, error, isValidating, size, setSize, mutate } = useSWRInfinite(
     (pageIndex, previousPage) => {
       if (previousPage && !previousPage.hasMore) return null;
-      if (pageIndex === 0) return `/api/saved?limit=${SAVED_PAGE_SIZE}`;
+      const params = new URLSearchParams();
+      params.set('limit', String(SAVED_PAGE_SIZE));
+      if (activeFilters.search.trim()) params.set('search', activeFilters.search.trim());
+      if (activeFilters.module && activeFilters.module !== 'all') params.set('module', activeFilters.module);
+      if (activeFilters.start) params.set('start', activeFilters.start);
+      if (activeFilters.end) params.set('end', activeFilters.end);
+
+      if (pageIndex === 0) {
+        return `/api/saved?${params.toString()}`;
+      }
       const cursor = previousPage?.nextCursor;
       if (!cursor) return null;
-      return `/api/saved?limit=${SAVED_PAGE_SIZE}&cursor=${encodeURIComponent(cursor)}`;
+      params.set('cursor', cursor);
+      return `/api/saved?${params.toString()}`;
     },
     fetchSavedPage,
     { revalidateOnFocus: false },
   );
+
+  useEffect(() => {
+    setSize(1);
+  }, [activeFilters.search, activeFilters.module, activeFilters.start, activeFilters.end, setSize]);
 
   const [removingKey, setRemovingKey] = useState<string | null>(null);
   const [moduleFilter, setModuleFilter] = useState<string>('all');
@@ -79,43 +201,31 @@ export function SavedList() {
     [allItems],
   );
 
-  const moduleOptions = useMemo(
-    () => {
-      const modules = new Map<string, string>();
-      for (const item of decorated) {
-        modules.set(item.moduleId, item.moduleLabel);
-      }
-      const dynamicOptions = Array.from(modules.entries())
-        .sort((a, b) => a[1].localeCompare(b[1]))
-        .map(([value, label]) => ({ value, label }));
-      return [{ value: 'all', label: 'All modules' }, ...dynamicOptions];
-    },
-    [decorated],
-  );
-
-  const filteredItems = useMemo(() => {
-    let cutoff: Date | null = null;
-    if (dateFilter !== 'any') {
-      const days = Number.parseInt(dateFilter, 10);
-      if (!Number.isNaN(days)) {
-        cutoff = new Date();
-        cutoff.setHours(0, 0, 0, 0);
-        cutoff.setDate(cutoff.getDate() - days);
-      }
+  const filtered = useMemo(() => {
+    const searchTerm = activeFilters.search.trim().toLowerCase();
+    const startDate = activeFilters.start ? new Date(activeFilters.start) : null;
+    const endDate = activeFilters.end ? new Date(activeFilters.end) : null;
+    if (endDate) {
+      endDate.setHours(23, 59, 59, 999);
     }
 
     return decorated.filter((item) => {
-      if (moduleFilter !== 'all' && item.moduleId !== moduleFilter) {
-        return false;
-      }
-      if (!cutoff) return true;
-      return item.createdDate >= cutoff;
+      if (activeFilters.module !== 'all' && item.moduleId !== activeFilters.module) return false;
+      if (startDate && item.createdDate < startDate) return false;
+      if (endDate && item.createdDate > endDate) return false;
+
+      if (!searchTerm) return true;
+      const key = keyFor(item);
+      const itemTags = tags[key] ?? [];
+      const matchesTitle = item.resource_id.toLowerCase().includes(searchTerm);
+      const matchesTags = itemTags.some((tag) => tag.toLowerCase().includes(searchTerm));
+      return matchesTitle || matchesTags;
     });
-  }, [decorated, moduleFilter, dateFilter]);
+  }, [activeFilters, decorated, tags]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, { label: string; items: DecoratedItem[] }>();
-    for (const item of filteredItems) {
+    for (const item of filtered) {
       const current = map.get(item.moduleId);
       if (current) {
         current.items.push(item);
@@ -124,61 +234,11 @@ export function SavedList() {
       }
     }
     return Array.from(map.entries()).map(([id, value]) => ({ id, ...value }));
-  }, [filteredItems]);
+  }, [filtered]);
 
   const hasMore = pages.length > 0 ? pages[pages.length - 1].hasMore : false;
   const loadingMore = isValidating && pages.length > 0;
-  const empty = !isInitialLoading && decorated.length === 0;
-  const filteredEmpty = !isInitialLoading && decorated.length > 0 && filteredItems.length === 0;
-  const hasFilters = moduleFilter !== 'all' || dateFilter !== 'any';
-  const selectedCount = selected.size;
-  const allSelected = filteredItems.length > 0 && selectedCount === filteredItems.length;
-  const hasSelection = selectedCount > 0;
-
-  useEffect(() => {
-    if (viewTracked.current || isInitialLoading) return;
-    track('saved_view', { total: decorated.length });
-    viewTracked.current = true;
-  }, [decorated.length, isInitialLoading]);
-
-  useEffect(() => {
-    setSelected((prev) => {
-      if (prev.size === 0) return prev;
-      const visibleKeys = new Set(filteredItems.map((item) => keyFor(item)));
-      let changed = false;
-      const next = new Set<string>();
-      prev.forEach((key) => {
-        if (visibleKeys.has(key)) {
-          next.add(key);
-        } else {
-          changed = true;
-        }
-      });
-      if (!changed && next.size === prev.size) return prev;
-      return next;
-    });
-  }, [filteredItems]);
-
-  const removeOptimistically = useCallback(
-    (keys: Set<string>) =>
-      mutate((current) => {
-        if (!current) return current;
-        return current.map((page) => ({
-          ...page,
-          items: page.items.filter((candidate) => !keys.has(keyFor(candidate))),
-        }));
-      }, { revalidate: false }),
-    [mutate],
-  );
-
-  useEffect(() => {
-    if (isInitialLoading) return;
-    const prev = previousCountRef.current;
-    const next = decorated.length;
-    if (prev === next) return;
-    previousCountRef.current = next;
-    void emitUserEvent('saved_view', { step: next, delta: next - prev });
-  }, [decorated.length, isInitialLoading]);
+  const empty = !isInitialLoading && filtered.length === 0;
 
   const handleRemove = useCallback(
     async (item: DecoratedItem) => {
@@ -328,159 +388,77 @@ export function SavedList() {
 
   return (
     <div className="grid gap-6">
-      <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="grid gap-3 sm:grid-cols-2 sm:items-end sm:gap-4">
-            <Select
-              label="Module"
-              value={moduleFilter}
-              onChange={(event) => setModuleFilter(event.target.value)}
-              options={moduleOptions}
-              className="sm:w-56"
-            />
-            <Select
-              label="Date saved"
-              value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value as DateFilterValue)}
-              options={DATE_FILTER_OPTIONS}
-              className="sm:w-56"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {hasFilters && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="rounded-ds-xl"
-                onClick={handleClearFilters}
-                disabled={isBulkRemoving}
-              >
-                Reset filters
-              </Button>
-            )}
-            {hasSelection && (
-              <span className="text-small text-mutedText">{selectedCount} selected</span>
-            )}
-            <Button
-              type="button"
-              variant="soft"
-              tone="default"
-              className="rounded-ds-xl"
-              onClick={toggleSelectAll}
-              disabled={filteredItems.length === 0 || isBulkRemoving}
-            >
-              {allSelected ? 'Clear selection' : 'Select all'}
-            </Button>
-            {hasSelection && (
-              <Button
-                type="button"
-                variant="soft"
-                tone="danger"
-                className="rounded-ds-xl"
-                onClick={handleBulkRemove}
-                loading={isBulkRemoving}
-                loadingText="Removing"
-              >
-                Remove selected ({selectedCount})
-              </Button>
-            )}
-          </div>
-        </div>
+      <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
+        <form className="grid gap-4 md:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] md:items-end" onSubmit={(event) => event.preventDefault()}>
+          <Input
+            label="Search saved items"
+            placeholder="Search by title or tag"
+            value={searchInput}
+            onChange={(event) => {
+              const value = event.target.value;
+              setSearchInput(value);
+              handleFilterChange({ search: value });
+            }}
+            size="md"
+            className="rounded-ds-xl"
+          />
+          <Select
+            label="Module"
+            value={activeFilters.module}
+            onChange={(event) => handleFilterChange({ module: event.target.value })}
+            options={MODULE_OPTIONS}
+          />
+          <Input
+            label="Saved after"
+            type="date"
+            value={activeFilters.start}
+            onChange={(event) => handleFilterChange({ start: event.target.value })}
+          />
+          <Input
+            label="Saved before"
+            type="date"
+            value={activeFilters.end}
+            onChange={(event) => handleFilterChange({ end: event.target.value })}
+          />
+        </form>
       </Card>
 
-      {filteredEmpty ? (
-        <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
-          <h2 className="text-h4 font-slab">No saved items match your filters</h2>
-          <p className="mt-2 text-small text-mutedText">
-            Try selecting a different module or date range to see your bookmarks.
-          </p>
-          {hasFilters && (
-            <div className="mt-4">
-              <Button
-                type="button"
-                variant="secondary"
-                className="rounded-ds-xl"
-                onClick={handleClearFilters}
-                disabled={isBulkRemoving}
-              >
-                Clear filters
-              </Button>
+      {grouped.map((group) => (
+        <Card key={group.id} className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
+            <div>
+              <h2 className="text-h4 font-slab">{group.label}</h2>
+              <p className="text-small text-mutedText">{group.items.length} saved item{group.items.length === 1 ? '' : 's'}</p>
             </div>
-          )}
-        </Card>
-      ) : (
-        grouped.map((group) => (
-          <Card key={group.id} className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 pb-3">
-              <div>
-                <h2 className="text-h4 font-slab">{group.label}</h2>
-                <p className="text-small text-mutedText">
-                  {group.items.length} saved item{group.items.length === 1 ? '' : 's'}
-                </p>
-              </div>
-            </div>
-            <div className="divide-y divide-border/30">
-              {group.items.map((item) => {
-                const key = keyFor(item);
-                const categoryLabel = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
-                return (
-                  <div
-                    key={key}
-                    className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex flex-1 items-start gap-3">
-                      <input
-                        type="checkbox"
-                        className="mt-1 h-5 w-5 shrink-0 rounded border border-border bg-card text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                        aria-label={`Select ${item.resource_id}`}
-                        checked={selected.has(key)}
-                        onChange={() => setSelected((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(key)) {
-                            next.delete(key);
-                          } else {
-                            next.add(key);
-                          }
-                          return next;
-                        })}
-                        disabled={isBulkRemoving || removingKey === key}
-                      />
-                      <div>
-                        <Link
-                          href={item.href}
-                          className="font-medium text-foreground hover:text-primary"
-                        >
-                          {item.resource_id}
-                        </Link>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-caption text-mutedText">
-                          <Badge variant="neutral" className="uppercase tracking-[0.18em]">
-                            {categoryLabel}
-                          </Badge>
+          </div>
+          <div className="divide-y divide-border/30">
+            {group.items.map((item) => {
+              const key = keyFor(item);
+              const categoryLabel = (item.category ?? '').replace(/_/g, ' ') || 'Bookmark';
+              return (
+                <div key={key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <Link href={item.href} className="font-medium text-foreground hover:text-primary">
+                      {item.resource_id}
+                    </Link>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-caption text-mutedText">
+                      <Badge variant="neutral" className="uppercase tracking-[0.18em]">
+                        {categoryLabel}
+                      </Badge>
+                      <span aria-hidden="true">•</span>
+                      <span>Saved {formatter.format(item.createdDate)}</span>
+                      {(tags[key] ?? []).length > 0 && (
+                        <>
                           <span aria-hidden="true">•</span>
-                          <span>Saved {formatter.format(item.createdDate)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        href={item.href}
-                        variant="ghost"
-                        className="rounded-ds-xl"
-                        disabled={isBulkRemoving}
-                      >
-                        Open
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="rounded-ds-xl"
-                        onClick={() => handleRemove(item)}
-                        loading={removingKey === key}
-                        loadingText="Removing"
-                        disabled={isBulkRemoving}
-                      >
-                        Remove
-                      </Button>
+                          <span className="flex flex-wrap gap-1" aria-label="Tags">
+                            {(tags[key] ?? []).map((tag) => (
+                              <Badge key={tag} variant="outline" className="border-primary/40 text-primary">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
