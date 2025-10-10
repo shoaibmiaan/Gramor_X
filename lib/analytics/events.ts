@@ -18,7 +18,10 @@ export type AnalyticsEventName =
   | 'teacher_review_started'
   | 'teacher_review_completed'
   | 'teacher_review_scored'
-  | 'writing_essay_scored';
+  | 'writing_essay_scored'
+  | 'studyplan_create'
+  | 'studyplan_update'
+  | 'studyplan_task_complete';
 
 export type AnalyticsProps = Record<
   string,
