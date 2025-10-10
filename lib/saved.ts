@@ -1,4 +1,5 @@
 export type SavedItem = {
+  id?: string;
   resource_id: string;
   type: string | null;
   category: string | null;
@@ -32,7 +33,17 @@ export async function fetchSavedPage(url: string): Promise<SavedItemsPage> {
   }
   const body = await res.json();
   if (Array.isArray(body)) {
-    return { items: body as SavedItem[], nextCursor: null, hasMore: false };
+    return {
+      items: (body as Record<string, unknown>[]).map((item) => ({
+        id: typeof item.id === 'string' ? item.id : undefined,
+        resource_id: String(item.resource_id ?? ''),
+        type: typeof item.type === 'string' ? item.type : null,
+        category: typeof item.category === 'string' ? item.category : null,
+        created_at: String(item.created_at ?? ''),
+      })),
+      nextCursor: null,
+      hasMore: false,
+    };
   }
   return body as SavedItemsPage;
 }
@@ -71,6 +82,11 @@ export function buildSavedLink(item: SavedItem): string {
 }
 
 export async function removeSavedItem(item: SavedItem): Promise<void> {
+  if (item.id) {
+    await fetch(`/api/saved/${item.id}`, { method: 'DELETE' });
+    return;
+  }
+
   if (!item.category) return;
   await fetch(`/api/saved/${item.category}`, {
     method: 'DELETE',
