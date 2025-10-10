@@ -1,5 +1,5 @@
 // pages/study-plan/index.tsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 
 import { Container } from '@/components/design-system/Container';
@@ -12,6 +12,7 @@ import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { generateStudyPlan } from '@/lib/studyPlan';
+import { emitUserEvent } from '@/lib/analytics/user';
 
 import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
 import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
@@ -43,6 +44,11 @@ const PRESETS: ReadonlyArray<StudyPlanPreset> = [
   },
 ];
 
+const countCompletedTasks = (plan: PlanType | null): number => {
+  if (!plan) return 0;
+  return plan.days.reduce((sum, day) => sum + day.tasks.filter((task) => task.completed).length, 0);
+};
+
 function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType {
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
@@ -69,6 +75,8 @@ export default function StudyPlanPage() {
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const [busyTask, setBusyTask] = useState<string | null>(null);
 
+  const planProgressRef = useRef<number>(0);
+
   const { success: toastSuccess, error: toastError } = useToast();
   const { current: streak, loading: streakLoading, completeToday, reload: reloadStreak } = useStreak();
 
@@ -79,6 +87,7 @@ export default function StudyPlanPage() {
       if (!user?.id) {
         setUserId(null);
         setPlan(null);
+        planProgressRef.current = 0;
         return;
       }
       setUserId(user.id);
@@ -93,6 +102,7 @@ export default function StudyPlanPage() {
 
       if (!data) {
         setPlan(null);
+        planProgressRef.current = 0;
       } else {
         const normalised = coerceStudyPlan(data.plan_json ?? data, user.id, {
           startISO: data.start_iso ?? undefined,
@@ -100,6 +110,7 @@ export default function StudyPlanPage() {
           goalBand: data.goal_band ?? undefined,
         });
         setPlan(normalised);
+        planProgressRef.current = countCompletedTasks(normalised);
       }
     } catch (err) {
       console.error('Failed to load study plan', err);
@@ -158,6 +169,15 @@ export default function StudyPlanPage() {
         await persistPlan(nextPlan);
         setPlan(nextPlan);
         toastSuccess('Plan ready', 'Your new study plan is live. Start with today’s tasks!');
+        const prevWeeks = plan?.weeks ?? 0;
+        const deltaWeeks = nextPlan.weeks - prevWeeks;
+        const completed = countCompletedTasks(nextPlan);
+        planProgressRef.current = completed;
+        void emitUserEvent('studyplan_create', {
+          step: nextPlan.weeks,
+          delta: deltaWeeks,
+          tasksCompleted: completed,
+        });
       } catch (err) {
         console.error('Failed to create plan', err);
         toastError(err instanceof Error ? err.message : 'Could not create plan.');
@@ -165,7 +185,7 @@ export default function StudyPlanPage() {
         setCreatingId(null);
       }
     },
-    [persistPlan, toastError, toastSuccess, userId],
+    [persistPlan, toastError, toastSuccess, userId, plan],
   );
 
   const handleTaskToggle = useCallback(
@@ -189,8 +209,19 @@ export default function StudyPlanPage() {
       setBusyTask(taskId);
       setPlan(next);
 
+      const prevCompleted = planProgressRef.current;
+
       try {
         await persistPlan(next);
+        const nextCompleted = countCompletedTasks(next);
+        planProgressRef.current = nextCompleted;
+        void emitUserEvent('studyplan_update', {
+          step: nextCompleted,
+          delta: nextCompleted - prevCompleted,
+          day: planDayKey(day),
+          taskId,
+          completed: checked,
+        });
         const shouldStartStreak = checked && !wasComplete && !hadOtherCompleted && dayKey === todayKey;
         if (shouldStartStreak) {
           try {
@@ -205,6 +236,7 @@ export default function StudyPlanPage() {
         console.error('Failed to update task', err);
         toastError(err instanceof Error ? err.message : 'Could not update task.');
         setPlan(plan); // rollback
+        planProgressRef.current = prevCompleted;
       } finally {
         setBusyTask(null);
       }
