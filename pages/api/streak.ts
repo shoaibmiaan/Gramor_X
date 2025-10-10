@@ -7,6 +7,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export type StreakData = {
   current_streak: number;
+  longest_streak: number;
   last_activity_date: string | null; // YYYY-MM-DD
   next_restart_date: string | null;  // not persisted on 'streaks' table
   shields: number;                   // not persisted on 'streaks' table
@@ -70,20 +71,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Read current row (aliases to expected keys)
     let { data: row, error: fetchError } = await supabaseUser
       .from('streaks')
-      .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
+      .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
     // If no row, create one
-    const baseInsert = { user_id: user.id, current: 0, last_active_date: null, updated_at: null };
+    const baseInsert = { user_id: user.id, current: 0, longest: 0, last_active_date: null, updated_at: null };
 
     if (!row) {
       const { data: inserted, error: insertError } = await supabaseUser
         .from('streaks')
         .insert(baseInsert)
-        .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
+        .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
         .single();
       if (insertError) {
         console.error('[API/streak] Insert failed:', insertError);
@@ -97,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const { data: serviceInserted, error: serviceErr } = await svc
               .from('streaks')
               .insert(baseInsert)
-              .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
+              .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
               .single();
 
             if (serviceErr) {
@@ -115,6 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           row = {
             user_id: user.id,
             current_streak: 0,
+            longest_streak: 0,
             last_activity_date: null,
             updated_at: null,
           } as typeof row;
@@ -127,6 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Build response object (shields/next_restart_date are not stored on this table)
     const asResponse = (r: typeof row): StreakData => ({
       current_streak: r?.current_streak ?? 0,
+      longest_streak: r?.longest_streak ?? r?.current_streak ?? 0,
       last_activity_date: r?.last_activity_date ?? null,
       next_restart_date: null,
       shields: 0,
@@ -161,15 +164,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           newCurrent = 1; // missed 24h -> reset
         }
 
+        const previousLongest = row.longest_streak ?? row.current_streak ?? 0;
+        const newLongest = Math.max(previousLongest, newCurrent);
+
         const { data: updatedRow, error: upErr } = await supabaseUser
           .from('streaks')
           .update({
             current: newCurrent,
+            longest: newLongest,
             last_active_date: today,
             updated_at: now.toISOString(),
           })
           .eq('user_id', user.id)
-          .select('user_id,current_streak:current,last_activity_date:last_active_date,updated_at')
+          .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
           .single();
 
         if (upErr) {
