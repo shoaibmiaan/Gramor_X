@@ -14,8 +14,11 @@ export default function MarkSections() {
   const slug = (router.query.slug as string) || 'ieltsfever-listening-practice-test-1';
 
   // Pre-fill with your URL; you can paste a different one in the input
+  // Default to a locally generated sample clip so the tool works offline. Run
+  // `./scripts/generate-listening-fixtures.sh` to recreate it, or paste the production URL when
+  // marking a real test (e.g. Supabase storage object).
   const [audioUrl, setAudioUrl] = useState<string>(
-    'https://xypbinamxunmwkhlvefd.supabase.co/storage/v1/object/public/listening/IELTS_listening_test_0001/ielts-listening-practice-test-1.mp3'
+    '/placement/audio/section1_q1.mp3'
   );
 
   // 4 sections
@@ -130,6 +133,11 @@ ${values};`;
             <div className="md:col-span-2">
               <label className="text-small opacity-80">Audio URL</label>
               <Input value={audioUrl} onChange={(e:any)=>setAudioUrl(e.target.value)} placeholder="https://..." />
+              {audioUrl.startsWith('/placement/audio/') && (
+                <Alert variant="info" title="Local fixture">
+                  Run <code>./scripts/generate-listening-fixtures.sh</code> to generate the sample audio before marking sections.
+                </Alert>
+              )}
               {/* Hidden native audio; UI via AudioBar */}
               <audio ref={audioRef} className="sr-only" />
               <div className="mt-4">

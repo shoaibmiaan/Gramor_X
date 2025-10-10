@@ -2,7 +2,7 @@
 //public/placement/audio/section1_q1.mp3 and public/placement/audio/section1_q2.mp3
 //Put a simple Task 1 chart image under:
 //public/placement/images/task1_chart.png
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { Container } from '@/components/design-system/Container';
@@ -12,6 +12,7 @@ import { Badge } from '@/components/design-system/Badge';
 import Image from "next/image";
 import { Alert } from '@/components/design-system/Alert';
 import { GradientText } from '@/components/design-system/GradientText';
+import { AudioPlayer } from '@/components/audio/Player';
 
 // ---- helpers
 type Answer = string | string[] | { text?: string; audioBlobUrl?: string };
@@ -35,6 +36,11 @@ export default function PlacementRun() {
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [error, setError] = useState<string | null>(null);
+  const [fixtureErrors, setFixtureErrors] = useState<Record<string, boolean>>({});
+
+  const flagFixtureError = useCallback((key: string) => {
+    setFixtureErrors((prev) => ({ ...prev, [key]: true }));
+  }, []);
 
   const steps: Step[] = useMemo(() => ([
     // 1) Listening MCQ (exact pattern: listen then choose ONE answer)
@@ -45,7 +51,18 @@ export default function PlacementRun() {
       title: 'Listening Q1 — Multiple choice (One answer)',
       body: (
         <div className="space-y-4">
-          <audio src={audioUrl1} controls preload="none" className="w-full" />
+          <AudioPlayer
+            src={audioUrl1}
+            preload="metadata"
+            className="w-full"
+            preferMetadataOnly
+            onError={() => flagFixtureError('L1')}
+          />
+          {fixtureErrors.L1 && (
+            <Alert variant="warning" title="Audio fixture missing">
+              Run <code>./scripts/generate-listening-fixtures.sh</code> to recreate <code>{audioUrl1}</code>.
+            </Alert>
+          )}
           <p className="text-body text-grayish">
             Choose the correct answer, A, B, C or D.
           </p>
@@ -72,7 +89,18 @@ export default function PlacementRun() {
       title: 'Listening Q2 — Form completion (ONE WORD ONLY)',
       body: (
         <div className="space-y-4">
-          <audio src={audioUrl2} controls preload="none" className="w-full" />
+          <AudioPlayer
+            src={audioUrl2}
+            preload="metadata"
+            className="w-full"
+            preferMetadataOnly
+            onError={() => flagFixtureError('L2')}
+          />
+          {fixtureErrors.L2 && (
+            <Alert variant="warning" title="Audio fixture missing">
+              Run <code>./scripts/generate-listening-fixtures.sh</code> to recreate <code>{audioUrl2}</code>.
+            </Alert>
+          )}
           <p className="text-body text-grayish">
             Write ONE WORD ONLY for each answer.
           </p>
