@@ -1,18 +1,25 @@
 'use client';
-import { env } from "@/lib/env";
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient"; // Import centralized client
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Badge } from "./Badge";
+import { isStoragePath } from '@/lib/avatar';
+
+type UploadResult = {
+  signedUrl: string | null;
+  path: string;
+};
 
 type Props = {
   userId: string | null;
-  onUploaded: (url: string, path: string) => void;
+  onUploaded: (result: UploadResult) => void;
   className?: string;
-  initialUrl?: string;
+  initialUrl?: string | null;
+  initialPath?: string | null;
   bucket?: string; // default 'avatars'
+  signedUrlTTL?: number; // seconds
 };
 
 export const AvatarUploader: React.FC<Props> = ({
@@ -20,7 +27,9 @@ export const AvatarUploader: React.FC<Props> = ({
   onUploaded,
   className = "",
   initialUrl,
+  initialPath,
   bucket = "avatars",
+  signedUrlTTL = 60 * 60,
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(initialUrl ?? null);
@@ -35,6 +44,43 @@ export const AvatarUploader: React.FC<Props> = ({
     setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
+
+  useEffect(() => {
+    if (initialUrl) {
+      setPreview(initialUrl);
+      return;
+    }
+
+    if (!initialPath || !isStoragePath(initialPath)) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(initialPath, signedUrlTTL);
+
+        if (!cancelled) {
+          if (error) {
+            console.warn('Failed to create initial avatar signed URL', error);
+            setPreview(null);
+          } else {
+            setPreview(data?.signedUrl ?? null);
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn('Failed to create initial avatar signed URL', error);
+          setPreview(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialUrl, initialPath, bucket, signedUrlTTL]);
 
   const onSelect = (f: File) => {
     if (!f.type.startsWith("image/")) {
@@ -57,26 +103,46 @@ export const AvatarUploader: React.FC<Props> = ({
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/avatar-${Date.now()}.${ext}`;
 
-    const { error: upErr } = await supabase.storage
+    const { data: signedData, error: signedErr } = await supabase.storage
       .from(bucket)
-      .upload(path, file, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: file.type,
-      });
+      .createSignedUploadUrl(path);
 
-    if (upErr) {
+    if (signedErr || !signedData?.token) {
       setBusy(false);
-      setError(upErr.message);
+      setError(signedErr?.message || 'Could not prepare upload.');
       return;
     }
 
-    // Public URL (switch to signed if bucket is private)
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    const publicUrl = data.publicUrl;
+    const { error: uploadErr } = await supabase.storage
+      .from(bucket)
+      .uploadToSignedUrl(path, signedData.token, file);
+
+    if (uploadErr) {
+      setBusy(false);
+      setError(uploadErr.message);
+      return;
+    }
+
+    const { data: urlData, error: urlErr } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(path, signedUrlTTL);
+
+    if (urlErr) {
+      setBusy(false);
+      setError(urlErr.message);
+      return;
+    }
+
+    const signedUrl = urlData?.signedUrl ?? null;
+    if (!signedUrl) {
+      setBusy(false);
+      setError('Could not generate preview URL.');
+      return;
+    }
 
     setBusy(false);
-    onUploaded(publicUrl, path);
+    setPreview(signedUrl);
+    onUploaded({ signedUrl, path });
   };
 
   return (

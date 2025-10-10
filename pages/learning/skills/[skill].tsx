@@ -11,6 +11,7 @@ import { Alert } from '@/components/design-system/Alert';
 import { StreakIndicator } from '@/components/design-system/StreakIndicator';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import type { Profile, AIPlan } from '@/types/profile';
+import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 
 const supabase = createClient(
   env.NEXT_PUBLIC_SUPABASE_URL,
@@ -54,6 +55,7 @@ export default function Dashboard() {
   const ai: AIPlan = profile?.ai_recommendation ?? {};
   const prefs = profile?.study_prefs ?? [];
   const notes = Array.isArray(ai.notes) ? ai.notes : [];
+  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   // After a session, rotate the studied skill to the end of study_prefs
   useEffect(() => {
@@ -107,8 +109,14 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-4">
             <StreakIndicator count={streak} />
-            {profile?.avatar_url ? (
-              <Image src={profile.avatar_url} alt="Avatar" width={56} height={56} className="rounded-full ring-2 ring-primary/40" />
+            {profileAvatarUrl ? (
+              <Image
+                src={profileAvatarUrl}
+                alt="Avatar"
+                width={56}
+                height={56}
+                className="rounded-full ring-2 ring-primary/40"
+              />
             ) : null}
           </div>
         </div>
