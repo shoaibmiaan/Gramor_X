@@ -55,3 +55,7 @@ storybook-static
 
 *.bak
 .vercel
+
+# Generated audio fixtures
+public/audio/*.mp3
+public/placement/audio/*.mp3
