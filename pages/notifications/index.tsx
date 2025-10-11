@@ -6,6 +6,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { env } from '@/lib/env';
 import { flags } from '@/lib/flags';
+import NotificationPreferencesPanel from '@/components/notifications/NotificationPreferencesPanel';
 import {
   NotificationListResponseSchema,
   type NotificationNudge,
@@ -179,6 +180,8 @@ export default function NotificationsCenter() {
                 Nudges from the GramorX team about your progress, feature rollouts, and important account updates.
               </p>
             </div>
+
+            <NotificationPreferencesPanel />
 
             {error ? (
               <div className="rounded-ds-lg border border-destructive/50 bg-destructive/5 p-4 text-destructive">
