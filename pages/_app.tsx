@@ -185,7 +185,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const forceLayoutOnAuthPage = isAuthPage && !!user;
 
   const isDashboardRoute =
-    pathname.startsWith('/dashboard') ||
+    (pathname.startsWith('/dashboard') && pathname !== '/dashboard') ||
     pathname.startsWith('/account') ||
     pathname.startsWith('/settings') ||
     pathname.startsWith('/notifications') ||

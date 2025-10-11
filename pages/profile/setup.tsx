@@ -173,7 +173,7 @@ export default function ProfileSetup() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', session.user.id) // Use 'id' instead of 'user_id'
+        .or(`id.eq.${session.user.id},user_id.eq.${session.user.id}`)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') setError(error.message);
