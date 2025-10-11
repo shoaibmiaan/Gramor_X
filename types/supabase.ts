@@ -14,14 +14,21 @@ export interface Profiles extends TableBase {
   user_id: string;
   full_name?: string;
   phone?: string;
+  phone_verified?: boolean | null;
   goal_band?: number;
   weaknesses?: string[];
   role?: 'student' | 'teacher' | 'admin';
   membership?: 'free' | 'starter' | 'booster' | 'master';
   locale?: string;
+
+  // from codex/add-whatsapp-opt-in-preferences-panel
+  notification_channels?: string[] | null;
+  whatsapp_opt_in?: boolean | null;
+
+  // from main
   preferred_language?: string | null;
-  study_days?: string[] | null;
-  study_minutes_per_day?: number | null;
+  study_days?: string[] | null;           // e.g., ['Mon','Wed','Fri']
+  study_minutes_per_day?: number | null;  // e.g., 30
 }
 
 export interface StudyPlans extends TableBase {
@@ -64,7 +71,6 @@ export interface AccountAuditLog extends TableBase {
   ip_address?: string | null;
   user_agent?: string | null;
   metadata?: Record<string, unknown> | null;
-  created_at: string;
 }
 
 export interface AccountDeletionQueue {
@@ -93,6 +99,21 @@ export interface WritingPrompts extends TableBase {
   created_by?: string | null;
 }
 
+export interface NotificationsOptIn extends TableBase {
+  user_id: string;
+  sms_opt_in: boolean;
+  wa_opt_in: boolean;
+  email_opt_in: boolean;
+}
+
+export interface NotificationConsentEvent extends TableBase {
+  user_id: string;
+  actor_id?: string | null;
+  channel: 'email' | 'sms' | 'whatsapp';
+  action: 'opt_in' | 'opt_out' | 'verify' | 'test_message' | 'task';
+  metadata?: Record<string, any> | null;
+}
+
 /** Handy union for typed upserts/selects */
 export interface DBSchema {
   profiles: Profiles;
@@ -101,6 +122,12 @@ export interface DBSchema {
   attempts: Attempts;
   invoices: Invoices;
   writing_prompts: WritingPrompts;
+
+  // kept from codex/add-whatsapp-opt-in-preferences-panel
+  notifications_opt_in: NotificationsOptIn;
+  notification_consent_events: NotificationConsentEvent;
+
+  // kept from main
   account_audit_log: AccountAuditLog;
   account_deletion_queue: AccountDeletionQueue;
   account_exports: AccountExport;
