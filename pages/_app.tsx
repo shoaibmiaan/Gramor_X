@@ -430,7 +430,9 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <link rel="stylesheet" href="/premium.css" />
         </Head>
 
-        <div className={`${poppins.className} ${slab.className} min-h-[100dvh] bg-background text-foreground`}>
+        <div
+          className={`${poppins.className} ${slab.className} min-h-screen min-h-[100dvh] bg-background text-foreground antialiased`}
+        >
           {/* ✅ NEW: Client-side plan guard + ribbon + route protection */}
           <GlobalPlanGuard />
 
