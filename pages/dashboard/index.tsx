@@ -36,6 +36,8 @@ import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCar
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { ChallengeTaskStatus } from '@/types/challenge';
+import { TodayReviewsPanel } from '@/components/review/TodayReviewsPanel';
+import { FourSkillSpotlight } from '@/components/review/FourSkillSpotlight';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -345,6 +347,12 @@ export default function Dashboard() {
         <div className="mt-10">
           <WordOfTheDayCard />
         </div>
+
+        <div id="reviews" className="mt-10">
+          <TodayReviewsPanel />
+        </div>
+
+        <FourSkillSpotlight />
 
         <div className="mt-10">
           {challengeLoading ? (
