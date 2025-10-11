@@ -45,7 +45,18 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const date = new Date().toISOString().slice(0, 10);
+  const date = (() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Karachi',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date());
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  })();
 
   try {
     const token = req.headers.authorization?.startsWith('Bearer ')
