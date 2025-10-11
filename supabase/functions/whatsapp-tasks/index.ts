@@ -62,10 +62,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return Response.json<ErrorResponse>({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const userId = payload.userId;
-  if (!userId) {
-    return Response.json<ErrorResponse>({ error: "userId is required" }, { status: 400 });
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return Response.json<ErrorResponse>({ error: "Authorization header missing" }, { status: 401 });
   }
+
+  const accessToken = authHeader.replace("Bearer ", "");
+  const { data: authData, error: authError } = await client.auth.getUser(accessToken);
+
+  if (authError || !authData?.user?.id) {
+    return Response.json<ErrorResponse>({ error: "Invalid access token" }, { status: 401 });
+  }
+
+  const authenticatedUserId = authData.user.id;
+  if (payload.userId && payload.userId !== authenticatedUserId) {
+    return Response.json<ErrorResponse>({ error: "userId does not match authenticated user" }, { status: 403 });
+  }
+
+  const userId = authenticatedUserId;
 
   const type = payload.type ?? "test";
 
@@ -115,7 +129,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const { error: insertError } = await client.from("notification_consent_events").insert({
     user_id: userId,
-    actor_id: userId,
+    actor_id: authenticatedUserId,
     channel: "whatsapp",
     action: type === "task" ? "task" : "test_message",
     metadata: { type },
