@@ -1,6 +1,6 @@
 // components/common/LocaleSwitcher.tsx
 import React from 'react';
-import { persistLocale, getLocale, toSupportedLocale, useLocale, type Locale } from '@/lib/locale';
+import { persistLocale, toSupportedLocale, useLocale, type Locale } from '@/lib/locale';
 import { loadTranslations } from '@/lib/i18n';
 
 type Props = {
@@ -11,8 +11,12 @@ type Props = {
 
 export default function LocaleSwitcher({ value, onChanged, options }: Props) {
   const [busy, setBusy] = React.useState(false);
-  const { t } = useLocale();
-  const [local, setLocal] = React.useState<Locale>(value ?? getLocale());
+  const { locale: activeLocale, setLocale: setLocaleContext, t } = useLocale();
+  const [local, setLocal] = React.useState<Locale>(value ?? activeLocale);
+
+  React.useEffect(() => {
+    setLocal(value ?? activeLocale);
+  }, [value, activeLocale]);
 
   const langs = options ?? [
     { value: 'en', label: t('common.languages.en', 'English') },
@@ -26,6 +30,7 @@ export default function LocaleSwitcher({ value, onChanged, options }: Props) {
       await loadTranslations(next);
       persistLocale(next);
       setLocal(next);
+      setLocaleContext(next);
       onChanged?.(next);
     } finally {
       setBusy(false);
