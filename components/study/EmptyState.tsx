@@ -1,7 +1,8 @@
 // components/study/EmptyState.tsx
 import React from 'react';
 import Link from 'next/link';
-import { EmptyState as DSEmptyState } from '@/components/design-system/EmptyState';
+
+import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 
@@ -64,23 +65,46 @@ export function StudyPlanEmptyState({
   const list = presets?.length ? presets : DEFAULT_PRESETS;
 
   return (
-    <div className="space-y-8">
-      <DSEmptyState
-        title="Create your study plan"
-        description="Pick a quick preset to fill your calendar instantly. You can customise tasks later."
-        icon={<Icon name="fire" size={28} title="Streak" />}
-        actions={
-          showOnboardingCta ? (
-            <Button asChild variant="outline">
-              <Link href="/onboarding">Build with onboarding</Link>
+    <div className="space-y-10">
+      <Card
+        padding="lg"
+        className="flex flex-col gap-6 rounded-ds-3xl border-dashed border-border/70 bg-card/80 sm:flex-row sm:items-start sm:justify-between"
+      >
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+            <Icon name="book-open" size={28} title="Study plan quickstart" />
+          </span>
+          <div className="space-y-2">
+            <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground/70">Quickstart</p>
+            <h2 className="font-slab text-h3 text-foreground">Let’s build your IELTS routine</h2>
+            <p className="max-w-xl text-body text-muted-foreground">
+              Generate a personalised schedule with the plan builder or take a baseline mock to see where to focus first.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[220px]">
+          {showOnboardingCta ? (
+            <Button asChild fullWidth>
+              <Link href="/onboarding">Generate my plan</Link>
             </Button>
           ) : (
-            <span className="text-small text-muted-foreground">
-              Plans auto-adjust after you complete a day.
-            </span>
-          )
-        }
-      />
+            <p className="rounded-ds-xl border border-border/60 bg-muted/40 px-4 py-3 text-center text-small text-muted-foreground">
+              Plans auto-adjust after you complete a day. Come back any time for a fresh schedule.
+            </p>
+          )}
+          <Button asChild fullWidth variant="soft" tone="info">
+            <Link href="/mock-tests">Take baseline mock</Link>
+          </Button>
+        </div>
+      </Card>
+
+      <div className="space-y-3 text-center">
+        <h3 className="font-slab text-h4 text-foreground">Or pick a quick preset</h3>
+        <p className="mx-auto max-w-2xl text-body text-muted-foreground">
+          Choose a template to fill your calendar instantly. You can tweak tasks and regenerate whenever you like.
+        </p>
+      </div>
 
       <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
         {list.map((preset) => {
