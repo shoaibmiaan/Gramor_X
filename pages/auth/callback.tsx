@@ -27,6 +27,10 @@ export default function AuthCallback() {
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
 
+          if (data.session) {
+            await supabase.auth.setSession(data.session);
+          }
+
           // Best-effort: notify server cookies (if present in your project)
           try {
             await fetch('/api/auth/set-session', {
@@ -48,6 +52,10 @@ export default function AuthCallback() {
             token_hash,
           });
           if (error) throw error;
+
+          if (data.session) {
+            await supabase.auth.setSession(data.session);
+          }
 
           try {
             await fetch('/api/auth/set-session', {
