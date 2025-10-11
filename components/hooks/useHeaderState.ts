@@ -6,12 +6,14 @@ import { supabase } from '@/lib/supabaseClient';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { defaultTier } from '@/config/navigation';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { createSignedAvatarUrl, isStoragePath } from '@/lib/avatar';
 
 interface UserInfo {
   id: string | null;
   email: string | null;
   name: string | null;
   avatarUrl: string | null;
+  avatarPath: string | null;
 }
 
 export function useHeaderState(initialStreak?: number) {
@@ -19,7 +21,7 @@ export function useHeaderState(initialStreak?: number) {
 
   const [ready, setReady] = useState(false);
   const [role, setRole] = useState<string | null>(null);
-  const [user, setUser] = useState<UserInfo>({ id: null, email: null, name: null, avatarUrl: null });
+  const [user, setUser] = useState<UserInfo>({ id: null, email: null, name: null, avatarUrl: null, avatarPath: null });
   const [streak, setStreak] = useState<number>(initialStreak ?? 0);
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>(defaultTier);
 
@@ -102,6 +104,28 @@ export function useHeaderState(initialStreak?: number) {
       return { role: normalizedRole, tier: normalizedTier };
     };
 
+    const resolveAvatar = async (userMeta?: Record<string, unknown>) => {
+      const raw = typeof userMeta?.['avatar_path'] === 'string'
+        ? (userMeta?.['avatar_path'] as string)
+        : typeof userMeta?.['avatar_url'] === 'string'
+        ? (userMeta?.['avatar_url'] as string)
+        : null;
+
+      if (!raw) return { url: null, path: null } as const;
+
+      if (isStoragePath(raw)) {
+        try {
+          const url = await createSignedAvatarUrl(raw);
+          return { url, path: raw } as const;
+        } catch (error) {
+          console.warn('Failed to create signed avatar url for header', error);
+          return { url: null, path: raw } as const;
+        }
+      }
+
+      return { url: raw, path: null } as const;
+    };
+
     const sync = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -112,11 +136,13 @@ export function useHeaderState(initialStreak?: number) {
         const s = session?.user ?? null;
         const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
         if (!cancelled) {
+          const avatar = await resolveAvatar(userMeta);
           setUser({
             id: s?.id ?? null,
             email: s?.email ?? null,
             name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
-            avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
+            avatarUrl: avatar.url,
+            avatarPath: avatar.path,
           });
           const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
           if (!cancelled) {
@@ -136,11 +162,13 @@ export function useHeaderState(initialStreak?: number) {
         try {
           const s = session?.user ?? null;
           const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
+          const avatar = await resolveAvatar(userMeta);
           setUser({
             id: s?.id ?? null,
             email: s?.email ?? null,
             name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
-            avatarUrl: typeof userMeta['avatar_url'] === 'string' ? (userMeta['avatar_url'] as string) : null,
+            avatarUrl: avatar.url,
+            avatarPath: avatar.path,
           });
           const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
           setRole(identity.role);
@@ -160,8 +188,22 @@ export function useHeaderState(initialStreak?: number) {
 
   useEffect(() => {
     const onAvatarChanged = (e: Event) => {
-      const ce = e as CustomEvent<{ url: string }>;
-      setUser((u) => ({ ...u, avatarUrl: ce.detail.url }));
+      const ce = e as CustomEvent<{ url?: string | null; path?: string | null }>;
+      const { url, path } = ce.detail;
+      if (path && !url) {
+        void createSignedAvatarUrl(path)
+          .then((signed) => {
+            setUser((u) => ({ ...u, avatarUrl: signed ?? u.avatarUrl, avatarPath: path }));
+          })
+          .catch((error) => console.warn('Failed to refresh avatar after change', error));
+        return;
+      }
+
+      setUser((u) => ({
+        ...u,
+        avatarUrl: url ?? u.avatarUrl,
+        avatarPath: path ?? u.avatarPath,
+      }));
     };
     window.addEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
     return () => window.removeEventListener('profile:avatar-changed', onAvatarChanged as EventListener);
