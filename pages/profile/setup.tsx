@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useLocale } from '@/lib/locale';
 import { Container } from '@/components/design-system/Container';
@@ -11,7 +11,9 @@ import Image from 'next/image';
 import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { emitUserEvent } from '@/lib/analytics/user';
 import { COUNTRIES, LEVELS, TIME, PREFS, WEAKNESSES, GOAL_REASONS, LEARNING_STYLES } from '@/lib/profile-options';
+import { resolveAvatarUrl } from '@/lib/avatar';
 import type { AIPlan } from '@/types/profile';
 
 /** ——— UI helpers ——— */
@@ -67,6 +69,7 @@ export default function ProfileSetup() {
   const [lang, setLang] = useState('en');
   const [explanationLang, setExplanationLang] = useState('en');
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
+  const [avatarPath, setAvatarPath] = useState<string | undefined>();
   const [ai, setAi] = useState<(AIPlan & { source?: string }) | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -78,6 +81,38 @@ export default function ProfileSetup() {
   const [goalReasons, setGoalReasons] = useState<typeof GOAL_REASONS[number][]>([]);
   const [learningStyle, setLearningStyle] = useState<typeof LEARNING_STYLES[number] | ''>('');
   const [timezone, setTimezone] = useState('');
+
+  const profileProgressRef = useRef<number>(0);
+
+  const computeProgressFromValues = (values: {
+    fullName?: string;
+    country?: string;
+    level?: string | number | '';
+    time?: string;
+    daysPerWeek?: number | '';
+    phoneVerified?: boolean;
+  }) => {
+    const requiredCount = 6;
+    const filled = [
+      Boolean(values.fullName),
+      Boolean(values.country),
+      Boolean(values.level),
+      Boolean(values.time),
+      Boolean(values.daysPerWeek),
+      Boolean(values.phoneVerified),
+    ].filter(Boolean).length;
+    return Math.round((filled / requiredCount) * 100);
+  };
+
+  const computeProgress = () =>
+    computeProgressFromValues({
+      fullName,
+      country,
+      level,
+      time,
+      daysPerWeek,
+      phoneVerified: phoneStage === 'verified',
+    });
 
   const timezones = useMemo(() => {
     try {
@@ -161,11 +196,27 @@ export default function ProfileSetup() {
         setLocale(data.preferred_language ?? 'en');
         setExplanationLang(data.language_preference ?? 'en');
         setExplanationLocale(data.language_preference ?? 'en');
-        setAvatarUrl(data.avatar_url ?? undefined);
+        if (data.avatar_url) {
+          const resolved = await resolveAvatarUrl(data.avatar_url);
+          setAvatarUrl(resolved.signedUrl ?? undefined);
+          setAvatarPath(resolved.path ?? undefined);
+        } else {
+          setAvatarUrl(undefined);
+          setAvatarPath(undefined);
+        }
         try {
           const rec = (data.ai_recommendation as AIPlan | null) ?? null;
           if (rec && (rec.suggestedGoal || rec.sequence?.length)) setAi(rec);
         } catch {}
+
+        profileProgressRef.current = computeProgressFromValues({
+          fullName: data.full_name ?? '',
+          country: data.country ?? '',
+          level: data.english_level ?? '',
+          time: data.time_commitment ?? '',
+          daysPerWeek: data.days_per_week ?? '',
+          phoneVerified: Boolean(data.phone),
+        });
       }
 
       setLoading(false);
@@ -347,6 +398,9 @@ export default function ProfileSetup() {
     setError(null);
     setNotice(null);
 
+    const prevProgress = profileProgressRef.current ?? 0;
+    const nextProgress = computeProgress();
+
     const errs: FieldErrors = {};
     if (!fullName.trim()) errs.fullName = 'Full name is required';
     if (!country) errs.country = 'Country is required';
@@ -402,7 +456,7 @@ export default function ProfileSetup() {
       days_per_week: daysPerWeek || null,
       preferred_language: lang || 'en',
       language_preference: explanationLang || 'en',
-      avatar_url: avatarUrl || null,
+      avatar_url: avatarPath || null,
       goal_reason: goalReasons,
       learning_style: learningStyle || null,
       ai_recommendation: ai
@@ -449,6 +503,9 @@ export default function ProfileSetup() {
         throw new Error(upsertErr.message);
       }
 
+      profileProgressRef.current = nextProgress;
+      void emitUserEvent('profile_save', { step: nextProgress, delta: nextProgress - prevProgress });
+
       setNotice(finalize ? 'Profile saved — welcome aboard!' : 'Draft saved.');
       if (finalize) router.push('/dashboard');
     } catch (e: any) {
@@ -460,16 +517,7 @@ export default function ProfileSetup() {
   };
 
   // Progress calculation
-  const requiredCount = 6;
-  const filled = [
-    Boolean(fullName),
-    Boolean(country),
-    Boolean(level),
-    Boolean(time),
-    Boolean(daysPerWeek),
-    phoneStage === 'verified',
-  ].filter(Boolean).length;
-  const progress = Math.round((filled / requiredCount) * 100);
+  const progress = computeProgress();
 
   return (
     <section className="pb-24 sm:pb-14 pt-10 sm:pt-16 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -726,7 +774,7 @@ export default function ProfileSetup() {
                       <AvatarUploader
                         userId={userId}
                         initialUrl={avatarUrl}
-                        onUploaded={async (url) => {
+                        onUploaded={async (url, _path) => {
                           setAvatarUrl(url);
                           await supabase.auth.updateUser({ data: { avatar_url: url } });
                         }}

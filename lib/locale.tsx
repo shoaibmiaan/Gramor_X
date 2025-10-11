@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+
+import enMessages from "@/public/locales/en/common.json";
+import hiMessages from "@/public/locales/hi/common.json";
+import urMessages from "@/public/locales/ur/common.json";
+import arMessages from "@/public/locales/ar/common.json";
+import esMessages from "@/public/locales/es/common.json";
 
 /** ---- minimal message registry ---- */
 type Messages = Record<string, any>;
@@ -49,12 +55,51 @@ export function LocaleProvider({
   children: React.ReactNode;
 }) {
   const [locale, setLocaleState] = useState(initialLocale);
+  const loadedLocales = useRef(new Set<string>());
 
   // keep module-level locale in sync with provider state
   useEffect(() => {
     currentLocale = locale;
   }, [locale]);
 
+  useEffect(() => {
+    const loaders: Record<string, () => Messages | Promise<Messages>> = {
+      en: () => enMessages,
+      hi: () => hiMessages,
+      ur: () => urMessages,
+      ar: () => arMessages,
+      es: () => esMessages,
+    };
+
+    if (loadedLocales.current.has(locale)) return;
+
+    const load = loaders[locale] ?? loaders.en;
+    const result = load();
+
+    Promise.resolve(result)
+      .then((messages) => {
+        registerMessages(locale, messages || {});
+        loadedLocales.current.add(locale);
+      })
+      .catch((error) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to load locale messages", error);
+        }
+      });
+  }, [locale]);
+
   const value = useMemo<Ctx>(() => ({ locale, setLocale: setLocaleState, t }), [locale]);
   return <LocaleCtx.Provider value={value}>{children}</LocaleCtx.Provider>;
 }
+
+const builtinMessages: Record<string, Messages> = {
+  en: enMessages,
+  hi: hiMessages,
+  ur: urMessages,
+  ar: arMessages,
+  es: esMessages,
+};
+
+Object.entries(builtinMessages).forEach(([locale, messages]) => {
+  registerMessages(locale, messages);
+});
