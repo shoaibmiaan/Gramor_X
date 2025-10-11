@@ -1,10 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jwtVerify } from "https://deno.land/x/jose@v4.15.5/jwt/verify.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_WHATSAPP_FROM = Deno.env.get("TWILIO_WHATSAPP_FROM");
+const SUPABASE_JWT_SECRET = Deno.env.get("SUPABASE_JWT_SECRET");
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase service configuration");
@@ -14,7 +16,30 @@ if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_FROM) {
   throw new Error("Missing Twilio WhatsApp credentials");
 }
 
+if (!SUPABASE_JWT_SECRET) {
+  throw new Error("Missing Supabase JWT secret");
+}
+
 const client = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+async function resolveUserIdFromToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(
+      token,
+      new TextEncoder().encode(SUPABASE_JWT_SECRET!),
+    );
+
+    const sub = payload.sub;
+    if (typeof sub !== "string" || sub.length === 0) {
+      return null;
+    }
+
+    return sub;
+  } catch (error) {
+    console.error("Failed to verify access token", error);
+    return null;
+  }
+}
 
 async function sendWhatsApp(to: string, body: string) {
   const params = new URLSearchParams({
@@ -68,13 +93,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const accessToken = authHeader.replace("Bearer ", "");
-  const { data: authData, error: authError } = await client.auth.getUser(accessToken);
+  const authenticatedUserId = await resolveUserIdFromToken(accessToken);
 
-  if (authError || !authData?.user?.id) {
+  if (!authenticatedUserId) {
     return Response.json<ErrorResponse>({ error: "Invalid access token" }, { status: 401 });
   }
 
-  const authenticatedUserId = authData.user.id;
   if (payload.userId && payload.userId !== authenticatedUserId) {
     return Response.json<ErrorResponse>({ error: "userId does not match authenticated user" }, { status: 403 });
   }
