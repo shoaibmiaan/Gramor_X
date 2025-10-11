@@ -1,8 +1,8 @@
 // common/LocaleSwitcher.tsx
-import * as React from "react";
-import { loadTranslations, getLocale } from "@/lib/i18n";
-import { setLocale } from "@/lib/locale";
-import type { SupportedLocale } from "@/lib/i18n/config";
+import * as React from 'react';
+import { loadTranslations } from '@/lib/i18n';
+import { persistLocale, getLocale, toSupportedLocale, useLocale } from '@/lib/locale';
+import type { SupportedLocale } from '@/lib/i18n/config';
 
 /**
  * Compact locale toggle (EN / UR). Uses DS token classes.
@@ -15,7 +15,8 @@ export function LocaleSwitcher({
   label?: string;
   onChanged?: (locale: SupportedLocale) => void;
 }) {
-  const [locale, setLocal] = React.useState<SupportedLocale>("en");
+  const { t } = useLocale();
+  const [locale, setLocal] = React.useState<SupportedLocale>('en');
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
@@ -27,10 +28,11 @@ export function LocaleSwitcher({
   const change = async (next: SupportedLocale) => {
     try {
       setBusy(true);
-      await loadTranslations(next);
-      setLocale(next);
-      setLocal(next);
-      onChanged?.(next);
+      const supported = toSupportedLocale(next);
+      await loadTranslations(supported);
+      persistLocale(supported);
+      setLocal(supported);
+      onChanged?.(supported);
     } finally {
       setBusy(false);
     }
@@ -38,7 +40,7 @@ export function LocaleSwitcher({
 
   return (
     <div className="inline-flex items-center gap-2">
-      <span className="text-xs text-mutedText">{label}</span>
+      <span className="text-xs text-mutedText">{label ?? t('Language')}</span>
       <select
         aria-label="Select language"
         disabled={busy}
@@ -48,8 +50,8 @@ export function LocaleSwitcher({
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background
                    hover:bg-border/30 disabled:opacity-50"
       >
-        <option value="en">English</option>
-        <option value="ur">اردو</option>
+        <option value="en">{t('common.languages.en', 'English')}</option>
+        <option value="ur">{t('common.languages.ur', 'اردو')}</option>
       </select>
     </div>
   );
