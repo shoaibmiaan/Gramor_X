@@ -16,7 +16,7 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
     if (!resourceId) return;
     (async () => {
       try {
-        const url = `/api/saved/category/${category}?resource_id=${resourceId}${type ? `&type=${type}` : ''}`;
+        const url = `/api/saved/by-category/${category}?resource_id=${resourceId}${type ? `&type=${type}` : ''}`;
         const res = await fetch(url);
         if (active && res.ok) {
           const data = await res.json();
@@ -36,14 +36,14 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
     const body: Record<string, string> = { resource_id: resourceId };
     if (type) body.type = type;
     if (saved) {
-      await fetch(`/api/saved/category/${category}`, {
+      await fetch(`/api/saved/by-category/${category}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       setSaved(false);
     } else {
-      await fetch(`/api/saved/category/${category}`, {
+      await fetch(`/api/saved/by-category/${category}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
