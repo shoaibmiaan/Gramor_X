@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-12",
+  "title": "General Training Set 12 — Community Centre & Flexible Hours",
+  "description": "Formal letter about using a community hall and an essay on flexible working schedules.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter requesting community hall use",
+    "type": "general training",
+    "prompt": "You and a group of neighbours would like to host a monthly skills workshop in your local community centre. Write a letter to the centre manager. In your letter: introduce your group and explain the purpose of the workshops, describe the facilities you would need, and propose how you can contribute to the centre in return.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Adopt a polite, semi-formal tone suitable for a community manager.",
+      "Provide specific details about the skills you plan to share.",
+      "Offer a practical suggestion that shows goodwill and responsibility."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Discussion essay — Flexible working hours",
+    "prompt": "Many companies now allow employees to choose when they work each day as long as tasks are completed. Discuss the advantages and disadvantages of flexible schedules and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the statement and state your position.",
+      "Body paragraph 1: potential benefits for productivity and wellbeing.",
+      "Body paragraph 2: possible drawbacks for teamwork or customer service.",
+      "Conclusion: present your opinion with a recommendation."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "You and a group of neighbours would like to host a monthly skills workshop in your local community centre. Write a letter to the centre manager. In your letter: introduce your group and explain the purpose of the workshops, describe the facilities you would need, and propose how you can contribute to the centre in return.",
+  "task2Prompt": "Many companies now allow employees to choose when they work each day as long as tasks are completed. Discuss the advantages and disadvantages of flexible schedules and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}
