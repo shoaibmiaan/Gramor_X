@@ -1,5 +1,4 @@
 import type { User } from '@supabase/supabase-js';
-import { supabaseBrowser } from './supabaseBrowser';
 
 // Centralized user-role helpers. Roles are mutually exclusive and ordered by
 // privilege (admin > teacher > student).
@@ -54,6 +53,7 @@ export type { AppRole as Role };
 // role from the auth session and falls back to the `profiles` table if the
 // metadata is missing or out of date.
 export async function getCurrentRole(): Promise<AppRole | null> {
+  const { supabaseBrowser } = await import('./supabaseBrowser');
   const { data } = await supabaseBrowser.auth.getSession();
   const user = data.session?.user ?? null;
   let role = extractRole(user);
