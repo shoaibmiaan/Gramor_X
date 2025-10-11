@@ -1,6 +1,8 @@
+// pages/api/words/today.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getActiveDayISO } from '@/lib/daily-learning-time';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { getServerClient } from '@/lib/supabaseServer';
 
 type WordPayload = {
   id: string;
@@ -46,20 +48,31 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // ✅ Deterministic active-day calculation (respects user’s chosen learning window)
   const date = getActiveDayISO();
 
   try {
-    const token = req.headers.authorization?.startsWith('Bearer ')
+    // Try Bearer first (mobile/cron); else fall back to SSR cookie session.
+    const bearer = req.headers.authorization?.startsWith('Bearer ')
       ? req.headers.authorization.split(' ')[1]
       : '';
 
     let userId: string | null = null;
-    if (token) {
-      const { data: userRes } = await supabaseAdmin.auth.getUser(token);
+
+    if (bearer) {
+      const { data: userRes } = await supabaseAdmin.auth.getUser(bearer);
       userId = userRes?.user?.id ?? null;
+    } else {
+      const supabase = getServerClient(req, res);
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id ?? null;
     }
 
-    const { data: wod, error: wodErr } = await supabaseAdmin.rpc('get_word_of_day', { d: date }).single();
+    // Fetch Word-of-the-Day from SQL function; safe fallback on error.
+    const { data: wod, error: wodErr } = await supabaseAdmin
+      .rpc('get_word_of_day', { d: date })
+      .single();
+
     const word: WordPayload = wodErr || !wod
       ? FALLBACK_WORD
       : {
@@ -75,12 +88,15 @@ export default async function handler(
           interest: typeof wod.interest_hook === 'string' ? wod.interest_hook : null,
         };
 
+    // No caching; today’s word/streak is per-user stateful.
     res.setHeader('Cache-Control', 'no-store');
 
+    // Anonymous: return public word with zeroed streaks.
     if (!userId) {
       return res.status(200).json({ word, ...ZERO_STREAK });
     }
 
+    // Learned today?
     const { data: learnedRow } = await supabaseAdmin
       .from('user_word_logs')
       .select('id')
@@ -88,9 +104,11 @@ export default async function handler(
       .eq('learned_on', date)
       .maybeSingle();
 
+    // Current streak via RPC
     const { data: streak } = await supabaseAdmin.rpc('calc_streak', { p_user: userId });
     const streakDays = Number.isFinite(streak as number) ? (streak as number) : 0;
 
+    // Longest streak from table (fallback to current streak)
     const { data: streakRow } = await supabaseAdmin
       .from('streaks')
       .select('longest')
@@ -111,6 +129,7 @@ export default async function handler(
   } catch (error) {
     console.error('[api/words/today] unexpected error', error);
     res.setHeader('Cache-Control', 'no-store');
+    // Graceful fallback with public content
     return res.status(200).json({ word: FALLBACK_WORD, ...ZERO_STREAK });
   }
 }

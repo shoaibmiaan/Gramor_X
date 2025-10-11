@@ -17,7 +17,7 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
     if (!resourceId) return;
     (async () => {
       try {
-        const url = `/api/saved/${category}?resource_id=${resourceId}${type ? `&type=${type}` : ''}`;
+        const url = `/api/saved/by-category/${category}?resource_id=${resourceId}${type ? `&type=${type}` : ''}`;
         const res = await fetch(url);
         if (active && res.ok) {
           const data = await res.json();
@@ -36,8 +36,9 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
     if (!resourceId) return;
     const body: Record<string, string> = { resource_id: resourceId };
     if (type) body.type = type;
+
     if (saved) {
-      const res = await fetch(`/api/saved/${category}`, {
+      const res = await fetch(`/api/saved/by-category/${category}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -47,12 +48,12 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
         void emitUserEvent('saved_remove', { step: null, delta: -1, category, resourceId });
       }
     } else {
-      await fetch(`/api/saved/${category}`, {
+      const res = await fetch(`/api/saved/by-category/${category}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      setSaved(true);
+      if (res.ok) setSaved(true);
     }
   };
 
@@ -62,12 +63,8 @@ export const SaveItemButton: React.FC<Props> = ({ resourceId, type = '', categor
       size="sm"
       onClick={toggle}
       disabled={loading}
-      className={`rounded-ds ${
-        saved ? 'bg-accent/20 text-accent hover:bg-accent/30' : ''
-      }`}
-      leadingIcon={
-        <i className={`${saved ? 'fas' : 'far'} fa-bookmark`} aria-hidden="true" />
-      }
+      className={`rounded-ds ${saved ? 'bg-accent/20 text-accent hover:bg-accent/30' : ''}`}
+      leadingIcon={<i className={`${saved ? 'fas' : 'far'} fa-bookmark`} aria-hidden="true" />}
     >
       {saved ? 'Saved' : 'Save'}
     </Button>
