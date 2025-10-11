@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-13",
+  "title": "Academic Set 13 — Remote Clinics & Ageing Cities",
+  "description": "Bar chart on telehealth appointments and a problem-solution essay on ageing urban populations.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Telehealth appointments in four regions",
+    "type": "academic",
+    "prompt": "The bar chart shows the percentage of primary healthcare appointments conducted via telehealth in four regions (North America, Europe, Asia-Pacific, and Africa) in 2015, 2020, and 2025 (projected). Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Compare the rate of increase across the three time points.",
+      "Highlight which region is expected to see the greatest growth by 2025.",
+      "Group regions with similar adoption levels when describing the data."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Problem-solution essay — Ageing cities",
+    "prompt": "In many cities, the proportion of residents over 65 is growing rapidly. What challenges does this create, and what measures could local governments take to support older citizens?",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the topic and indicate that you will discuss problems and solutions.",
+      "Body paragraph 1: outline challenges such as pressure on healthcare, housing, and transport.",
+      "Body paragraph 2: propose practical measures like age-friendly infrastructure and community services.",
+      "Conclusion: summarise the key solutions and emphasise proactive planning."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The bar chart shows the percentage of primary healthcare appointments conducted via telehealth in four regions (North America, Europe, Asia-Pacific, and Africa) in 2015, 2020, and 2025 (projected). Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "In many cities, the proportion of residents over 65 is growing rapidly. What challenges does this create, and what measures could local governments take to support older citizens?",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

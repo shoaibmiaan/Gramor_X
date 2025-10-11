@@ -17,7 +17,6 @@ import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
 import QuickDrillButton from '@/components/quick/QuickDrillButton';
 import { WordOfTheDayCard } from '@/components/feature/WordOfTheDayCard';
-import { HeaderStreakChip } from '@/components/feature/HeaderStreakChip';
 import { StreakCounter } from '@/components/streak/StreakCounter';
 
 import { useStreak } from '@/hooks/useStreak';
@@ -291,7 +290,6 @@ export default function Dashboard() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3 md:gap-4">
-                <HeaderStreakChip />
                 <StreakIndicator value={streak} />
                 {earnedBadges.map((b) => (
                   <Badge key={b.id} size="sm">
