@@ -19,7 +19,7 @@ import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { env } from '@/lib/env';
-import { LocaleProvider } from '@/lib/locale'; // ⬅️ UPDATED
+import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 
@@ -54,6 +54,8 @@ import { HighContrastProvider } from '@/context/HighContrastContext';
 
 // ✅ NEW: global plan guard (client-side gating + ribbon)
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
+import { loadTranslations } from '@/lib/i18n';
+import type { SupportedLocale } from '@/lib/i18n/config';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -139,6 +141,11 @@ function TeacherOnboardingGate() {
 function InnerApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const pathname = router.pathname;
+  const { locale: activeLocale } = useLocale();
+
+  useEffect(() => {
+    void loadTranslations(activeLocale as SupportedLocale);
+  }, [activeLocale]);
 
   // Expecting UserContext to expose approval status; default false if missing
   const { user, role, isTeacherApproved } = useUserContext() as {
