@@ -49,10 +49,13 @@ export default function ExamLayout({
       </a>
       <DistractionFreeBanner />
       <FocusGuard exam={exam} slug={slug} />
-      <div className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-40 border-b bg-background dark:bg-dark" role="banner">
-          <Container className="flex items-center justify-between gap-4 py-3">
-            <div className="flex items-center gap-4">
+      <div className="flex min-h-[100dvh] flex-col bg-background text-foreground dark:bg-dark">
+        <header
+          className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 dark:bg-dark/95"
+          role="banner"
+        >
+          <Container className="flex flex-col gap-4 py-3 pt-safe sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               <div className="leading-tight">
                 {attemptId && (
                   <div className="text-small text-muted-foreground dark:text-gray-400">Attempt {attemptId}</div>
@@ -61,18 +64,22 @@ export default function ExamLayout({
               </div>
               {partNavigator}
             </div>
-            <PrTimer seconds={seconds} onElapsed={onElapsed} />
+            <div className="shrink-0">
+              <PrTimer seconds={seconds} onElapsed={onElapsed} />
+            </div>
           </Container>
         </header>
 
         <main id={mainId} className="flex-1" tabIndex={-1}>
-          <Container className="py-6 pb-safe md:pb-0 flex gap-4">
+          <Container className="flex flex-col gap-6 py-6 sm:py-8 md:flex-row md:gap-4">
             {questionPalette && (
-              <aside className="hidden md:block w-60 shrink-0" aria-label="Question navigation">
-                {questionPalette}
+              <aside className="hidden w-60 shrink-0 md:block" aria-label="Question navigation">
+                <div className="card-surface sticky top-[calc(6.5rem+env(safe-area-inset-top,0px))] rounded-ds-xl p-3">
+                  {questionPalette}
+                </div>
               </aside>
             )}
-            <section className="flex-1">{children}</section>
+            <section className="flex-1 min-w-0">{children}</section>
           </Container>
         </main>
       </div>

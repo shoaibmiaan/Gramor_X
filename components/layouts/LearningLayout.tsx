@@ -12,7 +12,7 @@ const LearningLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
       <Link
         href={href}
         aria-current={active ? 'page' : undefined}
-        className={`nav-pill ${active ? 'bg-primary/10 text-primary' : ''}`}
+        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`}
       >
         {label}
       </Link>
@@ -20,24 +20,31 @@ const LearningLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-[100dvh] bg-background text-foreground">
       <section className="border-b border-border bg-card/30">
-        <Container className="py-5 sm:py-6 pb-safe md:pb-0">
-          <h1 className="font-slab text-h3 sm:text-h2">Learning & Studio</h1>
-          <p className="text-small text-mutedText mt-1">
-            Lessons, drills, strategies — and your content studio.
-          </p>
-          <nav className="mt-3 flex flex-wrap gap-2">
-            <Item href="/learning" label="Overview" />
-            <Item href="/learning/skills" label="Skills" />
-            <Item href="/learning/skills/lessons" label="Lessons" />
-            <Item href="/learning/strategies" label="Strategies" />
-            <Item href="/content/studio" label="Studio" />
+        <Container className="flex flex-col gap-4 py-5 pt-safe sm:py-6">
+          <div className="space-y-1">
+            <h1 className="font-slab text-h3 sm:text-h2">Learning & Studio</h1>
+            <p className="text-small text-mutedText">
+              Lessons, drills, strategies — and your content studio.
+            </p>
+          </div>
+          <nav
+            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
+            aria-label="Learning sections"
+          >
+            <div className="flex gap-2 px-1">
+              <Item href="/learning" label="Overview" />
+              <Item href="/learning/skills" label="Skills" />
+              <Item href="/learning/skills/lessons" label="Lessons" />
+              <Item href="/learning/strategies" label="Strategies" />
+              <Item href="/content/studio" label="Studio" />
+            </div>
           </nav>
         </Container>
       </section>
 
-      <Container className="py-6 pb-safe md:pb-0">
+      <Container className="py-6">
         <div className="card-surface rounded-ds-2xl p-4">{children}</div>
       </Container>
     </div>
