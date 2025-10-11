@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getActiveDayISO } from '@/lib/daily-learning-time';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 type WordPayload = {
@@ -45,18 +46,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const date = (() => {
-    try {
-      return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Karachi',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(new Date());
-    } catch {
-      return new Date().toISOString().split('T')[0];
-    }
-  })();
+  const date = getActiveDayISO();
 
   try {
     const token = req.headers.authorization?.startsWith('Bearer ')
