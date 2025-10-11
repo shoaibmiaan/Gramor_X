@@ -1,0 +1,56 @@
+{
+  "id": "listening-practice-05",
+  "title": "Academic Listening Test 5 — Innovation & Society",
+  "durationSec": 1800,
+  "transcript": "The recordings include a customer arranging a makerspace membership, a presentation about a science centre, a panel of entrepreneurs refining a pitch, and a lecture on responsible innovation.",
+  "sections": [
+    {
+      "id": "part-1",
+      "title": "Section 1 — Makerspace Registration",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-05-part1.mp3",
+      "questions": [
+        { "id": "L5-Q1", "type": "gap", "prompt": "Which membership tier does the customer choose?", "answer": "Collaborator" },
+        { "id": "L5-Q2", "type": "mcq", "prompt": "Which equipment induction is booked first?", "options": ["Laser cutter", "3D printer", "Metal lathe"], "answer": "Laser cutter" },
+        { "id": "L5-Q3", "type": "short", "prompt": "What safety course must be completed online?", "answer": "Workshop essentials" },
+        { "id": "L5-Q4", "type": "gap", "prompt": "How many guest passes are included per month?", "answer": "2" },
+        { "id": "L5-Q5", "type": "mcq", "prompt": "Which payment method does the customer use?", "options": ["Credit card", "Bank transfer", "Cash"], "answer": "Bank transfer" }
+      ]
+    },
+    {
+      "id": "part-2",
+      "title": "Section 2 — Science Centre Presentation",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-05-part2.mp3",
+      "questions": [
+        { "id": "L5-Q6", "type": "gap", "prompt": "How many new interactive zones are opening?", "answer": "4" },
+        { "id": "L5-Q7", "type": "mcq", "prompt": "Which age group is the robotics lab designed for?", "options": ["5-8", "9-12", "13-16"], "answer": "9-12" },
+        { "id": "L5-Q8", "type": "short", "prompt": "What is the name of the evening lecture series?", "answer": "Night of Ideas" },
+        { "id": "L5-Q9", "type": "gap", "prompt": "How many volunteers are needed for the opening weekend?", "answer": "45" },
+        { "id": "L5-Q10", "type": "mcq", "prompt": "Which transport discount is offered to visitors?", "options": ["Tram pass", "Cycle share", "Parking voucher"], "answer": "Cycle share" }
+      ]
+    },
+    {
+      "id": "part-3",
+      "title": "Section 3 — Startup Pitch Coaching",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-05-part3.mp3",
+      "questions": [
+        { "id": "L5-Q11", "type": "mcq", "prompt": "Which market segment does the mentor urge them to prioritise?", "options": ["Healthcare", "Education", "Retail"], "answer": "Education" },
+        { "id": "L5-Q12", "type": "gap", "prompt": "What monthly subscription price do they settle on in pounds?", "answer": "19" },
+        { "id": "L5-Q13", "type": "short", "prompt": "Which competitor is cited as a benchmark?", "answer": "LumenLab" },
+        { "id": "L5-Q14", "type": "mcq", "prompt": "Which pilot partner agrees to test the platform?", "options": ["City College", "Metro Bank", "Green Farm"], "answer": "City College" },
+        { "id": "L5-Q15", "type": "gap", "prompt": "How many weeks will the beta test run?", "answer": "8" }
+      ]
+    },
+    {
+      "id": "part-4",
+      "title": "Section 4 — Responsible Innovation Lecture",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-05-part4.mp3",
+      "questions": [
+        { "id": "L5-Q16", "type": "gap", "prompt": "Which framework does the lecturer use to assess ethical impact?", "answer": "anticipate, reflect, engage, act" },
+        { "id": "L5-Q17", "type": "mcq", "prompt": "Which example illustrates unintended bias in AI?", "options": ["Loan approvals", "Traffic routing", "Language translation"], "answer": "Loan approvals" },
+        { "id": "L5-Q18", "type": "short", "prompt": "What term describes building safeguards from the start?", "answer": "ethics by design" },
+        { "id": "L5-Q19", "type": "gap", "prompt": "How many stakeholder workshops are cited from the case study?", "answer": "12" },
+        { "id": "L5-Q20", "type": "mcq", "prompt": "Which policy tool is highlighted for encouraging responsible research?", "options": ["Innovation sandboxes", "Patent fast-track", "Prize funds"], "answer": "Innovation sandboxes" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "listening-practice-04",
+  "title": "Academic Listening Test 4 — Global Perspectives",
+  "durationSec": 1800,
+  "transcript": "The first recording is a conversation with a travel consultant. The second is a briefing for international volunteers. The third captures postgraduate students reviewing fieldwork plans. The final recording is a lecture on sustainable tourism.",
+  "sections": [
+    {
+      "id": "part-1",
+      "title": "Section 1 — Travel Booking",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-04-part1.mp3",
+      "questions": [
+        { "id": "L4-Q1", "type": "mcq", "prompt": "Which destination does the customer finally select?", "options": ["Lisbon", "Reykjavík", "Valencia"], "answer": "Reykjavík" },
+        { "id": "L4-Q2", "type": "gap", "prompt": "What is the departure date requested?", "answer": "18 June" },
+        { "id": "L4-Q3", "type": "short", "prompt": "Which airline offers the best baggage allowance?", "answer": "NorthAir" },
+        { "id": "L4-Q4", "type": "gap", "prompt": "How many nights will the traveller stay?", "answer": "5" },
+        { "id": "L4-Q5", "type": "mcq", "prompt": "Which add-on service does the customer decline?", "options": ["Airport transfer", "Travel insurance", "Hotel breakfast"], "answer": "Airport transfer" }
+      ]
+    },
+    {
+      "id": "part-2",
+      "title": "Section 2 — Volunteer Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-04-part2.mp3",
+      "questions": [
+        { "id": "L4-Q6", "type": "gap", "prompt": "What is the maximum luggage weight allowed in kilograms?", "answer": "18" },
+        { "id": "L4-Q7", "type": "mcq", "prompt": "Which vaccination certificate must volunteers show?", "options": ["Yellow fever", "Typhoid", "Rabies"], "answer": "Yellow fever" },
+        { "id": "L4-Q8", "type": "short", "prompt": "Which local partner organisation coordinates housing?", "answer": "Kijana Foundation" },
+        { "id": "L4-Q9", "type": "gap", "prompt": "How many teaching kits should each team carry?", "answer": "3" },
+        { "id": "L4-Q10", "type": "mcq", "prompt": "Which app should volunteers use to log their work?", "options": ["FieldTrack", "ImpactNow", "ShareMap"], "answer": "ImpactNow" }
+      ]
+    },
+    {
+      "id": "part-3",
+      "title": "Section 3 — Fieldwork Planning",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-04-part3.mp3",
+      "questions": [
+        { "id": "L4-Q11", "type": "gap", "prompt": "How many villages will the students survey?", "answer": "7" },
+        { "id": "L4-Q12", "type": "mcq", "prompt": "Which data collection tool do they adopt?", "options": ["Paper forms", "Mobile app", "Voice recorders"], "answer": "Mobile app" },
+        { "id": "L4-Q13", "type": "short", "prompt": "Which supervisor will review the ethics protocol?", "answer": "Dr. Flores" },
+        { "id": "L4-Q14", "type": "mcq", "prompt": "What contingency item do they add to the budget?", "options": ["Satellite phone", "Portable solar panels", "Water filters"], "answer": "Water filters" },
+        { "id": "L4-Q15", "type": "gap", "prompt": "How many days will be spent in the capital for training?", "answer": "2" }
+      ]
+    },
+    {
+      "id": "part-4",
+      "title": "Section 4 — Sustainable Tourism Lecture",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-04-part4.mp3",
+      "questions": [
+        { "id": "L4-Q16", "type": "mcq", "prompt": "Which principle is emphasised as essential for community-led tourism?", "options": ["Profit maximisation", "Carrying capacity", "Unlimited marketing"], "answer": "Carrying capacity" },
+        { "id": "L4-Q17", "type": "gap", "prompt": "What percentage of visitor fees does the lecturer say should support conservation?", "answer": "40" },
+        { "id": "L4-Q18", "type": "short", "prompt": "Which island is used as a case study of coral reef recovery?", "answer": "Moorea" },
+        { "id": "L4-Q19", "type": "gap", "prompt": "How many years did it take to restore the mangrove park mentioned?", "answer": "6" },
+        { "id": "L4-Q20", "type": "mcq", "prompt": "Which technology is highlighted for tracking tourist flows?", "options": ["QR tickets", "Satellite imaging", "Bluetooth beacons"], "answer": "Bluetooth beacons" }
+      ]
+    }
+  ]
+}
