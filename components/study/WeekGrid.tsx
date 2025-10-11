@@ -2,14 +2,16 @@ import React from 'react';
 import { Card } from '@/components/design-system/Card';
 import type { StudyDay } from '@/types/plan';
 import { planDayKey, totalMinutesForDay } from '@/utils/studyPlan';
+import { useLocale } from '@/lib/locale';
 
 type Props = {
   days: StudyDay[];
 };
 
-function formatDay(dateISO: string) {
+function formatDay(dateISO: string, locale: string) {
   const date = new Date(dateISO);
-  return new Intl.DateTimeFormat(undefined, {
+  const resolvedLocale = locale === 'ur' ? 'ur-PK' : locale;
+  return new Intl.DateTimeFormat(resolvedLocale, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -17,17 +19,18 @@ function formatDay(dateISO: string) {
 }
 
 export const WeekGrid: React.FC<Props> = ({ days }) => {
+  const { t, locale } = useLocale();
   if (days.length === 0) {
     return (
       <Card className="rounded-ds-2xl p-6 text-small text-muted-foreground">
-        Upcoming study days will appear here once your plan starts.
+        {t('studyPlan.weekGrid.empty')}
       </Card>
     );
   }
 
   return (
     <Card className="rounded-ds-2xl p-6">
-      <h3 className="font-slab text-h4">Next 7 days</h3>
+      <h3 className="font-slab text-h4">{t('studyPlan.weekGrid.title')}</h3>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {days.map((day) => {
           const completed = day.tasks.filter((task) => task.completed).length;
@@ -38,9 +41,15 @@ export const WeekGrid: React.FC<Props> = ({ days }) => {
               key={key}
               className="rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm"
             >
-              <p className="text-small text-muted-foreground">{formatDay(day.dateISO)}</p>
-              <p className="text-body font-semibold text-foreground">{completed}/{total} tasks complete</p>
-              <p className="text-small text-muted-foreground">{totalMinutesForDay(day)} min planned</p>
+              <p className="text-small text-muted-foreground">{formatDay(day.dateISO, locale)}</p>
+              <p className="text-body font-semibold text-foreground">
+                {t('studyPlan.weekGrid.progress', undefined, { completed, total })}
+              </p>
+              <p className="text-small text-muted-foreground">
+                {t('studyPlan.weekGrid.minutesPlanned', undefined, {
+                  minutes: totalMinutesForDay(day),
+                })}
+              </p>
             </div>
           );
         })}

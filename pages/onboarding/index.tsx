@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import StepShell from '@/components/onboarding/StepShell';
 import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
-import { Checkbox } from '@/components/design-system/Checkbox';
 import { Input } from '@/components/design-system/Input';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { emitUserEvent } from '@/lib/analytics/user';
@@ -16,23 +15,7 @@ import {
   weekdayOptions,
 } from '@/lib/onboarding/schema';
 import { markOnboardingComplete } from '@/lib/profile';
-
-const LANGUAGE_COPY: Record<(typeof languageOptions)[number], { title: string; description: string }> = {
-  en: {
-    title: 'English',
-    description: 'Interface, reminders, and lessons in English.',
-  },
-  ur: {
-    title: 'اردو',
-    description: 'Interface in Urdu with IELTS practice kept bilingual.',
-  },
-};
-
-const quickBands = ['6.5', '7.0', '7.5', '8.0'] as const;
-
-const phoneRegex = /^\+?[1-9]\d{7,14}$/;
-
-const dayOrder = [...weekdayOptions];
+import { useLocale } from '@/lib/locale';
 
 type Language = (typeof languageOptions)[number];
 type Weekday = (typeof weekdayOptions)[number];
@@ -46,9 +29,7 @@ type FormState = {
   whatsappOptIn: boolean;
   phone: string;
 };
-
 type FieldErrors = Partial<Record<keyof FormState, string>>;
-
 type StepId = 1 | 2 | 3 | 4 | 5;
 
 const defaultFormState: FormState = {
@@ -61,34 +42,25 @@ const defaultFormState: FormState = {
   phone: '',
 };
 
-const STEP_COPIES = [
-  {
-    title: 'Pick your learning language',
-    subtitle: 'We’ll translate prompts, reminders, and nudges so everything feels familiar.',
-    hint: 'You can switch languages later from Settings → Preferences.',
+const LANGUAGE_COPY: Record<(typeof languageOptions)[number], { title: string; description: string }> = {
+  en: {
+    title: 'English',
+    description: 'Interface, reminders, and lessons in English.',
   },
-  {
-    title: 'Set your target band',
-    subtitle: 'A clear goal helps us pace mocks, AI feedback, and review sessions.',
+  ur: {
+    title: 'اردو',
+    description: 'Interface in Urdu with IELTS practice kept bilingual.',
   },
-  {
-    title: 'When is your IELTS exam?',
-    subtitle: 'We’ll reverse-engineer the study plan so you peak near test day.',
-  },
-  {
-    title: 'Shape your weekly rhythm',
-    subtitle: 'Tell us when you can put in focused time so we can schedule smarter.',
-    hint: 'We’ll schedule AI-graded tasks and mocks on the days you pick.',
-  },
-  {
-    title: 'Stay on track with WhatsApp',
-    subtitle: 'Opt in for gentle reminders and quick wins (totally optional).',
-    hint: 'We send at most three nudges per week and you can opt out anytime.',
-  },
-] as const;
+};
+
+const phoneRegex = /^\+?[1-9]\d{7,14}$/;
+const dayOrder = [...weekdayOptions];
+
+const quickBands = ['6.5', '7.0', '7.5', '8.0'] as const;
 
 export default function OnboardingWizard() {
   const router = useRouter();
+  const { t } = useLocale();
 
   const [form, setForm] = useState<FormState>(defaultFormState);
   const [profileState, setProfileState] = useState<OnboardingState | null>(null);
@@ -134,13 +106,13 @@ export default function OnboardingWizard() {
 
   const stepMeta = useMemo(
     () => [
-      { label: 'Language', done: (profileState?.onboardingStep ?? 0) >= 1 },
-      { label: 'Target band', done: (profileState?.onboardingStep ?? 0) >= 2 },
-      { label: 'Exam date', done: (profileState?.onboardingStep ?? 0) >= 3 },
-      { label: 'Study rhythm', done: (profileState?.onboardingStep ?? 0) >= 4 },
-      { label: 'Notifications', done: profileState?.onboardingComplete === true },
+      { label: t('onboarding.step.label.language', 'Language'), done: (profileState?.onboardingStep ?? 0) >= 1 },
+      { label: t('onboarding.step.label.band', 'Target band'), done: (profileState?.onboardingStep ?? 0) >= 2 },
+      { label: t('onboarding.step.label.date', 'Exam date'), done: (profileState?.onboardingStep ?? 0) >= 3 },
+      { label: t('onboarding.step.label.rhythm', 'Study rhythm'), done: (profileState?.onboardingStep ?? 0) >= 4 },
+      { label: t('onboarding.step.label.notify', 'Notifications'), done: profileState?.onboardingComplete === true },
     ],
-    [profileState?.onboardingComplete, profileState?.onboardingStep],
+    [profileState?.onboardingComplete, profileState?.onboardingStep, t],
   );
 
   useEffect(() => {
@@ -157,13 +129,11 @@ export default function OnboardingWizard() {
           await router.replace(`/login${suffix}`);
           return;
         }
-
         const body = await res.json();
         if (!res.ok) {
-          const message = typeof body?.error === 'string' ? body.error : 'Unable to load onboarding data';
+          const message = typeof body?.error === 'string' ? body.error : t('onboarding.errors.loadProfile', 'Unable to load onboarding data');
           throw new Error(message);
         }
-
         const parsed = onboardingStateSchema.parse(body);
         if (!active) return;
 
@@ -179,7 +149,7 @@ export default function OnboardingWizard() {
         if (!active) return;
         if (err instanceof Error && err.name === 'AbortError') return;
         if (err instanceof Error && err.message === 'Not authenticated') return;
-        const message = err instanceof Error ? err.message : 'Unable to load onboarding data';
+        const message = err instanceof Error ? err.message : t('onboarding.errors.loadProfile', 'Unable to load onboarding data');
         setError(message);
       } finally {
         if (active) setLoading(false);
@@ -190,7 +160,7 @@ export default function OnboardingWizard() {
       active = false;
       controller.abort();
     };
-  }, [determineStep, nextPath, router, syncForm]);
+  }, [determineStep, nextPath, router, syncForm, t]);
 
   useEffect(() => {
     if (loading || startTracked.current) return;
@@ -199,13 +169,8 @@ export default function OnboardingWizard() {
   }, [loading, step]);
 
   const updateForm = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      return next;
-    });
-    if (key === 'phone' || (key === 'whatsappOptIn' && value === false)) {
-      setPhoneError(null);
-    }
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (key === 'phone' || (key === 'whatsappOptIn' && value === false)) setPhoneError(null);
     setFieldErrors((prev) => {
       if (!(key in prev)) return prev;
       const { [key]: _removed, ...rest } = prev;
@@ -231,26 +196,22 @@ export default function OnboardingWizard() {
   const persistStep = useCallback(
     async (payload: unknown) => {
       setSaving(true);
-      setError(null);
       try {
         const res = await fetch('/api/onboarding', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-
         if (res.status === 401) {
           const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
           await router.replace(`/login${suffix}`);
           throw new Error('Not authenticated');
         }
-
         const body = await res.json();
         if (!res.ok) {
-          const message = typeof body?.error === 'string' ? body.error : 'Unable to save onboarding step';
+          const message = typeof body?.error === 'string' ? body.error : t('onboarding.errors.saveGeneric', 'Unable to save onboarding step');
           throw new Error(message);
         }
-
         const parsed = onboardingStateSchema.parse(body);
         setProfileState(parsed);
         syncForm(parsed);
@@ -261,7 +222,7 @@ export default function OnboardingWizard() {
         setSaving(false);
       }
     },
-    [determineStep, nextPath, router, syncForm],
+    [determineStep, nextPath, router, syncForm, t],
   );
 
   const handleBack = useCallback(() => {
@@ -274,120 +235,112 @@ export default function OnboardingWizard() {
     (currentStep: StepId) => {
       const errors: FieldErrors = {};
       if (currentStep === 1) {
-        if (!form.preferredLanguage) {
-          errors.preferredLanguage = 'Pick a language to continue.';
-        }
+        if (!form.preferredLanguage) errors.preferredLanguage = t('onboarding.errors.pickLanguage', 'Pick a language to continue.');
       }
       if (currentStep === 2) {
         const parsed = Number(form.goalBand);
         const isHalfStep = Math.abs(parsed * 2 - Math.round(parsed * 2)) < 0.001;
         if (Number.isNaN(parsed) || parsed < 4 || parsed > 9 || !isHalfStep) {
-          errors.goalBand = 'Choose a band between 4.0 and 9.0 in 0.5 steps.';
+          errors.goalBand = t('onboarding.errors.bandRange', 'Choose a band between 4.0 and 9.0 in 0.5 steps.');
         }
       }
       if (currentStep === 3 && form.examDate) {
         const parsedDate = new Date(form.examDate);
-        if (Number.isNaN(parsedDate.getTime())) {
-          errors.examDate = 'Enter a valid date.';
-        }
+        if (Number.isNaN(parsedDate.getTime())) errors.examDate = t('onboarding.errors.dateInvalid', 'Enter a valid date.');
       }
       if (currentStep === 4) {
-        if (form.studyDays.length === 0) {
-          errors.studyDays = 'Pick at least one study day.';
-        }
+        if (form.studyDays.length === 0) errors.studyDays = t('onboarding.errors.studyDays', 'Pick at least one study day.');
         const minutes = Number(form.minutesPerDay);
         if (Number.isNaN(minutes) || minutes < 15 || minutes > 240) {
-          errors.minutesPerDay = 'Set between 15 and 240 minutes.';
+          errors.minutesPerDay = t('onboarding.errors.minutes', 'Set between 15 and 240 minutes.');
         }
       }
       if (currentStep === 5 && form.whatsappOptIn) {
         const trimmed = form.phone.trim();
         if (!phoneRegex.test(trimmed)) {
-          errors.phone = 'Enter a valid international phone number.';
-          setPhoneError('Enter a valid international phone number.');
+          errors.phone = t('onboarding.errors.invalidPhone', 'Enter a valid international phone number.');
+          setPhoneError(errors.phone);
         }
       }
-
       setFieldErrors(errors);
       return errors;
     },
-    [form.examDate, form.goalBand, form.minutesPerDay, form.phone, form.preferredLanguage, form.studyDays, form.whatsappOptIn],
+    [form, t],
   );
 
   const handleNext = useCallback(async () => {
     if (loading || saving) return;
     const validationErrors = validateStep(step);
     if (Object.keys(validationErrors).length > 0) {
-      setError('Please review the highlighted fields.');
+      setError(t('onboarding.errors.review', 'Please review the highlighted fields.'));
       return;
     }
-
     const prev = step;
-
     try {
       if (step === 1) {
         const parsed = await persistStep({ step: 1, data: { preferredLanguage: form.preferredLanguage } });
         const nextStepValue = determineStep(parsed);
-        const delta = Math.max(0, nextStepValue - prev);
-        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, nextStepValue - prev) });
         return;
       }
-
       if (step === 2) {
         const parsedGoal = Number(form.goalBand);
         const parsed = await persistStep({ step: 2, data: { goalBand: parsedGoal } });
-        const nextStepValue = determineStep(parsed);
-        const delta = Math.max(0, nextStepValue - prev);
-        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
         return;
       }
-
       if (step === 3) {
         const parsed = await persistStep({ step: 3, data: { examDate: form.examDate } });
-        const nextStepValue = determineStep(parsed);
-        const delta = Math.max(0, nextStepValue - prev);
-        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
         return;
       }
-
       if (step === 4) {
         const minutes = Number(form.minutesPerDay);
         const parsed = await persistStep({ step: 4, data: { studyDays: form.studyDays, minutesPerDay: minutes } });
-        const nextStepValue = determineStep(parsed);
-        const delta = Math.max(0, nextStepValue - prev);
-        void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
         return;
       }
-
       const trimmedPhone = form.whatsappOptIn ? form.phone.trim() : '';
-      const parsed = await persistStep({
-        step: 5,
-        data: {
-          whatsappOptIn: form.whatsappOptIn,
-          phone: trimmedPhone,
-        },
-      });
-
+      const parsed = await persistStep({ step: 5, data: { whatsappOptIn: form.whatsappOptIn, phone: trimmedPhone } });
       if (parsed.onboardingComplete) {
         await markOnboardingComplete().catch(() => undefined);
         void emitUserEvent('onboarding_done', { step: prev, delta: 0 });
         await router.replace(nextPath);
         return;
       }
-
-      const nextStepValue = determineStep(parsed);
-      const delta = Math.max(0, nextStepValue - prev);
-      void emitUserEvent('onboarding_step_complete', { step: prev, delta });
+      void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
     } catch (err) {
-      if (err instanceof Error && err.message === 'Not authenticated') {
-        return;
-      }
-      const message = err instanceof Error ? err.message : 'Unable to save onboarding step';
+      if (err instanceof Error && err.message === 'Not authenticated') return;
+      const message = err instanceof Error ? err.message : t('onboarding.errors.saveGeneric', 'Unable to save onboarding step');
       setError(message);
     }
-  }, [determineStep, form, loading, nextPath, persistStep, router, saving, step, validateStep]);
+  }, [determineStep, form, loading, nextPath, persistStep, router, saving, step, t, validateStep]);
 
-  const copy = STEP_COPIES[step - 1] ?? STEP_COPIES[0];
+  const copy = [
+    {
+      title: t('onboarding.copy.language.title', 'Pick your learning language'),
+      subtitle: t('onboarding.copy.language.subtitle', 'We’ll translate prompts, reminders, and nudges so everything feels familiar.'),
+      hint: t('onboarding.copy.language.hint', 'You can switch languages later from Settings → Preferences.'),
+    },
+    {
+      title: t('onboarding.copy.band.title', 'Set your target band'),
+      subtitle: t('onboarding.copy.band.subtitle', 'A clear goal helps us pace mocks, AI feedback, and review sessions.'),
+    },
+    {
+      title: t('onboarding.copy.date.title', 'When is your IELTS exam?'),
+      subtitle: t('onboarding.copy.date.subtitle', 'We’ll reverse-engineer the study plan so you peak near test day.'),
+    },
+    {
+      title: t('onboarding.copy.rhythm.title', 'Shape your weekly rhythm'),
+      subtitle: t('onboarding.copy.rhythm.subtitle', 'Tell us when you can put in focused time so we can schedule smarter.'),
+      hint: t('onboarding.copy.rhythm.hint', 'We’ll schedule AI-graded tasks and mocks on the days you pick.'),
+    },
+    {
+      title: t('onboarding.copy.whatsapp.title', 'Stay on track with WhatsApp'),
+      subtitle: t('onboarding.copy.whatsapp.subtitle', 'Opt in for gentle reminders and quick wins (totally optional).'),
+      hint: t('onboarding.copy.whatsapp.hint', 'We send at most three nudges per week and you can opt out anytime.'),
+    },
+  ][step - 1];
 
   return (
     <StepShell
@@ -399,7 +352,7 @@ export default function OnboardingWizard() {
       steps={stepMeta}
       onBack={handleBack}
       onNext={handleNext}
-      nextLabel={saving ? 'Saving…' : step === TOTAL_ONBOARDING_STEPS ? 'Finish' : 'Continue'}
+      nextLabel={saving ? t('onboarding.buttons.saving', 'Saving…') : step === TOTAL_ONBOARDING_STEPS ? t('onboarding.buttons.finish', 'Finish') : t('onboarding.buttons.continue', 'Continue')}
       nextDisabled={saving || loading}
     >
       {error && (
@@ -409,7 +362,11 @@ export default function OnboardingWizard() {
       )}
 
       {loading ? (
-        <LoadingState />
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-10 w-3/4" />
+          <Skeleton className="h-6 w-1/2" />
+        </div>
       ) : (
         <StepContent
           step={step}
@@ -418,26 +375,36 @@ export default function OnboardingWizard() {
           toggleStudyDay={toggleStudyDay}
           phoneError={phoneError}
           fieldErrors={fieldErrors}
+          t={t}
         />
       )}
     </StepShell>
   );
 }
 
-type StepContentProps = {
+function StepContent({
+  step,
+  form,
+  updateForm,
+  toggleStudyDay,
+  phoneError,
+  fieldErrors,
+  t,
+}: {
   step: StepId;
   form: FormState;
   updateForm: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
   toggleStudyDay: (day: Weekday) => void;
   phoneError: string | null;
   fieldErrors: FieldErrors;
-};
-
-function StepContent({ step, form, updateForm, toggleStudyDay, phoneError, fieldErrors }: StepContentProps) {
+  t: typeof import('@/lib/locale').t;
+}) {
   if (step === 1) {
     return (
       <div className="space-y-4">
-        <p className="text-small text-mutedText">Pick the language that feels most comfortable for instructions and reminders.</p>
+        <p className="text-small text-mutedText">
+          {t('onboarding.lang.pick', 'Pick the language that feels most comfortable for instructions and reminders.')}
+        </p>
         <div className="grid gap-3 sm:grid-cols-2">
           {languageOptions.map((option) => {
             const selected = form.preferredLanguage === option;
@@ -456,9 +423,7 @@ function StepContent({ step, form, updateForm, toggleStudyDay, phoneError, field
             );
           })}
         </div>
-        {fieldErrors.preferredLanguage && (
-          <p className="text-caption text-error">{fieldErrors.preferredLanguage}</p>
-        )}
+        {fieldErrors.preferredLanguage && <p className="text-caption text-error">{fieldErrors.preferredLanguage}</p>}
       </div>
     );
   }
@@ -468,13 +433,13 @@ function StepContent({ step, form, updateForm, toggleStudyDay, phoneError, field
       <div className="space-y-4">
         <Input
           type="number"
-          label="Target overall band"
+          label={t('onboarding.band.inputLabel', 'Target overall band')}
           min={4}
           max={9}
           step={0.5}
           value={form.goalBand}
           onChange={(event) => updateForm('goalBand', event.target.value)}
-          helperText="Most universities aim for 6.5–7.0. Setting your target 0.5 higher gives breathing room."
+          helperText={t('onboarding.band.helper', 'Most universities aim for 6.5–7.0. Setting your target 0.5 higher gives breathing room.')}
           error={fieldErrors.goalBand}
         />
         <div className="flex flex-wrap gap-2">
@@ -502,14 +467,14 @@ function StepContent({ step, form, updateForm, toggleStudyDay, phoneError, field
       <div className="space-y-4">
         <Input
           type="date"
-          label="IELTS exam date"
+          label={t('onboarding.date.inputLabel', 'IELTS exam date')}
           value={form.examDate}
           onChange={(event) => updateForm('examDate', event.target.value)}
-          helperText="Leave blank if you haven’t booked yet—we’ll suggest a four-week ramp."
+          helperText={t('onboarding.date.helper', 'Leave blank if you haven’t booked yet—we’ll suggest a four-week ramp.')}
           error={fieldErrors.examDate}
         />
         <p className="text-small text-mutedText">
-          We’ll pace mocks, AI-evaluated writing, and speaking drills so you peak near your exam.
+          {t('onboarding.date.tip', 'We’ll pace mocks, AI-evaluated writing, and speaking drills so you peak near your exam.')}
         </p>
       </div>
     );
@@ -519,7 +484,9 @@ function StepContent({ step, form, updateForm, toggleStudyDay, phoneError, field
     return (
       <div className="space-y-5">
         <div>
-          <p className="text-small text-mutedText">Which days can you reliably dedicate to IELTS prep?</p>
+          <p className="text-small text-mutedText">
+            {t('onboarding.rhythm.pickDays', 'Which days can you reliably dedicate to IELTS prep?')}
+          </p>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {weekdayOptions.map((day) => {
               const selected = form.studyDays.includes(day);
@@ -540,13 +507,13 @@ function StepContent({ step, form, updateForm, toggleStudyDay, phoneError, field
         </div>
         <Input
           type="number"
-          label="Minutes per study day"
+          label={t('onboarding.minutes.label', 'Minutes per study day')}
           min={15}
           max={240}
           step={5}
           value={form.minutesPerDay}
           onChange={(event) => updateForm('minutesPerDay', event.target.value)}
-          helperText="We recommend at least 45 focused minutes. Your plan will adapt to this budget."
+          helperText={t('onboarding.minutes.helper', 'We recommend at least 45 focused minutes. Your plan will adapt to this budget.')}
           error={fieldErrors.minutesPerDay}
         />
       </div>
@@ -555,36 +522,29 @@ function StepContent({ step, form, updateForm, toggleStudyDay, phoneError, field
 
   return (
     <div className="space-y-4">
-      <Checkbox
-        checked={form.whatsappOptIn}
-        onCheckedChange={(checked) => updateForm('whatsappOptIn', Boolean(checked))}
-        label="Send me WhatsApp nudges"
-        description="2–3 gentle reminders per week with prompts, checklists, and next steps."
+      <Input
+        type="checkbox"
+        asChild
+        label={t('onboarding.whatsapp.optInTitle', 'Send me WhatsApp nudges')}
       />
+      <div className="text-small text-mutedText">
+        {t('onboarding.whatsapp.optInDescription', '2–3 gentle reminders per week with prompts, checklists, and next steps.')}
+      </div>
+
       {form.whatsappOptIn ? (
         <Input
-          label="WhatsApp number"
-          placeholder="+14155552671"
+          label={t('onboarding.whatsapp.phoneLabel', 'WhatsApp number')}
+          placeholder={t('onboarding.whatsapp.placeholder', '+14155552671')}
           value={form.phone}
           onChange={(event) => updateForm('phone', event.target.value)}
-          helperText="Use your full international number including country code."
+          helperText={t('onboarding.whatsapp.helper', 'Use your full international number including country code.')}
           error={phoneError ?? fieldErrors.phone ?? undefined}
         />
       ) : (
         <p className="text-small text-mutedText">
-          Prefer email? Enable WhatsApp reminders later from Settings → Notifications.
+          {t('onboarding.whatsapp.emailFallback', 'Prefer email? Enable WhatsApp reminders later from Settings → Notifications.')}
         </p>
       )}
-    </div>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="space-y-3">
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-10 w-3/4" />
-      <Skeleton className="h-6 w-1/2" />
     </div>
   );
 }

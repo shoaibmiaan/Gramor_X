@@ -1,0 +1,56 @@
+{
+  "id": "listening-practice-01",
+  "title": "Academic Listening Test 1 — Campus Life",
+  "durationSec": 1800,
+  "transcript": "You will hear four recordings. Section one is a conversation between two students planning their semester. Section two is a talk given by the accommodation manager. Section three is a tutorial discussion about a research project. Section four is a lecture on renewable energy policies.",
+  "sections": [
+    {
+      "id": "part-1",
+      "title": "Section 1 — Accommodation Office",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-01-part1.mp3",
+      "questions": [
+        { "id": "L1-Q1", "type": "gap", "prompt": "What is the name of the residence hall the student prefers?", "answer": "Harbour View" },
+        { "id": "L1-Q2", "type": "gap", "prompt": "Which floor does the friend recommend for quiet study?", "answer": "third" },
+        { "id": "L1-Q3", "type": "mcq", "prompt": "How long is the lease offered by the office?", "options": ["6 months", "9 months", "12 months"], "answer": "12 months" },
+        { "id": "L1-Q4", "type": "short", "prompt": "Which utility is not included in the rent?", "answer": "electricity" },
+        { "id": "L1-Q5", "type": "mcq", "prompt": "When is the rent payment due each month?", "options": ["1st", "5th", "10th"], "answer": "1st" }
+      ]
+    },
+    {
+      "id": "part-2",
+      "title": "Section 2 — Campus Facilities Talk",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-01-part2.mp3",
+      "questions": [
+        { "id": "L1-Q6", "type": "mcq", "prompt": "Which facility has recently been renovated?", "options": ["Sports centre", "Library", "Cafeteria"], "answer": "Sports centre" },
+        { "id": "L1-Q7", "type": "gap", "prompt": "How many computers are now available in the digital lab?", "answer": "60" },
+        { "id": "L1-Q8", "type": "short", "prompt": "What is the name of the new student mentoring program?", "answer": "Compass" },
+        { "id": "L1-Q9", "type": "mcq", "prompt": "Which bus route stops outside the library?", "options": ["Route 2", "Route 5", "Route 7"], "answer": "Route 5" },
+        { "id": "L1-Q10", "type": "gap", "prompt": "What is the extension number for the counselling service?", "answer": "4217" }
+      ]
+    },
+    {
+      "id": "part-3",
+      "title": "Section 3 — Research Project Tutorial",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-01-part3.mp3",
+      "questions": [
+        { "id": "L1-Q11", "type": "mcq", "prompt": "Which topic do the students finally choose for their project?", "options": ["Urban farming", "Ocean plastics", "Smart homes"], "answer": "Ocean plastics" },
+        { "id": "L1-Q12", "type": "short", "prompt": "What research method does the tutor insist they include?", "answer": "survey" },
+        { "id": "L1-Q13", "type": "gap", "prompt": "How many interviewees do they plan to contact?", "answer": "15" },
+        { "id": "L1-Q14", "type": "mcq", "prompt": "When is the first draft due?", "options": ["15 April", "22 April", "30 April"], "answer": "22 April" },
+        { "id": "L1-Q15", "type": "short", "prompt": "Which academic journal does the tutor recommend they read?", "answer": "Environmental Review" }
+      ]
+    },
+    {
+      "id": "part-4",
+      "title": "Section 4 — Lecture on Renewable Energy",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-01-part4.mp3",
+      "questions": [
+        { "id": "L1-Q16", "type": "gap", "prompt": "Which country achieved net-zero electricity emissions first according to the lecturer?", "answer": "Iceland" },
+        { "id": "L1-Q17", "type": "mcq", "prompt": "What percentage of the world's electricity is forecast to come from wind by 2035?", "options": ["12%", "22%", "35%"], "answer": "22%" },
+        { "id": "L1-Q18", "type": "short", "prompt": "What storage technology is highlighted as the most scalable?", "answer": "pumped hydro" },
+        { "id": "L1-Q19", "type": "gap", "prompt": "How many pilot tidal turbines are mentioned in the Orkney project?", "answer": "4" },
+        { "id": "L1-Q20", "type": "mcq", "prompt": "Which factor is described as the main barrier to offshore wind expansion?", "options": ["Grid capacity", "Wildlife impact", "Turbine cost"], "answer": "Grid capacity" }
+      ]
+    }
+  ]
+}
