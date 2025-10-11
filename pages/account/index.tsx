@@ -8,13 +8,146 @@ import { useRouter } from "next/router";
 import { Container } from "@/components/design-system/Container";
 import { Button } from "@/components/design-system/Button";
 import { Badge } from "@/components/design-system/Badge";
+import { Card } from "@/components/design-system/Card";
 import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser";
+import { getPlan, isPaidPlan, type PlanId } from "@/types/pricing";
+
+type BillingSummary = {
+  plan: PlanId;
+  status:
+    | "active"
+    | "trialing"
+    | "canceled"
+    | "incomplete"
+    | "past_due"
+    | "unpaid"
+    | "paused";
+  renewsAt?: string;
+  trialEndsAt?: string;
+};
+
+type BillingSummaryResponse =
+  | { ok: true; summary: BillingSummary; customerId?: string | null; needsStripeSetup?: boolean }
+  | { ok: false; error: string };
 
 export default function SettingsHubPage() {
   const router = useRouter();
   const [email, setEmail] = React.useState<string | null>(null);
   const [sending, setSending] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);  // Admin check
+  const [billingLoading, setBillingLoading] = React.useState(true);
+  const [billingError, setBillingError] = React.useState<string | null>(null);
+  const [summary, setSummary] = React.useState<BillingSummary | null>(null);
+  const [portalAvailable, setPortalAvailable] = React.useState(false);
+  const [portalLoading, setPortalLoading] = React.useState(false);
+
+  const statusVariant = React.useCallback((status: BillingSummary["status"]): React.ComponentProps<typeof Badge>["variant"] => {
+    switch (status) {
+      case "active":
+        return "success";
+      case "trialing":
+        return "info";
+      case "past_due":
+      case "incomplete":
+        return "warning";
+      case "unpaid":
+        return "danger";
+      case "paused":
+        return "secondary";
+      case "canceled":
+      default:
+        return "neutral";
+    }
+  }, []);
+
+  const formatStatus = React.useCallback((status: BillingSummary["status"]) => {
+    return status
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setBillingLoading(true);
+        setBillingError(null);
+
+        const response = await fetch("/api/billing/summary", { credentials: "include" });
+        const data: BillingSummaryResponse = await response.json();
+
+        if (!response.ok) {
+          throw new Error(response.statusText || "Failed to load billing");
+        }
+
+        if (!data.ok) {
+          throw new Error(data.error || "Failed to load billing");
+        }
+
+        if (cancelled) return;
+
+        setSummary(data.summary);
+        const canOpenPortal = Boolean(data.customerId) && !data.needsStripeSetup;
+        setPortalAvailable(canOpenPortal);
+      } catch (error) {
+        if (cancelled) return;
+        setBillingError((error as Error).message || "Failed to load billing");
+        setSummary(null);
+        setPortalAvailable(false);
+      } finally {
+        if (!cancelled) {
+          setBillingLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const openPortal = React.useCallback(async () => {
+    try {
+      setBillingError(null);
+      setPortalLoading(true);
+
+      const response = await fetch("/api/billing/create-portal-session", {
+        method: "POST",
+        credentials: "include",
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error((payload && payload.error) || response.statusText || "Failed to open billing portal");
+      }
+
+      const url = typeof payload?.url === "string" ? payload.url : null;
+      if (!url) {
+        throw new Error("Failed to open billing portal");
+      }
+
+      window.location.href = url;
+    } catch (error) {
+      setBillingError((error as Error).message || "Failed to open billing portal");
+      setPortalLoading(false);
+    }
+  }, []);
+
+  const planDefinition = React.useMemo(() => (summary ? getPlan(summary.plan) : null), [summary]);
+  const isPremiumPlan = React.useMemo(() => (summary ? isPaidPlan(summary.plan) : false), [summary]);
+  const dateFormatter = React.useMemo(() => new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }), []);
+  const planMeta = React.useMemo(() => {
+    if (!summary) return null;
+    const parts: string[] = [];
+    if (summary.renewsAt) {
+      parts.push(`Renews ${dateFormatter.format(new Date(summary.renewsAt))}`);
+    }
+    if (summary.trialEndsAt) {
+      parts.push(`Trial ends ${dateFormatter.format(new Date(summary.trialEndsAt))}`);
+    }
+    return parts;
+  }, [summary, dateFormatter]);
 
   React.useEffect(() => {
     let mounted = true;
@@ -79,6 +212,85 @@ export default function SettingsHubPage() {
           </header>
 
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Plan & Billing */}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-small font-medium text-foreground">Plan &amp; Billing</h2>
+                  <p className="mt-1 text-small text-muted-foreground">
+                    Check your subscription status and manage billing details.
+                  </p>
+                </div>
+                {isPremiumPlan && <Badge variant="accent">Premium</Badge>}
+              </div>
+
+              <div className="mt-3 space-y-3">
+                {billingLoading ? (
+                  <p className="text-small text-muted-foreground">Checking your plan…</p>
+                ) : billingError ? (
+                  <p className="text-small text-danger">{billingError}</p>
+                ) : summary ? (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={statusVariant(summary.status)}>{formatStatus(summary.status)}</Badge>
+                      {planDefinition && (
+                        <span className="text-small text-muted-foreground">{planDefinition.name}</span>
+                      )}
+                    </div>
+
+                    {planMeta && planMeta.length > 0 && (
+                      <p className="text-caption text-muted-foreground">
+                        {planMeta.map((part, index) => (
+                          <React.Fragment key={`${part}-${index}`}>
+                            {index > 0 && <span aria-hidden="true"> · </span>}
+                            <span>{part}</span>
+                          </React.Fragment>
+                        ))}
+                      </p>
+                    )}
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                      {isPremiumPlan ? (
+                        portalAvailable ? (
+                          <Button onClick={openPortal} loading={portalLoading} variant="soft" tone="accent">
+                            {portalLoading ? "Opening…" : "Manage billing"}
+                          </Button>
+                        ) : (
+                          <Button asChild variant="soft">
+                            <Link href="/pricing">Change plan</Link>
+                          </Button>
+                        )
+                      ) : (
+                        <Button asChild variant="soft" tone="accent">
+                          <Link href="/pricing">Upgrade to Premium</Link>
+                        </Button>
+                      )}
+
+                      {!isPremiumPlan && (
+                        <span className="text-caption text-muted-foreground">
+                          Unlock unlimited mock exams, full AI evaluations, and coaching tools.
+                        </span>
+                      )}
+                    </div>
+
+                    {!portalAvailable && isPremiumPlan && (
+                      <p className="text-caption text-muted-foreground">
+                        The billing portal is temporarily unavailable. Email {" "}
+                        <a className="underline" href="mailto:support@gramorx.com">
+                          support@gramorx.com
+                        </a>{" "}
+                        to update or cancel your plan.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-small text-muted-foreground">
+                    We couldn’t find an active subscription yet. Upgrade to unlock Premium perks.
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Language */}
             <div className="rounded-xl border border-border bg-card p-4">
               <h2 className="text-small font-medium text-foreground">Language</h2>
