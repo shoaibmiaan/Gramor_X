@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getActiveDayISO } from '@/lib/daily-learning-time';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 type LearnIn = { wordId?: string };
@@ -17,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const { wordId }: LearnIn = req.body ?? {};
   if (!wordId) return res.status(400).json({ error: 'wordId required' });
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = getActiveDayISO();
 
   // Upsert once per day
   const { error: upErr } = await supabaseAdmin.from('user_word_logs').upsert(
