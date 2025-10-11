@@ -13,6 +13,16 @@ export type WritingExamSummary = {
 
 export const writingExamSummaries: WritingExamSummary[] = [
   {
+    id: 'ielts-writing-full-001',
+    title: 'Academic Set — Urban Futures',
+    description: 'Charts on international student mobility paired with an essay about housing versus green space investment.',
+    task1Type: 'Academic',
+    task1Focus: 'Dual bar charts • overseas enrolments • 2010 vs 2020',
+    task2Focus: 'Discuss priorities for city governments',
+    durationMinutes: 60,
+    tags: ['education', 'cities']
+  },
+  {
     id: 'ielts-writing-exam-01',
     title: 'Academic Set 1 — Energy & Remote Work',
     description: 'Line graph on renewable energy adoption paired with an essay about working from home.',
