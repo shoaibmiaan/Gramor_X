@@ -3,23 +3,48 @@ import { extractRole, type AppRole } from './roles';
 export type { AppRole } from './roles';
 
 /** Public and guest-only allowlists
- * Everything NOT in PUBLIC is considered protected.
+ * Everything NOT in PUBLIC_ROUTES is considered protected.
  */
-const PUBLIC: string[] = [
-  '/', '/pricing', '/community', '/about', '/contact',
-  '/auth/verify', '/403', // keep these public to avoid loops
-  '/legal/privacy', '/legal/terms', '/faq', '/tokens-test',
+type RouteMatcher = string | RegExp;
+
+const PUBLIC_ROUTES: RouteMatcher[] = [
+  '/',
+  /^\/pricing$/,
+  /^\/community$/,
+  /^\/about$/,
+  /^\/contact$/,
+  /^\/roadmap$/,
+  '/auth/verify',
+  '/403', // keep these public to avoid loops
+  /^\/legal(\/|$)/,
+  '/faq',
+  '/tokens-test',
 ];
 
-const GUEST_ONLY: string[] = [
-  '/login', '/signup', '/forgot-password',
+const GUEST_ONLY_ROUTES: RouteMatcher[] = [
+  /^\/login(\/|$)/,
+  /^\/signup(\/|$)/,
+  '/forgot-password',
 ];
 
-export const isPublicRoute = (path: string) => PUBLIC.includes(path);
-export const isGuestOnlyRoute = (path: string) =>
-  GUEST_ONLY.includes(path) ||
-  path.startsWith('/login/') ||
-  path.startsWith('/signup/');
+const normalizePath = (path: string) => {
+  const withoutQuery = path.split('?')[0] ?? '';
+  if (!withoutQuery) return '';
+  if (withoutQuery === '/') return withoutQuery;
+  return withoutQuery.replace(/\/+$/, '');
+};
+
+const matchesRoute = (path: string, allowlist: RouteMatcher[]) => {
+  const normalized = normalizePath(path);
+  return allowlist.some((matcher) =>
+    typeof matcher === 'string'
+      ? normalizePath(matcher) === normalized
+      : matcher.test(normalized),
+  );
+};
+
+export const isPublicRoute = (path: string) => matchesRoute(path, PUBLIC_ROUTES);
+export const isGuestOnlyRoute = (path: string) => matchesRoute(path, GUEST_ONLY_ROUTES);
 
 /** Role extraction */
 export const getUserRole = (user: User | null | undefined): AppRole | null =>
