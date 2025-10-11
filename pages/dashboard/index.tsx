@@ -35,6 +35,7 @@ import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCar
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { ChallengeTaskStatus } from '@/types/challenge';
+import { TodayReviewsPanel } from '@/components/review/TodayReviewsPanel';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -342,6 +343,10 @@ export default function Dashboard() {
         {/* Word of the day */}
         <div className="mt-10">
           <WordOfTheDayCard />
+        </div>
+
+        <div className="mt-10">
+          <TodayReviewsPanel />
         </div>
 
         <div className="mt-10">
