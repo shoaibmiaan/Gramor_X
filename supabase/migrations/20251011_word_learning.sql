@@ -92,6 +92,56 @@ exception
   when duplicate_object then null;
 end$$;
 
+insert into public.word_learning_streaks (user_id, current, longest, last_active_date, updated_at)
+select
+  s.user_id,
+  s.current,
+  s.longest,
+  s.last_active_date,
+  coalesce(s.updated_at, now())
+from public.streaks s
+on conflict (user_id) do update
+  set current = excluded.current,
+      longest = greatest(public.word_learning_streaks.longest, excluded.longest),
+      last_active_date = coalesce(excluded.last_active_date, public.word_learning_streaks.last_active_date),
+      updated_at = now();
+
+with ordered_logs as (
+  select
+    user_id,
+    learned_on,
+    learned_on - ((row_number() over (partition by user_id order by learned_on))::int) as grp
+  from public.user_word_logs
+),
+user_streaks as (
+  select user_id, grp, count(*) as streak_length
+  from ordered_logs
+  group by user_id, grp
+),
+longest_streaks as (
+  select user_id, max(streak_length) as longest
+  from user_streaks
+  group by user_id
+),
+last_activity as (
+  select user_id, max(learned_on) as last_active_date
+  from public.user_word_logs
+  group by user_id
+)
+insert into public.word_learning_streaks (user_id, current, longest, last_active_date, updated_at)
+select
+  l.user_id,
+  0,
+  l.longest,
+  la.last_active_date,
+  now()
+from longest_streaks l
+left join last_activity la on la.user_id = l.user_id
+on conflict (user_id) do update
+  set longest = greatest(public.word_learning_streaks.longest, excluded.longest),
+      last_active_date = coalesce(public.word_learning_streaks.last_active_date, excluded.last_active_date),
+      updated_at = now();
+
 create or replace function public.get_word_of_day(d date default timezone('Asia/Karachi', now())::date)
 returns table (
   id uuid,
