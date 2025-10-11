@@ -1,105 +1,156 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
-import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
+import StepShell from '@/components/onboarding/StepShell';
+import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
-import { Checkbox } from '@/components/design-system/Checkbox';
-import { Alert } from '@/components/design-system/Alert';
-
-import type { Profile } from '@/types/profile';
-import { fetchProfile, markOnboardingComplete, upsertProfile } from '@/lib/profile';
+import { Skeleton } from '@/components/design-system/Skeleton';
+import { emitUserEvent } from '@/lib/analytics/user';
+import {
+  TOTAL_ONBOARDING_STEPS,
+  languageOptions,
+  onboardingStateSchema,
+  type OnboardingState,
+  weekdayOptions,
+} from '@/lib/onboarding/schema';
+import { markOnboardingComplete } from '@/lib/profile';
 import { useLocale } from '@/lib/locale';
 
-type StepId = 1 | 2 | 3;
+type Language = (typeof languageOptions)[number];
+type Weekday = (typeof weekdayOptions)[number];
 
-const STEP_CONFIG: { id: StepId; titleKey: string; descriptionKey: string }[] = [
-  { id: 1, titleKey: 'onboarding.steps.band.title', descriptionKey: 'onboarding.steps.band.description' },
-  { id: 2, titleKey: 'onboarding.steps.date.title', descriptionKey: 'onboarding.steps.date.description' },
-  { id: 3, titleKey: 'onboarding.steps.whatsapp.title', descriptionKey: 'onboarding.steps.whatsapp.description' },
-];
+type FormState = {
+  preferredLanguage: Language;
+  goalBand: string;
+  examDate: string;
+  studyDays: Weekday[];
+  minutesPerDay: string;
+  whatsappOptIn: boolean;
+  phone: string;
+};
+type FieldErrors = Partial<Record<keyof FormState, string>>;
+type StepId = 1 | 2 | 3 | 4 | 5;
 
-const quickBands = ['6.5', '7.0', '7.5', '8.0'];
+const defaultFormState: FormState = {
+  preferredLanguage: 'en',
+  goalBand: '7.0',
+  examDate: '',
+  studyDays: [],
+  minutesPerDay: '45',
+  whatsappOptIn: false,
+  phone: '',
+};
+
+const LANGUAGE_COPY: Record<(typeof languageOptions)[number], { title: string; description: string }> = {
+  en: {
+    title: 'English',
+    description: 'Interface, reminders, and lessons in English.',
+  },
+  ur: {
+    title: 'اردو',
+    description: 'Interface in Urdu with IELTS practice kept bilingual.',
+  },
+};
 
 const phoneRegex = /^\+?[1-9]\d{7,14}$/;
+const dayOrder = [...weekdayOptions];
 
-const skeletonLines = [
-  'h-5 w-32',
-  'h-4 w-3/4',
-  'h-4 w-full',
-  'h-4 w-2/3',
-];
+const quickBands = ['6.5', '7.0', '7.5', '8.0'] as const;
 
 export default function OnboardingWizard() {
   const router = useRouter();
   const { t } = useLocale();
 
+  const [form, setForm] = useState<FormState>(defaultFormState);
+  const [profileState, setProfileState] = useState<OnboardingState | null>(null);
+  const [step, setStep] = useState<StepId>(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  const [step, setStep] = useState<StepId>(1);
-  const [band, setBand] = useState('7.0');
-  const [examDate, setExamDate] = useState('');
-  const [optIn, setOptIn] = useState(false);
-  const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const startTracked = useRef(false);
 
   const nextPath = useMemo(() => {
     const qNext = typeof router.query.next === 'string' ? router.query.next : null;
     return qNext && qNext.startsWith('/') ? qNext : '/dashboard';
   }, [router.query.next]);
 
+  const determineStep = useCallback((state: OnboardingState | null) => {
+    if (!state) return 1;
+    if (state.onboardingComplete) return TOTAL_ONBOARDING_STEPS as StepId;
+    const highest = Math.max(0, state.onboardingStep ?? 0);
+    const next = Math.min(TOTAL_ONBOARDING_STEPS, Math.max(1, highest + 1));
+    return next as StepId;
+  }, []);
+
+  const syncForm = useCallback((state: OnboardingState) => {
+    setForm({
+      preferredLanguage: (state.preferredLanguage as Language) ?? defaultFormState.preferredLanguage,
+      goalBand:
+        typeof state.goalBand === 'number'
+          ? state.goalBand.toFixed(Number.isInteger(state.goalBand) ? 0 : 1)
+          : defaultFormState.goalBand,
+      examDate: state.examDate ?? defaultFormState.examDate,
+      studyDays: Array.isArray(state.studyDays) ? state.studyDays : defaultFormState.studyDays,
+      minutesPerDay:
+        typeof state.studyMinutesPerDay === 'number'
+          ? String(state.studyMinutesPerDay)
+          : defaultFormState.minutesPerDay,
+      whatsappOptIn: state.whatsappOptIn ?? defaultFormState.whatsappOptIn,
+      phone: state.phone ?? defaultFormState.phone,
+    });
+  }, []);
+
+  const stepMeta = useMemo(
+    () => [
+      { label: t('onboarding.step.label.language', 'Language'), done: (profileState?.onboardingStep ?? 0) >= 1 },
+      { label: t('onboarding.step.label.band', 'Target band'), done: (profileState?.onboardingStep ?? 0) >= 2 },
+      { label: t('onboarding.step.label.date', 'Exam date'), done: (profileState?.onboardingStep ?? 0) >= 3 },
+      { label: t('onboarding.step.label.rhythm', 'Study rhythm'), done: (profileState?.onboardingStep ?? 0) >= 4 },
+      { label: t('onboarding.step.label.notify', 'Notifications'), done: profileState?.onboardingComplete === true },
+    ],
+    [profileState?.onboardingComplete, profileState?.onboardingStep, t],
+  );
+
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
 
     (async () => {
       try {
-        const data = await fetchProfile();
-        if (!active) return;
-
-        if (!data) {
-          setProfile(null);
-          setBand('7.0');
-          setExamDate('');
-          setOptIn(false);
-          setPhone('');
-          setStep(1);
-          return;
-        }
-
-        setProfile(data);
-        if (data.goal_band != null) {
-          setBand(Number(data.goal_band).toFixed(1));
-        }
-        if (data.exam_date) {
-          setExamDate(data.exam_date.slice(0, 10));
-        }
-
-        const channels = new Set<string>(data.notification_channels ?? []);
-        const initialOptIn = channels.has('whatsapp') || data.whatsapp_opt_in === true;
-        setOptIn(initialOptIn);
-        if (data.phone) setPhone(data.phone);
-
-        const completed = data.onboarding_complete === true;
-        const completedStep = Number(data.onboarding_step ?? 0);
-        if (completed) {
-          setStep(3);
-        } else {
-          const nextStep = Math.min(3, Math.max(1, completedStep + 1)) as StepId;
-          setStep(nextStep);
-        }
-      } catch (err) {
-        if (err instanceof Error && err.message === 'Not authenticated') {
+        const res = await fetch('/api/onboarding', { signal: controller.signal });
+        if (res.status === 401) {
           const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
           await router.replace(`/login${suffix}`);
           return;
         }
-        if (active) setError(t('onboarding.errors.loadProfile'));
+        const body = await res.json();
+        if (!res.ok) {
+          const message = typeof body?.error === 'string' ? body.error : t('onboarding.errors.loadProfile', 'Unable to load onboarding data');
+          throw new Error(message);
+        }
+        const parsed = onboardingStateSchema.parse(body);
+        if (!active) return;
+
+        setProfileState(parsed);
+        syncForm(parsed);
+        const nextStepValue = determineStep(parsed);
+        setStep(nextStepValue);
+
+        if (parsed.onboardingComplete) {
+          await router.replace(nextPath);
+        }
+      } catch (err) {
+        if (!active) return;
+        if (err instanceof Error && err.name === 'AbortError') return;
+        if (err instanceof Error && err.message === 'Not authenticated') return;
+        const message = err instanceof Error ? err.message : t('onboarding.errors.loadProfile', 'Unable to load onboarding data');
+        setError(message);
       } finally {
         if (active) setLoading(false);
       }
@@ -107,340 +158,392 @@ export default function OnboardingWizard() {
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [router, nextPath]);
+  }, [determineStep, nextPath, router, syncForm, t]);
 
-  const updateProfile = useCallback(
-    async (patch: Parameters<typeof upsertProfile>[0], nextStep?: StepId) => {
+  useEffect(() => {
+    if (loading || startTracked.current) return;
+    startTracked.current = true;
+    void emitUserEvent('onboarding_start', { step, delta: 0 });
+  }, [loading, step]);
+
+  const updateForm = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (key === 'phone' || (key === 'whatsappOptIn' && value === false)) setPhoneError(null);
+    setFieldErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const { [key]: _removed, ...rest } = prev;
+      return rest;
+    });
+    setError(null);
+  }, []);
+
+  const toggleStudyDay = useCallback((day: Weekday) => {
+    setForm((prev) => {
+      const exists = prev.studyDays.includes(day);
+      const nextDays = exists ? prev.studyDays.filter((d) => d !== day) : [...prev.studyDays, day];
+      nextDays.sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+      return { ...prev, studyDays: nextDays };
+    });
+    setFieldErrors((prev) => {
+      if (!('studyDays' in prev)) return prev;
+      const { studyDays: _removed, ...rest } = prev;
+      return rest;
+    });
+  }, []);
+
+  const persistStep = useCallback(
+    async (payload: unknown) => {
       setSaving(true);
-      setError(null);
       try {
-        const updated = await upsertProfile(patch);
-        setProfile(updated as Profile);
-        if (typeof nextStep === 'number') {
-          setStep(nextStep);
+        const res = await fetch('/api/onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.status === 401) {
+          const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
+          await router.replace(`/login${suffix}`);
+          throw new Error('Not authenticated');
         }
-      } catch (err) {
-        setError(t('onboarding.errors.saveProfile'));
-        throw err;
+        const body = await res.json();
+        if (!res.ok) {
+          const message = typeof body?.error === 'string' ? body.error : t('onboarding.errors.saveGeneric', 'Unable to save onboarding step');
+          throw new Error(message);
+        }
+        const parsed = onboardingStateSchema.parse(body);
+        setProfileState(parsed);
+        syncForm(parsed);
+        const nextStepValue = determineStep(parsed);
+        setStep(nextStepValue);
+        return parsed;
       } finally {
         setSaving(false);
       }
     },
-    [],
+    [determineStep, nextPath, router, syncForm, t],
   );
 
-  const handleBandNext = async () => {
-    const parsed = Number(band);
-    if (Number.isNaN(parsed) || parsed < 4 || parsed > 9) {
-      setError(t('onboarding.errors.bandRange'));
+  const handleBack = useCallback(() => {
+    if (loading || saving) return;
+    setError(null);
+    setStep((prev) => (prev > 1 ? ((prev - 1) as StepId) : prev));
+  }, [loading, saving]);
+
+  const validateStep = useCallback(
+    (currentStep: StepId) => {
+      const errors: FieldErrors = {};
+      if (currentStep === 1) {
+        if (!form.preferredLanguage) errors.preferredLanguage = t('onboarding.errors.pickLanguage', 'Pick a language to continue.');
+      }
+      if (currentStep === 2) {
+        const parsed = Number(form.goalBand);
+        const isHalfStep = Math.abs(parsed * 2 - Math.round(parsed * 2)) < 0.001;
+        if (Number.isNaN(parsed) || parsed < 4 || parsed > 9 || !isHalfStep) {
+          errors.goalBand = t('onboarding.errors.bandRange', 'Choose a band between 4.0 and 9.0 in 0.5 steps.');
+        }
+      }
+      if (currentStep === 3 && form.examDate) {
+        const parsedDate = new Date(form.examDate);
+        if (Number.isNaN(parsedDate.getTime())) errors.examDate = t('onboarding.errors.dateInvalid', 'Enter a valid date.');
+      }
+      if (currentStep === 4) {
+        if (form.studyDays.length === 0) errors.studyDays = t('onboarding.errors.studyDays', 'Pick at least one study day.');
+        const minutes = Number(form.minutesPerDay);
+        if (Number.isNaN(minutes) || minutes < 15 || minutes > 240) {
+          errors.minutesPerDay = t('onboarding.errors.minutes', 'Set between 15 and 240 minutes.');
+        }
+      }
+      if (currentStep === 5 && form.whatsappOptIn) {
+        const trimmed = form.phone.trim();
+        if (!phoneRegex.test(trimmed)) {
+          errors.phone = t('onboarding.errors.invalidPhone', 'Enter a valid international phone number.');
+          setPhoneError(errors.phone);
+        }
+      }
+      setFieldErrors(errors);
+      return errors;
+    },
+    [form, t],
+  );
+
+  const handleNext = useCallback(async () => {
+    if (loading || saving) return;
+    const validationErrors = validateStep(step);
+    if (Object.keys(validationErrors).length > 0) {
+      setError(t('onboarding.errors.review', 'Please review the highlighted fields.'));
       return;
     }
-    await updateProfile({ goal_band: parsed, onboarding_step: 1, onboarding_complete: false }, 2);
-  };
-
-  const handleDateNext = async () => {
-    await updateProfile({ exam_date: examDate || null, onboarding_step: 2 }, 3);
-  };
-
-  const finish = async () => {
-    setPhoneError(null);
-    const baseChannels = new Set<string>(profile?.notification_channels ?? []);
-    let phoneValue: string | null = null;
-
-    if (optIn) {
-      const trimmed = phone.trim();
-      if (!phoneRegex.test(trimmed)) {
-        setPhoneError(t('onboarding.errors.phoneFormat'));
+    const prev = step;
+    try {
+      if (step === 1) {
+        const parsed = await persistStep({ step: 1, data: { preferredLanguage: form.preferredLanguage } });
+        const nextStepValue = determineStep(parsed);
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, nextStepValue - prev) });
         return;
       }
-      phoneValue = trimmed;
-      baseChannels.add('whatsapp');
-    } else {
-      baseChannels.delete('whatsapp');
-    }
-
-    try {
-      await updateProfile(
-        {
-          phone: phoneValue,
-          notification_channels: Array.from(baseChannels),
-          whatsapp_opt_in: optIn,
-          onboarding_step: 3,
-          onboarding_complete: true,
-        },
-      );
-      await markOnboardingComplete();
-      await router.replace(nextPath);
-    } catch (err) {
-      if (err instanceof Error && err.message === 'Not authenticated') {
-        const suffix = nextPath ? `?next=${encodeURIComponent(nextPath)}` : '';
-        await router.replace(`/login${suffix}`);
+      if (step === 2) {
+        const parsedGoal = Number(form.goalBand);
+        const parsed = await persistStep({ step: 2, data: { goalBand: parsedGoal } });
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
+        return;
       }
-    }
-  };
-
-  const skip = async () => {
-    try {
-      await updateProfile({ onboarding_step: 3, onboarding_complete: true });
-      await markOnboardingComplete();
-      await router.replace(nextPath);
+      if (step === 3) {
+        const parsed = await persistStep({ step: 3, data: { examDate: form.examDate } });
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
+        return;
+      }
+      if (step === 4) {
+        const minutes = Number(form.minutesPerDay);
+        const parsed = await persistStep({ step: 4, data: { studyDays: form.studyDays, minutesPerDay: minutes } });
+        void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
+        return;
+      }
+      const trimmedPhone = form.whatsappOptIn ? form.phone.trim() : '';
+      const parsed = await persistStep({ step: 5, data: { whatsappOptIn: form.whatsappOptIn, phone: trimmedPhone } });
+      if (parsed.onboardingComplete) {
+        await markOnboardingComplete().catch(() => undefined);
+        void emitUserEvent('onboarding_done', { step: prev, delta: 0 });
+        await router.replace(nextPath);
+        return;
+      }
+      void emitUserEvent('onboarding_step_complete', { step: prev, delta: Math.max(0, determineStep(parsed) - prev) });
     } catch (err) {
-      setError(t('onboarding.errors.skip'));
+      if (err instanceof Error && err.message === 'Not authenticated') return;
+      const message = err instanceof Error ? err.message : t('onboarding.errors.saveGeneric', 'Unable to save onboarding step');
+      setError(message);
     }
-  };
+  }, [determineStep, form, loading, nextPath, persistStep, router, saving, step, t, validateStep]);
 
-  const back = () => {
-    if (step === 1) return;
-    setError(null);
-    setStep((step - 1) as StepId);
-  };
-
-  useEffect(() => {
-    if (!optIn) {
-      setPhoneError(null);
-    }
-  }, [optIn]);
+  const copy = [
+    {
+      title: t('onboarding.copy.language.title', 'Pick your learning language'),
+      subtitle: t('onboarding.copy.language.subtitle', 'We’ll translate prompts, reminders, and nudges so everything feels familiar.'),
+      hint: t('onboarding.copy.language.hint', 'You can switch languages later from Settings → Preferences.'),
+    },
+    {
+      title: t('onboarding.copy.band.title', 'Set your target band'),
+      subtitle: t('onboarding.copy.band.subtitle', 'A clear goal helps us pace mocks, AI feedback, and review sessions.'),
+    },
+    {
+      title: t('onboarding.copy.date.title', 'When is your IELTS exam?'),
+      subtitle: t('onboarding.copy.date.subtitle', 'We’ll reverse-engineer the study plan so you peak near test day.'),
+    },
+    {
+      title: t('onboarding.copy.rhythm.title', 'Shape your weekly rhythm'),
+      subtitle: t('onboarding.copy.rhythm.subtitle', 'Tell us when you can put in focused time so we can schedule smarter.'),
+      hint: t('onboarding.copy.rhythm.hint', 'We’ll schedule AI-graded tasks and mocks on the days you pick.'),
+    },
+    {
+      title: t('onboarding.copy.whatsapp.title', 'Stay on track with WhatsApp'),
+      subtitle: t('onboarding.copy.whatsapp.subtitle', 'Opt in for gentle reminders and quick wins (totally optional).'),
+      hint: t('onboarding.copy.whatsapp.hint', 'We send at most three nudges per week and you can opt out anytime.'),
+    },
+  ][step - 1];
 
   return (
-    <div className="min-h-screen bg-lightBg/40 py-12 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-      <Container className="max-w-3xl">
-        <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6 shadow-xl backdrop-blur">
-          <header className="flex flex-col gap-2 border-b border-border/50 pb-4">
-            <span className="text-caption uppercase tracking-[0.18em] text-mutedText">
-              {t('onboarding.hero.eyebrow')}
-            </span>
-            <h1 className="text-h2 font-slab">{t('onboarding.hero.title')}</h1>
-            <p className="text-small text-mutedText">{t('onboarding.hero.subtitle')}</p>
-          </header>
+    <StepShell
+      step={step}
+      total={TOTAL_ONBOARDING_STEPS}
+      title={copy.title}
+      subtitle={copy.subtitle}
+      hint={copy.hint}
+      steps={stepMeta}
+      onBack={handleBack}
+      onNext={handleNext}
+      nextLabel={saving ? t('onboarding.buttons.saving', 'Saving…') : step === TOTAL_ONBOARDING_STEPS ? t('onboarding.buttons.finish', 'Finish') : t('onboarding.buttons.continue', 'Continue')}
+      nextDisabled={saving || loading}
+    >
+      {error && (
+        <Alert variant="error" className="mb-4" role="alert">
+          {error}
+        </Alert>
+      )}
 
-          <Stepper current={step} />
-
-          {error && (
-            <Alert variant="error" className="mt-4" role="alert">
-              {error}
-            </Alert>
-          )}
-
-          <div className="mt-6">
-            {loading ? (
-              <div className="grid gap-3">
-                {skeletonLines.map((cls) => (
-                  <div key={cls} className={`animate-pulse rounded-md bg-muted/50 ${cls}`} />
-                ))}
-              </div>
-            ) : (
-              <StepContent
-                step={step}
-                band={band}
-                setBand={setBand}
-                examDate={examDate}
-                setExamDate={setExamDate}
-                optIn={optIn}
-                setOptIn={setOptIn}
-                phone={phone}
-                setPhone={setPhone}
-                phoneError={phoneError}
-              />
-            )}
-          </div>
-
-          <footer className="mt-8 flex flex-col gap-3 border-t border-border/40 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 text-caption text-mutedText">
-              <span className="rounded border border-border px-1.5 py-0.5">{step}</span>
-              <span>{t('onboarding.footer.step', undefined, { current: step, total: 3 })}</span>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Button
-                type="button"
-                variant="secondary"
-                className="rounded-ds-xl"
-                disabled={step === 1 || saving}
-                onClick={back}
-              >
-                {t('onboarding.footer.back')}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="rounded-ds-xl"
-                disabled={saving}
-                onClick={skip}
-              >
-                {t('onboarding.footer.skip')}
-              </Button>
-              <Button
-                type="button"
-                className="rounded-ds-xl"
-                onClick={() => {
-                  if (loading || saving) return;
-                  if (step === 1) handleBandNext();
-                  else if (step === 2) handleDateNext();
-                  else finish();
-                }}
-                disabled={loading || saving}
-              >
-                {saving
-                  ? t('onboarding.footer.saving')
-                  : step === 3
-                    ? t('onboarding.footer.finish')
-                    : t('onboarding.footer.next')}
-              </Button>
-            </div>
-          </footer>
-        </Card>
-      </Container>
-    </div>
+      {loading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-10 w-3/4" />
+          <Skeleton className="h-6 w-1/2" />
+        </div>
+      ) : (
+        <StepContent
+          step={step}
+          form={form}
+          updateForm={updateForm}
+          toggleStudyDay={toggleStudyDay}
+          phoneError={phoneError}
+          fieldErrors={fieldErrors}
+          t={t}
+        />
+      )}
+    </StepShell>
   );
 }
-
-function Stepper({ current }: { current: StepId }) {
-  const { t } = useLocale();
-  return (
-    <ol className="mt-6 grid gap-3 sm:grid-cols-3" aria-label={t('onboarding.stepper.aria')}>
-      {STEP_CONFIG.map((step) => {
-        const isActive = step.id === current;
-        const isDone = step.id < current;
-        return (
-          <li
-            key={step.id}
-            className={[
-              'rounded-ds-xl border px-3 py-3 transition',
-              isActive
-                ? 'border-primary/60 bg-primary/10 shadow-glow'
-                : isDone
-                  ? 'border-success/40 bg-success/10'
-                  : 'border-border/60 bg-card/70',
-            ].join(' ')}
-          >
-            <div className="flex items-center gap-2 text-caption font-medium uppercase tracking-[0.2em] text-mutedText">
-              <span
-                className={[
-                  'flex h-6 w-6 items-center justify-center rounded-full border text-caption tabular-nums',
-                  isDone
-                    ? 'border-success/40 bg-success/20 text-success'
-                    : isActive
-                      ? 'border-primary/60 bg-primary text-primary-foreground'
-                      : 'border-border bg-card/60 text-mutedText',
-                ].join(' ')}
-              >
-                {step.id}
-              </span>
-              {isDone
-                ? t('onboarding.stepper.done')
-                : isActive
-                  ? t('onboarding.stepper.current')
-                  : t('onboarding.stepper.next')}
-            </div>
-            <div className="mt-2 font-semibold text-foreground">{t(step.titleKey)}</div>
-            <p className="text-small text-mutedText">{t(step.descriptionKey)}</p>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-type StepContentProps = {
-  step: StepId;
-  band: string;
-  setBand: (value: string) => void;
-  examDate: string;
-  setExamDate: (value: string) => void;
-  optIn: boolean;
-  setOptIn: (value: boolean) => void;
-  phone: string;
-  setPhone: (value: string) => void;
-  phoneError: string | null;
-};
 
 function StepContent({
   step,
-  band,
-  setBand,
-  examDate,
-  setExamDate,
-  optIn,
-  setOptIn,
-  phone,
-  setPhone,
+  form,
+  updateForm,
+  toggleStudyDay,
   phoneError,
-}: StepContentProps) {
-  const { t } = useLocale();
-
+  fieldErrors,
+  t,
+}: {
+  step: StepId;
+  form: FormState;
+  updateForm: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
+  toggleStudyDay: (day: Weekday) => void;
+  phoneError: string | null;
+  fieldErrors: FieldErrors;
+  t: typeof import('@/lib/locale').t;
+}) {
   if (step === 1) {
     return (
-      <div className="grid gap-4">
-        <div>
-          <Input
-            type="number"
-            label={t('onboarding.band.label')}
-            min="4"
-            max="9"
-            step="0.5"
-            value={band}
-            onChange={(e) => setBand(e.target.value)}
-            helperText={t('onboarding.band.helper')}
-          />
+      <div className="space-y-4">
+        <p className="text-small text-mutedText">
+          {t('onboarding.lang.pick', 'Pick the language that feels most comfortable for instructions and reminders.')}
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {languageOptions.map((option) => {
+            const selected = form.preferredLanguage === option;
+            const copy = LANGUAGE_COPY[option];
+            return (
+              <Button
+                key={option}
+                type="button"
+                variant={selected ? 'primary' : 'secondary'}
+                className="flex w-full flex-col items-start gap-1 rounded-ds-xl px-4 py-3 text-left"
+                onClick={() => updateForm('preferredLanguage', option)}
+              >
+                <span className="text-base font-semibold">{copy.title}</span>
+                <span className="text-small text-mutedText">{copy.description}</span>
+              </Button>
+            );
+          })}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {quickBands.map((value) => (
-            <Button
-              key={value}
-              type="button"
-              variant={band === value ? 'primary' : 'secondary'}
-              className="rounded-ds-xl"
-              onClick={() => setBand(value)}
-            >
-              {value}
-            </Button>
-          ))}
-        </div>
-        <p className="text-small text-mutedText">{t('onboarding.band.tip')}</p>
+        {fieldErrors.preferredLanguage && <p className="text-caption text-error">{fieldErrors.preferredLanguage}</p>}
       </div>
     );
   }
 
   if (step === 2) {
     return (
-      <div className="grid gap-4">
+      <div className="space-y-4">
+        <Input
+          type="number"
+          label={t('onboarding.band.inputLabel', 'Target overall band')}
+          min={4}
+          max={9}
+          step={0.5}
+          value={form.goalBand}
+          onChange={(event) => updateForm('goalBand', event.target.value)}
+          helperText={t('onboarding.band.helper', 'Most universities aim for 6.5–7.0. Setting your target 0.5 higher gives breathing room.')}
+          error={fieldErrors.goalBand}
+        />
+        <div className="flex flex-wrap gap-2">
+          {quickBands.map((band) => {
+            const selected = form.goalBand === band;
+            return (
+              <Button
+                key={band}
+                type="button"
+                variant={selected ? 'primary' : 'secondary'}
+                className="rounded-ds-xl"
+                onClick={() => updateForm('goalBand', band)}
+              >
+                {band}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="space-y-4">
         <Input
           type="date"
-          label={t('onboarding.date.label')}
-          value={examDate}
-          onChange={(e) => setExamDate(e.target.value)}
-          helperText={t('onboarding.date.helper')}
+          label={t('onboarding.date.inputLabel', 'IELTS exam date')}
+          value={form.examDate}
+          onChange={(event) => updateForm('examDate', event.target.value)}
+          helperText={t('onboarding.date.helper', 'Leave blank if you haven’t booked yet—we’ll suggest a four-week ramp.')}
+          error={fieldErrors.examDate}
         />
-        <p className="text-small text-mutedText">{t('onboarding.date.tip')}</p>
+        <p className="text-small text-mutedText">
+          {t('onboarding.date.tip', 'We’ll pace mocks, AI-evaluated writing, and speaking drills so you peak near your exam.')}
+        </p>
+      </div>
+    );
+  }
+
+  if (step === 4) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <p className="text-small text-mutedText">
+            {t('onboarding.rhythm.pickDays', 'Which days can you reliably dedicate to IELTS prep?')}
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {weekdayOptions.map((day) => {
+              const selected = form.studyDays.includes(day);
+              return (
+                <Button
+                  key={day}
+                  type="button"
+                  variant={selected ? 'primary' : 'secondary'}
+                  className="rounded-ds-xl px-3 py-2 font-semibold"
+                  onClick={() => toggleStudyDay(day)}
+                >
+                  {day}
+                </Button>
+              );
+            })}
+          </div>
+          {fieldErrors.studyDays && <p className="mt-2 text-caption text-error">{fieldErrors.studyDays}</p>}
+        </div>
+        <Input
+          type="number"
+          label={t('onboarding.minutes.label', 'Minutes per study day')}
+          min={15}
+          max={240}
+          step={5}
+          value={form.minutesPerDay}
+          onChange={(event) => updateForm('minutesPerDay', event.target.value)}
+          helperText={t('onboarding.minutes.helper', 'We recommend at least 45 focused minutes. Your plan will adapt to this budget.')}
+          error={fieldErrors.minutesPerDay}
+        />
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4">
-      <label className="flex items-start gap-3 rounded-ds-xl border border-border/60 bg-card/60 p-4">
-        <Checkbox
-          checked={optIn}
-          onCheckedChange={(checked) => setOptIn(Boolean(checked))}
-        />
-        <div>
-          <div className="font-semibold">{t('onboarding.whatsapp.optInTitle')}</div>
-          <p className="text-small text-mutedText">{t('onboarding.whatsapp.optInCopy')}</p>
-        </div>
-      </label>
-      {optIn && (
+    <div className="space-y-4">
+      <Input
+        type="checkbox"
+        asChild
+        label={t('onboarding.whatsapp.optInTitle', 'Send me WhatsApp nudges')}
+      />
+      <div className="text-small text-mutedText">
+        {t('onboarding.whatsapp.optInDescription', '2–3 gentle reminders per week with prompts, checklists, and next steps.')}
+      </div>
+
+      {form.whatsappOptIn ? (
         <Input
-          label={t('onboarding.whatsapp.numberLabel')}
-          placeholder="+14155552671"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          error={phoneError ?? undefined}
-          helperText={t('onboarding.whatsapp.numberHelper')}
+          label={t('onboarding.whatsapp.phoneLabel', 'WhatsApp number')}
+          placeholder={t('onboarding.whatsapp.placeholder', '+14155552671')}
+          value={form.phone}
+          onChange={(event) => updateForm('phone', event.target.value)}
+          helperText={t('onboarding.whatsapp.helper', 'Use your full international number including country code.')}
+          error={phoneError ?? fieldErrors.phone ?? undefined}
         />
-      )}
-      {!optIn && (
-        <p className="text-small text-mutedText">{t('onboarding.whatsapp.emailFallback')}</p>
+      ) : (
+        <p className="text-small text-mutedText">
+          {t('onboarding.whatsapp.emailFallback', 'Prefer email? Enable WhatsApp reminders later from Settings → Notifications.')}
+        </p>
       )}
     </div>
   );
