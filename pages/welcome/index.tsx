@@ -75,7 +75,11 @@ function normalizeWod(raw: any): WordOfDay {
 export default function WelcomePage() {
   const router = useRouter();
   const { t } = useLocale();
-  const { streak, loading: streakLoading, error: streakError } = useStreak(); // Added useStreak hook
+  const {
+    current: streakCurrent,
+    loading: streakLoading,
+    error: streakError,
+  } = useStreak();
 
   const [name, setName] = useState<string | null>(null);
   const [wod, setWod] = useState<WordOfDay | null>(null);
@@ -192,7 +196,7 @@ export default function WelcomePage() {
                 ) : streakError ? (
                   <div>Error: {streakError}</div>
                 ) : (
-                  <StreakIndicator value={streak?.current ?? 0} />
+                  <StreakIndicator value={streakCurrent ?? 0} />
                 )}
                 <div className="mt-2 text-small text-mutedText">Keep a daily streak to unlock bonus mock tests.</div>
               </div>

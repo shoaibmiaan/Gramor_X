@@ -226,13 +226,6 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
             </Link>
 
             <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:gap-3 lg:gap-4">
-              {typeof streakState === 'number' && streakState > 0 ? (
-                <div className="hidden items-center gap-2 rounded-full border border-neonGreen/40 bg-neonGreen/10 px-3 py-1 text-xs font-semibold text-neonGreen sm:flex">
-                  <Icon name="Flame" size={16} />
-                  {streakState} day{streakState === 1 ? '' : 's'} strong
-                </div>
-              ) : null}
-
               <DesktopNav
                 user={user}
                 role={role ?? 'guest'}

@@ -34,7 +34,13 @@ export default function Layout({ children }: Props) {
     <>
       <a id="top" aria-hidden="true" />
       <Header />
-      <main className="min-h-[60vh]">{children}</main>
+      <main
+        className={
+          'min-h-[60vh] pt-safe pb-[calc(env(safe-area-inset-bottom,0px)+72px)] md:pb-16 lg:pb-20'
+        }
+      >
+        {children}
+      </main>
       {useMiniFooter ? <FooterMini /> : <Footer />}
       {showBottomNav && <BottomNav />}
       <QuickAccessWidget />
