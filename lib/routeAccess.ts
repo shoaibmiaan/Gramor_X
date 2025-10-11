@@ -9,11 +9,11 @@ type RouteMatcher = string | RegExp;
 
 const PUBLIC_ROUTES: RouteMatcher[] = [
   '/',
-  /^\/pricing(\/|$)/,
-  /^\/community(\/|$)/,
-  /^\/about(\/|$)/,
-  /^\/contact(\/|$)/,
-  /^\/roadmap(\/|$)/,
+  /^\/pricing$/,
+  /^\/community$/,
+  /^\/about$/,
+  /^\/contact$/,
+  /^\/roadmap$/,
   '/auth/verify',
   '/403', // keep these public to avoid loops
   /^\/legal(\/|$)/,
