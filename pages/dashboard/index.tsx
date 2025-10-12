@@ -35,6 +35,7 @@ import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCar
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { ChallengeTaskStatus } from '@/types/challenge';
+import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -233,6 +234,8 @@ export default function Dashboard() {
     }
   }, [streakLoading, lastDayKey, completeToday]);
 
+  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
+
   if (loading) {
     return (
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -254,7 +257,6 @@ export default function Dashboard() {
   const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
-  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -320,7 +322,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <StreakCounter current={streak} longest={longest} loading={streakLoading} />
+            <StreakCounter current={streak} longest={longest} loading={streakLoading} shields={shields} />
 
             {nextRestart && (
           <Alert variant="info" className="mt-6">
@@ -358,6 +360,10 @@ export default function Dashboard() {
           ) : (
             <JoinWeeklyChallengeCard />
           )}
+        </div>
+
+        <div className="mt-6">
+          <DailyWeeklyChallenges />
         </div>
 
         {/* Top summary cards */}
