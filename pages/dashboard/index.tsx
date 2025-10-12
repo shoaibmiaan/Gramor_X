@@ -357,6 +357,10 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-10">
+          <TodayReviewsPanel />
+        </div>
+
+        <div className="mt-10">
           {challengeLoading ? (
             <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
               <div className="h-6 w-40 animate-pulse rounded bg-border" />
