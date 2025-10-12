@@ -162,33 +162,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (action === 'claim') {
         const currentStreak = row.current_streak ?? 0;
         if (currentStreak < 7) {
-          return res.status(400).json({ error: 'Shield available after 7-day streak' });
+          return res.status(400).json({ error: 'Shield claim unavailable for current streak' });
         }
 
-        let lastClaimDate: Date | null = null;
+        if (!row.last_activity_date) {
+          return res.status(409).json({ error: 'Shield claim unavailable without recent activity' });
+        }
+
+        const streakEnd = new Date(`${row.last_activity_date}T00:00:00Z`);
+        if (Number.isNaN(streakEnd.getTime())) {
+          return res.status(500).json({ error: 'Invalid streak state' });
+        }
+
+        const streakStart = new Date(streakEnd);
+        streakStart.setUTCDate(streakStart.getUTCDate() - Math.max(currentStreak - 1, 0));
+
+        let claimsThisStreak = 0;
         try {
-          const { data: lastClaim, error: lastClaimErr } = await supabaseUser
+          const { count, error: claimErr } = await supabaseUser
             .from('streak_shield_logs')
-            .select('created_at')
+            .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id)
             .eq('action', 'claim')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (lastClaimErr) throw lastClaimErr;
-          lastClaimDate = lastClaim?.created_at ? new Date(lastClaim.created_at) : null;
-        } catch (err) {
-          console.error('[API/streak] Failed to verify shield claim eligibility', err);
+            .gte('created_at', streakStart.toISOString());
+          if (claimErr) throw claimErr;
+          claimsThisStreak = count ?? 0;
+        } catch (claimLookupErr) {
+          console.error('[API/streak] Claim eligibility lookup failed', claimLookupErr);
           return res.status(503).json({ error: 'Shield claim unavailable' });
         }
 
-        if (lastClaimDate) {
-          const sevenDaysMs = ms(24 * 7);
-          const elapsed = now.getTime() - lastClaimDate.getTime();
-          if (elapsed < sevenDaysMs) {
-            return res.status(400).json({ error: 'Shield already claimed this week' });
-          }
+        const eligibleClaims = Math.floor(currentStreak / 7);
+        if (claimsThisStreak >= eligibleClaims) {
+          return res.status(409).json({ error: 'Shield already claimed for current streak progress' });
         }
 
         const nextTokens = shieldTokens + 1;

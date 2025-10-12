@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-import { buildProgressTrends, type BandRow } from '@/lib/analytics/progress';
+import { buildProgressTrends, computeLexicalEstimate, type BandRow } from '@/lib/analytics/progress';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -39,11 +39,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: error.message });
   }
 
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('goal_band')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  const { data: masteryRows, error: masteryError } = await supabase
+    .from('user_challenge_progress')
+    .select('total_mastered')
+    .eq('user_id', user.id);
+
+  if (masteryError) {
+    return res.status(500).json({ error: masteryError.message });
+  }
+
   const payload = buildProgressTrends(((data ?? []) as BandRow[]).map((row) => ({
     attempt_date: row.attempt_date,
     skill: row.skill,
     band: typeof row.band === 'number' ? row.band : Number(row.band ?? 0),
   })));
 
-  return res.status(200).json(payload);
+  const totalMastered = (masteryRows ?? []).reduce(
+    (sum, row) => sum + (typeof row?.total_mastered === 'number' ? row.total_mastered : 0),
+    0,
+  );
+  const lexicalEstimate = computeLexicalEstimate(totalMastered, profileRow?.goal_band ?? null);
+
+  return res.status(200).json({ ...payload, lexicalEstimate });
 }

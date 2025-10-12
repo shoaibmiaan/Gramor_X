@@ -11,25 +11,10 @@ export interface Drill {
   due: Date;
 }
 
-// Vocabulary review cadence derived from docs/vocab-spec.md
-export const VOCAB_REVIEW_INTERVALS_DAYS = [0, 1, 3, 7, 16, 32] as const;
-
-export const VOCAB_MASTERY_MIN_STREAK = 3;
-export const VOCAB_MASTERY_MIN_INTERVAL_DAYS = 21;
-
-function getVocabIntervalDays(repetitions: number): number {
-  const idx = Math.min(Math.max(repetitions, 0), VOCAB_REVIEW_INTERVALS_DAYS.length - 1);
-  return VOCAB_REVIEW_INTERVALS_DAYS[idx];
-}
-
-export function vocabIntervalDaysForRepetitions(repetitions: number): number {
-  return getVocabIntervalDays(repetitions);
-}
-
-export function isVocabMastered(repetitions: number): boolean {
-  const intervalDays = getVocabIntervalDays(repetitions);
-  return repetitions >= VOCAB_MASTERY_MIN_STREAK && intervalDays >= VOCAB_MASTERY_MIN_INTERVAL_DAYS;
-}
+const INTERVALS: Record<'control' | 'extended', number[]> = {
+  control: [1, 3, 7, 14, 30],
+  extended: [1, 4, 9, 16, 35],
+};
 
 /**
  * Schedule the next review for a drill using a simplified SM-2 algorithm.
@@ -62,8 +47,10 @@ export function isDue(drill: Drill, date: Date = new Date()): boolean {
  * Returns the next review date given the number of completed repetitions.
  * The interval grows over time following a simple spaced repetition sequence.
  */
-export function scheduleReview(repetitions: number): Date {
-  const days = getVocabIntervalDays(repetitions);
+export function scheduleReview(repetitions: number, variant: 'control' | 'extended' = 'control'): Date {
+  const config = INTERVALS[variant] ?? INTERVALS.control;
+  const idx = Math.min(Math.max(0, repetitions), config.length - 1);
+  const days = config[idx];
   const next = new Date();
   next.setDate(next.getDate() + days);
   return next;

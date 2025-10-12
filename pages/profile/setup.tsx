@@ -13,7 +13,17 @@ import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { emitUserEvent } from '@/lib/analytics/user';
-import { COUNTRIES, LEVELS, TIME, PREFS, WEAKNESSES, GOAL_REASONS, LEARNING_STYLES } from '@/lib/profile-options';
+import {
+  COUNTRIES,
+  LEVELS,
+  TIME,
+  PREFS,
+  WEAKNESSES,
+  GOAL_REASONS,
+  LEARNING_STYLES,
+  TOPICS,
+  DAILY_QUOTA_RANGE,
+} from '@/lib/profile-options';
 import { resolveAvatarUrl } from '@/lib/avatar';
 import type { AIPlan } from '@/types/profile';
 
@@ -34,6 +44,24 @@ const Section: React.FC<{ title: string; subtitle?: string; children: React.Reac
     </summary>
     <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-0">{children}</div>
   </details>
+);
+
+const DEFAULT_DAILY_QUOTA = 4;
+
+const clampDailyQuota = (value: number | null | undefined): number => {
+  if (!Number.isFinite(value ?? NaN)) return DEFAULT_DAILY_QUOTA;
+  const coerced = Math.round(Number(value));
+  return Math.min(DAILY_QUOTA_RANGE.max, Math.max(DAILY_QUOTA_RANGE.min, coerced));
+};
+
+const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
+  <div className="w-full h-2 rounded-full bg-muted/40 overflow-hidden">
+    <div
+      className="h-full bg-gradient-to-r from-primary/80 to-electricBlue/80 transition-[width] duration-300"
+      /* eslint-disable-next-line ds-guard/no-inline-style */
+      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+    />
+  </div>
 );
 
 const SkeletonLine: React.FC<{ className?: string }> = ({ className }) => (
@@ -57,6 +85,8 @@ export default function ProfileSetup() {
   const [goal, setGoal] = useState(7.0);
   const [examDate, setExamDate] = useState('');
   const [prefs, setPrefs] = useState<typeof PREFS[number][]>([]);
+  const [focusTopics, setFocusTopics] = useState<typeof TOPICS[number][]>([]);
+  const [dailyQuota, setDailyQuota] = useState<number>(DEFAULT_DAILY_QUOTA);
   const [time, setTime] = useState<typeof TIME[number] | ''>('');
   const [daysPerWeek, setDaysPerWeek] = useState<number | ''>('');
   const [lang, setLang] = useState('en');
@@ -180,6 +210,12 @@ export default function ProfileSetup() {
         setGoal(Number(data.goal_band ?? 7.0));
         setExamDate(data.exam_date ?? '');
         setPrefs(data.study_prefs ?? []);
+        setFocusTopics(
+          Array.isArray(data.focus_topics)
+            ? (data.focus_topics.filter((topic: any) => typeof topic === 'string') as typeof TOPICS[number][])
+            : [],
+        );
+        setDailyQuota(clampDailyQuota(data.daily_quota_goal ?? null));
         setTime(data.time_commitment ?? '');
         setDaysPerWeek(data.days_per_week ?? '');
         setPhone(data.phone ?? '');
@@ -329,6 +365,10 @@ export default function ProfileSetup() {
     setPrefs((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
   };
 
+  const toggleTopic = (topic: typeof TOPICS[number]) => {
+    setFocusTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]));
+  };
+
   const toggleWeakness = (w: typeof WEAKNESSES[number]) => {
     setWeaknesses((prev) => (prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w]));
   };
@@ -444,12 +484,14 @@ export default function ProfileSetup() {
       goal_band: goal || null,
       exam_date: examDate || null,
       study_prefs: prefs,
+      focus_topics: focusTopics,
       phone: phone || null,
       weaknesses,
       timezone: timezone || null,
       time_commitment: time || null,
       time_commitment_min: timeCommitmentMin,
       days_per_week: daysPerWeek || null,
+      daily_quota_goal: dailyQuota || null,
       preferred_language: lang || 'en',
       language_preference: explanationLang || 'en',
       avatar_url: avatarPath || null,
@@ -878,6 +920,52 @@ export default function ProfileSetup() {
                             </Badge>
                           </button>
                         ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Priority topics</span>
+                      <div className="flex flex-wrap gap-2">
+                        {TOPICS.map((topic) => (
+                          <button
+                            key={topic}
+                            type="button"
+                            onClick={() => toggleTopic(topic)}
+                            aria-pressed={focusTopics.includes(topic)}
+                            className="focus-visible:outline-none"
+                          >
+                            <Badge
+                              variant={focusTopics.includes(topic) ? 'accent' : 'neutral'}
+                              className={`cursor-pointer transition ${focusTopics.includes(topic) ? 'ring-2 ring-accent' : 'hover:opacity-90'}`}
+                            >
+                              {topic}
+                            </Badge>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-caption text-grayish/80 dark:text-grayish/80">
+                        Used to theme daily drills and lexical goals.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block">
+                        <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Daily practice quota</span>
+                        <input
+                          type="range"
+                          min={DAILY_QUOTA_RANGE.min}
+                          max={DAILY_QUOTA_RANGE.max}
+                          step={1}
+                          value={dailyQuota}
+                          onChange={(event) => setDailyQuota(clampDailyQuota(Number(event.target.value)))}
+                          className="w-full"
+                        />
+                      </label>
+                      <div className="mt-1 flex flex-wrap items-center justify-between text-caption text-grayish dark:text-grayish">
+                        <span>{dailyQuota} activities per day</span>
+                        <span>
+                          Range {DAILY_QUOTA_RANGE.min}–{DAILY_QUOTA_RANGE.max}
+                        </span>
                       </div>
                     </div>
 
