@@ -34,7 +34,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { t } = useLocale();
   const { success: toastSuccess, error: toastError } = useToast();
-  const { current: streak, longest, loading: streakLoading } = useStreak();
+  const { current: streak, longest, loading: streakLoading, shields } = useStreak();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [fullName, setFullName] = useState('');
@@ -194,7 +194,7 @@ export default function ProfilePage() {
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
         <div className="mx-auto flex max-w-2xl flex-col gap-6">
-          <StreakCounter current={streak} longest={longest} loading={streakLoading} />
+          <StreakCounter current={streak} longest={longest} loading={streakLoading} shields={shields} />
 
           {error && (
             <Alert variant="error" role="alert" className="rounded-ds-2xl">
