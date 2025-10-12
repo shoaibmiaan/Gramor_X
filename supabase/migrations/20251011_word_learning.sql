@@ -74,6 +74,74 @@ exception
   when duplicate_object then null;
 end$$;
 
+create table if not exists public.word_learning_streaks (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  current integer not null default 0,
+  longest integer not null default 0,
+  last_active_date date,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.word_learning_streaks enable row level security;
+
+do $$
+begin
+  create policy "word_learning_streaks_read_own" on public.word_learning_streaks
+    for select using (auth.uid() = user_id);
+exception
+  when duplicate_object then null;
+end$$;
+
+insert into public.word_learning_streaks (user_id, current, longest, last_active_date, updated_at)
+select
+  s.user_id,
+  s.current,
+  s.longest,
+  s.last_active_date,
+  coalesce(s.updated_at, now())
+from public.streaks s
+on conflict (user_id) do update
+  set current = excluded.current,
+      longest = greatest(public.word_learning_streaks.longest, excluded.longest),
+      last_active_date = coalesce(excluded.last_active_date, public.word_learning_streaks.last_active_date),
+      updated_at = now();
+
+with ordered_logs as (
+  select
+    user_id,
+    learned_on,
+    learned_on - ((row_number() over (partition by user_id order by learned_on))::int) as grp
+  from public.user_word_logs
+),
+user_streaks as (
+  select user_id, grp, count(*) as streak_length
+  from ordered_logs
+  group by user_id, grp
+),
+longest_streaks as (
+  select user_id, max(streak_length) as longest
+  from user_streaks
+  group by user_id
+),
+last_activity as (
+  select user_id, max(learned_on) as last_active_date
+  from public.user_word_logs
+  group by user_id
+)
+insert into public.word_learning_streaks (user_id, current, longest, last_active_date, updated_at)
+select
+  l.user_id,
+  0,
+  l.longest,
+  la.last_active_date,
+  now()
+from longest_streaks l
+left join last_activity la on la.user_id = l.user_id
+on conflict (user_id) do update
+  set longest = greatest(public.word_learning_streaks.longest, excluded.longest),
+      last_active_date = coalesce(public.word_learning_streaks.last_active_date, excluded.last_active_date),
+      updated_at = now();
+
 create or replace function public.get_word_of_day(d date default timezone('Asia/Karachi', now())::date)
 returns table (
   id uuid,
@@ -144,7 +212,7 @@ begin
     return 0;
   end if;
 
-  select longest into existing_longest from public.streaks where user_id = p_user;
+  select longest into existing_longest from public.word_learning_streaks where user_id = p_user;
   existing_longest := coalesce(existing_longest, 0);
 
   select max(learned_on) into last_learned
@@ -152,17 +220,11 @@ begin
   where user_id = p_user;
 
   if last_learned is null then
-    insert into public.user_streaks (user_id, current_streak, last_activity_date)
-    values (p_user, 0, null)
-    on conflict (user_id) do update
-      set current_streak = 0,
-          last_activity_date = null;
-
-    insert into public.streaks (user_id, current, longest, last_active_date, updated_at)
+    insert into public.word_learning_streaks (user_id, current, longest, last_active_date, updated_at)
     values (p_user, 0, existing_longest, null, now())
     on conflict (user_id) do update
       set current = 0,
-          longest = greatest(public.streaks.longest, existing_longest),
+          longest = greatest(public.word_learning_streaks.longest, excluded.longest),
           last_active_date = null,
           updated_at = now();
     return 0;
@@ -195,17 +257,11 @@ begin
     end loop;
   end if;
 
-  insert into public.user_streaks (user_id, current_streak, last_activity_date)
-  values (p_user, streak, last_learned)
-  on conflict (user_id) do update
-    set current_streak = excluded.current_streak,
-        last_activity_date = excluded.last_activity_date;
-
-  insert into public.streaks (user_id, current, longest, last_active_date, updated_at)
+  insert into public.word_learning_streaks (user_id, current, longest, last_active_date, updated_at)
   values (p_user, streak, greatest(streak, existing_longest), last_learned, now())
   on conflict (user_id) do update
     set current = excluded.current,
-        longest = greatest(public.streaks.longest, excluded.current, existing_longest),
+        longest = greatest(public.word_learning_streaks.longest, excluded.longest),
         last_active_date = excluded.last_active_date,
         updated_at = now();
 
