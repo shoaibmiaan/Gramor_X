@@ -6,7 +6,7 @@ import urMessages from '@/public/locales/ur/common.json';
 import arMessages from '@/public/locales/ar/common.json';
 import esMessages from '@/public/locales/es/common.json';
 
-const SUPPORTED_LOCALES = ['en', 'ur', 'ar', 'fr'] as const;
+const SUPPORTED_LOCALES = ['en', 'ur'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 const DEFAULT_LOCALE: Locale = 'en';
 const STORAGE_KEY = 'gx:locale';
@@ -53,6 +53,10 @@ function normaliseLocale(raw?: string | null): Locale {
   const base = lower.split('-')[0];
   const baseMatch = SUPPORTED_LOCALES.find((loc) => loc === base);
   return baseMatch ?? DEFAULT_LOCALE;
+}
+
+export function toSupportedLocale(input: string | Locale): Locale {
+  return normaliseLocale(typeof input === 'string' ? input : String(input));
 }
 
 export function isLocaleRTL(locale: string | null | undefined): boolean {
