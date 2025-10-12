@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const currentStreak = Number.isFinite(streak as number) ? (streak as number) : 0;
 
   const { data: streakRow } = await supabaseAdmin
-    .from('streaks')
+    .from('word_learning_streaks')
     .select('longest')
     .eq('user_id', userId)
     .maybeSingle();
