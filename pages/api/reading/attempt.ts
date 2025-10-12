@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { buildReadingMiniCloze } from '@/lib/skills/readingMiniCloze';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 interface ReadingAttemptBody {
@@ -29,16 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const itemType = body.item_type && ['word', 'collocation', 'gap'].includes(body.item_type)
     ? body.item_type
     : 'word';
-  const passage = typeof body.passage === 'string' ? body.passage : '';
-  const blanks = Array.isArray(body.blanks) ? body.blanks : [];
   const responses = Array.isArray(body.responses) ? body.responses : [];
 
   if (!wordId) {
     return res.status(400).json({ error: 'Missing word_id' });
-  }
-
-  if (blanks.length === 0) {
-    return res.status(400).json({ error: 'No blanks provided' });
   }
 
   const supabase = createSupabaseServerClient({ req, res });
@@ -52,24 +47,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const blankMap = new Map<string, { label: string; answer: string }>();
-    blanks.forEach((blank, index) => {
-      const id = typeof blank.id === 'string' ? blank.id : `blank-${index + 1}`;
-      const answer = typeof blank.answer === 'string' ? blank.answer : '';
-      blankMap.set(id, {
-        label: typeof blank.label === 'string' ? blank.label : `Blank ${index + 1}`,
-        answer,
+    const [wordRes, collocationsRes, examplesRes] = await Promise.all([
+      supabase
+        .from('words')
+        .select('id, headword, definition, register, ielts_topics')
+        .eq('id', wordId)
+        .maybeSingle(),
+      supabase
+        .from('word_collocations')
+        .select('id, word_id, chunk, pattern, note')
+        .eq('word_id', wordId),
+      supabase
+        .from('word_examples')
+        .select('id, word_id, text, source, is_gap_ready, ielts_topic')
+        .eq('word_id', wordId)
+        .order('updated_at', { ascending: false })
+        .limit(5),
+    ]);
+
+    if (wordRes.error || !wordRes.data) {
+      console.error('[reading/attempt] failed to load word', wordRes.error);
+      return res.status(400).json({ error: 'Reading drill unavailable for this word' });
+    }
+
+    if (collocationsRes.error || examplesRes.error) {
+      console.error('[reading/attempt] failed to load context', {
+        collocations: collocationsRes.error,
+        examples: examplesRes.error,
       });
+      return res.status(500).json({ error: 'Failed to prepare reading drill' });
+    }
+
+    const readingMiniCloze = buildReadingMiniCloze({
+      word: wordRes.data,
+      collocations: collocationsRes.data ?? [],
+      examples: examplesRes.data ?? [],
     });
 
-    const resultRows = Array.from(blankMap.entries()).map(([id, meta]) => {
-      const responseEntry = responses.find((entry) => entry && entry.id === id);
-      const responseText = typeof responseEntry?.response === 'string' ? responseEntry.response : '';
-      const correct = normalise(responseText) === normalise(meta.answer);
+    if (!readingMiniCloze || readingMiniCloze.blanks.length === 0) {
+      return res.status(400).json({ error: 'Reading drill unavailable for this word' });
+    }
+
+    const responseMap = new Map<string, string>();
+    responses.forEach((entry) => {
+      if (entry && typeof entry.id === 'string' && typeof entry.response === 'string') {
+        responseMap.set(entry.id, entry.response);
+      }
+    });
+
+    const resultRows = readingMiniCloze.blanks.map((blank) => {
+      const responseText = responseMap.get(blank.id) ?? '';
+      const correct = normalise(responseText) === normalise(blank.answer);
       return {
-        id,
-        label: meta.label,
-        expected: meta.answer,
+        id: blank.id,
+        label: blank.label,
+        expected: blank.answer,
         response: responseText,
         correct,
       };
@@ -92,8 +124,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         user_id: user.id,
         word_id: wordId,
         item_type: itemType,
-        passage,
-        blanks: resultRows.map((row) => ({ id: row.id, label: row.label, answer: row.expected })),
+        passage: readingMiniCloze.passage,
+        blanks: readingMiniCloze.blanks,
         responses: resultRows.map((row) => ({ id: row.id, response: row.response, correct: row.correct })),
         score,
         feedback,
