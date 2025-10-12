@@ -1,5 +1,3 @@
-// pages/dashboard/index.tsx
-
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -53,7 +51,6 @@ export default function Dashboard() {
     progress: Record<string, ChallengeTaskStatus> | null;
   } | null>(null);
 
-  // Hook now exposes: nextRestart + shields + claimShield + useShield
   const {
     current: streak,
     longest,
@@ -89,7 +86,6 @@ export default function Dashboard() {
             const { error } = await supabase.auth.exchangeCodeForSession(url);
             if (!error) {
               await router.replace('/dashboard');
-              // continue to load dashboard normally
             }
           }
         }
@@ -125,7 +121,6 @@ export default function Dashboard() {
 
         let p = data as Profile | null;
 
-        // If the profile row doesn't exist yet, create a minimal one so we don't bounce
         if (!p) {
           const minimal = {
             user_id: authUser.id,
@@ -152,10 +147,8 @@ export default function Dashboard() {
           }
         }
 
-        // Determine if onboarding is incomplete WITHOUT redirecting
         const draftFlag = (p as any)?.draft === true;
         const explicitIncomplete = (p as any)?.onboarding_complete === false;
-        // Heuristic fallback (if schema doesn't have flags)
         const heuristicIncomplete =
           (p as any)?.onboarding_complete == null &&
           (!p?.full_name || !p?.preferred_language);
@@ -229,20 +222,6 @@ export default function Dashboard() {
       cancelled = true;
     };
   }, [sessionUserId]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem('dashboardTipsDismissed');
-      if (!dismissed) setShowTips(true);
-    }
-  }, []);
-
-  const dismissTips = () => {
-    setShowTips(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboardTipsDismissed', '1');
-    }
-  };
 
   useEffect(() => {
     if (streakLoading) return;
@@ -335,6 +314,7 @@ export default function Dashboard() {
                     width={56}
                     height={56}
                     className="rounded-full ring-2 ring-primary/40"
+                    unoptimized
                   />
                 ) : null}
               </div>
@@ -364,10 +344,10 @@ export default function Dashboard() {
               <WordOfTheDayCard />
             </div>
 
+            {/* Reviews + Spotlight (single instances) */}
             <div id="reviews" className="mt-10">
               <TodayReviewsPanel />
             </div>
-
             <FourSkillSpotlight />
 
             {/* Weekly Challenge */}
