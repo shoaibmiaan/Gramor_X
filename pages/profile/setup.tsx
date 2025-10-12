@@ -7,7 +7,6 @@ import { Input } from '@/components/design-system/Input';
 import { AvatarUploader } from '@/components/design-system/AvatarUploader';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
-import { ProgressBar } from '@/components/design-system/ProgressBar';
 import Image from 'next/image';
 import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
@@ -54,7 +53,7 @@ const clampDailyQuota = (value: number | null | undefined): number => {
   return Math.min(DAILY_QUOTA_RANGE.max, Math.max(DAILY_QUOTA_RANGE.min, coerced));
 };
 
-const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
+const SetupProgressBar: React.FC<{ value: number }> = ({ value }) => (
   <div className="w-full h-2 rounded-full bg-muted/40 overflow-hidden">
     <div
       className="h-full bg-gradient-to-r from-primary/80 to-electricBlue/80 transition-[width] duration-300"
@@ -567,7 +566,7 @@ export default function ProfileSetup() {
               <p className="text-muted mt-1 sm:mt-2 max-w-prose">{t('profileSetup.description')}</p>
             </div>
             <div className="w-full sm:w-64">
-              <ProgressBar value={progress} />
+              <SetupProgressBar value={progress} />
               <p className="mt-1 text-right text-caption text-muted">{progress}%</p>
             </div>
           </div>
