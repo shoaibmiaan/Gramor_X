@@ -160,6 +160,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const previousCurrent = row.current_streak ?? 0;
 
       if (action === 'claim') {
+        const currentStreak = row.current_streak ?? 0;
+        if (currentStreak < 7) {
+          return res.status(400).json({ error: 'Shield claim unavailable for current streak' });
+        }
+
+        if (!row.last_activity_date) {
+          return res.status(409).json({ error: 'Shield claim unavailable without recent activity' });
+        }
+
+        const streakEnd = new Date(`${row.last_activity_date}T00:00:00Z`);
+        if (Number.isNaN(streakEnd.getTime())) {
+          return res.status(500).json({ error: 'Invalid streak state' });
+        }
+
+        const streakStart = new Date(streakEnd);
+        streakStart.setUTCDate(streakStart.getUTCDate() - Math.max(currentStreak - 1, 0));
+
+        let claimsThisStreak = 0;
+        try {
+          const { count, error: claimErr } = await supabaseUser
+            .from('streak_shield_logs')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('action', 'claim')
+            .gte('created_at', streakStart.toISOString());
+          if (claimErr) throw claimErr;
+          claimsThisStreak = count ?? 0;
+        } catch (claimLookupErr) {
+          console.error('[API/streak] Claim eligibility lookup failed', claimLookupErr);
+          return res.status(503).json({ error: 'Shield claim unavailable' });
+        }
+
+        const eligibleClaims = Math.floor(currentStreak / 7);
+        if (claimsThisStreak >= eligibleClaims) {
+          return res.status(409).json({ error: 'Shield already claimed for current streak progress' });
+        }
+
         const nextTokens = shieldTokens + 1;
         try {
           const { data: updatedShield, error: shieldErr } = await supabaseUser
