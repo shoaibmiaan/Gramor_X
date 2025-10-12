@@ -22,6 +22,7 @@ import { env } from '@/lib/env';
 import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
+import { destinationByRole } from '@/lib/routeAccess';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
@@ -308,7 +309,8 @@ function InnerApp({ Component, pageProps }: AppProps) {
       if (session?.user && isAuthPage) {
         const url = new URL(window.location.href);
         const next = url.searchParams.get('next');
-        const target = next && next.startsWith('/') ? next : '/';
+        const target =
+          next && next.startsWith('/') ? next : destinationByRole(session.user) ?? '/';
         router.replace(target);
       }
     })();
@@ -329,7 +331,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
             if (next && next.startsWith('/')) {
               router.replace(next);
             } else if (isAuthPage) {
-              router.replace('/');
+              router.replace(destinationByRole(sessionNow.user));
             }
           }
 
