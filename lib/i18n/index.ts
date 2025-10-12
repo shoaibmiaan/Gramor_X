@@ -1,38 +1,29 @@
 // lib/i18n/index.ts
-import { i18nConfig, SupportedLocale } from "./config";
+import { defaultLocale, type SupportedLocale } from './config';
+import { dictionaries } from './dictionaries';
+import {
+  registerMessages,
+  setLocale as setActiveLocale,
+  toSupportedLocale,
+  t as translate,
+  getLocale as getActiveLocale,
+} from '@/lib/locale';
 
-let currentLocale: SupportedLocale = i18nConfig.defaultLocale;
-let translations: Record<string, string> = {};
+const loaded = new Set<SupportedLocale>();
 
-/**
- * Load translations for a given locale.
- */
+registerMessages(defaultLocale, dictionaries[defaultLocale]);
+loaded.add(defaultLocale);
+
 export async function loadTranslations(locale: SupportedLocale) {
-  if (!i18nConfig.locales.includes(locale)) {
-    locale = i18nConfig.defaultLocale;
+  const safe = toSupportedLocale(locale);
+  if (!loaded.has(safe)) {
+    const dictionary = dictionaries[safe] ?? dictionaries[defaultLocale];
+    registerMessages(safe, dictionary);
+    loaded.add(safe);
   }
-
-  try {
-    const mod = await import(`@/locales/${locale}/common.json`);
-    translations = mod.default;
-    currentLocale = locale;
-  } catch (e) {
-    console.error("Failed to load translations", e);
-    translations = {};
-    currentLocale = i18nConfig.defaultLocale;
-  }
+  setActiveLocale(safe);
+  return safe;
 }
 
-/**
- * Translate a key using loaded translations.
- */
-export function t(key: string): string {
-  return translations[key] ?? key;
-}
-
-/**
- * Get current locale.
- */
-export function getLocale(): SupportedLocale {
-  return currentLocale;
-}
+export const t = translate;
+export const getLocale = getActiveLocale;
