@@ -45,9 +45,8 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
   const [auth, setAuth] = useState<'unknown' | 'authed' | 'guest'>('unknown');
 
   useEffect(() => {
-    const t = new Date();
-    t.setDate(t.getDate() + 7);
-    setTarget(t);
+    const launchAt = new Date('2025-12-02T00:00:00Z');
+    setTarget(launchAt);
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
@@ -297,7 +296,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
                   </div>
                 </>
               ) : (
-                <div className="text-sm text-muted-foreground">Loading today's challenge…</div>
+                <div className="text-sm text-muted-foreground">Loading today&apos;s challenge…</div>
               )}
             </Card>
           </div>
