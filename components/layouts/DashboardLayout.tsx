@@ -4,22 +4,23 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
 
-/**
- * DashboardLayout
- * - DS tokens only (no hex)
- * - Context header + quick section nav
- * - Body wraps children in a card surface
- */
+const QUICK_LINKS = [
+  { href: '/study-plan', label: 'Study Plan' },
+  { href: '/progress', label: 'Analytics' },
+  { href: '/listening', label: 'Listening' },
+  { href: '/reading', label: 'Reading' },
+  { href: '/writing', label: 'Writing' },
+  { href: '/speaking/simulator', label: 'Speaking' },
+  { href: '/pricing', label: 'Upgrade' },
+] as const;
+
 const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { pathname } = useRouter();
-  const itemClass = (active: boolean) =>
-    `nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`;
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      {/* Context header */}
-      <section className="border-b border-border bg-card/40">
-        <Container className="flex flex-col gap-4 py-5 pt-safe sm:py-6">
+      <header className="border-b border-border bg-card/30">
+        <Container className="space-y-4 py-6 pt-safe">
           <div className="space-y-1">
             <h1 className="font-slab text-h3 sm:text-h2">Your Dashboard</h1>
             <p className="text-small text-mutedText">
@@ -27,48 +28,34 @@ const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
             </p>
           </div>
 
-          {/* Quick section nav (DS helper .nav-pill) */}
           <nav
-            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
             aria-label="Dashboard quick links"
+            className="flex flex-wrap gap-3 text-sm text-muted-foreground"
           >
-            <div className="flex gap-2 px-1">
-              <Link href="/study-plan" className={itemClass(pathname.startsWith('/study-plan'))}>
-                Study Plan
-              </Link>
-              <Link href="/progress" className={itemClass(pathname.startsWith('/progress'))}>
-                Analytics
-              </Link>
-              <Link href="/listening" className={itemClass(pathname.startsWith('/listening'))}>
-                Listening
-              </Link>
-              <Link href="/reading" className={itemClass(pathname.startsWith('/reading'))}>
-                Reading
-              </Link>
-              <Link href="/writing" className={itemClass(pathname.startsWith('/writing'))}>
-                Writing
-              </Link>
-              <Link href="/speaking/simulator" className={itemClass(pathname.startsWith('/speaking'))}>
-                Speaking
-              </Link>
-              <Link href="/pricing" className={itemClass(pathname.startsWith('/pricing'))}>
-                Upgrade
-              </Link>
-            </div>
+            {QUICK_LINKS.map(({ href, label }) => {
+              const active = pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`rounded-md px-2 py-1 transition hover:text-foreground ${
+                    active ? 'bg-muted text-foreground' : ''
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
         </Container>
-      </section>
+      </header>
 
-      {/* Page body */}
-      <Container className="py-5 sm:py-6">
-        <div className="card-surface rounded-ds-2xl p-3 sm:p-4">
-          {children}
-        </div>
-      </Container>
+      <main>
+        <Container className="py-8 sm:py-10">{children}</Container>
+      </main>
     </div>
   );
 };
 
 export default DashboardLayout;
-/** also export named, so either import style works */
 export { DashboardLayout };
