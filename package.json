@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently \"next dev\" \"npm:dev:premium\"",
     "dev:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --watch",
-    "build": "npm run build:premium && next build",
+    "build": "npm run build:premium && node ./scripts/next-build.mjs",
     "build:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --minify",
     "start": "next start",
     "clean": "rm -rf .next",
