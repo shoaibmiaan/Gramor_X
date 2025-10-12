@@ -121,6 +121,56 @@ export const writingExamSummaries: WritingExamSummary[] = [
     task2Focus: 'Consider the importance of arts in education',
     durationMinutes: 60,
     tags: ['transport', 'education', 'arts']
+  },
+  {
+    id: 'ielts-writing-exam-11',
+    title: 'Academic Set 11 — Urban Cycling & Creative Funding',
+    description: 'Cycling trend line graph with an opinion essay about public arts grants.',
+    task1Type: 'Academic',
+    task1Focus: 'Line graph • cycling journeys • 3 cities',
+    task2Focus: 'Debate prioritising community art programmes',
+    durationMinutes: 60,
+    tags: ['charts', 'arts', 'cities']
+  },
+  {
+    id: 'ielts-writing-exam-12',
+    title: 'General Training Set 12 — Community Centre & Flexible Hours',
+    description: 'Community hall request letter paired with an essay on flexible schedules.',
+    task1Type: 'General Training',
+    task1Focus: 'Semi-formal letter • facilities request',
+    task2Focus: 'Evaluate flexible working timetables',
+    durationMinutes: 60,
+    tags: ['letters', 'work', 'community']
+  },
+  {
+    id: 'ielts-writing-exam-13',
+    title: 'Academic Set 13 — Remote Clinics & Ageing Cities',
+    description: 'Telehealth adoption bar chart and a problem-solution essay on ageing populations.',
+    task1Type: 'Academic',
+    task1Focus: 'Bar chart • telehealth uptake • 4 regions',
+    task2Focus: 'Address challenges in ageing cities',
+    durationMinutes: 60,
+    tags: ['health', 'charts', 'society']
+  },
+  {
+    id: 'ielts-writing-exam-14',
+    title: 'Academic Set 14 — Smart Homes & Youth Engagement',
+    description: 'Energy management process diagram with an essay on youth councils.',
+    task1Type: 'Academic',
+    task1Focus: 'Process diagram • smart home energy system',
+    task2Focus: 'Argue for or against youth policy councils',
+    durationMinutes: 60,
+    tags: ['process', 'technology', 'civics']
+  },
+  {
+    id: 'ielts-writing-exam-15',
+    title: 'General Training Set 15 — Fitness Programme & Social Media',
+    description: 'Informal colleague letter followed by an essay on social media breaks.',
+    task1Type: 'General Training',
+    task1Focus: 'Informal letter • workplace challenge invitation',
+    task2Focus: 'Discuss merits of social media breaks',
+    durationMinutes: 60,
+    tags: ['letters', 'health', 'technology']
   }
 ];
 
