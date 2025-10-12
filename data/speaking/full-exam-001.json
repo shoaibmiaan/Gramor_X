@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-001",
+  "title": "IELTS Speaking Full Mock Exam 001",
+  "part1": [
+    "Can you tell me about the city you grew up in?",
+    "How do you usually spend your weekends?",
+    "Do you prefer reading books or watching films in your free time?",
+    "Have your leisure activities changed since you were a child?",
+    "Is it easy to travel around your hometown?",
+    "What kinds of public events are popular there?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a technology that helps you stay organised.",
+      "You should say:",
+      "• what the technology is",
+      "• how often you use it",
+      "• what specific features you find most useful",
+      "and explain how it has changed the way you plan your day."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "Why do some people struggle to manage their time effectively?",
+    "How has technology changed the way companies organise large projects?",
+    "Do you think schools should teach time-management skills? Why or why not?",
+    "In what ways might future technologies improve productivity at work?"
+  ]
+}
