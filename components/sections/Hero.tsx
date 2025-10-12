@@ -7,6 +7,7 @@ import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { Icon } from '@/components/design-system/Icon';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
+import { track } from '@/lib/analytics/track';
 
 const highlightFeatures = [
   {
@@ -95,6 +96,9 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
       const json: WOD = await res.json();
       setData(json);
       onStreakChange?.(json.streakDays ?? 0);
+      if (!json.learnedToday) {
+        track('vocab_review_start', { wordId: json.word.id });
+      }
       try {
         window.dispatchEvent(
           new CustomEvent('streak:changed', { detail: { value: json.streakDays ?? 0 } })
@@ -135,6 +139,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
       if (!r.ok) {
         console.error('Failed to mark word learned:', r.status);
       } else {
+        track('vocab_review_finish', { wordId: data.word.id });
         const updated = await load();
         if (updated) {
           try {
@@ -296,7 +301,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
                   </div>
                 </>
               ) : (
-                <div className="text-sm text-muted-foreground">Loading today&apos;s challenge…</div>
+                <div className="text-sm text-muted-foreground">Loading today&rsquo;s challenge…</div>
               )}
             </Card>
           </div>

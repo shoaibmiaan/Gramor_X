@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getActiveDayISO } from '@/lib/daily-learning-time';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { getServerClient } from '@/lib/supabaseServer';
+import { trackor } from '@/lib/analytics/trackor.server';
 
 type WordPayload = {
   id: string;
@@ -38,6 +39,13 @@ const ZERO_STREAK: Pick<TodayOut, 'learnedToday' | 'streakDays' | 'longestStreak
   longestStreak: 0,
   streakValueUSD: 0,
 };
+
+const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+function maybeUuid(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  return UUID_RE.test(value) ? value : null;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -119,13 +127,38 @@ export default async function handler(
       ? (streakRow?.longest as number)
       : streakDays;
 
-    return res.status(200).json({
+    const payload: TodayOut = {
       word,
       learnedToday: Boolean(learnedRow),
       streakDays,
       longestStreak: longest,
       streakValueUSD: streakDays * 0.5,
-    });
+    };
+
+    if (!learnedRow) {
+      try {
+        await trackor.log('vocab_review_start', {
+          user_id: userId,
+          word_id: word.id,
+          streak_days: streakDays,
+          longest_streak: longest,
+        });
+      } catch (error) {
+        console.warn('[api/words/today] analytics failed', error);
+      }
+      try {
+        await supabaseAdmin.from('review_events').insert({
+          user_id: userId,
+          event: 'open',
+          source: 'daily_word',
+          word_id: maybeUuid(word.id),
+        });
+      } catch (error) {
+        console.warn('[api/words/today] review open log failed', error);
+      }
+    }
+
+    return res.status(200).json(payload);
   } catch (error) {
     console.error('[api/words/today] unexpected error', error);
     res.setHeader('Cache-Control', 'no-store');

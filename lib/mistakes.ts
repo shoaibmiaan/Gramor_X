@@ -50,11 +50,9 @@ export async function fetchMistakePage({
 export async function recordMistakeReview({
   id,
   repetitions,
-  nextReview,
 }: {
   id: string;
   repetitions: number;
-  nextReview: string;
 }): Promise<MistakeRecord> {
   const res = await fetch('/api/mistakes', {
     method: 'PUT',
@@ -62,8 +60,6 @@ export async function recordMistakeReview({
     body: JSON.stringify({
       id,
       repetitions,
-      next_review: nextReview,
-      last_seen_at: new Date().toISOString(),
     }),
   });
   if (!res.ok) {

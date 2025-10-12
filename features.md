@@ -62,6 +62,7 @@ Got it. I’ve converted your checklist into tables with three columns: **Item**
 | [x] Speaking audio evaluation (fluency, vocab, grammar, pronunciation) | Uploaded audio is analyzed for multiple criteria using speech models, and results are stored for later review. Pronunciation scoring can be inconsistent for strong accents. |         |
 | [x] Transcription + pronunciation scoring                              | Service transcribes recordings and rates pronunciation accuracy. Accent-specific tuning and support for multiple languages are missing.                                      |         |
 | [x] Instant feedback with model answer                                 | After submission, the system displays a model answer and highlights key points for improvement. Sample audio for speaking responses is planned.                              |         |
+| [x] AI paraphrase & speaking assist                                    | Feature-flagged sentence rewrites and Part 2 speaking hints with rate limits, logging, and heuristic fallbacks keep coaching optional and safe.                              |         |
 | [ ] AI re-evaluation option                                            | Feature has not been started. Will allow users to request a second AI review, likely consuming additional credits and providing comparison reports.                          |         |
 
 ---
