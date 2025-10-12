@@ -78,7 +78,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser;
 
     (async () => {
       try {
@@ -186,7 +186,7 @@ export default function Dashboard() {
 
     let cancelled = false;
     setChallengeLoading(true);
-    const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser;
 
     (async () => {
       try {
@@ -252,6 +252,8 @@ export default function Dashboard() {
     }
   }, [streakLoading, lastDayKey, completeToday]);
 
+  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
+
   if (loading) {
     return (
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -273,8 +275,6 @@ export default function Dashboard() {
   const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
-  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
-
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
