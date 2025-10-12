@@ -126,13 +126,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    let shieldTokens = 0;
+    try {
+      const { data: shieldRow } = await supabaseUser
+        .from('streak_shields')
+        .select('tokens')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      shieldTokens = shieldRow?.tokens ?? 0;
+    } catch (shieldErr) {
+      console.warn('[API/streak] Unable to load shields', shieldErr);
+      shieldTokens = 0;
+    }
+
     // Build response object (shields/next_restart_date are not stored on this table)
-    const asResponse = (r: typeof row): StreakData => ({
+    const asResponse = (r: typeof row, shields = shieldTokens): StreakData => ({
       current_streak: r?.current_streak ?? 0,
       longest_streak: r?.longest_streak ?? r?.current_streak ?? 0,
       last_activity_date: r?.last_activity_date ?? null,
       next_restart_date: null,
-      shields: 0,
+      shields,
     });
 
     if (req.method === 'GET') {
@@ -142,65 +155,136 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'POST') {
       const { action, date } = req.body as { action?: 'use' | 'claim' | 'schedule'; date?: string };
 
-      // Only the core “completion” flow affects the DB row in 'streaks'
       const now = new Date();
       const today = getDayKey(now);
+      const previousCurrent = row.current_streak ?? 0;
 
-      // If user already logged today, do nothing (prevents multiple increments per calendar day)
-      if (!action) {
-        const lastDay = row.last_activity_date;
-        let newCurrent = 1;
-
-        if (lastDay === today) {
-          // already counted today
-          return res.status(200).json(asResponse(row));
-        }
-
-        // Rolling 24h logic using updated_at timestamp (snapchat-style)
-        const lastTs = row.updated_at ? new Date(row.updated_at) : null;
-        if (lastTs && (now.getTime() - lastTs.getTime()) <= ms(24)) {
-          newCurrent = (row.current_streak ?? 0) + 1; // within 24h -> increment
-        } else {
-          newCurrent = 1; // missed 24h -> reset
-        }
-
-        const previousLongest = row.longest_streak ?? row.current_streak ?? 0;
-        const newLongest = Math.max(previousLongest, newCurrent);
-
-        const { data: updatedRow, error: upErr } = await supabaseUser
-          .from('streaks')
-          .update({
-            current: newCurrent,
-            longest: newLongest,
-            last_active_date: today,
-            updated_at: now.toISOString(),
-          })
-          .eq('user_id', user.id)
-          .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
-          .single();
-
-        if (upErr) {
-          console.error('[API/streak] Update failed:', upErr);
-          // Fallback: return original row
-          return res.status(200).json(asResponse(row));
-        }
-        return res.status(200).json(asResponse(updatedRow));
-      }
-
-      // The following actions are no-ops for 'streaks' storage (kept for compatibility)
-      if (action === 'use') {
-        // would spend a shield in a separate table; keep response consistent
-        return res.status(200).json({ ...asResponse(row), shields: Math.max(0, (0 - 1)) });
-      }
       if (action === 'claim') {
-        return res.status(200).json({ ...asResponse(row), shields: 0 + 1 });
+        const currentStreak = row.current_streak ?? 0;
+        if (currentStreak < 7) {
+          return res.status(400).json({ error: 'Shield available after 7-day streak' });
+        }
+
+        let lastClaimDate: Date | null = null;
+        try {
+          const { data: lastClaim, error: lastClaimErr } = await supabaseUser
+            .from('streak_shield_logs')
+            .select('created_at')
+            .eq('user_id', user.id)
+            .eq('action', 'claim')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (lastClaimErr) throw lastClaimErr;
+          lastClaimDate = lastClaim?.created_at ? new Date(lastClaim.created_at) : null;
+        } catch (err) {
+          console.error('[API/streak] Failed to verify shield claim eligibility', err);
+          return res.status(503).json({ error: 'Shield claim unavailable' });
+        }
+
+        if (lastClaimDate) {
+          const sevenDaysMs = ms(24 * 7);
+          const elapsed = now.getTime() - lastClaimDate.getTime();
+          if (elapsed < sevenDaysMs) {
+            return res.status(400).json({ error: 'Shield already claimed this week' });
+          }
+        }
+
+        const nextTokens = shieldTokens + 1;
+        try {
+          const { data: updatedShield, error: shieldErr } = await supabaseUser
+            .from('streak_shields')
+            .upsert({ user_id: user.id, tokens: nextTokens }, { onConflict: 'user_id' })
+            .select('tokens')
+            .single();
+          if (shieldErr) throw shieldErr;
+          shieldTokens = updatedShield?.tokens ?? nextTokens;
+          await supabaseUser.from('streak_shield_logs').insert({ user_id: user.id, action: 'claim' });
+        } catch (err) {
+          console.error('[API/streak] Claim shield failed', err);
+          return res.status(500).json({ error: 'Failed to claim shield' });
+        }
+        return res.status(200).json(asResponse(row, shieldTokens));
       }
+
       if (action === 'schedule') {
         if (!date) return res.status(400).json({ error: 'Date required for scheduling' });
-        return res.status(200).json({ ...asResponse(row), next_restart_date: date });
+        return res.status(200).json({ ...asResponse(row, shieldTokens), next_restart_date: date });
       }
 
-      return res.status(400).json({ error: 'Invalid action' });
+      const spentShield = action === 'use';
+      if (spentShield && shieldTokens <= 0) {
+        return res.status(400).json({ error: 'No shields available' });
+      }
+
+      if (!spentShield && row.last_activity_date === today) {
+        return res.status(200).json(asResponse(row, shieldTokens));
+      }
+
+      const lastTs = row.updated_at ? new Date(row.updated_at) : null;
+      const within24h = lastTs ? now.getTime() - lastTs.getTime() <= ms(24) : false;
+
+      let newCurrent = 1;
+      if (spentShield) {
+        newCurrent = previousCurrent + 1;
+      } else if (within24h) {
+        newCurrent = previousCurrent + 1;
+      } else {
+        newCurrent = 1;
+      }
+
+      const previousLongest = row.longest_streak ?? row.current_streak ?? 0;
+      const newLongest = Math.max(previousLongest, newCurrent);
+
+      const { data: updatedRow, error: upErr } = await supabaseUser
+        .from('streaks')
+        .update({
+          current: newCurrent,
+          longest: newLongest,
+          last_active_date: today,
+          updated_at: now.toISOString(),
+        })
+        .eq('user_id', user.id)
+        .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
+        .single();
+
+      if (upErr) {
+        console.error('[API/streak] Update failed:', upErr);
+        return res.status(200).json(asResponse(row, shieldTokens));
+      }
+
+      let tokensDelta = 0;
+      if (spentShield) tokensDelta -= 1;
+      if (newCurrent > previousCurrent && newCurrent % 7 === 0) tokensDelta += 1;
+
+      let nextTokens = shieldTokens;
+      if (tokensDelta !== 0) {
+        nextTokens = Math.max(0, shieldTokens + tokensDelta);
+        try {
+          const { data: shieldRow, error: shieldUpdateErr } = await supabaseUser
+            .from('streak_shields')
+            .upsert({ user_id: user.id, tokens: nextTokens }, { onConflict: 'user_id' })
+            .select('tokens')
+            .single();
+          if (shieldUpdateErr) {
+            console.error('[API/streak] Failed to update shields', shieldUpdateErr);
+          } else {
+            nextTokens = shieldRow?.tokens ?? nextTokens;
+          }
+        } catch (shieldUpdateError) {
+          console.error('[API/streak] Shield upsert failed', shieldUpdateError);
+        }
+      }
+
+      if (spentShield) {
+        await supabaseUser.from('streak_shield_logs').insert({ user_id: user.id, action: 'use' });
+      }
+      if (tokensDelta > 0) {
+        await supabaseUser.from('streak_shield_logs').insert({ user_id: user.id, action: 'claim' });
+      }
+
+      return res.status(200).json(asResponse(updatedRow, nextTokens));
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
