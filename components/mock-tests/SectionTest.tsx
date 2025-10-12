@@ -22,14 +22,17 @@ export type SectionTestHandle = {
   submit: () => void;
 };
 
+type Mode = 'simulation' | 'practice';
+
 type Props = {
   section: string;
   questions: Question[];
+  mode?: Mode;
   onComplete?: (result: SectionResult) => void;
 };
 
 export const SectionTest = forwardRef<SectionTestHandle, Props>(
-  function SectionTest({ section, questions, onComplete }, ref) {
+  function SectionTest({ section, questions, mode = 'simulation', onComplete }, ref) {
     const [answers, setAnswers] = useState<number[]>(Array(questions.length).fill(-1));
     const [result, setResult] = useState<SectionResult | null>(null);
     const [tabSwitches, setTabSwitches] = useState(0);
@@ -55,9 +58,9 @@ export const SectionTest = forwardRef<SectionTestHandle, Props>(
 
     useEffect(() => {
       if (typeof window === 'undefined') return;
-      const state = { answers, tabSwitches };
+      const state = { answers, tabSwitches, mode };
       localStorage.setItem(`mock-${section}-state`, JSON.stringify(state));
-    }, [answers, section, tabSwitches]);
+    }, [answers, section, tabSwitches, mode]);
 
     useEffect(() => {
       const handler = () => {
@@ -149,7 +152,16 @@ export const SectionTest = forwardRef<SectionTestHandle, Props>(
     }
 
     return (
-      <Card className="p-6 rounded-ds-2xl">
+      <Card className="p-6 space-y-6 rounded-ds-2xl">
+        {mode === 'practice' && (
+          <div
+            className="rounded-ds-xl border border-dashed border-primary/40 bg-primary/5 p-4 text-sm text-foreground"
+            role="note"
+          >
+            Practice mode lets you check answers as you go. Try a response and look for the instant
+            feedback below each question.
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -182,6 +194,18 @@ export const SectionTest = forwardRef<SectionTestHandle, Props>(
                     );
                   })}
                 </div>
+                {mode === 'practice' && answers[qi] !== -1 && (
+                  <p
+                    className={`text-sm font-medium ${
+                      answers[qi] === q.answer ? 'text-emerald-600' : 'text-destructive'
+                    }`}
+                    aria-live="polite"
+                  >
+                    {answers[qi] === q.answer
+                      ? 'Great choice! This matches the correct answer.'
+                      : 'Not quite right — adjust your answer and try again.'}
+                  </p>
+                )}
               </fieldset>
             );
           })}
