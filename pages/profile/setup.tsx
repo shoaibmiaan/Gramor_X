@@ -7,6 +7,7 @@ import { Input } from '@/components/design-system/Input';
 import { AvatarUploader } from '@/components/design-system/AvatarUploader';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 import Image from 'next/image';
 import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
@@ -35,15 +36,6 @@ const Section: React.FC<{ title: string; subtitle?: string; children: React.Reac
   </details>
 );
 
-const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
-  <div className="w-full h-2 rounded-full bg-muted/40 overflow-hidden">
-    <div
-      className="h-full bg-gradient-to-r from-primary/80 to-electricBlue/80 transition-[width] duration-300"
-      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-    />
-  </div>
-);
-
 const SkeletonLine: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`animate-pulse rounded-md bg-muted ${className ?? 'h-4 w-full'}`} />
 );
@@ -53,6 +45,7 @@ export default function ProfileSetup() {
   const { t, setLocale, setExplanationLocale } = useLocale();
 
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -163,9 +156,12 @@ export default function ProfileSetup() {
       }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        router.replace('/login');
+        setIsAuthenticated(false);
+        setLoading(false);
+        router.replace({ pathname: '/login', query: { redirect: '/profile/setup' } });
         return;
       }
+      setIsAuthenticated(true);
       setUserId(session.user.id);
       console.log('Authenticated user ID:', session.user.id);
       console.log('JWT role:', session.user.app_metadata?.role); // Debug JWT role
@@ -553,6 +549,21 @@ export default function ProfileSetup() {
                     </div>
                   ))}
                 </div>
+              </Card>
+            ) : !isAuthenticated ? (
+              <Card className="card-surface p-6 rounded-ds-2xl space-y-3">
+                <h2 className="font-slab text-h4 m-0">You’re being redirected</h2>
+                <p className="text-muted text-small">
+                  We could not detect an active session. Please sign in to continue setting up your profile.
+                </p>
+                <Button
+                  type="button"
+                  variant="primary"
+                  className="rounded-ds-xl w-fit"
+                  onClick={() => router.replace({ pathname: '/login', query: { redirect: '/profile/setup' } })}
+                >
+                  Go to login
+                </Button>
               </Card>
             ) : (
               <>
