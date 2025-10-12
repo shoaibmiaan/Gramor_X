@@ -44,6 +44,8 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
   useEffect(() => {
     let mounted = true;
     const checkSession = async () => {
+      let shouldShowAuthOptions = true;
+
       try {
         const {
           data: { session },
@@ -58,6 +60,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
         }
 
         if (session) {
+          shouldShowAuthOptions = false;
           const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
           const blockedPath = mode === 'login' ? '/login' : '/signup';
           const safe =
@@ -70,13 +73,14 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
               await router.replace(safe);
             } catch (navigationError) {
               console.error('Failed to redirect after session detection:', navigationError);
+              shouldShowAuthOptions = true;
             }
           }
         }
       } catch (err) {
         if (mounted) console.error('Error checking session:', err);
       } finally {
-        if (mounted) setReady(true);
+        if (mounted && shouldShowAuthOptions) setReady(true);
       }
     };
     void checkSession();
