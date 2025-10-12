@@ -1,5 +1,13 @@
 import type { Profile, AIPlan } from '@/types/profile';
-import { PREFS } from '@/lib/profile-options';
+import { PREFS, TOPICS, DAILY_QUOTA_RANGE } from '@/lib/profile-options';
+
+const DEFAULT_TOPICS = TOPICS.slice(0, 4);
+
+function sanitizeQuota(value: number | null | undefined): number {
+  if (!Number.isFinite(value ?? NaN)) return 4;
+  const coerced = Math.round(Number(value));
+  return Math.min(DAILY_QUOTA_RANGE.max, Math.max(DAILY_QUOTA_RANGE.min, coerced));
+}
 
 /**
  * Generate an AI plan for a learner. Weaknesses are prioritized
@@ -20,9 +28,24 @@ export function generateAIPlan(profile: Profile): AIPlan {
     }
   });
 
+  const topics = (profile.focus_topics ?? []).filter((topic): topic is string => Boolean(topic?.trim()));
+  const normalizedTopics = topics.length ? topics : DEFAULT_TOPICS;
+  const dailyQuota = sanitizeQuota(profile.daily_quota_goal ?? null);
+
+  const sessionMix = Array.from({ length: dailyQuota }, (_, index) => ({
+    skill: prioritized[index % prioritized.length],
+    topic: normalizedTopics[index % normalizedTopics.length],
+  }));
+
   return {
     sequence: prioritized,
-    notes: [`Focus order: ${prioritized.join(' → ')}`],
+    dailyQuota,
+    sessionMix,
+    notes: [
+      `Daily target: ${dailyQuota} activities`,
+      `Focus topics: ${normalizedTopics.join(', ')}`,
+      `Focus order: ${prioritized.join(' → ')}`,
+    ],
     source: 'local',
   };
 }

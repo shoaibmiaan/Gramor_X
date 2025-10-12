@@ -14,7 +14,6 @@ import {
   type MistakePage,
   type MistakeRecord,
 } from '@/lib/mistakes';
-import { scheduleReview } from '@/lib/spaced-repetition';
 
 const PAGE_SIZE = 10;
 
@@ -43,11 +42,9 @@ export default function MistakesPage() {
   const handleReview = useCallback(
     async (mistake: Mistake) => {
       const nextReps = mistake.repetitions + 1;
-      const nextReview = scheduleReview(nextReps).toISOString();
       const updated = await recordMistakeReview({
         id: mistake.id,
         repetitions: nextReps,
-        nextReview,
       });
 
       await mutate(
