@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 interface ReadingAttemptBody {
@@ -26,14 +25,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const body = (req.body ?? {}) as ReadingAttemptBody;
   const wordId = typeof body.word_id === 'string' ? body.word_id : null;
-  const itemType = body.item_type && ['word', 'collocation', 'gap'].includes(body.item_type)
-    ? body.item_type
-    : 'word';
+  const itemType =
+    body.item_type && ['word', 'collocation', 'gap'].includes(body.item_type)
+      ? body.item_type
+      : 'word';
   const passage = typeof body.passage === 'string' ? body.passage : '';
+  const blanks = Array.isArray(body.blanks) ? body.blanks : [];
   const responses = Array.isArray(body.responses) ? body.responses : [];
 
   if (!wordId) {
     return res.status(400).json({ error: 'Missing word_id' });
+  }
+
+  if (blanks.length === 0) {
+    return res.status(400).json({ error: 'No blanks provided' });
   }
 
   const supabase = createSupabaseServerClient({ req, res });
@@ -47,58 +52,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { data: wordRow, error: wordError } = await supabase
-      .from('words')
-      .select('id, headword')
-      .eq('id', wordId)
-      .maybeSingle();
-
-    if (wordError) {
-      console.error('[reading/attempt] failed to fetch word', wordError);
-      return res.status(500).json({ error: 'Failed to load word data' });
-    }
-
-    if (!wordRow) {
-      return res.status(404).json({ error: 'Word not found' });
-    }
-
-    const { data: collocations, error: collocationError } = await supabase
-      .from('word_collocations')
-      .select('chunk')
-      .eq('word_id', wordId)
-      .order('updated_at', { ascending: false })
-      .limit(10);
-
-    if (collocationError) {
-      console.error('[reading/attempt] failed to fetch collocations', collocationError);
-      return res.status(500).json({ error: 'Failed to load collocation data' });
-    }
-
-    const collocationChunks = (collocations ?? [])
-      .map((row) => (typeof row?.chunk === 'string' ? row.chunk : null))
-      .filter((chunk): chunk is string => !!chunk);
-
-    const suggestedCollocations: string[] = collocationChunks.slice(0, 3);
-    const fallbackHeadword = typeof wordRow.headword === 'string' && wordRow.headword.trim()
-      ? wordRow.headword.trim()
-      : 'this word';
-    while (suggestedCollocations.length < 3) {
-      suggestedCollocations.push(`use ${fallbackHeadword}`);
-    }
-
-    const blankDefinitions = [
-      { id: 'blank-headword', label: 'Headword', answer: wordRow.headword ?? '' },
-      { id: 'blank-collocation-1', label: 'Collocation 1', answer: suggestedCollocations[0] },
-      {
-        id: 'blank-collocation-2',
-        label: 'Collocation 2',
-        answer: suggestedCollocations[1] ?? suggestedCollocations[0],
-      },
-    ];
-
+    // Build answer map from provided blanks
     const blankMap = new Map<string, { label: string; answer: string }>();
-    blankDefinitions.forEach((blank) => {
-      blankMap.set(blank.id, { label: blank.label, answer: blank.answer });
+    blanks.forEach((blank, index) => {
+      const id = typeof blank.id === 'string' ? blank.id : `blank-${index + 1}`;
+      const answer = typeof blank.answer === 'string' ? blank.answer : '';
+      blankMap.set(id, {
+        label: typeof blank.label === 'string' ? blank.label : `Blank ${index + 1}`,
+        answer,
+      });
     });
 
     const resultRows = Array.from(blankMap.entries()).map(([id, meta]) => {
@@ -116,14 +78,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const correctCount = resultRows.filter((row) => row.correct).length;
     const score = resultRows.length > 0 ? Math.round((correctCount / resultRows.length) * 100) : 0;
-    let feedback: string;
-    if (score === 100) {
-      feedback = 'Perfect! All blanks were filled accurately.';
-    } else if (score >= 67) {
-      feedback = 'Solid effort—review the incorrect blanks and try once more.';
-    } else {
-      feedback = 'Re-read the paragraph carefully and notice the collocations around each blank.';
-    }
+
+    const feedback =
+      score === 100
+        ? 'Perfect! All blanks were filled accurately.'
+        : score >= 67
+        ? 'Solid effort—review the incorrect blanks and try once more.'
+        : 'Re-read the paragraph carefully and notice the collocations around each blank.';
 
     const { data: attemptRow, error: attemptError } = await supabase
       .from('word_reading_attempts')
@@ -141,7 +102,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .maybeSingle();
 
     if (attemptError || !attemptRow) {
-      console.error('[reading/attempt] failed to insert attempt', attemptError);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[reading/attempt] failed to insert attempt', attemptError);
+      }
       return res.status(500).json({ error: 'Failed to record attempt' });
     }
 
@@ -153,7 +116,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .maybeSingle();
 
     if (statsError) {
-      console.error('[reading/attempt] failed to fetch stats', statsError);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[reading/attempt] failed to fetch stats', statsError);
+      }
       return res.status(500).json({ error: 'Failed to update stats' });
     }
 
@@ -167,7 +132,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('word_id', wordId);
 
       if (updateError) {
-        console.error('[reading/attempt] failed to increment attempts', updateError);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[reading/attempt] failed to increment attempts', updateError);
+        }
         return res.status(500).json({ error: 'Failed to increment attempts' });
       }
     } else {
@@ -179,7 +146,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       if (insertError) {
-        console.error('[reading/attempt] failed to initialise stats', insertError);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[reading/attempt] failed to initialise stats', insertError);
+        }
         return res.status(500).json({ error: 'Failed to initialise stats' });
       }
     }
@@ -192,7 +161,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       reading_attempts: nextCount,
     });
   } catch (error) {
-    console.error('[reading/attempt] fatal error', error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[reading/attempt] fatal error', error);
+    }
     return res.status(500).json({ error: 'Unexpected error' });
   }
 }
