@@ -25,15 +25,6 @@ type ResponseBody =
     }
   | { ok: false; error: string };
 
-function nextReset(now: DateTime, type: 'daily' | 'weekly'): DateTime {
-  if (type === 'daily') {
-    return now.plus({ days: 1 }).startOf('day');
-  }
-  const weekday = now.weekday; // 1 Monday … 7 Sunday
-  const daysUntilNextMonday = weekday === 1 ? 7 : 8 - weekday;
-  return now.plus({ days: daysUntilNextMonday }).startOf('day');
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseBody>) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -69,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const { data: progressRow, error: progressErr } = await svc
       .from('user_challenge_progress')
-      .select('id, progress_count, total_mastered, target, resets_at, last_incremented_at')
+      .select('target')
       .eq('user_id', user.id)
       .eq('challenge_id', challengeId)
       .maybeSingle();
@@ -78,48 +69,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       throw progressErr;
     }
 
-    let progressCount = progressRow?.progress_count ?? 0;
-    let totalMastered = progressRow?.total_mastered ?? 0;
     const target = challenge.goal ?? progressRow?.target ?? 0;
-    let resetsAt = progressRow?.resets_at ? DateTime.fromISO(progressRow.resets_at).setZone(TIME_ZONE) : null;
-
-    if (!resetsAt || resetsAt <= now) {
-      progressCount = 0;
-      resetsAt = nextReset(now, challenge.challenge_type as 'daily' | 'weekly');
+    if (!target || target <= 0) {
+      return res.status(400).json({ ok: false, error: 'Invalid challenge target' });
     }
 
-    const canIncrement = progressCount < target;
-    let xpAwarded = 0;
+    const { data: rpcResult, error: rpcErr } = await svc.rpc('increment_challenge_progress', {
+      p_user_id: user.id,
+      p_challenge_id: challengeId,
+      p_now: now.toUTC().toISO(),
+      p_target: target,
+      p_reset_type: challenge.challenge_type,
+      p_time_zone: TIME_ZONE,
+    });
 
-    if (canIncrement) {
-      progressCount += 1;
-      totalMastered += 1;
+    if (rpcErr) {
+      throw rpcErr;
+    }
+
+    const result = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
+    if (!result) {
+      throw new Error('Failed to persist challenge progress');
+    }
+
+    let xpAwarded = 0;
+    if (result.incremented) {
       xpAwarded = await logXpEvent(user.id, challenge.xp_event as any, {
         challengeId,
         scope: challenge.challenge_type,
       });
-    }
-
-    const payload = {
-      user_id: user.id,
-      challenge_id: challengeId,
-      progress_count: progressCount,
-      total_mastered: totalMastered,
-      target,
-      last_incremented_at: canIncrement
-        ? now.toUTC().toISO()
-        : progressRow?.last_incremented_at ?? null,
-      resets_at: resetsAt.toUTC().toISO(),
-    };
-
-    const { data: upserted, error: upsertErr } = await svc
-      .from('user_challenge_progress')
-      .upsert(payload, { onConflict: 'user_id,challenge_id' })
-      .select('progress_count, total_mastered, target, last_incremented_at, resets_at')
-      .single();
-
-    if (upsertErr) {
-      throw upsertErr;
     }
 
     return res.status(200).json({
@@ -127,11 +105,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       xpAwarded,
       progress: {
         challengeId,
-        progressCount: upserted.progress_count ?? 0,
-        totalMastered: upserted.total_mastered ?? 0,
-        target: upserted.target ?? target,
-        lastIncrementedAt: upserted.last_incremented_at ?? null,
-        resetsAt: upserted.resets_at ?? null,
+        progressCount: result.progress_count ?? 0,
+        totalMastered: result.total_mastered ?? 0,
+        target: result.target ?? target,
+        lastIncrementedAt: result.last_incremented_at ?? null,
+        resetsAt: result.resets_at ?? null,
       },
     });
   } catch (error: any) {

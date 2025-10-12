@@ -160,6 +160,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const previousCurrent = row.current_streak ?? 0;
 
       if (action === 'claim') {
+        const currentStreak = row.current_streak ?? 0;
+        if (currentStreak < 7) {
+          return res.status(400).json({ error: 'Shield available after 7-day streak' });
+        }
+
+        let lastClaimDate: Date | null = null;
+        try {
+          const { data: lastClaim, error: lastClaimErr } = await supabaseUser
+            .from('streak_shield_logs')
+            .select('created_at')
+            .eq('user_id', user.id)
+            .eq('action', 'claim')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (lastClaimErr) throw lastClaimErr;
+          lastClaimDate = lastClaim?.created_at ? new Date(lastClaim.created_at) : null;
+        } catch (err) {
+          console.error('[API/streak] Failed to verify shield claim eligibility', err);
+          return res.status(503).json({ error: 'Shield claim unavailable' });
+        }
+
+        if (lastClaimDate) {
+          const sevenDaysMs = ms(24 * 7);
+          const elapsed = now.getTime() - lastClaimDate.getTime();
+          if (elapsed < sevenDaysMs) {
+            return res.status(400).json({ error: 'Shield already claimed this week' });
+          }
+        }
+
         const nextTokens = shieldTokens + 1;
         try {
           const { data: updatedShield, error: shieldErr } = await supabaseUser
