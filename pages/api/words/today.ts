@@ -110,7 +110,7 @@ export default async function handler(
 
     // Longest streak from table (fallback to current streak)
     const { data: streakRow } = await supabaseAdmin
-      .from('streaks')
+      .from('word_learning_streaks')
       .select('longest')
       .eq('user_id', userId)
       .maybeSingle();
