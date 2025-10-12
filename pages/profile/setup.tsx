@@ -7,7 +7,6 @@ import { Input } from '@/components/design-system/Input';
 import { AvatarUploader } from '@/components/design-system/AvatarUploader';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
-import { ProgressBar } from '@/components/design-system/ProgressBar';
 import Image from 'next/image';
 import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
@@ -54,7 +53,7 @@ const clampDailyQuota = (value: number | null | undefined): number => {
   return Math.min(DAILY_QUOTA_RANGE.max, Math.max(DAILY_QUOTA_RANGE.min, coerced));
 };
 
-const ProgressBar: React.FC<{ value: number }> = ({ value }) => (
+const SetupProgressBar: React.FC<{ value: number }> = ({ value }) => (
   <div className="w-full h-2 rounded-full bg-muted/40 overflow-hidden">
     <div
       className="h-full bg-gradient-to-r from-primary/80 to-electricBlue/80 transition-[width] duration-300"
@@ -476,9 +475,18 @@ export default function ProfileSetup() {
     };
     const timeCommitmentMin = time ? timeCommitmentMap[time] || 60 : null;
 
-    const payload = {
-      id: userId, // Changed from user_id to id to match RLS policies
-      full_name: fullName.trim(),
+    const aiRecommendation = ai
+      ? {
+          suggestedGoal: ai.suggestedGoal,
+          etaWeeks: ai.etaWeeks,
+          sequence: ai.sequence,
+          notes: ai.notes,
+          source: ai.source,
+        }
+      : null;
+
+    const basePayload = {
+      full_name: fullName.trim() || null,
       country: country || null,
       english_level: level || null,
       goal_band: goal || null,
@@ -497,27 +505,23 @@ export default function ProfileSetup() {
       avatar_url: avatarPath || null,
       goal_reason: goalReasons,
       learning_style: learningStyle || null,
-      ai_recommendation: ai
-        ? {
-            suggestedGoal: ai.suggestedGoal,
-            etaWeeks: ai.etaWeeks,
-            sequence: ai.sequence,
-            notes: ai.notes,
-            source: ai.source,
-          }
-        : {},
+      ai_recommendation: aiRecommendation,
       setup_complete: finalize,
       role: 'student', // Explicitly set role to satisfy 'Students manage own profile' policy
       status: finalize ? 'active' : 'inactive', // Set status based on finalize
     };
 
-    try {
-      console.log('Saving profile with payload:', payload);
-      console.log('Authenticated user ID:', userId);
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('JWT role:', session?.user?.app_metadata?.role);
+    const insertPayload = {
+      ...basePayload,
+      user_id: userId,
+    };
 
-      const { data: existing } = await supabase.from('profiles').select('id, setup_complete').eq('id', userId).maybeSingle();
+    try {
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id, user_id, setup_complete')
+        .or(`id.eq.${userId},user_id.eq.${userId}`)
+        .maybeSingle();
       if (existing?.setup_complete && !finalize) {
         setError('Profile is already complete and cannot be updated as a draft.');
         setSaving(false);
@@ -525,8 +529,11 @@ export default function ProfileSetup() {
       }
 
       const { error: upsertErr } = existing
-        ? await supabase.from('profiles').update(payload).eq('id', userId)
-        : await supabase.from('profiles').insert(payload);
+        ? await supabase
+            .from('profiles')
+            .update(basePayload)
+            .eq(existing.id ? 'id' : 'user_id', existing.id ?? existing?.user_id ?? userId)
+        : await supabase.from('profiles').insert(insertPayload);
 
       if (upsertErr) {
         if (upsertErr.code === '42501') {
@@ -567,7 +574,7 @@ export default function ProfileSetup() {
               <p className="text-muted mt-1 sm:mt-2 max-w-prose">{t('profileSetup.description')}</p>
             </div>
             <div className="w-full sm:w-64">
-              <ProgressBar value={progress} />
+              <SetupProgressBar value={progress} />
               <p className="mt-1 text-right text-caption text-muted">{progress}%</p>
             </div>
           </div>
