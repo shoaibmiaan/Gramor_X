@@ -4,9 +4,10 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 
 type SavedItem = {
+  id?: string;
   resource_id: string;
-  type: string;
-  category: string;
+  type: string | null;
+  category: string | null;
   created_at: string;
 };
 
@@ -29,7 +30,13 @@ export function SavedItems() {
           setItems([]);
         } else if (res.ok) {
           const data = await res.json();
-          setItems(data as SavedItem[]);
+          if (Array.isArray(data)) {
+            setItems(data as SavedItem[]);
+          } else if (data && Array.isArray((data as { items?: SavedItem[] }).items)) {
+            setItems((data as { items: SavedItem[] }).items);
+          } else {
+            setItems([]);
+          }
         }
       } catch {
         // ignore
@@ -85,7 +92,8 @@ export function SavedItems() {
     if (b.category === 'grammar') return `/grammar/${b.resource_id}`;
     if (b.type === 'reading') return `/reading/${b.resource_id}`;
     if (b.type === 'listening') return `/listening/${b.resource_id}`;
-    return `/${b.type}/${b.resource_id}`;
+    const fallbackType = b.type || b.category || 'content';
+    return `/${fallbackType}/${b.resource_id}`;
   };
 
   return (
@@ -125,12 +133,12 @@ export function SavedItems() {
                 : a.created_at.localeCompare(b.created_at),
             )
             .map((b) => {
-              const key = `${b.category}:${b.type}:${b.resource_id}`;
+              const key = b.id ?? `${b.category}:${b.type}:${b.resource_id}`;
               const tagList = tags[key] || [];
               return (
                 <li key={key} className="flex items-center justify-between gap-4">
                   <Link href={linkFor(b)} className="underline">
-                    {b.category}: {b.resource_id}
+                    {(b.category ?? 'bookmark')}: {b.resource_id}
                   </Link>
                   <div className="flex items-center gap-2">
                     {tagList.map((t) => (

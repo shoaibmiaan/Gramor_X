@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { useLocale } from '@/lib/locale';
@@ -25,9 +25,7 @@ export function useRouteGuard() {
   const router = useRouter();
   const { setLocale } = useLocale();
   const pathname = router.pathname;
-
-  // Keep /pricing public even if routeAccess hasn’t been updated elsewhere
-  const isPricingRoute = useMemo(() => /^\/pricing(\/|$)/.test(pathname), [pathname]);
+  const path = router.asPath || pathname;
 
   const [isChecking, setIsChecking] = useState(true);
   const hasRedirected = useRef(false); // prevent double redirects in StrictMode/dev
@@ -46,8 +44,8 @@ export function useRouteGuard() {
         const role: AppRole | null = getUserRole(user);
 
         // Public routes never redirect (but we can still hydrate locale)
-        const publicR = isPublicRoute(pathname) || isPricingRoute;
-        const guestOnlyR = isGuestOnlyRoute(pathname);
+        const publicR = isPublicRoute(path);
+        const guestOnlyR = isGuestOnlyRoute(path);
 
         // hydrate locale if logged in
         if (authed && user) {
@@ -127,7 +125,7 @@ export function useRouteGuard() {
     return () => {
       mounted = false;
     };
-  }, [router.isReady, router.pathname, router.asPath, pathname, setLocale, isPricingRoute]);
+  }, [router.isReady, router.pathname, router.asPath, path, setLocale]);
 
   return { isChecking };
 }
