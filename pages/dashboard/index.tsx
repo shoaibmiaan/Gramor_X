@@ -35,8 +35,7 @@ import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCar
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { ChallengeTaskStatus } from '@/types/challenge';
-import { TodayReviewsPanel } from '@/components/review/TodayReviewsPanel';
-import { FourSkillSpotlight } from '@/components/review/FourSkillSpotlight';
+import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -323,7 +322,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <StreakCounter current={streak} longest={longest} loading={streakLoading} />
+            <StreakCounter current={streak} longest={longest} loading={streakLoading} shields={shields} />
 
             {nextRestart && (
           <Alert variant="info" className="mt-6">
@@ -367,6 +366,10 @@ export default function Dashboard() {
           ) : (
             <JoinWeeklyChallengeCard />
           )}
+        </div>
+
+        <div className="mt-6">
+          <DailyWeeklyChallenges />
         </div>
 
         {/* Top summary cards */}
