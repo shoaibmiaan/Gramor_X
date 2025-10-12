@@ -28,8 +28,7 @@ const GUEST_ONLY_ROUTES: RouteMatcher[] = [
 ];
 
 const normalizePath = (path: string) => {
-  const withoutFragment = path.split('#')[0] ?? '';
-  const withoutQuery = withoutFragment.split('?')[0] ?? '';
+  const withoutQuery = path.split('?')[0] ?? '';
   if (!withoutQuery) return '';
   if (withoutQuery === '/') return withoutQuery;
   return withoutQuery.replace(/\/+$/, '');

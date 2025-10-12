@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { resource_id, type } = req.query as { resource_id?: string; type?: string };
     let query = supabase
       .from('user_bookmarks')
-      .select('resource_id, type, category, created_at')
+      .select('id, resource_id, type, category, created_at')
       .eq('user_id', user.id)
       .eq('category', category);
     if (resource_id) query = query.eq('resource_id', resource_id);
