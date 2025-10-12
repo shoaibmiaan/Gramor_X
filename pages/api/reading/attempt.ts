@@ -30,15 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ? body.item_type
     : 'word';
   const passage = typeof body.passage === 'string' ? body.passage : '';
-  const blanks = Array.isArray(body.blanks) ? body.blanks : [];
   const responses = Array.isArray(body.responses) ? body.responses : [];
 
   if (!wordId) {
     return res.status(400).json({ error: 'Missing word_id' });
-  }
-
-  if (blanks.length === 0) {
-    return res.status(400).json({ error: 'No blanks provided' });
   }
 
   const supabase = createSupabaseServerClient({ req, res });
@@ -52,14 +47,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const { data: wordRow, error: wordError } = await supabase
+      .from('words')
+      .select('id, headword')
+      .eq('id', wordId)
+      .maybeSingle();
+
+    if (wordError) {
+      console.error('[reading/attempt] failed to fetch word', wordError);
+      return res.status(500).json({ error: 'Failed to load word data' });
+    }
+
+    if (!wordRow) {
+      return res.status(404).json({ error: 'Word not found' });
+    }
+
+    const { data: collocations, error: collocationError } = await supabase
+      .from('word_collocations')
+      .select('chunk')
+      .eq('word_id', wordId)
+      .order('updated_at', { ascending: false })
+      .limit(10);
+
+    if (collocationError) {
+      console.error('[reading/attempt] failed to fetch collocations', collocationError);
+      return res.status(500).json({ error: 'Failed to load collocation data' });
+    }
+
+    const collocationChunks = (collocations ?? [])
+      .map((row) => (typeof row?.chunk === 'string' ? row.chunk : null))
+      .filter((chunk): chunk is string => !!chunk);
+
+    const suggestedCollocations: string[] = collocationChunks.slice(0, 3);
+    const fallbackHeadword = typeof wordRow.headword === 'string' && wordRow.headword.trim()
+      ? wordRow.headword.trim()
+      : 'this word';
+    while (suggestedCollocations.length < 3) {
+      suggestedCollocations.push(`use ${fallbackHeadword}`);
+    }
+
+    const blankDefinitions = [
+      { id: 'blank-headword', label: 'Headword', answer: wordRow.headword ?? '' },
+      { id: 'blank-collocation-1', label: 'Collocation 1', answer: suggestedCollocations[0] },
+      {
+        id: 'blank-collocation-2',
+        label: 'Collocation 2',
+        answer: suggestedCollocations[1] ?? suggestedCollocations[0],
+      },
+    ];
+
     const blankMap = new Map<string, { label: string; answer: string }>();
-    blanks.forEach((blank, index) => {
-      const id = typeof blank.id === 'string' ? blank.id : `blank-${index + 1}`;
-      const answer = typeof blank.answer === 'string' ? blank.answer : '';
-      blankMap.set(id, {
-        label: typeof blank.label === 'string' ? blank.label : `Blank ${index + 1}`,
-        answer,
-      });
+    blankDefinitions.forEach((blank) => {
+      blankMap.set(blank.id, { label: blank.label, answer: blank.answer });
     });
 
     const resultRows = Array.from(blankMap.entries()).map(([id, meta]) => {
