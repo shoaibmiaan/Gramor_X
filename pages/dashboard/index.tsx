@@ -79,6 +79,7 @@ export default function Dashboard() {
   useEffect(() => {
     let cancelled = false;
     const supabase = supabaseBrowser;
+    // supabaseBrowser is already an instantiated Supabase client; avoid calling it like a factory.
 
     (async () => {
       try {
@@ -187,6 +188,7 @@ export default function Dashboard() {
     let cancelled = false;
     setChallengeLoading(true);
     const supabase = supabaseBrowser;
+    // supabaseBrowser exports a singleton client instance for browser usage.
 
     (async () => {
       try {
