@@ -7,6 +7,7 @@
 ---
 
 ## Legend
+
 - **Status:** ☐ Not started · ◐ In progress · ⛔ Blocked · ✅ Done
 - **Pri:** H (High) · M (Medium) · L (Low)
 - All routes use **Pages Router**, all UI uses **Design System tokens** (no inline hex), `next/image`, `Link/NavLink`, `const` by default, `@ts-expect-error` (not `@ts-ignore`).
@@ -18,6 +19,7 @@
 **Outcome:** Core plumbing ready. Database schemas with RLS are live, design tokens wired, analytics/monitoring hooks scaffolded, health check passing, and environment validated. Next developer can begin Phase 1 (Onboarding + Study Plan) immediately.
 
 ### Files added (16)
+
 ```
 design-system/tokens/scale.js                 # tokens (using your existing content)
 lib/env.ts                                    # zod-validated env + helpers
@@ -38,33 +40,40 @@ scripts/gen-types.ts                           # optional supabase types generat
 ```
 
 ### Tailwind / Design System
+
 - **tailwind.config.js** imports DS tokens and exposes: `borderRadius.ds`, `spacing` (custom steps), and `fontSize` via `typeScale`.
 - Color tokens use CSS vars (`rgb(var(--color-*) / <alpha-value>)`) so `/opacity` utilities work.
 - No inline hex; **token classes** only.
 
 ### Environment (validated)
+
 Minimum variables in `.env.local` now recognized by `lib/env.ts`:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
 SUPABASE_URL, SUPABASE_SERVICE_KEY (service role), SUPABASE_SERVICE_ROLE_KEY,
 TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID, TWILIO_WHATSAPP_FROM
 # Optional: NEXT_PUBLIC_GA4_ID, NEXT_PUBLIC_META_PIXEL_ID, NEXT_PUBLIC_SENTRY_DSN
 ```
+
 Validation can be skipped using `SKIP_ENV_VALIDATION=true` (dev/test only).
 
 ### Database (applied with RLS)
+
 - **Core:** subscriptions, entitlements, usage_counters (owner read/write).
-- **Growth:** referral_codes, referral_redemptions (owner read/insert), partner_* (service-role only).
+- **Growth:** referral*codes, referral_redemptions (owner read/insert), partner*\* (service-role only).
 - **Learning:** study_plans, streaks, notifications_opt_in (owner read/write).
 - **Attempts:** attempts_listening/reading/writing/speaking (owner read/write) + indexes.
 - **Cohorts/Proof:** challenge_enrollments, certificates (owner read/write).
 
 ### Health & Verification
+
 - **/api/healthz** returns env readiness + feature flag snapshot.
 - GA4/Meta/Sentry are optional; safe no-ops if IDs/DSN not provided.
 - Build passes with Pages Router; DS tokens are discovered by Tailwind.
 
 ### Contracts for Phase 1
+
 - Use `study_plans.plan_json` to store generated 4-week plan.
 - Use `notifications_opt_in` for WhatsApp/SMS/email choices during onboarding.
 - Fire events via `track()`:
@@ -72,10 +81,12 @@ Validation can be skipped using `SKIP_ENV_VALIDATION=true` (dev/test only).
 - Feature flags available via `flags.enabled('trial' | 'paywall' | 'predictor' | 'referral' | 'partner' | 'challenge')`.
 
 ### Known constraints
+
 - Partner tables purposely lack public policies; access via **service role** only.
 - Sentry init is gated; install `@sentry/nextjs` before enabling in production.
 
 ### Handover Checklist for Phase 1
+
 - [ ] Create routes: `/onboarding/goal`, `/onboarding/date`, `/onboarding/skills`, `/onboarding/schedule`.
 - [ ] Write `profiles.locale` and `study_plans.plan_json` on completion.
 - [ ] Add **Urdu/English** switch; persist to `profiles.locale`.
@@ -109,13 +120,13 @@ Validation can be skipped using `SKIP_ENV_VALIDATION=true` (dev/test only).
   **Acceptance:** User completes onboarding; auto-plan for 4 weeks; event `onboarding_completed`.
 
 - ☐ **F1.2 IELTS E2E Minimum Slice** (Pri: H)  
-  **Routes:**  
-  - Listening `/mock/listening/[id]` → `/review/listening/[id]`  
-  - Reading `/mock/reading/[id]` → `/review/reading/[id]`  
-  - Writing `/mock/writing/[id]` (autosave editor) → AI → `/review/writing/[id]`  
+  **Routes:**
+  - Listening `/mock/listening/[id]` → `/review/listening/[id]`
+  - Reading `/mock/reading/[id]` → `/review/reading/[id]`
+  - Writing `/mock/writing/[id]` (autosave editor) → AI → `/review/writing/[id]`
   - Speaking `/mock/speaking/[id]` (record/timer) → AI → `/review/speaking/[id]`  
-  **APIs:** `POST /api/ai/writing/grade`, `POST /api/ai/speaking/grade`, `POST /api/ai/explain`  
-  **Acceptance:** New user can complete **1 mock** and view **AI feedback < 10 min** end-to-end.
+    **APIs:** `POST /api/ai/writing/grade`, `POST /api/ai/speaking/grade`, `POST /api/ai/explain`  
+    **Acceptance:** New user can complete **1 mock** and view **AI feedback < 10 min** end-to-end.
 
 - ☐ **F1.3 Trial & Paywall (groundwork)** (Pri: H)  
   **Free limits:** 1 full mock + 2 AI essay checks + 10 speaking-AI min/day (configurable).  
@@ -184,6 +195,7 @@ Validation can be skipped using `SKIP_ENV_VALIDATION=true` (dev/test only).
 ---
 
 ## Global Acceptance Criteria
+
 - Aha moment: 1st mock → AI feedback **< 10 min**
 - Trial gating shows at the exact thresholds; upgrade < 3 clicks
 - Payments/webhooks reliable (≥ 95%); retries with idempotency keys
@@ -196,23 +208,26 @@ Validation can be skipped using `SKIP_ENV_VALIDATION=true` (dev/test only).
 ---
 
 ## Routes (master list)
+
 `/onboarding/*`, `/mock/(listening|reading|writing|speaking)/[id]`, `/review/*`, `/ai`, `/pricing`, `/checkout`, `/account/(billing|referrals|progress)`, `/partners`, `/admin/partners`, `/predictor`, `/challenge`, `/cert/[id]`, `/teacher`, `/api/webhooks/payment`
 
 ---
 
 ## Database — New/Updated Tables (summary)
-- **subscriptions** (user_id, plan, status, started_at, renews_at, trial_ends_at, source, seats)  
-- **entitlements** (user_id, key, value_json)  
-- **usage_counters** (user_id, feature, period_utc_date, count)  
-- **referral_codes** / **referral_redemptions**  
-- **partner_accounts** / **partner_codes** / **partner_payouts**  
-- **study_plans**, **streaks**, **notifications_opt_in**  
-- **challenge_enrollments**, **certificates**  
+
+- **subscriptions** (user_id, plan, status, started_at, renews_at, trial_ends_at, source, seats)
+- **entitlements** (user_id, key, value_json)
+- **usage_counters** (user_id, feature, period_utc_date, count)
+- **referral_codes** / **referral_redemptions**
+- **partner_accounts** / **partner_codes** / **partner_payouts**
+- **study_plans**, **streaks**, **notifications_opt_in**
+- **challenge_enrollments**, **certificates**
 - **attempts_listening/reading/writing/speaking** (+ `score_json`, `ai_feedback_json`)
 
 ---
 
 ## Analytics Events (instrument exactly)
+
 `signup`, `onboarding_completed`, `mock_started`, `mock_completed`, `ai_feedback_viewed`, `paywall_view`, `subscribe_clicked`, `plan_purchased`, `referral_link_created`, `referral_redeemed`, `partner_code_applied`, `predictor_completed`, `challenge_joined`, `certificate_shared`
 
 ---
@@ -222,7 +237,9 @@ Validation can be skipped using `SKIP_ENV_VALIDATION=true` (dev/test only).
 > This section consolidates the code/file deliverables per phase. Keep Pages Router + DS guardrails: token classes only, `Link/NavLink` for internal nav, `next/image` for real images, and typed API inputs/outputs.
 
 ### Phase 0 — Prep (core plumbing)
+
 **Files**
+
 ```
 design-system/tokens/scale.js
 lib/env.ts
@@ -243,14 +260,18 @@ scripts/gen-types.ts
 ```
 
 ### Phase 1 — Foundation & “Aha”
+
 **Pages (Onboarding)**
+
 ```
 pages/onboarding/goal.tsx
 pages/onboarding/date.tsx
 pages/onboarding/skills.tsx
 pages/onboarding/schedule.tsx
 ```
+
 **Pages (Mocks & Reviews)**
+
 ```
 pages/mock/listening/[id].tsx
 pages/review/listening/[id].tsx
@@ -262,7 +283,9 @@ pages/mock/speaking/[id].tsx
 pages/review/speaking/[id].tsx
 pages/speaking/simulator.tsx
 ```
+
 **Pages (Pricing / Checkout / Core)**
+
 ```
 pages/pricing/index.tsx
 pages/checkout/index.tsx
@@ -274,7 +297,9 @@ pages/listening/index.tsx
 pages/reading/index.tsx
 pages/writing/index.tsx
 ```
+
 **API routes**
+
 ```
 pages/api/healthz.ts
 pages/api/ai/writing/grade.ts
@@ -283,7 +308,9 @@ pages/api/ai/explain.ts
 pages/api/onboarding/complete.ts
 pages/api/counters/increment.ts
 ```
+
 **Components**
+
 ```
 components/paywall/PaywallGate.tsx
 components/paywall/UsageCounterBadge.tsx
@@ -297,7 +324,9 @@ components/review/AnswerDiff.tsx
 components/onboarding/StepShell.tsx
 components/nav/CommandCenter.tsx
 ```
+
 **Lib**
+
 ```
 lib/env.ts
 lib/flags.ts
@@ -314,7 +343,9 @@ lib/routes.ts
 lib/supabaseBrowser.ts
 lib/supabaseServer.ts
 ```
+
 **Types**
+
 ```
 types/attempts.ts
 types/questions.ts
@@ -322,21 +353,27 @@ types/plan.ts
 types/pricing.ts
 types/supabase.ts
 ```
+
 **Data (samples)**
+
 ```
 data/listening/sample-001.json
 data/reading/sample-001.json
 data/writing/sample-001.json
 data/speaking/sample-001.json
 ```
+
 **Styling / Tracking**
+
 ```
 tailwind.config.js
 pages/_document.tsx
 ```
 
 ### Phase 2 — Monetization & Growth Loops
+
 **Pages (routes)**
+
 ```
 pages/checkout/index.tsx
 pages/checkout/success.tsx
@@ -348,7 +385,9 @@ pages/admin/partners/index.tsx
 pages/predictor/index.tsx
 pages/predictor/result.tsx
 ```
+
 **API routes**
+
 ```
 pages/api/payments/create-checkout-session.ts
 pages/api/payments/create-easypaisa-session.ts
@@ -360,13 +399,17 @@ pages/api/referrals/redeem.ts
 pages/api/partners/summary.ts
 pages/api/predictor/score.ts
 ```
+
 **DB migrations**
+
 ```
 db/migrations/006_teammates.sql
 db/migrations/007_payment_events.sql
 db/migrations/008_referral_guards.sql
 ```
+
 **Lib / services**
+
 ```
 lib/payments/index.ts
 lib/payments/stripe.ts
@@ -379,7 +422,9 @@ lib/referrals.ts
 lib/partners.ts
 lib/predictor.ts
 ```
+
 **UI components**
+
 ```
 components/payments/PlanPicker.tsx
 components/payments/CheckoutForm.tsx
@@ -391,7 +436,9 @@ components/predictor/BandPredictorForm.tsx
 components/predictor/BandBreakdown.tsx
 components/marketing/SocialProofStrip.tsx
 ```
+
 **Emails**
+
 ```
 emails/ReceiptEmail.tsx
 emails/PaymentFailedEmail.tsx
@@ -399,7 +446,9 @@ emails/BuddyInviteEmail.tsx
 emails/ReferralInviteEmail.tsx
 emails/ReferralRewardEmail.tsx
 ```
+
 **Types & tests**
+
 ```
 types/payments.ts
 types/referrals.ts
@@ -408,14 +457,18 @@ types/predictor.ts
 tests/api/payments.webhook.test.ts
 tests/pages/predictor.test.tsx
 ```
+
 **Scripts**
+
 ```
 scripts/generate_social_proof.ts
 scripts/backfill_entitlements.ts
 ```
 
 ### Phase 3 — Scale & Retention
+
 **Pages (routes)**
+
 ```
 pages/challenge/index.tsx
 pages/challenge/[cohort].tsx
@@ -425,7 +478,9 @@ pages/teacher/cohorts/[id].tsx
 pages/accessibility.tsx
 pages/settings/language.tsx
 ```
+
 **API routes**
+
 ```
 pages/api/challenge/enroll.ts
 pages/api/challenge/progress.ts
@@ -436,13 +491,17 @@ pages/api/teacher/cohorts.ts
 pages/api/teacher/assignments.ts
 pages/api/notifications/nudge.ts
 ```
+
 **DB migrations**
+
 ```
 db/migrations/010_challenge_progress.sql
 db/migrations/011_teacher_cohorts.sql
 db/migrations/012_certificates_assets.sql
 ```
+
 **Lib / services**
+
 ```
 lib/challenge.ts
 lib/certificates.ts
@@ -451,7 +510,9 @@ lib/i18n/index.ts
 lib/i18n/config.ts
 lib/locale.ts
 ```
+
 **UI components**
+
 ```
 components/challenge/ChallengeCohortCard.tsx
 components/challenge/TaskList.tsx
@@ -461,14 +522,18 @@ components/teacher/CohortTable.tsx
 components/teacher/AssignTaskModal.tsx
 components/common/LocaleSwitcher.tsx
 ```
+
 **Emails**
+
 ```
 emails/ChallengeWelcomeEmail.tsx
 emails/DailyTaskEmail.tsx
 emails/CertificateEmail.tsx
 emails/TeacherNudgeEmail.tsx
 ```
+
 **Types & tests**
+
 ```
 types/challenge.ts
 types/certificates.ts
@@ -478,20 +543,26 @@ tests/api/challenge.progress.test.ts
 tests/pages/cert/[id].test.tsx
 tests/a11y/wcag-axe.test.ts
 ```
+
 **Scripts**
+
 ```
 scripts/seed_challenge.ts
 scripts/generate_certificate_template.ts
 scripts/l10n_extract.ts
 ```
+
 **i18n content**
+
 ```
 locales/en/*.json
 locales/ur/*.json
 ```
 
 ### Phase 4 — Ecosystem (Coaching, Institutions, Proctoring, PWA, AI v2)
+
 **Pages (routes)**
+
 ```
 pages/marketplace/index.tsx
 pages/coach/[id].tsx
@@ -511,7 +582,9 @@ pages/content/studio/[id].tsx
 pages/reports/band-analytics.tsx
 pages/pwa/app.tsx
 ```
+
 **API routes**
+
 ```
 pages/api/marketplace/coaches.ts
 pages/api/marketplace/apply.ts
@@ -533,7 +606,9 @@ pages/api/institutions/reports.ts
 pages/api/content/upload.ts
 pages/api/content/publish.ts
 ```
+
 **DB migrations**
+
 ```
 db/migrations/013_coaches.sql
 db/migrations/014_availability_bookings.sql
@@ -544,7 +619,9 @@ db/migrations/018_ai_assessments_v2.sql
 db/migrations/019_content_items.sql
 db/migrations/020_reports_materialized.sql
 ```
+
 **Lib / services**
+
 ```
 lib/marketplace.ts
 lib/booking.ts
@@ -560,7 +637,9 @@ lib/rbac.ts
 lib/ratelimit.ts
 lib/pwa.ts
 ```
+
 **UI components**
+
 ```
 components/marketplace/CoachCard.tsx
 components/marketplace/ApplyCoachForm.tsx
@@ -577,7 +656,9 @@ components/institutions/ReportsFilters.tsx
 components/content/ContentEditor.tsx
 components/common/PWAInstallBanner.tsx
 ```
+
 **Emails**
+
 ```
 emails/CoachApplicationReceived.tsx
 emails/CoachApplicationDecision.tsx
@@ -586,7 +667,9 @@ emails/BookingRescheduled.tsx
 emails/ClassReminder.tsx
 emails/OrgInviteEmail.tsx
 ```
+
 **Types & tests**
+
 ```
 types/marketplace.ts
 types/bookings.ts
@@ -600,14 +683,18 @@ tests/api/proctoring.flags.test.ts
 tests/lib/ai.writing_v2.rules.test.ts
 tests/pages/institutions.reports.test.tsx
 ```
+
 **Public / PWA**
+
 ```
 public/manifest.webmanifest
 public/icons/*
 service-worker.ts
 pages/api/pwa/ping.ts
 ```
+
 **Scripts & cron**
+
 ```
 scripts/cron/send_class_reminders.ts
 scripts/cron/slots_cleanup.ts
@@ -616,7 +703,9 @@ scripts/backfill_ai_v2.ts
 ```
 
 ### Phase 5 — Platform & Enterprise (White-Label, Dev Portal, Data/Experiments, Compliance)
+
 **Pages (routes)**
+
 ```
 pages/enterprise/index.tsx
 pages/enterprise/tenants/[id].tsx
@@ -635,7 +724,9 @@ pages/compliance/gdpr.tsx
 pages/compliance/dpa.tsx
 pages/status.tsx
 ```
+
 **API routes**
+
 ```
 pages/api/enterprise/tenants/create.ts
 pages/api/enterprise/tenants/update.ts
@@ -657,7 +748,9 @@ pages/api/compliance/gdpr/delete.ts
 pages/api/compliance/dsar/status.ts
 pages/api/status/health.ts
 ```
+
 **DB migrations**
+
 ```
 db/migrations/021_tenants.sql
 db/migrations/022_sso.sql
@@ -668,7 +761,9 @@ db/migrations/026_events_dw.sql
 db/migrations/027_experiments.sql
 db/migrations/028_compliance_audit.sql
 ```
+
 **Lib / services**
+
 ```
 lib/tenant.ts
 lib/sso/saml.ts
@@ -686,7 +781,9 @@ lib/compliance/gdpr.ts
 lib/rate-limit.ts
 lib/status.ts
 ```
+
 **UI components**
+
 ```
 components/enterprise/TenantSwitcher.tsx
 components/enterprise/BrandForm.tsx
@@ -701,14 +798,18 @@ components/experiments/ExperimentTable.tsx
 components/compliance/DSARRequestForm.tsx
 components/common/ScopeBadge.tsx
 ```
+
 **Emails**
+
 ```
 emails/EnterpriseInvite.tsx
 emails/ApiKeyRotated.tsx
 emails/WebhookBounced.tsx
 emails/DSARStatus.tsx
 ```
+
 **Types & tests**
+
 ```
 types/tenants.ts
 types/sso.ts
@@ -723,7 +824,9 @@ tests/api/webhooks.delivery.test.ts
 tests/lib/experiments.assign.test.ts
 tests/api/compliance.export_delete.test.ts
 ```
+
 **Scripts & ops**
+
 ```
 scripts/rotate_api_keys.ts
 scripts/replay_webhooks.ts
@@ -732,10 +835,23 @@ scripts/backfill_experiment_assignments.ts
 scripts/compliance/anonymize_old_events.ts
 scripts/status/cron_ping.ts
 ```
+
 **Public / docs**
+
 ```
 public/api/openapi.json
 public/api/schemas/*.json
 docs/DEVPORTAL.md
 docs/WEBHOOKS.md
 ```
+
+## Phase 6 — AI Assist (Optional)
+
+- ✅ **AI Paraphrase Coach (Writing)**: `/api/ai/writing/paraphrase` + `ParaphraseCoach` component behind `NEXT_PUBLIC_FEATURE_AI_ASSIST`. Logs to `ai_assist_logs`, rate limited per user, heuristic fallback if models fail.
+- ✅ **AI Speaking Hints (Part 2)**: `/api/ai/speaking/hints` + `SpeakingHints` card on practice page under the same flag. Logged + rate limited with quick rollback via feature flag.
+
+## Phase 7 — Analytics, A/B, and Quality Gates
+
+- ✅ **Success metrics dashboards**: `/api/analytics/success-metrics` aggregates review funnels, retention uplift, mastered words, and collocation accuracy with guardrails; surfaced on `trackor/analytics.html`.
+- ✅ **Spaced interval experiment guardrails**: `lib/experiments/spaced-intervals.ts` assigns variants, stores status in Supabase, and auto-pauses when DAU review completion drops below 55%.
+- ✅ **Review & challenge instrumentation**: new `review_events`, `collocation_attempts`, and updated word/challenge APIs capture open/completion events plus attempt metadata for accuracy tracking.
