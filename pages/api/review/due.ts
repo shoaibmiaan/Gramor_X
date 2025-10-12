@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { buildReadingMiniCloze } from '@/lib/skills/readingMiniCloze';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import type { ReviewQueue } from '@/types/supabase';
 import type {
@@ -24,45 +25,6 @@ const SKILL_MAP: Record<ReviewItemType, SkillKey> = {
 const SKILL_ORDER: SkillKey[] = ['reading', 'listening', 'writing', 'speaking'];
 const DEFAULT_TOTAL_EXERCISES = 10;
 
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function buildReadingSegments(
-  template: string,
-  tokens: Array<{ id: string; token: string; placeholder: string }>,
-) {
-  const segments: { type: 'text' | 'blank'; content?: string; id?: string; placeholder?: string }[] = [];
-  let cursor = 0;
-
-  tokens.forEach((entry) => {
-    const index = template.indexOf(entry.token, cursor);
-    if (index === -1) {
-      return;
-    }
-
-    const slice = template.slice(cursor, index);
-    if (slice) {
-      segments.push({ type: 'text', content: slice });
-    }
-
-    segments.push({ type: 'blank', id: entry.id, placeholder: entry.placeholder });
-    cursor = index + entry.token.length;
-  });
-
-  if (cursor < template.length) {
-    segments.push({ type: 'text', content: template.slice(cursor) });
-  }
-
-  return segments;
-}
-
-function selectTopic(word: any) {
-  if (!word) return null;
-  const topics = Array.isArray(word.ielts_topics) ? word.ielts_topics : [];
-  return topics.length > 0 ? topics[0] : null;
-}
-
 function buildSkillBundle(options: {
   word: any | undefined;
   collocations: any[];
@@ -73,17 +35,10 @@ function buildSkillBundle(options: {
   const { word, collocations, examples, stats, hasAudio } = options;
   if (!word) return undefined;
 
-  const headword = word.headword ?? '';
-  const topic = selectTopic(word) ?? 'IELTS Task 2';
-  const definition = word.definition ?? 'describe the idea clearly';
-  const collocationChunks = collocations
-    .map((row) => row?.chunk)
-    .filter((chunk: any): chunk is string => typeof chunk === 'string');
+  const readingMiniCloze = buildReadingMiniCloze({ word, collocations, examples });
+  if (!readingMiniCloze) return undefined;
 
-  const suggestedCollocations = collocationChunks.slice(0, 3);
-  while (suggestedCollocations.length < 3) {
-    suggestedCollocations.push(`use ${headword}`);
-  }
+  const { headword, topic, suggestedCollocations, passage, segments, blanks } = readingMiniCloze;
 
   const scenarios: string[] = [];
   scenarios.push(`Academic: explain a ${topic.toLowerCase()} trend using “${headword}”.`);
@@ -92,40 +47,6 @@ function buildSkillBundle(options: {
     examples[0]?.text
       ? `Remix this context: “${examples[0].text.replace(/"/g, '')}”`
       : `Personal: describe when you would rely on “${headword}”.`,
-  );
-
-  const readingCollocationOne = suggestedCollocations[0];
-  const readingCollocationTwo = suggestedCollocations[1] ?? suggestedCollocations[0];
-  const exampleSentence = examples[1]?.text ?? `This ensures you can ${readingCollocationTwo} during the exam.`;
-
-  const blankTokens = [
-    { id: 'blank-headword', token: '__BLANK_HEADWORD__', placeholder: 'Blank 1', answer: headword, label: 'Headword' },
-    {
-      id: 'blank-collocation-1',
-      token: '__BLANK_COLLOC_ONE__',
-      placeholder: 'Blank 2',
-      answer: readingCollocationOne,
-      label: 'Collocation 1',
-    },
-    {
-      id: 'blank-collocation-2',
-      token: '__BLANK_COLLOC_TWO__',
-      placeholder: 'Blank 3',
-      answer: readingCollocationTwo,
-      label: 'Collocation 2',
-    },
-  ];
-
-  const readingTemplate = [
-    `IELTS passages about ${topic} often rely on ${blankTokens[0].token} to ${definition}.`,
-    `Writers sound fluent when they use ${blankTokens[1].token} in introductions.`,
-    `Link your ideas by pairing ${blankTokens[2].token}. ${exampleSentence}`,
-  ].join(' ');
-
-  const readingSegments = buildReadingSegments(readingTemplate, blankTokens);
-  const readingPassage = blankTokens.reduce(
-    (acc, token) => acc.replace(new RegExp(escapeRegExp(token.token), 'g'), '_____'),
-    readingTemplate,
   );
 
   const statsSafe = stats ?? {};
@@ -139,13 +60,9 @@ function buildSkillBundle(options: {
       attempts: statsSafe.writing_attempts ?? 0,
     },
     reading: {
-      passage: readingPassage,
-      segments: readingSegments.map((segment) =>
-        segment.type === 'text'
-          ? { type: 'text', content: segment.content ?? '' }
-          : { type: 'blank', id: segment.id ?? '', placeholder: segment.placeholder ?? 'Blank' },
-      ),
-      blanks: blankTokens.map((token) => ({ id: token.id, label: token.label, answer: token.answer })),
+      passage,
+      segments,
+      blanks,
       attempts: statsSafe.reading_attempts ?? 0,
     },
     speaking: {
