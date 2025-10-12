@@ -33,5 +33,14 @@
       "location": "Houston, USA",
       "supportHours": "Support: 24/7"
     }
+  },
+  "common": {
+    "languages": {
+      "en": "English",
+      "ur": "Urdu"
+    },
+    "status": {
+      "updating": "Updating…"
+    }
   }
 }
