@@ -240,7 +240,7 @@ export function useStreak() {
     }
   }, [state.lastDayKey, state.shields]);
 
-  const claimShield = useCallback(async () => {
+  const handleClaimShield = useCallback(async () => {
     try {
       const data = await claimShield();
       setState((s) => ({
@@ -304,7 +304,7 @@ export function useStreak() {
     ...state,
     reload: load,
     completeToday,
-    claimShield,
+    claimShield: handleClaimShield,
     useShield,
     scheduleRecovery: scheduleRecoveryAction,
   };
