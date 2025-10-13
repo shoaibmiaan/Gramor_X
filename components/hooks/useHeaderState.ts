@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import { fetchStreak as fetchStreakApi } from '@/lib/streak';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { defaultTier } from '@/config/navigation';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
@@ -24,6 +25,11 @@ export function useHeaderState(initialStreak?: number) {
   const [user, setUser] = useState<UserInfo>({ id: null, email: null, name: null, avatarUrl: null, avatarPath: null });
   const [streak, setStreak] = useState<number>(initialStreak ?? 0);
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>(defaultTier);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+  }, []);
 
   // Streak (prop wins; otherwise fetch)
   useEffect(() => {
@@ -31,54 +37,42 @@ export function useHeaderState(initialStreak?: number) {
   }, [initialStreak]);
 
   // Fail-soft streak fetch: never throw, never hide header; just default to 0 on errors.
-  const fetchStreak = useCallback(async () => {
-    let mounted = true;
-    if (typeof initialStreak === 'number') return () => {};
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.access_token) {
-        if (mounted) setStreak(0);
-        return () => { mounted = false; };
+  const syncStreak = useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      if (!force && typeof initialStreak === 'number') {
+        if (mountedRef.current) setStreak(initialStreak);
+        return;
       }
 
-      const res = await fetch('/api/streak', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-
-      if (!res.ok) {
-        // Keep header visible — just fall back to 0
-        console.warn('Streak fetch non-200:', res.status);
-        if (mounted) setStreak(0);
-        return () => { mounted = false; };
+      try {
+        const data = await fetchStreakApi();
+        const value = typeof data?.current_streak === 'number' ? data.current_streak : 0;
+        if (mountedRef.current) setStreak(value);
+      } catch (err) {
+        console.warn('[useHeaderState] streak sync failed:', err);
+        if (mountedRef.current) setStreak(0);
       }
-
-      const j = await res.json().catch(() => null);
-      const value = typeof j?.current_streak === 'number' ? j.current_streak : 0;
-      if (mounted) setStreak(value);
-    } catch (err) {
-      console.warn('Streak fetch error (fail-soft):', err);
-      if (mounted) setStreak(0);
-    }
-    return () => { mounted = false; };
-  }, [initialStreak]);
+    },
+    [initialStreak]
+  );
 
   useEffect(() => {
-    let mounted = true;
-    fetchStreak().then((cleanup) => {
-      return () => { if (mounted && cleanup) cleanup(); };
-    });
-    return () => { mounted = false; };
-  }, [fetchStreak]);
+    void syncStreak();
+  }, [syncStreak]);
 
   useEffect(() => {
     const onChanged = (e: Event) => {
       const ce = e as CustomEvent<{ value?: number }>;
-      if (typeof ce.detail?.value === 'number') setStreak(ce.detail.value);
-      else fetchStreak();
+      if (typeof ce.detail?.value === 'number') {
+        setStreak(ce.detail.value);
+        void syncStreak({ force: true });
+      } else {
+        void syncStreak({ force: true });
+      }
     };
     window.addEventListener('streak:changed', onChanged as EventListener);
     return () => window.removeEventListener('streak:changed', onChanged as EventListener);
-  }, [fetchStreak]);
+  }, [syncStreak]);
 
   useEffect(() => {
     let cancelled = false;
