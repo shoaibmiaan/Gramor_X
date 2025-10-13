@@ -513,6 +513,7 @@ export default function ProfileSetup() {
 
     const insertPayload = {
       ...basePayload,
+      id: userId,
       user_id: userId,
     };
 
