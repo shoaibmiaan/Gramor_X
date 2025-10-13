@@ -28,6 +28,13 @@ export function useStreak() {
     error: null,
   });
 
+  const broadcast = useCallback((value: number) => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value } }));
+    } catch {}
+  }, []);
+
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
@@ -59,79 +66,103 @@ export function useStreak() {
         state.lastDayKey !== today && state.lastDayKey !== yesterday && state.shields > 0;
 
       const data = await incrementStreak({ useShield: shouldUseShield });
-      setState((s) => ({
-        ...s,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        shields: data.shields ?? s.shields,
-        error: null,
-      }));
+      let nextCurrent = 0;
+      setState((s) => {
+        const currentValue = data.current_streak ?? s.current;
+        nextCurrent = currentValue;
+        return {
+          ...s,
+          current: currentValue,
+          longest: data.longest_streak ?? s.longest,
+          lastDayKey: data.last_activity_date ?? s.lastDayKey,
+          nextRestart: data.next_restart_date ?? s.nextRestart,
+          shields: data.shields ?? s.shields,
+          error: null,
+        };
+      });
+      broadcast(nextCurrent);
       return data;
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to update';
       setState((s) => ({ ...s, error: message }));
       throw e;
     }
-  }, [state.lastDayKey, state.shields]);
+  }, [broadcast, state.lastDayKey, state.shields]);
 
   const claimShield = useCallback(async () => {
     try {
       const data = await apiClaimShield();
-      setState((s) => ({
-        ...s,
-        shields: data.shields ?? s.shields,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        error: null,
-      }));
+      let nextCurrent = 0;
+      setState((s) => {
+        const currentValue = data.current_streak ?? s.current;
+        nextCurrent = currentValue;
+        return {
+          ...s,
+          shields: data.shields ?? s.shields,
+          current: currentValue,
+          longest: data.longest_streak ?? s.longest,
+          lastDayKey: data.last_activity_date ?? s.lastDayKey,
+          nextRestart: data.next_restart_date ?? s.nextRestart,
+          error: null,
+        };
+      });
+      broadcast(nextCurrent);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to claim';
       setState((s) => ({ ...s, error: message }));
       throw e;
     }
-  }, []);
+  }, [broadcast]);
 
   const useShield = useCallback(async () => {
     try {
       const data = await incrementStreak({ useShield: true });
-      setState((s) => ({
-        ...s,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        shields: data.shields ?? s.shields,
-        error: null,
-      }));
+      let nextCurrent = 0;
+      setState((s) => {
+        const currentValue = data.current_streak ?? s.current;
+        nextCurrent = currentValue;
+        return {
+          ...s,
+          current: currentValue,
+          longest: data.longest_streak ?? s.longest,
+          lastDayKey: data.last_activity_date ?? s.lastDayKey,
+          nextRestart: data.next_restart_date ?? s.nextRestart,
+          shields: data.shields ?? s.shields,
+          error: null,
+        };
+      });
+      broadcast(nextCurrent);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to use';
       setState((s) => ({ ...s, error: message }));
       throw e;
     }
-  }, []);
+  }, [broadcast]);
 
   const scheduleRecovery = useCallback(async (date: string) => {
     try {
       const data = await apiScheduleRecovery(date);
-      setState((s) => ({
-        ...s,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        shields: data.shields ?? s.shields,
-        error: null,
-      }));
+      let nextCurrent = 0;
+      setState((s) => {
+        const currentValue = data.current_streak ?? s.current;
+        nextCurrent = currentValue;
+        return {
+          ...s,
+          current: currentValue,
+          longest: data.longest_streak ?? s.longest,
+          lastDayKey: data.last_activity_date ?? s.lastDayKey,
+          nextRestart: data.next_restart_date ?? s.nextRestart,
+          shields: data.shields ?? s.shields,
+          error: null,
+        };
+      });
+      broadcast(nextCurrent);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to schedule recovery';
       setState((s) => ({ ...s, error: message }));
       throw e;
     }
-  }, []);
+  }, [broadcast]);
 
   return { ...state, reload: load, completeToday, claimShield, useShield, scheduleRecovery };
 }

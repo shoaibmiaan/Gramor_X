@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/design-system/Button';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { fetchStreak } from '@/lib/streak';
 
 type WordInfo = {
   id: string;
@@ -24,6 +25,24 @@ export function WordOfTheDayCard() {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const syncStreak = React.useCallback(async (fallback = 0) => {
+    let value = fallback;
+    try {
+      const data = await fetchStreak();
+      value = typeof data?.current_streak === 'number' ? data.current_streak : fallback;
+    } catch (err) {
+      console.warn('[WordOfTheDayCard] Unable to sync streak from API:', err);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value } }));
+      } catch {}
+    }
+
+    return value;
+  }, []);
+
   const load = React.useCallback(async () => {
     setError(null);
     try {
@@ -39,18 +58,26 @@ export function WordOfTheDayCard() {
       if (!res.ok) {
         setError('Could not load Word of the Day.');
         setData(null);
+        await syncStreak(0);
         return null;
       }
 
       const json = (await res.json()) as WOD;
-      setData(json);
-      return json;
+      const streakDays = await syncStreak(json.streakDays ?? 0);
+      const normalized: WOD = {
+        ...json,
+        streakDays,
+        longestStreak: Math.max(json.longestStreak ?? 0, streakDays),
+      };
+      setData(normalized);
+      return normalized;
     } catch {
       setError('Network error. Please retry.');
       setData(null);
+      await syncStreak(0);
       return null;
     }
-  }, []);
+  }, [syncStreak]);
 
   React.useEffect(() => { load(); }, [load]);
 
@@ -78,9 +105,8 @@ export function WordOfTheDayCard() {
         longestStreak?: number;
       };
       const updated = await load();
-      const nextValue = (payload?.streakDays ?? updated?.streakDays) ?? 0;
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value: nextValue } }));
+      if (!updated) {
+        await syncStreak(typeof payload?.streakDays === 'number' ? payload.streakDays : 0);
       }
     } catch {
       setError('Could not update. Please try again.');
