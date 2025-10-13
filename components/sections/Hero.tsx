@@ -7,6 +7,7 @@ import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { Icon } from '@/components/design-system/Icon';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
+import { fetchStreak } from '@/lib/streak';
 import { track } from '@/lib/analytics/track';
 
 const highlightFeatures = [
@@ -63,6 +64,26 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
     return { days, hours, minutes, seconds };
   }, [target, now]);
 
+  const announceStreak = useCallback(
+    async (fallback = 0) => {
+      let value = fallback;
+      try {
+        const data = await fetchStreak();
+        value = typeof data?.current_streak === 'number' ? data.current_streak : fallback;
+      } catch (err) {
+        console.warn('[Hero] Unable to sync streak from API:', err);
+      }
+
+      onStreakChange?.(value);
+      try {
+        window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value } }));
+      } catch {}
+
+      return value;
+    },
+    [onStreakChange]
+  );
+
   const load = useCallback(async (): Promise<WOD | null> => {
     try {
       const {
@@ -73,14 +94,14 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
         console.error('Failed to get session:', error);
         setAuth('guest');
         setData(null);
-        onStreakChange?.(0);
+        await announceStreak(0);
         return null;
       }
       const token = session?.access_token;
       if (!token) {
         setAuth('guest');
         setData(null);
-        onStreakChange?.(0);
+        await announceStreak(0);
         return null;
       }
       setAuth('authed');
@@ -90,29 +111,25 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
       if (!res.ok) {
         console.error('Failed to fetch word of the day:', res.status);
         setData(null);
-        onStreakChange?.(0);
+        await announceStreak(0);
         return null;
       }
       const json: WOD = await res.json();
-      setData(json);
-      onStreakChange?.(json.streakDays ?? 0);
+      const streakDays = await announceStreak(json.streakDays ?? 0);
+      const normalized: WOD = { ...json, streakDays };
+      setData(normalized);
       if (!json.learnedToday) {
         track('vocab_review_start', { wordId: json.word.id });
       }
-      try {
-        window.dispatchEvent(
-          new CustomEvent('streak:changed', { detail: { value: json.streakDays ?? 0 } })
-        );
-      } catch {}
-      return json;
+      return normalized;
     } catch (err) {
       console.error('Error loading word of the day:', err);
       setAuth('guest');
       setData(null);
-      onStreakChange?.(0);
+      await announceStreak(0);
       return null;
     }
-  }, [onStreakChange]);
+  }, [announceStreak]);
 
   useEffect(() => {
     void load();
@@ -140,13 +157,10 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
         console.error('Failed to mark word learned:', r.status);
       } else {
         track('vocab_review_finish', { wordId: data.word.id });
+        const payload = (await r.json().catch(() => null)) as { streakDays?: number } | null;
         const updated = await load();
-        if (updated) {
-          try {
-            window.dispatchEvent(
-              new CustomEvent('streak:changed', { detail: { value: updated.streakDays ?? 0 } })
-            );
-          } catch {}
+        if (!updated) {
+          await announceStreak(typeof payload?.streakDays === 'number' ? payload.streakDays : 0);
         }
       }
     } catch (err) {
