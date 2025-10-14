@@ -162,15 +162,20 @@ export interface UserPrefs {
 export interface Profiles extends TableBase {
   user_id: string;
   full_name?: string;
+  country?: string | null;
+  english_level?: string | null;
   phone?: string;
   phone_verified?: boolean | null;
   goal_band?: number;
   weaknesses?: string[];
   study_prefs?: string[] | null;
   focus_topics?: string[] | null;
+  goal_reason?: string[] | null;
   role?: 'student' | 'teacher' | 'admin';
+  status?: string | null;
   membership?: 'free' | 'starter' | 'booster' | 'master';
   locale?: string;
+  timezone?: string | null;
 
   // from codex/add-whatsapp-opt-in-preferences-panel
   notification_channels?: string[] | null;
@@ -178,9 +183,18 @@ export interface Profiles extends TableBase {
 
   // from main
   preferred_language?: string | null;
+  language_preference?: string | null;
   study_days?: string[] | null;           // e.g., ['Mon','Wed','Fri']
   study_minutes_per_day?: number | null;  // e.g., 30
   daily_quota_goal?: number | null;
+  days_per_week?: number | null;
+  time_commitment?: string | null;
+  time_commitment_min?: number | null;
+  exam_date?: string | null;
+  avatar_url?: string | null;
+  learning_style?: string | null;
+  ai_recommendation?: Record<string, unknown> | null;
+  setup_complete?: boolean | null;
 }
 
 export interface StudyPlans extends TableBase {
