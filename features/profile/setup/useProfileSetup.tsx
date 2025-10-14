@@ -20,6 +20,17 @@ import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { useLocale } from '@/lib/locale';
 import type { AIPlan } from '@/types/profile';
 
+/**
+ * Keep all shared helpers in one place so API & UI stay consistent.
+ * This file purposely *does not* re-implement these locally.
+ */
+import {
+  clampDailyQuota,
+  computeProgressFromValues,
+  DEFAULT_DAILY_QUOTA,
+  phoneRegex,
+} from './profileSetupUtils';
+
 type FieldErrors = {
   fullName?: string;
   country?: string;
@@ -96,16 +107,6 @@ export interface ProfileSetupContextValue {
   progress: number;
 }
 
-const DEFAULT_DAILY_QUOTA = 4;
-
-const clampDailyQuota = (value: number | null | undefined): number => {
-  if (!Number.isFinite(value ?? Number.NaN)) return DEFAULT_DAILY_QUOTA;
-  const coerced = Math.round(Number(value));
-  return Math.min(DAILY_QUOTA_RANGE.max, Math.max(DAILY_QUOTA_RANGE.min, coerced));
-};
-
-const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-
 const ProfileSetupContext = createContext<ProfileSetupContextValue | null>(null);
 
 export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -164,25 +165,117 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [timezone]);
 
-  const computeProgressFromValues = (values: {
-    fullName?: string;
-    country?: string;
-    level?: string | number | '';
-    time?: string;
-    daysPerWeek?: number | '';
-    phoneVerified?: boolean;
-  }) => {
-    const requiredCount = 6;
-    const filled = [
-      Boolean(values.fullName),
-      Boolean(values.country),
-      Boolean(values.level),
-      Boolean(values.time),
-      Boolean(values.daysPerWeek),
-      Boolean(values.phoneVerified),
-    ].filter(Boolean).length;
-    return Math.round((filled / requiredCount) * 100);
-  };
+  useEffect(() => {
+    let active = true;
+
+    const loadProfile = async () => {
+      setLoading(true);
+      try {
+        // Handle OAuth/Magic Link code → session exchange
+        if (typeof window !== 'undefined') {
+          const url = window.location.href;
+          if (url.includes('code=') || url.includes('access_token=')) {
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(url);
+            if (!exchangeError) router.replace('/profile/setup').catch(() => {});
+          }
+        }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!active) return;
+
+        if (!session?.user) {
+          setIsAuthenticated(false);
+          router.replace({ pathname: '/login', query: { redirect: '/profile/setup' } }).catch(() => {});
+          return;
+        }
+
+        setIsAuthenticated(true);
+        setUserId(session.user.id);
+
+        const { data, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .or(`id.eq.${session.user.id},user_id.eq.${session.user.id}`)
+          .maybeSingle();
+
+        if (!active) return;
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          setError(profileError.message);
+        }
+
+        if (data) {
+          setFullName(data.full_name ?? '');
+          setCountry(data.country ?? '');
+          setLevel((data.english_level as typeof LEVELS[number] | null) ?? '');
+          setGoal(Number(data.goal_band ?? 7.0));
+          setExamDate(data.exam_date ?? '');
+          setPrefs(Array.isArray(data.study_prefs) ? data.study_prefs : []);
+          setFocusTopics(
+            Array.isArray(data.focus_topics)
+              ? (data.focus_topics.filter((topic: unknown) => typeof topic === 'string') as typeof TOPICS[number][])
+              : [],
+          );
+          setDailyQuota(clampDailyQuota(data.daily_quota_goal ?? null));
+          setTime((data.time_commitment as typeof TIME[number] | null) ?? '');
+          setDaysPerWeek((data.days_per_week as number | null) ?? '');
+          setPhone(data.phone ?? '');
+          setPhoneStage(data.phone ? 'verified' : 'request');
+          setWeaknesses(Array.isArray(data.weaknesses) ? data.weaknesses : []);
+          setGoalReasons(Array.isArray(data.goal_reason) ? data.goal_reason : []);
+          setLearningStyle((data.learning_style as typeof LEARNING_STYLES[number] | null) ?? '');
+          setTimezone(data.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
+          setLang(data.preferred_language ?? 'en');
+          setLocale(data.preferred_language ?? 'en');
+          setExplanationLang(data.language_preference ?? 'en');
+          setExplanationLocale(data.language_preference ?? 'en');
+
+          if (data.avatar_url) {
+            const resolved = await resolveAvatarUrl(data.avatar_url);
+            if (!active) return;
+            setAvatarUrl(resolved.signedUrl ?? undefined);
+            setAvatarPath(resolved.path ?? undefined);
+          } else {
+            setAvatarUrl(undefined);
+            setAvatarPath(undefined);
+          }
+
+          try {
+            const rec = (data.ai_recommendation as AIPlan | null) ?? null;
+            if (rec && (rec.suggestedGoal || rec.sequence?.length)) setAi(rec);
+          } catch {
+            // ignore malformed AI recommendations
+          }
+
+          profileProgressRef.current = computeProgressFromValues({
+            fullName: data.full_name ?? '',
+            country: data.country ?? '',
+            level: data.english_level ?? '',
+            time: data.time_commitment ?? '',
+            daysPerWeek: data.days_per_week ?? '',
+            phoneVerified: Boolean(data.phone),
+          });
+        }
+      } catch (err) {
+        if (!active) return;
+        // Non-fatal: surface a friendly message and let users retry save later.
+        // eslint-disable-next-line no-console
+        console.error('Failed to load profile setup data', err);
+        setError((prev) => prev ?? 'Unable to load profile data');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [router, setLocale, setExplanationLocale]);
 
   const computeProgress = () =>
     computeProgressFromValues({
@@ -201,94 +294,6 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return [] as string[];
     }
   }, []);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      if (typeof window !== 'undefined') {
-        const url = window.location.href;
-        if (url.includes('code=') || url.includes('access_token=')) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(url);
-          if (!exchangeError) router.replace('/profile/setup').catch(() => {});
-        }
-      }
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        setIsAuthenticated(false);
-        setLoading(false);
-        router.replace({ pathname: '/login', query: { redirect: '/profile/setup' } }).catch(() => {});
-        return;
-      }
-
-      setIsAuthenticated(true);
-      setUserId(session.user.id);
-
-      const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`id.eq.${session.user.id},user_id.eq.${session.user.id}`)
-        .maybeSingle();
-
-      if (profileError && profileError.code !== 'PGRST116') setError(profileError.message);
-      if (data) {
-        setFullName(data.full_name ?? '');
-        setCountry(data.country ?? '');
-        setLevel((data.english_level as typeof LEVELS[number] | null) ?? '');
-        setGoal(Number(data.goal_band ?? 7.0));
-        setExamDate(data.exam_date ?? '');
-        setPrefs(Array.isArray(data.study_prefs) ? data.study_prefs : []);
-        setFocusTopics(
-          Array.isArray(data.focus_topics)
-            ? (data.focus_topics.filter((topic: unknown) => typeof topic === 'string') as typeof TOPICS[number][])
-            : [],
-        );
-        setDailyQuota(clampDailyQuota(data.daily_quota_goal ?? null));
-        setTime((data.time_commitment as typeof TIME[number] | null) ?? '');
-        setDaysPerWeek((data.days_per_week as number | null) ?? '');
-        setPhone(data.phone ?? '');
-        setPhoneStage(data.phone ? 'verified' : 'request');
-        setWeaknesses(Array.isArray(data.weaknesses) ? data.weaknesses : []);
-        setGoalReasons(Array.isArray(data.goal_reason) ? data.goal_reason : []);
-        setLearningStyle((data.learning_style as typeof LEARNING_STYLES[number] | null) ?? '');
-        setTimezone(data.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
-        setLang(data.preferred_language ?? 'en');
-        setLocale(data.preferred_language ?? 'en');
-        setExplanationLang(data.language_preference ?? 'en');
-        setExplanationLocale(data.language_preference ?? 'en');
-
-        if (data.avatar_url) {
-          const resolved = await resolveAvatarUrl(data.avatar_url);
-          setAvatarUrl(resolved.signedUrl ?? undefined);
-          setAvatarPath(resolved.path ?? undefined);
-        } else {
-          setAvatarUrl(undefined);
-          setAvatarPath(undefined);
-        }
-
-        try {
-          const rec = (data.ai_recommendation as AIPlan | null) ?? null;
-          if (rec && (rec.suggestedGoal || rec.sequence?.length)) setAi(rec);
-        } catch {
-          // ignore malformed AI recommendations
-        }
-
-        profileProgressRef.current = computeProgressFromValues({
-          fullName: data.full_name ?? '',
-          country: data.country ?? '',
-          level: data.english_level ?? '',
-          time: data.time_commitment ?? '',
-          daysPerWeek: data.days_per_week ?? '',
-          phoneVerified: Boolean(data.phone),
-        });
-      }
-
-      setLoading(false);
-    })();
-  }, [router, setLocale, setExplanationLocale]);
 
   const localAISuggest = useMemo(() => {
     if (!level) return null;
@@ -358,18 +363,14 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
           body: JSON.stringify(aiPayload),
           signal: controller.signal,
         });
-        if (!res.ok) {
-          throw new Error('Failed to generate AI plan');
-        }
+        if (!res.ok) throw new Error('Failed to generate AI plan');
+
         const data = await res.json();
         if (!active) return;
         setAi({
           suggestedGoal: typeof data.suggestedGoal === 'number' ? data.suggestedGoal : fallback?.suggestedGoal,
           etaWeeks: typeof data.etaWeeks === 'number' ? data.etaWeeks : fallback?.etaWeeks,
-          sequence:
-            Array.isArray(data.sequence) && data.sequence.length
-              ? data.sequence
-              : fallback?.sequence ?? [],
+          sequence: Array.isArray(data.sequence) && data.sequence.length ? data.sequence : fallback?.sequence ?? [],
           notes: Array.isArray(data.notes) && data.notes.length ? data.notes : fallback?.notes ?? [],
           source: data.source ?? 'ai',
         });
@@ -377,9 +378,7 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (e?.name === 'AbortError') return;
         if (!active) return;
         setAiError(e?.message || 'Unable to fetch AI plan');
-        if (fallback) {
-          setAi(fallback);
-        }
+        if (fallback) setAi(fallback);
       } finally {
         if (active) setAiLoading(false);
       }
@@ -593,6 +592,7 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (finalize) router.push('/dashboard').catch(() => {});
     } catch (e: any) {
       setError(e?.message || 'Failed to save profile');
+      // eslint-disable-next-line no-console
       console.error('Save profile error:', e);
     } finally {
       setSaving(false);
@@ -692,4 +692,3 @@ export {
   TOPICS,
   WEAKNESSES,
 };
-
