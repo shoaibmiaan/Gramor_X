@@ -19,6 +19,11 @@ import {
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { useLocale } from '@/lib/locale';
 import type { AIPlan } from '@/types/profile';
+
+/**
+ * Keep all shared helpers in one place so API & UI stay consistent.
+ * This file purposely *does not* re-implement these locally.
+ */
 import {
   clampDailyQuota,
   computeProgressFromValues,
@@ -160,30 +165,13 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [timezone]);
 
-  const computeProgress = () =>
-    computeProgressFromValues({
-      fullName,
-      country,
-      level,
-      time,
-      daysPerWeek,
-      phoneVerified: phoneStage === 'verified',
-    });
-
-  const timezones = useMemo(() => {
-    try {
-      return (Intl as any).supportedValuesOf ? (Intl as any).supportedValuesOf('timeZone') : [];
-    } catch {
-      return [] as string[];
-    }
-  }, []);
-
   useEffect(() => {
     let active = true;
 
     const loadProfile = async () => {
       setLoading(true);
       try {
+        // Handle OAuth/Magic Link code → session exchange
         if (typeof window !== 'undefined') {
           const url = window.location.href;
           if (url.includes('code=') || url.includes('access_token=')) {
@@ -218,6 +206,7 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (profileError && profileError.code !== 'PGRST116') {
           setError(profileError.message);
         }
+
         if (data) {
           setFullName(data.full_name ?? '');
           setCountry(data.country ?? '');
@@ -272,6 +261,8 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       } catch (err) {
         if (!active) return;
+        // Non-fatal: surface a friendly message and let users retry save later.
+        // eslint-disable-next-line no-console
         console.error('Failed to load profile setup data', err);
         setError((prev) => prev ?? 'Unable to load profile data');
       } finally {
@@ -285,6 +276,24 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
       active = false;
     };
   }, [router, setLocale, setExplanationLocale]);
+
+  const computeProgress = () =>
+    computeProgressFromValues({
+      fullName,
+      country,
+      level,
+      time,
+      daysPerWeek,
+      phoneVerified: phoneStage === 'verified',
+    });
+
+  const timezones = useMemo(() => {
+    try {
+      return (Intl as any).supportedValuesOf ? (Intl as any).supportedValuesOf('timeZone') : [];
+    } catch {
+      return [] as string[];
+    }
+  }, []);
 
   const localAISuggest = useMemo(() => {
     if (!level) return null;
@@ -354,18 +363,14 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
           body: JSON.stringify(aiPayload),
           signal: controller.signal,
         });
-        if (!res.ok) {
-          throw new Error('Failed to generate AI plan');
-        }
+        if (!res.ok) throw new Error('Failed to generate AI plan');
+
         const data = await res.json();
         if (!active) return;
         setAi({
           suggestedGoal: typeof data.suggestedGoal === 'number' ? data.suggestedGoal : fallback?.suggestedGoal,
           etaWeeks: typeof data.etaWeeks === 'number' ? data.etaWeeks : fallback?.etaWeeks,
-          sequence:
-            Array.isArray(data.sequence) && data.sequence.length
-              ? data.sequence
-              : fallback?.sequence ?? [],
+          sequence: Array.isArray(data.sequence) && data.sequence.length ? data.sequence : fallback?.sequence ?? [],
           notes: Array.isArray(data.notes) && data.notes.length ? data.notes : fallback?.notes ?? [],
           source: data.source ?? 'ai',
         });
@@ -373,9 +378,7 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (e?.name === 'AbortError') return;
         if (!active) return;
         setAiError(e?.message || 'Unable to fetch AI plan');
-        if (fallback) {
-          setAi(fallback);
-        }
+        if (fallback) setAi(fallback);
       } finally {
         if (active) setAiLoading(false);
       }
@@ -589,6 +592,7 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (finalize) router.push('/dashboard').catch(() => {});
     } catch (e: any) {
       setError(e?.message || 'Failed to save profile');
+      // eslint-disable-next-line no-console
       console.error('Save profile error:', e);
     } finally {
       setSaving(false);
@@ -688,4 +692,3 @@ export {
   TOPICS,
   WEAKNESSES,
 };
-
