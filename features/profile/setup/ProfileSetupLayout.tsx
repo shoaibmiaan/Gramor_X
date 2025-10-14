@@ -1,38 +1,38 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
-import { useLocale } from '@/lib/locale';
-import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
-import { Input } from '@/components/design-system/Input';
-import { AvatarUploader } from '@/components/design-system/AvatarUploader';
-import { Button } from '@/components/design-system/Button';
-import { Badge } from '@/components/design-system/Badge';
+'use client';
+
+import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+
 import { Alert } from '@/components/design-system/Alert';
+import { AvatarUploader } from '@/components/design-system/AvatarUploader';
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { Container } from '@/components/design-system/Container';
+import { Input } from '@/components/design-system/Input';
 import { Select } from '@/components/design-system/Select';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { emitUserEvent } from '@/lib/analytics/user';
+
 import {
   COUNTRIES,
-  LEVELS,
-  TIME,
-  PREFS,
-  WEAKNESSES,
+  DAILY_QUOTA_RANGE,
   GOAL_REASONS,
   LEARNING_STYLES,
+  LEVELS,
+  PREFS,
+  TIME,
   TOPICS,
-  DAILY_QUOTA_RANGE,
-} from '@/lib/profile-options';
-import { resolveAvatarUrl } from '@/lib/avatar';
-import type { AIPlan } from '@/types/profile';
+  WEAKNESSES,
+  useProfileSetup,
+} from './useProfileSetup';
 
-/** ——— UI helpers ——— */
-const Section: React.FC<{ title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean }> = ({
-  title,
-  subtitle,
-  children,
-  defaultOpen = true,
-}) => (
+const Section: React.FC<{
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}> = ({ title, subtitle, children, defaultOpen = true }) => (
   <details open={defaultOpen} className="group rounded-ds-2xl border border-border/50 bg-card/60 backdrop-blur-[2px] shadow-sm">
     <summary className="cursor-pointer select-none list-none px-5 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-3">
       <div>
@@ -44,14 +44,6 @@ const Section: React.FC<{ title: string; subtitle?: string; children: React.Reac
     <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-0">{children}</div>
   </details>
 );
-
-const DEFAULT_DAILY_QUOTA = 4;
-
-const clampDailyQuota = (value: number | null | undefined): number => {
-  if (!Number.isFinite(value ?? NaN)) return DEFAULT_DAILY_QUOTA;
-  const coerced = Math.round(Number(value));
-  return Math.min(DAILY_QUOTA_RANGE.max, Math.max(DAILY_QUOTA_RANGE.min, coerced));
-};
 
 const SetupProgressBar: React.FC<{ value: number }> = ({ value }) => (
   <div className="w-full h-2 rounded-full bg-muted/40 overflow-hidden">
@@ -67,503 +59,105 @@ const SkeletonLine: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`animate-pulse rounded-md bg-muted ${className ?? 'h-4 w-full'}`} />
 );
 
-export default function ProfileSetup() {
+export const ProfileSetupLayout: React.FC = () => {
   const router = useRouter();
-  const { t, setLocale, setExplanationLocale } = useLocale();
+  const {
+    t,
+    loading,
+    isAuthenticated,
+    saving,
+    error,
+    notice,
+    userId,
+    fullName,
+    setFullName,
+    country,
+    setCountry,
+    level,
+    setLevel,
+    goal,
+    setGoal,
+    examDate,
+    setExamDate,
+    prefs,
+    togglePref,
+    focusTopics,
+    toggleTopic,
+    dailyQuota,
+    setDailyQuota,
+    time,
+    setTime,
+    daysPerWeek,
+    setDaysPerWeek,
+    lang,
+    handlePreferredLanguageChange,
+    explanationLang,
+    handleExplanationLanguageChange,
+    avatarUrl,
+    setAvatarUrl,
+    avatarPath,
+    setAvatarPath,
+    ai,
+    aiLoading,
+    aiError,
+    phone,
+    setPhone,
+    phoneCode,
+    setPhoneCode,
+    phoneStage,
+    requestOtp,
+    verifyOtp,
+    phoneErr,
+    weaknesses,
+    toggleWeakness,
+    goalReasons,
+    toggleGoalReason,
+    learningStyle,
+    setLearningStyle,
+    timezone,
+    setTimezone,
+    timezones,
+    fieldErrors,
+    clearFieldError,
+    canSubmit,
+    saveProfile,
+    progress,
+  } = useProfileSetup();
 
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-
-  const [userId, setUserId] = useState<string | null>(null);
-  const [fullName, setFullName] = useState('');
-  const [country, setCountry] = useState('');
-  const [level, setLevel] = useState<typeof LEVELS[number] | ''>('');
-  const [goal, setGoal] = useState(7.0);
-  const [examDate, setExamDate] = useState('');
-  const [prefs, setPrefs] = useState<typeof PREFS[number][]>([]);
-  const [focusTopics, setFocusTopics] = useState<typeof TOPICS[number][]>([]);
-  const [dailyQuota, setDailyQuota] = useState<number>(DEFAULT_DAILY_QUOTA);
-  const [time, setTime] = useState<typeof TIME[number] | ''>('');
-  const [daysPerWeek, setDaysPerWeek] = useState<number | ''>('');
-  const [lang, setLang] = useState('en');
-  const [explanationLang, setExplanationLang] = useState('en');
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>();
-  const [avatarPath, setAvatarPath] = useState<string | undefined>();
-  const [ai, setAi] = useState<(AIPlan & { source?: string }) | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [phone, setPhone] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
-  const [phoneStage, setPhoneStage] = useState<'request' | 'verify' | 'verified'>('request');
-  const [phoneErr, setPhoneErr] = useState<string | null>(null);
-  const [weaknesses, setWeaknesses] = useState<typeof WEAKNESSES[number][]>([]);
-  const [goalReasons, setGoalReasons] = useState<typeof GOAL_REASONS[number][]>([]);
-  const [learningStyle, setLearningStyle] = useState<typeof LEARNING_STYLES[number] | ''>('');
-  const [timezone, setTimezone] = useState('');
-
-  const profileProgressRef = useRef<number>(0);
-
-  const computeProgressFromValues = (values: {
-    fullName?: string;
-    country?: string;
-    level?: string | number | '';
-    time?: string;
-    daysPerWeek?: number | '';
-    phoneVerified?: boolean;
-  }) => {
-    const requiredCount = 6;
-    const filled = [
-      Boolean(values.fullName),
-      Boolean(values.country),
-      Boolean(values.level),
-      Boolean(values.time),
-      Boolean(values.daysPerWeek),
-      Boolean(values.phoneVerified),
-    ].filter(Boolean).length;
-    return Math.round((filled / requiredCount) * 100);
-  };
-
-  const computeProgress = () =>
-    computeProgressFromValues({
-      fullName,
-      country,
-      level,
-      time,
-      daysPerWeek,
-      phoneVerified: phoneStage === 'verified',
-    });
-
-  const timezones = useMemo(() => {
-    try {
-      return (Intl as any).supportedValuesOf ? (Intl as any).supportedValuesOf('timeZone') : [];
-    } catch {
-      return [] as string[];
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!timezone) {
-      try {
-        setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-      } catch {}
-    }
-  }, [timezone]);
-
-  type FieldErrors = {
-    fullName?: string;
-    country?: string;
-    level?: string;
-    goal?: string;
-    examDate?: string;
-    phone?: string;
-    time?: string;
-    daysPerWeek?: string;
-  };
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const clearFieldError = (field: keyof FieldErrors) =>
-    setFieldErrors((prev) => {
-      const { [field]: _, ...rest } = prev;
-      return rest;
-    });
-
-  // Phone validation regex matching schema's profiles_phone_format
-  const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-
-  // Fetch active session & profile
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      if (typeof window !== 'undefined') {
-        const url = window.location.href;
-        if (url.includes('code=') || url.includes('access_token=')) {
-          const { error } = await supabase.auth.exchangeCodeForSession(url);
-          if (!error) router.replace('/profile/setup');
-        }
-      }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setIsAuthenticated(false);
-        setLoading(false);
-        router.replace({ pathname: '/login', query: { redirect: '/profile/setup' } });
-        return;
-      }
-      setIsAuthenticated(true);
-      setUserId(session.user.id);
-      console.log('Authenticated user ID:', session.user.id);
-      console.log('JWT role:', session.user.app_metadata?.role); // Debug JWT role
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`id.eq.${session.user.id},user_id.eq.${session.user.id}`)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') setError(error.message);
-      if (data) {
-        setFullName(data.full_name ?? '');
-        setCountry(data.country ?? '');
-        setLevel(data.english_level ?? '');
-        setGoal(Number(data.goal_band ?? 7.0));
-        setExamDate(data.exam_date ?? '');
-        setPrefs(data.study_prefs ?? []);
-        setFocusTopics(
-          Array.isArray(data.focus_topics)
-            ? (data.focus_topics.filter((topic: any) => typeof topic === 'string') as typeof TOPICS[number][])
-            : [],
-        );
-        setDailyQuota(clampDailyQuota(data.daily_quota_goal ?? null));
-        setTime(data.time_commitment ?? '');
-        setDaysPerWeek(data.days_per_week ?? '');
-        setPhone(data.phone ?? '');
-        setPhoneStage(data.phone ? 'verified' : 'request');
-        setWeaknesses(data.weaknesses ?? []);
-        setGoalReasons(data.goal_reason ?? []);
-        setLearningStyle(data.learning_style ?? '');
-        setTimezone(data.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
-        setLang(data.preferred_language ?? 'en');
-        setLocale(data.preferred_language ?? 'en');
-        setExplanationLang(data.language_preference ?? 'en');
-        setExplanationLocale(data.language_preference ?? 'en');
-        if (data.avatar_url) {
-          const resolved = await resolveAvatarUrl(data.avatar_url);
-          setAvatarUrl(resolved.signedUrl ?? undefined);
-          setAvatarPath(resolved.path ?? undefined);
-        } else {
-          setAvatarUrl(undefined);
-          setAvatarPath(undefined);
-        }
-        try {
-          const rec = (data.ai_recommendation as AIPlan | null) ?? null;
-          if (rec && (rec.suggestedGoal || rec.sequence?.length)) setAi(rec);
-        } catch {}
-
-        profileProgressRef.current = computeProgressFromValues({
-          fullName: data.full_name ?? '',
-          country: data.country ?? '',
-          level: data.english_level ?? '',
-          time: data.time_commitment ?? '',
-          daysPerWeek: data.days_per_week ?? '',
-          phoneVerified: Boolean(data.phone),
-        });
-      }
-
-      setLoading(false);
-    })();
-  }, [router, setLocale, setExplanationLocale]);
-
-  // Lightweight on-device AI heuristic
-  const localAISuggest = useMemo(() => {
-    if (!level) return null;
-    const base: Record<string, number> = {
-      Beginner: 5.5,
-      Elementary: 6.0,
-      'Pre-Intermediate': 6.5,
-      Intermediate: 7.0,
-      'Upper-Intermediate': 7.5,
-      Advanced: 8.0,
-    };
-    const suggestedGoal = base[level] ?? 7.0;
-    const sequence = prefs.length ? prefs : [...PREFS];
-    const etaWeeks = Math.max(
-      4,
-      Math.round((suggestedGoal - 5) * (time === '2h/day' ? 4 : time === '1h/day' ? 6 : 5))
+  if (loading) {
+    return (
+      <section className="pb-24 sm:pb-14 pt-10 sm:pt-16 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Container>
+          <div className="mx-auto mb-6 sm:mb-8 max-w-5xl">
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-col sm:flex-row">
+              <div className="flex-1">
+                <h1 className="font-slab text-display leading-tight text-gradient-primary">
+                  {t('profileSetup.completeProfile')}
+                </h1>
+                <p className="text-muted mt-1 sm:mt-2 max-w-prose">{t('profileSetup.description')}</p>
+              </div>
+              <div className="w-full sm:w-64">
+                <SetupProgressBar value={progress} />
+                <p className="mt-1 text-right text-caption text-muted">{progress}%</p>
+              </div>
+            </div>
+          </div>
+          <Card className="card-surface p-6 rounded-ds-2xl space-y-4">
+            <SkeletonLine className="h-6 w-2/3" />
+            <SkeletonLine className="h-5 w-1/3" />
+            <div className="grid sm:grid-cols-2 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <SkeletonLine className="h-3 w-24" />
+                  <SkeletonLine className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Container>
+      </section>
     );
-    const focusOrder = sequence.join(' → ');
-    const cadence = time || '1–2h/day';
-    return {
-      suggestedGoal,
-      etaWeeks,
-      sequence,
-      notes: [
-        `Focus order: ${focusOrder}`,
-        `Consistency over intensity — aim for ${cadence}.`,
-        'Benchmark every 2 weeks and adjust your goal if you are ahead.',
-      ],
-      source: 'local',
-    } satisfies AIPlan & { source: string };
-  }, [level, prefs, time]);
-
-  const aiPayload = useMemo(() => {
-    if (!level) return null;
-    const normalizedPrefs = prefs.length ? prefs : undefined;
-    const normalizedGoal = Number.isFinite(goal) ? goal : undefined;
-    return {
-      english_level: level,
-      study_prefs: normalizedPrefs,
-      time_commitment: time || undefined,
-      current_band: normalizedGoal,
-    };
-  }, [level, prefs, time, goal]);
-
-  useEffect(() => {
-    if (!aiPayload) {
-      setAi(null);
-      setAiError(null);
-      setAiLoading(false);
-      return;
-    }
-
-    const fallback = localAISuggest;
-    if (fallback) {
-      setAi(fallback);
-    }
-    setAiError(null);
-
-    const controller = new AbortController();
-    let active = true;
-
-    const fetchPlan = async () => {
-      setAiLoading(true);
-      try {
-        const res = await fetch('/api/ai/profile-suggest', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(aiPayload),
-          signal: controller.signal,
-        });
-        if (!res.ok) {
-          throw new Error('Failed to generate AI plan');
-        }
-        const data = await res.json();
-        if (!active) return;
-        setAi({
-          suggestedGoal: typeof data.suggestedGoal === 'number' ? data.suggestedGoal : fallback?.suggestedGoal,
-          etaWeeks: typeof data.etaWeeks === 'number' ? data.etaWeeks : fallback?.etaWeeks,
-          sequence:
-            Array.isArray(data.sequence) && data.sequence.length
-              ? data.sequence
-              : fallback?.sequence ?? [],
-          notes:
-            Array.isArray(data.notes) && data.notes.length ? data.notes : fallback?.notes ?? [],
-          source: data.source ?? 'ai',
-        });
-      } catch (e: any) {
-        if (e?.name === 'AbortError') return;
-        if (!active) return;
-        setAiError(e?.message || 'Unable to fetch AI plan');
-        if (fallback) {
-          setAi(fallback);
-        }
-      } finally {
-        if (active) setAiLoading(false);
-      }
-    };
-
-    fetchPlan();
-
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [aiPayload, localAISuggest]);
-
-  const togglePref = (p: typeof PREFS[number]) => {
-    setPrefs((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
-  };
-
-  const toggleTopic = (topic: typeof TOPICS[number]) => {
-    setFocusTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]));
-  };
-
-  const toggleWeakness = (w: typeof WEAKNESSES[number]) => {
-    setWeaknesses((prev) => (prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w]));
-  };
-
-  const toggleGoalReason = (r: typeof GOAL_REASONS[number]) => {
-    setGoalReasons((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
-  };
-
-  const requestOtp = async () => {
-    setPhoneErr(null);
-    clearFieldError('phone');
-    if (!phone) {
-      setPhoneErr('Please enter a phone number');
-      return;
-    }
-    if (!phoneRegex.test(phone)) {
-      setPhoneErr('Phone number must be a valid international number (e.g., +923001234567)');
-      return;
-    }
-    try {
-      const res = await fetch('/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      const j = await res.json();
-      if (!j.ok) throw new Error(j.error || 'Failed to send OTP');
-      setPhoneStage('verify');
-    } catch (e: any) {
-      setPhoneErr(e.message);
-    }
-  };
-
-  const verifyOtp = async () => {
-    setPhoneErr(null);
-    if (!phoneCode) {
-      setPhoneErr('Please enter the verification code');
-      return;
-    }
-    try {
-      const res = await fetch('/api/check-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, code: phoneCode }),
-      });
-      const j = await res.json();
-      if (!j.ok) throw new Error(j.error || 'Invalid verification code');
-      setPhoneStage('verified');
-    } catch (e: any) {
-      setPhoneErr(e.message);
-    }
-  };
-
-  const canSubmit = fullName && country && level && time && daysPerWeek && phoneStage === 'verified' && Object.keys(fieldErrors).length === 0;
-
-  const saveProfile = async (finalize = false) => {
-    if (!userId) {
-      setError('User not authenticated. Please log in again.');
-      setSaving(false);
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    setNotice(null);
-
-    const prevProgress = profileProgressRef.current ?? 0;
-    const nextProgress = computeProgress();
-
-    const errs: FieldErrors = {};
-    if (!fullName.trim()) errs.fullName = 'Full name is required';
-    if (!country) errs.country = 'Country is required';
-    if (!level) errs.level = 'English level is required';
-    if (!time) errs.time = 'Time commitment is required';
-    if (!daysPerWeek) errs.daysPerWeek = 'Days per week is required';
-    if (goal < 4 || goal > 9 || Math.round(goal * 2) !== goal * 2) {
-      errs.goal = 'Goal must be between 4.0 and 9.0 in 0.5 increments';
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (examDate) {
-      if (!dateRegex.test(examDate)) errs.examDate = 'Invalid date format (YYYY-MM-DD)';
-      else {
-        const d = new Date(examDate);
-        if (isNaN(d.getTime()) || d < today) errs.examDate = 'Exam date cannot be in the past';
-      }
-    }
-    if (phone && !phoneRegex.test(phone)) {
-      errs.phone = 'Phone number must be a valid international number';
-    }
-    if (daysPerWeek && (daysPerWeek < 1 || daysPerWeek > 7)) {
-      errs.daysPerWeek = 'Days per week must be between 1 and 7';
-    }
-    if (Object.keys(errs).length) {
-      setFieldErrors(errs);
-      setSaving(false);
-      return;
-    }
-    setFieldErrors({});
-
-    const timeCommitmentMap: Record<string, number> = {
-      '1h/day': 60,
-      '2h/day': 120,
-      Flexible: 90,
-    };
-    const timeCommitmentMin = time ? timeCommitmentMap[time] || 60 : null;
-
-    const aiRecommendation = ai
-      ? {
-          suggestedGoal: ai.suggestedGoal,
-          etaWeeks: ai.etaWeeks,
-          sequence: ai.sequence,
-          notes: ai.notes,
-          source: ai.source,
-        }
-      : null;
-
-    const basePayload = {
-      full_name: fullName.trim() || null,
-      country: country || null,
-      english_level: level || null,
-      goal_band: goal || null,
-      exam_date: examDate || null,
-      study_prefs: prefs,
-      focus_topics: focusTopics,
-      phone: phone || null,
-      weaknesses,
-      timezone: timezone || null,
-      time_commitment: time || null,
-      time_commitment_min: timeCommitmentMin,
-      days_per_week: daysPerWeek || null,
-      daily_quota_goal: dailyQuota || null,
-      preferred_language: lang || 'en',
-      language_preference: explanationLang || 'en',
-      avatar_url: avatarPath || null,
-      goal_reason: goalReasons,
-      learning_style: learningStyle || null,
-      ai_recommendation: aiRecommendation,
-      setup_complete: finalize,
-      role: 'student', // Explicitly set role to satisfy 'Students manage own profile' policy
-      status: finalize ? 'active' : 'inactive', // Set status based on finalize
-    };
-
-    const insertPayload = {
-      ...basePayload,
-      id: userId,
-      user_id: userId,
-    };
-
-    try {
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id, user_id, setup_complete')
-        .or(`id.eq.${userId},user_id.eq.${userId}`)
-        .maybeSingle();
-      if (existing?.setup_complete && !finalize) {
-        setError('Profile is already complete and cannot be updated as a draft.');
-        setSaving(false);
-        return;
-      }
-
-      const { error: upsertErr } = existing
-        ? await supabase
-            .from('profiles')
-            .update(basePayload)
-            .eq(existing.id ? 'id' : 'user_id', existing.id ?? existing?.user_id ?? userId)
-        : await supabase.from('profiles').insert(insertPayload);
-
-      if (upsertErr) {
-        if (upsertErr.code === '42501') {
-          throw new Error('Row-level security policy violation. Ensure your user ID and role are correct.');
-        }
-        if (upsertErr.code === '23505') {
-          if (upsertErr.message.includes('unique_phone')) {
-            throw new Error('This phone number is already registered');
-          }
-          throw new Error('This profile already exists');
-        }
-        throw new Error(upsertErr.message);
-      }
-
-      profileProgressRef.current = nextProgress;
-      void emitUserEvent('profile_save', { step: nextProgress, delta: nextProgress - prevProgress });
-
-      setNotice(finalize ? 'Profile saved — welcome aboard!' : 'Draft saved.');
-      if (finalize) router.push('/dashboard');
-    } catch (e: any) {
-      setError(e.message || 'Failed to save profile');
-      console.error('Save profile error:', e);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Progress calculation
-  const progress = computeProgress();
+  }
 
   return (
     <section className="pb-24 sm:pb-14 pt-10 sm:pt-16 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -571,7 +165,9 @@ export default function ProfileSetup() {
         <div className="mx-auto mb-6 sm:mb-8 max-w-5xl">
           <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-col sm:flex-row">
             <div className="flex-1">
-              <h1 className="font-slab text-display leading-tight text-gradient-primary">{t('profileSetup.completeProfile')}</h1>
+              <h1 className="font-slab text-display leading-tight text-gradient-primary">
+                {t('profileSetup.completeProfile')}
+              </h1>
               <p className="text-muted mt-1 sm:mt-2 max-w-prose">{t('profileSetup.description')}</p>
             </div>
             <div className="w-full sm:w-64">
@@ -587,20 +183,7 @@ export default function ProfileSetup() {
 
         <div className="max-w-5xl mx-auto grid gap-6 lg:grid-cols-[1.25fr_.75fr]">
           <div className="space-y-4">
-            {loading ? (
-              <Card className="card-surface p-6 rounded-ds-2xl space-y-4">
-                <SkeletonLine className="h-6 w-2/3" />
-                <SkeletonLine className="h-5 w-1/3" />
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="space-y-2">
-                      <SkeletonLine className="h-3 w-24" />
-                      <SkeletonLine className="h-10 w-full" />
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : !isAuthenticated ? (
+            {!isAuthenticated ? (
               <Card className="card-surface p-6 rounded-ds-2xl space-y-3">
                 <h2 className="font-slab text-h4 m-0">You’re being redirected</h2>
                 <p className="text-muted text-small">
@@ -670,7 +253,7 @@ export default function ProfileSetup() {
                       label="English level"
                       value={level}
                       onChange={(e) => {
-                        setLevel(e.target.value as any);
+                        setLevel(e.target.value as typeof LEVELS[number]);
                         clearFieldError('level');
                       }}
                       hint="Self-assessed for now"
@@ -691,7 +274,7 @@ export default function ProfileSetup() {
                       label="Time commitment"
                       value={time}
                       onChange={(e) => {
-                        setTime(e.target.value);
+                        setTime(e.target.value as typeof TIME[number] | '');
                         clearFieldError('time');
                       }}
                       required
@@ -807,10 +390,7 @@ export default function ProfileSetup() {
                     <Select
                       label={t('profileSetup.preferredLanguage')}
                       value={lang}
-                      onChange={(e) => {
-                        setLang(e.target.value);
-                        setLocale(e.target.value);
-                      }}
+                      onChange={(e) => handlePreferredLanguageChange(e.target.value)}
                     >
                       <option value="en">English</option>
                       <option value="ur">Urdu</option>
@@ -820,10 +400,7 @@ export default function ProfileSetup() {
                     <Select
                       label={t('profileSetup.explanationLanguage')}
                       value={explanationLang}
-                      onChange={(e) => {
-                        setExplanationLang(e.target.value);
-                        setExplanationLocale(e.target.value);
-                      }}
+                      onChange={(e) => handleExplanationLanguageChange(e.target.value)}
                     >
                       <option value="en">English</option>
                       <option value="ur">Urdu</option>
@@ -835,9 +412,11 @@ export default function ProfileSetup() {
                       <AvatarUploader
                         userId={userId}
                         initialUrl={avatarUrl}
-                        onUploaded={async (url, _path) => {
-                          setAvatarUrl(url);
-                          await supabase.auth.updateUser({ data: { avatar_url: url } });
+                        initialPath={avatarPath}
+                        onUploaded={(url, path) => {
+                          setAvatarUrl(url ?? undefined);
+                          setAvatarPath(typeof path === 'string' ? path : undefined);
+                          void supabase.auth.updateUser({ data: { avatar_url: url ?? undefined } });
                         }}
                       />
                     </div>
@@ -886,11 +465,7 @@ export default function ProfileSetup() {
                         }}
                         aria-describedby={fieldErrors.examDate ? 'examDate-error' : undefined}
                       />
-                      <Select
-                        label="Timezone"
-                        value={timezone}
-                        onChange={(e) => setTimezone(e.target.value)}
-                      >
+                      <Select label="Timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
                         <option value="" disabled>
                           Select timezone
                         </option>
@@ -902,7 +477,9 @@ export default function ProfileSetup() {
                       </Select>
                     </div>
                     {fieldErrors.examDate && (
-                      <Alert id="examDate-error" variant="warning">{fieldErrors.examDate}</Alert>
+                      <Alert id="examDate-error" variant="warning">
+                        {fieldErrors.examDate}
+                      </Alert>
                     )}
                   </div>
                 </Section>
@@ -958,14 +535,25 @@ export default function ProfileSetup() {
 
                     <div>
                       <label className="block">
-                        <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">Daily practice quota</span>
+                        <span className="mb-1.5 inline-block text-small text-grayish dark:text-grayish">
+                          Daily practice quota
+                        </span>
                         <input
                           type="range"
                           min={DAILY_QUOTA_RANGE.min}
                           max={DAILY_QUOTA_RANGE.max}
                           step={1}
                           value={dailyQuota}
-                          onChange={(event) => setDailyQuota(clampDailyQuota(Number(event.target.value)))}
+                          onChange={(event) => {
+                            const raw = Number(event.target.value);
+                            if (Number.isFinite(raw)) {
+                              const clamped = Math.min(
+                                DAILY_QUOTA_RANGE.max,
+                                Math.max(DAILY_QUOTA_RANGE.min, Math.round(raw)),
+                              );
+                              setDailyQuota(clamped);
+                            }
+                          }}
                           className="w-full"
                         />
                       </label>
@@ -1024,7 +612,7 @@ export default function ProfileSetup() {
                     <Select
                       label="Learning style"
                       value={learningStyle}
-                      onChange={(e) => setLearningStyle(e.target.value as any)}
+                      onChange={(e) => setLearningStyle(e.target.value as typeof LEARNING_STYLES[number] | '')}
                     >
                       <option value="" disabled>
                         Select learning style
@@ -1109,11 +697,7 @@ export default function ProfileSetup() {
                     </div>
                   ) : null}
                   {!aiError && (
-                    <Alert
-                      variant={ai.source === 'openai' ? 'info' : 'success'}
-                      className="mt-2"
-                      aria-live="polite"
-                    >
+                    <Alert variant={ai.source === 'openai' ? 'info' : 'success'} className="mt-2" aria-live="polite">
                       {ai.source === 'openai'
                         ? 'Plan generated with OpenAI.'
                         : ai.source === 'ai'
@@ -1211,4 +795,5 @@ export default function ProfileSetup() {
       </div>
     </section>
   );
-}
+};
+
