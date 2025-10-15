@@ -10,6 +10,7 @@ import { createServerClient as createSSRServerClient, type CookieOptionsWithName
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { parse, serialize } from 'cookie';
+import { Buffer } from 'node:buffer';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { NextRequest, NextResponse } from 'next/server';
 
@@ -141,7 +142,85 @@ function headerValue(headers: ServerRequest['headers'] | undefined, name: string
   return undefined;
 }
 
-function buildHeaders(req: ServerRequest | NextRequest | undefined, extra?: Record<string, string>) {
+function parseAuthCookieJSON(value: string | undefined) {
+  if (!value) return undefined;
+
+  const candidates = new Set<string>();
+  candidates.add(value);
+
+  if (value.includes('%')) {
+    try {
+      candidates.add(decodeURIComponent(value));
+    } catch {
+      // ignore decoding errors
+    }
+  }
+
+  for (const candidate of Array.from(candidates)) {
+    try {
+      candidates.add(Buffer.from(candidate, 'base64url').toString('utf8'));
+    } catch {
+      // ignore if not base64url
+    }
+
+    try {
+      candidates.add(Buffer.from(candidate, 'base64').toString('utf8'));
+    } catch {
+      // ignore if not base64
+    }
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // keep trying other candidates
+    }
+  }
+
+  return undefined;
+}
+
+function extractBearerFromCookies(jar: Map<string, string>) {
+  const direct = jar.get('sb-access-token');
+  if (direct) return `Bearer ${direct}`;
+
+  const legacyNames = ['sb:token', 'supabase-auth-token'];
+
+  const projectCookie = Array.from(jar.entries()).find(([name]) =>
+    /^sb-[a-z0-9-]+-auth-token$/i.test(name),
+  );
+
+  if (projectCookie) legacyNames.unshift(projectCookie[0]);
+
+  for (const name of legacyNames) {
+    const parsed = parseAuthCookieJSON(jar.get(name));
+    if (!parsed) continue;
+
+    const session =
+      parsed?.currentSession ??
+      parsed?.session ??
+      (Array.isArray(parsed) ? parsed[0] : parsed);
+
+    const token =
+      session?.access_token ??
+      session?.accessToken ??
+      parsed?.access_token ??
+      parsed?.accessToken;
+
+    if (typeof token === 'string' && token.length > 0) {
+      return `Bearer ${token}`;
+    }
+  }
+
+  return undefined;
+}
+
+function buildHeaders(
+  req: ServerRequest | NextRequest | undefined,
+  extra: Record<string, string> | undefined,
+  cookies: Map<string, string> = new Map(),
+) {
   const headers: Record<string, string> = {
     'X-Client-Info': CLIENT_HEADER,
     ...(extra ?? {}),
@@ -150,6 +229,11 @@ function buildHeaders(req: ServerRequest | NextRequest | undefined, extra?: Reco
   if (req) {
     const auth = headerValue(req.headers, 'authorization');
     if (auth && !headers.Authorization) headers.Authorization = auth;
+  }
+
+  if (!headers.Authorization) {
+    const bearer = extractBearerFromCookies(cookies);
+    if (bearer) headers.Authorization = bearer;
   }
 
   return headers;
@@ -186,11 +270,13 @@ export function getServerClient<T = Database>(
     };
   }
 
+  const headers = buildHeaders(req, opts.headers, cookieJar);
+
   return createSSRServerClient<T>(URL, ANON_KEY, {
     cookies,
     cookieOptions: opts.cookieOptions,
     cookieEncoding: opts.cookieEncoding,
-    global: { headers: buildHeaders(req, opts.headers) },
+    global: { headers },
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
@@ -205,6 +291,11 @@ export function getMiddlewareClient<T = Database>(req: NextRequest, res: NextRes
 
   if (!URL || !ANON_KEY) return makeTestStub<T>();
 
+  const cookieJar = new Map<string, string>();
+  req.cookies.getAll().forEach((cookie) => {
+    cookieJar.set(cookie.name, cookie.value);
+  });
+
   return createSSRServerClient<T>(URL, ANON_KEY, {
     cookies: {
       getAll: () =>
@@ -217,7 +308,7 @@ export function getMiddlewareClient<T = Database>(req: NextRequest, res: NextRes
         });
       },
     },
-    global: { headers: buildHeaders(req, undefined) },
+    global: { headers: buildHeaders(req, undefined, cookieJar) },
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
