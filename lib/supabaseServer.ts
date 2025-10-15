@@ -10,7 +10,6 @@ import { createServerClient as createSSRServerClient, type CookieOptionsWithName
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { parse, serialize } from 'cookie';
-import { Buffer } from 'node:buffer';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { NextRequest, NextResponse } from 'next/server';
 
@@ -142,6 +141,49 @@ function headerValue(headers: ServerRequest['headers'] | undefined, name: string
   return undefined;
 }
 
+function normalizeBase64(value: string, variant: 'base64' | 'base64url') {
+  if (variant === 'base64url') {
+    value = value.replace(/-/g, '+').replace(/_/g, '/');
+  }
+
+  const padding = value.length % 4;
+  if (padding) {
+    value = value.padEnd(value.length + (4 - padding), '=');
+  }
+
+  return value;
+}
+
+function base64ToString(value: string, variant: 'base64' | 'base64url') {
+  const normalized = normalizeBase64(value, variant);
+
+  if (typeof atob === 'function') {
+    try {
+      const binary = atob(normalized);
+      if (typeof TextDecoder === 'function') {
+        const decoder = new TextDecoder('utf-8', { fatal: false });
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return decoder.decode(bytes);
+      }
+
+      return binary;
+    } catch {
+      // ignore decoding errors when using Web APIs
+    }
+  }
+
+  const buffer = typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined;
+  if (buffer) {
+    try {
+      return buffer.from(normalized, 'base64').toString('utf8');
+    } catch {
+      // ignore decoding errors when using Node.js Buffer
+    }
+  }
+
+  return undefined;
+}
+
 function parseAuthCookieJSON(value: string | undefined) {
   if (!value) return undefined;
 
@@ -158,13 +200,15 @@ function parseAuthCookieJSON(value: string | undefined) {
 
   for (const candidate of Array.from(candidates)) {
     try {
-      candidates.add(Buffer.from(candidate, 'base64url').toString('utf8'));
+      const decoded = base64ToString(candidate, 'base64url');
+      if (decoded) candidates.add(decoded);
     } catch {
       // ignore if not base64url
     }
 
     try {
-      candidates.add(Buffer.from(candidate, 'base64').toString('utf8'));
+      const decoded = base64ToString(candidate, 'base64');
+      if (decoded) candidates.add(decoded);
     } catch {
       // ignore if not base64
     }
