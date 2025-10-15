@@ -19,11 +19,6 @@ import {
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { useLocale } from '@/lib/locale';
 import type { AIPlan } from '@/types/profile';
-
-/**
- * Keep all shared helpers in one place so API & UI stay consistent.
- * This file purposely *does not* re-implement these locally.
- */
 import {
   clampDailyQuota,
   computeProgressFromValues,
@@ -171,7 +166,6 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const loadProfile = async () => {
       setLoading(true);
       try {
-        // Handle OAuth/Magic Link code → session exchange
         if (typeof window !== 'undefined') {
           const url = window.location.href;
           if (url.includes('code=') || url.includes('access_token=')) {
@@ -261,8 +255,6 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       } catch (err) {
         if (!active) return;
-        // Non-fatal: surface a friendly message and let users retry save later.
-        // eslint-disable-next-line no-console
         console.error('Failed to load profile setup data', err);
         setError((prev) => prev ?? 'Unable to load profile data');
       } finally {
@@ -362,6 +354,7 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
           signal: controller.signal,
         });
         if (!res.ok) throw new Error('Failed to generate AI plan');
+
         const data = await res.json();
         if (!active) return;
         setAi({
@@ -389,21 +382,17 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, [aiPayload, localAISuggest]);
 
-  const togglePref = (p: typeof PREFS[number]) => {
+  const togglePref = (p: typeof PREFS[number]) =>
     setPrefs((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
-  };
 
-  const toggleTopic = (topic: typeof TOPICS[number]) => {
+  const toggleTopic = (topic: typeof TOPICS[number]) =>
     setFocusTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]));
-  };
 
-  const toggleWeakness = (w: typeof WEAKNESSES[number]) => {
+  const toggleWeakness = (w: typeof WEAKNESSES[number]) =>
     setWeaknesses((prev) => (prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w]));
-  };
 
-  const toggleGoalReason = (r: typeof GOAL_REASONS[number]) => {
+  const toggleGoalReason = (r: typeof GOAL_REASONS[number]) =>
     setGoalReasons((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
-  };
 
   const requestOtp = async () => {
     setPhoneErr(null);
@@ -589,7 +578,6 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (finalize) router.push('/dashboard').catch(() => {});
     } catch (e: any) {
       setError(e?.message || 'Failed to save profile');
-      // eslint-disable-next-line no-console
       console.error('Save profile error:', e);
     } finally {
       setSaving(false);
@@ -689,4 +677,3 @@ export {
   TOPICS,
   WEAKNESSES,
 };
-
