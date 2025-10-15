@@ -144,6 +144,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     percentage: result.percentage,
   });
 
+  try {
+    await trackor.log('grade_submitted', {
+      attempt_id: attemptId,
+      user_id: user.id,
+      passage_slug: testSlug,
+      correct_count: result.correctCount,
+      total_questions: result.totalQuestions,
+      earned_points: result.earnedPoints,
+      band: result.band,
+      percentage: result.percentage,
+      assessment: 'reading',
+    });
+  } catch (error) {
+    console.warn('[reading.submit] analytics failed', error);
+  }
+
   return res.status(200).json({
     attemptId,
     score: { correct: result.correctCount, total: result.totalQuestions },

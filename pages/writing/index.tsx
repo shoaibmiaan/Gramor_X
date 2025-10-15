@@ -10,12 +10,32 @@ import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
 import { writingExamSummaries } from '@/data/writing/exam-index';
 import { gradeWriting } from '@/lib/ai/writing';
+import { ParaphraseCoach } from '@/components/ai/ParaphraseCoach';
+import { flags } from '@/lib/flags';
 
 type TaskType = 'T1' | 'T2' | 'GT';
 type Mode = 'practice' | 'exam';
 
 const MIN_WORDS: Record<TaskType, number> = { T1: 150, GT: 150, T2: 250 };
 const TARGET_MINUTES: Record<TaskType, number> = { T1: 20, GT: 20, T2: 40 };
+
+const aiAssistEnabled = flags.enabled('aiAssist');
+
+const INFORMAL_MARKERS = [
+  'hey',
+  'hi there',
+  'gonna',
+  'wanna',
+  'buddy',
+  'dude',
+  'cheers',
+  'see ya',
+  'tons of',
+  "can't wait",
+  'awesome',
+  'cool',
+  'thanks a bunch',
+];
 
 function useSample({
   setTaskType,
@@ -135,6 +155,23 @@ export default function WritingHome() {
     const [wd, n] = top;
     return n >= 8 ? `You used “${wd}” ${n} times. Try synonyms to improve Lexical Resource.` : null;
   }, [essay]);
+
+  const requiresFormalRegister = useMemo(() => {
+    if (taskType === 'GT') {
+      return letterType !== 'informal';
+    }
+    return true;
+  }, [taskType, letterType]);
+
+  const registerWarning = useMemo(() => {
+    if (!requiresFormalRegister) return null;
+    if (!essay.trim()) return null;
+    const lower = essay.toLowerCase();
+    const matches = INFORMAL_MARKERS.filter((phrase) => lower.includes(phrase));
+    if (!matches.length) return null;
+    const highlights = matches.slice(0, 3).map((hit) => `“${hit}”`).join(', ');
+    return `Avoid informal phrases like ${highlights} to maintain a ${taskType === 'GT' ? letterType : 'formal'} register.`;
+  }, [essay, requiresFormalRegister, taskType, letterType]);
 
   const examLocked = mode === 'exam' && examActive;
 
@@ -504,6 +541,12 @@ export default function WritingHome() {
                 </Badge>
                 {repetitionHint && <Badge variant="info" size="sm">{repetitionHint}</Badge>}
               </div>
+
+              {registerWarning && (
+                <Alert variant="warning" className="mt-3" title="Mind your register">
+                  {registerWarning}
+                </Alert>
+              )}
             </div>
 
             {err && (
@@ -583,8 +626,8 @@ export default function WritingHome() {
               </div>
               {mode === 'exam' && !examActive && (
                 <Alert variant="info" className="mt-3" title="Exam mode not started">
-                  Click "Begin exam" to lock the interface and start the official timer. Submission is disabled until the exam is
-                  in progress.
+                  Click &ldquo;Begin exam&rdquo; to lock the interface and start the official timer. Submission is disabled until the exam
+                  is in progress.
                 </Alert>
               )}
               {mode === 'exam' && belowMin && (
@@ -595,11 +638,15 @@ export default function WritingHome() {
               {mode === 'exam' && examActive && (
                 <Alert variant="warning" className="mt-3" title="Exam controls locked">
                   During the exam you can’t change task type, switch modes, restart the timer, or clear the prompt. Finish your
-                  response and use "Submit attempt" when ready.
+                  response and use &ldquo;Submit attempt&rdquo; when ready.
                 </Alert>
               )}
             </Card>
 
+          <div className="flex flex-col gap-6">
+            {aiAssistEnabled && (
+              <ParaphraseCoach context={prompt ? prompt : undefined} />
+            )}
             <Card className="card-surface p-6 rounded-ds-2xl">
               <h3 className="text-h3">How this works</h3>
               <ul className="list-disc pl-6 mt-2 space-y-1 text-grayish">
@@ -620,6 +667,7 @@ export default function WritingHome() {
             </Card>
           </div>
         </div>
+        </div>
         </Container>
       </section>
 
@@ -639,55 +687,70 @@ export default function WritingHome() {
           </div>
 
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
-            {writingExamSummaries.map((paper) => (
-              <Card key={paper.id} className="card-surface h-full rounded-ds-2xl p-6">
-                <div className="flex h-full flex-col gap-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-h3 font-semibold">{paper.title}</h3>
-                      <p className="mt-1 text-grayish">{paper.description}</p>
+            {writingExamSummaries.map((paper) => {
+              const registerVariant: 'secondary' | 'info' | 'warning' | 'neutral' =
+                paper.register === 'Formal'
+                  ? 'secondary'
+                  : paper.register === 'Semi-formal'
+                    ? 'info'
+                    : paper.register === 'Informal'
+                      ? 'warning'
+                      : 'neutral';
+              return (
+                <Card key={paper.id} className="card-surface h-full rounded-ds-2xl p-6">
+                  <div className="flex h-full flex-col gap-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-h3 font-semibold">{paper.title}</h3>
+                        <p className="mt-1 text-grayish">{paper.description}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Badge variant="neutral" size="sm">
+                          {paper.task1Type}
+                        </Badge>
+                        <Badge variant={registerVariant} size="sm" className="capitalize">
+                          {paper.register} register
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant="neutral" size="sm">
-                      {paper.task1Type}
-                    </Badge>
-                  </div>
 
-                  <div className="grid gap-1 text-caption text-grayish">
-                    <span>Task 1: {paper.task1Focus}</span>
-                    <span>Task 2: {paper.task2Focus}</span>
-                  </div>
+                    <div className="grid gap-1 text-caption text-grayish">
+                      <span>Task 1: {paper.task1Focus}</span>
+                      <span>Task 2: {paper.task2Focus}</span>
+                    </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="neutral" size="sm">
-                      {paper.durationMinutes} min total
-                    </Badge>
-                    {paper.tags.map((tag) => (
-                      <Badge key={tag} variant="info" size="sm" className="capitalize">
-                        {tag}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="neutral" size="sm">
+                        {paper.durationMinutes} min total
                       </Badge>
-                    ))}
-                  </div>
+                      {paper.tags.map((tag) => (
+                        <Badge key={tag} variant="info" size="sm" className="capitalize">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
 
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    <Button
-                      href={`/writing/${paper.id}`}
-                      variant="secondary"
-                      className="rounded-ds-xl"
-                      elevateOnHover
-                    >
-                      Plan &amp; outline
-                    </Button>
-                    <Button
-                      href={`/mock/writing/${paper.id}`}
-                      className="rounded-ds-xl"
-                      elevateOnHover
-                    >
-                      Start timed mock
-                    </Button>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <Button
+                        href={`/writing/${paper.id}`}
+                        variant="secondary"
+                        className="rounded-ds-xl"
+                        elevateOnHover
+                      >
+                        Plan &amp; outline
+                      </Button>
+                      <Button
+                        href={`/mock/writing/${paper.id}`}
+                        className="rounded-ds-xl"
+                        elevateOnHover
+                      >
+                        Start timed mock
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </Container>
       </section>
