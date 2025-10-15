@@ -25,6 +25,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_FEATURE_COACH: z.string().optional(),
   NEXT_PUBLIC_FEATURE_NOTIFICATIONS: z.string().optional(),
   NEXT_PUBLIC_FEATURE_QUICK_TEN: z.string().optional(),
+  NEXT_PUBLIC_FEATURE_AI_ASSIST: z.string().optional(),
 
   // Optional analytics/monitoring
   NEXT_PUBLIC_GA4_ID: z.string().optional(),
@@ -115,6 +116,7 @@ const raw = {
   NEXT_PUBLIC_FEATURE_COACH: process.env.NEXT_PUBLIC_FEATURE_COACH,
   NEXT_PUBLIC_FEATURE_NOTIFICATIONS: process.env.NEXT_PUBLIC_FEATURE_NOTIFICATIONS,
   NEXT_PUBLIC_FEATURE_QUICK_TEN: process.env.NEXT_PUBLIC_FEATURE_QUICK_TEN,
+  NEXT_PUBLIC_FEATURE_AI_ASSIST: process.env.NEXT_PUBLIC_FEATURE_AI_ASSIST,
 
   NEXT_PUBLIC_GA4_ID: process.env.NEXT_PUBLIC_GA4_ID,
   NEXT_PUBLIC_META_PIXEL_ID: process.env.NEXT_PUBLIC_META_PIXEL_ID,

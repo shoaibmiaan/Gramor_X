@@ -6,11 +6,15 @@ import { Container } from '@/components/design-system/Container';
 import Recorder, { RecorderHandle } from '@/components/speaking/Recorder';
 import { AccentPicker, Accent } from '@/components/speaking/AccentPicker';
 import AccentMirror from '@/components/speaking/AccentMirror';
+import { SpeakingHints } from '@/components/ai/SpeakingHints';
+import { flags } from '@/lib/flags';
 
 // ---------- Modes & Focus ----------
 type Mode = 'part1' | 'part2' | 'part3';
 type Focus = 'fluency' | 'lexical' | 'grammar' | 'pronunciation';
 const FOCI: Focus[] = ['fluency', 'lexical', 'grammar', 'pronunciation'];
+
+const aiAssistEnabled = flags.enabled('aiAssist');
 
 // ---------- Prompt banks ----------
 const PART1 = {
@@ -540,7 +544,10 @@ export default function SpeakingPracticePage() {
           </div>
 
           {/* Quick Nav + Tips */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 flex flex-col gap-4">
+            {aiAssistEnabled && mode === 'part2' && (
+              <SpeakingHints cue={prompt} />
+            )}
             <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-4">
               <div className="text-caption uppercase tracking-wide text-grayish">Quick Jump</div>
               <div className="mt-2 grid grid-cols-2 gap-2 text-small">
@@ -550,8 +557,7 @@ export default function SpeakingPracticePage() {
                 <Link href="/speaking/attempts" className="rounded-lg border border-lightBorder dark:border-white/10 p-2 text-center">Attempts</Link>
               </div>
             </div>
-
-            <div className="mt-4 rounded-2xl border border-lightBorder dark:border-white/10 p-4">
+            <div className="rounded-2xl border border-lightBorder dark:border-white/10 p-4">
               <div className="text-caption uppercase tracking-wide text-grayish">
                 Tips {mode === 'part2' ? `for ${focus.charAt(0).toUpperCase() + focus.slice(1)}` : `for ${mode.toUpperCase()}`}
               </div>

@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { getUserRole } from '@/lib/routeAccess';
 import { useLocale } from '@/lib/locale';
 import { useStreak } from '@/hooks/useStreak'; // Added for streak data
+import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 
 type WordOfDay = { word: string; meaning?: string; example?: string };
 
@@ -236,6 +237,20 @@ export default function WelcomePage() {
           <ModuleCard title="Reading" href="/reading" caption="True/False/NG, MCQs and passage strategy." chip="Practice" />
           <ModuleCard title="Writing" href="/writing" caption="Task 1 & Task 2 with AI scoring and tips." chip="AI Feedback" />
           <ModuleCard title="Speaking" href="/speaking" caption="Part 1–3 prompts with recording & evaluation." chip="Record" />
+        </div>
+
+        {/* CHALLENGES */}
+        <div className="mb-12">
+          <div className="flex flex-wrap items-center gap-3 justify-between mb-3">
+            <div>
+              <h2 className="font-semibold text-h3">Daily & Weekly Challenges</h2>
+              <p className="text-small text-mutedText mt-1 max-w-2xl">
+                Stay on track with collocation mastery goals, forgiveness streak boosts, and XP bonuses tailored to your progress.
+              </p>
+            </div>
+            <Badge variant="success">New</Badge>
+          </div>
+          <DailyWeeklyChallenges />
         </div>
 
         {/* WORD OF THE DAY + BAND PREDICTOR */}

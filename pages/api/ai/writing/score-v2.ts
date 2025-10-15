@@ -487,6 +487,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse<WritingResponse
     provider: score.provider ?? aiResult.provider,
   });
 
+  try {
+    await trackor.log('writing_eval', {
+      user_id: auth.user.id,
+      attempt_id: attemptId ?? null,
+      prompt_id: resolvedPromptId,
+      task_type: taskType,
+      word_count: wordCount,
+      overall: score.overall,
+      provider: score.provider ?? aiResult.provider,
+    });
+
+    await trackor.log('grade_submitted', {
+      user_id: auth.user.id,
+      attempt_id: attemptId ?? null,
+      prompt_id: resolvedPromptId,
+      task_type: taskType,
+      overall: score.overall,
+      assessment: 'writing',
+    });
+  } catch (error) {
+    console.warn('[writing.score] analytics failed', error);
+  }
+
   return res.status(200).json({ ok: true, attemptId: attemptId ?? undefined, score });
 }
 

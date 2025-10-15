@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { scheduleSpacedReview } from '@/lib/experiments/spaced-intervals';
 
 type MistakeRow = {
   id: string;
@@ -125,13 +126,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PUT') {
-    const { id, ...fields } = req.body as { id?: string; [key: string]: any };
+    const { id, repetitions } = req.body as { id?: string; repetitions?: number };
     if (!id) {
       return res.status(400).json({ error: 'Missing id' });
     }
+    const nextReps = Number.isFinite(repetitions) ? Math.max(0, Math.floor(repetitions as number)) : 0;
+    const nextReview = await scheduleSpacedReview(user.id, nextReps);
+    const payload = {
+      repetitions: nextReps,
+      next_review: nextReview.toISOString(),
+      last_seen_at: new Date().toISOString(),
+    };
     const { data, error } = await supabase
       .from('mistakes_book')
-      .update(fields)
+      .update(payload)
       .eq('id', id)
       .eq('user_id', user.id)
       .select()
