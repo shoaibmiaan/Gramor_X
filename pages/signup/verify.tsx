@@ -20,8 +20,8 @@ export default function VerifyEmailPage() {
   const next = useMemo(() => {
     const qs = new URLSearchParams();
     if (role) qs.set('role', role);
-    if (ref)  qs.set('ref', ref);
-    const path = '/onboarding';
+    if (ref) qs.set('ref', ref);
+    const path = '/welcome';
     const s = qs.toString();
     return s ? `${path}?${s}` : path;
   }, [role, ref]);
@@ -63,11 +63,16 @@ export default function VerifyEmailPage() {
           ? window.location.origin
           : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
+      const verificationParams = new URLSearchParams();
+      verificationParams.set('next', next);
+      if (role) verificationParams.set('role', role);
+      if (ref) verificationParams.set('ref', ref);
+
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email,
         options: {
-          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          emailRedirectTo: `${origin}/auth/verify?${verificationParams.toString()}`,
         },
       });
 
