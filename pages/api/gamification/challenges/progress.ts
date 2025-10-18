@@ -140,7 +140,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const attempts = Number.isFinite(body.attempts) ? Math.max(1, Math.floor(body.attempts as number)) : 1;
     const baseCorrect = Number.isFinite(body.correct) ? Math.max(0, Math.floor(body.correct as number)) : 0;
-    const correct = Math.min(canIncrement ? Math.max(baseCorrect, attempts) : baseCorrect, attempts);
+    const correct = Math.min(baseCorrect, attempts);
 
     try {
       await svc.from('collocation_attempts').insert({
