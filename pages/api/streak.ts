@@ -1,66 +1,33 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { supabaseService, supabaseServer } from '@/lib/supabaseServer';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getServerClient } from '@/lib/supabaseServer';
+import type { StreakSummary, StreakMutationAction } from '@/types/streak';
+import type { Database } from '@/types/database';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export type StreakData = {
-  current_streak: number;
-  longest_streak: number;
-  last_activity_date: string | null; // YYYY-MM-DD
-  next_restart_date: string | null;  // not persisted on 'streaks' table
-  shields: number;                   // not persisted on 'streaks' table
-};
+export type StreakData = StreakSummary;
 
 const getDayKey = (d = new Date()) => d.toISOString().split('T')[0];
 const ms = (h: number) => h * 60 * 60 * 1000;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  let token = req.headers.authorization?.split(' ')[1] ?? null;
-  let refreshToken: string | null = null;
-
-  if (!token) {
-    try {
-      const cookieClient = supabaseServer(req);
-      const { data, error } = await cookieClient.auth.getSession();
-      if (error) {
-        console.error('[API/streak] Cookie session lookup failed:', error);
-      }
-      token = data?.session?.access_token ?? null;
-      refreshToken = data?.session?.refresh_token ?? null;
-    } catch (error) {
-      console.error('[API/streak] Cookie session client unavailable:', error);
-    }
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  if (!token) return res.status(401).json({ error: 'No authorization token' });
-
-  // RLS client (acts as the user)
-  let supabaseUser: SupabaseClient;
+  let supabaseUser: SupabaseClient<Database>;
   try {
-    supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    supabaseUser = getServerClient<Database>(req, res);
   } catch (error) {
-    console.error('[API/streak] User client creation failed:', error);
-    return res.status(503).json({ error: 'service_unavailable' });
-  }
-
-  try {
-    await supabaseUser.auth.setSession({
-      access_token: token,
-      refresh_token: refreshToken ?? '',
-    });
-  } catch (error) {
-    console.error('[API/streak] User session setup failed:', error);
-    return res.status(503).json({ error: 'service_unavailable' });
+    console.error('[API/streak] Failed to create server client:', error);
+    return res.status(500).json({ error: 'server_client_unavailable' });
   }
 
   let user = null;
   try {
     const { data: { user: authUser }, error: authError } = await supabaseUser.auth.getUser();
-    if (authError || !authUser) return res.status(401).json({ error: 'Invalid token' });
+    if (authError || !authUser) {
+      return res.status(401).json({ error: 'not_authenticated' });
+    }
     user = authUser;
   } catch (error) {
     console.error('[API/streak] Auth verification failed:', error);
@@ -83,46 +50,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!row) {
       const { data: inserted, error: insertError } = await supabaseUser
         .from('streaks')
-        .insert(baseInsert)
+        .upsert(baseInsert, { onConflict: 'user_id' })
         .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
-        .single();
+        .maybeSingle();
+
       if (insertError) {
         console.error('[API/streak] Insert failed:', insertError);
-
-        const shouldRetryWithService =
-          insertError?.code === '42501' || insertError?.message?.includes('row-level security');
-
-        if (shouldRetryWithService) {
-          try {
-            const svc = supabaseService();
-            const { data: serviceInserted, error: serviceErr } = await svc
-              .from('streaks')
-              .insert(baseInsert)
-              .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
-              .single();
-
-            if (serviceErr) {
-              console.error('[API/streak] Service insert failed:', serviceErr);
-            } else {
-              row = serviceInserted ?? row;
-            }
-          } catch (serviceClientError) {
-            console.error('[API/streak] Service client unavailable for insert:', serviceClientError);
-          }
-        }
-
-        // Fallback: treat as new streak of 0 when all attempts fail
-        if (!row) {
-          row = {
-            user_id: user.id,
-            current_streak: 0,
-            longest_streak: 0,
-            last_activity_date: null,
-            updated_at: null,
-          } as typeof row;
-        }
       } else {
-        row = inserted;
+        row = inserted ?? null;
+      }
+
+      if (!row) {
+        row = {
+          user_id: user.id,
+          current_streak: 0,
+          longest_streak: 0,
+          last_activity_date: null,
+          updated_at: null,
+        } as typeof row;
       }
     }
 
@@ -153,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { action, date } = req.body as { action?: 'use' | 'claim' | 'schedule'; date?: string };
+      const { action, date } = req.body as { action?: StreakMutationAction; date?: string };
 
       const now = new Date();
       const today = getDayKey(now);
@@ -293,7 +238,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(asResponse(updatedRow, nextTokens));
     }
 
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'method_not_allowed' });
   } catch (err: any) {
     console.error('[API/streak] Error:', err);
     return res.status(500).json({ error: err.message || 'Internal server error' });
