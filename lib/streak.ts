@@ -1,17 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import type { StreakSummary, StreakMutationAction } from '@/types/streak';
 
-export type StreakState = {
-  loading: boolean;
-  current: number;
-  longest: number;
-  lastDayKey: string | null;
-  nextRestart: string | null;
-  shields: number;
-  error: string | null;
-};
+const STREAK_TIMEOUT_MS = 10_000;
 
-// Utility functions for @/lib/streak
 export const getDayKeyInTZ = (date: Date = new Date(), timeZone = 'Asia/Karachi'): string => {
   try {
     const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -26,15 +17,7 @@ export const getDayKeyInTZ = (date: Date = new Date(), timeZone = 'Asia/Karachi'
   }
 };
 
-type StreakResponse = {
-  current_streak: number;
-  longest_streak: number;
-  last_activity_date: string | null;
-  next_restart_date: string | null;
-  shields: number;
-};
-
-const emptyStreak = (): StreakResponse => ({
+const emptyStreak = (): StreakSummary => ({
   current_streak: 0,
   longest_streak: 0,
   last_activity_date: null,
@@ -42,7 +25,7 @@ const emptyStreak = (): StreakResponse => ({
   shields: 0,
 });
 
-const normalizeStreak = (payload: Partial<StreakResponse> | null | undefined): StreakResponse => {
+const normalizeStreak = (payload: Partial<StreakSummary> | null | undefined): StreakSummary => {
   const fallback = emptyStreak();
   const current = typeof payload?.current_streak === 'number' ? payload.current_streak : fallback.current_streak;
   const longest =
@@ -61,19 +44,83 @@ const normalizeStreak = (payload: Partial<StreakResponse> | null | undefined): S
   };
 };
 
-export const fetchStreak = async (): Promise<StreakResponse> => {
+const withTimeout = async <T>(task: (signal: AbortSignal) => Promise<T>, timeoutMs = STREAK_TIMEOUT_MS): Promise<T> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      if (sessionError) {
-        console.warn('[fetchStreak] Session error (treating as guest):', sessionError.message);
-      }
-      return emptyStreak();
-    }
+    const result = await task(controller.signal);
+    clearTimeout(timer);
+    return result;
+  } catch (error) {
+    clearTimeout(timer);
+    throw error;
+  }
+};
 
-    const res = await fetch('/api/streak', {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
+const handleMutation = async (payload: { action?: StreakMutationAction; date?: string }): Promise<StreakSummary> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    console.error('[streak] Session error:', sessionError?.message || 'No session');
+    throw new Error('Unauthorized');
+  }
+
+  const body: Record<string, unknown> = {};
+  if (payload.action) body.action = payload.action;
+  if (payload.date) body.date = payload.date;
+
+  let res: Response;
+  try {
+    res = await withTimeout((signal) =>
+      fetch('/api/streak', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+        signal,
+      })
+    );
+  } catch (error) {
+    if ((error as Error)?.name === 'AbortError') {
+      throw new Error('Streak request timed out');
+    }
+    throw error;
+  }
+
+  if (!res.ok) {
+    console.error('[streak] Mutation failed:', res.status, res.statusText);
+    throw new Error(`Failed to update streak: ${res.status}`);
+  }
+
+  const raw = (await res.json().catch(() => null)) as Partial<StreakSummary> | null;
+  return normalizeStreak(raw);
+};
+
+export const fetchStreak = async (): Promise<StreakSummary> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    if (sessionError) {
+      console.warn('[fetchStreak] Session error (treating as guest):', sessionError.message);
+    }
+    return emptyStreak();
+  }
+
+  try {
+    const res = await withTimeout((signal) =>
+      fetch('/api/streak', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        signal,
+      })
+    );
 
     if (res.status === 401) {
       console.info('[fetchStreak] Received 401 from streak API, defaulting to empty streak');
@@ -85,227 +132,21 @@ export const fetchStreak = async (): Promise<StreakResponse> => {
       throw new Error(`Failed to fetch streak: ${res.status}`);
     }
 
-    const raw = (await res.json().catch(() => null)) as Partial<StreakResponse> | null;
+    const raw = (await res.json().catch(() => null)) as Partial<StreakSummary> | null;
     return normalizeStreak(raw);
-  } catch (err) {
-    console.error('[fetchStreak] Unexpected error:', err);
-    throw err;
+  } catch (error) {
+    if ((error as Error)?.name === 'AbortError') {
+      console.warn('[fetchStreak] Timed out after %dms', STREAK_TIMEOUT_MS);
+      throw new Error('Streak request timed out');
+    }
+    console.error('[fetchStreak] Unexpected error:', error);
+    throw error instanceof Error ? error : new Error('Failed to fetch streak');
   }
 };
 
-export const incrementStreak = async ({ useShield = false }: { useShield?: boolean }) => {
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('[incrementStreak] Session error:', sessionError?.message || 'No session');
-      throw new Error('Unauthorized');
-    }
-    const res = await fetch('/api/streak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ action: useShield ? 'use' : undefined }),
-    });
-    if (!res.ok) {
-      console.error('[incrementStreak] API error:', res.status, res.statusText);
-      throw new Error(`Failed to increment streak: ${res.status}`);
-    }
-    return res.json();
-  } catch (err) {
-    console.error('[incrementStreak] Unexpected error:', err);
-    throw err;
-  }
-};
+export const incrementStreak = async ({ useShield = false }: { useShield?: boolean }) =>
+  handleMutation({ action: useShield ? 'use' : undefined });
 
-export const claimShield = async () => {
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('[claimShield] Session error:', sessionError?.message || 'No session');
-      throw new Error('Unauthorized');
-    }
-    const res = await fetch('/api/streak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ action: 'claim' }),
-    });
-    if (!res.ok) {
-      console.error('[claimShield] API error:', res.status, res.statusText);
-      throw new Error(`Failed to claim shield: ${res.status}`);
-    }
-    return res.json();
-  } catch (err) {
-    console.error('[claimShield] Unexpected error:', err);
-    throw err;
-  }
-};
+export const claimShield = async () => handleMutation({ action: 'claim' });
 
-export const scheduleRecovery = async (date: string) => {
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      console.error('[scheduleRecovery] Session error:', sessionError?.message || 'No session');
-      throw new Error('Unauthorized');
-    }
-    const res = await fetch('/api/streak', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ action: 'schedule', date }),
-    });
-    if (!res.ok) {
-      console.error('[scheduleRecovery] API error:', res.status, res.statusText);
-      throw new Error(`Failed to schedule recovery: ${res.status}`);
-    }
-    return res.json();
-  } catch (err) {
-    console.error('[scheduleRecovery] Unexpected error:', err);
-    throw err;
-  }
-};
-
-export function useStreak() {
-  const [state, setState] = useState<StreakState>({
-    loading: true,
-    current: 0,
-    longest: 0,
-    lastDayKey: null,
-    nextRestart: null,
-    shields: 0,
-    error: null,
-  });
-
-  const load = useCallback(async () => {
-    let mounted = true;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    try {
-      const data = await Promise.race([
-        fetchStreak(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Streak fetch timed out after 10s')), 10000)
-        ),
-      ]);
-      if (!mounted) return;
-      setState({
-        loading: false,
-        current: data.current_streak ?? 0,
-        longest: data.longest_streak ?? data.current_streak ?? 0,
-        lastDayKey: data.last_activity_date ?? null,
-        nextRestart: data.next_restart_date ?? null,
-        shields: data.shields ?? 0,
-        error: null,
-      });
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to load streak';
-      console.error('[useStreak] Load error:', message);
-      if (!mounted) return;
-      setState((s) => ({ ...s, loading: false, error: message }));
-    }
-    return () => { mounted = false; };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    load().then((cleanup) => {
-      if (!mounted) return;
-      return () => { cleanup && cleanup(); };
-    }).catch((err) => {
-      console.error('[useStreak] useEffect error:', err);
-      if (mounted) setState((s) => ({ ...s, loading: false, error: err.message || 'Failed to load streak' }));
-    });
-    return () => { mounted = false; };
-  }, [load]);
-
-  const completeToday = useCallback(async () => {
-    try {
-      const today = getDayKeyInTZ();
-      const yesterday = getDayKeyInTZ(new Date(Date.now() - 864e5));
-      const shouldUseShield =
-        state.lastDayKey !== today && state.lastDayKey !== yesterday && state.shields > 0;
-
-      const data = await incrementStreak({ useShield: shouldUseShield });
-      setState((s) => ({
-        ...s,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        shields: data.shields ?? s.shields,
-        error: null,
-      }));
-      return data;
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to update streak';
-      console.error('[useStreak] completeToday error:', message);
-      setState((s) => ({ ...s, error: message }));
-      throw e;
-    }
-  }, [state.lastDayKey, state.shields]);
-
-  const handleClaimShield = useCallback(async () => {
-    try {
-      const data = await claimShield();
-      setState((s) => ({
-        ...s,
-        shields: data.shields ?? s.shields,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        error: null,
-      }));
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to claim shield';
-      console.error('[useStreak] claimShield error:', message);
-      setState((s) => ({ ...s, error: message }));
-      throw e;
-    }
-  }, []);
-
-  const useShield = useCallback(async () => {
-    try {
-      const data = await incrementStreak({ useShield: true });
-      setState((s) => ({
-        ...s,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        shields: data.shields ?? s.shields,
-        error: null,
-      }));
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to use shield';
-      console.error('[useStreak] useShield error:', message);
-      setState((s) => ({ ...s, error: message }));
-      throw e;
-    }
-  }, []);
-
-  const scheduleRecoveryAction = useCallback(async (date: string) => {
-    try {
-      const data = await scheduleRecovery(date);
-      setState((s) => ({
-        ...s,
-        current: data.current_streak ?? s.current,
-        longest: data.longest_streak ?? s.longest,
-        lastDayKey: data.last_activity_date ?? s.lastDayKey,
-        nextRestart: data.next_restart_date ?? s.nextRestart,
-        shields: data.shields ?? s.shields,
-        error: null,
-      }));
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to schedule recovery';
-      console.error('[useStreak] scheduleRecovery error:', message);
-      setState((s) => ({ ...s, error: message }));
-      throw e;
-    }
-  }, []);
-
-  return {
-    ...state,
-    reload: load,
-    completeToday,
-    claimShield: handleClaimShield,
-    useShield,
-    scheduleRecovery: scheduleRecoveryAction,
-  };
-}
+export const scheduleRecovery = async (date: string) => handleMutation({ action: 'schedule', date });
