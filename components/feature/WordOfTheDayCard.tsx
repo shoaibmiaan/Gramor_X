@@ -116,12 +116,15 @@ export function WordOfTheDayCard() {
   };
 
   if (!data) {
-    // Lightweight placeholder (keeps layout stable)
     return (
       <div className="rounded-2xl border border-border bg-card p-6">
-        <div className="h-4 w-40 rounded bg-muted/30" />
-        <div className="mt-3 h-7 w-56 rounded bg-muted/30" />
-        <div className="mt-2 h-4 w-full rounded bg-muted/20" />
+        <div className="text-small text-muted-foreground mb-2">📘 Word of the Day</div>
+        <div className="text-h2 font-semibold capitalize">cogent</div>
+        <p className="mt-2 text-muted-foreground">clear, logical, and convincing</p>
+        <p className="mt-3 italic text-muted-foreground">&ldquo;He wrote a cogent essay in Task 2.&rdquo;</p>
+        <p className="mt-4 text-small text-muted-foreground">
+          Explore more vocabulary insights by logging in to start your streak.
+        </p>
         {error && <p className="mt-3 text-small text-destructive">{error}</p>}
       </div>
     );
