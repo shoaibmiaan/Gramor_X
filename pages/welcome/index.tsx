@@ -1,7 +1,6 @@
-'use client';
-
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
@@ -9,6 +8,7 @@ import { Badge } from '@/components/design-system/Badge';
 import { StreakIndicator } from '@/components/design-system/StreakIndicator';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { getUserRole } from '@/lib/routeAccess';
+import { getServerClient } from '@/lib/supabaseServer';
 import { useLocale } from '@/lib/locale';
 import { useStreak } from '@/hooks/useStreak'; // Added for streak data
 
@@ -84,33 +84,63 @@ export default function WelcomePage() {
   const [name, setName] = useState<string | null>(null);
   const [wod, setWod] = useState<WordOfDay | null>(null);
   const [loadingWord, setLoadingWord] = useState(true);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  const redirectToLogin = React.useCallback(() => {
+    const redirectTarget = encodeURIComponent('/welcome');
+    router.replace(`/login?redirect=${redirectTarget}`);
+  }, [router]);
 
   // Redirect non-students away from /welcome
   useEffect(() => {
+    if (!router.isReady) return;
+
     let mounted = true;
+    let redirected = false;
+
+    const sendToLogin = () => {
+      redirected = true;
+      redirectToLogin();
+    };
+
     (async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Session fetch error:', error);
-        if (mounted) router.replace('/login');
-        return;
-      }
-      const role = getUserRole(session?.user);
-      if (role === 'teacher' && mounted) {
-        router.replace('/teacher');
-        return;
-      }
-      if (role === 'admin' && mounted) {
-        router.replace('/admin');
-        return;
-      }
-      if (!session && mounted) {
-        router.replace('/login');
-        return;
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('Session fetch error:', error);
+          if (mounted) sendToLogin();
+          return;
+        }
+
+        const role = getUserRole(session?.user);
+        if (role === 'teacher' && mounted) {
+          redirected = true;
+          router.replace('/teacher');
+          return;
+        }
+        if (role === 'admin' && mounted) {
+          redirected = true;
+          router.replace('/admin');
+          return;
+        }
+        if (!session && mounted) {
+          sendToLogin();
+          return;
+        }
+      } finally {
+        if (mounted && !redirected) {
+          setCheckingSession(false);
+        }
       }
     })();
-    return () => { mounted = false; };
-  }, [router]);
+    return () => {
+      mounted = false;
+    };
+  }, [redirectToLogin, router, router.isReady]);
 
   // Pull minimal profile info
   useEffect(() => {
@@ -168,6 +198,18 @@ export default function WelcomePage() {
     () => (name ? `Welcome, ${name.split(' ')[0]} 👋` : 'Welcome to GramorX'),
     [name]
   );
+
+  if (checkingSession) {
+    return (
+      <section className="py-16">
+        <Container>
+          <div className="rounded-ds-2xl border border-border bg-card p-8 text-center">
+            <p className="text-small text-mutedText">Preparing your welcome experience...</p>
+          </div>
+        </Container>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16">
@@ -282,3 +324,51 @@ export default function WelcomePage() {
     </section>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async ({ req, res, resolvedUrl }) => {
+  try {
+    const supabaseServer = getServerClient(req as any, res as any);
+    const {
+      data: { session },
+      error,
+    } = await supabaseServer.auth.getSession();
+
+    if (error) {
+      console.error('Welcome GSSP session error:', error);
+    }
+
+    if (!session?.user) {
+      const redirectTarget = encodeURIComponent(resolvedUrl ?? '/welcome');
+      return {
+        redirect: {
+          destination: `/login?redirect=${redirectTarget}`,
+          permanent: false,
+        },
+      };
+    }
+
+    const role = getUserRole(session.user);
+    if (role === 'teacher') {
+      return {
+        redirect: {
+          destination: '/teacher',
+          permanent: false,
+        },
+      };
+    }
+
+    if (role === 'admin') {
+      return {
+        redirect: {
+          destination: '/admin',
+          permanent: false,
+        },
+      };
+    }
+
+    return { props: {} };
+  } catch (err) {
+    console.error('Welcome GSSP unexpected error:', err);
+    return { props: {} };
+  }
+};
