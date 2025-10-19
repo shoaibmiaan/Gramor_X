@@ -35,6 +35,7 @@ import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCar
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { ChallengeTaskStatus } from '@/types/challenge';
+import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -233,6 +234,8 @@ export default function Dashboard() {
     }
   }, [streakLoading, lastDayKey, completeToday]);
 
+  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
+
   if (loading) {
     return (
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -254,7 +257,6 @@ export default function Dashboard() {
   const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
-  const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -320,7 +322,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <StreakCounter current={streak} longest={longest} loading={streakLoading} />
+            <StreakCounter current={streak} longest={longest} loading={streakLoading} shields={shields} />
 
             {nextRestart && (
           <Alert variant="info" className="mt-6">
@@ -360,8 +362,12 @@ export default function Dashboard() {
           )}
         </div>
 
+        <div className="mt-6">
+          <DailyWeeklyChallenges />
+        </div>
+
         {/* Top summary cards */}
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Card className="p-6 rounded-ds-2xl">
             <div className="text-small opacity-70 mb-1">Goal Band</div>
             <div className="text-h1 font-semibold">
@@ -384,34 +390,72 @@ export default function Dashboard() {
           </Card>
 
           <Card className="p-6 rounded-ds-2xl">
-            <div className="text-small opacity-70 mb-1">Focus Sequence</div>
+            <div className="text-small opacity-70 mb-1">Session mix</div>
             <div className="flex flex-wrap gap-2 mt-1">
-              {(ai.sequence ?? prefs).slice(0, 4).map((s) => (
-                <Badge key={s} size="sm">
-                  {s}
-                </Badge>
-              ))}
+              {(ai.sessionMix && ai.sessionMix.length > 0
+                ? ai.sessionMix
+                : (ai.sequence ?? prefs).map((skill) => ({ skill, topic: '' })))
+                .slice(0, 4)
+                .map((entry, index) => (
+                  <Badge key={`${entry.skill}-${entry.topic || index}`} size="sm">
+                    {entry.topic ? `${entry.skill} • ${entry.topic}` : entry.skill}
+                  </Badge>
+                ))}
             </div>
+          </Card>
+
+          <Card className="p-6 rounded-ds-2xl">
+            <div className="text-small opacity-70 mb-1">Daily quota</div>
+            <div className="text-h1 font-semibold">
+              {ai.dailyQuota ?? profile?.daily_quota_goal ?? '—'}
+              <span className="text-h3 ml-1">sessions</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {((profile?.focus_topics ?? []).length
+                ? (profile?.focus_topics as string[])
+                : (ai.sessionMix ?? [])
+                    .map((entry) => entry.topic)
+                    .filter((topic): topic is string => Boolean(topic))
+              )
+                .slice(0, 3)
+                .map((topic) => (
+                  <Badge key={topic} variant="secondary" size="sm" className="capitalize">
+                    {topic}
+                  </Badge>
+                ))}
+            </div>
+            <p className="mt-3 text-caption text-muted-foreground">
+              Targets personalised daily practice volume.
+            </p>
           </Card>
         </div>
 
         {/* Next suggested lessons */}
-        {(ai.sequence ?? []).length > 0 && (
+        {((ai.sessionMix ?? ai.sequence) ?? []).length > 0 && (
           <div className="mt-10">
             <h2 className="font-slab text-h2 mb-4">Next Lessons</h2>
             <div className="grid gap-6 md:grid-cols-3">
-              {(ai.sequence ?? []).slice(0, 3).map((s) => (
-                <Card key={s} className="p-6 rounded-ds-2xl flex flex-col">
-                  <h3 className="font-slab text-h3 mb-2 capitalize">{s}</h3>
-                  <div className="mt-auto">
-                    <Link href={`/learning/skills/${s.toLowerCase()}`} className="w-full inline-block">
-                      <Button variant="primary" className="rounded-ds-xl w-full">
-                        Start
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
-              ))}
+              {((ai.sessionMix && ai.sessionMix.length
+                ? ai.sessionMix
+                : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
+              )
+                .slice(0, 3)
+                .map((entry, index) => {
+                  const hrefSkill = entry.skill.toLowerCase();
+                  const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
+                  return (
+                    <Card key={`${entry.skill}-${entry.topic || index}`} className="p-6 rounded-ds-2xl flex flex-col">
+                      <h3 className="font-slab text-h3 mb-2 capitalize">{title}</h3>
+                      <div className="mt-auto">
+                        <Link href={`/learning/skills/${hrefSkill}`} className="w-full inline-block">
+                          <Button variant="primary" className="rounded-ds-xl w-full">
+                            Start
+                          </Button>
+                        </Link>
+                      </div>
+                    </Card>
+                  );
+                }))}
             </div>
           </div>
         )}

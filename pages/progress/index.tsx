@@ -8,7 +8,8 @@ import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Container } from '@/components/design-system/Container';
 import { EmptyState } from '@/components/design-system/EmptyState';
-import type { ProgressTrendPayload, SkillAverage } from '@/lib/analytics/progress';
+import { Badge } from '@/components/design-system/Badge';
+import type { ProgressTrendPayload, SkillAverage, LexicalEstimate } from '@/lib/analytics/progress';
 
 const TrendLineChart = dynamic(
   () => import('@/components/progress/TrendCharts').then((mod) => mod.TrendLineChart),
@@ -32,6 +33,7 @@ export default function ProgressPage() {
   const timeline = data?.timeline ?? [];
   const perSkill = data?.perSkill ?? [];
   const totalAttempts = data?.totalAttempts ?? 0;
+  const lexicalEstimate = data?.lexicalEstimate ?? null;
   const hasData = timeline.length > 0 || perSkill.length > 0;
 
   const exportJSON = () => {
@@ -136,6 +138,8 @@ export default function ProgressPage() {
                 <SkillAreaChart data={perSkill} />
                 <SkillSummary data={perSkill} />
               </section>
+
+              {lexicalEstimate && <LexicalResourcePanel estimate={lexicalEstimate} />}
             </div>
           )}
         </Card>
@@ -174,6 +178,73 @@ function SkillSummary({ data }: { data: SkillAverage[] }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function LexicalResourcePanel({ estimate }: { estimate: LexicalEstimate }) {
+  const progressToBand6 = estimate.thresholds.band6
+    ? Math.min(100, Math.round((estimate.estimatedWordFamilies / estimate.thresholds.band6) * 100))
+    : 0;
+  const progressToBand7 = estimate.thresholds.band7
+    ? Math.min(100, Math.round((estimate.estimatedWordFamilies / estimate.thresholds.band7) * 100))
+    : 0;
+  const target = estimate.goalBand && estimate.goalBand >= 7 ? estimate.thresholds.band7 : estimate.thresholds.band6;
+  const targetLabel = estimate.goalBand && estimate.goalBand >= 7 ? 'Target band goal' : 'Band 6 baseline';
+  const progressToTarget = target
+    ? Math.min(100, Math.round((estimate.estimatedWordFamilies / target) * 100))
+    : 0;
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-slab text-h3 text-foreground">Lexical Resource trajectory</h2>
+        <span className="text-caption text-muted-foreground">
+          Band 6 ≈ {estimate.thresholds.band6.toLocaleString()} wf · Band 7 ≈ {estimate.thresholds.band7.toLocaleString()} wf
+        </span>
+      </div>
+
+      <div className="rounded-ds-xl border border-border/60 bg-card/40 p-4 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-caption uppercase tracking-[0.12em] text-muted-foreground">Estimated word families</div>
+            <div className="text-h3 font-semibold text-foreground">
+              {estimate.estimatedWordFamilies.toLocaleString()}
+            </div>
+            <div className="text-caption text-muted-foreground">
+              Based on {estimate.mastered.toLocaleString()} mastered collocations.
+            </div>
+          </div>
+          <Badge variant="info" size="sm">{estimate.estimatedBandRange.label}</Badge>
+        </div>
+
+        <div className="space-y-3">
+          <LexicalProgressBar label={`${targetLabel} (${target.toLocaleString()} wf)`} value={progressToTarget} />
+          <LexicalProgressBar label={`Band 6 proxy (${estimate.thresholds.band6.toLocaleString()} wf)`} value={progressToBand6} />
+          <LexicalProgressBar label={`Band 7 proxy (${estimate.thresholds.band7.toLocaleString()} wf)`} value={progressToBand7} />
+        </div>
+
+        <p className="text-caption text-muted-foreground">
+          This vocabulary proxy helps you monitor Lexical Resource, but examiners also judge Task Response, Coherence, and
+          Grammar. Use the estimate as guidance, not a guarantee.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function LexicalProgressBar({ label, value }: { label: string; value: number }) {
+  const percent = Math.min(100, Math.max(0, value));
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-caption text-muted-foreground">
+        <span>{label}</span>
+        <span>{percent}%</span>
+      </div>
+      <div className="h-2 w-full rounded-full bg-border/40" role="presentation">
+        {/* eslint-disable-next-line ds-guard/no-inline-style */}
+        <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
+      </div>
     </div>
   );
 }
