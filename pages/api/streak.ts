@@ -1,33 +1,66 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { getServerClient } from '@/lib/supabaseServer';
-import type { StreakSummary, StreakMutationAction } from '@/types/streak';
-import type { Database } from '@/types/database';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { supabaseService, supabaseServer } from '@/lib/supabaseServer';
 
-export type StreakData = StreakSummary;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export type StreakData = {
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null; // YYYY-MM-DD
+  next_restart_date: string | null;  // not persisted on 'streaks' table
+  shields: number;                   // not persisted on 'streaks' table
+};
 
 const getDayKey = (d = new Date()) => d.toISOString().split('T')[0];
 const ms = (h: number) => h * 60 * 60 * 1000;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return res.status(405).json({ error: 'method_not_allowed' });
+  let token = req.headers.authorization?.split(' ')[1] ?? null;
+  let refreshToken: string | null = null;
+
+  if (!token) {
+    try {
+      const cookieClient = supabaseServer(req);
+      const { data, error } = await cookieClient.auth.getSession();
+      if (error) {
+        console.error('[API/streak] Cookie session lookup failed:', error);
+      }
+      token = data?.session?.access_token ?? null;
+      refreshToken = data?.session?.refresh_token ?? null;
+    } catch (error) {
+      console.error('[API/streak] Cookie session client unavailable:', error);
+    }
   }
 
-  let supabaseUser: SupabaseClient<Database>;
+  if (!token) return res.status(401).json({ error: 'No authorization token' });
+
+  // RLS client (acts as the user)
+  let supabaseUser: SupabaseClient;
   try {
-    supabaseUser = getServerClient<Database>(req, res);
+    supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
   } catch (error) {
-    console.error('[API/streak] Failed to create server client:', error);
-    return res.status(500).json({ error: 'server_client_unavailable' });
+    console.error('[API/streak] User client creation failed:', error);
+    return res.status(503).json({ error: 'service_unavailable' });
+  }
+
+  try {
+    await supabaseUser.auth.setSession({
+      access_token: token,
+      refresh_token: refreshToken ?? '',
+    });
+  } catch (error) {
+    console.error('[API/streak] User session setup failed:', error);
+    return res.status(503).json({ error: 'service_unavailable' });
   }
 
   let user = null;
   try {
     const { data: { user: authUser }, error: authError } = await supabaseUser.auth.getUser();
-    if (authError || !authUser) {
-      return res.status(401).json({ error: 'not_authenticated' });
-    }
+    if (authError || !authUser) return res.status(401).json({ error: 'Invalid token' });
     user = authUser;
   } catch (error) {
     console.error('[API/streak] Auth verification failed:', error);
@@ -50,24 +83,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!row) {
       const { data: inserted, error: insertError } = await supabaseUser
         .from('streaks')
-        .upsert(baseInsert, { onConflict: 'user_id' })
+        .insert(baseInsert)
         .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
-        .maybeSingle();
-
+        .single();
       if (insertError) {
         console.error('[API/streak] Insert failed:', insertError);
-      } else {
-        row = inserted ?? null;
-      }
 
-      if (!row) {
-        row = {
-          user_id: user.id,
-          current_streak: 0,
-          longest_streak: 0,
-          last_activity_date: null,
-          updated_at: null,
-        } as typeof row;
+        const shouldRetryWithService =
+          insertError?.code === '42501' || insertError?.message?.includes('row-level security');
+
+        if (shouldRetryWithService) {
+          try {
+            const svc = supabaseService();
+            const { data: serviceInserted, error: serviceErr } = await svc
+              .from('streaks')
+              .insert(baseInsert)
+              .select('user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at')
+              .single();
+
+            if (serviceErr) {
+              console.error('[API/streak] Service insert failed:', serviceErr);
+            } else {
+              row = serviceInserted ?? row;
+            }
+          } catch (serviceClientError) {
+            console.error('[API/streak] Service client unavailable for insert:', serviceClientError);
+          }
+        }
+
+        // Fallback: treat as new streak of 0 when all attempts fail
+        if (!row) {
+          row = {
+            user_id: user.id,
+            current_streak: 0,
+            longest_streak: 0,
+            last_activity_date: null,
+            updated_at: null,
+          } as typeof row;
+        }
+      } else {
+        row = inserted;
       }
     }
 
@@ -98,50 +153,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { action, date } = req.body as { action?: StreakMutationAction; date?: string };
+      const { action, date } = req.body as { action?: 'use' | 'claim' | 'schedule'; date?: string };
 
       const now = new Date();
       const today = getDayKey(now);
       const previousCurrent = row.current_streak ?? 0;
 
       if (action === 'claim') {
-        const currentStreak = row.current_streak ?? 0;
-        if (currentStreak < 7) {
-          return res.status(400).json({ error: 'Shield claim unavailable for current streak' });
-        }
-
-        if (!row.last_activity_date) {
-          return res.status(409).json({ error: 'Shield claim unavailable without recent activity' });
-        }
-
-        const streakEnd = new Date(`${row.last_activity_date}T00:00:00Z`);
-        if (Number.isNaN(streakEnd.getTime())) {
-          return res.status(500).json({ error: 'Invalid streak state' });
-        }
-
-        const streakStart = new Date(streakEnd);
-        streakStart.setUTCDate(streakStart.getUTCDate() - Math.max(currentStreak - 1, 0));
-
-        let claimsThisStreak = 0;
-        try {
-          const { count, error: claimErr } = await supabaseUser
-            .from('streak_shield_logs')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('action', 'claim')
-            .gte('created_at', streakStart.toISOString());
-          if (claimErr) throw claimErr;
-          claimsThisStreak = count ?? 0;
-        } catch (claimLookupErr) {
-          console.error('[API/streak] Claim eligibility lookup failed', claimLookupErr);
-          return res.status(503).json({ error: 'Shield claim unavailable' });
-        }
-
-        const eligibleClaims = Math.floor(currentStreak / 7);
-        if (claimsThisStreak >= eligibleClaims) {
-          return res.status(409).json({ error: 'Shield already claimed for current streak progress' });
-        }
-
         const nextTokens = shieldTokens + 1;
         try {
           const { data: updatedShield, error: shieldErr } = await supabaseUser
@@ -238,7 +256,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(asResponse(updatedRow, nextTokens));
     }
 
-    return res.status(405).json({ error: 'method_not_allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   } catch (err: any) {
     console.error('[API/streak] Error:', err);
     return res.status(500).json({ error: err.message || 'Internal server error' });

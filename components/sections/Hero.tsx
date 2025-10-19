@@ -7,7 +7,6 @@ import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { Icon } from '@/components/design-system/Icon';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
-import { fetchStreak } from '@/lib/streak';
 import { track } from '@/lib/analytics/track';
 
 const highlightFeatures = [
@@ -47,8 +46,9 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
   const [auth, setAuth] = useState<'unknown' | 'authed' | 'guest'>('unknown');
 
   useEffect(() => {
-    const launchAt = new Date('2025-12-02T00:00:00Z');
-    setTarget(launchAt);
+    const t = new Date();
+    t.setDate(t.getDate() + 7);
+    setTarget(t);
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
@@ -64,26 +64,6 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
     return { days, hours, minutes, seconds };
   }, [target, now]);
 
-  const announceStreak = useCallback(
-    async (fallback = 0) => {
-      let value = fallback;
-      try {
-        const data = await fetchStreak();
-        value = typeof data?.current_streak === 'number' ? data.current_streak : fallback;
-      } catch (err) {
-        console.warn('[Hero] Unable to sync streak from API:', err);
-      }
-
-      onStreakChange?.(value);
-      try {
-        window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value } }));
-      } catch {}
-
-      return value;
-    },
-    [onStreakChange]
-  );
-
   const load = useCallback(async (): Promise<WOD | null> => {
     try {
       const {
@@ -94,14 +74,14 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
         console.error('Failed to get session:', error);
         setAuth('guest');
         setData(null);
-        await announceStreak(0);
+        onStreakChange?.(0);
         return null;
       }
       const token = session?.access_token;
       if (!token) {
         setAuth('guest');
         setData(null);
-        await announceStreak(0);
+        onStreakChange?.(0);
         return null;
       }
       setAuth('authed');
@@ -111,25 +91,29 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
       if (!res.ok) {
         console.error('Failed to fetch word of the day:', res.status);
         setData(null);
-        await announceStreak(0);
+        onStreakChange?.(0);
         return null;
       }
       const json: WOD = await res.json();
-      const streakDays = await announceStreak(json.streakDays ?? 0);
-      const normalized: WOD = { ...json, streakDays };
-      setData(normalized);
+      setData(json);
+      onStreakChange?.(json.streakDays ?? 0);
       if (!json.learnedToday) {
         track('vocab_review_start', { wordId: json.word.id });
       }
-      return normalized;
+      try {
+        window.dispatchEvent(
+          new CustomEvent('streak:changed', { detail: { value: json.streakDays ?? 0 } })
+        );
+      } catch {}
+      return json;
     } catch (err) {
       console.error('Error loading word of the day:', err);
       setAuth('guest');
       setData(null);
-      await announceStreak(0);
+      onStreakChange?.(0);
       return null;
     }
-  }, [announceStreak]);
+  }, [onStreakChange]);
 
   useEffect(() => {
     void load();
@@ -157,10 +141,13 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
         console.error('Failed to mark word learned:', r.status);
       } else {
         track('vocab_review_finish', { wordId: data.word.id });
-        const payload = (await r.json().catch(() => null)) as { streakDays?: number } | null;
         const updated = await load();
-        if (!updated) {
-          await announceStreak(typeof payload?.streakDays === 'number' ? payload.streakDays : 0);
+        if (updated) {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('streak:changed', { detail: { value: updated.streakDays ?? 0 } })
+            );
+          } catch {}
         }
       }
     } catch (err) {

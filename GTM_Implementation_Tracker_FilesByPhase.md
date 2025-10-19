@@ -855,3 +855,9 @@ docs/WEBHOOKS.md
 - ✅ **Success metrics dashboards**: `/api/analytics/success-metrics` aggregates review funnels, retention uplift, mastered words, and collocation accuracy with guardrails; surfaced on `trackor/analytics.html`.
 - ✅ **Spaced interval experiment guardrails**: `lib/experiments/spaced-intervals.ts` assigns variants, stores status in Supabase, and auto-pauses when DAU review completion drops below 55%.
 - ✅ **Review & challenge instrumentation**: new `review_events`, `collocation_attempts`, and updated word/challenge APIs capture open/completion events plus attempt metadata for accuracy tracking.
+
+## Phase 8 — Content Ops & Tooling
+
+- ✅ **Word pack seeder refresh**: `tools/generate_word_bank.py` now emits `supabase/seed/word_packs.sql` from CSV/JSON packs with collocations, IELTS-tagged examples, audio references, and register metadata.
+- ✅ **Content lint guardrails**: `lib/content/validate.ts`, `scripts/lint_content.ts`, and `tests/content/word-packs-lint.test.ts` enforce duplicate-free packs, length ceilings, and profanity bans in CI.
+- ✅ **Internal drill playground**: `/internal/content/playground` lists every pack with search, register badges, audio previews, collocations, and IELTS example tags for editor QA.

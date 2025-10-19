@@ -11,6 +11,8 @@ import { getUserRole } from '@/lib/routeAccess';
 import { getServerClient } from '@/lib/supabaseServer';
 import { useLocale } from '@/lib/locale';
 import { useStreak } from '@/hooks/useStreak'; // Added for streak data
+import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
+import { Icon } from '@/components/design-system/Icon';
 
 type WordOfDay = { word: string; meaning?: string; example?: string };
 
@@ -278,6 +280,76 @@ export default function WelcomePage() {
           <ModuleCard title="Reading" href="/reading" caption="True/False/NG, MCQs and passage strategy." chip="Practice" />
           <ModuleCard title="Writing" href="/writing" caption="Task 1 & Task 2 with AI scoring and tips." chip="AI Feedback" />
           <ModuleCard title="Speaking" href="/speaking" caption="Part 1–3 prompts with recording & evaluation." chip="Record" />
+        </div>
+
+        {/* CHALLENGES SPOTLIGHT */}
+        <div className="relative mb-16 overflow-hidden rounded-ds-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-background to-background p-8 md:p-12">
+          <div className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -right-12 h-64 w-64 rounded-full bg-secondary/20 blur-3xl" />
+
+          <div className="relative z-10 grid items-start gap-10 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+            <div className="space-y-5">
+              <Badge variant="secondary" className="rounded-full bg-background/70 backdrop-blur">
+                Feature spotlight
+              </Badge>
+              <div className="space-y-3">
+                <h2 className="font-slab text-h2 leading-tight text-foreground">
+                  Stay motivated with our Daily & Weekly Challenge lane
+                </h2>
+                <p className="text-mutedText text-base md:text-lg max-w-xl">
+                  Master high-value collocations, protect your streak with forgiveness tokens, and collect XP bursts designed to keep your IELTS momentum unstoppable.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="flex flex-col gap-2 rounded-ds-2xl border border-border/50 bg-background/70 p-4 backdrop-blur">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Icon name="Sparkles" size={18} className="text-primary" />
+                    <span className="text-caption uppercase tracking-wide text-mutedText">Collocations</span>
+                  </div>
+                  <p className="text-h4 font-semibold">5 mastered</p>
+                  <p className="text-small text-mutedText">Earn a bonus every time you complete today’s set.</p>
+                </div>
+                <div className="flex flex-col gap-2 rounded-ds-2xl border border-border/50 bg-background/70 p-4 backdrop-blur">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Icon name="Flame" size={18} className="text-accent" />
+                    <span className="text-caption uppercase tracking-wide text-mutedText">Streak boost</span>
+                  </div>
+                  <p className="text-h4 font-semibold">Every 7 days</p>
+                  <p className="text-small text-mutedText">Unlock forgiveness tokens to keep your run alive.</p>
+                </div>
+                <div className="flex flex-col gap-2 rounded-ds-2xl border border-border/50 bg-background/70 p-4 backdrop-blur">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Icon name="Trophy" size={18} className="text-success" />
+                    <span className="text-caption uppercase tracking-wide text-mutedText">XP rewards</span>
+                  </div>
+                  <p className="text-h4 font-semibold">+10 — +12 XP</p>
+                  <p className="text-small text-mutedText">Stack daily wins and climb the leaderboard faster.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button asChild className="rounded-ds-xl">
+                  <Link href="/challenge">Log today’s progress</Link>
+                </Button>
+                <Button asChild variant="ghost" className="rounded-ds-xl">
+                  <Link href="/leaderboard">View XP leaderboard</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -top-8 -left-10 hidden xl:block">
+                <div className="rounded-ds-2xl border border-white/30 bg-white/20 px-4 py-2 text-caption font-medium uppercase tracking-wide text-white shadow-lg shadow-primary/20 backdrop-blur">
+                  Real-time progress
+                </div>
+              </div>
+              <div className="relative rounded-ds-2xl border border-white/20 bg-background/85 p-4 shadow-[0_30px_60px_rgba(15,23,42,0.25)] backdrop-blur-xl">
+                <DailyWeeklyChallenges />
+                <div className="pointer-events-none absolute inset-x-6 -bottom-6 h-12 rounded-full bg-primary/20 blur-2xl" />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* WORD OF THE DAY + BAND PREDICTOR */}
