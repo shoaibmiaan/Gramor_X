@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -23,21 +22,20 @@ import { StreakCounter } from '@/components/streak/StreakCounter';
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
-
+import dynamic from 'next/dynamic';
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
 import GapToGoal from '@/components/visa/GapToGoal';
-
 import type { Profile, AIPlan } from '@/types/profile';
 import { SavedItems } from '@/components/dashboard/SavedItems';
 import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
 import WhatsAppOptIn from '@/components/dashboard/WhatsAppOptIn';
 import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeCard';
 import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCard';
-import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { ChallengeTaskStatus } from '@/types/challenge';
+import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -77,8 +75,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    const supabase = supabaseBrowser;
-    // supabaseBrowser is already an instantiated Supabase client; avoid calling it like a factory.
 
     (async () => {
       try {
@@ -86,7 +82,7 @@ export default function Dashboard() {
         if (typeof window !== 'undefined') {
           const url = window.location.href;
           if (url.includes('code=') || url.includes('access_token=')) {
-            const { error } = await supabase.auth.exchangeCodeForSession(url);
+            const { error } = await supabaseBrowser.auth.exchangeCodeForSession(url);
             if (!error) {
               await router.replace('/dashboard');
               // continue to load dashboard normally
@@ -96,7 +92,7 @@ export default function Dashboard() {
 
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await supabaseBrowser.auth.getSession();
 
         const authUser = session?.user ?? null;
         setSessionUserId(authUser?.id ?? null);
@@ -107,7 +103,7 @@ export default function Dashboard() {
         }
 
         // Load (or create minimal) profile
-        const { data, error } = await supabase
+        const { data, error } = await supabaseBrowser
           .from('profiles')
           .select('*')
           .eq('user_id', authUser.id)
@@ -116,9 +112,7 @@ export default function Dashboard() {
         if (cancelled) return;
 
         if (error) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('[dashboard] profile load error:', error);
-          }
+          console.error('[dashboard] profile load error:', error);
           setLoading(false);
           return;
         }
@@ -132,21 +126,16 @@ export default function Dashboard() {
             email: authUser.email,
             preferred_language: 'en',
             onboarding_complete: false,
-          } satisfies Pick<
-            Profile,
-            'user_id' | 'email' | 'preferred_language' | 'onboarding_complete'
-          >;
+          } as any;
 
-          const { data: created, error: insertErr } = await supabase
+          const { data: created, error: insertErr } = await supabaseBrowser
             .from('profiles')
             .insert(minimal)
             .select('*')
             .single();
 
           if (insertErr) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.error('[dashboard] profile insert error:', insertErr);
-            }
+            console.error('[dashboard] profile insert error:', insertErr);
           } else {
             p = created as Profile;
           }
@@ -165,9 +154,7 @@ export default function Dashboard() {
         setProfile(p ?? null);
         setLoading(false);
       } catch (e) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('[dashboard] fatal load error:', e);
-        }
+        console.error('[dashboard] fatal load error:', e);
         if (!cancelled) setLoading(false);
       }
     })();
@@ -186,12 +173,10 @@ export default function Dashboard() {
 
     let cancelled = false;
     setChallengeLoading(true);
-    const supabase = supabaseBrowser;
-    // supabaseBrowser exports a singleton client instance for browser usage.
 
     (async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseBrowser
           .from('challenge_enrollments')
           .select('cohort, progress, enrolled_at')
           .eq('user_id', sessionUserId)
@@ -201,9 +186,7 @@ export default function Dashboard() {
         if (cancelled) return;
 
         if (error) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.error('[dashboard] challenge enrollment fetch error:', error);
-          }
+          console.error('[dashboard] challenge enrollment fetch error:', error);
           setChallengeEnrollment(null);
         } else {
           const record = Array.isArray(data) ? (data as any)[0] ?? null : (data as any) ?? null;
@@ -217,9 +200,7 @@ export default function Dashboard() {
           }
         }
       } catch (err) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('[dashboard] challenge enrollment error:', err);
-        }
+        console.error('[dashboard] challenge enrollment error:', err);
         if (!cancelled) setChallengeEnrollment(null);
       } finally {
         if (!cancelled) setChallengeLoading(false);
@@ -262,7 +243,7 @@ export default function Dashboard() {
           <div className="grid gap-6 md:grid-cols-3">
             {[...Array(3)].map((_, i) => (
               <Card key={i} className="p-6 rounded-ds-2xl">
-                <div className="animate-pulse h-6 w-40 bg-gray-200 dark:bg-white/10 rounded" />
+                <div className="animate-pulse h-6 w-40 bg-gray-2 00 dark:bg-white/10 rounded" />
                 <div className="mt-4 animate-pulse h-24 bg-muted dark:bg-white/10 rounded" />
               </Card>
             ))}
@@ -276,20 +257,7 @@ export default function Dashboard() {
   const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
-  const sessionMixEntries =
-    ai.sessionMix && ai.sessionMix.length > 0
-      ? ai.sessionMix
-      : (ai.sequence ?? prefs).map((skill) => ({ skill, topic: '' }));
-  const profileFocusTopics = (profile?.focus_topics as string[] | undefined)?.filter(Boolean) ?? [];
-  const sessionMixTopics = (ai.sessionMix ?? [])
-    .map((entry) => entry.topic)
-    .filter((topic): topic is string => Boolean(topic));
-  const focusTopics = (profileFocusTopics.length > 0 ? profileFocusTopics : sessionMixTopics).slice(0, 3);
-  const nextLessonEntries = (
-    ai.sessionMix && ai.sessionMix.length > 0
-      ? ai.sessionMix
-      : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
-  ).slice(0, 3);
+
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
@@ -342,9 +310,9 @@ export default function Dashboard() {
                 )}
                 {streak >= 7 && <Badge variant="success" size="sm">🔥 {streak}-day streak!</Badge>}
 
-                {profileAvatarUrl ? (
+                {profile?.avatar_url ? (
                   <Image
-                    src={profileAvatarUrl}
+                    src={profile.avatar_url}
                     alt="Avatar"
                     width={56}
                     height={56}
@@ -357,239 +325,254 @@ export default function Dashboard() {
             <StreakCounter current={streak} longest={longest} loading={streakLoading} shields={shields} />
 
             {nextRestart && (
-              <Alert variant="info" className="mt-6">
-                Streak will restart on {nextRestart}.
+          <Alert variant="info" className="mt-6">
+            Streak will restart on {nextRestart}.
+          </Alert>
+        )}
+
+        {showTips && (
+          <Alert variant="info" className="mt-6">
+            <div className="flex items-center justify-between gap-4">
+              <span>Explore practice modules and track your progress from here.</span>
+              <Button size="sm" variant="secondary" onClick={dismissTips} className="rounded-ds-xl">
+                Got it
+              </Button>
+            </div>
+          </Alert>
+        )}
+
+        {/* Word of the day */}
+        <div className="mt-10">
+          <WordOfTheDayCard />
+        </div>
+
+        <div className="mt-10">
+          {challengeLoading ? (
+            <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+              <div className="h-6 w-40 animate-pulse rounded bg-border" />
+              <div className="mt-4 h-24 w-full animate-pulse rounded bg-border" />
+            </Card>
+          ) : challengeEnrollment ? (
+            <ChallengeSpotlightCard
+              cohortId={challengeEnrollment.cohort}
+              progress={challengeEnrollment.progress ?? null}
+            />
+          ) : (
+            <JoinWeeklyChallengeCard />
+          )}
+        </div>
+
+        <div className="mt-6">
+          <DailyWeeklyChallenges />
+        </div>
+
+        {/* Top summary cards */}
+        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="p-6 rounded-ds-2xl">
+            <div className="text-small opacity-70 mb-1">Goal Band</div>
+            <div className="text-h1 font-semibold">
+              {profile?.goal_band?.toFixed?.(1) ?? (ai.suggestedGoal?.toFixed?.(1) || '—')}
+            </div>
+            <div className="mt-3">
+              <Badge variant="info" size="sm">{profile?.english_level || 'Level —'}</Badge>
+            </div>
+          </Card>
+
+          <Card className="p-6 rounded-ds-2xl">
+            <div className="text-small opacity-70 mb-1">ETA to Goal</div>
+            <div className="text-h1 font-semibold">
+              {ai.etaWeeks ?? '—'}
+              <span className="text-h3 ml-1">weeks</span>
+            </div>
+            <div className="mt-3 text-small opacity-80">
+              Assuming {profile?.time_commitment || '1–2h/day'}
+            </div>
+          </Card>
+
+          <Card className="p-6 rounded-ds-2xl">
+            <div className="text-small opacity-70 mb-1">Session mix</div>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {(ai.sessionMix && ai.sessionMix.length > 0
+                ? ai.sessionMix
+                : (ai.sequence ?? prefs).map((skill) => ({ skill, topic: '' })))
+                .slice(0, 4)
+                .map((entry, index) => (
+                  <Badge key={`${entry.skill}-${entry.topic || index}`} size="sm">
+                    {entry.topic ? `${entry.skill} • ${entry.topic}` : entry.skill}
+                  </Badge>
+                ))}
+            </div>
+          </Card>
+
+          <Card className="p-6 rounded-ds-2xl">
+            <div className="text-small opacity-70 mb-1">Daily quota</div>
+            <div className="text-h1 font-semibold">
+              {ai.dailyQuota ?? profile?.daily_quota_goal ?? '—'}
+              <span className="text-h3 ml-1">sessions</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {((profile?.focus_topics ?? []).length
+                ? (profile?.focus_topics as string[])
+                : (ai.sessionMix ?? [])
+                    .map((entry) => entry.topic)
+                    .filter((topic): topic is string => Boolean(topic))
+              )
+                .slice(0, 3)
+                .map((topic) => (
+                  <Badge key={topic} variant="secondary" size="sm" className="capitalize">
+                    {topic}
+                  </Badge>
+                ))}
+            </div>
+            <p className="mt-3 text-caption text-muted-foreground">
+              Targets personalised daily practice volume.
+            </p>
+          </Card>
+        </div>
+
+        {/* Next suggested lessons */}
+        {((ai.sessionMix ?? ai.sequence) ?? []).length > 0 && (
+          <div className="mt-10">
+            <h2 className="font-slab text-h2 mb-4">Next Lessons</h2>
+            <div className="grid gap-6 md:grid-cols-3">
+              {((ai.sessionMix && ai.sessionMix.length
+                ? ai.sessionMix
+                : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
+              )
+                .slice(0, 3)
+                .map((entry, index) => {
+                  const hrefSkill = entry.skill.toLowerCase();
+                  const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
+                  return (
+                    <Card key={`${entry.skill}-${entry.topic || index}`} className="p-6 rounded-ds-2xl flex flex-col">
+                      <h3 className="font-slab text-h3 mb-2 capitalize">{title}</h3>
+                      <div className="mt-auto">
+                        <Link href={`/learning/skills/${hrefSkill}`} className="w-full inline-block">
+                          <Button variant="primary" className="rounded-ds-xl w-full">
+                            Start
+                          </Button>
+                        </Link>
+                      </div>
+                    </Card>
+                  );
+                }))}
+            </div>
+          </div>
+        )}
+
+        {/* Visa gap summary */}
+        <div className="mt-10">
+          <GapToGoal />
+        </div>
+
+        {/* Study calendar */}
+        <div className="mt-10">
+          <StudyCalendar />
+        </div>
+
+        {/* Goal roadmap */}
+        <div className="mt-10">
+          <GoalRoadmap examDate={profile?.exam_date ?? null} />
+        </div>
+
+        {/* Actions + Reading stats */}
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_.9fr]">
+          <Card className="p-6 rounded-ds-2xl">
+            <h2 className="font-slab text-h2">Quick Actions</h2>
+            <p className="text-grayish mt-1">Jump back in with one click.</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <QuickDrillButton />
+              <Link href="/learning">
+                <Button variant="primary" className="rounded-ds-xl">Start Today’s Lesson</Button>
+              </Link>
+              <Link href="/mock-tests">
+                <Button variant="secondary" className="rounded-ds-xl">Take a Mock Test</Button>
+              </Link>
+              <Link href="/writing">
+                <Button variant="accent" className="rounded-ds-xl">Practice Writing</Button>
+              </Link>
+              <Link href="/reading">
+                <Button variant="secondary" className="rounded-ds-xl">Practice Reading</Button>
+              </Link>
+              <Button onClick={handleShare} variant="secondary" className="rounded-ds-xl">
+                Share Progress
+              </Button>
+            </div>
+          </Card>
+
+          <ReadingStatsCard />
+        </div>
+
+        {/* Engagement */}
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <ShareLinkCard />
+          <WhatsAppOptIn />
+        </div>
+
+        {/* Skill analytics */}
+        <div className="mt-10">
+          <Card className="p-6 rounded-ds-2xl">
+            <h3 className="font-slab text-h3 mb-2">Skill Focus</h3>
+            {(ai.sequence ?? []).length ? (
+              <ul className="list-disc pl-6 text-body">
+                {(ai.sequence ?? []).map((s, i, arr) => (
+                  <li key={s}>
+                    {s} {i === 0 ? '- prioritize' : i === arr.length - 1 ? '- strong' : ''}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-body">Add preferences in your profile to see analytics.</p>
+            )}
+          </Card>
+        </div>
+
+        {/* Saved items */}
+        <div className="mt-10">
+          <SavedItems />
+        </div>
+
+        {/* Upgrade */}
+        <div className="mt-10">
+          <Card className="p-6 rounded-ds-2xl">
+            <h3 className="font-slab text-h3 mb-2">Upgrade to Rocket 🚀</h3>
+            <p className="text-body opacity-90">
+              Unlock AI deep feedback, speaking evaluator, and full analytics.
+            </p>
+            <div className="mt-4">
+              <Link href="/pricing">
+                <Button variant="primary" className="rounded-ds-xl">
+                  See Plans
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
+
+        {/* Coach notes */}
+        <div className="mt-10">
+          <Card className="p-6 rounded-ds-2xl">
+            <h3 className="font-slab text-h3">Coach Notes</h3>
+            {Array.isArray(ai?.notes) && ai.notes.length ? (
+              <ul className="mt-3 list-disc pl-6 text-body">
+                {ai.notes.map((n: string, i: number) => (
+                  <li key={i}>{n}</li>
+                ))}
+              </ul>
+            ) : (
+              <Alert variant="info" className="mt-3">
+                Add more details in <b>Profile</b> to refine your AI plan.
               </Alert>
             )}
-
-            {showTips && (
-              <Alert variant="info" className="mt-6">
-                <div className="flex items-center justify-between gap-4">
-                  <span>Explore practice modules and track your progress from here.</span>
-                  <Button size="sm" variant="secondary" onClick={dismissTips} className="rounded-ds-xl">
-                    Got it
-                  </Button>
-                </div>
-              </Alert>
-            )}
-
-            {/* Word of the day */}
-            <div className="mt-10">
-              <WordOfTheDayCard />
+            <div className="mt-4">
+              <Link href="/profile/setup">
+                <Button variant="secondary" className="rounded-ds-xl">
+                  Edit Profile
+                </Button>
+              </Link>
             </div>
-
-            {/* Weekly Challenge */}
-            <div className="mt-10">
-              {challengeLoading ? (
-                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
-                  <div className="h-6 w-40 animate-pulse rounded bg-border" />
-                  <div className="mt-4 h-24 w-full animate-pulse rounded bg-border" />
-                </Card>
-              ) : challengeEnrollment ? (
-                <ChallengeSpotlightCard
-                  cohortId={challengeEnrollment.cohort}
-                  progress={challengeEnrollment.progress ?? null}
-                />
-              ) : (
-                <JoinWeeklyChallengeCard />
-              )}
-            </div>
-
-            <div className="mt-6">
-              <DailyWeeklyChallenges />
-            </div>
-
-            {/* Top summary cards */}
-            <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-              <Card className="p-6 rounded-ds-2xl">
-                <div className="text-small opacity-70 mb-1">Goal Band</div>
-                <div className="text-h1 font-semibold">
-                  {profile?.goal_band?.toFixed?.(1) ?? (ai.suggestedGoal?.toFixed?.(1) || '—')}
-                </div>
-                <div className="mt-3">
-                  <Badge variant="info" size="sm">{profile?.english_level || 'Level —'}</Badge>
-                </div>
-              </Card>
-
-              <Card className="p-6 rounded-ds-2xl">
-                <div className="text-small opacity-70 mb-1">ETA to Goal</div>
-                <div className="text-h1 font-semibold">
-                  {ai.etaWeeks ?? '—'}
-                  <span className="text-h3 ml-1">weeks</span>
-                </div>
-                <div className="mt-3 text-small opacity-80">
-                  Assuming {profile?.time_commitment || '1–2h/day'}
-                </div>
-              </Card>
-
-              <Card className="p-6 rounded-ds-2xl">
-                <div className="text-small opacity-70 mb-1">Session mix</div>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {sessionMixEntries.slice(0, 4).map((entry, index) => (
-                    <Badge key={`${entry.skill}-${entry.topic || index}`} size="sm">
-                      {entry.topic ? `${entry.skill} • ${entry.topic}` : entry.skill}
-                    </Badge>
-                  ))}
-                </div>
-              </Card>
-
-              <Card className="p-6 rounded-ds-2xl">
-                <div className="text-small opacity-70 mb-1">Daily quota</div>
-                <div className="text-h1 font-semibold">
-                  {ai.dailyQuota ?? profile?.daily_quota_goal ?? '—'}
-                  <span className="text-h3 ml-1">sessions</span>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {focusTopics.map((topic) => (
-                    <Badge key={topic} variant="secondary" size="sm" className="capitalize">
-                      {topic}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="mt-3 text-caption text-muted-foreground">
-                  Targets personalised daily practice volume.
-                </p>
-              </Card>
-            </div>
-
-            {/* Next suggested lessons */}
-            {nextLessonEntries.length > 0 && (
-              <div className="mt-10">
-                <h2 className="font-slab text-h2 mb-4">Next Lessons</h2>
-                <div className="grid gap-6 md:grid-cols-3">
-                  {nextLessonEntries.map((entry, index) => {
-                    const hrefSkill = entry.skill.toLowerCase();
-                    const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
-                    return (
-                      <Card key={`${entry.skill}-${entry.topic || index}`} className="p-6 rounded-ds-2xl flex flex-col">
-                        <h3 className="font-slab text-h3 mb-2 capitalize">{title}</h3>
-                        <div className="mt-auto">
-                          <Link href={`/learning/skills/${hrefSkill}`} className="w-full inline-block">
-                            <Button variant="primary" className="rounded-ds-xl w-full">
-                              Start
-                            </Button>
-                          </Link>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Visa gap summary */}
-            <div className="mt-10">
-              <GapToGoal />
-            </div>
-
-            {/* Study calendar */}
-            <div className="mt-10">
-              <StudyCalendar />
-            </div>
-
-            {/* Goal roadmap */}
-            <div className="mt-10">
-              <GoalRoadmap examDate={profile?.exam_date ?? null} />
-            </div>
-
-            {/* Actions + Reading stats */}
-            <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_.9fr]">
-              <Card className="p-6 rounded-ds-2xl">
-                <h2 className="font-slab text-h2">Quick Actions</h2>
-                <p className="text-grayish mt-1">Jump back in with one click.</p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <QuickDrillButton />
-                  <Link href="/learning">
-                    <Button variant="primary" className="rounded-ds-xl">Start Today’s Lesson</Button>
-                  </Link>
-                  <Link href="/mock-tests">
-                    <Button variant="secondary" className="rounded-ds-xl">Take a Mock Test</Button>
-                  </Link>
-                  <Link href="/writing">
-                    <Button variant="accent" className="rounded-ds-xl">Practice Writing</Button>
-                  </Link>
-                  <Link href="/reading">
-                    <Button variant="secondary" className="rounded-ds-xl">Practice Reading</Button>
-                  </Link>
-                  <Button onClick={handleShare} variant="secondary" className="rounded-ds-xl">
-                    Share Progress
-                  </Button>
-                </div>
-              </Card>
-
-              <ReadingStatsCard />
-            </div>
-
-            {/* Engagement */}
-            <div className="mt-10 grid gap-6 md:grid-cols-2">
-              <ShareLinkCard />
-              <WhatsAppOptIn />
-            </div>
-
-            {/* Skill analytics */}
-            <div className="mt-10">
-              <Card className="p-6 rounded-ds-2xl">
-                <h3 className="font-slab text-h3 mb-2">Skill Focus</h3>
-                {(ai.sequence ?? []).length ? (
-                  <ul className="list-disc pl-6 text-body">
-                    {(ai.sequence ?? []).map((s, i, arr) => (
-                      <li key={s}>
-                        {s} {i === 0 ? '- prioritize' : i === arr.length - 1 ? '- strong' : ''}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-body">Add preferences in your profile to see analytics.</p>
-                )}
-              </Card>
-            </div>
-
-            {/* Saved items */}
-            <div className="mt-10">
-              <SavedItems />
-            </div>
-
-            {/* Upgrade */}
-            <div className="mt-10">
-              <Card className="p-6 rounded-ds-2xl">
-                <h3 className="font-slab text-h3 mb-2">Upgrade to Rocket 🚀</h3>
-                <p className="text-body opacity-90">
-                  Unlock AI deep feedback, speaking evaluator, and full analytics.
-                </p>
-                <div className="mt-4">
-                  <Link href="/pricing">
-                    <Button variant="primary" className="rounded-ds-xl">
-                      See Plans
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            </div>
-
-            {/* Coach notes */}
-            <div className="mt-10">
-              <Card className="p-6 rounded-ds-2xl">
-                <h3 className="font-slab text-h3">Coach Notes</h3>
-                {Array.isArray(ai?.notes) && ai.notes.length ? (
-                  <ul className="mt-3 list-disc pl-6 text-body">
-                    {ai.notes.map((n: string, i: number) => (
-                      <li key={i}>{n}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Alert variant="info" className="mt-3">
-                    Add more details in <b>Profile</b> to refine your AI plan.
-                  </Alert>
-                )}
-                <div className="mt-4">
-                  <Link href="/profile/setup">
-                    <Button variant="secondary" className="rounded-ds-xl">
-                      Edit Profile
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            </div>
+          </Card>
+        </div>
           </div>
         </div>
       </Container>

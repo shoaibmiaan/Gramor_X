@@ -1,8 +1,6 @@
 /* Tailwind INPUT for the premium bundle (compiled -> public/premium.css) */
 
-*,
-::before,
-::after {
+*, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
   --tw-translate-x: 0;
@@ -110,9 +108,7 @@
   --tw-contain-style:  ;
 }
 
-*,
-::before,
-::after {
+*,::before,::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
   --tw-translate-x: 0;
@@ -164,8 +160,8 @@
 
 :root {
   --pr-radius: 16px;
-  --pr-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.2);
-  --pr-shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.3);
+  --pr-shadow-md: 0 8px 24px rgba(0,0,0,0.20);
+  --pr-shadow-lg: 0 18px 48px rgba(0,0,0,0.30);
   /* Theme preview tokens (used by switcher dots only) */
   --pr-preview-carbon: #0b0f1a;
   --pr-preview-ivory: #f7f7fb;
@@ -177,7 +173,7 @@
 
 /* Carbon (dark) */
 
-[data-pr-theme='carbon'] {
+[data-pr-theme="carbon"] {
   --pr-bg: #0b0f1a;
   --pr-fg: #e6eaf2;
   --pr-card: #0f1626;
@@ -193,7 +189,7 @@
 
 /* Ivory (light) */
 
-[data-pr-theme='ivory'] {
+[data-pr-theme="ivory"] {
   --pr-bg: #f7f7fb;
   --pr-fg: #0b1324;
   --pr-card: #ffffff;
@@ -208,7 +204,7 @@
 
 /* Royal Aster */
 
-[data-pr-theme='royal'] {
+[data-pr-theme="royal"] {
   --pr-bg: #0e0a18;
   --pr-fg: #efeaff;
   --pr-card: #15122a;
@@ -223,7 +219,7 @@
 
 /* Aurora Neo */
 
-[data-pr-theme='aurora'] {
+[data-pr-theme="aurora"] {
   --pr-bg: #07141e;
   --pr-fg: #e7f7ff;
   --pr-card: #0b1b28;
@@ -328,7 +324,7 @@ html[data-pr-theme] {
 }
 
 .pr-bottom-\[max\(1rem\,env\(safe-area-inset-bottom\)\)\] {
-  bottom: max(1rem, env(safe-area-inset-bottom));
+  bottom: max(1rem,env(safe-area-inset-bottom));
 }
 
 .pr-right-4 {
@@ -340,7 +336,7 @@ html[data-pr-theme] {
 }
 
 .pr-top-\[max\(1rem\,env\(safe-area-inset-top\)\)\] {
-  top: max(1rem, env(safe-area-inset-top));
+  top: max(1rem,env(safe-area-inset-top));
 }
 
 .pr-isolate {
@@ -382,6 +378,10 @@ html[data-pr-theme] {
 
 .pr-mb-6 {
   margin-bottom: 1.5rem;
+}
+
+.pr-ml-2 {
+  margin-left: 0.5rem;
 }
 
 .pr-ml-6 {
@@ -521,6 +521,10 @@ html[data-pr-theme] {
   max-width: 24rem;
 }
 
+.pr-max-w-xs {
+  max-width: 20rem;
+}
+
 .pr-flex-1 {
   flex: 1 1 0%;
 }
@@ -531,7 +535,7 @@ html[data-pr-theme] {
 
 @keyframes pr-pulse {
   50% {
-    opacity: 0.5;
+    opacity: .5;
   }
 }
 
@@ -551,8 +555,8 @@ html[data-pr-theme] {
 
 .pr-select-none {
   -webkit-user-select: none;
-  -moz-user-select: none;
-  user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 
 .pr-list-decimal {
@@ -704,19 +708,19 @@ html[data-pr-theme] {
 }
 
 .pr-bg-\[color-mix\(in_oklab\,var\(--pr-card\)\,white_4\%\)\] {
-  background-color: color-mix(in oklab, var(--pr-card), white 4%);
+  background-color: color-mix(in oklab,var(--pr-card),white 4%);
 }
 
 .pr-bg-\[color-mix\(in_oklab\,var\(--pr-danger\)\,var\(--pr-bg\)_85\%\)\] {
-  background-color: color-mix(in oklab, var(--pr-danger), var(--pr-bg) 85%);
+  background-color: color-mix(in oklab,var(--pr-danger),var(--pr-bg) 85%);
 }
 
 .pr-bg-\[color-mix\(in_oklab\,var\(--pr-danger\)\,var\(--pr-bg\)_88\%\)\] {
-  background-color: color-mix(in oklab, var(--pr-danger), var(--pr-bg) 88%);
+  background-color: color-mix(in oklab,var(--pr-danger),var(--pr-bg) 88%);
 }
 
 .pr-bg-\[color-mix\(in_oklab\,var\(--pr-primary\)\,var\(--pr-bg\)_88\%\)\] {
-  background-color: color-mix(in oklab, var(--pr-primary), var(--pr-bg) 88%);
+  background-color: color-mix(in oklab,var(--pr-primary),var(--pr-bg) 88%);
 }
 
 .pr-bg-\[var\(--pr-card\)\] {
@@ -761,7 +765,7 @@ html[data-pr-theme] {
 }
 
 .pr-from-\[color-mix\(in_oklab\,var\(--pr-bg\)\,white_2\%\)\] {
-  --tw-gradient-from: color-mix(in oklab, var(--pr-bg), white 2%) var(--tw-gradient-from-position);
+  --tw-gradient-from: color-mix(in oklab,var(--pr-bg),white 2%) var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
@@ -779,7 +783,7 @@ html[data-pr-theme] {
 }
 
 .pr-to-\[color-mix\(in_oklab\,var\(--pr-bg\)\,black_2\%\)\] {
-  --tw-gradient-to: color-mix(in oklab, var(--pr-bg), black 2%) var(--tw-gradient-to-position);
+  --tw-gradient-to: color-mix(in oklab,var(--pr-bg),black 2%) var(--tw-gradient-to-position);
 }
 
 .pr-to-\[var\(--pr-accent\)\] {
@@ -868,9 +872,7 @@ html[data-pr-theme] {
 }
 
 .pr-font-mono {
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .pr-text-2xl {
@@ -996,10 +998,9 @@ html[data-pr-theme] {
 }
 
 .pr-shadow-\[0_8px_40px_-20px_color-mix\(in_oklab\,var\(--pr-foreground\)\,transparent_92\%\)\] {
-  --tw-shadow: 0 8px 40px -20px color-mix(in oklab, var(--pr-foreground), transparent 92%);
+  --tw-shadow: 0 8px 40px -20px color-mix(in oklab,var(--pr-foreground),transparent 92%);
   --tw-shadow-colored: 0 8px 40px -20px var(--tw-shadow-color);
-  box-shadow:
-    var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
 .pr-ring-\[var\(--pr-primary\)\] {
@@ -1008,22 +1009,16 @@ html[data-pr-theme] {
 
 .pr-backdrop-blur {
   --tw-backdrop-blur: blur(8px);
-  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast)
-    var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
-    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
 }
 
 .pr-backdrop-blur-sm {
   --tw-backdrop-blur: blur(4px);
-  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast)
-    var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
-    var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
 }
 
 .pr-transition {
-  transition-property:
-    color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow,
-    transform, filter, backdrop-filter;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
@@ -1052,15 +1047,6 @@ html[data-pr-theme] {
   animation-delay: 0.2s;
 }
 
-.\[mask-image\:linear-gradient\(to_right\2c
-  transparent\2c
-  black_10\%\2c
-  black_90\%\2c
-  transparent\)\] {
-  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-}
-
 /* ---------- Base tokens & themes ---------- */
 
 /* ---------- Components used on Premium pages ---------- */
@@ -1075,20 +1061,15 @@ html[data-pr-theme] {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background:
-    radial-gradient(
-      1200px 900px at 50% 0%,
-      color-mix(in oklab, var(--pr-fg), var(--pr-bg) 92%) 0%,
-      transparent 60%
-    ),
-    var(--pr-bg);
+  background: radial-gradient(1200px 900px at 50% 0%, color-mix(in oklab, var(--pr-fg), var(--pr-bg) 92%) 0%, transparent 60%),
+              var(--pr-bg);
 }
 
 /* Two moving color orbs + one slow aurora sheet */
 
 .lux-bg::before,
 .lux-bg::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -30%;
   border-radius: 50%;
@@ -1098,68 +1079,56 @@ html[data-pr-theme] {
 }
 
 .lux-bg::before {
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--orb-1), transparent 40%) 0%,
-    transparent 100%
-  );
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-1), transparent 40%) 0%, transparent 100%);
   animation: lux-orb-a 28s ease-in-out infinite;
 }
 
 .lux-bg::after {
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--orb-2), transparent 45%) 0%,
-    transparent 100%
-  );
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-2), transparent 45%) 0%, transparent 100%);
   animation: lux-orb-b 32s ease-in-out infinite;
 }
 
 /* A slow “sheet” moving diagonally for depth */
 
 .lux-sheet {
-  content: '';
+  content: "";
   position: absolute;
   inset: -20%;
   pointer-events: none;
   background:
-    linear-gradient(
-      120deg,
+    linear-gradient(120deg,
       transparent 0%,
       color-mix(in oklab, var(--orb-3), transparent 70%) 35%,
-      transparent 70%
-    ),
-    radial-gradient(
-      1000px 800px at 20% 120%,
+      transparent 70%),
+    radial-gradient(1000px 800px at 20% 120%,
       color-mix(in oklab, var(--orb-3), transparent 85%) 0%,
-      transparent 60%
-    );
+      transparent 60%);
   filter: blur(30px);
   mix-blend-mode: screen;
-  opacity: 0.35;
+  opacity: .35;
   animation: lux-sheet-move 60s linear infinite;
 }
 
 .lux-bg > .lux-sheet {
-  position: absolute;
+  position:absolute;
 }
 
 /* Keyframes */
 
 @keyframes lux-orb-a {
-  0% {
+  0%   {
     transform: translate(-15%, -8%) scale(1.1);
   }
 
-  25% {
-    transform: translate(20%, -5%) scale(1);
+  25%  {
+    transform: translate(20%, -5%)  scale(1.0);
   }
 
-  50% {
-    transform: translate(35%, 15%) scale(1.15);
+  50%  {
+    transform: translate(35%, 15%)  scale(1.15);
   }
 
-  75% {
+  75%  {
     transform: translate(-10%, 10%) scale(1.05);
   }
 
@@ -1169,29 +1138,29 @@ html[data-pr-theme] {
 }
 
 @keyframes lux-orb-b {
-  0% {
-    transform: translate(10%, 10%) scale(1) rotate(0deg);
+  0%   {
+    transform: translate(10%, 10%) scale(1.0) rotate(0deg);
   }
 
-  33% {
+  33%  {
     transform: translate(-20%, 25%) scale(1.12) rotate(60deg);
   }
 
-  66% {
+  66%  {
     transform: translate(15%, -15%) scale(1.06) rotate(120deg);
   }
 
   100% {
-    transform: translate(10%, 10%) scale(1) rotate(180deg);
+    transform: translate(10%, 10%) scale(1.0) rotate(180deg);
   }
 }
 
 @keyframes lux-sheet-move {
-  0% {
+  0%   {
     transform: translate3d(-10%, 0, 0) rotate(0.0001deg);
   }
 
-  50% {
+  50%  {
     transform: translate3d(15%, -5%, 0) rotate(0.0001deg);
   }
 
@@ -1203,7 +1172,7 @@ html[data-pr-theme] {
 /* Optional: add the sheet element automatically so you don't have to place it in JSX */
 
 .lux-bg::marker {
-  content: '';
+  content: "";
 }
 
 /* no-op so we can use :has safely if supported */
@@ -1239,18 +1208,13 @@ html[data-pr-theme] {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background:
-    radial-gradient(
-      1200px 900px at 50% 0%,
-      color-mix(in oklab, var(--pr-fg), var(--pr-bg) 92%) 0%,
-      transparent 60%
-    ),
-    var(--pr-bg);
+  background: radial-gradient(1200px 900px at 50% 0%, color-mix(in oklab, var(--pr-fg), var(--pr-bg) 92%) 0%, transparent 60%),
+              var(--pr-bg);
 }
 
 .lux-bg::before,
 .lux-bg::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -30%;
   border-radius: 50%;
@@ -1260,20 +1224,12 @@ html[data-pr-theme] {
 }
 
 .lux-bg::before {
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--orb-1), transparent 40%) 0%,
-    transparent 100%
-  );
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-1), transparent 40%) 0%, transparent 100%);
   animation: lux-orb-a 28s ease-in-out infinite;
 }
 
 .lux-bg::after {
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--orb-2), transparent 45%) 0%,
-    transparent 100%
-  );
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-2), transparent 45%) 0%, transparent 100%);
   animation: lux-orb-b 32s ease-in-out infinite;
 }
 
@@ -1282,37 +1238,33 @@ html[data-pr-theme] {
   inset: -20%;
   pointer-events: none;
   background:
-    linear-gradient(
-      120deg,
+    linear-gradient(120deg,
       transparent 0%,
       color-mix(in oklab, var(--orb-3), transparent 70%) 35%,
-      transparent 70%
-    ),
-    radial-gradient(
-      1000px 800px at 20% 120%,
+      transparent 70%),
+    radial-gradient(1000px 800px at 20% 120%,
       color-mix(in oklab, var(--orb-3), transparent 85%) 0%,
-      transparent 60%
-    );
+      transparent 60%);
   filter: blur(30px);
   mix-blend-mode: screen;
-  opacity: 0.35;
+  opacity: .35;
   animation: lux-sheet-move 60s linear infinite;
 }
 
 @keyframes lux-orb-a {
-  0% {
+  0%   {
     transform: translate(-15%, -8%) scale(1.1);
   }
 
-  25% {
-    transform: translate(20%, -5%) scale(1);
+  25%  {
+    transform: translate(20%, -5%)  scale(1.0);
   }
 
-  50% {
-    transform: translate(35%, 15%) scale(1.15);
+  50%  {
+    transform: translate(35%, 15%)  scale(1.15);
   }
 
-  75% {
+  75%  {
     transform: translate(-10%, 10%) scale(1.05);
   }
 
@@ -1322,29 +1274,29 @@ html[data-pr-theme] {
 }
 
 @keyframes lux-orb-b {
-  0% {
-    transform: translate(10%, 10%) scale(1) rotate(0deg);
+  0%   {
+    transform: translate(10%, 10%) scale(1.0) rotate(0deg);
   }
 
-  33% {
+  33%  {
     transform: translate(-20%, 25%) scale(1.12) rotate(60deg);
   }
 
-  66% {
+  66%  {
     transform: translate(15%, -15%) scale(1.06) rotate(120deg);
   }
 
   100% {
-    transform: translate(10%, 10%) scale(1) rotate(180deg);
+    transform: translate(10%, 10%) scale(1.0) rotate(180deg);
   }
 }
 
 @keyframes lux-sheet-move {
-  0% {
+  0%   {
     transform: translate3d(-10%, 0, 0) rotate(0.0001deg);
   }
 
-  50% {
+  50%  {
     transform: translate3d(15%, -5%, 0) rotate(0.0001deg);
   }
 
@@ -1362,8 +1314,8 @@ html[data-pr-theme] {
   z-index: 50;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.6rem 0.9rem;
+  gap: .25rem;
+  padding: .6rem .9rem;
   border-radius: 9999px;
   border: 1px solid var(--pr-border);
   /* glassy pill that works on all themes */
@@ -1374,11 +1326,7 @@ html[data-pr-theme] {
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  transition:
-    transform 0.18s ease,
-    background 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+  transition: transform .18s ease, background .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 
 .pr-exit-btn:hover {
@@ -1398,7 +1346,7 @@ html[data-pr-theme] {
 }
 
 .hover\:pr-bg-\[color-mix\(in_oklab\2c var\(--pr-fg\)\2c var\(--pr-bg\)_94\%\)\]:hover {
-  background-color: color-mix(in oklab, var(--pr-fg), var(--pr-bg) 94%);
+  background-color: color-mix(in oklab,var(--pr-fg),var(--pr-bg) 94%);
 }
 
 .hover\:pr-bg-\[var\(--pr-card\)\]:hover {
@@ -1428,10 +1376,8 @@ html[data-pr-theme] {
 }
 
 .focus\:pr-ring-2:focus {
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
-    var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
-    var(--tw-ring-color);
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 
@@ -1445,10 +1391,8 @@ html[data-pr-theme] {
 }
 
 .focus-visible\:pr-ring-2:focus-visible {
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
-    var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
-    var(--tw-ring-color);
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 

@@ -25,13 +25,14 @@ Got it. I’ve converted your checklist into tables with three columns: **Item**
 
 ## 📚 2. Learning Module
 
-| Item                                               | Development summary                                                                                                                                                     | Updated |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| [ ] Structured course library (Academic & General) | Course catalog and browsing interface have not been developed. Implementation will require content schemas, filtering, and user progress tracking.                      |         |
-| [ ] Grammar, vocabulary, collocations lessons      | Dedicated lesson pages are absent. The module will need curated content, interactive examples, and completion tracking.                                                 |         |
-| [x] IELTS strategy tips (all 4 skills)             | Tip cards covering listening, reading, writing, and speaking appear throughout the app and are maintained in markdown files. Expansion with video resources is planned. |         |
-| [ ] AI-generated practice drills                   | No functionality exists to generate drills with LLMs. Requires prompt design, answer validation, and usage tracking.                                                    |         |
-| [ ] Progressively unlocked learning paths          | Learning paths are not yet implemented. Prerequisite mapping and user state management will be needed to unlock content gradually.                                      |         |
+| Item                                               | Development summary                                                                                                                                                                            | Updated    |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| [ ] Structured course library (Academic & General) | Course catalog and browsing interface have not been developed. Implementation will require content schemas, filtering, and user progress tracking.                                             |            |
+| [ ] Grammar, vocabulary, collocations lessons      | Dedicated lesson pages are absent. The module will need curated content, interactive examples, and completion tracking.                                                                        |            |
+| [x] Word drill pack seeder & QA playground         | CSV/JSON-driven word packs feed Supabase seeds with collocations, IELTS-tagged examples, register, and audio refs while lint scripts and the internal playground keep content editor-friendly. | 2025-09-03 |
+| [x] IELTS strategy tips (all 4 skills)             | Tip cards covering listening, reading, writing, and speaking appear throughout the app and are maintained in markdown files. Expansion with video resources is planned.                        |            |
+| [ ] AI-generated practice drills                   | No functionality exists to generate drills with LLMs. Requires prompt design, answer validation, and usage tracking.                                                                           |            |
+| [ ] Progressively unlocked learning paths          | Learning paths are not yet implemented. Prerequisite mapping and user state management will be needed to unlock content gradually.                                                             |            |
 
 ---
 
