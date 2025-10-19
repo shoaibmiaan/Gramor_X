@@ -2,12 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
-import { redirectByRole } from '@/lib/routeAccess';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -16,9 +15,26 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function VerifyPage() {
-  const router = useRouter();
-  const email = typeof router.query.email === 'string' ? router.query.email : null;
-  const ref = typeof router.query.ref === 'string' ? router.query.ref : '';
+  const { query, replace, isReady, asPath } = useRouter();
+  const email = typeof query.email === 'string' ? query.email : null;
+  const ref = typeof query.ref === 'string' ? query.ref : '';
+  const role = typeof query.role === 'string' ? query.role : '';
+  const nextParam = typeof query.next === 'string' ? query.next : '';
+
+  const welcomeHref = React.useMemo(() => {
+    const params = new URLSearchParams();
+    if (role) params.set('role', role);
+    if (ref) params.set('ref', ref);
+    const search = params.toString();
+    return `/welcome${search ? `?${search}` : ''}`;
+  }, [ref, role]);
+
+  const redirectHref = React.useMemo(() => {
+    if (nextParam && nextParam.startsWith('/')) {
+      return nextParam;
+    }
+    return welcomeHref;
+  }, [nextParam, welcomeHref]);
 
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -27,35 +43,106 @@ export default function VerifyPage() {
 
   const hasCode = React.useMemo(() => {
     if (typeof window === 'undefined') return false;
-    return new URLSearchParams(window.location.search).has('code');
-  }, [router.asPath]);
+    const params = new URLSearchParams(window.location.search);
+    return params.has('code') || params.has('access_token');
+  }, [asPath]);
 
   React.useEffect(() => {
-    if (!hasCode) return;
+    if (!isReady || !hasCode) return;
+    let cancelled = false;
+
     const handleVerification = async () => {
       setBusy(true);
       setError(null);
+
       try {
         const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
         if (error) throw error;
-        redirectByRole(data?.session?.user ?? null);
+
+        let bridgeOk = false;
+        try {
+          const response = await fetch('/api/auth/set-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ event: 'SIGNED_IN', session: data.session ?? null }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Unable to finalize sign-in on the server.');
+          }
+
+          const payload: { ok?: boolean; error?: string } | null = await response
+            .json()
+            .catch(() => null);
+
+          bridgeOk = payload?.ok !== false;
+          if (!bridgeOk && payload?.error) {
+            throw new Error('Unable to finalize sign-in. Please try again.');
+          }
+        } catch (postErr) {
+          console.error('Failed to bridge session after verification:', postErr);
+          if (!cancelled) {
+            setError(
+              postErr instanceof Error
+                ? postErr.message
+                : 'Unable to finalize sign-in. Please try again.'
+            );
+          }
+          return;
+        }
+
+        if (!bridgeOk) {
+          if (!cancelled) {
+            setError('We verified your email but could not complete sign-in. Try again.');
+          }
+          return;
+        }
+
+        if (!cancelled) {
+          void replace(redirectHref);
+        }
       } catch (err: any) {
         console.error('Verification error:', err);
-        setError(err.message || 'Failed to verify email.');
+        if (!cancelled) {
+          setError(err?.message || 'Failed to verify email.');
+        }
       } finally {
-        setBusy(false);
+        if (!cancelled) {
+          setBusy(false);
+        }
       }
     };
-    handleVerification();
-  }, [hasCode]);
+
+    void handleVerification();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasCode, isReady, replace, redirectHref]);
 
   async function handleResend() {
     if (!email || busy) return;
     setBusy(true);
     setError(null);
     try {
+      const origin =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const params = new URLSearchParams();
+      params.set('next', redirectHref);
+      if (role) params.set('role', role);
+      if (ref) params.set('ref', ref);
+
       // @ts-expect-error supabase-js may not expose resend type yet
-      const { error: resendErr } = await supabase.auth.resend({ type: 'signup', email });
+      const { error: resendErr } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${origin}/auth/verify?${params.toString()}`,
+        },
+      });
       if (resendErr) throw resendErr;
       setResent(true);
       setNotice('We’ve sent a new verification link.');

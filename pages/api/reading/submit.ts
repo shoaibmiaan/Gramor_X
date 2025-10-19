@@ -6,6 +6,71 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { gradeReadingAttempt } from '@/lib/reading/grade';
 
+type ReadingAttemptResult = ReturnType<typeof gradeReadingAttempt>;
+type AttemptCacheEntry = {
+  id: string;
+  slug: string;
+  answers: Record<string, unknown>;
+  result: ReadingAttemptResult;
+  userId: string;
+  createdAt: string;
+  paper?: unknown;
+  paperTitle?: string | null;
+  meta?: Record<string, unknown> | null;
+};
+
+const ATTEMPT_CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutes
+const attemptCache = new Map<string, AttemptCacheEntry>();
+let lastPrune = 0;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function cloneJson<T>(value: T): T {
+  if (value == null) return value;
+  try {
+    return JSON.parse(JSON.stringify(value)) as T;
+  } catch {
+    return value;
+  }
+}
+
+function pruneExpired(now = Date.now()) {
+  if (now - lastPrune < 60_000) return; // throttle pruning to once per minute
+  lastPrune = now;
+  for (const [key, entry] of attemptCache.entries()) {
+    const created = Date.parse(entry.createdAt);
+    if (Number.isFinite(created) && now - created > ATTEMPT_CACHE_TTL_MS) {
+      attemptCache.delete(key);
+    }
+  }
+}
+
+function rememberAttempt(entry: AttemptCacheEntry) {
+  pruneExpired();
+  attemptCache.set(entry.id, {
+    ...entry,
+    answers: cloneJson(entry.answers),
+    result: cloneJson(entry.result),
+    meta: entry.meta ? cloneJson(entry.meta) : null,
+    paper: entry.paper ? cloneJson(entry.paper) : undefined,
+  });
+}
+
+export function getAttempt(attemptId: string): AttemptCacheEntry | null {
+  pruneExpired();
+  const cached = attemptCache.get(attemptId);
+  if (!cached) return null;
+  return {
+    ...cached,
+    answers: cloneJson(cached.answers),
+    result: cloneJson(cached.result),
+    meta: cached.meta ? cloneJson(cached.meta) : null,
+    paper: cached.paper ? cloneJson(cached.paper) : undefined,
+  };
+}
+
 type Body = {
   slug?: string;
   passageSlug?: string;
@@ -130,6 +195,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (insertError) {
     return res.status(500).json({ error: insertError.message || 'Failed to save attempt' });
   }
+
+  const createdAt = new Date().toISOString();
+
+  rememberAttempt({
+    id: attemptId,
+    slug: testSlug,
+    answers,
+    result,
+    userId: user.id,
+    createdAt,
+    paper: isRecord(meta) && meta.paper ? meta.paper : undefined,
+    paperTitle:
+      isRecord(meta) && typeof meta.paperTitle === 'string' ? (meta.paperTitle as string) : null,
+    meta: isRecord(meta) ? (meta as Record<string, unknown>) : null,
+  });
 
   await trackor.log('reading_attempt_submitted', {
     attempt_id: attemptId,

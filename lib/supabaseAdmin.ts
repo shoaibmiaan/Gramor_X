@@ -73,3 +73,7 @@ export const supabaseAdmin: SupabaseClient =
   })();
 
 export default supabaseAdmin;
+
+export function getAdminClient(): SupabaseClient {
+  return supabaseAdmin;
+}
