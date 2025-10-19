@@ -17,6 +17,8 @@ export interface Profiles extends TableBase {
   phone_verified?: boolean | null;
   goal_band?: number;
   weaknesses?: string[];
+  study_prefs?: string[] | null;
+  focus_topics?: string[] | null;
   role?: 'student' | 'teacher' | 'admin';
   membership?: 'free' | 'starter' | 'booster' | 'master';
   locale?: string;
@@ -29,6 +31,7 @@ export interface Profiles extends TableBase {
   preferred_language?: string | null;
   study_days?: string[] | null;           // e.g., ['Mon','Wed','Fri']
   study_minutes_per_day?: number | null;  // e.g., 30
+  daily_quota_goal?: number | null;
 }
 
 export interface StudyPlans extends TableBase {
@@ -114,6 +117,65 @@ export interface NotificationConsentEvent extends TableBase {
   metadata?: Record<string, any> | null;
 }
 
+export interface AiAssistLog extends TableBase {
+  user_id: string | null;
+  feature: 'paraphrase' | 'speaking_hint';
+  input: string;
+  output: Record<string, unknown> | null;
+  tokens_used?: number | null;
+}
+
+export type WordPackRegister = 'formal' | 'neutral' | 'informal';
+
+export interface WordPackExample {
+  text: string;
+  tags: string[];
+}
+
+export interface WordPacks extends TableBase {
+  word_id: string;
+  slug: string;
+  register: WordPackRegister;
+  audio_ref?: string | null;
+  collocations: string[];
+  examples: WordPackExample[];
+}
+
+export interface Experiments {
+  key: string;
+  name: string;
+  status: 'planned' | 'running' | 'paused' | 'completed';
+  guardrail_reason?: string | null;
+  updated_at: string;
+}
+
+export interface ExperimentAssignments {
+  user_id: string;
+  experiment_key: string;
+  variant: string;
+  assigned_at: string;
+  guardrail_state: 'active' | 'disabled';
+}
+
+export interface ReviewEvents {
+  id: string;
+  user_id: string | null;
+  event: 'open' | 'complete';
+  source: string | null;
+  word_id: string | null;
+  occurred_at: string;
+}
+
+export interface CollocationAttempts {
+  id: string;
+  user_id: string | null;
+  challenge_id: string | null;
+  attempts: number;
+  correct: number;
+  source: string | null;
+  attempted_at: string;
+}
+
 /** Handy union for typed upserts/selects */
 export interface DBSchema {
   profiles: Profiles;
@@ -126,6 +188,14 @@ export interface DBSchema {
   // kept from codex/add-whatsapp-opt-in-preferences-panel
   notifications_opt_in: NotificationsOptIn;
   notification_consent_events: NotificationConsentEvent;
+
+  ai_assist_logs: AiAssistLog;
+
+  experiments: Experiments;
+  experiment_assignments: ExperimentAssignments;
+  review_events: ReviewEvents;
+  collocation_attempts: CollocationAttempts;
+  word_packs: WordPacks;
 
   // kept from main
   account_audit_log: AccountAuditLog;

@@ -4,6 +4,8 @@ export interface AIPlan {
   sequence?: string[];
   notes?: string[];
   source?: string;
+  dailyQuota?: number;
+  sessionMix?: { skill: string; topic: string }[];
 }
 
 export interface Profile {
@@ -17,7 +19,9 @@ export interface Profile {
   english_level?: string | null;
   goal_band?: number | null;
   study_prefs?: string[] | null;
+  focus_topics?: string[] | null;
   time_commitment?: string | null;
+  daily_quota_goal?: number | null;
   preferred_language?: string | null;
   study_days?: string[] | null;
   study_minutes_per_day?: number | null;

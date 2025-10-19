@@ -24,9 +24,49 @@ export interface ProgressTrendPayload {
   timeline: TrendPoint[];
   perSkill: SkillAverage[];
   totalAttempts: number;
+  lexicalEstimate?: LexicalEstimate | null;
 }
 
 const SKILLS: SkillKey[] = ['reading', 'listening', 'writing', 'speaking'];
+
+export interface LexicalEstimate {
+  mastered: number;
+  estimatedWordFamilies: number;
+  estimatedBandRange: { label: string; min: number; max: number | null };
+  thresholds: { band6: number; band7: number };
+  recommendedTarget: number;
+  goalBand: number | null;
+}
+
+const WF_PER_MASTERED = 3;
+
+const LEXICAL_RANGES: { label: string; min: number; max: number }[] = [
+  { label: 'Band 5 baseline', min: 0, max: 2999 },
+  { label: 'Band 6 ready', min: 3000, max: 4999 },
+  { label: 'Band 7 trajectory', min: 5000, max: 6499 },
+  { label: 'Band 8+ range', min: 6500, max: Number.POSITIVE_INFINITY },
+];
+
+export function computeLexicalEstimate(mastered: number, goalBand: number | null): LexicalEstimate {
+  const estimatedWordFamilies = Math.max(0, Math.round((mastered ?? 0) * WF_PER_MASTERED));
+  const bucket =
+    LEXICAL_RANGES.find((range) => estimatedWordFamilies >= range.min && estimatedWordFamilies <= range.max) ??
+    LEXICAL_RANGES[0];
+  const recommendedTarget = goalBand && goalBand >= 7 ? 5000 : 3000;
+
+  return {
+    mastered,
+    estimatedWordFamilies,
+    estimatedBandRange: {
+      label: bucket.label,
+      min: bucket.min,
+      max: Number.isFinite(bucket.max) ? bucket.max : null,
+    },
+    thresholds: { band6: 3000, band7: 5000 },
+    recommendedTarget,
+    goalBand: goalBand ?? null,
+  };
+}
 
 export function buildProgressTrends(rows: BandRow[]): ProgressTrendPayload {
   if (!rows || rows.length === 0) {
