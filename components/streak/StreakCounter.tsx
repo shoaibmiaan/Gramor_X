@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Card } from '@/components/design-system/Card';
 
+let tooltipIdSeed = 0;
+
 function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(' ');
 }
@@ -54,7 +56,12 @@ export const StreakCounter: React.FC<StreakCounterProps> = ({
   loading = false,
   shields = 0,
 }) => {
-  const tooltipId = React.useId();
+  const tooltipIdRef = React.useRef<string>();
+  if (!tooltipIdRef.current) {
+    const nextId = ++tooltipIdSeed;
+    tooltipIdRef.current = `streak-tooltip-${nextId}`;
+  }
+  const tooltipId = tooltipIdRef.current;
   const [open, setOpen] = React.useState(false);
 
   const safeCurrent = Number.isFinite(current) ? Math.max(0, Math.trunc(current)) : 0;

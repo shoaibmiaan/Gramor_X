@@ -1,0 +1,48 @@
+{
+  "id": "ielts-writing-full-001",
+  "module": "writing",
+  "version": 1,
+  "title": "Academic Writing Full Mock Exam 001",
+  "description": "Complete IELTS Academic writing set with a data interpretation Task 1 and a balanced argument Task 2.",
+  "durationSec": 3600,
+  "task1": {
+    "type": "academic",
+    "title": "Task 1 — International Student Mobility",
+    "prompt": "The charts below show the number of international students enrolled at universities in four different countries (Canada, Australia, Germany, and Japan) in 2010 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Group countries with similar growth trends.",
+      "Highlight the largest and smallest changes.",
+      "Mention any notable shifts in ranking."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Task 2 — Balancing Urban Development",
+    "prompt": "Some people think city governments should prioritise building affordable housing, while others believe they should focus on creating more green spaces. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction with paraphrased topic and thesis",
+      "Body paragraph supporting investment in housing",
+      "Body paragraph supporting expansion of green spaces",
+      "Conclusion stating your opinion with recommendations"
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  }
+}

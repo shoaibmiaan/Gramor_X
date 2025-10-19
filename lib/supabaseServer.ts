@@ -141,7 +141,130 @@ function headerValue(headers: ServerRequest['headers'] | undefined, name: string
   return undefined;
 }
 
-function buildHeaders(req: ServerRequest | NextRequest | undefined, extra?: Record<string, string>) {
+function normalizeBase64(value: string, variant: 'base64' | 'base64url') {
+  if (variant === 'base64url') {
+    value = value.replace(/-/g, '+').replace(/_/g, '/');
+  }
+
+  const padding = value.length % 4;
+  if (padding) {
+    value = value.padEnd(value.length + (4 - padding), '=');
+  }
+
+  return value;
+}
+
+function base64ToString(value: string, variant: 'base64' | 'base64url') {
+  const normalized = normalizeBase64(value, variant);
+
+  if (typeof atob === 'function') {
+    try {
+      const binary = atob(normalized);
+      if (typeof TextDecoder === 'function') {
+        const decoder = new TextDecoder('utf-8', { fatal: false });
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return decoder.decode(bytes);
+      }
+
+      return binary;
+    } catch {
+      // ignore decoding errors when using Web APIs
+    }
+  }
+
+  const buffer = typeof globalThis !== 'undefined' ? (globalThis as any).Buffer : undefined;
+  if (buffer) {
+    try {
+      return buffer.from(normalized, 'base64').toString('utf8');
+    } catch {
+      // ignore decoding errors when using Node.js Buffer
+    }
+  }
+
+  return undefined;
+}
+
+function parseAuthCookieJSON(value: string | undefined) {
+  if (!value) return undefined;
+
+  const candidates = new Set<string>();
+  candidates.add(value);
+
+  if (value.includes('%')) {
+    try {
+      candidates.add(decodeURIComponent(value));
+    } catch {
+      // ignore decoding errors
+    }
+  }
+
+  for (const candidate of Array.from(candidates)) {
+    try {
+      const decoded = base64ToString(candidate, 'base64url');
+      if (decoded) candidates.add(decoded);
+    } catch {
+      // ignore if not base64url
+    }
+
+    try {
+      const decoded = base64ToString(candidate, 'base64');
+      if (decoded) candidates.add(decoded);
+    } catch {
+      // ignore if not base64
+    }
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // keep trying other candidates
+    }
+  }
+
+  return undefined;
+}
+
+function extractBearerFromCookies(jar: Map<string, string>) {
+  const direct = jar.get('sb-access-token');
+  if (direct) return `Bearer ${direct}`;
+
+  const legacyNames = ['sb:token', 'supabase-auth-token'];
+
+  const projectCookie = Array.from(jar.entries()).find(([name]) =>
+    /^sb-[a-z0-9-]+-auth-token$/i.test(name),
+  );
+
+  if (projectCookie) legacyNames.unshift(projectCookie[0]);
+
+  for (const name of legacyNames) {
+    const parsed = parseAuthCookieJSON(jar.get(name));
+    if (!parsed) continue;
+
+    const session =
+      parsed?.currentSession ??
+      parsed?.session ??
+      (Array.isArray(parsed) ? parsed[0] : parsed);
+
+    const token =
+      session?.access_token ??
+      session?.accessToken ??
+      parsed?.access_token ??
+      parsed?.accessToken;
+
+    if (typeof token === 'string' && token.length > 0) {
+      return `Bearer ${token}`;
+    }
+  }
+
+  return undefined;
+}
+
+function buildHeaders(
+  req: ServerRequest | NextRequest | undefined,
+  extra: Record<string, string> | undefined,
+  cookies: Map<string, string> = new Map(),
+) {
   const headers: Record<string, string> = {
     'X-Client-Info': CLIENT_HEADER,
     ...(extra ?? {}),
@@ -150,6 +273,11 @@ function buildHeaders(req: ServerRequest | NextRequest | undefined, extra?: Reco
   if (req) {
     const auth = headerValue(req.headers, 'authorization');
     if (auth && !headers.Authorization) headers.Authorization = auth;
+  }
+
+  if (!headers.Authorization) {
+    const bearer = extractBearerFromCookies(cookies);
+    if (bearer) headers.Authorization = bearer;
   }
 
   return headers;
@@ -186,11 +314,13 @@ export function getServerClient<T = Database>(
     };
   }
 
+  const headers = buildHeaders(req, opts.headers, cookieJar);
+
   return createSSRServerClient<T>(URL, ANON_KEY, {
     cookies,
     cookieOptions: opts.cookieOptions,
     cookieEncoding: opts.cookieEncoding,
-    global: { headers: buildHeaders(req, opts.headers) },
+    global: { headers },
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,
@@ -205,6 +335,11 @@ export function getMiddlewareClient<T = Database>(req: NextRequest, res: NextRes
 
   if (!URL || !ANON_KEY) return makeTestStub<T>();
 
+  const cookieJar = new Map<string, string>();
+  req.cookies.getAll().forEach((cookie) => {
+    cookieJar.set(cookie.name, cookie.value);
+  });
+
   return createSSRServerClient<T>(URL, ANON_KEY, {
     cookies: {
       getAll: () =>
@@ -217,7 +352,7 @@ export function getMiddlewareClient<T = Database>(req: NextRequest, res: NextRes
         });
       },
     },
-    global: { headers: buildHeaders(req, undefined) },
+    global: { headers: buildHeaders(req, undefined, cookieJar) },
     auth: {
       autoRefreshToken: false,
       detectSessionInUrl: false,

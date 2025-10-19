@@ -110,11 +110,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(503).json({ ok: false, error: 'service_unavailable' });
   }
 
-  const { event, session } = req.body as { event: string; session: SupabaseSession | null };
+  const { event, session } = (req.body ?? {}) as { event?: string; session?: SupabaseSession | null };
+
+  if (!event || typeof event !== 'string') {
+    return res.status(400).json({ ok: false, error: 'missing_event' });
+  }
 
   try {
-    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-      // Try helper first; fallback to manual cookies if missing or errors out
+    if (event === 'SIGNED_OUT') {
+      let usedFallback = false;
+      if (typeof supabase.auth.signOut === 'function') {
+        try {
+          await supabase.auth.signOut();
+        } catch (err) {
+          console.warn('Set-session API - signOut failed, clearing cookies manually:', err);
+          usedFallback = true;
+        }
+      } else {
+        usedFallback = true;
+      }
+
+      if (usedFallback) clearSessionCookies(res);
+
+      return res.status(200).json({ ok: true });
+    }
+
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      const hasTokens =
+        !!session && typeof session.access_token === 'string' && session.access_token.length > 0;
+
+      if (!hasTokens) {
+        clearSessionCookies(res);
+        return res.status(200).json({ ok: false, error: 'missing_tokens' });
+      }
+
       let usedFallback = false;
       if (typeof supabase.auth.setSession === 'function') {
         try {
@@ -131,25 +160,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const wrote = writeSessionCookies(res, session);
         if (!wrote) clearSessionCookies(res);
       }
-
-      return res.status(200).json({ ok: true });
-    }
-
-    if (event === 'SIGNED_OUT') {
-      // Try helper; fallback to manual clear
-      let usedFallback = false;
-      if (typeof supabase.auth.signOut === 'function') {
-        try {
-          await supabase.auth.signOut();
-        } catch (err) {
-          console.warn('Set-session API - signOut failed, clearing cookies manually:', err);
-          usedFallback = true;
-        }
-      } else {
-        usedFallback = true;
-      }
-
-      if (usedFallback) clearSessionCookies(res);
 
       return res.status(200).json({ ok: true });
     }

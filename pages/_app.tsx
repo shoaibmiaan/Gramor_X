@@ -22,6 +22,7 @@ import { env } from '@/lib/env';
 import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
+import { destinationByRole } from '@/lib/routeAccess';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
@@ -245,30 +246,24 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   // ---------- AUTH BRIDGE: sync server cookies + correct redirects ----------
   const syncingRef = useRef(false);
-  const lastEventRef = useRef<AuthChangeEvent | 'INITIAL_SESSION' | null>(null);
-  const lastTokenRef = useRef<string | null>(null);
+  const lastBridgeKeyRef = useRef<string | null>(null);
   const subscribedRef = useRef(false);
 
-  const syncSession = async (event: AuthChangeEvent | 'INITIAL_SESSION', sessionNow: Session | null) => {
-    if (event === 'INITIAL_SESSION' && !sessionNow) return;
+  const bridgeSession = async (event: AuthChangeEvent, sessionNow: Session | null) => {
+    const shouldPost = event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED';
+    if (!shouldPost) return;
 
-    // Only process events that affect cookies / routing
-    const ALLOW = new Set<AuthChangeEvent | 'INITIAL_SESSION'>([
-      'INITIAL_SESSION',
-      'SIGNED_IN',
-      'SIGNED_OUT',
-      'TOKEN_REFRESHED',
-    ]);
-    if (!ALLOW.has(event)) return;
+    if (event !== 'SIGNED_OUT' && !sessionNow?.access_token) return;
 
-    // Drop exact duplicates (same event + same access token)
-    const token = sessionNow?.access_token ?? null;
-    if (lastEventRef.current === event && lastTokenRef.current === token) return;
-    lastEventRef.current = event;
-    lastTokenRef.current = token;
+    const token = sessionNow?.access_token ?? '';
+    const dedupeKey = `${event}:${token}`;
+    if (event !== 'SIGNED_OUT' && lastBridgeKeyRef.current === dedupeKey) return;
 
     if (syncingRef.current) return;
     syncingRef.current = true;
+
+    const previousKey = lastBridgeKeyRef.current;
+
     try {
       await fetch('/api/auth/set-session', {
         method: 'POST',
@@ -276,8 +271,9 @@ function InnerApp({ Component, pageProps }: AppProps) {
         credentials: 'same-origin',
         body: JSON.stringify({ event, session: sessionNow }),
       });
+      lastBridgeKeyRef.current = dedupeKey;
     } catch {
-      // best-effort; ignore
+      lastBridgeKeyRef.current = previousKey;
     } finally {
       syncingRef.current = false;
     }
@@ -303,12 +299,17 @@ function InnerApp({ Component, pageProps }: AppProps) {
       } = await supabaseBrowser.auth.getSession();
       if (!isMounted) return;
 
-      await syncSession('INITIAL_SESSION', session);
+      if (session) {
+        await bridgeSession('SIGNED_IN', session);
+      } else {
+        await bridgeSession('SIGNED_OUT', null);
+      }
 
       if (session?.user && isAuthPage) {
         const url = new URL(window.location.href);
         const next = url.searchParams.get('next');
-        const target = next && next.startsWith('/') ? next : '/';
+        const target =
+          next && next.startsWith('/') ? next : destinationByRole(session.user) ?? '/';
         router.replace(target);
       }
     })();
@@ -319,7 +320,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
         data: { subscription },
       } = supabaseBrowser.auth.onAuthStateChange((event, sessionNow) => {
         (async () => {
-          await syncSession(event, sessionNow);
+          await bridgeSession(event, sessionNow);
 
           // Route reactions AFTER cookie sync so middleware sees it
           if (event === 'SIGNED_IN' && sessionNow?.user) {
@@ -329,7 +330,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
             if (next && next.startsWith('/')) {
               router.replace(next);
             } else if (isAuthPage) {
-              router.replace('/');
+              router.replace(destinationByRole(sessionNow.user));
             }
           }
 
