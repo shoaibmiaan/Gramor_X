@@ -8,9 +8,11 @@ import ExamLayout from '@/components/layouts/ExamLayout';
 
 export default function SectionPage() {
   const router = useRouter();
-  const { section } = router.query as { section?: string };
+  const { section, mode: modeQuery } = router.query as { section?: string; mode?: string };
+  const mode = modeQuery === 'practice' ? 'practice' : 'simulation';
+  const sectionKey = typeof section === 'string' ? section : undefined;
   const testRef = useRef<SectionTestHandle>(null);
-  if (!section || !mockSections[section]) {
+  if (!sectionKey || !mockSections[sectionKey]) {
     return (
       <section className="py-24">
         <Container>
@@ -21,16 +23,32 @@ export default function SectionPage() {
       </section>
     );
   }
-  const { duration, questions } = mockSections[section];
+  const { duration, questions } = mockSections[sectionKey];
+  const sectionLabel = `${sectionKey.charAt(0).toUpperCase()}${sectionKey.slice(1)}`;
   return (
     <ExamLayout
       exam="mock-test"
-      slug={section}
-      title={`${section.charAt(0).toUpperCase() + section.slice(1)} Section`}
+      slug={sectionKey}
+      title={`${mode === 'simulation' ? 'Simulation' : 'Practice'} · ${sectionLabel}`}
       seconds={duration}
-      onElapsed={() => testRef.current?.submit()}
+      onElapsed={mode === 'simulation' ? () => testRef.current?.submit() : undefined}
     >
-      <SectionTest ref={testRef} section={section} questions={questions} />
+      <div className="space-y-4">
+        <Card className="rounded-ds-2xl border border-dashed border-border/60 bg-card/40 p-4 text-sm text-muted-foreground">
+          {mode === 'simulation' ? (
+            <p>
+              Treat this as the real thing — the timer will auto-submit, and focus guard tracks tab
+              switches.
+            </p>
+          ) : (
+            <p>
+              Practice mode provides instant feedback under each question so you can learn as you
+              go. Use the timer as a pacing guide.
+            </p>
+          )}
+        </Card>
+        <SectionTest ref={testRef} section={sectionKey} questions={questions} mode={mode} />
+      </div>
     </ExamLayout>
   );
 }

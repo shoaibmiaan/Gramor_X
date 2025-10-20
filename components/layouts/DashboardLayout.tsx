@@ -1,48 +1,61 @@
 // components/layouts/DashboardLayout.tsx
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
 
-/**
- * DashboardLayout
- * - DS tokens only (no hex)
- * - Context header + quick section nav
- * - Body wraps children in a card surface
- */
-const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Context header */}
-      <section className="bg-card/40 border-b border-border">
-        <Container className="py-5 sm:py-6 pb-safe md:pb-0">
-          <h1 className="text-h3 sm:text-h2 font-slab">Your Dashboard</h1>
-          <p className="text-small text-mutedText mt-1">
-            Track progress, follow your plan, and jump back into modules.
-          </p>
+const QUICK_LINKS = [
+  { href: '/study-plan', label: 'Study Plan' },
+  { href: '/progress', label: 'Analytics' },
+  { href: '/listening', label: 'Listening' },
+  { href: '/reading', label: 'Reading' },
+  { href: '/writing', label: 'Writing' },
+  { href: '/speaking/simulator', label: 'Speaking' },
+  { href: '/pricing', label: 'Upgrade' },
+] as const;
 
-          {/* Quick section nav (DS helper .nav-pill) */}
-          <nav className="mt-3 flex flex-wrap gap-2">
-            <Link href="/study-plan" className="nav-pill">Study Plan</Link>
-            <Link href="/progress" className="nav-pill">Analytics</Link>
-            <Link href="/listening" className="nav-pill">Listening</Link>
-            <Link href="/reading" className="nav-pill">Reading</Link>
-            <Link href="/writing" className="nav-pill">Writing</Link>
-            <Link href="/speaking/simulator" className="nav-pill">Speaking</Link>
-            <Link href="/pricing" className="nav-pill">Upgrade</Link>
+const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const { pathname } = useRouter();
+
+  return (
+    <div className="min-h-[100dvh] bg-background text-foreground">
+      <header className="border-b border-border bg-card/30">
+        <Container className="space-y-4 py-6 pt-safe">
+          <div className="space-y-1">
+            <h1 className="font-slab text-h3 sm:text-h2">Your Dashboard</h1>
+            <p className="text-small text-mutedText">
+              Track progress, follow your plan, and jump back into modules.
+            </p>
+          </div>
+
+          <nav
+            aria-label="Dashboard quick links"
+            className="flex flex-wrap gap-3 text-sm text-muted-foreground"
+          >
+            {QUICK_LINKS.map(({ href, label }) => {
+              const active = pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`rounded-md px-2 py-1 transition hover:text-foreground ${
+                    active ? 'bg-muted text-foreground' : ''
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
         </Container>
-      </section>
+      </header>
 
-      {/* Page body */}
-      <Container className="py-5 sm:py-6 pb-safe md:pb-0">
-        <div className="card-surface rounded-ds-2xl p-3 sm:p-4">
-          {children}
-        </div>
-      </Container>
+      <main>
+        <Container className="py-8 sm:py-10">{children}</Container>
+      </main>
     </div>
   );
 };
 
 export default DashboardLayout;
-/** also export named, so either import style works */
 export { DashboardLayout };
