@@ -1,0 +1,44 @@
+[
+  {
+    "word": "climate",
+    "slug": "climate-action",
+    "register": "formal",
+    "audioRef": "https://cdn.gramorx.com/audio/climate.mp3",
+    "collocations": [
+      "climate change mitigation",
+      "climate resilience strategy",
+      "climate action plan"
+    ],
+    "examples": [
+      {
+        "text": "In IELTS Writing Task 2, evaluate whether a national climate action plan balances economic growth with environmental protection.",
+        "tags": ["ielts-writing-task-2"]
+      },
+      {
+        "text": "For IELTS Speaking Part 3, discuss how climate resilience strategies help coastal communities prepare for storms.",
+        "tags": ["ielts-speaking-part-3"]
+      }
+    ]
+  },
+  {
+    "word": "urban",
+    "slug": "urban-development",
+    "register": "neutral",
+    "audioRef": null,
+    "collocations": [
+      "urban regeneration project",
+      "urban transport network",
+      "urban sprawl control"
+    ],
+    "examples": [
+      {
+        "text": "Describe an urban regeneration project in IELTS Speaking Part 2 and highlight the public transport improvements it delivered.",
+        "tags": ["ielts-speaking-part-2"]
+      },
+      {
+        "text": "In IELTS Writing Task 1, compare two urban transport networks using precise data language and cohesive comparisons.",
+        "tags": ["ielts-writing-task-1"]
+      }
+    ]
+  }
+]

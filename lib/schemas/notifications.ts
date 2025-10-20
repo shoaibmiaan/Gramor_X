@@ -46,3 +46,28 @@ export const CreateNotificationSchema = z.object({
   message: z.string().min(1),
   url: z.string().url().optional().nullable(),
 });
+
+export const NotificationPreferencesSchema = z.object({
+  email: z.string().email().nullable(),
+  emailOptIn: z.boolean(),
+  whatsappOptIn: z.boolean(),
+  smsOptIn: z.boolean(),
+  phone: z.string().nullable(),
+  phoneVerified: z.boolean(),
+});
+
+export type NotificationPreferences = z.infer<typeof NotificationPreferencesSchema>;
+
+export const UpdateNotificationPreferencesSchema = z.object({
+  emailOptIn: z.boolean().optional(),
+  whatsappOptIn: z.boolean().optional(),
+  smsOptIn: z.boolean().optional(),
+  phone: z
+    .string()
+    .regex(/^\+[1-9]\d{1,14}$/, 'Phone must be in E.164 format (+XXXXXXXXXXX)')
+    .optional(),
+  phoneVerified: z.boolean().optional(),
+  sendTest: z.boolean().optional(),
+});
+
+export type UpdateNotificationPreferences = z.infer<typeof UpdateNotificationPreferencesSchema>;

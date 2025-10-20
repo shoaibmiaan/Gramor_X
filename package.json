@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently \"next dev\" \"npm:dev:premium\"",
     "dev:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --watch",
-    "build": "npm run build:premium && next build",
+    "build": "npm run build:premium && node ./scripts/next-build.mjs",
     "build:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --minify",
     "start": "next start",
     "clean": "rm -rf .next",
@@ -22,6 +22,7 @@
     "build-storybook": "storybook build",
     "seed:challenge": "tsx scripts/seed_challenge.ts",
     "seed:reading": "tsx scripts/seed_reading_test.ts",
+    "snapshot:xp": "tsx scripts/snapshot_xp_leaderboard.ts",
     "gen:cert-template": "tsx scripts/generate_certificate_template.ts",
     "l10n:extract": "tsx scripts/l10n_extract.ts",
     "test:a11y": "vitest run tests/a11y/wcag-axe.test.ts",

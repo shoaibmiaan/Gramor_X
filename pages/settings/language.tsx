@@ -3,7 +3,7 @@ import * as React from "react";
 import Head from "next/head";
 import { Container } from "@/components/design-system/Container";
 import LocaleSwitcher from "@/components/common/LocaleSwitcher";
-import { _detectLocale as detectLocale, persistLocale as setLocale } from "@/lib/locale";
+import { _detectLocale as detectLocale, persistLocale } from "@/lib/locale";
 import { loadTranslations, t, getLocale } from "@/lib/i18n";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { supabaseBrowser } from "@/lib/supabaseBrowser";
@@ -36,7 +36,7 @@ export default function LanguageSettingsPage() {
     setSaved(null);
     try {
       await loadTranslations(next);
-      setLocale(next);
+      persistLocale(next);
       setLocale(next);
 
       // Persist to profile if logged in

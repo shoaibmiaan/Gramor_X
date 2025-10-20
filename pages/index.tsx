@@ -2,19 +2,22 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
+import type { GetServerSideProps } from 'next';
+import type { HeroProps } from '@/components/sections/Hero';
 import { Icon } from '@/components/design-system/Icon';
 import { Container } from '@/components/design-system/Container';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { useLocale } from '@/lib/locale';
+import { getLaunchMsUTC } from '@/lib/config/launchDate';
 
 /**
  * Chunk-split sections. Keep Hero interactive while server-rendering
  * the rest for SEO + perf. Provide lightweight fallbacks.
  */
-const Hero = dynamic(
-  () => import('@/components/sections/Hero').then((m: any) => m.Hero ?? m.default),
+const Hero = dynamic<HeroProps>(
+  () => import('@/components/sections/Hero').then((m) => m.Hero ?? m.default),
   { ssr: true, loading: () => <div className="min-h-[50vh]" /> }
 );
 
@@ -62,6 +65,11 @@ const statHighlights = [
   },
 ] as const;
 
+type HomePageProps = {
+  serverNowMsUTC: number;
+  launchMsUTC: number;
+};
+
 function SectionSkeleton() {
   return (
     <div className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -77,7 +85,7 @@ function SectionSkeleton() {
   );
 }
 
-export default function HomePage() {
+export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomePageProps) {
   const { t } = useLocale();
 
   // streak logic unchanged
@@ -124,7 +132,12 @@ export default function HomePage() {
       </a>
 
       <main id="main" className="min-h-[100dvh]">
-        <Hero streak={streak} onStreakChange={onStreakChange} />
+        <Hero
+          streak={streak}
+          onStreakChange={onStreakChange}
+          serverNowMsUTC={serverNowMsUTC}
+          launchMsUTC={launchMsUTC}
+        />
 
         <section className="border-y border-border/40 bg-white/85 py-16 backdrop-blur dark:bg-dark/70">
           <Container>
@@ -205,3 +218,15 @@ export default function HomePage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<HomePageProps> = async () => {
+  const launchMsUTC = Math.floor(getLaunchMsUTC());
+  const serverNowMsUTC = Date.now();
+
+  return {
+    props: {
+      serverNowMsUTC,
+      launchMsUTC,
+    },
+  };
+};

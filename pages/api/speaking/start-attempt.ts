@@ -86,6 +86,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       daily_limit: enforceLimit ? freeLimit : null,
       daily_count: dailyCount ?? null,
     });
+    await trackor.log('speaking_attempt', {
+      attempt_id: data.id,
+      user_id: user.id,
+      plan,
+      mode,
+      part,
+      started_at: startedAt,
+      daily_limit: enforceLimit ? freeLimit : null,
+      daily_count: dailyCount ?? null,
+    });
   } catch (logErr) {
     console.warn('[speaking.start] analytics failed', logErr);
   }
