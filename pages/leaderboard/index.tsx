@@ -7,55 +7,97 @@ import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Skeleton } from '@/components/design-system/Skeleton';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+
+type Scope = 'daily' | 'weekly';
 
 interface Entry {
-  user_id: string;
-  full_name: string | null;
-  score: number;
+  userId: string;
+  fullName: string;
+  xp: number;
+  rank: number;
+  snapshotDate: string | null;
 }
 
-export default function WeeklyLeaderboard() {
-  const [entries, setEntries] = useState<Entry[]>([]);
+const SCOPE_LABEL: Record<Scope, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+};
+
+const SCOPE_DESCRIPTION: Record<Scope, string> = {
+  daily: 'Daily snapshots reset at midnight Karachi time.',
+  weekly: 'Weekly snapshots reset every Monday.',
+};
+
+function formatSnapshot(entries: Entry[]): string | null {
+  const snapshot = entries[0]?.snapshotDate;
+  return snapshot ?? null;
+}
+
+export default function XpLeaderboard() {
+  const [entries, setEntries] = useState<Record<Scope, Entry[]>>({ daily: [], weekly: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeScope, setActiveScope] = useState<Scope>('weekly');
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const { data, error } = await supabase
-          .from('weekly_leaderboard')
-          .select('user_id, score, profiles(full_name)')
-          .order('score', { ascending: false })
-          .limit(10);
-
-        if (error) {
-          throw error;
+        const res = await fetch('/api/leaderboard/xp');
+        if (!res.ok) {
+          throw new Error('Unable to load leaderboard');
         }
-
-        if (data) {
-          const formatted: Entry[] = data.map((d: any) => ({
-            user_id: d.user_id,
-            score: d.score,
-            full_name: d.profiles?.full_name ?? 'Anonymous',
-          }));
-          setEntries(formatted);
+        const json = (await res.json()) as {
+          ok: boolean;
+          entries?: Record<Scope, Array<{ userId: string; fullName: string; xp: number; rank: number; snapshotDate: string }>>;
+          error?: string;
+        };
+        if (!json.ok || !json.entries) {
+          throw new Error(json.error || 'Unable to load leaderboard');
+        }
+        if (!cancelled) {
+          const normalized: Record<Scope, Entry[]> = {
+            daily: (json.entries.daily ?? []).map((row) => ({
+              userId: row.userId,
+              fullName: row.fullName ?? 'Anonymous',
+              xp: row.xp ?? 0,
+              rank: row.rank ?? 0,
+              snapshotDate: row.snapshotDate ?? null,
+            })),
+            weekly: (json.entries.weekly ?? []).map((row) => ({
+              userId: row.userId,
+              fullName: row.fullName ?? 'Anonymous',
+              xp: row.xp ?? 0,
+              rank: row.rank ?? 0,
+              snapshotDate: row.snapshotDate ?? null,
+            })),
+          };
+          setEntries(normalized);
         }
       } catch (err) {
         console.error('[leaderboard] failed to load leaderboard', err);
-        setError('Unable to load the leaderboard right now.');
+        if (!cancelled) setError('Unable to load the leaderboard right now.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const currentEntries = useMemo(() => entries[activeScope] ?? [], [entries, activeScope]);
 
   const { topThree, rest } = useMemo(() => {
     return {
-      topThree: entries.slice(0, 3),
-      rest: entries.slice(3),
+      topThree: currentEntries.slice(0, 3),
+      rest: currentEntries.slice(3),
     };
-  }, [entries]);
+  }, [currentEntries]);
+
+  const snapshotDate = formatSnapshot(currentEntries);
 
   const renderLoadingState = () => (
     <Card className="p-8 rounded-ds-2xl">
@@ -87,16 +129,16 @@ export default function WeeklyLeaderboard() {
   const renderEmptyState = () => (
     <Card className="p-8 text-center rounded-ds-2xl">
       <Badge variant="secondary" size="sm" className="mx-auto">
-        Weekly Challenge
+        {SCOPE_LABEL[activeScope]} Challenge
       </Badge>
       <h2 className="font-slab text-h2 mt-4">No scores… yet!</h2>
       <p className="text-body mt-3 text-grayish">
-        Be the first to complete this week&rsquo;s tasks and claim the top spot on the leaderboard.
+        Be the first to complete this {activeScope === 'daily' ? "day's" : "week's"} tasks and claim the top spot on the leaderboard.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Link href="/challenge">
           <Button variant="primary" className="rounded-ds-xl">
-            Join the weekly challenge
+            Join the challenge
           </Button>
         </Link>
         <Link href="/dashboard">
@@ -111,10 +153,10 @@ export default function WeeklyLeaderboard() {
   return (
     <>
       <Head>
-        <title>Weekly Leaderboard · GramorX</title>
+        <title>XP Leaderboard · GramorX</title>
         <meta
           name="description"
-          content="See how you rank in this week&rsquo;s IELTS practice challenge and compete with other learners."
+          content="See how you rank in daily and weekly IELTS practice challenges and compete with other learners."
         />
       </Head>
 
@@ -122,12 +164,11 @@ export default function WeeklyLeaderboard() {
         <Container>
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="accent" size="sm" className="uppercase tracking-wide">
-              Weekly Challenge
+              Gamification
             </Badge>
-            <h1 className="font-slab text-display mt-4 text-foreground">Weekly Leaderboard</h1>
+            <h1 className="font-slab text-display mt-4 text-foreground">XP Leaderboard</h1>
             <p className="mt-3 text-body text-grayish">
-              Complete daily micro-tasks to earn points, unlock badges, and climb to the top. Scores reset every
-              Monday.
+              Earn XP from lessons, drills, writing minis, and speaking attempts. Climb the daily and weekly boards as you stay consistent.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link href="/challenge">
@@ -141,6 +182,24 @@ export default function WeeklyLeaderboard() {
                 </Button>
               </Link>
             </div>
+
+            <div className="mt-8 inline-flex gap-2 rounded-ds-xl border border-border/60 bg-background/80 p-2">
+              {(['daily', 'weekly'] as Scope[]).map((scope) => (
+                <Button
+                  key={scope}
+                  variant={activeScope === scope ? 'primary' : 'ghost'}
+                  className="rounded-ds-lg"
+                  onClick={() => setActiveScope(scope)}
+                  disabled={loading && activeScope === scope}
+                >
+                  {SCOPE_LABEL[scope]}
+                </Button>
+              ))}
+            </div>
+            <p className="mt-3 text-caption text-muted-foreground">
+              {SCOPE_DESCRIPTION[activeScope]}
+              {snapshotDate ? ` • Snapshot ${snapshotDate}` : ''}
+            </p>
           </div>
 
           <div className="mt-12 max-w-4xl mx-auto space-y-8">
@@ -155,14 +214,14 @@ export default function WeeklyLeaderboard() {
               </Card>
             )}
 
-            {!loading && !error && entries.length === 0 && renderEmptyState()}
+            {!loading && !error && currentEntries.length === 0 && renderEmptyState()}
 
-            {!loading && !error && entries.length > 0 && (
+            {!loading && !error && currentEntries.length > 0 && (
               <>
                 <Card className="relative overflow-hidden rounded-ds-2xl border border-primary/10 bg-background/80 p-8">
                   <div className="absolute -top-24 right-0 h-48 w-48 rounded-full bg-primary/10 blur-3xl" aria-hidden />
                   <div className="relative z-10">
-                    <h2 className="font-slab text-h2 text-foreground">This Week&rsquo;s Top Performers</h2>
+                    <h2 className="font-slab text-h2 text-foreground">Top performers ({SCOPE_LABEL[activeScope]})</h2>
                     <p className="mt-2 text-body text-grayish">
                       Keep your streak alive and collect challenge points through lessons, drills, and mock tests.
                     </p>
@@ -177,7 +236,7 @@ export default function WeeklyLeaderboard() {
 
                         return (
                           <div
-                            key={entry.user_id}
+                            key={entry.userId}
                             className={`rounded-ds-xl border p-5 text-left transition-transform hover:-translate-y-1 ${classes}`}
                           >
                             <div className="flex items-center gap-3">
@@ -185,13 +244,13 @@ export default function WeeklyLeaderboard() {
                                 {medal}
                               </span>
                               <div>
-                                <p className="text-caption uppercase tracking-wide text-grayish">Rank {index + 1}</p>
-                                <p className="text-body font-semibold text-foreground">{entry.full_name}</p>
+                                <p className="text-caption uppercase tracking-wide text-grayish">Rank {entry.rank}</p>
+                                <p className="text-body font-semibold text-foreground">{entry.fullName}</p>
                               </div>
                             </div>
                             <div className="mt-4">
-                              <p className="text-caption text-grayish">Challenge points</p>
-                              <p className="text-h3 font-slab text-foreground">{entry.score}</p>
+                              <p className="text-caption text-grayish">Challenge XP</p>
+                              <p className="text-h3 font-slab text-foreground">{entry.xp}</p>
                             </div>
                           </div>
                         );
@@ -200,40 +259,42 @@ export default function WeeklyLeaderboard() {
                         [...Array(3 - topThree.length)].map((_, i) => (
                           <div
                             key={`placeholder-${i}`}
-                            className="rounded-ds-xl border border-dashed border-muted/60 bg-muted/20 p-5 text-left"
+                            className="rounded-ds-xl border border-dashed border-border/60 p-5 text-center text-caption text-muted-foreground"
                           >
-                            <p className="text-body font-semibold text-grayish">Reserved for you</p>
-                            <p className="mt-2 text-caption text-grayish opacity-80">
-                              Finish more tasks to appear in the top {3 - i}.
-                            </p>
+                            Spot available
                           </div>
                         ))}
                     </div>
                   </div>
                 </Card>
 
-                {rest.length > 0 && (
-                  <Card className="rounded-ds-2xl border border-border/40 bg-background/80 p-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h3 className="font-slab text-h3 text-foreground">Challengers on your heels</h3>
-                      <span className="text-small text-grayish">Positions 4–{entries.length}</span>
-                    </div>
-                    <ol className="mt-6 space-y-3">
-                      {rest.map((entry, index) => (
-                        <li
-                          key={entry.user_id}
-                          className="flex items-center justify-between rounded-ds-lg border border-transparent bg-muted/20 px-4 py-3 transition hover:border-primary/30 hover:bg-muted/40"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-caption font-semibold text-grayish">#{index + 4}</span>
-                            <span className="text-body font-medium text-foreground">{entry.full_name}</span>
+                <Card className="p-6 rounded-ds-2xl border border-border/60">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-slab text-h4 text-foreground">Leaderboard</h3>
+                    <Badge variant="secondary" size="sm">
+                      Showing top {currentEntries.length} learners
+                    </Badge>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {rest.map((entry) => (
+                      <div
+                        key={entry.userId}
+                        className="flex items-center justify-between gap-4 rounded-ds-xl border border-border/60 bg-background/80 px-4 py-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="grid h-9 w-9 place-items-center rounded-full bg-muted text-caption font-semibold text-foreground">
+                            {entry.rank}
+                          </span>
+                          <div>
+                            <p className="text-small font-medium text-foreground">{entry.fullName}</p>
+                            <p className="text-caption text-muted-foreground">XP {entry.xp}</p>
                           </div>
-                          <span className="font-semibold text-foreground">{entry.score}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </Card>
-                )}
+                        </div>
+                        <span className="text-caption text-muted-foreground">Rank {entry.rank}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
               </>
             )}
           </div>

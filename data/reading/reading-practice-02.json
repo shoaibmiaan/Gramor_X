@@ -1,0 +1,46 @@
+{
+  "id": "reading-practice-02",
+  "title": "Reading Practice Test 2 — Science & Society",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "passage-a",
+      "title": "Citizen Science from Space",
+      "text": "High-resolution satellite imagery is no longer the preserve of governments. Platforms now invite volunteers to tag images for signs of deforestation, illegal fishing, and glacier retreat. Projects like CoastWatch convert public annotations into alerts for local authorities. While critics worry about data accuracy, organisers say they cross-check submissions and use machine learning to flag anomalies before they are acted upon.",
+      "questions": [
+        { "id": "A1", "type": "mcq", "prompt": "What activities do volunteers identify using satellite imagery?", "options": ["Commercial shipping routes", "Environmental changes", "Space debris"], "answer": "Environmental changes" },
+        { "id": "A2", "type": "gap", "prompt": "Which project turns public annotations into alerts?", "answer": "CoastWatch" },
+        { "id": "A3", "type": "tfng", "prompt": "Citizen scientists have unrestricted access to government satellites.", "answer": "False" },
+        { "id": "A4", "type": "mcq", "prompt": "How do organisers address concerns about accuracy?", "options": ["Ignore the submissions", "Cross-check and use machine learning", "Rely solely on manual review"], "answer": "Cross-check and use machine learning" },
+        { "id": "A5", "type": "gap", "prompt": "Name one phenomenon volunteers look for besides deforestation.", "answer": "illegal fishing" },
+        { "id": "A6", "type": "tfng", "prompt": "The passage suggests that alerts are sent without any verification.", "answer": "False" }
+      ]
+    },
+    {
+      "id": "passage-b",
+      "title": "Reviving Traditional Grains",
+      "text": "Quinoa and millet once dominated high-altitude farming but were displaced by imported wheat. Climate shocks and soil degradation are prompting Andean farmers to revive the grains with government support. Researchers note that diverse crop rotations improve resilience and nutrition, though market access remains a hurdle. Cooperatives are experimenting with online direct-to-consumer sales to secure higher prices.",
+      "questions": [
+        { "id": "B1", "type": "gap", "prompt": "Which imported crop replaced quinoa in many Andean regions?", "answer": "wheat" },
+        { "id": "B2", "type": "tfng", "prompt": "Government initiatives are discouraging farmers from planting traditional grains.", "answer": "False" },
+        { "id": "B3", "type": "mcq", "prompt": "What benefit do researchers associate with crop diversity?", "options": ["Faster exports", "Improved resilience and nutrition", "Longer supply chains"], "answer": "Improved resilience and nutrition" },
+        { "id": "B4", "type": "gap", "prompt": "What marketing strategy are cooperatives trying?", "answer": "online direct-to-consumer sales" },
+        { "id": "B5", "type": "tfng", "prompt": "The passage says market access is no longer an issue.", "answer": "False" },
+        { "id": "B6", "type": "mcq", "prompt": "Why are farmers reconsidering traditional grains?", "options": ["They require less labour", "Climate pressures and soil degradation", "They receive larger subsidies"], "answer": "Climate pressures and soil degradation" }
+      ]
+    },
+    {
+      "id": "passage-c",
+      "title": "Designing Inclusive Museums",
+      "text": "Museums worldwide are working to welcome neurodiverse visitors. Quiet hours with reduced lighting, multi-sensory guides, and preview videos help people prepare for exhibitions. Some institutions co-design experiences with autistic advocates to ensure signage, seating, and ticketing feel intuitive. Funding such adaptations can be challenging, but many museums now track visitor feedback to demonstrate the social impact of inclusive design.",
+      "questions": [
+        { "id": "C1", "type": "tfng", "prompt": "Museums are reducing accessibility options because of high costs.", "answer": "False" },
+        { "id": "C2", "type": "gap", "prompt": "What tool helps visitors familiarise themselves with exhibitions beforehand?", "answer": "preview videos" },
+        { "id": "C3", "type": "mcq", "prompt": "Who collaborates with museums to design inclusive experiences?", "options": ["Autistic advocates", "Travel agents", "Architectural firms only"], "answer": "Autistic advocates" },
+        { "id": "C4", "type": "gap", "prompt": "Name one feature introduced during quiet hours.", "answer": "reduced lighting" },
+        { "id": "C5", "type": "mcq", "prompt": "Why do museums collect visitor feedback on accessibility initiatives?", "options": ["To satisfy marketing agencies", "To evidence social impact", "To replace staff"], "answer": "To evidence social impact" },
+        { "id": "C6", "type": "tfng", "prompt": "The passage claims inclusive design removes the need for signage.", "answer": "False" }
+      ]
+    }
+  ]
+}

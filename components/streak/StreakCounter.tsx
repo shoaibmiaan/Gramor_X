@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Card } from '@/components/design-system/Card';
 
+let tooltipIdSeed = 0;
+
 function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(' ');
 }
@@ -10,6 +12,7 @@ type StreakCounterProps = {
   current: number;
   longest: number;
   loading?: boolean;
+  shields?: number;
 };
 
 type StatProps = {
@@ -51,12 +54,19 @@ export const StreakCounter: React.FC<StreakCounterProps> = ({
   current,
   longest,
   loading = false,
+  shields = 0,
 }) => {
-  const tooltipId = React.useId();
+  const tooltipIdRef = React.useRef<string>();
+  if (!tooltipIdRef.current) {
+    const nextId = ++tooltipIdSeed;
+    tooltipIdRef.current = `streak-tooltip-${nextId}`;
+  }
+  const tooltipId = tooltipIdRef.current;
   const [open, setOpen] = React.useState(false);
 
   const safeCurrent = Number.isFinite(current) ? Math.max(0, Math.trunc(current)) : 0;
   const safeLongest = Number.isFinite(longest) ? Math.max(safeCurrent, Math.trunc(longest)) : safeCurrent;
+  const safeShields = Number.isFinite(shields) ? Math.max(0, Math.trunc(shields)) : 0;
 
   const showTooltip = () => setOpen(true);
   const hideTooltip = () => setOpen(false);
@@ -96,9 +106,10 @@ export const StreakCounter: React.FC<StreakCounterProps> = ({
           Keep your streak alive to unlock streak shields and weekly reward drops.
         </p>
       </div>
-      <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2">
+      <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3">
         <Stat label="Current streak" value={safeCurrent} tone="primary" loading={loading} />
         <Stat label="Longest streak" value={safeLongest} tone="neutral" loading={loading} />
+        <Stat label="Forgiveness tokens" value={safeShields} tone="neutral" loading={loading} />
       </div>
     </Card>
   );

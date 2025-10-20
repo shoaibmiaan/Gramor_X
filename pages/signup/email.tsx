@@ -55,14 +55,19 @@ export default function SignUpWithEmail() {
       // Where to land AFTER clicking the email verification link
       const nextQS = new URLSearchParams();
       if (role) nextQS.set('role', role);
-      if (ref)  nextQS.set('ref', ref);
-      const next = `/onboarding${nextQS.toString() ? `?${nextQS.toString()}` : ''}`;
+      if (ref) nextQS.set('ref', ref);
+      const next = `/welcome${nextQS.toString() ? `?${nextQS.toString()}` : ''}`;
+
+      const verificationParams = new URLSearchParams();
+      verificationParams.set('next', next);
+      if (role) verificationParams.set('role', role);
+      if (ref) verificationParams.set('ref', ref);
 
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
-          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          emailRedirectTo: `${origin}/auth/verify?${verificationParams.toString()}`,
           // persist intended role on the auth user for downstream use:
           data: { role: role || 'student' },
         },
@@ -75,12 +80,13 @@ export default function SignUpWithEmail() {
             type: 'signup',
             email: trimmedEmail,
             options: {
-              emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+              emailRedirectTo: `${origin}/auth/verify?${verificationParams.toString()}`,
             },
           });
-          await router.replace(
-            `/signup/verify?email=${encodeURIComponent(trimmedEmail)}${role ? `&role=${encodeURIComponent(role)}` : ''}`
-          );
+          const verifyParams = new URLSearchParams({ email: trimmedEmail });
+          if (role) verifyParams.set('role', role);
+          if (ref) verifyParams.set('ref', ref);
+          await router.replace(`/signup/verify?${verifyParams.toString()}`);
           return;
         }
         setErr(getAuthErrorMessage(error) || error.message);
@@ -91,9 +97,10 @@ export default function SignUpWithEmail() {
       // (Optional) hold referralCode; link it after verification to avoid orphan rows.
 
       // Success: move user away from the form
-      await router.replace(
-        `/signup/verify?email=${encodeURIComponent(trimmedEmail)}${role ? `&role=${encodeURIComponent(role)}` : ''}`
-      );
+      const verifyParams = new URLSearchParams({ email: trimmedEmail });
+      if (role) verifyParams.set('role', role);
+      if (ref) verifyParams.set('ref', ref);
+      await router.replace(`/signup/verify?${verifyParams.toString()}`);
     } catch (e: any) {
       setErr('Unable to sign up. Please try again.');
       setLoading(false);

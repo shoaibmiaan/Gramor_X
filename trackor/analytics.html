@@ -41,7 +41,7 @@
 <a href="platform-ops.html">Platform Ops</a></nav>
 
 <h1>Performance & Analytics</h1>
-  <div class="card"><b>Status:</b> Scaffolded. Populate with DS sections.</div>
+  <div class="card"><b>Status:</b> Success dashboards online. Metrics refresh every 15 minutes via <code>/api/analytics/success-metrics</code>.</div>
   <div class="chips">
     <span class="chip">Exam Room</span>
     <span class="chip">Practice</span>
@@ -54,6 +54,73 @@
     <a class="link" href="/analytics/test/1">/analytics/test/1</a> ·
     <a class="link" href="/analytics/test/1/review">/analytics/test/1/review</a>
   </p>
+
+  <section class="card">
+    <h2>Phase 7 Success Metrics</h2>
+    <p>The dashboard aggregates 28 days of review, challenge, and retention data. Targets are embedded as guardrails; if a metric drops below target it is flagged in red.</p>
+    <table style="width:100%;margin-top:12px;border-collapse:collapse;font-size:14px;">
+      <thead>
+        <tr style="text-align:left;color:#9ca3af;">
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);">Metric</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);">Target</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);">Live value</th>
+          <th style="padding:6px 8px;border-bottom:1px solid var(--border);">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:6px 8px;">DAU review-completion rate</td>
+          <td style="padding:6px 8px;">≥ 55%</td>
+          <td style="padding:6px 8px;">Computed from <code>review_events</code> (open → complete)</td>
+          <td style="padding:6px 8px;">Guardrail pauses experiments if the rate dips below the threshold.</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 8px;">Avg reviews / user / day</td>
+          <td style="padding:6px 8px;">≥ 12</td>
+          <td style="padding:6px 8px;">7-day average of completions per active user-day</td>
+          <td style="padding:6px 8px;">Uses <code>review_events</code> completions only.</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 8px;">7-day retention uplift</td>
+          <td style="padding:6px 8px;">+8–12% vs baseline</td>
+          <td style="padding:6px 8px;">Compares control vs. variant cohorts on the spaced-interval experiment</td>
+          <td style="padding:6px 8px;">Baseline and current windows auto-roll every day.</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 8px;">Words mastered / week</td>
+          <td style="padding:6px 8px;">≥ 18</td>
+          <td style="padding:6px 8px;">Average completions in <code>user_word_logs</code> per active learner</td>
+          <td style="padding:6px 8px;">Feeds progress reporting and quota nudges.</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 8px;">Collocation accuracy delta</td>
+          <td style="padding:6px 8px;">+0.15 in 2 weeks</td>
+          <td style="padding:6px 8px;">Correct / attempts from <code>collocation_attempts</code></td>
+          <td style="padding:6px 8px;">Tracks improvement between trailing 14-day windows.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>A/B Experiments & Guardrails</h2>
+    <ul>
+      <li><b>Spaced intervals A vs B</b>: Running. Assignments stored in <code>experiment_assignments</code>; guardrail auto-pauses when review completion drops below 55%.</li>
+      <li><b>Collocation-first vs word-first</b>: Planned. Instrumentation in place, launches after interval test stabilises.</li>
+      <li><b>Challenge notifications on/off</b>: Planned. Ready to flip once the retention uplift target is reliably green.</li>
+    </ul>
+    <p class="muted">The <code>/api/analytics/success-metrics</code> endpoint also toggles experiment status and assignment guardrails when metrics breach thresholds, making rollback automatic.</p>
+  </section>
+
+  <section class="card">
+    <h2>Data Sources</h2>
+    <ul>
+      <li><code>review_events</code>: Instrumented from the word-of-the-day APIs to capture open/completion funnels.</li>
+      <li><code>user_word_logs</code>: Weekly mastered counts for words and retention.</li>
+      <li><code>collocation_attempts</code>: Challenge increments with attempt metadata for accuracy tracking.</li>
+      <li><code>experiments</code> &amp; <code>experiment_assignments</code>: Experiment registry, status, and per-user variant.</li>
+    </ul>
+  </section>
 
 </div>
 </body>
