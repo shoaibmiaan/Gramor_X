@@ -104,10 +104,12 @@ create policy if not exists "word_listening_attempts_self_delete" on public.word
   for delete
   using (auth.uid() = user_id);
 
-create trigger if not exists trg_word_writing_attempts_updated
+drop trigger if exists trg_word_writing_attempts_updated on public.word_writing_attempts;
+create trigger trg_word_writing_attempts_updated
 before update on public.word_writing_attempts
 for each row execute procedure public.set_updated_at();
 
-create trigger if not exists trg_word_reading_attempts_updated
+drop trigger if exists trg_word_reading_attempts_updated on public.word_reading_attempts;
+create trigger trg_word_reading_attempts_updated
 before update on public.word_reading_attempts
 for each row execute procedure public.set_updated_at();
