@@ -1,5 +1,9 @@
+'use client';
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import Image from 'next/image';
+
 import { useLocale } from '@/lib/locale';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -7,10 +11,9 @@ import { Input } from '@/components/design-system/Input';
 import { AvatarUploader } from '@/components/design-system/AvatarUploader';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
-import Image from 'next/image';
 import { Alert } from '@/components/design-system/Alert';
 import { Select } from '@/components/design-system/Select';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { emitUserEvent } from '@/lib/analytics/user';
 import {
   COUNTRIES,
@@ -67,9 +70,13 @@ const SkeletonLine: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`animate-pulse rounded-md bg-muted ${className ?? 'h-4 w-full'}`} />
 );
 
-export default function ProfileSetup() {
+/** 
+ * Named export (so imports like `{ ProfileSetupLayout }` work)
+ */
+export function ProfileSetupLayout() {
   const router = useRouter();
   const { t, setLocale, setExplanationLocale } = useLocale();
+  const supabase = supabaseBrowser();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -248,7 +255,7 @@ export default function ProfileSetup() {
 
       setLoading(false);
     })();
-  }, [router, setLocale, setExplanationLocale]);
+  }, [router, setLocale, setExplanationLocale, supabase]);
 
   // Lightweight on-device AI heuristic
   const localAISuggest = useMemo(() => {
@@ -417,7 +424,8 @@ export default function ProfileSetup() {
     }
   };
 
-  const canSubmit = fullName && country && level && time && daysPerWeek && phoneStage === 'verified' && Object.keys(fieldErrors).length === 0;
+  const canSubmit =
+    fullName && country && level && time && daysPerWeek && phoneStage === 'verified' && Object.keys(fieldErrors).length === 0;
 
   const saveProfile = async (finalize = false) => {
     if (!userId) {
@@ -472,7 +480,7 @@ export default function ProfileSetup() {
     const timeCommitmentMin = time ? timeCommitmentMap[time] || 60 : null;
 
     const payload = {
-      id: userId, // Changed from user_id to id to match RLS policies
+      id: userId, // match RLS policies
       full_name: fullName.trim(),
       country: country || null,
       english_level: level || null,
@@ -502,8 +510,8 @@ export default function ProfileSetup() {
           }
         : {},
       setup_complete: finalize,
-      role: 'student', // Explicitly set role to satisfy 'Students manage own profile' policy
-      status: finalize ? 'active' : 'inactive', // Set status based on finalize
+      role: 'student',
+      status: finalize ? 'active' : 'inactive',
     };
 
     try {
@@ -512,7 +520,12 @@ export default function ProfileSetup() {
       const { data: { session } } = await supabase.auth.getSession();
       console.log('JWT role:', session?.user?.app_metadata?.role);
 
-      const { data: existing } = await supabase.from('profiles').select('id, setup_complete').eq('id', userId).maybeSingle();
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id, setup_complete')
+        .eq('id', userId)
+        .maybeSingle();
+
       if (existing?.setup_complete && !finalize) {
         setError('Profile is already complete and cannot be updated as a draft.');
         setSaving(false);
