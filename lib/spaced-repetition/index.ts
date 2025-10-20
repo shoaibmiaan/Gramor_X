@@ -45,3 +45,41 @@ export function isVocabMastered(
   const interval = currentIntervalDays ?? vocabIntervalDaysForRepetitions(repetitions);
   return repetitions >= 8 || interval >= 60;
 }
+
+// ---------- Scheduling facade used by /api/review/grade ----------
+export type ScheduleReviewInput = {
+  easiness: number;                 // previous E-Factor (>=1.3)
+  interval_days: number;            // previous interval in days (>=1)
+  quality: 0 | 1 | 2 | 3 | 4 | 5;   // SM-2 quality score for this review
+  repetitions?: number;             // successful reps so far (for vocab mastery)
+  nowISO?: string;                  // testability override
+};
+
+export type ScheduleReviewResult = {
+  next_interval_days: number;
+  next_easiness: number;
+  next_due_at: string;              // ISO timestamp
+  mastered: boolean;                // conservative mastery flag
+};
+
+export function scheduleReview(input: ScheduleReviewInput): ScheduleReviewResult {
+  const prevDays = Math.max(1, Math.floor(input.interval_days || 1));
+  const prevEase = Number.isFinite(input.easiness) ? input.easiness : 2.5;
+
+  const { nextDays, nextEasiness } = nextInterval(prevEase, input.quality, prevDays);
+
+  const reps =
+    Math.max(0, Math.floor(input.repetitions ?? 0)) + (input.quality >= 3 ? 1 : 0);
+  const mastered = isVocabMastered(reps, nextEasiness, nextDays);
+
+  const base = input.nowISO ? new Date(input.nowISO) : new Date();
+  const due = new Date(base);
+  due.setDate(due.getDate() + nextDays);
+
+  return {
+    next_interval_days: nextDays,
+    next_easiness: Number(nextEasiness.toFixed(4)),
+    next_due_at: due.toISOString(),
+    mastered,
+  };
+}
