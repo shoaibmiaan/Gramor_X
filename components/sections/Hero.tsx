@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
@@ -8,6 +8,7 @@ import { Alert } from '@/components/design-system/Alert';
 import { Icon } from '@/components/design-system/Icon';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { track } from '@/lib/analytics/track';
+import { LaunchCountdown } from '@/components/launch/LaunchCountdown';
 
 const highlightFeatures = [
   {
@@ -34,35 +35,17 @@ type WOD = {
   streakValueUSD: number;
 };
 
-type HeroProps = {
+export type HeroProps = {
   onStreakChange?: (n: number) => void;
+  streak?: number;
+  serverNowMsUTC: number;
+  launchMsUTC: number;
 };
 
-export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
-  const [target, setTarget] = useState<Date | null>(null);
-  const [now, setNow] = useState<Date | null>(null);
+export const Hero: React.FC<HeroProps> = ({ onStreakChange, serverNowMsUTC, launchMsUTC }) => {
   const [data, setData] = useState<WOD | null>(null);
   const [busy, setBusy] = useState(false);
   const [auth, setAuth] = useState<'unknown' | 'authed' | 'guest'>('unknown');
-
-  useEffect(() => {
-    const t = new Date();
-    t.setDate(t.getDate() + 7);
-    setTarget(t);
-    setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const diff = useMemo(() => {
-    if (!target || !now) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-    const ms = Math.max(+target - +now, 0);
-    const days = Math.floor(ms / 86400000);
-    const hours = Math.floor((ms % 86400000) / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return { days, hours, minutes, seconds };
-  }, [target, now]);
 
   const load = useCallback(async (): Promise<WOD | null> => {
     try {
@@ -224,19 +207,7 @@ export const Hero: React.FC<HeroProps> = ({ onStreakChange }) => {
                 <span className="uppercase tracking-wide">Beta access</span>
                 <span className="rounded-full bg-electricBlue/10 px-3 py-1 text-electricBlue">Opens in</span>
               </div>
-              <div className="flex flex-wrap justify-center gap-4 sm:gap-6" aria-live="polite">
-                {(['Days', 'Hours', 'Minutes', 'Seconds'] as const).map((label, i) => {
-                  const v = [diff.days, diff.hours, diff.minutes, diff.seconds][i] || 0;
-                  return (
-                    <div key={label} className="min-w-[5.5rem] text-center">
-                      <div className="font-slab text-4xl font-bold text-gradient-vertical sm:text-5xl">
-                        {String(v).padStart(2, '0')}
-                      </div>
-                      <div className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-                    </div>
-                  );
-                })}
-              </div>
+              <LaunchCountdown serverNowMsUTC={serverNowMsUTC} launchMsUTC={launchMsUTC} />
             </Card>
 
             <Card className="border border-border/60 bg-white/80 p-6 shadow-lg backdrop-blur dark:bg-dark/70">
