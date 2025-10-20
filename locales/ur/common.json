@@ -33,5 +33,14 @@
       "location": "ہیوسٹن، امریکہ",
       "supportHours": "سپورٹ: 24/7"
     }
+  },
+  "common": {
+    "languages": {
+      "en": "انگریزی",
+      "ur": "اردو"
+    },
+    "status": {
+      "updating": "تبدیل ہو رہا ہے…"
+    }
   }
 }

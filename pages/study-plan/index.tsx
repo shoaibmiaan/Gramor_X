@@ -1,6 +1,6 @@
-// pages/study-plan/index.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import clsx from 'clsx';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -14,6 +14,7 @@ import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { generateStudyPlan } from '@/lib/studyPlan';
+import { useLocale } from '@/lib/locale';
 import { track } from '@/lib/analytics/track';
 
 import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
@@ -27,29 +28,44 @@ import { usePlan } from '@/hooks/usePlan';
 const PRESETS: ReadonlyArray<StudyPlanPreset> = [
   {
     id: 'balanced-4w',
-    title: 'Balanced focus',
-    description: 'Four weeks of daily IELTS tasks evenly split across all skills.',
+    titleKey: 'studyPlan.presets.balanced.title',
+    descriptionKey: 'studyPlan.presets.balanced.description',
     weeks: 4,
-    highlight: 'Recommended',
+    highlightKey: 'studyPlan.presets.balanced.highlight',
   },
   {
     id: 'speaking-boost',
-    title: 'Speaking boost',
-    description: 'Two-week plan focused on speaking drills and writing prompts.',
+    titleKey: 'studyPlan.presets.speaking.title',
+    descriptionKey: 'studyPlan.presets.speaking.description',
     weeks: 2,
+    highlightKey: 'studyPlan.presets.speaking.highlight',
   },
   {
     id: 'listening-sprint',
-    title: 'Listening sprint',
-    description: 'One-week reset with intensive listening practice.',
+    titleKey: 'studyPlan.presets.listening.title',
+    descriptionKey: 'studyPlan.presets.listening.description',
     weeks: 1,
-    highlight: 'Great for jump-starts',
+    highlightKey: 'studyPlan.presets.listening.highlight',
   },
 ];
 
-type StudyPlanEvent = 'studyplan_create' | 'studyplan_update' | 'studyplan_task_complete';
+const PRESET_TARGETS: Record<string, number> = {
+  'balanced-4w': 7,
+  'speaking-boost': 7,
+  'listening-sprint': 7,
+};
 
-async function logStudyPlanEvent(event: StudyPlanEvent, payload: Record<string, unknown> = {}) {
+const PRESET_AVAILABILITY: Record<string, ReadonlyArray<string>> = {
+  'balanced-4w': ['Mon', 'Wed', 'Fri', 'Sun'],
+  'speaking-boost': ['Tue', 'Thu', 'Sat'],
+  'listening-sprint': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+};
+
+function countCompletedTasks(plan: PlanType): number {
+  return plan.days.reduce((acc, d) => acc + d.tasks.filter((t) => t.completed).length, 0);
+}
+
+async function logStudyPlanEvent(event: 'studyplan_create' | 'studyplan_update' | 'studyplan_task_complete', payload: Record<string, unknown> = {}) {
   try {
     await fetch('/api/study-plan/events', {
       method: 'POST',
@@ -96,6 +112,7 @@ export default function StudyPlanPage() {
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const [busyTask, setBusyTask] = useState<string | null>(null);
 
+  const { t, isRTL } = useLocale();
   const planProgressRef = useRef<number>(0);
 
   const { success: toastSuccess, error: toastError } = useToast();
@@ -178,12 +195,11 @@ export default function StudyPlanPage() {
     return today.tasks.find((task) => !task.completed) ?? null;
   }, [today]);
 
+  const taskRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
   const handleTaskRef = useCallback((taskId: string, element: HTMLInputElement | null) => {
-    if (element) {
-      taskRefs.current[taskId] = element;
-    } else {
-      delete taskRefs.current[taskId];
-    }
+    if (element) taskRefs.current[taskId] = element;
+    else delete taskRefs.current[taskId];
   }, []);
 
   const handleFocusNextTask = useCallback(() => {
@@ -219,7 +235,7 @@ export default function StudyPlanPage() {
   const handleCreatePlan = useCallback(
     async (preset: StudyPlanPreset) => {
       if (!userId) {
-        toastError('Please sign in to create a study plan.');
+        toastError(t('studyPlan.toast.signInRequired', 'Please sign in to create a plan.'));
         return;
       }
       setCreatingId(preset.id);
@@ -227,17 +243,20 @@ export default function StudyPlanPage() {
         const nextPlan = createPlanFromPreset(preset, userId);
         await persistPlan(nextPlan);
         setPlan(nextPlan);
-        toastSuccess('Plan ready', 'Your new study plan is live. Start with today’s tasks!');
+        toastSuccess(
+          t('studyPlan.toast.planReady.title', 'Plan ready'),
+          t('studyPlan.toast.planReady.description', 'Your new study plan is live. Start with today’s tasks!'),
+        );
         track('studyplan_create', { preset: preset.id, weeks: preset.weeks });
         void logStudyPlanEvent('studyplan_create', { preset: preset.id, weeks: preset.weeks });
       } catch (err) {
         console.error('Failed to create plan', err);
-        toastError(err instanceof Error ? err.message : 'Could not create plan.');
+        toastError(t('studyPlan.toast.createError', 'Could not create study plan. Please try again.'));
       } finally {
         setCreatingId(null);
       }
     },
-    [persistPlan, toastError, toastSuccess, userId, plan],
+    [persistPlan, toastError, toastSuccess, userId, t],
   );
 
   const handleTaskToggle = useCallback(
@@ -280,17 +299,16 @@ export default function StudyPlanPage() {
           track('studyplan_task_complete', { day: dayKey, taskId });
           void logStudyPlanEvent('studyplan_task_complete', { day: dayKey, taskId });
         }
-        toastSuccess('Progress saved');
       } catch (err) {
         console.error('Failed to update task', err);
-        toastError(err instanceof Error ? err.message : 'Could not update task.');
+        toastError(t('studyPlan.toast.updateError', 'Could not update task. Please try again.'));
         setPlan(plan); // rollback
         planProgressRef.current = prevCompleted;
       } finally {
         setBusyTask(null);
       }
     },
-    [plan, userId, persistPlan, completeToday, reloadStreak, toastSuccess, toastError, todayKey],
+    [plan, t, userId, persistPlan, completeToday, reloadStreak, toastError, todayKey],
   );
 
   const hasPlan = !!plan && plan.days.length > 0;
@@ -298,17 +316,15 @@ export default function StudyPlanPage() {
   return (
     <section className="bg-lightBg py-16 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className={clsx('flex flex-wrap items-center justify-between gap-4', isRTL && 'text-right')}>
           <div>
-            <h1 className="font-slab text-display">Your study plan</h1>
-            <p className="text-body text-muted-foreground">
-              Keep a daily rhythm to build momentum for your IELTS goal.
-            </p>
+            <h1 className="font-slab text-display">{t('studyPlan.page.title', 'Your study plan')}</h1>
+            <p className="text-body text-muted-foreground">{t('studyPlan.page.subtitle', 'Stay on pace toward your IELTS goal with a daily schedule.')}</p>
           </div>
           <div className="flex items-center gap-3">
             <StreakChip value={streakLoading ? 0 : streak} loading={streakLoading} href="/profile/streak" />
             <Button variant="soft" tone="info" asChild>
-              <Link href="/progress">View progress</Link>
+              <Link href="/progress">{t('studyPlan.page.viewProgress', 'View progress')}</Link>
             </Button>
           </div>
         </div>
@@ -317,8 +333,11 @@ export default function StudyPlanPage() {
           <UpgradeBanner
             className="mt-6"
             pillLabel="Explorer · Free plan"
-            title="Refresh your study plan without limits"
-            description="Premium auto-adjusts your calendar, adds weekly mock recommendations, and sends WhatsApp nudges when you fall behind."
+            title={t('studyPlan.upgrade.title', 'Refresh your study plan without limits')}
+            description={t(
+              'studyPlan.upgrade.description',
+              'Premium auto-adjusts your calendar, adds weekly mock recommendations, and sends WhatsApp nudges when you fall behind.',
+            )}
             href="/pricing?from=study-plan-upgrade"
             feature="Adaptive study plan"
           />
@@ -346,9 +365,7 @@ export default function StudyPlanPage() {
               <div className="space-y-6">
                 <PlanCard
                   day={today ?? plan!.days[0]}
-                  onToggleTask={(taskId, checked) =>
-                    handleTaskToggle(today ?? plan!.days[0], taskId, checked)
-                  }
+                  onToggleTask={(taskId, checked) => handleTaskToggle(today ?? plan!.days[0], taskId, checked)}
                   busyTaskId={busyTask}
                   isToday={planDayKey(today ?? plan!.days[0]) === todayKey}
                   nextTaskId={nextTaskToday?.id ?? null}
@@ -360,37 +377,32 @@ export default function StudyPlanPage() {
 
               <div className="space-y-6">
                 <Card className="rounded-ds-2xl p-6 space-y-4">
-                  <h3 className="font-slab text-h4">Plan progress</h3>
+                  <h3 className="font-slab text-h4">{t('studyPlan.sidebar.progress.title', 'Plan progress')}</h3>
                   <p className="text-small text-muted-foreground">
                     {planProgress >= 100
-                      ? 'You’ve completed every task in this plan. Consider regenerating a new schedule to keep training.'
-                      : 'Stay on pace toward your IELTS goal by checking off the next task in your queue.'}
+                      ? t('studyPlan.sidebar.progress.done', 'You’ve completed every task in this plan. Consider regenerating a new schedule to keep training.')
+                      : t('studyPlan.sidebar.progress.keepPace', 'Stay on pace toward your IELTS goal by checking off the next task in your queue.')}
                   </p>
                   <div className="space-y-2">
-                    <ProgressBar value={planProgress} aria-label="Overall study plan progress" />
+                    <ProgressBar value={planProgress} aria-label={t('studyPlan.sidebar.progress.aria', 'Overall study plan progress')} />
                     <div className="flex items-center justify-between text-small font-medium text-foreground">
                       <span>
-                        {planTotals.completed}/{planTotals.total} tasks complete
+                        {planTotals.completed}/{planTotals.total} {t('studyPlan.sidebar.progress.tasksComplete', 'tasks complete')}
                       </span>
                       <span>{planProgress}%</span>
                     </div>
                   </div>
-                  <Button
-                    variant="soft"
-                    tone="info"
-                    size="sm"
-                    onClick={handleFocusNextTask}
-                    disabled={!nextTaskToday}
-                  >
-                    {nextTaskToday ? 'Jump to today’s next task' : 'All caught up for today'}
+                  <Button variant="soft" tone="info" size="sm" onClick={handleFocusNextTask} disabled={!nextTaskToday}>
+                    {nextTaskToday
+                      ? t('studyPlan.sidebar.progress.jump', 'Jump to today’s next task')
+                      : t('studyPlan.sidebar.progress.caughtUp', 'All caught up for today')}
                   </Button>
                 </Card>
 
                 <Card className="rounded-ds-2xl p-6 space-y-4">
-                  <h3 className="font-slab text-h4">Need a change?</h3>
+                  <h3 className="font-slab text-h4">{t('studyPlan.sidebar.title', 'Need a change?')}</h3>
                   <p className="text-small text-muted-foreground">
-                    Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets
-                    below.
+                    {t('studyPlan.sidebar.description', 'Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets below.')}
                   </p>
                   <div className="space-y-3">
                     {PRESETS.map((preset) => (
@@ -401,8 +413,10 @@ export default function StudyPlanPage() {
                         onClick={() => handleCreatePlan(preset)}
                         loading={creatingId === preset.id}
                       >
-                        {preset.title}
-                        <span className="text-small text-muted-foreground">{preset.weeks} wk</span>
+                        {t(preset.titleKey)}
+                        <span className="text-small text-muted-foreground">
+                          {t('studyPlan.sidebar.weekShort', '{{count}} wk', { count: preset.weeks })}
+                        </span>
                       </Button>
                     ))}
                   </div>

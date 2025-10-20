@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button } from '@/components/design-system/Button';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { fetchStreak } from '@/lib/streak';
 
 type WordInfo = {
   id: string;
@@ -24,6 +25,24 @@ export function WordOfTheDayCard() {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const syncStreak = React.useCallback(async (fallback = 0) => {
+    let value = fallback;
+    try {
+      const data = await fetchStreak();
+      value = typeof data?.current_streak === 'number' ? data.current_streak : fallback;
+    } catch (err) {
+      console.warn('[WordOfTheDayCard] Unable to sync streak from API:', err);
+    }
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value } }));
+      } catch {}
+    }
+
+    return value;
+  }, []);
+
   const load = React.useCallback(async () => {
     setError(null);
     try {
@@ -39,18 +58,26 @@ export function WordOfTheDayCard() {
       if (!res.ok) {
         setError('Could not load Word of the Day.');
         setData(null);
+        await syncStreak(0);
         return null;
       }
 
       const json = (await res.json()) as WOD;
-      setData(json);
-      return json;
+      const streakDays = await syncStreak(json.streakDays ?? 0);
+      const normalized: WOD = {
+        ...json,
+        streakDays,
+        longestStreak: Math.max(json.longestStreak ?? 0, streakDays),
+      };
+      setData(normalized);
+      return normalized;
     } catch {
       setError('Network error. Please retry.');
       setData(null);
+      await syncStreak(0);
       return null;
     }
-  }, []);
+  }, [syncStreak]);
 
   React.useEffect(() => { load(); }, [load]);
 
@@ -78,9 +105,8 @@ export function WordOfTheDayCard() {
         longestStreak?: number;
       };
       const updated = await load();
-      const nextValue = (payload?.streakDays ?? updated?.streakDays) ?? 0;
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('streak:changed', { detail: { value: nextValue } }));
+      if (!updated) {
+        await syncStreak(typeof payload?.streakDays === 'number' ? payload.streakDays : 0);
       }
     } catch {
       setError('Could not update. Please try again.');
@@ -90,12 +116,15 @@ export function WordOfTheDayCard() {
   };
 
   if (!data) {
-    // Lightweight placeholder (keeps layout stable)
     return (
       <div className="rounded-2xl border border-border bg-card p-6">
-        <div className="h-4 w-40 rounded bg-muted/30" />
-        <div className="mt-3 h-7 w-56 rounded bg-muted/30" />
-        <div className="mt-2 h-4 w-full rounded bg-muted/20" />
+        <div className="text-small text-muted-foreground mb-2">📘 Word of the Day</div>
+        <div className="text-h2 font-semibold capitalize">cogent</div>
+        <p className="mt-2 text-muted-foreground">clear, logical, and convincing</p>
+        <p className="mt-3 italic text-muted-foreground">&ldquo;He wrote a cogent essay in Task 2.&rdquo;</p>
+        <p className="mt-4 text-small text-muted-foreground">
+          Explore more vocabulary insights by logging in to start your streak.
+        </p>
         {error && <p className="mt-3 text-small text-destructive">{error}</p>}
       </div>
     );
