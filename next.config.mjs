@@ -85,21 +85,16 @@ const baseConfig = {
   // Allow next/image to load from Supabase Storage + common CDNs
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: '**.supabase.co' },
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'res.cloudinary.com' },
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-    ],
-    domains: [
       ...new Set(
         [
+          '**.supabase.co',
           supabaseHost,
           'lh3.googleusercontent.com',
           'res.cloudinary.com',
           'images.unsplash.com',
         ].filter(Boolean)
       ),
-    ],
+    ].map((hostname) => ({ protocol: 'https', hostname })),
   },
 };
 
