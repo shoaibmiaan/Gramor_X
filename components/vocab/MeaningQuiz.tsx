@@ -12,7 +12,7 @@ type AttemptResult = {
   xpAwarded: number;
 };
 
-type MeaningQuizProps = Readonly<{
+export type MeaningQuizProps = Readonly<{
   word: WordOfDay | null;
   onComplete?: (result: AttemptResult) => void;
 }>;
@@ -28,6 +28,9 @@ export function MeaningQuiz({ word, onComplete }: MeaningQuizProps) {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const startRef = React.useRef<number>(Date.now());
+  const errorRef = React.useRef<HTMLDivElement | null>(null);
+  const hintId = React.useId();
+  const errorId = React.useId();
 
   React.useEffect(() => {
     if (!word) {
@@ -46,6 +49,12 @@ export function MeaningQuiz({ word, onComplete }: MeaningQuizProps) {
     () => state.options.find((option) => option.id === state.selected) ?? null,
     [state.options, state.selected],
   );
+
+  React.useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [error]);
 
   const handleSubmit = React.useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -133,13 +142,20 @@ export function MeaningQuiz({ word, onComplete }: MeaningQuizProps) {
             </p>
           </div>
           {isAnswered ? (
-            <Badge variant={correct ? 'success' : 'danger'} size="sm" aria-live="polite">
-              {correct ? `+${state.result?.xpAwarded ?? 0} XP` : 'Try again'}
-            </Badge>
+            <span aria-live="polite">
+              <Badge variant={correct ? 'success' : 'danger'} size="sm">
+                {correct ? `+${state.result?.xpAwarded ?? 0} XP` : 'Try again'}
+              </Badge>
+            </span>
           ) : null}
         </header>
 
-        <fieldset className="space-y-3" aria-describedby="meaning-quiz-hint">
+        <fieldset
+          className="space-y-3"
+          aria-describedby={[hintId, error ? errorId : null].filter(Boolean).join(' ') || undefined}
+          aria-invalid={Boolean(error)}
+          aria-errormessage={error ? errorId : undefined}
+        >
           <legend className="sr-only">Choose the best meaning</legend>
           {state.options.map((option) => {
             const isSelected = state.selected === option.id;
@@ -164,13 +180,19 @@ export function MeaningQuiz({ word, onComplete }: MeaningQuizProps) {
               />
             );
           })}
-          <p id="meaning-quiz-hint" className="text-caption text-mutedText">
+          <p id={hintId} className="text-caption text-mutedText">
             Use the arrow keys to move between options, then press space to select.
           </p>
         </fieldset>
 
         {error ? (
-          <div role="alert" className="rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-warning">
+          <div
+            id={errorId}
+            ref={errorRef}
+            role="alert"
+            tabIndex={-1}
+            className="rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-warning"
+          >
             {error}
           </div>
         ) : null}

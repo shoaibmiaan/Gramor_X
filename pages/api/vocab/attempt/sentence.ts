@@ -6,6 +6,8 @@ import { getServerClient } from '@/lib/supabaseServer';
 import { detectPromptInjection, sanitizeCoachMessages } from '@/lib/ai/guardrails';
 import { env } from '@/lib/env';
 import { getVocabWordById } from '@/lib/vocabulary/today';
+import { awardVocabXp, baseXpForSentence } from '@/lib/gamification/xp';
+import { trackor } from '@/lib/analytics/trackor.server';
 
 const BodySchema = z.object({
   wordId: z.string().uuid('wordId must be a valid uuid'),
@@ -271,7 +273,8 @@ async function handler(
     meaning: vocabWord.meaning,
   });
 
-  const xpAwarded = 15 + (evaluation.score === 3 ? 5 : 0);
+  const baseXp = baseXpForSentence(evaluation.score);
+  let xpAwarded = baseXp;
 
   const { data: statsRow, error: statsError } = await supabase
     .from('user_word_stats')
@@ -321,20 +324,33 @@ async function handler(
     }
   }
 
-  const { error: xpError } = await supabase.from('xp_events').insert({
-    user_id: user.id,
-    source: 'vocab',
-    amount: xpAwarded,
-    meta: {
+  try {
+    const result = await awardVocabXp({
+      client: supabase,
+      userId: user.id,
+      baseAmount: baseXp,
       kind: 'sentence',
-      wordId,
-      timeMs: timeMs ?? null,
-      score: evaluation.score,
-    },
-  });
+      meta: {
+        wordId,
+        score: evaluation.score,
+        timeMs: timeMs ?? null,
+      },
+    });
+    xpAwarded = result.awarded;
 
-  if (xpError) {
-    console.error('[api/vocab/attempt/sentence] xp insert failed', xpError);
+    await trackor.log('vocab_sentence_submitted', {
+      user_id: user.id,
+      word_id: wordId,
+      score: evaluation.score,
+      xp_awarded: result.awarded,
+      xp_requested: result.requested,
+      multiplier: result.multiplier,
+      capped: result.capped,
+      time_ms: timeMs ?? null,
+      day_iso: result.dayIso,
+    });
+  } catch (error) {
+    console.error('[api/vocab/attempt/sentence] xp award failed', error);
     return res.status(500).json({ error: 'Failed to record XP' });
   }
 

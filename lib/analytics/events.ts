@@ -35,6 +35,12 @@ export type AnalyticsEventName =
   | 'teacher_review_completed'
   | 'teacher_review_scored'
   | 'writing_essay_scored'
+  | 'vocab_word_viewed'
+  | 'vocab_meaning_submitted'
+  | 'vocab_sentence_submitted'
+  | 'vocab_synonyms_submitted'
+  | 'vocab_reward_shown'
+  | 'vocab_share_clicked'
   | 'saved_view'
   | 'saved_remove';
 

@@ -4,15 +4,79 @@ import * as React from 'react';
 
 import { Button } from '@/components/design-system/Button';
 import { Container } from '@/components/design-system/Container';
+import dynamic from 'next/dynamic';
+
 import { WordReveal } from '@/components/vocab/WordReveal';
-import { MeaningQuiz } from '@/components/vocab/MeaningQuiz';
-import { SentencePractice } from '@/components/vocab/SentencePractice';
-import { SynonymRush } from '@/components/vocab/SynonymRush';
-import { RewardsPanel } from '@/components/vocab/RewardsPanel';
+import type { MeaningQuizProps } from '@/components/vocab/MeaningQuiz';
+import type { SentencePracticeProps } from '@/components/vocab/SentencePractice';
+import type { SynonymRushProps } from '@/components/vocab/SynonymRush';
+import type { RewardsPanelProps } from '@/components/vocab/RewardsPanel';
+import { Card } from '@/components/design-system/Card';
 import StreakChip from '@/components/user/StreakChip';
 import { useStreak } from '@/hooks/useStreak';
 import type { WordOfDay } from '@/lib/vocabulary/today';
 import { getWordOfDay } from '@/lib/vocabulary/today';
+import { track } from '@/lib/analytics/track';
+
+const LoadingCard = ({
+  title,
+  description,
+  rows = 3,
+}: {
+  title: string;
+  description: string;
+  rows?: number;
+}) => (
+  <Card className="animate-pulse p-6" aria-hidden="true">
+    <div className="space-y-3">
+      <h2 className="text-h4 font-semibold text-foreground/60">{title}</h2>
+      <p className="text-body text-mutedText/70">{description}</p>
+      {Array.from({ length: rows }).map((_, index) => (
+        // eslint-disable-next-line react/no-array-index-key
+        <div key={index} className="h-10 w-full rounded-xl bg-muted/30" />
+      ))}
+    </div>
+  </Card>
+);
+
+const MeaningQuizSection = dynamic<MeaningQuizProps>(
+  () => import('@/components/vocab/MeaningQuiz').then((mod) => mod.MeaningQuiz),
+  {
+    loading: () => (
+      <LoadingCard title="Meaning quiz" description="Loading answer choices…" rows={4} />
+    ),
+  },
+);
+
+const SentencePracticeSection = dynamic<SentencePracticeProps>(
+  () => import('@/components/vocab/SentencePractice').then((mod) => mod.SentencePractice),
+  {
+    loading: () => (
+      <LoadingCard title="Sentence practice" description="Summoning the AI coach…" rows={2} />
+    ),
+    ssr: false,
+  },
+);
+
+const SynonymRushSection = dynamic<SynonymRushProps>(
+  () => import('@/components/vocab/SynonymRush').then((mod) => mod.SynonymRush),
+  {
+    loading: () => (
+      <LoadingCard title="Synonym rush" description="Warming up new matches…" rows={4} />
+    ),
+    ssr: false,
+  },
+);
+
+const RewardsPanelSection = dynamic<RewardsPanelProps>(
+  () => import('@/components/vocab/RewardsPanel').then((mod) => mod.RewardsPanel),
+  {
+    loading: () => (
+      <LoadingCard title="Rewards & leaderboard" description="Preparing celebrations…" rows={3} />
+    ),
+    ssr: false,
+  },
+);
 
 type PageProps = Readonly<{
   initialDate: string | null;
@@ -104,8 +168,13 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
         },
       }));
       recordXp(result.xpAwarded);
+      track('vocab_meaning_submitted', {
+        wordId: word?.id ?? 'unknown',
+        correct: result.correct,
+        xpAwarded: result.xpAwarded,
+      });
     },
-    [recordXp],
+    [recordXp, word?.id],
   );
 
   const handleSentenceComplete = React.useCallback(
@@ -118,8 +187,13 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
         },
       }));
       recordXp(result.xpAwarded);
+      track('vocab_sentence_submitted', {
+        wordId: word?.id ?? 'unknown',
+        score: result.score,
+        xpAwarded: result.xpAwarded,
+      });
     },
-    [recordXp],
+    [recordXp, word?.id],
   );
 
   const handleSynonymComplete = React.useCallback(
@@ -133,8 +207,14 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
         },
       }));
       recordXp(result.xpAwarded);
+      track('vocab_synonyms_submitted', {
+        wordId: word?.id ?? 'unknown',
+        score: result.score,
+        accuracy: Number.isFinite(result.accuracy) ? result.accuracy : 0,
+        xpAwarded: result.xpAwarded,
+      });
     },
-    [recordXp],
+    [recordXp, word?.id],
   );
 
   return (
@@ -197,13 +277,13 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
             />
 
             <div className="grid gap-6 lg:grid-cols-2">
-              <MeaningQuiz word={word} onComplete={handleMeaningComplete} />
-              <SentencePractice word={word} onComplete={handleSentenceComplete} />
+              <MeaningQuizSection word={word} onComplete={handleMeaningComplete} />
+              <SentencePracticeSection word={word} onComplete={handleSentenceComplete} />
               <div className="lg:col-span-2">
-                <SynonymRush word={word} onComplete={handleSynonymComplete} />
+                <SynonymRushSection word={word} onComplete={handleSynonymComplete} />
               </div>
               <div className="lg:col-span-2">
-                <RewardsPanel xpTotal={xpTotal} attempts={attempts} />
+                <RewardsPanelSection xpTotal={xpTotal} attempts={attempts} />
               </div>
             </div>
           </div>

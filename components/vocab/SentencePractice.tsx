@@ -13,7 +13,7 @@ type SentenceResult = {
   xpAwarded: number;
 };
 
-type SentencePracticeProps = Readonly<{
+export type SentencePracticeProps = Readonly<{
   word: WordOfDay | null;
   onComplete?: (result: SentenceResult) => void;
 }>;
@@ -32,6 +32,8 @@ export function SentencePractice({ word, onComplete }: SentencePracticeProps) {
   const [submitting, setSubmitting] = React.useState(false);
   const startRef = React.useRef<number>(Date.now());
   const mountedRef = React.useRef(true);
+  const errorRef = React.useRef<HTMLDivElement | null>(null);
+  const errorId = React.useId();
 
   React.useEffect(() => {
     mountedRef.current = true;
@@ -55,6 +57,12 @@ export function SentencePractice({ word, onComplete }: SentencePracticeProps) {
     setError(null);
     startRef.current = typeof performance !== 'undefined' ? performance.now() : Date.now();
   }, [word]);
+
+  React.useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [error]);
 
   const handleSubmit = React.useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -132,9 +140,11 @@ export function SentencePractice({ word, onComplete }: SentencePracticeProps) {
             </p>
           </div>
           {result ? (
-            <Badge variant={result.score >= 3 ? 'success' : result.score === 2 ? 'info' : 'warning'} size="sm">
-              {scoreCopy[result.score]} · +{result.xpAwarded} XP
-            </Badge>
+            <span aria-live="polite">
+              <Badge variant={result.score >= 3 ? 'success' : result.score === 2 ? 'info' : 'warning'} size="sm">
+                {scoreCopy[result.score]} · +{result.xpAwarded} XP
+              </Badge>
+            </span>
           ) : null}
         </header>
 
@@ -147,6 +157,8 @@ export function SentencePractice({ word, onComplete }: SentencePracticeProps) {
             maxLength={500}
             placeholder={`Example: The ${word.headword.toLowerCase()} tone impressed the examiner.`}
             required
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errorId : undefined}
           />
         </label>
 
@@ -167,7 +179,13 @@ export function SentencePractice({ word, onComplete }: SentencePracticeProps) {
         ) : null}
 
         {error ? (
-          <div role="alert" className="rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-warning">
+          <div
+            id={errorId}
+            ref={errorRef}
+            role="alert"
+            tabIndex={-1}
+            className="rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-warning"
+          >
             {error}
           </div>
         ) : null}

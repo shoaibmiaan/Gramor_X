@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 import { withPlan } from '@/lib/apiGuard';
 import { getServerClient } from '@/lib/supabaseServer';
+import { computeSynonymRound, awardVocabXp } from '@/lib/gamification/xp';
+import { trackor } from '@/lib/analytics/trackor.server';
 
 const BodySchema = z.object({
   wordId: z.string().uuid('wordId must be a valid uuid'),
@@ -20,17 +22,6 @@ type SynonymAttemptResponse = {
 };
 
 type ErrorResponse = { error: string };
-
-function computeScore(body: Body) {
-  const accuracy = body.correct <= 0 ? 0 : Math.min(body.correct / body.total, 1);
-  const cappedTime = Math.max(1, Math.min(body.timeMs, 180_000));
-  const speed =
-    cappedTime <= 20_000 ? 1 : cappedTime <= 40_000 ? 0.7 : cappedTime <= 60_000 ? 0.45 : 0.2;
-  const composite = Math.min(1, accuracy * 0.7 + speed * 0.3);
-  const score = Math.round(composite * 100);
-  const xpAwarded = Math.min(10, Math.max(0, Math.round(composite * 10)));
-  return { score, accuracy, xpAwarded };
-}
 
 async function handler(
   req: NextApiRequest,
@@ -62,7 +53,12 @@ async function handler(
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { score, accuracy, xpAwarded } = computeScore(parsed.data);
+  const round = computeSynonymRound({
+    totalTargets: parsed.data.total,
+    netCorrect: parsed.data.correct,
+    timeMs: parsed.data.timeMs,
+  });
+  let xpAwarded = round.baseXp;
 
   const { data: statsRow, error: statsError } = await supabase
     .from('user_word_stats')
@@ -77,7 +73,7 @@ async function handler(
   }
 
   const nowIso = new Date().toISOString();
-  const pass = accuracy >= 0.7;
+  const pass = round.accuracy >= 0.7;
 
   if (statsRow) {
     const { error: updateError } = await supabase
@@ -110,26 +106,42 @@ async function handler(
     }
   }
 
-  const { error: xpError } = await supabase.from('xp_events').insert({
-    user_id: user.id,
-    source: 'vocab',
-    amount: xpAwarded,
-    meta: {
+  try {
+    const result = await awardVocabXp({
+      client: supabase,
+      userId: user.id,
+      baseAmount: round.baseXp,
       kind: 'synonyms',
-      wordId,
-      total: parsed.data.total,
-      correct: parsed.data.correct,
-      timeMs: parsed.data.timeMs,
-      score,
-    },
-  });
+      meta: {
+        wordId,
+        total: parsed.data.total,
+        netCorrect: parsed.data.correct,
+        timeMs: parsed.data.timeMs,
+        score: round.score,
+        accuracy: round.accuracy,
+      },
+      logEvenIfZero: true,
+    });
+    xpAwarded = result.awarded;
 
-  if (xpError) {
-    console.error('[api/vocab/attempt/synonyms] xp insert failed', xpError);
+    await trackor.log('vocab_synonyms_submitted', {
+      user_id: user.id,
+      word_id: wordId,
+      score: round.score,
+      accuracy: round.accuracy,
+      xp_awarded: result.awarded,
+      xp_requested: result.requested,
+      multiplier: result.multiplier,
+      capped: result.capped,
+      time_ms: parsed.data.timeMs,
+      day_iso: result.dayIso,
+    });
+  } catch (error) {
+    console.error('[api/vocab/attempt/synonyms] xp award failed', error);
     return res.status(500).json({ error: 'Failed to record XP' });
   }
 
-  return res.status(200).json({ score, accuracy, xpAwarded });
+  return res.status(200).json({ score: round.score, accuracy: round.accuracy, xpAwarded });
 }
 
 export default withPlan('free', handler);
