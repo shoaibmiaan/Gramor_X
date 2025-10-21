@@ -188,11 +188,11 @@ export async function fetchMockCheckpoint(params: {
   mockId?: string;
 }): Promise<MockCheckpoint | null> {
   try {
-    const module = params.section;
+    const moduleSection = params.section;
     const includeCompleted = params.includeCompleted ?? false;
     if (params.attemptId) {
       const response = await getAttemptProgress(params.attemptId, {
-        module,
+        module: moduleSection,
         includeCompleted,
         mockId: params.mockId,
       });
@@ -208,7 +208,11 @@ export async function fetchMockCheckpoint(params: {
         updatedAt: response.progress.updatedAt,
       };
     }
-    const latest = await getLatestAttemptProgress({ module, includeCompleted, mockId: params.mockId });
+    const latest = await getLatestAttemptProgress({
+      module: moduleSection,
+      includeCompleted,
+      mockId: params.mockId,
+    });
     if (!latest.ok || !latest.progress) return null;
     return {
       attemptId: latest.progress.attemptId,
