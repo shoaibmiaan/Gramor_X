@@ -6,6 +6,7 @@ import { Container } from '@/components/design-system/Container';
 import { Section } from '@/components/design-system/Section';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
+import { useUserContext } from '@/context/UserContext';
 
 type Item = {
   status: 'Live' | 'Beta';
@@ -15,9 +16,20 @@ type Item = {
   subtitle: string;
   bullets: string[];
   href?: string;
+  requiresAuth?: boolean;
 };
 
 const items: Item[] = [
+  {
+    status: 'Live',
+    statusVariant: 'success',
+    icon: 'BookMarked',
+    title: 'Vocabulary explorer',
+    subtitle: 'Search IELTS-ready words with CEFR, category, and synonym filters.',
+    bullets: ['Guest preview available', 'Unlock saves & drills after signup'],
+    href: '/vocabulary',
+    requiresAuth: true,
+  },
   {
     status: 'Live',
     statusVariant: 'success',
@@ -75,6 +87,9 @@ const items: Item[] = [
 ];
 
 export const Modules: React.FC = () => {
+  const { role } = useUserContext();
+  const isGuest = !role || role === 'guest';
+
   return (
     <Section id="modules">
       <Container>
@@ -125,12 +140,26 @@ export const Modules: React.FC = () => {
 
               {module.href && (
                 <div className="mt-6">
-                  <Link
-                    href={module.href}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-electricBlue hover:text-electricBlue/80"
-                  >
-                    Explore {module.title.toLowerCase()} <Icon name="ArrowRight" size={18} />
-                  </Link>
+                  {(() => {
+                    const normalizedHref = module.href?.startsWith('/') ? module.href : `/${module.href ?? ''}`;
+                    const href =
+                      module.requiresAuth && isGuest && normalizedHref
+                        ? `/signup?${new URLSearchParams({ next: normalizedHref }).toString()}`
+                        : normalizedHref;
+                    const label =
+                      module.requiresAuth && isGuest
+                        ? 'Sign up to explore'
+                        : `Explore ${module.title.toLowerCase()}`;
+
+                    return (
+                      <Link
+                        href={href || '#'}
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-electricBlue hover:text-electricBlue/80"
+                      >
+                        {label} <Icon name="ArrowRight" size={18} />
+                      </Link>
+                    );
+                  })()}
                 </div>
               )}
             </Card>

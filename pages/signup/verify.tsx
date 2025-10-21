@@ -15,16 +15,19 @@ export default function VerifyEmailPage() {
   const email = typeof router.query.email === 'string' ? router.query.email : '';
   const role = typeof router.query.role === 'string' ? router.query.role : '';
   const ref  = typeof router.query.ref  === 'string' ? router.query.ref  : '';
+  const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
+  const nextParam = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
 
   // Where the user should land after clicking the magic link
   const next = useMemo(() => {
+    if (nextParam) return nextParam;
     const qs = new URLSearchParams();
     if (role) qs.set('role', role);
     if (ref) qs.set('ref', ref);
     const path = '/welcome';
     const s = qs.toString();
     return s ? `${path}?${s}` : path;
-  }, [role, ref]);
+  }, [nextParam, ref, role]);
 
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [err, setErr] = useState<string | null>(null);
@@ -170,18 +173,35 @@ export default function VerifyEmailPage() {
       </div>
 
       <div className="mt-4 text-center space-y-2">
-        <Link
-          href={`/signup/email${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
-        >
-          Use a different email
-        </Link>
-        <Link
-          href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}
-          className="text-primary underline block"
-        >
-          Back to Log in
-        </Link>
+        {(() => {
+          const qp = new URLSearchParams();
+          if (role) qp.set('role', role);
+          if (ref) qp.set('ref', ref);
+          if (nextParam) qp.set('next', nextParam);
+          const suffix = qp.toString();
+          return (
+            <Link
+              href={`/signup/email${suffix ? `?${suffix}` : ''}`}
+              className="text-primary underline block"
+            >
+              Use a different email
+            </Link>
+          );
+        })()}
+        {(() => {
+          const qp = new URLSearchParams();
+          if (role) qp.set('role', role);
+          if (nextParam) qp.set('next', nextParam);
+          const suffix = qp.toString();
+          return (
+            <Link
+              href={`/login${suffix ? `?${suffix}` : ''}`}
+              className="text-primary underline block"
+            >
+              Back to Log in
+            </Link>
+          );
+        })()}
       </div>
     </div>
   );
