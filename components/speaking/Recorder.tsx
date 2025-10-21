@@ -280,5 +280,5 @@ export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
   },
 );
 
-(Recorder as any).displayName = 'Recorder';
+Recorder.displayName = 'Recorder';
 export default Recorder;
