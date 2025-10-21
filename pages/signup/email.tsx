@@ -16,6 +16,8 @@ export default function SignUpWithEmail() {
   const router = useRouter();
   const role = typeof router.query?.role === 'string' ? (router.query.role as string) : '';
   const ref  = typeof router.query?.ref === 'string'  ? (router.query.ref as string)  : '';
+  const rawNext = typeof router.query?.next === 'string' ? (router.query.next as string) : '';
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,14 +58,15 @@ export default function SignUpWithEmail() {
       const nextQS = new URLSearchParams();
       if (role) nextQS.set('role', role);
       if (ref) nextQS.set('ref', ref);
-      const next = `/welcome${nextQS.toString() ? `?${nextQS.toString()}` : ''}`;
+      const fallbackNext = `/welcome${nextQS.toString() ? `?${nextQS.toString()}` : ''}`;
+      const nextPath = next || fallbackNext;
 
       const verificationParams = new URLSearchParams();
-      verificationParams.set('next', next);
+      verificationParams.set('next', nextPath);
       if (role) verificationParams.set('role', role);
       if (ref) verificationParams.set('ref', ref);
 
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
@@ -86,6 +89,7 @@ export default function SignUpWithEmail() {
           const verifyParams = new URLSearchParams({ email: trimmedEmail });
           if (role) verifyParams.set('role', role);
           if (ref) verifyParams.set('ref', ref);
+          if (nextPath) verifyParams.set('next', nextPath);
           await router.replace(`/signup/verify?${verifyParams.toString()}`);
           return;
         }
@@ -100,8 +104,9 @@ export default function SignUpWithEmail() {
       const verifyParams = new URLSearchParams({ email: trimmedEmail });
       if (role) verifyParams.set('role', role);
       if (ref) verifyParams.set('ref', ref);
+      if (nextPath) verifyParams.set('next', nextPath);
       await router.replace(`/signup/verify?${verifyParams.toString()}`);
-    } catch (e: any) {
+    } catch (_e: any) {
       setErr('Unable to sign up. Please try again.');
       setLoading(false);
     }
@@ -167,7 +172,15 @@ export default function SignUpWithEmail() {
         </Button>
 
         <Button asChild variant="link" className="mt-2" fullWidth>
-          <Link href={`/login${role ? `?role=${encodeURIComponent(role)}` : ''}`}>Already have an account? Log in</Link>
+          {(() => {
+            const qp = new URLSearchParams();
+            if (role) qp.set('role', role);
+            if (next) qp.set('next', next);
+            const suffix = qp.toString();
+            return (
+              <Link href={`/login${suffix ? `?${suffix}` : ''}`}>Already have an account? Log in</Link>
+            );
+          })()}
         </Button>
 
         <p className="mt-2 text-caption text-mutedText text-center">
@@ -177,9 +190,18 @@ export default function SignUpWithEmail() {
       </form>
 
       <div className="mt-4 text-center">
-        <Link href={`/signup${role ? `?role=${encodeURIComponent(role)}` : ''}`} className="text-primary underline">
-          Back to Sign Up Methods
-        </Link>
+        {(() => {
+          const qp = new URLSearchParams();
+          if (role) qp.set('role', role);
+          if (ref) qp.set('ref', ref);
+          if (next) qp.set('next', next);
+          const suffix = qp.toString();
+          return (
+            <Link href={`/signup${suffix ? `?${suffix}` : ''}`} className="text-primary underline">
+              Back to Sign Up Methods
+            </Link>
+          );
+        })()}
       </div>
     </>
   );

@@ -32,14 +32,17 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const ref = mode === 'signup' && typeof router.query.ref === 'string' ? router.query.ref : '';
+  const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
   const actionVerb = mode === 'login' ? 'Sign in' : 'Sign up';
   const sharedQS = useMemo(() => {
     const qp = new URLSearchParams();
     if (selectedRole) qp.set('role', selectedRole);
     if (mode === 'signup' && ref) qp.set('ref', ref);
+    if (next) qp.set('next', next);
     const s = qp.toString();
     return s ? `?${s}` : '';
-  }, [mode, ref, selectedRole]);
+  }, [mode, next, ref, selectedRole]);
 
   useEffect(() => {
     let mounted = true;
@@ -61,11 +64,10 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
 
         if (session) {
           shouldShowAuthOptions = false;
-          const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
           const blockedPath = mode === 'login' ? '/login' : '/signup';
           const safe =
-            rawNext && !rawNext.startsWith('http') && rawNext !== blockedPath
-              ? rawNext
+            next && next !== blockedPath
+              ? next
               : destinationByRole(session.user);
 
           if (router.asPath !== safe) {
@@ -87,7 +89,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
     return () => {
       mounted = false;
     };
-  }, [mode, router]);
+  }, [mode, next, router]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -132,18 +134,20 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
       setBusy(provider);
 
       const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-      let next: string;
-      if (mode === 'login') {
-        next = `/dashboard${selectedRole ? `?role=${encodeURIComponent(selectedRole)}` : ''}`;
-      } else {
-        const qs = new URLSearchParams();
-        if (selectedRole) qs.set('role', selectedRole);
-        if (ref) qs.set('ref', ref);
-        const suffix = qs.toString();
-        next = `/welcome${suffix ? `?${suffix}` : ''}`;
+      let nextPath = next;
+      if (!nextPath) {
+        if (mode === 'login') {
+          nextPath = `/dashboard${selectedRole ? `?role=${encodeURIComponent(selectedRole)}` : ''}`;
+        } else {
+          const qs = new URLSearchParams();
+          if (selectedRole) qs.set('role', selectedRole);
+          if (ref) qs.set('ref', ref);
+          const suffix = qs.toString();
+          nextPath = `/welcome${suffix ? `?${suffix}` : ''}`;
+        }
       }
 
-      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
 
       const { error } = await supabaseBrowser.auth.signInWithOAuth({
         provider,
@@ -340,16 +344,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
                 {mode === 'login' ? 'Create an account' : 'Log in'}
               </Link>
             </div>
-            <Button
-              variant="link"
-              onClick={() => {
-                setSelectedRole(null);
-                if (typeof window !== 'undefined') localStorage.removeItem('selectedRole');
-                const { role: _role, ...rest } = router.query as Record<string, unknown>;
-                router.replace({ pathname: router.pathname, query: { ...rest } }, undefined, { shallow: true });
-              }}
-              aria-label="Change selected role"
-            >
+            <Button variant="link" onClick={clearRole} aria-label="Change selected role">
               Change role
             </Button>
           </div>
