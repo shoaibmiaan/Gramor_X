@@ -1,6 +1,8 @@
 // lib/analytics/success-metrics.ts
 // Aggregate core product success metrics used in Phase 7 dashboards and guardrails.
 
+import { getActiveDayISO } from '@/lib/daily-learning-time';
+
 export type ReviewEventInput = {
   userId: string | null;
   event: 'open' | 'complete';
@@ -22,6 +24,13 @@ export type CollocationAttemptInput = {
   attempts: number;
   correct: number;
   attemptedAt: string;
+};
+
+export type VocabXpEventInput = {
+  userId: string;
+  amount: number;
+  createdAt: string;
+  meta: Record<string, unknown> | null | undefined;
 };
 
 export interface SuccessMetricsSnapshot {
@@ -46,6 +55,7 @@ export interface SuccessMetricsSnapshot {
     previous: number | null;
     delta: number | null;
   };
+  vocabulary: VocabularyMetrics;
   guardrails: Array<{
     metric: string;
     value: number | null;
@@ -60,7 +70,17 @@ export interface SuccessMetricInputs {
   wordsLearned: WordLogInput[];
   assignments: AssignmentInput[];
   collocationAttempts: CollocationAttemptInput[];
+  xpEvents?: VocabXpEventInput[];
 }
+
+export type VocabularyMetrics = {
+  activeLearnersToday: number;
+  meaningCorrectRate: number | null;
+  sentenceAverageScore: number | null;
+  synonymsAverageScore: number | null;
+  synonymsAverageAccuracy: number | null;
+  xpAwardedToday: number;
+};
 
 const DAY_MS = 86_400_000;
 
@@ -228,6 +248,8 @@ export function computeSuccessMetrics(inputs: SuccessMetricInputs): SuccessMetri
   const collocationDelta =
     recentAccuracy != null && previousAccuracy != null ? recentAccuracy - previousAccuracy : null;
 
+  const vocabulary = computeVocabularyMetrics(inputs, now);
+
   const guardrails: SuccessMetricsSnapshot['guardrails'] = [
     {
       metric: 'Review completion rate',
@@ -283,6 +305,79 @@ export function computeSuccessMetrics(inputs: SuccessMetricInputs): SuccessMetri
       previous: previousAccuracy,
       delta: collocationDelta,
     },
+    vocabulary,
     guardrails,
+  };
+}
+
+function computeVocabularyMetrics(inputs: SuccessMetricInputs, now: Date): VocabularyMetrics {
+  const todayIso = getActiveDayISO(now);
+  const activeLearners = new Set<string>();
+
+  inputs.wordsLearned
+    .filter((row) => toDayKey(row.learnedOn) === todayIso)
+    .forEach((row) => {
+      if (row.userId) activeLearners.add(row.userId);
+    });
+
+  const xpEvents = inputs.xpEvents ?? [];
+
+  let xpAwardedToday = 0;
+  let meaningAttempts = 0;
+  let meaningCorrect = 0;
+  let sentenceSamples = 0;
+  let sentenceScoreSum = 0;
+  let synonymSamples = 0;
+  let synonymScoreSum = 0;
+  let synonymAccuracySum = 0;
+
+  xpEvents.forEach((event) => {
+    const eventDay = getActiveDayISO(new Date(event.createdAt));
+    if (eventDay === todayIso) {
+      xpAwardedToday += Number(event.amount ?? 0);
+    }
+
+    const meta = event.meta ?? {};
+    const kindRaw = meta?.kind ?? null;
+    const kind = typeof kindRaw === 'string' ? kindRaw : null;
+
+    if (kind === 'meaning') {
+      meaningAttempts += 1;
+      const correct = typeof meta?.correct === 'boolean' ? meta.correct : Boolean(meta?.correct);
+      if (correct) meaningCorrect += 1;
+    } else if (kind === 'sentence') {
+      const score = Number((meta as any)?.score ?? NaN);
+      if (Number.isFinite(score)) {
+        sentenceSamples += 1;
+        sentenceScoreSum += score;
+      }
+    } else if (kind === 'synonyms') {
+      const score = Number((meta as any)?.score ?? NaN);
+      if (Number.isFinite(score)) {
+        synonymSamples += 1;
+        synonymScoreSum += score;
+      }
+      const accuracy = Number((meta as any)?.accuracy ?? NaN);
+      if (Number.isFinite(accuracy)) {
+        synonymAccuracySum += accuracy;
+      } else if (synonymSamples > 0) {
+        // Keep counts aligned when accuracy is missing
+        synonymAccuracySum += 0;
+      }
+    }
+  });
+
+  const meaningCorrectRate = meaningAttempts > 0 ? meaningCorrect / meaningAttempts : null;
+  const sentenceAverageScore = sentenceSamples > 0 ? sentenceScoreSum / sentenceSamples : null;
+  const synonymsAverageScore = synonymSamples > 0 ? synonymScoreSum / synonymSamples : null;
+  const synonymsAverageAccuracy = synonymSamples > 0 ? synonymAccuracySum / synonymSamples : null;
+
+  return {
+    activeLearnersToday: activeLearners.size,
+    meaningCorrectRate,
+    sentenceAverageScore,
+    synonymsAverageScore,
+    synonymsAverageAccuracy,
+    xpAwardedToday,
   };
 }
