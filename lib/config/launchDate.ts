@@ -1,6 +1,6 @@
 // lib/config/launchDate.ts
 
-const DEFAULT_LAUNCH_ISO = '2025-05-12T12:00:00.000Z';
+const DEFAULT_LAUNCH_ISO = '2025-12-02T00:00:00.000Z';
 
 function parseIsoToMs(iso: string | undefined | null): number | null {
   if (!iso) return null;
