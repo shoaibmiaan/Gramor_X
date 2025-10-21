@@ -5,6 +5,12 @@ import * as React from 'react';
 import { Button } from '@/components/design-system/Button';
 import { Container } from '@/components/design-system/Container';
 import { WordReveal } from '@/components/vocab/WordReveal';
+import { MeaningQuiz } from '@/components/vocab/MeaningQuiz';
+import { SentencePractice } from '@/components/vocab/SentencePractice';
+import { SynonymRush } from '@/components/vocab/SynonymRush';
+import { RewardsPanel } from '@/components/vocab/RewardsPanel';
+import StreakChip from '@/components/user/StreakChip';
+import { useStreak } from '@/hooks/useStreak';
 import type { WordOfDay } from '@/lib/vocabulary/today';
 import { getWordOfDay } from '@/lib/vocabulary/today';
 
@@ -20,6 +26,14 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
   const [source, setSource] = React.useState<'rpc' | 'view' | null>(initialSource);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const { loading: streakLoading, current: streakCurrent, completeToday } = useStreak();
+  const [streakError, setStreakError] = React.useState<string | null>(null);
+  const [xpTotal, setXpTotal] = React.useState(0);
+  const [attempts, setAttempts] = React.useState<{
+    meaning?: { xpAwarded: number; correct: boolean; attempts: number };
+    sentence?: { xpAwarded: number; score: number };
+    synonyms?: { xpAwarded: number; score: number; accuracy: number };
+  }>({});
 
   const refresh = React.useCallback(async () => {
     setLoading(true);
@@ -51,6 +65,78 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
     }
   }, [initialWord, refresh]);
 
+  React.useEffect(() => {
+    if (!word) {
+      setAttempts({});
+      setXpTotal(0);
+      return;
+    }
+    setAttempts({});
+    setXpTotal(0);
+  }, [word]);
+
+  const recordXp = React.useCallback(
+    (xp: number) => {
+      if (xp <= 0) return;
+      setXpTotal((current) => current + xp);
+      void completeToday()
+        .then(() => setStreakError(null))
+        .catch((err: unknown) => {
+          console.warn('[pages/vocab] streak update failed', err);
+          const message =
+            err instanceof Error && /unauthorized/i.test(err.message)
+              ? 'Sign in to sync your streak automatically.'
+              : 'Streak sync delayed — your XP is safe.';
+          setStreakError(message);
+        });
+    },
+    [completeToday],
+  );
+
+  const handleMeaningComplete = React.useCallback(
+    (result: { correct: boolean; xpAwarded: number }) => {
+      setAttempts((current) => ({
+        ...current,
+        meaning: {
+          xpAwarded: result.xpAwarded,
+          correct: result.correct,
+          attempts: (current.meaning?.attempts ?? 0) + 1,
+        },
+      }));
+      recordXp(result.xpAwarded);
+    },
+    [recordXp],
+  );
+
+  const handleSentenceComplete = React.useCallback(
+    (result: { score: 1 | 2 | 3; xpAwarded: number }) => {
+      setAttempts((current) => ({
+        ...current,
+        sentence: {
+          xpAwarded: result.xpAwarded,
+          score: result.score,
+        },
+      }));
+      recordXp(result.xpAwarded);
+    },
+    [recordXp],
+  );
+
+  const handleSynonymComplete = React.useCallback(
+    (result: { score: number; accuracy: number; xpAwarded: number }) => {
+      setAttempts((current) => ({
+        ...current,
+        synonyms: {
+          xpAwarded: result.xpAwarded,
+          score: result.score,
+          accuracy: result.accuracy,
+        },
+      }));
+      recordXp(result.xpAwarded);
+    },
+    [recordXp],
+  );
+
   return (
     <>
       <Head>
@@ -70,16 +156,19 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
                   Build your streak with daily IELTS-ready vocabulary.
                 </p>
               </div>
-              <Button
-                variant="soft"
-                tone="info"
-                onClick={() => refresh()}
-                loading={loading}
-                loadingText="Refreshing"
-                aria-label="Refresh today\'s word"
-              >
-                Refresh
-              </Button>
+              <div className="flex flex-wrap items-center gap-3">
+                <StreakChip value={streakCurrent ?? 0} loading={streakLoading} />
+                <Button
+                  variant="soft"
+                  tone="info"
+                  onClick={() => refresh()}
+                  loading={loading}
+                  loadingText="Refreshing"
+                  aria-label="Refresh today\'s word"
+                >
+                  Refresh
+                </Button>
+              </div>
             </div>
 
             {error ? (
@@ -91,12 +180,32 @@ const VocabPage: NextPage<PageProps> = ({ initialDate, initialWord, initialSourc
               </div>
             ) : null}
 
+            {streakError ? (
+              <div
+                role="status"
+                className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-warning"
+              >
+                {streakError}
+              </div>
+            ) : null}
+
             <WordReveal
               date={date ?? undefined}
               word={word}
               source={source ?? undefined}
               isLoading={!word && loading}
             />
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <MeaningQuiz word={word} onComplete={handleMeaningComplete} />
+              <SentencePractice word={word} onComplete={handleSentenceComplete} />
+              <div className="lg:col-span-2">
+                <SynonymRush word={word} onComplete={handleSynonymComplete} />
+              </div>
+              <div className="lg:col-span-2">
+                <RewardsPanel xpTotal={xpTotal} attempts={attempts} />
+              </div>
+            </div>
           </div>
         </Container>
       </main>
