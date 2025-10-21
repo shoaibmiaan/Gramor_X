@@ -12,7 +12,7 @@ type SynonymResult = {
   xpAwarded: number;
 };
 
-type SynonymRushProps = Readonly<{
+export type SynonymRushProps = Readonly<{
   word: WordOfDay | null;
   onComplete?: (result: SynonymResult) => void;
 }>;
@@ -29,6 +29,10 @@ export function SynonymRush({ word, onComplete }: SynonymRushProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const startRef = React.useRef<number>(Date.now());
+  const errorRef = React.useRef<HTMLDivElement | null>(null);
+  const headingId = React.useId();
+  const instructionsId = React.useId();
+  const errorId = React.useId();
 
   const prepareRound = React.useCallback(
     (nextWord: WordOfDay | null) => {
@@ -47,6 +51,12 @@ export function SynonymRush({ word, onComplete }: SynonymRushProps) {
     prepareRound(word);
     setError(null);
   }, [prepareRound, word]);
+
+  React.useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [error]);
 
   const hasOptions = state.options.length > 0;
 
@@ -151,19 +161,32 @@ export function SynonymRush({ word, onComplete }: SynonymRushProps) {
       <div className="flex flex-col gap-4">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-h4 font-semibold text-foreground">Synonym rush</h2>
+            <h2 id={headingId} className="text-h4 font-semibold text-foreground">
+              Synonym rush
+            </h2>
             <p className="text-body text-mutedText">
               Select every option that matches <strong>{word.headword}</strong>. Wrong picks subtract from your score.
             </p>
           </div>
           {state.result ? (
-            <Badge variant="info" size="sm">
-              Score {state.result.score} · +{state.result.xpAwarded} XP
-            </Badge>
+            <span aria-live="polite">
+              <Badge variant="info" size="sm">
+                Score {state.result.score} · +{state.result.xpAwarded} XP
+              </Badge>
+            </span>
           ) : null}
         </header>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <p id={instructionsId} className="text-caption text-mutedText">
+          Toggle every synonym that fits. Press submit when you are ready.
+        </p>
+
+        <div
+          className="grid gap-3 sm:grid-cols-2"
+          role="group"
+          aria-labelledby={headingId}
+          aria-describedby={[instructionsId, error ? errorId : null].filter(Boolean).join(' ') || undefined}
+        >
           {state.options.map((option) => {
             const active = state.selections.has(option.id);
             const showOutcome = Boolean(state.result);
@@ -175,6 +198,7 @@ export function SynonymRush({ word, onComplete }: SynonymRushProps) {
               : active
                 ? 'Selected'
                 : 'Not selected';
+            const statusId = `synonym-status-${option.id}`;
             return (
               <button
                 key={option.id}
@@ -190,16 +214,25 @@ export function SynonymRush({ word, onComplete }: SynonymRushProps) {
                   .filter(Boolean)
                   .join(' ')}
                 aria-pressed={active}
+                aria-describedby={statusId}
               >
                 <span className="font-semibold text-foreground capitalize">{option.text}</span>
-                <span className="sr-only">{srLabel}</span>
+                <span id={statusId} className="sr-only">
+                  {srLabel}
+                </span>
               </button>
             );
           })}
         </div>
 
         {error ? (
-          <div role="alert" className="rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-warning">
+          <div
+            id={errorId}
+            ref={errorRef}
+            role="alert"
+            tabIndex={-1}
+            className="rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-warning"
+          >
             {error}
           </div>
         ) : null}

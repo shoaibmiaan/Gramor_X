@@ -5,6 +5,8 @@ import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { Icon } from '@/components/design-system/Icon';
+import { track } from '@/lib/analytics/track';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 const CONFETTI_COUNT = 14;
 const CONFETTI_COLORS = ['#f97316', '#3b82f6', '#10b981', '#facc15', '#ec4899'] as const;
@@ -48,12 +50,12 @@ type LeaderboardEntry = {
   xp: number;
 };
 
-type RewardsPanelProps = Readonly<{
+export type RewardsPanelProps = Readonly<{
   xpTotal: number;
   attempts: AttemptState;
 }>;
 
-function ConfettiBurst({ visible }: { visible: boolean }) {
+function ConfettiBurst({ visible, disabled }: { visible: boolean; disabled?: boolean }) {
   const pieces = React.useMemo(() => Array.from({ length: CONFETTI_COUNT }), []);
   const dynamicStyles = React.useMemo(
     () =>
@@ -67,7 +69,7 @@ function ConfettiBurst({ visible }: { visible: boolean }) {
         .join('\n'),
     [],
   );
-  if (!visible) return null;
+  if (!visible || disabled) return null;
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden confetti-burst" aria-hidden>
       <style jsx>{`
@@ -184,6 +186,8 @@ export function RewardsPanel({ xpTotal, attempts }: RewardsPanelProps) {
   const [shareStatus, setShareStatus] = React.useState<'idle' | 'copied' | 'shared' | 'error'>('idle');
   const [showConfetti, setShowConfetti] = React.useState(false);
   const prevXpRef = React.useRef(0);
+  const rewardLoggedRef = React.useRef(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -209,6 +213,12 @@ export function RewardsPanel({ xpTotal, attempts }: RewardsPanelProps) {
   }, []);
 
   React.useEffect(() => {
+    if (prefersReducedMotion) {
+      prevXpRef.current = xpTotal;
+      setShowConfetti(false);
+      return undefined;
+    }
+
     if (xpTotal > prevXpRef.current && xpTotal > 0) {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 1800);
@@ -217,6 +227,17 @@ export function RewardsPanel({ xpTotal, attempts }: RewardsPanelProps) {
     }
     prevXpRef.current = xpTotal;
     return undefined;
+  }, [prefersReducedMotion, xpTotal]);
+
+  React.useEffect(() => {
+    if (xpTotal <= 0) {
+      rewardLoggedRef.current = false;
+      return;
+    }
+    if (!rewardLoggedRef.current) {
+      rewardLoggedRef.current = true;
+      track('vocab_reward_shown', { xpTotal });
+    }
   }, [xpTotal]);
 
   const attemptSummaries = React.useMemo(() => buildAttemptSummaries(attempts), [attempts]);
@@ -228,32 +249,37 @@ export function RewardsPanel({ xpTotal, attempts }: RewardsPanelProps) {
       if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({ title: 'GramorX Vocabulary Streak', text: shareText, url: shareUrl });
         setShareStatus('shared');
+        track('vocab_share_clicked', { method: 'web-share', status: 'shared' });
         return;
       }
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(shareUrl);
         setShareStatus('copied');
+        track('vocab_share_clicked', { method: 'clipboard', status: 'copied' });
         return;
       }
       throw new Error('Sharing not supported');
     } catch (err) {
       console.warn('[RewardsPanel] share failed', err);
       setShareStatus('error');
+      track('vocab_share_clicked', { method: 'fallback', status: 'error' });
     }
   }, [xpTotal]);
 
   return (
     <Card className="relative overflow-hidden p-6">
-      <ConfettiBurst visible={showConfetti} />
+      <ConfettiBurst visible={showConfetti} disabled={prefersReducedMotion} />
       <div className="flex flex-col gap-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-h4 font-semibold text-foreground">Rewards & leaderboard</h2>
             <p className="text-body text-mutedText">Keep the streak alive to climb the weekly XP ladder.</p>
           </div>
-          <Badge variant="success" size="sm">
-            Total XP today · {xpTotal}
-          </Badge>
+          <span aria-live="polite">
+            <Badge variant="success" size="sm">
+              Total XP today · {xpTotal}
+            </Badge>
+          </span>
         </header>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -280,7 +306,7 @@ export function RewardsPanel({ xpTotal, attempts }: RewardsPanelProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="soft" tone="success" onClick={handleShare}>
+          <Button variant="soft" tone="success" onClick={handleShare} aria-describedby="share-status">
             <Icon name="gift" size={18} aria-hidden />
             {shareStatus === 'copied'
               ? 'Link copied!'
@@ -290,19 +316,28 @@ export function RewardsPanel({ xpTotal, attempts }: RewardsPanelProps) {
                   ? 'Sharing unavailable'
                   : 'Share progress'}
           </Button>
+          <span id="share-status" className="sr-only" aria-live="polite">
+            {shareStatus === 'copied'
+              ? 'Share link copied to clipboard'
+              : shareStatus === 'shared'
+                ? 'Shared successfully'
+                : shareStatus === 'error'
+                  ? 'Sharing failed'
+                  : 'Ready to share'}
+          </span>
           <Button asChild variant="soft" tone="info">
             <Link href="/vocabulary">
               <Icon name="book" size={18} aria-hidden />
               Review words
             </Link>
           </Button>
-          <Button variant="soft" tone="primary" onClick={handleShare}>
+          <Button variant="soft" tone="primary" onClick={handleShare} aria-describedby="share-status">
             <Icon name="arrow-right" size={18} aria-hidden />
             Challenge a friend
           </Button>
         </div>
 
-        <section aria-live="polite" className="space-y-3">
+        <section aria-live="polite" className="space-y-3" aria-busy={loading}>
           <div className="flex items-center gap-2">
             <h3 className="text-h5 font-semibold text-foreground">Weekly leaderboard</h3>
             <Badge variant="neutral" size="xs">

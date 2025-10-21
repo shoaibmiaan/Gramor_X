@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Badge } from '@/components/design-system/Badge';
 import { Card } from '@/components/design-system/Card';
 import type { WordOfDay } from '@/lib/vocabulary/today';
+import { track } from '@/lib/analytics/track';
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', {
   year: 'numeric',
@@ -62,6 +63,11 @@ export function WordReveal({ date, word, source, isLoading }: WordRevealProps) {
       return date;
     }
   }, [date]);
+
+  React.useEffect(() => {
+    if (!word) return;
+    track('vocab_word_viewed', { wordId: word.id, source: source ?? 'unknown' });
+  }, [word?.id, source]);
 
   if (isLoading) {
     return (

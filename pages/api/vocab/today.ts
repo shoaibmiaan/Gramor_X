@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { getWordOfDay } from '@/lib/vocabulary/today';
+import { getServerClient } from '@/lib/supabaseServer';
+import { trackor } from '@/lib/analytics/trackor.server';
 
 export type TodayWordResponse = {
   date: string;
@@ -34,12 +36,27 @@ export default async function handler(
   }
 
   try {
+    const supabase = getServerClient(req, res);
     const result = await getWordOfDay();
     if (!result) {
       return res.status(404).json({ error: 'Word of the day not scheduled' });
     }
 
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      await trackor.log('vocab_word_viewed', {
+        user_id: user?.id ?? null,
+        word_id: result.word.id,
+        source: result.source,
+        word_date: result.wordDate,
+      });
+    } catch (error) {
+      console.warn('[api/vocab/today] analytics logging failed', error);
+    }
 
     return res.status(200).json({
       date: result.wordDate,

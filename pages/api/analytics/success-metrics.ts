@@ -107,7 +107,7 @@ export default async function handler(
     const since = new Date(now.getTime() - 28 * DAY_MS);
     const sinceIso = since.toISOString();
 
-    const [reviewRows, wordRows, assignmentRows, attemptRows, experimentRows] = await Promise.all([
+    const [reviewRows, wordRows, assignmentRows, attemptRows, xpRows, experimentRows] = await Promise.all([
       fetchRows(client, 'review_events', 'user_id,event,occurred_at', {
         query: (builder) => builder.gte('occurred_at', sinceIso),
         fallbackFilter: (row) => new Date(row?.occurred_at ?? 0).getTime() >= since.getTime(),
@@ -122,6 +122,11 @@ export default async function handler(
       fetchRows(client, 'collocation_attempts', 'user_id,attempts,correct,attempted_at', {
         query: (builder) => builder.gte('attempted_at', sinceIso),
         fallbackFilter: (row) => new Date(row?.attempted_at ?? 0).getTime() >= since.getTime(),
+      }),
+      fetchRows(client, 'xp_events', 'user_id,amount,meta,created_at,source', {
+        query: (builder) => builder.eq('source', 'vocab').gte('created_at', sinceIso),
+        fallbackFilter: (row) =>
+          row?.source === 'vocab' && new Date(row?.created_at ?? 0).getTime() >= since.getTime(),
       }),
       fetchRows(client, 'experiments', 'key,status,guardrail_reason'),
     ]);
@@ -146,6 +151,14 @@ export default async function handler(
         correct: Number(row?.correct ?? 0),
         attemptedAt: row?.attempted_at ?? now.toISOString(),
       })),
+      xpEvents: xpRows
+        .filter((row: any) => row?.user_id)
+        .map((row: any) => ({
+          userId: row.user_id as string,
+          amount: Number(row?.amount ?? 0),
+          createdAt: row?.created_at ?? now.toISOString(),
+          meta: row?.meta ?? null,
+        })),
     });
 
     const reviewGuardrail = metrics.guardrails.find(

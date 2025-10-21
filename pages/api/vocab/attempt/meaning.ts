@@ -5,6 +5,8 @@ import { withPlan } from '@/lib/apiGuard';
 import { getServerClient } from '@/lib/supabaseServer';
 import { getActiveDayISO } from '@/lib/daily-learning-time';
 import { getVocabWordById } from '@/lib/vocabulary/today';
+import { awardVocabXp, baseXpForMeaning } from '@/lib/gamification/xp';
+import { trackor } from '@/lib/analytics/trackor.server';
 
 const ChoiceSchema = z.union([
   z.string().min(1),
@@ -181,25 +183,39 @@ async function handler(
     }
   }
 
-  const xpAwarded = correct ? 10 : 0;
+  const baseXp = baseXpForMeaning(correct);
 
-  if (xpAwarded > 0) {
-    const { error: xpError } = await supabase.from('xp_events').insert({
-      user_id: user.id,
-      source: 'vocab',
-      amount: xpAwarded,
+  let xpAwarded = 0;
+  try {
+    const result = await awardVocabXp({
+      client: supabase,
+      userId: user.id,
+      baseAmount: baseXp,
+      kind: 'meaning',
       meta: {
-        kind: 'meaning',
         wordId,
+        correct,
         timeMs,
         choice: normalisedChoice || choiceText,
       },
+      logEvenIfZero: true,
     });
+    xpAwarded = result.awarded;
 
-    if (xpError) {
-      console.error('[api/vocab/attempt/meaning] xp insert failed', xpError);
-      return res.status(500).json({ error: 'Failed to record XP' });
-    }
+    await trackor.log('vocab_meaning_submitted', {
+      user_id: user.id,
+      word_id: wordId,
+      correct,
+      xp_awarded: result.awarded,
+      xp_requested: result.requested,
+      multiplier: result.multiplier,
+      capped: result.capped,
+      time_ms: timeMs,
+      day_iso: result.dayIso,
+    });
+  } catch (error) {
+    console.error('[api/vocab/attempt/meaning] xp award failed', error);
+    return res.status(500).json({ error: 'Failed to record XP' });
   }
 
   return res.status(200).json({ correct, xpAwarded });
