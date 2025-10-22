@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import {
   clearMockAttemptId,
   clearMockDraft,
@@ -206,15 +205,26 @@ export default function ReadingMockPage() {
     const flatQ = paper.passages.flatMap((p) => p.questions);
     let correct = 0;
     for (const q of flatQ) if (normalize(answers[q.id] || '') === normalize(q.answer)) correct++;
-    const percentage = Math.round((correct / flatQ.length) * 100);
-    let attemptId = '';
+    const payload = {
+      attemptId: attemptRef.current,
+      paperId: paper.id,
+      correct,
+      total: flatQ.length,
+      durationSec: paper.durationSec - timeLeft,
+      answers,
+    };
+
+    let attemptId = attemptRef.current || '';
     try {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user?.id) throw new Error('Not authenticated');
-      const payload = { user_id: u.user.id, paper_id: paper.id, answers, score: correct, total: flatQ.length, percentage, submitted_at: new Date().toISOString(), duration_sec: paper.durationSec - timeLeft };
-      const { data, error } = await supabase.from('attempts_reading').insert(payload).select('id').single();
-      if (error) throw error;
-      attemptId = data.id as unknown as string;
+      const res = await fetch('/api/mock/reading/result', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Request failed');
+      const json = (await res.json()) as { ok: boolean; attempt?: { id: string } };
+      if (!json.ok || !json.attempt?.id) throw new Error('Invalid response');
+      attemptId = json.attempt.id;
     } catch {
       attemptId = `local-${Date.now()}`;
       try { localStorage.setItem(`read:attempt-res:${attemptId}`, JSON.stringify({ paper, answers })); } catch {}
