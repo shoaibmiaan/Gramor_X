@@ -101,6 +101,21 @@ async function aggregateXp(userId: string) {
   return sumReadingMockXp(attempts);
 }
 
+async function loadCurrentStreak(userId: string): Promise<number> {
+  const svc = supabaseService();
+  const { data, error } = await svc
+    .from('user_streaks')
+    .select('current_streak')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const value = Number(data?.current_streak ?? 0);
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.round(value));
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<MockReadingResultResponse>,
@@ -269,6 +284,13 @@ export default async function handler(
       const requiredXp = xpRequiredForBand(targetBand);
       const percent = xpProgressPercent(totalXp, requiredXp);
 
+      let currentStreak = 0;
+      try {
+        currentStreak = await loadCurrentStreak(user.id);
+      } catch (err) {
+        console.warn('[mock/reading/result] streak fetch failed', err);
+      }
+
       return res.status(200).json({
         ok: true,
         attempt,
@@ -279,7 +301,7 @@ export default async function handler(
           percent,
           targetBand,
         },
-        streak: { current: 0 },
+        streak: { current: currentStreak },
       });
     }
 
