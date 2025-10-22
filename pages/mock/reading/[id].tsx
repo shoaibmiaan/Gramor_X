@@ -16,6 +16,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { ReadingPassage } from '@/components/exam/ReadingPassage';
 import { QuestionNav, type QuestionNavFilter, type QuestionNavQuestion } from '@/components/exam/QuestionNav';
 import { track } from '@/lib/analytics/track';
+import { Checkbox } from '@/components/design-system/Checkbox';
 
 type QType = 'tfng' | 'yynn' | 'heading' | 'match' | 'mcq' | 'gap';
 type Q = { id: string; type: QType; prompt?: string; options?: string[]; answer: string };
@@ -47,9 +48,11 @@ type DraftState = {
   questionFilter?: QuestionNavFilter;
   layoutMode?: LayoutMode;
   started?: boolean;
+  focusMode?: boolean;
 };
 
 const LAYOUT_PREF_KEY = 'mock:reading:layout-mode';
+const FOCUS_MODE_PREF_KEY = 'mock:reading:focus-mode';
 const LAYOUT_OPTIONS: Array<{
   id: LayoutMode;
   label: string;
@@ -116,6 +119,7 @@ export default function ReadingMockPage() {
   const [questionFilter, setQuestionFilter] = useState<QuestionNavFilter>('all');
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('split');
   const [isStarted, setIsStarted] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const [layoutHydrated, setLayoutHydrated] = useState(false);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const attemptRef = useRef<string>('');
@@ -129,6 +133,7 @@ export default function ReadingMockPage() {
     questionFilter: QuestionNavFilter;
     layoutMode: LayoutMode;
     started: boolean;
+    focusMode: boolean;
   }>({
     answers: {},
     passageIdx: 0,
@@ -137,6 +142,7 @@ export default function ReadingMockPage() {
     questionFilter: 'all',
     layoutMode: 'split',
     started: false,
+    focusMode: false,
   });
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteEditorValue, setNoteEditorValue] = useState('');
@@ -159,6 +165,7 @@ export default function ReadingMockPage() {
       setPaper(p);
       const draft = loadMockDraft<DraftState>('reading', id);
       const storedLayout = getStoredLayoutMode();
+      const storedFocus = getStoredFocusMode();
       if (draft?.data) {
         const normalizedAnswers = draft.data.answers ? normalizeAnswerMap(draft.data.answers) : undefined;
         if (normalizedAnswers) setAnswers(normalizedAnswers);
@@ -174,6 +181,11 @@ export default function ReadingMockPage() {
           setQuestionFilter(normalizeQuestionFilter(draft.data.questionFilter));
         }
         setLayoutMode(normalizeLayoutMode(draft.data.layoutMode ?? storedLayout));
+        if (typeof draft.data.focusMode === 'boolean') {
+          setFocusMode(draft.data.focusMode);
+        } else {
+          setFocusMode(storedFocus);
+        }
         const hasAnsweredFromDraft = normalizedAnswers ? hasAnyAnswered(normalizedAnswers) : false;
         const hasNotes = Boolean(noteList && noteList.length > 0);
         const startedFromDraft =
@@ -192,8 +204,10 @@ export default function ReadingMockPage() {
           questionFilter: 'all',
           layoutMode: storedLayout,
           started: false,
+          focusMode: storedFocus,
         });
         setLayoutMode(storedLayout);
+        setFocusMode(storedFocus);
         setIsStarted(false);
       }
       setLayoutHydrated(true);
@@ -216,6 +230,7 @@ export default function ReadingMockPage() {
           questionFilter?: unknown;
           layoutMode?: unknown;
           started?: unknown;
+          focusMode?: unknown;
         };
         const normalizedAnswers = payload.answers ? normalizeAnswerMap(payload.answers) : undefined;
         if (normalizedAnswers) setAnswers(normalizedAnswers);
@@ -233,6 +248,9 @@ export default function ReadingMockPage() {
         }
         if (payload.layoutMode) {
           setLayoutMode(normalizeLayoutMode(payload.layoutMode));
+        }
+        if (typeof payload.focusMode === 'boolean') {
+          setFocusMode(payload.focusMode);
         }
         const hasAnswered = normalizedAnswers ? hasAnyAnswered(normalizedAnswers) : false;
         const hasNotes = Array.isArray(payload.notes) && payload.notes.length > 0;
@@ -277,8 +295,9 @@ export default function ReadingMockPage() {
       questionFilter,
       layoutMode,
       started: isStarted,
+      focusMode,
     };
-  }, [answers, passageIdx, timeLeft, notes, questionFilter, layoutMode, isStarted]);
+  }, [answers, passageIdx, timeLeft, notes, questionFilter, layoutMode, isStarted, focusMode]);
 
   useEffect(() => {
     if (!layoutHydrated) return;
@@ -286,8 +305,55 @@ export default function ReadingMockPage() {
   }, [layoutHydrated, layoutMode]);
 
   useEffect(() => {
+    if (!layoutHydrated) return;
+    setStoredFocusMode(focusMode);
+  }, [focusMode, layoutHydrated]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRoot = root.dataset.focusMode;
+    const previousBody = body?.dataset.focusMode;
+
+    const apply = (value: boolean) => {
+      const next = value ? 'true' : 'false';
+      root.dataset.focusMode = next;
+      if (body) {
+        body.dataset.focusMode = next;
+      }
+    };
+
+    apply(focusMode);
+
+    return () => {
+      if (previousRoot === undefined) {
+        delete root.dataset.focusMode;
+      } else {
+        root.dataset.focusMode = previousRoot;
+      }
+      if (body) {
+        if (previousBody === undefined) {
+          delete body.dataset.focusMode;
+        } else {
+          body.dataset.focusMode = previousBody;
+        }
+      }
+    };
+  }, [focusMode]);
+
+  useEffect(() => {
     if (!id) return;
-    debouncedLocalDraft({ answers, passageIdx, timeLeft, notes, questionFilter, layoutMode, started: isStarted });
+    debouncedLocalDraft({
+      answers,
+      passageIdx,
+      timeLeft,
+      notes,
+      questionFilter,
+      layoutMode,
+      started: isStarted,
+      focusMode,
+    });
     return () => {
       debouncedLocalDraft.flush();
     };
@@ -311,6 +377,7 @@ export default function ReadingMockPage() {
           questionFilter: state.questionFilter,
           layoutMode: state.layoutMode,
           started: state.started,
+          focusMode: state.focusMode,
         },
         elapsed,
         duration: paper.durationSec,
@@ -705,6 +772,14 @@ export default function ReadingMockPage() {
     setLayoutMode((prev) => (prev === mode ? prev : mode));
   }, []);
 
+  const handleFocusModeToggle = useCallback((next: boolean) => {
+    setFocusMode(next);
+  }, []);
+
+  const exitFocusMode = useCallback(() => {
+    setFocusMode(false);
+  }, []);
+
   const scrollToQuestion = useCallback((questionId: string) => {
     const node = questionRefs.current[questionId];
     setActiveQuestionId(questionId);
@@ -753,7 +828,17 @@ export default function ReadingMockPage() {
           mockId: paper.id,
           // Include notes for resume flows as a fallback to the dedicated notes table
           // to guard against offline autosave scenarios.
-          payload: { paperId: paper.id, answers, passageIdx, timeLeft, notes, questionFilter, layoutMode, started: true },
+          payload: {
+            paperId: paper.id,
+            answers,
+            passageIdx,
+            timeLeft,
+            notes,
+            questionFilter,
+            layoutMode,
+            started: true,
+            focusMode,
+          },
           elapsed: paper.durationSec - timeLeft,
           duration: paper.durationSec,
           completed: true,
@@ -792,54 +877,56 @@ export default function ReadingMockPage() {
   return (
     <>
       <Shell
-      title={`Reading — ${paper.title}`}
-      right={
-        <>
-          <div className="text-small text-foreground/80">Answered {percent}%</div>
-          <div className="rounded-full border border-border px-3 py-1 text-small">⏱ {hhmmss(timeLeft)}</div>
-          <LayoutModeChips value={layoutMode} onChange={handleLayoutModeChange} />
-        </>
-      }
+        title={`Reading — ${paper.title}`}
+        right={
+          <>
+            <div className="text-small text-foreground/80">Answered {percent}%</div>
+            <div className="rounded-full border border-border px-3 py-1 text-small">⏱ {hhmmss(timeLeft)}</div>
+            <FocusModeToggle active={focusMode} onToggle={handleFocusModeToggle} />
+            <LayoutModeChips value={layoutMode} onChange={handleLayoutModeChange} />
+          </>
+        }
       >
-      <div className="min-w-0 rounded-2xl border border-border bg-background/50 p-4">
-        <div className={layoutContainerClass}>
-          <section className="min-w-0 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="text-small font-medium">
-                Passage {passageIdx + 1} of {paper.passages.length} — {current.title}
+        <div className="min-w-0 rounded-2xl border border-border bg-background/50 p-4">
+          {focusMode && isStarted ? <FocusModeNotice onExit={exitFocusMode} /> : null}
+          <div className={layoutContainerClass}>
+            <section className="min-w-0 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-small font-medium">
+                  Passage {passageIdx + 1} of {paper.passages.length} — {current.title}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    disabled={passageIdx === 0}
+                    onClick={() => setPassageIdx((i) => Math.max(0, i - 1))}
+                    className="rounded-lg border border-border px-3 py-1 text-small transition hover:border-primary disabled:opacity-60"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    disabled={passageIdx === paper.passages.length - 1}
+                    onClick={() => setPassageIdx((i) => Math.min(paper.passages.length - 1, i + 1))}
+                    className="rounded-lg border border-border px-3 py-1 text-small transition hover:border-primary disabled:opacity-60"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  disabled={passageIdx === 0}
-                  onClick={() => setPassageIdx((i) => Math.max(0, i - 1))}
-                  className="rounded-lg border border-border px-3 py-1 text-small transition hover:border-primary disabled:opacity-60"
-                >
-                  Prev
-                </button>
-                <button
-                  disabled={passageIdx === paper.passages.length - 1}
-                  onClick={() => setPassageIdx((i) => Math.min(paper.passages.length - 1, i + 1))}
-                  className="rounded-lg border border-border px-3 py-1 text-small transition hover:border-primary disabled:opacity-60"
-                >
-                  Next
-                </button>
+              <div className="rounded-xl border border-border/70 bg-background/70 p-4">
+                <ReadingPassage
+                  text={current.text}
+                  highlights={passageNotes}
+                  onCreateHighlight={handleSelectionHighlight}
+                  onCreateNote={handleSelectionNote}
+                  onHighlightFocus={handleHighlightFocus}
+                />
               </div>
-            </div>
-            <div className="rounded-xl border border-border/70 bg-background/70 p-4">
-              <ReadingPassage
-                text={current.text}
-                highlights={passageNotes}
-                onCreateHighlight={handleSelectionHighlight}
-                onCreateNote={handleSelectionNote}
-                onHighlightFocus={handleHighlightFocus}
-              />
-            </div>
-            <p className="text-caption text-foreground/70">
-              Select text in the passage to highlight or add a note. Highlights autosave for this attempt.
-            </p>
-          </section>
-          <section className="min-w-0 flex flex-col gap-4">
-            <div className="grid gap-3">
+              <p className="text-caption text-foreground/70">
+                Select text in the passage to highlight or add a note. Highlights autosave for this attempt.
+              </p>
+            </section>
+            <section className="min-w-0 flex flex-col gap-4">
+              <div className="grid gap-3">
               {current.questions.map((q, idx) => {
                 const entry = answers[q.id] ?? { value: '', flagged: false };
                 const flagged = entry.flagged;
@@ -949,8 +1036,8 @@ export default function ReadingMockPage() {
                 </div>
               </div>
             </div>
-          </section>
-        </div>
+            </section>
+          </div>
       </div>
       {/* Right rail */}
       <aside className="flex h-full min-w-0 flex-col gap-4">
@@ -1065,11 +1152,23 @@ export default function ReadingMockPage() {
         open={!isStarted}
         layoutMode={layoutMode}
         onLayoutChange={handleLayoutModeChange}
+        focusMode={focusMode}
+        onFocusModeChange={handleFocusModeToggle}
         onStart={startExam}
         paperTitle={paper.title}
         durationSec={paper.durationSec}
         resumeAvailable={resumeAvailable}
       />
+      <style jsx global>{`
+        :root[data-focus-mode="true"] header[data-solid] {
+          display: none !important;
+        }
+        :root[data-focus-mode="true"] nav[aria-label="Bottom navigation"],
+        :root[data-focus-mode="true"] [aria-controls="quick-actions-menu"],
+        :root[data-focus-mode="true"] #quick-actions-menu {
+          display: none !important;
+        }
+      `}</style>
     </>
   );
 }
@@ -1079,6 +1178,49 @@ type LayoutModeChipsProps = {
   value: LayoutMode;
   onChange: (mode: LayoutMode) => void;
 };
+
+type FocusModeToggleProps = {
+  active: boolean;
+  onToggle: (next: boolean) => void;
+};
+
+function FocusModeToggle({ active, onToggle }: FocusModeToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(!active)}
+      aria-pressed={active}
+      className={[
+        'rounded-full border px-3 py-1 text-small transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        active ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground/80 hover:border-primary',
+      ].join(' ')}
+    >
+      {active ? 'Focus mode on' : 'Focus mode off'}
+    </button>
+  );
+}
+
+type FocusModeNoticeProps = {
+  onExit: () => void;
+};
+
+function FocusModeNotice({ onExit }: FocusModeNoticeProps) {
+  return (
+    <div className="mb-4 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-small text-primary">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-medium">Focus mode is on — navigation and alerts are hidden.</p>
+        <button
+          type="button"
+          onClick={onExit}
+          className="inline-flex items-center justify-center rounded-full border border-primary px-3 py-1 text-small font-semibold text-primary transition hover:bg-primary hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Exit focus mode
+        </button>
+      </div>
+      <p className="mt-1 text-caption text-primary/80">You can toggle focus mode anytime from the header controls.</p>
+    </div>
+  );
+}
 
 function LayoutModeChips({ value, onChange }: LayoutModeChipsProps) {
   return (
@@ -1115,6 +1257,8 @@ type StartOverlayProps = {
   open: boolean;
   layoutMode: LayoutMode;
   onLayoutChange: (mode: LayoutMode) => void;
+  focusMode: boolean;
+  onFocusModeChange: (next: boolean) => void;
   onStart: () => void;
   paperTitle: string;
   durationSec: number;
@@ -1125,6 +1269,8 @@ function StartOverlay({
   open,
   layoutMode,
   onLayoutChange,
+  focusMode,
+  onFocusModeChange,
   onStart,
   paperTitle,
   durationSec,
@@ -1157,6 +1303,22 @@ function StartOverlay({
           <div className="rounded-xl border border-border bg-background/60 p-4">
             <div className="text-small font-semibold text-foreground">{paperTitle}</div>
             <div className="mt-1 text-caption text-foreground/70">Approx. {minutes} minute session</div>
+          </div>
+          {resumeAvailable ? (
+            <div className="rounded-xl border border-warning/50 bg-warning/10 px-4 py-3 text-small text-warning">
+              <p className="font-semibold">We saved your progress.</p>
+              <p className="text-caption text-warning/90">
+                Your answers, highlights, and timer will resume from the last checkpoint.
+              </p>
+            </div>
+          ) : null}
+          <div className="rounded-xl border border-border bg-background/60 p-4">
+            <div className="text-small font-semibold text-foreground">Instructions &amp; rules</div>
+            <ul className="mt-2 list-disc space-y-2 pl-5 text-small text-foreground/80">
+              <li>The timer keeps running even if you leave or refresh the page.</li>
+              <li>Use highlights and notes to mark the passage — everything autosaves.</li>
+              <li>Flag questions you want to review before submitting.</li>
+            </ul>
           </div>
           <div className="space-y-2">
             <div className="text-small font-medium text-foreground" id={`${dialogId}-layout-label`}>
@@ -1195,6 +1357,14 @@ function StartOverlay({
                 );
               })}
             </div>
+          </div>
+          <div className="rounded-xl border border-border bg-background/70 p-4">
+            <Checkbox
+              checked={focusMode}
+              onCheckedChange={onFocusModeChange}
+              label="Start in focus mode"
+              description="Hide navigation and notifications for a distraction-free session. You can exit anytime from the exam header."
+            />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-caption text-foreground/60">Layout applies on desktop; mobile stays single column.</p>
@@ -1326,6 +1496,24 @@ function setStoredLayoutMode(mode: LayoutMode) {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(LAYOUT_PREF_KEY, mode);
+  } catch {
+    // ignore persistence errors
+  }
+}
+
+function getStoredFocusMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(FOCUS_MODE_PREF_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function setStoredFocusMode(value: boolean) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(FOCUS_MODE_PREF_KEY, value ? '1' : '0');
   } catch {
     // ignore persistence errors
   }
