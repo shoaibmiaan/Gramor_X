@@ -28,6 +28,14 @@ const Modules = dynamic(
   { ssr: true, loading: () => <SectionSkeleton /> }
 );
 
+const VocabularyFeature = dynamic(
+  () =>
+    import('@/components/sections/VocabularyFeature').then(
+      (m: any) => m.VocabularyFeature ?? m.default
+    ),
+  { ssr: true, loading: () => <SectionSkeleton /> }
+);
+
 const Testimonials = dynamic(
   () =>
     import('@/components/sections/Testimonials').then(
@@ -178,6 +186,14 @@ export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomeProps) {
               </span>
             </div>
           </Container>
+        </section>
+
+        <section
+          id="vocabulary-module"
+          aria-label="Vocabulary Module"
+          className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90"
+        >
+          <VocabularyFeature />
         </section>
 
         <section
