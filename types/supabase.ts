@@ -238,6 +238,14 @@ export interface Attempts extends TableBase {
   band?: number;
 }
 
+export interface ReadingNoteTable extends TableBase {
+  user_id: string;
+  attempt_id: string;
+  passage_id: string;
+  ranges: Array<{ start: number; end: number; color?: string | null }>;
+  note_text?: string | null;
+}
+
 export interface Invoices extends TableBase {
   user_id: string;
   provider: 'stripe' | 'easypaisa' | 'jazzcash';
@@ -361,6 +369,7 @@ export interface DBSchema {
   study_plans: StudyPlans;
   usage_counters: UsageCounters;
   attempts: Attempts;
+  reading_notes: ReadingNoteTable;
   invoices: Invoices;
   writing_prompts: WritingPrompts;
 
