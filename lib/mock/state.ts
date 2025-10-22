@@ -1,6 +1,3 @@
-import { getAttemptProgress, getLatestAttemptProgress, saveAttemptProgress } from '@/lib/attempts/progress';
-import type { AttemptProgressRequest } from '@/types/api/progress';
-
 export type MockSection = 'listening' | 'reading' | 'writing' | 'speaking';
 
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -11,6 +8,20 @@ type LegacyKeyBuilder = (mockId: string) => string;
 
 const ACTIVE_KEY = (section: MockSection, mockId: string) => `mock:active:${section}:${mockId}`;
 const DRAFT_KEY = (section: MockSection, mockId: string) => `mock:draft:${section}:${mockId}`;
+
+const SECTION_INDEX: Record<MockSection, number> = {
+  listening: 0,
+  reading: 1,
+  writing: 2,
+  speaking: 3,
+};
+
+const SECTION_FROM_INDEX: Record<number, MockSection> = {
+  0: 'listening',
+  1: 'reading',
+  2: 'writing',
+  3: 'speaking',
+};
 
 const LEGACY_KEYS: Partial<Record<MockSection, LegacyKeyBuilder>> = {
   writing: (mockId) => `write:attempt:${mockId}`,
@@ -161,24 +172,27 @@ const clampDuration = (value?: number) => {
   return Math.max(0, Math.round(value));
 };
 
-const readMockId = (context: Record<string, unknown> | undefined): string => {
-  const value = context?.mockId;
-  return typeof value === 'string' ? value : '';
-};
-
 export async function saveMockCheckpoint(input: SaveCheckpointInput): Promise<boolean> {
   if (!input?.attemptId) return false;
-  const body: AttemptProgressRequest = {
-    module: input.section,
-    draft: input.payload ?? {},
+  const body = {
+    attemptId: input.attemptId,
+    sectionIndex: SECTION_INDEX[input.section] ?? 0,
+    snapshot: input.payload ?? {},
+    mockId: input.mockId,
     elapsedSeconds: clampSeconds(input.elapsed),
     durationSeconds: clampDuration(input.duration),
     completed: Boolean(input.completed),
-    context: { mockId: input.mockId },
-    draftUpdatedAt: new Date().toISOString(),
   };
-  const res = await saveAttemptProgress(input.attemptId, body);
-  return res.ok;
+  try {
+    const res = await fetch('/api/mock/checkpoints', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function fetchMockCheckpoint(params: {
@@ -188,41 +202,60 @@ export async function fetchMockCheckpoint(params: {
   mockId?: string;
 }): Promise<MockCheckpoint | null> {
   try {
-    const moduleSection = params.section;
-    const includeCompleted = params.includeCompleted ?? false;
-    if (params.attemptId) {
-      const response = await getAttemptProgress(params.attemptId, {
-        module: moduleSection,
-        includeCompleted,
-        mockId: params.mockId,
-      });
-      if (!response.ok || !response.progress) return null;
-      return {
-        attemptId: response.progress.attemptId,
-        section: response.progress.module as MockSection,
-        mockId: readMockId(response.progress.context),
-        payload: (response.progress.draft as MockCheckpointPayload) ?? {},
-        elapsed: response.progress.elapsedSeconds ?? 0,
-        duration: response.progress.durationSeconds ?? null,
-        completed: response.progress.completed,
-        updatedAt: response.progress.updatedAt,
-      };
+    const query = new URLSearchParams();
+    if (params.attemptId) query.set('attemptId', params.attemptId);
+    if (params.section) query.set('sectionIndex', String(SECTION_INDEX[params.section] ?? 0));
+    if (params.includeCompleted) query.set('includeCompleted', 'true');
+    if (params.mockId) query.set('mockId', params.mockId);
+
+    const res = await fetch(`/api/mock/checkpoints?${query.toString()}`);
+    const json = (await res.json()) as
+      | { ok: true; checkpoint: null }
+      | {
+          ok: true;
+          checkpoint: {
+            attemptId: string;
+            sectionIndex: number;
+            mockId: string | null;
+            snapshot: MockCheckpointPayload;
+            elapsedSeconds: number;
+            durationSeconds: number | null;
+            completed: boolean;
+            createdAt: string;
+          } | null;
+        }
+      | { ok: false; error: string };
+
+    if (!res.ok || !json || (json as any).ok === false) {
+      return null;
     }
-    const latest = await getLatestAttemptProgress({
-      module: moduleSection,
-      includeCompleted,
-      mockId: params.mockId,
-    });
-    if (!latest.ok || !latest.progress) return null;
+
+    const payload = (json as any).checkpoint as
+      | {
+          attemptId: string;
+          sectionIndex: number;
+          mockId: string | null;
+          snapshot: MockCheckpointPayload;
+          elapsedSeconds: number;
+          durationSeconds: number | null;
+          completed: boolean;
+          createdAt: string;
+        }
+      | null;
+
+    if (!payload) return null;
+
+    const section = SECTION_FROM_INDEX[payload.sectionIndex] ?? params.section ?? 'listening';
+
     return {
-      attemptId: latest.progress.attemptId,
-      section: latest.progress.module as MockSection,
-      mockId: readMockId(latest.progress.context),
-      payload: (latest.progress.draft as MockCheckpointPayload) ?? {},
-      elapsed: latest.progress.elapsedSeconds ?? 0,
-      duration: latest.progress.durationSeconds ?? null,
-      completed: latest.progress.completed,
-      updatedAt: latest.progress.updatedAt,
+      attemptId: payload.attemptId,
+      section,
+      mockId: payload.mockId ?? '',
+      payload: payload.snapshot ?? {},
+      elapsed: payload.elapsedSeconds ?? 0,
+      duration: payload.durationSeconds ?? null,
+      completed: payload.completed ?? false,
+      updatedAt: payload.createdAt,
     };
   } catch {
     return null;
