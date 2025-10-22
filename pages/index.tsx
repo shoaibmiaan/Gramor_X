@@ -4,6 +4,8 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import type { GetServerSideProps } from 'next';
 import type { HeroProps } from '@/components/sections/Hero';
+import type { HomeProps } from '@/types/home';
+import { createGuestHomeProps } from '@/lib/home';
 import { Icon } from '@/components/design-system/Icon';
 import { Container } from '@/components/design-system/Container';
 import { Badge } from '@/components/design-system/Badge';
@@ -65,11 +67,6 @@ const statHighlights = [
   },
 ] as const;
 
-type HomePageProps = {
-  serverNowMsUTC: number;
-  launchMsUTC: number;
-};
-
 function SectionSkeleton() {
   return (
     <div className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -85,7 +82,7 @@ function SectionSkeleton() {
   );
 }
 
-export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomePageProps) {
+export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomeProps) {
   const { t } = useLocale();
 
   // streak logic unchanged
@@ -219,14 +216,14 @@ export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomePageProps)
   );
 }
 
-export const getServerSideProps: GetServerSideProps<HomePageProps> = async () => {
+export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
   const launchMsUTC = Math.floor(getLaunchMsUTC());
   const serverNowMsUTC = Date.now();
 
   return {
-    props: {
+    props: createGuestHomeProps({
       serverNowMsUTC,
       launchMsUTC,
-    },
+    }),
   };
 };
