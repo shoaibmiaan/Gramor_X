@@ -1,14 +1,40 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { readingBandFromRaw } from '@/lib/reading/band';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+import {
+  computeReadingMockXp,
+  resolveTargetBand,
+  xpProgressPercent,
+  xpRequiredForBand,
+} from '@/lib/mock/xp';
+import type { MockReadingResultResponse } from '@/types/api/mock';
 
 type QType = 'tfng' | 'yynn' | 'heading' | 'match' | 'mcq' | 'gap';
 type Q = { id: string; type: QType; prompt?: string; options?: string[]; answer: string; explanation?: string };
 type Passage = { id: string; title: string; text: string; questions: Q[] };
 type ReadingPaper = { id: string; title: string; passages: Passage[] };
 
-type Attempt = { id: string; answers: Record<string, string>; score: number; total: number; percentage: number; submitted_at: string };
+type Attempt = {
+  id: string;
+  answers: Record<string, string>;
+  correct: number;
+  total: number;
+  percentage: number;
+  submittedAt: string | null;
+  band: number;
+  durationSec: number;
+};
+
+type ResultMeta = {
+  xpAwarded: number;
+  xpTotal: number;
+  xpRequired: number;
+  xpPercent: number;
+  targetBand: number;
+  streak: number;
+};
 
 const loadPaper = async (id: string): Promise<ReadingPaper> => {
   try { const mod = await import(`@/data/reading/${id}.json`); return mod.default as ReadingPaper; } catch {
@@ -53,23 +79,79 @@ export default function ReadingReviewPage() {
   useEffect(() => { if (!id) return; (async () => setPaper(await loadPaper(id)))(); }, [id]);
   useEffect(() => {
     if (!attempt) return;
+    let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase.from('attempts_reading').select('*').eq('id', attempt).single();
-        if (data) { setAtt(data as Attempt); return; }
-      } catch {}
+        const res = await fetch(`/api/mock/reading/result?attemptId=${encodeURIComponent(attempt)}`);
+        if (!res.ok) throw new Error('Failed to load attempt');
+        const json = (await res.json()) as MockReadingResultResponse;
+        if (!json.ok) throw new Error(json.error || 'Failed to load attempt');
+        if (cancelled) return;
+        const attemptData = json.attempt;
+        setAtt({
+          id: attemptData.id,
+          answers: attemptData.answers ?? {},
+          correct: attemptData.correct,
+          total: attemptData.total,
+          percentage: attemptData.percentage,
+          submittedAt: attemptData.submittedAt ?? null,
+          band: attemptData.band,
+          durationSec: attemptData.durationSec,
+        });
+        setMeta({
+          xpAwarded: json.xp.awarded,
+          xpTotal: json.xp.total,
+          xpRequired: json.xp.required,
+          xpPercent: json.xp.percent,
+          targetBand: json.xp.targetBand,
+          streak: json.streak?.current ?? 0,
+        });
+        return;
+      } catch (error) {
+        console.warn('[review/reading] attempt fetch failed', error);
+      }
+
       try {
         const raw = localStorage.getItem(`read:attempt-res:${attempt}`);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const answers = parsed.answers || {};
-          const flat: Q[] = (parsed.paper?.passages ?? []).flatMap((p: any) => p.questions);
-          const total = flat.length; let score = 0;
-          for (const q of flat) if ((answers[q.id] ?? '').trim().toLowerCase() === (q.answer ?? '').trim().toLowerCase()) score++;
-          setAtt({ id: attempt, answers, score, total, percentage: Math.round((score/(total||1))*100), submitted_at: new Date().toISOString() });
-        }
-      } catch {}
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const answers = parsed.answers || {};
+        const flat: Q[] = (parsed.paper?.passages ?? []).flatMap((p: any) => p.questions);
+        const total = flat.length;
+        let correct = 0;
+        for (const q of flat) if ((answers[q.id] ?? '').trim().toLowerCase() === (q.answer ?? '').trim().toLowerCase()) correct++;
+        const band = readingBandFromRaw(correct, Math.max(1, total));
+        if (cancelled) return;
+        setAtt({
+          id: attempt,
+          answers,
+          correct,
+          total,
+          percentage: Math.round((correct / Math.max(1, total)) * 100),
+          submittedAt: new Date().toISOString(),
+          band,
+          durationSec: 0,
+        });
+        const xpInfo = computeReadingMockXp(correct, Math.max(1, total), 0);
+        const targetBand = resolveTargetBand(band);
+        const required = xpRequiredForBand(targetBand);
+        const percent = xpProgressPercent(xpInfo.xp, required);
+        setMeta({
+          xpAwarded: xpInfo.xp,
+          xpTotal: xpInfo.xp,
+          xpRequired: required,
+          xpPercent: percent,
+          targetBand,
+          streak: 0,
+        });
+      } catch (error) {
+        console.warn('[review/reading] local fallback failed', error);
+      }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [attempt]);
 
   const flatQs = useMemo(() => paper?.passages.flatMap((p) => p.questions) ?? [], [paper]);
@@ -96,8 +178,39 @@ export default function ReadingReviewPage() {
   return (
     <Shell
       title={`Review — ${paper.title}`}
-      right={<div className="rounded-full border border-border px-3 py-1 text-small">Score: {att.score}/{att.total} ({att.percentage}%)</div>}
+      right={(
+        <div className="rounded-full border border-border px-3 py-1 text-small">
+          Band {att.band.toFixed(1)} • {att.correct}/{att.total} ({att.percentage}%)
+        </div>
+      )}
     >
+      {meta ? (
+        <section className="rounded-2xl border border-border bg-background/60 p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-caption uppercase tracking-wide text-muted-foreground">
+                Toward Band {meta.targetBand.toFixed(1)}
+              </p>
+              <h2 className="text-h4 font-semibold text-foreground">
+                +{meta.xpAwarded} XP from this mock
+              </h2>
+              <p className="text-small text-muted-foreground">
+                Total {totalLabel} XP • {percentLabel}% complete
+                {meta.streak > 0 ? ` • Streak ${meta.streak} day${meta.streak === 1 ? '' : 's'}` : ''}
+              </p>
+            </div>
+            <div className="w-full lg:max-w-sm">
+              <ProgressBar value={percentLabel} ariaLabel="Band progress" />
+              <p className="mt-2 text-caption text-muted-foreground">
+                {submittedAt
+                  ? `Submitted ${submittedAt.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                  : 'Submission time unavailable'}
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="rounded-2xl border border-border p-4">
         <h2 className="mb-2 text-body font-semibold">Performance by question type</h2>
         <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
