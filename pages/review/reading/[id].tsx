@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
@@ -48,6 +48,7 @@ export default function ReadingReviewPage() {
 
   const [paper, setPaper] = useState<ReadingPaper | null>(null);
   const [att, setAtt] = useState<Attempt | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => { if (!id) return; (async () => setPaper(await loadPaper(id)))(); }, [id]);
   useEffect(() => {
@@ -86,6 +87,10 @@ export default function ReadingReviewPage() {
     return Object.entries(map).map(([type, { correct, total }]) => ({ type, correct, total, pct: Math.round((correct / total) * 100) }));
   }, [paper, att, flatQs]);
 
+  const toggleExplanation = useCallback((qid: string) => {
+    setExpanded((prev) => ({ ...prev, [qid]: !prev[qid] }));
+  }, []);
+
   if (!paper || !att) return <Shell title="Review — Loading…"><div className="rounded-2xl border border-border p-4">Loading…</div></Shell>;
 
   return (
@@ -111,6 +116,8 @@ export default function ReadingReviewPage() {
           {flatQs.map((q, idx) => {
             const given = (att.answers?.[q.id] ?? '').trim();
             const ok = given.toLowerCase() === (q.answer ?? '').trim().toLowerCase();
+            const panelId = `ai-exp-${q.id}`;
+            const isOpen = Boolean(expanded[q.id]);
             return (
               <div key={q.id} className="rounded-lg border border-border p-3">
                 <div className="mb-1 text-small text-foreground/80">Q{idx + 1}. {q.prompt || q.id}</div>
@@ -119,7 +126,30 @@ export default function ReadingReviewPage() {
                   <span className="ml-3">Your answer: <strong>{given || '—'}</strong></span>
                   {!ok && <span className="ml-3">Correct: <strong>{q.answer}</strong></span>}
                 </div>
-                {q.explanation && <p className="mt-2 text-small text-foreground/80">{q.explanation}</p>}
+                {q.explanation && (
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleExplanation(q.id)}
+                      aria-expanded={isOpen}
+                      aria-controls={panelId}
+                      className="flex items-center gap-2 text-small font-medium text-primary hover:text-primary/80"
+                    >
+                      <span>{isOpen ? 'Hide AI explanation' : 'Show AI explanation'}</span>
+                      <span className={`inline-block text-xs transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden>
+                        ▾
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div
+                        id={panelId}
+                        className="mt-2 rounded-lg border border-dashed border-border/70 bg-foreground/5 p-3 text-small text-foreground/80"
+                      >
+                        <p className="whitespace-pre-wrap leading-6">{q.explanation}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

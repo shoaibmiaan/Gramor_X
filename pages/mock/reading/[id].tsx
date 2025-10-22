@@ -20,6 +20,17 @@ type ReadingPaper = { id: string; title: string; durationSec: number; passages: 
 
 type AnswerMap = Record<string, string>;
 type DraftState = { answers: AnswerMap; passageIdx: number; timeLeft?: number };
+type WrongDetail = { question: Q; givenAnswer: string; passage: Passage; passageIndex: number };
+type MistakeSyncItem = {
+  questionId: string;
+  prompt: string;
+  correctAnswer: string;
+  givenAnswer: string;
+  retryPath: string;
+  tags: { key: string; value: string }[];
+  skill: string;
+};
+type FocusAreaPayload = { kind: string; key: string; label: string };
 
 const sampleReading: ReadingPaper = {
   id: 'sample-001',
@@ -67,6 +78,17 @@ export default function ReadingMockPage() {
   const [attemptReady, setAttemptReady] = useState(false);
   const [checkpointHydrated, setCheckpointHydrated] = useState(false);
   const latestRef = useRef<{ answers: AnswerMap; passageIdx: number; timeLeft: number }>({ answers: {}, passageIdx: 0, timeLeft: 0 });
+
+  const questionLookup = useMemo(() => {
+    if (!paper) return new Map<string, { passage: Passage; passageIndex: number }>();
+    const map = new Map<string, { passage: Passage; passageIndex: number }>();
+    paper.passages.forEach((passage, idx) => {
+      passage.questions.forEach((question) => {
+        map.set(question.id, { passage, passageIndex: idx });
+      });
+    });
+    return map;
+  }, [paper]);
 
   useEffect(() => {
     if (!id) return;
@@ -204,36 +226,89 @@ export default function ReadingMockPage() {
   const submit = async () => {
     if (!paper || !id) return;
     const flatQ = paper.passages.flatMap((p) => p.questions);
+    const wrongDetails: WrongDetail[] = [];
     let correct = 0;
-    for (const q of flatQ) if (normalize(answers[q.id] || '') === normalize(q.answer)) correct++;
-    const percentage = Math.round((correct / flatQ.length) * 100);
+
+    for (const q of flatQ) {
+      const givenRaw = (answers[q.id] ?? '').trim();
+      if (normalize(givenRaw) === normalize(q.answer)) {
+        correct++;
+        continue;
+      }
+
+      const meta = questionLookup.get(q.id);
+      if (meta) {
+        wrongDetails.push({ question: q, givenAnswer: givenRaw, passage: meta.passage, passageIndex: meta.passageIndex });
+      } else if (paper.passages[0]) {
+        wrongDetails.push({ question: q, givenAnswer: givenRaw, passage: paper.passages[0], passageIndex: 0 });
+      }
+    }
+
+    const percentage = flatQ.length ? Math.round((correct / flatQ.length) * 100) : 0;
     let attemptId = '';
+    let persisted = false;
+
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user?.id) throw new Error('Not authenticated');
-      const payload = { user_id: u.user.id, paper_id: paper.id, answers, score: correct, total: flatQ.length, percentage, submitted_at: new Date().toISOString(), duration_sec: paper.durationSec - timeLeft };
+      const payload = {
+        user_id: u.user.id,
+        paper_id: paper.id,
+        answers,
+        score: correct,
+        total: flatQ.length,
+        percentage,
+        submitted_at: new Date().toISOString(),
+        duration_sec: paper.durationSec - timeLeft,
+      };
       const { data, error } = await supabase.from('attempts_reading').insert(payload).select('id').single();
       if (error) throw error;
       attemptId = data.id as unknown as string;
+      persisted = true;
     } catch {
       attemptId = `local-${Date.now()}`;
       try { localStorage.setItem(`read:attempt-res:${attemptId}`, JSON.stringify({ paper, answers })); } catch {}
-    } finally {
-      if (attemptRef.current) {
-        void saveMockCheckpoint({
-          attemptId: attemptRef.current,
-          section: 'reading',
-          mockId: paper.id,
-          payload: { paperId: paper.id, answers, passageIdx, timeLeft },
-          elapsed: paper.durationSec - timeLeft,
-          duration: paper.durationSec,
-          completed: true,
-        });
-        clearMockAttemptId('reading', paper.id);
-      }
-      clearMockDraft('reading', id);
-      router.replace(`/review/reading/${id}?attempt=${attemptId}`);
     }
+
+    if (persisted) {
+      const mistakeItems = buildMistakeItems(wrongDetails, paper.id);
+      const focusAreas = buildFocusAreas(wrongDetails);
+      const reasonCodes = buildReasonCodes(wrongDetails, 'reading');
+      const syncPromises: Promise<unknown>[] = [];
+
+      if (mistakeItems.length > 0) {
+        syncPromises.push(syncMistakesToBook({ attemptId, paperId: paper.id, items: mistakeItems }));
+      }
+
+      syncPromises.push(
+        applyStudyPlanReco({
+          attemptId,
+          module: 'reading',
+          focusAreas,
+          reasonCodes,
+        }),
+      );
+
+      if (syncPromises.length) {
+        await Promise.allSettled(syncPromises);
+      }
+    }
+
+    if (attemptRef.current) {
+      void saveMockCheckpoint({
+        attemptId: attemptRef.current,
+        section: 'reading',
+        mockId: paper.id,
+        payload: { paperId: paper.id, answers, passageIdx, timeLeft },
+        elapsed: paper.durationSec - timeLeft,
+        duration: paper.durationSec,
+        completed: true,
+      });
+      clearMockAttemptId('reading', paper.id);
+    }
+
+    clearMockDraft('reading', id);
+    router.replace(`/review/reading/${id}?attempt=${attemptId}`);
   };
 
   if (!paper || !current) return <Shell title="Loading..."><div className="rounded-2xl border border-border p-4">Loading paper…</div></Shell>;
@@ -318,3 +393,164 @@ const Options: React.FC<{ options: string[]; value: string; onPick: (v: string) 
 );
 const hhmmss = (sec: number) => `${Math.floor(sec/60).toString().padStart(2,'0')}:${Math.floor(sec%60).toString().padStart(2,'0')}`;
 const normalize = (s: string) => s.trim().toLowerCase();
+
+const difficultyForType = (t: QType): string => {
+  switch (t) {
+    case 'heading':
+    case 'match':
+    case 'gap':
+      return 'Challenging';
+    default:
+      return 'Moderate';
+  }
+};
+
+function buildMistakeItems(details: WrongDetail[], paperId: string): MistakeSyncItem[] {
+  return details.map((detail) => ({
+    questionId: detail.question.id,
+    prompt: detail.question.prompt || detail.question.id,
+    correctAnswer: detail.question.answer,
+    givenAnswer: detail.givenAnswer,
+    retryPath: `/mock/reading/${paperId}?focus=${encodeURIComponent(detail.question.id)}`,
+    tags: [
+      { key: 'Type', value: labelType(detail.question.type) },
+      { key: 'Passage', value: `Passage ${detail.passageIndex + 1}` },
+      { key: 'Difficulty', value: difficultyForType(detail.question.type) },
+    ],
+    skill: 'reading',
+  }));
+}
+
+function buildFocusAreas(details: WrongDetail[]): FocusAreaPayload[] {
+  if (details.length === 0) return [];
+
+  const typeCounts = new Map<QType, number>();
+  const passageCounts = new Map<
+    string,
+    {
+      title: string;
+      index: number;
+      count: number;
+    }
+  >();
+  const difficultyCounts = new Map<string, number>();
+
+  details.forEach((detail) => {
+    typeCounts.set(detail.question.type, (typeCounts.get(detail.question.type) ?? 0) + 1);
+    const passageMeta = passageCounts.get(detail.passage.id) ?? {
+      title: detail.passage.title,
+      index: detail.passageIndex,
+      count: 0,
+    };
+    passageMeta.count += 1;
+    passageCounts.set(detail.passage.id, passageMeta);
+    const difficultyKey = difficultyForType(detail.question.type);
+    difficultyCounts.set(difficultyKey, (difficultyCounts.get(difficultyKey) ?? 0) + 1);
+  });
+
+  const focus: FocusAreaPayload[] = [];
+  const sortedTypes = Array.from(typeCounts.entries()).sort((a, b) => b[1] - a[1]);
+  const sortedPassages = Array.from(passageCounts.entries()).sort((a, b) => b[1].count - a[1].count);
+  const sortedDifficulty = Array.from(difficultyCounts.entries()).sort((a, b) => b[1] - a[1]);
+
+  if (sortedTypes[0]) {
+    focus.push({ kind: 'questionType', key: sortedTypes[0][0], label: labelType(sortedTypes[0][0]) });
+  }
+
+  if (sortedPassages[0]) {
+    const meta = sortedPassages[0][1];
+    focus.push({
+      kind: 'passage',
+      key: sortedPassages[0][0],
+      label: meta.title || `Passage ${meta.index + 1}`,
+    });
+  }
+
+  if (sortedDifficulty[0] && focus.length < 3) {
+    focus.push({
+      kind: 'difficulty',
+      key: sortedDifficulty[0][0].toLowerCase(),
+      label: `${sortedDifficulty[0][0]} difficulty`,
+    });
+  }
+
+  if (focus.length < 3 && sortedTypes[1]) {
+    focus.push({ kind: 'questionType', key: sortedTypes[1][0], label: labelType(sortedTypes[1][0]) });
+  }
+
+  return focus.slice(0, 3);
+}
+
+function buildReasonCodes(details: WrongDetail[], module: string): string[] {
+  const base = new Set<string>([`${module}.mock.completed`]);
+  details.forEach((detail) => {
+    base.add(`${module}.qtype.${detail.question.type}`);
+    base.add(`${module}.passage.${detail.passage.id}`);
+    const difficultyKey = difficultyForType(detail.question.type).toLowerCase().replace(/\s+/g, '-');
+    base.add(`${module}.difficulty.${difficultyKey}`);
+  });
+  return Array.from(base).slice(0, 12);
+}
+
+async function syncMistakesToBook({
+  attemptId,
+  paperId,
+  items,
+}: {
+  attemptId: string;
+  paperId: string;
+  items: MistakeSyncItem[];
+}): Promise<void> {
+  if (!items.length) return;
+  try {
+    await fetch('/api/mistakes/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        attemptId,
+        paperId,
+        module: 'reading',
+        mistakes: items,
+      }),
+      keepalive: true,
+    });
+  } catch (error) {
+    console.error('Failed to sync mistakes', error);
+  }
+}
+
+async function applyStudyPlanReco({
+  attemptId,
+  module,
+  focusAreas,
+  reasonCodes,
+}: {
+  attemptId: string;
+  module: 'reading';
+  focusAreas: FocusAreaPayload[];
+  reasonCodes: string[];
+}): Promise<void> {
+  try {
+    await fetch('/api/plan/apply-reco', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ attemptId, module, focusAreas, reasonCodes }),
+      keepalive: true,
+    });
+  } catch (error) {
+    console.error('Failed to update study plan', error);
+  }
+}
+
+const labelType = (t: QType) =>
+  t === 'tfng'
+    ? 'True/False/Not Given'
+    : t === 'yynn'
+    ? 'Yes/No/Not Given'
+    : t === 'heading'
+    ? 'Headings'
+    : t === 'match'
+    ? 'Matching'
+    : t === 'mcq'
+    ? 'Multiple Choice'
+    : 'Gap Fill';
