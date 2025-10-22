@@ -46,5 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     total: attempt.total_questions ?? summary.totalQuestions ?? 0,
     items: Array.isArray(resultJson.items) ? resultJson.items : [],
     breakdown: resultJson.breakdown ?? null,
+    difficultyBreakdown: resultJson.difficultyBreakdown ?? null,
   });
 }
