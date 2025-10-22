@@ -151,6 +151,17 @@ export default function ReadingMockPage() {
   const [notesLoaded, setNotesLoaded] = useState(true);
   const DEFAULT_NOTE_COLOR = 'warning';
 
+  const questionLookup = useMemo(() => {
+    if (!paper) return new Map<string, { passage: Passage; passageIndex: number }>();
+    const map = new Map<string, { passage: Passage; passageIndex: number }>();
+    paper.passages.forEach((passage, idx) => {
+      passage.questions.forEach((question) => {
+        map.set(question.id, { passage, passageIndex: idx });
+      });
+    });
+    return map;
+  }, [paper]);
+
   useEffect(() => {
     if (!id) return;
     const attempt = ensureMockAttemptId('reading', id);
@@ -802,6 +813,7 @@ export default function ReadingMockPage() {
   const submit = async () => {
     if (!paper || !id) return;
     const flatQ = paper.passages.flatMap((p) => p.questions);
+    const wrongDetails: WrongDetail[] = [];
     let correct = 0;
     for (const q of flatQ) {
       const entry = answers[q.id];
@@ -810,13 +822,25 @@ export default function ReadingMockPage() {
     }
     const percentage = Math.round((correct / flatQ.length) * 100);
     let attemptId = '';
+    let persisted = false;
+
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user?.id) throw new Error('Not authenticated');
-      const payload = { user_id: u.user.id, paper_id: paper.id, answers, score: correct, total: flatQ.length, percentage, submitted_at: new Date().toISOString(), duration_sec: paper.durationSec - timeLeft };
+      const payload = {
+        user_id: u.user.id,
+        paper_id: paper.id,
+        answers,
+        score: correct,
+        total: flatQ.length,
+        percentage,
+        submitted_at: new Date().toISOString(),
+        duration_sec: paper.durationSec - timeLeft,
+      };
       const { data, error } = await supabase.from('attempts_reading').insert(payload).select('id').single();
       if (error) throw error;
       attemptId = data.id as unknown as string;
+      persisted = true;
     } catch {
       attemptId = `local-${Date.now()}`;
       try { localStorage.setItem(`read:attempt-res:${attemptId}`, JSON.stringify({ paper, answers })); } catch {}
@@ -845,9 +869,36 @@ export default function ReadingMockPage() {
         });
         clearMockAttemptId('reading', paper.id);
       }
-      clearMockDraft('reading', id);
-      router.replace(`/review/reading/${id}?attempt=${attemptId}`);
+
+      syncPromises.push(
+        applyStudyPlanReco({
+          attemptId,
+          module: 'reading',
+          focusAreas,
+          reasonCodes,
+        }),
+      );
+
+      if (syncPromises.length) {
+        await Promise.allSettled(syncPromises);
+      }
     }
+
+    if (attemptRef.current) {
+      void saveMockCheckpoint({
+        attemptId: attemptRef.current,
+        section: 'reading',
+        mockId: paper.id,
+        payload: { paperId: paper.id, answers, passageIdx, timeLeft },
+        elapsed: paper.durationSec - timeLeft,
+        duration: paper.durationSec,
+        completed: true,
+      });
+      clearMockAttemptId('reading', paper.id);
+    }
+
+    clearMockDraft('reading', id);
+    router.replace(`/review/reading/${id}?attempt=${attemptId}`);
   };
 
   if (!paper || !current) return <Shell title="Loading..."><div className="rounded-2xl border border-border p-4">Loading paper…</div></Shell>;
