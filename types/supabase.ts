@@ -10,6 +10,23 @@ export interface TableBase {
   updated_at?: string; // ISO
 }
 
+export interface ReadingExplanation extends TableBase {
+  attempt_id: string;
+  section: string;
+  summary: string;
+  focus?: string | null;
+  reasons: unknown;
+  model?: string | null;
+  tokens?: number | null;
+}
+
+export interface ReadingItem {
+  question_id: string;
+  difficulty: 'easy' | 'med' | 'hard';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Words extends TableBase {
   word: string;
   headword: string;
@@ -221,6 +238,14 @@ export interface Attempts extends TableBase {
   band?: number;
 }
 
+export interface ReadingNoteTable extends TableBase {
+  user_id: string;
+  attempt_id: string;
+  passage_id: string;
+  ranges: Array<{ start: number; end: number; color?: string | null }>;
+  note_text?: string | null;
+}
+
 export interface Invoices extends TableBase {
   user_id: string;
   provider: 'stripe' | 'easypaisa' | 'jazzcash';
@@ -344,6 +369,7 @@ export interface DBSchema {
   study_plans: StudyPlans;
   usage_counters: UsageCounters;
   attempts: Attempts;
+  reading_notes: ReadingNoteTable;
   invoices: Invoices;
   writing_prompts: WritingPrompts;
 
