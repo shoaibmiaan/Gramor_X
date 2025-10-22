@@ -103,7 +103,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
       </header>
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
         {children}
-      </div>
+      </main>
     </div>
   </div>
 );
@@ -168,6 +168,10 @@ export default function ReadingMockPage() {
     attemptRef.current = attempt;
     setAttemptReady(true);
   }, [id]);
+
+  useEffect(() => {
+    void router.prefetch('/mock/reading/review/demo-attempt');
+  }, [router]);
 
   useEffect(() => {
     if (!id) return;
@@ -287,6 +291,27 @@ export default function ReadingMockPage() {
     const t = setInterval(() => setTimeLeft((x) => (x > 0 ? x - 1 : 0)), 1000);
     return () => clearInterval(t);
   }, [paper, isStarted]);
+
+  useEffect(() => {
+    if (!paper || !checkpointHydrated) return;
+    if (initialPassageFocus.current) {
+      initialPassageFocus.current = false;
+      return;
+    }
+    passageHeadingRef.current?.focus();
+  }, [paper, passageIdx, checkpointHydrated]);
+
+  useEffect(() => {
+    if (!paper) return;
+    const shouldAnnounce =
+      timeLeft === paper.durationSec ||
+      timeLeft === 0 ||
+      timeLeft % 60 === 0 ||
+      (timeLeft <= 60 && (timeLeft <= 10 || timeLeft % 15 === 0));
+    if (shouldAnnounce) {
+      setTimerAnnouncement(`Time remaining: ${formatTimeForAnnouncement(timeLeft)}`);
+    }
+  }, [paper, timeLeft]);
 
   const debouncedLocalDraft = useDebouncedCallback(
     (payload: DraftState) => {
@@ -925,6 +950,8 @@ export default function ReadingMockPage() {
     );
   }
 
+  const passageHeadingId = `passage-${current.id}-title`;
+
   return (
     <>
       <Shell
@@ -1527,6 +1554,34 @@ function isFlaggedEntry(entry?: AnswerEntry): boolean {
 }
 
 const hhmmss = (sec: number) => `${Math.floor(sec/60).toString().padStart(2,'0')}:${Math.floor(sec%60).toString().padStart(2,'0')}`;
+const formatTimeForAnnouncement = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const parts: string[] = [];
+  if (mins > 0) parts.push(`${mins} minute${mins === 1 ? '' : 's'}`);
+  if (secs > 0 || mins === 0) parts.push(`${secs} second${secs === 1 ? '' : 's'}`);
+  return parts.join(' ');
+};
+const toOptionId = (value: string, index: number) => {
+  const base = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return base || `option-${index}`;
+};
+const describeQuestionType = (type: QType) => {
+  switch (type) {
+    case 'tfng':
+      return 'True, False, or Not Given question';
+    case 'yynn':
+      return 'Yes, No, or Not Given question';
+    case 'heading':
+      return 'Heading matching question';
+    case 'match':
+      return 'Matching question';
+    case 'mcq':
+      return 'Multiple choice question';
+    default:
+      return 'Short answer question';
+  }
+};
 const normalize = (s: string) => s.trim().toLowerCase();
 
 function normalizeLayoutMode(value: unknown): LayoutMode {
