@@ -2,7 +2,7 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -33,6 +33,7 @@ import { Input } from '@/components/design-system/Input';
 import { Textarea } from '@/components/design-system/Textarea';
 import { Button } from '@/components/design-system/Button';
 import UpgradeModal from '@/components/premium/UpgradeModal';
+import { RouteLoadingOverlay } from '@/components/common/RouteLoadingOverlay';
 
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import PublicMarketingLayout from '@/components/layouts/PublicMarketingLayout';
@@ -143,6 +144,40 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const pathname = router.pathname;
   const { locale: activeLocale } = useLocale();
+  const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const routeLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const clearRouteLoadingTimeout = () => {
+      if (routeLoadingTimeoutRef.current) {
+        clearTimeout(routeLoadingTimeoutRef.current);
+        routeLoadingTimeoutRef.current = null;
+      }
+    };
+
+    const startLoading = () => {
+      clearRouteLoadingTimeout();
+      routeLoadingTimeoutRef.current = setTimeout(() => {
+        setIsRouteLoading(true);
+      }, 200);
+    };
+
+    const stopLoading = () => {
+      clearRouteLoadingTimeout();
+      setIsRouteLoading(false);
+    };
+
+    router.events.on('routeChangeStart', startLoading);
+    router.events.on('routeChangeComplete', stopLoading);
+    router.events.on('routeChangeError', stopLoading);
+
+    return () => {
+      router.events.off('routeChangeStart', startLoading);
+      router.events.off('routeChangeComplete', stopLoading);
+      router.events.off('routeChangeError', stopLoading);
+      clearRouteLoadingTimeout();
+    };
+  }, [router]);
 
   useEffect(() => {
     void loadTranslations(activeLocale as SupportedLocale);
@@ -463,6 +498,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <AuthAssistant />
           <SidebarAI />
           <UpgradeModal />
+          <RouteLoadingOverlay active={isRouteLoading} />
         </div>
       </HighContrastProvider>
     </ThemeProvider>
