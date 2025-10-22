@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { Flag } from 'lucide-react';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import {
   clearMockAttemptId,
@@ -13,6 +14,7 @@ import {
 } from '@/lib/mock/state';
 import { useDebouncedCallback } from 'use-debounce';
 import { ReadingPassage } from '@/components/exam/ReadingPassage';
+import { QuestionNav, type QuestionNavFilter, type QuestionNavQuestion } from '@/components/exam/QuestionNav';
 import { track } from '@/lib/analytics/track';
 
 type QType = 'tfng' | 'yynn' | 'heading' | 'match' | 'mcq' | 'gap';
@@ -20,7 +22,12 @@ type Q = { id: string; type: QType; prompt?: string; options?: string[]; answer:
 type Passage = { id: string; title: string; text: string; questions: Q[] };
 type ReadingPaper = { id: string; title: string; durationSec: number; passages: Passage[] };
 
-type AnswerMap = Record<string, string>;
+type AnswerEntry = {
+  value: string;
+  flagged: boolean;
+};
+
+type AnswerMap = Record<string, AnswerEntry>;
 type ReadingNote = {
   id: string;
   passageId: string;
@@ -35,6 +42,7 @@ type DraftState = {
   passageIdx: number;
   timeLeft?: number;
   notes?: ReadingNote[];
+  questionFilter?: QuestionNavFilter;
 };
 
 const sampleReading: ReadingPaper = {
@@ -80,18 +88,28 @@ export default function ReadingMockPage() {
   const [passageIdx, setPassageIdx] = useState(0);
   const [timeLeft, setTimeLeft] = useState(3600);
   const [notes, setNotes] = useState<ReadingNote[]>([]);
+  const [questionFilter, setQuestionFilter] = useState<QuestionNavFilter>('all');
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const attemptRef = useRef<string>('');
   const [attemptReady, setAttemptReady] = useState(false);
   const [checkpointHydrated, setCheckpointHydrated] = useState(false);
-  const latestRef = useRef<{ answers: AnswerMap; passageIdx: number; timeLeft: number; notes: ReadingNote[] }>({
+  const latestRef = useRef<{
+    answers: AnswerMap;
+    passageIdx: number;
+    timeLeft: number;
+    notes: ReadingNote[];
+    questionFilter: QuestionNavFilter;
+  }>({
     answers: {},
     passageIdx: 0,
     timeLeft: 0,
     notes: [],
+    questionFilter: 'all',
   });
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteEditorValue, setNoteEditorValue] = useState('');
   const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const questionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [notesLoaded, setNotesLoaded] = useState(true);
   const DEFAULT_NOTE_COLOR = 'warning';
 
@@ -109,7 +127,7 @@ export default function ReadingMockPage() {
       setPaper(p);
       const draft = loadMockDraft<DraftState>('reading', id);
       if (draft?.data) {
-        if (draft.data.answers) setAnswers(draft.data.answers);
+        if (draft.data.answers) setAnswers(normalizeAnswerMap(draft.data.answers));
         if (typeof draft.data.passageIdx === 'number') setPassageIdx(draft.data.passageIdx);
         if (typeof draft.data.timeLeft === 'number') {
           setTimeLeft(Math.max(0, Math.min(p.durationSec, Math.round(draft.data.timeLeft))));
@@ -117,9 +135,18 @@ export default function ReadingMockPage() {
           setTimeLeft(p.durationSec);
         }
         if (Array.isArray(draft.data.notes)) setNotes(draft.data.notes);
+        if (draft.data.questionFilter) {
+          setQuestionFilter(normalizeQuestionFilter(draft.data.questionFilter));
+        }
       } else {
         setTimeLeft(p.durationSec);
-        saveMockDraft('reading', id, { answers: {}, passageIdx: 0, timeLeft: p.durationSec, notes: [] });
+        saveMockDraft('reading', id, {
+          answers: {},
+          passageIdx: 0,
+          timeLeft: p.durationSec,
+          notes: [],
+          questionFilter: 'all',
+        });
       }
     })();
   }, [id]);
@@ -133,12 +160,13 @@ export default function ReadingMockPage() {
       if (cancelled) return;
       if (checkpoint && checkpoint.mockId === paper.id) {
         const payload = (checkpoint.payload || {}) as {
-          answers?: AnswerMap;
+          answers?: Record<string, unknown>;
           passageIdx?: number;
           timeLeft?: number;
           notes?: ReadingNote[];
+          questionFilter?: unknown;
         };
-        if (payload.answers) setAnswers(payload.answers);
+        if (payload.answers) setAnswers(normalizeAnswerMap(payload.answers));
         if (typeof payload.passageIdx === 'number') setPassageIdx(payload.passageIdx);
         if (typeof payload.timeLeft === 'number') {
           setTimeLeft(Math.max(0, Math.min(paper.durationSec, Math.round(payload.timeLeft))));
@@ -148,6 +176,9 @@ export default function ReadingMockPage() {
           setTimeLeft(Math.max(0, Math.min(paper.durationSec, remaining)));
         }
         if (Array.isArray(payload.notes)) setNotes(payload.notes);
+        if (payload.questionFilter) {
+          setQuestionFilter(normalizeQuestionFilter(payload.questionFilter));
+        }
       }
       setCheckpointHydrated(true);
     })();
@@ -173,16 +204,16 @@ export default function ReadingMockPage() {
   );
 
   useEffect(() => {
-    latestRef.current = { answers, passageIdx, timeLeft, notes };
-  }, [answers, passageIdx, timeLeft, notes]);
+    latestRef.current = { answers, passageIdx, timeLeft, notes, questionFilter };
+  }, [answers, passageIdx, timeLeft, notes, questionFilter]);
 
   useEffect(() => {
     if (!id) return;
-    debouncedLocalDraft({ answers, passageIdx, timeLeft, notes });
+    debouncedLocalDraft({ answers, passageIdx, timeLeft, notes, questionFilter });
     return () => {
       debouncedLocalDraft.flush();
     };
-  }, [id, answers, passageIdx, timeLeft, notes, debouncedLocalDraft]);
+  }, [id, answers, passageIdx, timeLeft, notes, questionFilter, debouncedLocalDraft]);
 
   const persistCheckpoint = useCallback(
     (opts?: { completed?: boolean }) => {
@@ -199,6 +230,7 @@ export default function ReadingMockPage() {
           passageIdx: state.passageIdx,
           timeLeft: state.timeLeft,
           notes: state.notes,
+          questionFilter: state.questionFilter,
         },
         elapsed,
         duration: paper.durationSec,
@@ -222,7 +254,7 @@ export default function ReadingMockPage() {
     if (!paper || !attemptReady || !checkpointHydrated) return;
     const handle = setTimeout(() => persistCheckpoint(), 1000);
     return () => clearTimeout(handle);
-  }, [answers, passageIdx, paper, attemptReady, checkpointHydrated, persistCheckpoint]);
+  }, [answers, passageIdx, questionFilter, paper, attemptReady, checkpointHydrated, persistCheckpoint]);
 
   useEffect(() => {
     if (!paper || !attemptReady || !checkpointHydrated) return;
@@ -287,6 +319,66 @@ export default function ReadingMockPage() {
     setEditingNoteId(null);
     setNoteEditorValue('');
   }, [current?.id]);
+
+  useEffect(() => {
+    if (!current || !current.questions || current.questions.length === 0) {
+      setActiveQuestionId(null);
+      return;
+    }
+    setActiveQuestionId((prev) => {
+      if (prev && current.questions.some((q) => q.id === prev)) {
+        return prev;
+      }
+      return current.questions[0]?.id ?? null;
+    });
+  }, [current]);
+
+  const questionItems = useMemo<QuestionNavQuestion[]>(() => {
+    if (!paper) return [];
+    const items: QuestionNavQuestion[] = [];
+    paper.passages.forEach((passage, passageIndex) => {
+      passage.questions.forEach((question) => {
+        items.push({ id: question.id, index: items.length + 1, label: `P${passageIndex + 1}` });
+      });
+    });
+    return items;
+  }, [paper]);
+
+  const questionIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    questionItems.forEach((item) => {
+      map.set(item.id, item.index);
+    });
+    return map;
+  }, [questionItems]);
+
+  const questionStats = useMemo(() => {
+    let answeredTotal = 0;
+    let flaggedTotal = 0;
+    questionItems.forEach((item) => {
+      const entry = answers[item.id];
+      if (isAnsweredEntry(entry)) answeredTotal++;
+      if (isFlaggedEntry(entry)) flaggedTotal++;
+    });
+    return {
+      total: questionItems.length,
+      answered: answeredTotal,
+      flagged: flaggedTotal,
+      unanswered: questionItems.length - answeredTotal,
+    };
+  }, [questionItems, answers]);
+
+  const nextUnanswered = useMemo(
+    () => questionItems.find((item) => !isAnsweredEntry(answers[item.id])),
+    [questionItems, answers]
+  );
+
+  const nextFlagged = useMemo(
+    () => questionItems.find((item) => isFlaggedEntry(answers[item.id])),
+    [questionItems, answers]
+  );
+
+  const currentQuestionId = activeQuestionId ?? current?.questions?.[0]?.id ?? null;
 
   const createAnnotation = useCallback(
     async (payload: SelectionInput) => {
@@ -489,11 +581,62 @@ export default function ReadingMockPage() {
     setNoteEditorValue('');
   }, []);
 
+  const updateAnswerValue = useCallback((questionId: string, value: string) => {
+    setAnswers((prev) => {
+      const current = prev[questionId] ?? { value: '', flagged: false };
+      if (current.value === value) return prev;
+      return { ...prev, [questionId]: { value, flagged: current.flagged } };
+    });
+    setActiveQuestionId(questionId);
+  }, []);
+
+  const toggleFlag = useCallback((questionId: string) => {
+    let nextFlag = false;
+    setAnswers((prev) => {
+      const current = prev[questionId] ?? { value: '', flagged: false };
+      nextFlag = !current.flagged;
+      const nextEntry: AnswerEntry = { value: current.value, flagged: nextFlag };
+      return { ...prev, [questionId]: nextEntry };
+    });
+    setActiveQuestionId(questionId);
+    track('reading.flag.toggle', { questionId, flagged: nextFlag });
+  }, [track]);
+
+  const applyQuestionFilter = useCallback(
+    (next: QuestionNavFilter, source: 'nav' | 'toolbar') => {
+      setQuestionFilter((prev) => {
+        if (prev === next) return prev;
+        track('reading.nav.filter', { filter: next, source });
+        return next;
+      });
+    },
+    [track]
+  );
+
+  const scrollToQuestion = useCallback((questionId: string) => {
+    const node = questionRefs.current[questionId];
+    setActiveQuestionId(questionId);
+    if (!node) return;
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        const interactive = node.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        interactive?.focus({ preventScroll: true });
+      }, 160);
+    }
+  }, []);
+
   const submit = async () => {
     if (!paper || !id) return;
     const flatQ = paper.passages.flatMap((p) => p.questions);
     let correct = 0;
-    for (const q of flatQ) if (normalize(answers[q.id] || '') === normalize(q.answer)) correct++;
+    for (const q of flatQ) {
+      const entry = answers[q.id];
+      const response = entry?.value ?? '';
+      if (normalize(response) === normalize(q.answer)) correct++;
+    }
     const percentage = Math.round((correct / flatQ.length) * 100);
     let attemptId = '';
     try {
@@ -514,7 +657,7 @@ export default function ReadingMockPage() {
           mockId: paper.id,
           // Include notes for resume flows as a fallback to the dedicated notes table
           // to guard against offline autosave scenarios.
-          payload: { paperId: paper.id, answers, passageIdx, timeLeft, notes },
+          payload: { paperId: paper.id, answers, passageIdx, timeLeft, notes, questionFilter },
           elapsed: paper.durationSec - timeLeft,
           duration: paper.durationSec,
           completed: true,
@@ -528,9 +671,14 @@ export default function ReadingMockPage() {
 
   if (!paper || !current) return <Shell title="Loading..."><div className="rounded-2xl border border-border p-4">Loading paper…</div></Shell>;
 
-  const palette = paper.passages.flatMap((p) => p.questions.map((q) => q.id));
-  const answered = Object.keys(answers).length;
-  const percent = Math.round((answered / palette.length) * 100);
+  const percent =
+    questionStats.total > 0 ? Math.round((questionStats.answered / questionStats.total) * 100) : 0;
+
+  const quickFilters: Array<{ id: QuestionNavFilter; label: string; count: number }> = [
+    { id: 'all', label: 'All', count: questionStats.total },
+    { id: 'unanswered', label: 'Unanswered', count: questionStats.unanswered },
+    { id: 'flagged', label: 'Flagged', count: questionStats.flagged },
+  ];
 
   return (
     <Shell
@@ -564,36 +712,129 @@ export default function ReadingMockPage() {
           Select text in the passage to highlight or add a note. Highlights autosave for this attempt.
         </div>
         <div className="mt-4 grid gap-3">
-          {current.questions.map((q) => (
-            <div key={q.id} className="rounded-lg border border-border p-3">
-              <div className="mb-1 text-small font-medium">{q.prompt || q.id}</div>
-              {renderInput(q, answers[q.id] || '', (val) => setAnswers((a) => ({ ...a, [q.id]: val })))}
-            </div>
-          ))}
+          {current.questions.map((q, idx) => {
+            const entry = answers[q.id] ?? { value: '', flagged: false };
+            const flagged = entry.flagged;
+            const answered = isAnsweredEntry(entry);
+            const questionNumber = questionIndexMap.get(q.id) ?? idx + 1;
+            return (
+              <div
+                key={q.id}
+                ref={(node) => {
+                  if (node) {
+                    questionRefs.current[q.id] = node;
+                  } else {
+                    delete questionRefs.current[q.id];
+                  }
+                }}
+                className={[
+                  'group rounded-xl border bg-background/90 p-4 transition focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background',
+                  flagged ? 'border-warning/80 bg-warning/5' : answered ? 'border-success/60' : 'border-border',
+                  currentQuestionId === q.id ? 'ring-1 ring-primary/40' : '',
+                ].join(' ')}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="text-caption font-semibold uppercase tracking-wide text-foreground/60">
+                      Question {questionNumber}
+                    </div>
+                    <div className="mt-1 text-small font-medium text-foreground">{q.prompt || q.id}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleFlag(q.id)}
+                    className={[
+                      'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-caption transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                      flagged
+                        ? 'border-warning bg-warning/10 text-warning'
+                        : 'border-border text-foreground/70 hover:border-warning hover:text-warning',
+                    ].join(' ')}
+                    aria-pressed={flagged}
+                  >
+                    <Flag className="h-3.5 w-3.5" aria-hidden />
+                    <span>{flagged ? 'Flagged' : 'Flag'}</span>
+                  </button>
+                </div>
+                <div className="mt-3">
+                  {renderInput(q, entry.value, {
+                    onChange: (val) => updateAnswerValue(q.id, val),
+                    onFocus: () => setActiveQuestionId(q.id),
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className="mt-4 flex justify-end">
-          <button onClick={submit} className="rounded-xl bg-primary px-4 py-2 font-medium text-background hover:opacity-90">Submit for scoring</button>
+        <div className="sticky bottom-0 mt-6 -mx-4 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Question filters">
+              {quickFilters.map((item) => {
+                const isActive = questionFilter === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => applyQuestionFilter(item.id, 'toolbar')}
+                    className={[
+                      'rounded-full border px-3 py-1 text-small transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                      isActive ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground hover:border-primary',
+                    ].join(' ')}
+                    aria-pressed={isActive}
+                  >
+                    {item.label}
+                    <span className="ml-2 text-foreground/60">{item.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  applyQuestionFilter('unanswered', 'toolbar');
+                  if (nextUnanswered) scrollToQuestion(nextUnanswered.id);
+                }}
+                className="rounded-full border border-border px-3 py-1 text-small text-foreground transition hover:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!nextUnanswered}
+              >
+                Review unanswered
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  applyQuestionFilter('flagged', 'toolbar');
+                  if (nextFlagged) scrollToQuestion(nextFlagged.id);
+                }}
+                className="rounded-full border border-border px-3 py-1 text-small text-foreground transition hover:border-warning disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!nextFlagged}
+              >
+                Review flagged
+              </button>
+              <button
+                onClick={submit}
+                className="rounded-full bg-primary px-4 py-2 text-small font-semibold text-background transition hover:opacity-90"
+              >
+                Submit for scoring
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right: palette */}
-      <aside className="flex h-full flex-col rounded-2xl border border-border bg-background/50 p-4">
-        <div>
-          <div className="mb-2 text-small font-medium">Question palette</div>
-          <div className="grid grid-cols-5 gap-2">
-            {palette.map((qid, idx) => (
-              <div
-                key={qid}
-                className={`rounded border py-1 text-center text-caption ${answers[qid] ? 'border-primary text-primary' : 'border-border'}`}
-              >
-                {idx + 1}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="mt-6 border-t border-border/60 pt-4">
+      {/* Right rail */}
+      <aside className="flex h-full flex-col gap-4">
+        <QuestionNav
+          questions={questionItems}
+          answers={answers}
+          filter={questionFilter}
+          onFilterChange={(next) => applyQuestionFilter(next, 'nav')}
+          onSelect={scrollToQuestion}
+          onToggleFlag={toggleFlag}
+          currentQuestionId={currentQuestionId}
+        />
+        <div className="flex-1 rounded-2xl border border-border bg-background/50 p-4">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <div className="text-small font-medium">Highlights & notes</div>
+            <div className="text-small font-medium">Highlights &amp; notes</div>
             {!notesLoaded && <span className="text-caption text-foreground/60">Syncing…</span>}
           </div>
           {passageNotes.length === 0 ? (
@@ -692,29 +933,99 @@ export default function ReadingMockPage() {
   );
 }
 
-function renderInput(q: Q, value: string, onChange: (v: string) => void) {
+function renderInput(
+  q: Q,
+  value: string,
+  handlers: { onChange: (v: string) => void; onFocus: () => void }
+) {
   if (q.type === 'tfng') {
     const opts = ['True', 'False', 'Not Given'];
-    return <Options options={opts} value={value} onPick={onChange} />;
+    return <Options options={opts} value={value} onPick={handlers.onChange} onFocus={handlers.onFocus} />;
   }
   if (q.type === 'yynn') {
     const opts = ['Yes', 'No', 'Not Given'];
-    return <Options options={opts} value={value} onPick={onChange} />;
+    return <Options options={opts} value={value} onPick={handlers.onChange} onFocus={handlers.onFocus} />;
   }
   if (q.type === 'heading' || q.type === 'match' || q.type === 'mcq') {
-    return <Options options={q.options || []} value={value} onPick={onChange} />;
+    return <Options options={q.options || []} value={value} onPick={handlers.onChange} onFocus={handlers.onFocus} />;
   }
   return (
-    <input value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background" placeholder="Type your answer" />
+    <input
+      value={value}
+      onChange={(e) => handlers.onChange(e.target.value)}
+      onFocus={handlers.onFocus}
+      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      placeholder="Type your answer"
+    />
   );
 }
-const Options: React.FC<{ options: string[]; value: string; onPick: (v: string) => void }> = ({ options, value, onPick }) => (
+const Options: React.FC<{
+  options: string[];
+  value: string;
+  onPick: (v: string) => void;
+  onFocus: () => void;
+}> = ({ options, value, onPick, onFocus }) => (
   <div className="flex flex-wrap gap-2">
     {options.map((opt) => (
-      <button key={opt} onClick={() => onPick(opt)} type="button" className={`rounded-lg border px-3 py-1 text-small hover:border-primary ${value === opt ? 'border-primary' : 'border-border'}`}>{opt}</button>
+      <button
+        key={opt}
+        onClick={() => {
+          onFocus();
+          onPick(opt);
+        }}
+        onFocus={onFocus}
+        type="button"
+        className={`rounded-lg border px-3 py-1 text-small transition hover:border-primary ${value === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground'}`}
+      >
+        {opt}
+      </button>
     ))}
   </div>
 );
+
+function normalizeAnswerEntry(value: unknown): AnswerEntry {
+  if (value && typeof value === 'object') {
+    const record = value as { value?: unknown; flagged?: unknown };
+    const raw = record.value;
+    const normalizedValue =
+      typeof raw === 'string' ? raw : raw == null ? '' : String(raw);
+    return {
+      value: normalizedValue,
+      flagged: record.flagged === true,
+    };
+  }
+  if (typeof value === 'string') {
+    return { value, flagged: false };
+  }
+  if (value == null) {
+    return { value: '', flagged: false };
+  }
+  return { value: String(value), flagged: false };
+}
+
+function normalizeAnswerMap(input: unknown): AnswerMap {
+  if (!input || typeof input !== 'object') return {};
+  const result: AnswerMap = {};
+  Object.entries(input as Record<string, unknown>).forEach(([key, value]) => {
+    if (typeof key !== 'string') return;
+    result[key] = normalizeAnswerEntry(value);
+  });
+  return result;
+}
+
+function normalizeQuestionFilter(value: unknown): QuestionNavFilter {
+  return value === 'flagged' || value === 'unanswered' ? value : 'all';
+}
+
+function isAnsweredEntry(entry?: AnswerEntry): boolean {
+  if (!entry) return false;
+  return entry.value.trim().length > 0;
+}
+
+function isFlaggedEntry(entry?: AnswerEntry): boolean {
+  return Boolean(entry?.flagged);
+}
+
 const hhmmss = (sec: number) => `${Math.floor(sec/60).toString().padStart(2,'0')}:${Math.floor(sec%60).toString().padStart(2,'0')}`;
 const normalize = (s: string) => s.trim().toLowerCase();
 
