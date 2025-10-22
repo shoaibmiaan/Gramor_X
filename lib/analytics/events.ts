@@ -44,7 +44,9 @@ export type AnalyticsEventName =
   | 'saved_view'
   | 'saved_remove'
   | 'reading.highlight.add'
-  | 'reading.note.add';
+  | 'reading.note.add'
+  | 'reading.flag.toggle'
+  | 'reading.nav.filter';
 
 export type AnalyticsProps = Record<
   string,
