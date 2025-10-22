@@ -10,6 +10,23 @@ export interface TableBase {
   updated_at?: string; // ISO
 }
 
+export interface ReadingExplanation extends TableBase {
+  attempt_id: string;
+  section: string;
+  summary: string;
+  focus?: string | null;
+  reasons: unknown;
+  model?: string | null;
+  tokens?: number | null;
+}
+
+export interface ReadingItem {
+  question_id: string;
+  difficulty: 'easy' | 'med' | 'hard';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Words extends TableBase {
   word: string;
   headword: string;
