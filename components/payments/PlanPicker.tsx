@@ -1,15 +1,15 @@
 // components/PlanPicker.tsx
 import * as React from 'react';
 
-type PlanKey = 'starter' | 'booster' | 'master';
-type Cycle = 'monthly' | 'annual';
+import { startCheckout as startCheckoutRequest } from '@/lib/payments';
+import type { Cycle, PaymentMethod, PlanKey } from '@/types/payments';
 
 export type Plan = Readonly<{
   key: PlanKey;
   title: string;
   subtitle?: string;
   priceMonthly: number; // display currency major units
-  priceAnnual: number;  // discounted display (per month equivalent if you prefer)
+  priceAnnual: number; // discounted display (per month equivalent if you prefer)
   features: string[];
   badge?: string;
   mostPopular?: boolean;
@@ -19,6 +19,9 @@ export type PlanPickerProps = {
   plans?: Plan[];
   defaultCycle?: Cycle;
   className?: string;
+  onSelect?: (plan: PlanKey, cycle: Cycle) => void;
+  methods?: PaymentMethod[];
+  referralCode?: string;
 };
 
 const DEFAULT_PLANS: Plan[] = [
@@ -50,61 +53,125 @@ const DEFAULT_PLANS: Plan[] = [
   },
 ];
 
+const PROVIDER_LABEL: Record<PaymentMethod, string> = {
+  stripe: 'Card',
+  easypaisa: 'Easypaisa',
+  jazzcash: 'JazzCash',
+};
+
 export default function PlanPicker({
   plans = DEFAULT_PLANS,
   defaultCycle = 'monthly',
   className = '',
+  onSelect,
+  methods,
+  referralCode,
 }: PlanPickerProps) {
   const [cycle, setCycle] = React.useState<Cycle>(defaultCycle);
   const [busyKey, setBusyKey] = React.useState<PlanKey | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  async function startCheckout(plan: PlanKey) {
-    setError(null);
-    setBusyKey(plan);
-    try {
-      const r = await fetch('/api/payments/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, billingCycle: cycle }),
-      });
-      const j = (await r.json()) as { ok: boolean; url?: string; manual?: boolean; message?: string; error?: string };
-      if (!r.ok || !j.ok) throw new Error(j.error || 'Checkout failed');
+  const availableMethods = React.useMemo<PaymentMethod[]>(() => {
+    if (onSelect) return [];
+    if (methods && methods.length > 0) return methods;
+    return ['stripe'];
+  }, [methods, onSelect]);
 
-      if (j.manual) {
-        // Manual path: plan provisioned + due recorded
-        window.location.assign('/account/billing?due=1');
-        return;
-      }
-      if (j.url) {
-        window.location.assign(j.url);
-        return;
-      }
-      throw new Error('No redirect URL returned');
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusyKey(null);
+  const [selectedMethod, setSelectedMethod] = React.useState<PaymentMethod>(() => availableMethods[0] ?? 'stripe');
+
+  React.useEffect(() => {
+    if (availableMethods.length === 0) return;
+    if (!availableMethods.includes(selectedMethod)) {
+      setSelectedMethod(availableMethods[0]);
     }
-  }
+  }, [availableMethods, selectedMethod]);
+
+  const showMethodPicker = !onSelect && availableMethods.length > 1;
+
+  const handlePlanAction = React.useCallback(
+    async (planKey: PlanKey) => {
+      if (onSelect) {
+        onSelect(planKey, cycle);
+        return;
+      }
+
+      const provider = selectedMethod ?? availableMethods[0];
+      if (!provider) {
+        setError('No payment methods available right now.');
+        return;
+      }
+
+      const providerName = PROVIDER_LABEL[provider] ?? provider;
+
+      setError(null);
+      setBusyKey(planKey);
+
+      try {
+        const result = await startCheckoutRequest(provider, {
+          plan: planKey,
+          billingCycle: cycle,
+          referralCode,
+        });
+
+        if (!result.ok) {
+          throw new Error(result.error || `Checkout failed via ${providerName}`);
+        }
+
+        if ('manual' in result && result.manual) {
+          window.location.assign('/account/billing?due=1');
+          return;
+        }
+
+        if ('url' in result && result.url) {
+          window.location.assign(result.url);
+          return;
+        }
+
+        throw new Error(`No redirect URL returned for ${providerName}`);
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setBusyKey(null);
+      }
+    },
+    [availableMethods, cycle, onSelect, referralCode, selectedMethod],
+  );
 
   return (
     <section className={`w-full ${className}`}>
-      {/* Billing cycle toggle */}
-      <div className="mb-6 inline-flex rounded-xl border border-border p-1">
-        {(['monthly', 'annual'] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setCycle(k)}
-            className={[
-              'px-4 py-2 rounded-lg text-small',
-              cycle === k ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
-            ].join(' ')}
-          >
-            {k === 'monthly' ? 'Monthly' : 'Annual (save)'}
-          </button>
-        ))}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-xl border border-border p-1">
+          {(['monthly', 'annual'] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setCycle(k)}
+              className={[
+                'px-4 py-2 rounded-lg text-small',
+                cycle === k ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
+              ].join(' ')}
+            >
+              {k === 'monthly' ? 'Monthly' : 'Annual (save)'}
+            </button>
+          ))}
+        </div>
+
+        {showMethodPicker ? (
+          <label className="flex items-center gap-2 text-small text-muted-foreground">
+            <span>Pay with</span>
+            <select
+              className="rounded-lg border border-border bg-background px-3 py-2 text-small"
+              value={selectedMethod}
+              onChange={(event) => setSelectedMethod(event.target.value as PaymentMethod)}
+            >
+              {availableMethods.map((method) => (
+                <option key={method} value={method}>
+                  {PROVIDER_LABEL[method]}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
 
       {/* Plans grid */}
@@ -112,6 +179,12 @@ export default function PlanPicker({
         {plans.map((p) => {
           const price = cycle === 'monthly' ? p.priceMonthly : p.priceAnnual;
           const busy = busyKey === p.key;
+          const actionLabel = busy
+            ? 'Please wait…'
+            : onSelect
+            ? `Choose ${p.title}`
+            : `Continue with ${PROVIDER_LABEL[selectedMethod] ?? selectedMethod}`;
+
           return (
             <div
               key={p.key}
@@ -150,22 +223,28 @@ export default function PlanPicker({
               </ul>
 
               <button
-                onClick={() => startCheckout(p.key)}
+                onClick={() => void handlePlanAction(p.key)}
                 disabled={busy}
-                className="mt-5 w-full rounded-lg bg-primary px-4 py-2 text-small font-medium text-primary-foreground hover:opacity-90"
+                className="mt-5 w-full rounded-lg bg-primary px-4 py-2 text-small font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
                 aria-busy={busy}
               >
-                {busy ? 'Please wait…' : `Choose ${p.title}`}
+                {actionLabel}
               </button>
+
+              {!onSelect ? (
+                <p className="mt-2 text-caption text-muted-foreground">
+                  Pay with {PROVIDER_LABEL[selectedMethod] ?? selectedMethod}
+                </p>
+              ) : null}
             </div>
           );
         })}
 
-        {error && (
+        {error ? (
           <div className="md:col-span-3 rounded-xl p-3 ring-1 ring-red-500/40">
             <div className="text-sm">{error}</div>
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   );
