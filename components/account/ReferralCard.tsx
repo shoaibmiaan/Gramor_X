@@ -1,9 +1,15 @@
 import * as React from 'react';
 
 import { createReferralCode, getReferralStats } from '@/lib/api/referrals';
+import { track } from '@/lib/analytics/track';
 import type { ReferralSummary } from '@/types/referrals';
 
-export type ReferralCardProps = { className?: string };
+export type ReferralCardProps = {
+  className?: string;
+  source?: string;
+  onCodeGenerated?: (code: string) => void;
+  onShare?: (mode: 'copy' | 'share' | 'error') => void;
+};
 
 function buildShareUrl(code?: string | null): string {
   if (!code) return '';
@@ -12,7 +18,7 @@ function buildShareUrl(code?: string | null): string {
   return `${origin}/pricing?code=${encodeURIComponent(code)}`;
 }
 
-export default function ReferralCard({ className = '' }: ReferralCardProps) {
+export default function ReferralCard({ className = '', source, onCodeGenerated, onShare }: ReferralCardProps) {
   const [summary, setSummary] = React.useState<ReferralSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -44,10 +50,13 @@ export default function ReferralCard({ className = '' }: ReferralCardProps) {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setFlash('Referral link copied to clipboard');
+      track('referral_link_created', { source: source ?? 'referral-card', method: 'copy' });
+      onShare?.('copy');
     } catch {
       setFlash('Unable to copy automatically. Copy the link manually.');
+      onShare?.('error');
     }
-  }, [shareUrl]);
+  }, [onShare, shareUrl, source]);
 
   const handleShare = React.useCallback(async () => {
     if (!shareUrl) return;
@@ -55,13 +64,17 @@ export default function ReferralCard({ className = '' }: ReferralCardProps) {
     if (navigator.share) {
       try {
         await navigator.share({ text: message, title: 'Join me on GramorX' });
+        track('referral_link_created', { source: source ?? 'referral-card', method: 'share' });
+        onShare?.('share');
         return;
       } catch {
         /* fall back to new tab */
       }
     }
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
-  }, [shareUrl]);
+    track('referral_link_created', { source: source ?? 'referral-card', method: 'share' });
+    onShare?.('share');
+  }, [onShare, shareUrl, source]);
 
   const handleCreate = React.useCallback(async () => {
     setBusy(true);
@@ -70,6 +83,8 @@ export default function ReferralCard({ className = '' }: ReferralCardProps) {
     try {
       const res = await createReferralCode();
       if (!('ok' in res) || !res.ok) throw new Error((res as any)?.error || 'Could not create code');
+      track('referral.code.create', { source: source ?? 'referral-card', code: res.code });
+      onCodeGenerated?.(res.code);
       setSummary((prev) => ({
         code: res.code,
         balance: res.balance,
@@ -85,7 +100,7 @@ export default function ReferralCard({ className = '' }: ReferralCardProps) {
     } finally {
       setBusy(false);
     }
-  }, [load]);
+  }, [load, onCodeGenerated, source]);
 
   return (
     <section className={`rounded-2xl border border-border bg-background p-5 shadow-sm ${className}`}>
