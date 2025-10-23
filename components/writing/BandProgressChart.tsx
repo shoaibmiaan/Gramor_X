@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 import { Card } from '@/components/design-system/Card';
-import { track } from '@/lib/analytics/track';
+import { logWritingProgressChartViewed } from '@/lib/analytics/writing-events';
 import type { CriterionDelta, WritingProgressPoint } from '@/types/analytics';
 import type { WritingCriterion } from '@/types/writing';
 
@@ -65,7 +65,7 @@ const BandProgressChart: React.FC<Props> = ({ points, deltas }) => {
 
   useEffect(() => {
     if (chartData.length > 0) {
-      track('analytics.progress.view', { attempts: chartData.length });
+      logWritingProgressChartViewed({ attempts: chartData.length });
     }
   }, [chartData.length]);
 
