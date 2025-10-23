@@ -3,6 +3,7 @@ import type { GetServerSideProps } from 'next';
 
 import { Container } from '@/components/design-system/Container';
 import WritingResultCard from '@/components/writing/WritingResultCard';
+import AccessibilityHints from '@/components/writing/AccessibilityHints';
 import { getServerClient } from '@/lib/supabaseServer';
 import type { WritingScorePayload, WritingTaskType } from '@/types/writing';
 
@@ -19,6 +20,7 @@ const WritingReviewPage: React.FC<PageProps> = ({ attemptId, results }) => {
           <h1 className="text-3xl font-semibold text-foreground">Attempt review</h1>
           <p className="text-sm text-muted-foreground">Attempt ID: {attemptId}</p>
         </header>
+        <AccessibilityHints />
         {results.length === 0 ? (
           <p className="text-sm text-muted-foreground">No AI feedback available yet. Submit your responses to generate scores.</p>
         ) : (
