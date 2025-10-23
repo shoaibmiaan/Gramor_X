@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 import { BadgeStrip } from '@/components/challenge/BadgeStrip';
 import { badges } from '@/data/badges';
 import type { ChallengeLeaderboardEntry } from '@/types/challenge';
@@ -24,6 +25,7 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
   const [entries, setEntries] = React.useState<ChallengeLeaderboardEntry[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const snapshotDate = React.useMemo(() => entries[0]?.snapshotDate ?? null, [entries]);
 
   const completedTasks = React.useMemo(() => {
     if (!progress) return 0;
@@ -99,14 +101,17 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
           <span>Progress toward finish line</span>
           <span>{progressPct}%</span>
         </div>
-        <div className="relative h-2 w-full overflow-hidden rounded-full bg-border/50">
-          <div className="absolute left-0 top-0 h-full rounded-full bg-primary" style={{ width: `${progressPct}%` }} />
-        </div>
+        <ProgressBar value={progressPct} ariaLabel="Challenge progress" />
       </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between text-small text-muted-foreground">
           <span>Leaderboard snapshot</span>
+          {snapshotDate ? (
+            <span className="text-caption">
+              {new Date(snapshotDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            </span>
+          ) : null}
           <button
             type="button"
             onClick={() => {
@@ -160,7 +165,9 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
                   </span>
                   <span className="text-small font-medium text-foreground">{entry.fullName}</span>
                 </div>
-                <span className="text-caption text-muted-foreground">{entry.completedTasks} tasks</span>
+                <span className="text-caption text-muted-foreground">
+                  {entry.completedTasks} tasks{typeof entry.xp === 'number' ? ` • ${entry.xp} XP` : ''}
+                </span>
               </div>
             ))
           ) : (
