@@ -27,7 +27,7 @@ const maybe = (name) => {
 };
 
 module.exports = {
-  darkMode: ['class'],
+  darkMode: ['class', '[data-theme="brave"]'],
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -41,8 +41,10 @@ module.exports = {
     extend: {
       colors: {
         ...dsColorsSafe,
+        bg:                  'rgb(var(--gx-bg) / <alpha-value>)',
         background:           cv('background'),
         foreground:           cv('foreground'),
+        text:                'rgb(var(--gx-text) / <alpha-value>)',
         card:                 'rgb(var(--gx-card) / <alpha-value>)',
         'card-foreground':    'rgb(var(--gx-card-foreground) / <alpha-value>)',
         border:               'rgb(var(--gx-border) / <alpha-value>)',
@@ -106,6 +108,7 @@ module.exports = {
         md: 'var(--shadow-2)',
         glow: '0 10px 20px rgba(157,78,221,0.30)',
         glowLg: '0 20px 30px rgba(157,78,221,0.30)',
+        'elev-1': '0 6px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05)',
       },
 
       fontFamily: {

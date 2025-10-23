@@ -77,7 +77,7 @@ const statHighlights = [
 
 function SectionSkeleton() {
   return (
-    <div className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+    <div className="bg-card/40 py-24 backdrop-blur supports-[backdrop-filter]:bg-card/30">
       <div className="mx-auto max-w-6xl px-4">
         <div className="h-8 w-40 rounded bg-border/70" />
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -144,7 +144,7 @@ export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomeProps) {
           launchMsUTC={launchMsUTC}
         />
 
-        <section className="border-y border-border/40 bg-white/85 py-16 backdrop-blur dark:bg-dark/70">
+        <section className="border-y border-border/50 bg-card/40 py-16 backdrop-blur supports-[backdrop-filter]:bg-card/30">
           <Container>
             <div className="mx-auto max-w-4xl text-center">
               <Badge variant="info" size="sm" className="inline-flex items-center gap-2">
@@ -163,22 +163,24 @@ export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomeProps) {
               {statHighlights.map((stat) => (
                 <Card
                   key={stat.label}
-                  className="border border-border/60 bg-background/80 p-6 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  padding="lg"
+                  interactive
+                  className="h-full supports-[backdrop-filter]:bg-card/50"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-electricBlue/10 text-electricBlue">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent">
                       <Icon name={stat.icon} size={24} />
                     </div>
-                    <span className="font-slab text-3xl font-semibold text-gradient-primary">{stat.metric}</span>
+                    <span className="font-slab text-3xl font-semibold text-text">{stat.metric}</span>
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-foreground">{stat.label}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{stat.description}</p>
+                  <h3 className="mt-4 text-lg font-semibold text-text">{stat.label}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{stat.description}</p>
                 </Card>
               ))}
             </div>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
-              <Button href="#testimonials" variant="ghost" className="rounded-full border border-border px-5 py-2 text-sm font-semibold text-electricBlue hover:border-electricBlue/40 hover:text-electricBlue">
+              <Button href="#testimonials" variant="primary" size="lg" className="rounded-full px-6">
                 Explore learner case studies
               </Button>
               <span className="inline-flex items-center gap-2 rounded-full bg-muted/60 px-4 py-2 text-xs uppercase tracking-[0.3em]">

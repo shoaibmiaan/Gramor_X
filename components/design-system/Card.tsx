@@ -1,8 +1,5 @@
-import * as React from "react";
-
-function cn(...a: Array<string | false | undefined | null>) {
-  return a.filter(Boolean).join(" ");
-}
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 export type CardProps = Readonly<{
   className?: string;
@@ -32,11 +29,10 @@ export function Card({
   return (
     <Comp
       className={cn(
-        // DS helpers / tokens
-        "bg-card text-card-foreground border border-border rounded-ds-2xl",
-        "shadow-sm overflow-hidden",
-        insetBorder && "ring-1 ring-inset ring-border/50",
-        interactive && "transition-transform hover:translate-y-[-1px] active:translate-y-[0px]",
+        'overflow-hidden rounded-ds-2xl border border-border/80 bg-card/60 text-card-foreground shadow-elev-1',
+        'backdrop-blur-md transition-colors supports-[backdrop-filter]:bg-card/40 supports-[backdrop-filter]:backdrop-blur-lg',
+        insetBorder && 'ring-1 ring-inset ring-border/40',
+        interactive && 'transform-gpu transition-transform hover:-translate-y-1 hover:shadow-elev-1',
         padMap[padding],
         className
       )}
