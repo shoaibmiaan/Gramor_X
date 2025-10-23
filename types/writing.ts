@@ -54,11 +54,35 @@ export interface WritingDraftSnapshot {
   };
 }
 
+export interface WritingError {
+  id?: string;
+  type: 'grammar' | 'lexical' | 'coherence' | 'task' | 'general';
+  message?: string;
+  excerpt: string;
+  suggestion?: string;
+  severity?: 'low' | 'medium' | 'high';
+  replacements?: string[];
+  startOffset?: number;
+  endOffset?: number;
+}
+
+export interface WritingFeedbackBlock {
+  tag: string;
+  title: string;
+  description: string;
+  weight?: number;
+  criterion?: WritingCriterion | 'overall';
+  action?: string;
+}
+
 export interface WritingFeedback {
   summary: string;
   strengths: string[];
   improvements: string[];
   perCriterion: Record<WritingCriterion, { band: number; feedback: string }>;
+  band9Rewrite?: string;
+  errors?: WritingError[];
+  blocks?: WritingFeedbackBlock[];
 }
 
 export interface WritingScorePayload {

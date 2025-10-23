@@ -325,6 +325,40 @@ export interface WritingResponses extends TableBase {
   submitted_at?: string | null;
 }
 
+export interface WritingFeedbackRow extends TableBase {
+  attempt_id: string;
+  band9_rewrite?: string | null;
+  errors?: Record<string, unknown>[] | null;
+  blocks?: Record<string, unknown>[] | null;
+}
+
+export interface MistakesRow extends TableBase {
+  user_id: string;
+  source: 'writing';
+  attempt_id?: string | null;
+  type: string;
+  excerpt: string;
+  excerpt_hash: string;
+  ai_tip?: string | null;
+  status: 'new' | 'reviewing' | 'resolved';
+}
+
+export interface UserXpEvent extends TableBase {
+  user_id: string;
+  source: 'writing';
+  attempt_id?: string | null;
+  points: number;
+  reason: string;
+}
+
+export interface StudyPlanFocusRow extends TableBase {
+  user_id: string;
+  area: 'writing';
+  tag: string;
+  weight: number;
+  updated_at: string;
+}
+
 export interface ExamAttempts extends TableBase {
   user_id: string;
   exam_type: 'reading' | 'listening' | 'writing' | 'speaking';
@@ -427,8 +461,12 @@ export interface DBSchema {
   invoices: Invoices;
   writing_prompts: WritingPrompts;
   writing_responses: WritingResponses;
+  writing_feedback: WritingFeedbackRow;
   exam_attempts: ExamAttempts;
   exam_events: ExamEvents;
+  mistakes: MistakesRow;
+  user_xp_events: UserXpEvent;
+  study_plan_focus: StudyPlanFocusRow;
 
   // kept from codex/add-whatsapp-opt-in-preferences-panel
   notifications_opt_in: NotificationsOptIn;
