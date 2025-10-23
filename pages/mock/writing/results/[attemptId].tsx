@@ -4,18 +4,38 @@ import Link from 'next/link';
 
 import { Button } from '@/components/design-system/Button';
 import { Container } from '@/components/design-system/Container';
+import BandDiffView from '@/components/writing/BandDiffView';
+import BandProgressChart from '@/components/writing/BandProgressChart';
 import WritingResultCard from '@/components/writing/WritingResultCard';
 import { computeWritingSummary } from '@/lib/analytics/writing';
 import { getServerClient } from '@/lib/supabaseServer';
-import type { WritingScorePayload, WritingTaskType } from '@/types/writing';
+import { computeCriterionDeltas, trimProgressPoints } from '@/lib/writing/progress';
+import type { CriterionDelta, WritingProgressPoint } from '@/types/analytics';
+import type { WritingFeedback, WritingScorePayload, WritingTaskType } from '@/types/writing';
+
+interface HighlightSection {
+  task: WritingTaskType;
+  essay: string;
+  feedback: WritingFeedback;
+}
 
 interface PageProps {
   attemptId: string;
   results: Array<{ task: WritingTaskType; essay: string; score: WritingScorePayload }>;
   averageBand: number;
+  highlight?: HighlightSection | null;
+  progressPoints: WritingProgressPoint[];
+  progressDeltas: CriterionDelta[];
 }
 
-const WritingResultsPage: React.FC<PageProps> = ({ attemptId, results, averageBand }) => {
+const WritingResultsPage: React.FC<PageProps> = ({
+  attemptId,
+  results,
+  averageBand,
+  highlight,
+  progressPoints,
+  progressDeltas,
+}) => {
   return (
     <Container className="py-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
@@ -40,6 +60,16 @@ const WritingResultsPage: React.FC<PageProps> = ({ attemptId, results, averageBa
             <WritingResultCard key={result.task} task={result.task} result={result.score} essay={result.essay} />
           ))
         )}
+
+        {highlight ? (
+          <BandDiffView essay={highlight.essay} feedback={highlight.feedback} />
+        ) : (
+          <div className="rounded-ds-xl border border-border/60 bg-muted/30 p-6 text-sm text-muted-foreground">
+            Detailed highlights will appear once AI feedback is ready.
+          </div>
+        )}
+
+        <BandProgressChart points={progressPoints} deltas={progressDeltas} />
       </div>
     </Container>
   );
@@ -73,8 +103,16 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
 
   const { data: responses } = await supabase
     .from('writing_responses')
-    .select('task, answer_text, word_count, overall_band, band_scores, feedback, duration_seconds, evaluation_version, submitted_at, created_at')
+    .select('id, task, answer_text, word_count, overall_band, band_scores, feedback, duration_seconds, evaluation_version, submitted_at, created_at')
     .eq('exam_attempt_id', attemptId);
+
+  const responseIds = (responses ?? []).map((row) => row.id).filter(Boolean);
+  const { data: feedbackRows } = responseIds.length
+    ? await supabase
+        .from('writing_feedback')
+        .select('attempt_id, band9_rewrite, errors, blocks')
+        .in('attempt_id', responseIds as string[])
+    : { data: [] };
 
   const scores = (responses ?? [])
     .filter((row) => row.task === 'task1' || row.task === 'task2')
@@ -106,6 +144,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
         durationSeconds: row.duration_seconds ?? undefined,
         tokensUsed: undefined,
       } satisfies WritingScorePayload,
+      id: row.id as string,
     }));
 
   const summary = computeWritingSummary(
@@ -129,13 +168,104 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
     })),
   );
 
+  const progress = await loadProgress(supabase, user.id, attemptId);
+
   return {
     props: {
       attemptId,
-      results: scores,
+      results: scores.map(({ id: _id, ...rest }) => rest),
       averageBand: summary.averageBand || 0,
+      highlight:
+        scores.length > 0
+          ? (() => {
+              const primary = scores.find((entry) => entry.task === 'task2') ?? scores[0];
+              const feedbackRow = feedbackRows?.find((row) => row.attempt_id === primary.id);
+              const combinedFeedback: WritingFeedback = {
+                ...primary.score.feedback,
+                band9Rewrite: feedbackRow?.band9_rewrite ?? primary.score.feedback.band9Rewrite,
+                errors: (feedbackRow?.errors as WritingFeedback['errors']) ?? primary.score.feedback.errors,
+                blocks: (feedbackRow?.blocks as WritingFeedback['blocks']) ?? primary.score.feedback.blocks,
+              };
+              return {
+                task: primary.task,
+                essay: primary.essay,
+                feedback: combinedFeedback,
+              } satisfies HighlightSection;
+            })()
+          : null,
+      progressPoints: progress.points,
+      progressDeltas: progress.deltas,
     },
   };
 };
+
+async function loadProgress(
+  supabase: ReturnType<typeof getServerClient>,
+  userId: string,
+  currentAttemptId: string,
+) {
+  const { data: rows } = await supabase
+    .from('writing_responses')
+    .select('exam_attempt_id, overall_band, band_scores, submitted_at, created_at')
+    .eq('user_id', userId)
+    .order('submitted_at', { ascending: false })
+    .limit(10);
+
+  const attempts = new Map<string, { total: number; count: number; createdAt: string } & WritingProgressPoint>();
+
+  for (const row of rows ?? []) {
+    const examId = row.exam_attempt_id as string | null;
+    if (!examId) continue;
+    const point =
+      attempts.get(examId) ?? {
+        attemptId: examId,
+        createdAt: row.submitted_at ?? row.created_at ?? new Date().toISOString(),
+        overallBand: 0,
+        bandScores: {
+          task_response: 0,
+          coherence_and_cohesion: 0,
+          lexical_resource: 0,
+          grammatical_range: 0,
+        },
+        total: 0,
+        count: 0,
+      };
+    point.total += Number(row.overall_band ?? 0);
+    point.count += 1;
+    const bands = (row.band_scores as Record<string, number> | null) ?? {};
+    point.bandScores.task_response += Number(bands.task_response ?? 0);
+    point.bandScores.coherence_and_cohesion += Number(bands.coherence_and_cohesion ?? 0);
+    point.bandScores.lexical_resource += Number(bands.lexical_resource ?? 0);
+    point.bandScores.grammatical_range += Number(bands.grammatical_range ?? 0);
+    attempts.set(examId, point);
+  }
+
+  const rawPoints: WritingProgressPoint[] = Array.from(attempts.values()).map((point) => {
+    const divisor = point.count === 0 ? 1 : point.count;
+    return {
+      attemptId: point.attemptId,
+      createdAt: point.createdAt,
+      overallBand: Number((point.total / divisor).toFixed(1)),
+      bandScores: {
+        task_response: Number((point.bandScores.task_response / divisor).toFixed(1)),
+        coherence_and_cohesion: Number((point.bandScores.coherence_and_cohesion / divisor).toFixed(1)),
+        lexical_resource: Number((point.bandScores.lexical_resource / divisor).toFixed(1)),
+        grammatical_range: Number((point.bandScores.grammatical_range / divisor).toFixed(1)),
+      },
+    };
+  });
+
+  const trimmed = trimProgressPoints(rawPoints, 3);
+  const deltas = computeCriterionDeltas(trimmed);
+
+  if (!trimmed.find((point) => point.attemptId === currentAttemptId)) {
+    const current = rawPoints.find((point) => point.attemptId === currentAttemptId);
+    if (current) {
+      trimmed.push(current);
+    }
+  }
+
+  return { points: trimProgressPoints(trimmed, 3), deltas };
+}
 
 export default WritingResultsPage;
