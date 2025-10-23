@@ -41,6 +41,9 @@ const envSchema = z.object({
   SUPABASE_SERVICE_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
+  REVIEW_SHARE_SECRET: z.string().optional(),
+  REVIEW_SHARE_TTL_HOURS: z.coerce.number().optional(),
+
   ADMIN_EMAILS: z.string().optional(),
 
   GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
@@ -130,6 +133,9 @@ const raw = {
   SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
+  REVIEW_SHARE_SECRET: process.env.REVIEW_SHARE_SECRET,
+  REVIEW_SHARE_TTL_HOURS: process.env.REVIEW_SHARE_TTL_HOURS,
+
   ADMIN_EMAILS: process.env.ADMIN_EMAILS,
 
   GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -217,6 +223,8 @@ const defaults = {
   SUPABASE_URL: 'http://localhost:54321',
   SUPABASE_SERVICE_KEY: 'service_key',
   SUPABASE_SERVICE_ROLE_KEY: 'service_role_key',
+  REVIEW_SHARE_SECRET: 'review_share_secret',
+  REVIEW_SHARE_TTL_HOURS: 72,
   TWILIO_ACCOUNT_SID: 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
   TWILIO_AUTH_TOKEN: 'auth_token',
   TWILIO_VERIFY_SERVICE_SID: 'VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -232,6 +240,9 @@ export const env = (parsed.success
       ...defaults,
       ...raw,
       NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: Number(raw.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30),
+      REVIEW_SHARE_TTL_HOURS: Number(
+        raw.REVIEW_SHARE_TTL_HOURS ?? defaults.REVIEW_SHARE_TTL_HOURS ?? 72,
+      ),
     });
 
 export const isBrowser = typeof window !== 'undefined';
