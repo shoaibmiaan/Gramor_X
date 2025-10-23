@@ -2,6 +2,12 @@
 // Client helpers for saving and restoring writing exam drafts through the
 // autosave API endpoints.
 
+import {
+  ensureDraftSyncOrchestrator,
+  queueExamEvent,
+  queueWritingDraft,
+  registerDraftBackgroundSync,
+} from '@/lib/offline/syncOrchestrator';
 import type { WritingDraftSnapshot } from '@/types/writing';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -22,6 +28,7 @@ type SaveDraftResponse = {
   ok: boolean;
   savedAt?: string;
   error?: string;
+  queued?: boolean;
 };
 
 type LoadDraftResponse = {
@@ -37,14 +44,48 @@ const throwOnHttpError = async (res: Response) => {
   throw new Error(err);
 };
 
+const shouldQueueOffline = (error: unknown): boolean => {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  if (error instanceof TypeError) return true;
+  if (error instanceof DOMException) {
+    const transientNames = new Set(['AbortError', 'QuotaExceededError', 'NetworkError']);
+    if (transientNames.has(error.name)) return true;
+  }
+  const message = error instanceof Error ? error.message : '';
+  return /NetworkError|Failed to fetch|offline/i.test(message ?? '');
+};
+
 export const saveWritingDraft = async (payload: SaveDraftPayload): Promise<SaveDraftResponse> => {
-  const res = await fetch('/api/mock/writing/save-draft', {
-    method: 'POST',
-    headers: JSON_HEADERS,
-    body: JSON.stringify(payload),
-  });
-  await throwOnHttpError(res);
-  return (await res.json()) as SaveDraftResponse;
+  try {
+    const res = await fetch('/api/mock/writing/save-draft', {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify(payload),
+    });
+    await throwOnHttpError(res);
+    return (await res.json()) as SaveDraftResponse;
+  } catch (error) {
+    if (!shouldQueueOffline(error)) {
+      throw error;
+    }
+
+    const queued = await queueWritingDraft({
+      attemptId: payload.attemptId,
+      tasks: payload.tasks,
+      activeTask: payload.activeTask,
+      elapsedSeconds: payload.elapsedSeconds,
+    });
+
+    if (!queued) {
+      throw error;
+    }
+
+    const orchestrator = ensureDraftSyncOrchestrator();
+    orchestrator?.requestSync('queued');
+    void registerDraftBackgroundSync();
+
+    return { ok: true, savedAt: new Date().toISOString(), queued: true };
+  }
 };
 
 export const loadWritingDraft = async (attemptId: string): Promise<LoadDraftResponse> => {
@@ -62,12 +103,35 @@ export const persistExamEvent = async (
   attemptId: string,
   event: 'focus' | 'blur' | 'typing',
   payload: Record<string, unknown> = {},
-) => {
-  const res = await fetch('/api/mock/writing/save-draft', {
-    method: 'PUT',
-    headers: JSON_HEADERS,
-    body: JSON.stringify({ attemptId, event, payload }),
-  });
-  await throwOnHttpError(res);
-  return (await res.json()) as { ok: boolean };
+): Promise<{ ok: boolean; queued?: boolean }> => {
+  try {
+    const res = await fetch('/api/mock/writing/save-draft', {
+      method: 'PUT',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ attemptId, event, payload }),
+    });
+    await throwOnHttpError(res);
+    return (await res.json()) as { ok: boolean };
+  } catch (error) {
+    if (!shouldQueueOffline(error)) {
+      throw error;
+    }
+
+    const queued = await queueExamEvent({
+      attemptId,
+      eventType: event,
+      payload,
+      occurredAt: Date.now(),
+    });
+
+    if (!queued) {
+      throw error;
+    }
+
+    const orchestrator = ensureDraftSyncOrchestrator();
+    orchestrator?.requestSync('queued');
+    void registerDraftBackgroundSync();
+
+    return { ok: true, queued: true };
+  }
 };
