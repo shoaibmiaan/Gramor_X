@@ -10,6 +10,7 @@ import BandDiffView from '@/components/writing/BandDiffView';
 import BandProgressChart from '@/components/writing/BandProgressChart';
 import WritingResultCard from '@/components/writing/WritingResultCard';
 import AccessibilityHints from '@/components/writing/AccessibilityHints';
+import ExportButton from '@/components/writing/ExportButton';
 import { computeWritingSummary } from '@/lib/analytics/writing';
 import {
   logWritingCoachEntry,
@@ -22,6 +23,9 @@ import { computeCriterionDeltas, trimProgressPoints } from '@/lib/writing/progre
 import { calculateWritingXp, type WritingAchievement } from '@/lib/gamification/xp';
 import type { CriterionDelta, WritingProgressPoint } from '@/types/analytics';
 import type { WritingFeedback, WritingScorePayload, WritingTaskType } from '@/types/writing';
+import type { PlanId } from '@/types/pricing';
+import { resolveFlags } from '@/lib/flags';
+import { track } from '@/lib/analytics/track';
 
 interface HighlightSection {
   task: WritingTaskType;
@@ -30,6 +34,11 @@ interface HighlightSection {
 }
 
 interface PageProps {
+  plan: PlanId;
+  featureFlags: {
+    writingExports: boolean;
+    writingCertificates: boolean;
+  };
   attemptId: string;
   results: Array<{ task: WritingTaskType; essay: string; score: WritingScorePayload }>;
   averageBand: number;
@@ -55,6 +64,8 @@ const CoachDock = dynamic(() => import('@/components/writing/CoachDock'), {
 });
 
 const WritingResultsPage: React.FC<PageProps> = ({
+  plan,
+  featureFlags,
   attemptId,
   results,
   averageBand,
@@ -148,6 +159,21 @@ const WritingResultsPage: React.FC<PageProps> = ({
             <span id="share-status" className="sr-only" aria-live="polite">
               {shareFeedback}
             </span>
+            {featureFlags.writingExports ? (
+              <ExportButton attemptId={attemptId} />
+            ) : null}
+            {featureFlags.writingCertificates ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  track('cert.view', { attemptId, plan });
+                  window.open(`/cert/writing/${attemptId}`, '_blank');
+                }}
+              >
+                Certificate
+              </Button>
+            ) : null}
             <Link href="/analytics/writing" onClick={handleAnalyticsClick} className="inline-flex">
               <Button size="sm" variant="secondary">
                 Open analytics
@@ -241,6 +267,17 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
     return { notFound: true };
   }
 
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('plan, role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const plan = (profileRow?.plan as PlanId | undefined) ?? 'free';
+  const role = (profileRow?.role as string | null) ?? null;
+
+  const flagSnapshot = await resolveFlags({ plan, role, userId: user.id });
+
   const { data: responses } = await supabase
     .from('writing_responses')
     .select('id, task, answer_text, word_count, overall_band, band_scores, feedback, duration_seconds, evaluation_version, submitted_at, created_at')
@@ -326,6 +363,11 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
 
   return {
     props: {
+      plan,
+      featureFlags: {
+        writingExports: Boolean(flagSnapshot.writingExports),
+        writingCertificates: Boolean(flagSnapshot.writingCertificates),
+      },
       attemptId,
       results: scores.map(({ id: _id, ...rest }) => rest),
       averageBand: summary.averageBand || 0,

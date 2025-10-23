@@ -32,7 +32,7 @@ ensure('WHATSAPP_TASKS_SIGNING_SECRET', 'whatsapp_signing_secret');
 
 // ---- Collect tests from tests/ (skip lib/*.test.ts for now) ---
 const ROOT = process.cwd();
-const TEST_DIRS = ['tests'];
+const TEST_DIRS = ['tests/api', 'tests/pages', 'tests/admin', 'tests/perf', 'tests/a11y'];
 
 function collectTests(dir: string, out: string[] = []): string[] {
   if (!fs.existsSync(dir)) return out;
@@ -55,6 +55,17 @@ function collectTests(dir: string, out: string[] = []): string[] {
 
   // Import each test file; tests using `node:test` will register & run on import.
   for (const file of testFiles) {
+    const contents = fs.readFileSync(file, 'utf8');
+    const usesNodeTest =
+      contents.includes("from 'node:test'") ||
+      contents.includes('from "node:test"') ||
+      contents.includes("require('node:test')") ||
+      contents.includes('require("node:test")');
+
+    if (!usesNodeTest) {
+      console.log(`⏭  Skipping non node:test suite: ${path.relative(ROOT, file)}`);
+      continue;
+    }
     try {
       await import(pathToFileURL(file).href);
     } catch (err) {

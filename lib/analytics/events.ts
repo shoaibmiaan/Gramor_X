@@ -64,7 +64,12 @@ export type AnalyticsEventName =
   | 'reading.highlight.add'
   | 'reading.note.add'
   | 'reading.flag.toggle'
-  | 'reading.nav.filter';
+  | 'reading.nav.filter'
+  | 'flag.toggle'
+  | 'export.pdf'
+  | 'cert.view'
+  | 'slo.breach'
+  | 'ratelimit.block';
 
 export type AnalyticsProps = Record<
   string,

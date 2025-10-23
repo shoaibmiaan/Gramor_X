@@ -5,6 +5,9 @@ import { useRouter } from 'next/router';
 import WritingExamRoom from '@/components/writing/WritingExamRoom';
 import { getServerClient } from '@/lib/supabaseServer';
 import type { WritingExamPrompts } from '@/types/writing';
+import type { PlanId } from '@/types/pricing';
+import { writingMockLimit } from '@/lib/plan/gates';
+import { withPlanPage } from '@/lib/withPlanPage';
 
 type PageProps = {
   attemptId: string;
@@ -32,22 +35,39 @@ const mapPrompt = (row: any) => ({
   metadata: row.metadata ?? undefined,
 });
 
-const WritingMockPage: React.FC<PageProps> = ({ attemptId, prompts, durationSeconds, initialDraft }) => {
+const WritingMockPage: React.FC<PageProps & { __plan?: PlanId }> = ({
+  __plan = 'starter',
+  attemptId,
+  prompts,
+  durationSeconds,
+  initialDraft,
+}) => {
   const router = useRouter();
+  const plan = __plan;
+  const mockLimit = writingMockLimit(plan);
+
   return (
-    <WritingExamRoom
-      attemptId={attemptId}
-      prompts={prompts}
-      durationSeconds={durationSeconds}
-      initialDraft={initialDraft ?? undefined}
-      onSubmitSuccess={(result) => {
-        void router.push(`/mock/writing/results/${result.attemptId}`);
-      }}
-    />
+    <>
+      {plan !== 'booster' && plan !== 'master' ? (
+        <div className="mb-4 rounded-2xl border border-border/50 bg-muted/30 p-4 text-sm text-muted-foreground">
+          Starter plans include {mockLimit} daily writing mock{mockLimit === 1 ? '' : 's'}. Upgrade to Booster for unlimited
+          attempts, exportable reports, and printable certificates.
+        </div>
+      ) : null}
+      <WritingExamRoom
+        attemptId={attemptId}
+        prompts={prompts}
+        durationSeconds={durationSeconds}
+        initialDraft={initialDraft ?? undefined}
+        onSubmitSuccess={(result) => {
+          void router.push(`/mock/writing/results/${result.attemptId}`);
+        }}
+      />
+    </>
   );
 };
 
-export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => {
+export const getServerSideProps: GetServerSideProps<PageProps> = withPlanPage('starter')(async (ctx) => {
   const supabase = getServerClient(ctx.req as any, ctx.res as any);
   const {
     data: { user },
@@ -149,6 +169,6 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
       initialDraft: initialDraft ?? null,
     },
   };
-};
+});
 
 export default WritingMockPage;
