@@ -44,6 +44,8 @@ export type AnalyticsEventName =
   | 'writing.coach.reply'
   | 'writing.coach.error'
   | 'analytics.progress.view'
+  | 'analytics.writing.view'
+  | 'analytics.writing.trend'
   | 'xp.award.writing'
   | 'leaderboard.view.writing'
   | 'vocab_word_viewed'
