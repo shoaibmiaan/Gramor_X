@@ -13,7 +13,7 @@ import {
 
 import { Card } from '@/components/design-system/Card';
 import { Skeleton } from '@/components/design-system/Skeleton';
-import { track } from '@/lib/analytics/track';
+import { logWritingAnalyticsTrendChange } from '@/lib/analytics/writing-events';
 import type { WeeklySeries } from '@/types/analytics';
 
 type Props = {
@@ -36,9 +36,10 @@ export const WritingWeeklyTrend: React.FC<Props> = ({ series, loading = false })
 
   useEffect(() => {
     if (!loading && chartData.length > 0) {
-      track('analytics.writing.trend', {
+      logWritingAnalyticsTrendChange({
         weeks: chartData.length,
         attempts: series?.totalAttempts ?? 0,
+        source: 'chart',
       });
     }
   }, [loading, chartData.length, series?.totalAttempts]);

@@ -58,6 +58,7 @@ import { HighContrastProvider } from '@/context/HighContrastContext';
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
+import { logWritingAnalyticsView } from '@/lib/analytics/writing-events';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -182,6 +183,27 @@ function InnerApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     void loadTranslations(activeLocale as SupportedLocale);
   }, [activeLocale]);
+
+  useEffect(() => {
+    const logRoute = (url: string) => {
+      if (!url) return;
+      if (url.startsWith('/analytics/writing')) {
+        logWritingAnalyticsView({ source: 'route' });
+      }
+    };
+
+    logRoute(router.asPath);
+
+    const handleRouteChange = (url: string) => {
+      logRoute(url);
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
 
   // Expecting UserContext to expose approval status; default false if missing
   const { user, role, isTeacherApproved } = useUserContext() as {
