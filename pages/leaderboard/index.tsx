@@ -7,8 +7,8 @@ import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Skeleton } from '@/components/design-system/Skeleton';
-
-type Scope = 'daily' | 'weekly';
+import LeaderboardFilters, { type LeaderboardScope, type LeaderboardSkill } from '@/components/leaderboard/LeaderboardFilters';
+import { track } from '@/lib/analytics/track';
 
 interface Entry {
   userId: string;
@@ -18,12 +18,12 @@ interface Entry {
   snapshotDate: string | null;
 }
 
-const SCOPE_LABEL: Record<Scope, string> = {
+const SCOPE_LABEL: Record<LeaderboardScope, string> = {
   daily: 'Daily',
   weekly: 'Weekly',
 };
 
-const SCOPE_DESCRIPTION: Record<Scope, string> = {
+const SCOPE_DESCRIPTION: Record<LeaderboardScope, string> = {
   daily: 'Daily snapshots reset at midnight Karachi time.',
   weekly: 'Weekly snapshots reset every Monday.',
 };
@@ -34,10 +34,11 @@ function formatSnapshot(entries: Entry[]): string | null {
 }
 
 export default function XpLeaderboard() {
-  const [entries, setEntries] = useState<Record<Scope, Entry[]>>({ daily: [], weekly: [] });
+  const [entries, setEntries] = useState<Record<LeaderboardScope, Entry[]>>({ daily: [], weekly: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeScope, setActiveScope] = useState<Scope>('weekly');
+  const [activeScope, setActiveScope] = useState<LeaderboardScope>('weekly');
+  const [skill, setSkill] = useState<LeaderboardSkill>('xp');
 
   useEffect(() => {
     let cancelled = false;
@@ -51,14 +52,14 @@ export default function XpLeaderboard() {
         }
         const json = (await res.json()) as {
           ok: boolean;
-          entries?: Record<Scope, Array<{ userId: string; fullName: string; xp: number; rank: number; snapshotDate: string }>>;
+          entries?: Record<LeaderboardScope, Array<{ userId: string; fullName: string; xp: number; rank: number; snapshotDate: string }>>;
           error?: string;
         };
         if (!json.ok || !json.entries) {
           throw new Error(json.error || 'Unable to load leaderboard');
         }
         if (!cancelled) {
-          const normalized: Record<Scope, Entry[]> = {
+          const normalized: Record<LeaderboardScope, Entry[]> = {
             daily: (json.entries.daily ?? []).map((row) => ({
               userId: row.userId,
               fullName: row.fullName ?? 'Anonymous',
@@ -88,7 +89,10 @@ export default function XpLeaderboard() {
     };
   }, []);
 
-  const currentEntries = useMemo(() => entries[activeScope] ?? [], [entries, activeScope]);
+  const currentEntries = useMemo(() => {
+    if (skill === 'writing') return [];
+    return entries[activeScope] ?? [];
+  }, [entries, activeScope, skill]);
 
   const { topThree, rest } = useMemo(() => {
     return {
@@ -129,11 +133,13 @@ export default function XpLeaderboard() {
   const renderEmptyState = () => (
     <Card className="p-8 text-center rounded-ds-2xl">
       <Badge variant="secondary" size="sm" className="mx-auto">
-        {SCOPE_LABEL[activeScope]} Challenge
+        {skill === 'writing' ? 'Writing' : `${SCOPE_LABEL[activeScope]} Challenge`}
       </Badge>
       <h2 className="font-slab text-h2 mt-4">No scores… yet!</h2>
       <p className="text-body mt-3 text-grayish">
-        Be the first to complete this {activeScope === 'daily' ? "day's" : "week's"} tasks and claim the top spot on the leaderboard.
+        {skill === 'writing'
+          ? 'Complete a mock writing attempt to populate the writing leaderboard.'
+          : `Be the first to complete this ${activeScope === 'daily' ? "day's" : "week's"} tasks and claim the top spot on the leaderboard.`}
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <Link href="/challenge">
@@ -149,6 +155,12 @@ export default function XpLeaderboard() {
       </div>
     </Card>
   );
+
+  useEffect(() => {
+    if (skill === 'writing') {
+      track('leaderboard.view.writing', { scope: activeScope });
+    }
+  }, [activeScope, skill]);
 
   return (
     <>
@@ -183,18 +195,13 @@ export default function XpLeaderboard() {
               </Link>
             </div>
 
-            <div className="mt-8 inline-flex gap-2 rounded-ds-xl border border-border/60 bg-background/80 p-2">
-              {(['daily', 'weekly'] as Scope[]).map((scope) => (
-                <Button
-                  key={scope}
-                  variant={activeScope === scope ? 'primary' : 'ghost'}
-                  className="rounded-ds-lg"
-                  onClick={() => setActiveScope(scope)}
-                  disabled={loading && activeScope === scope}
-                >
-                  {SCOPE_LABEL[scope]}
-                </Button>
-              ))}
+            <div className="mt-8">
+              <LeaderboardFilters
+                scope={activeScope}
+                skill={skill}
+                onScopeChange={setActiveScope}
+                onSkillChange={setSkill}
+              />
             </div>
             <p className="mt-3 text-caption text-muted-foreground">
               {SCOPE_DESCRIPTION[activeScope]}

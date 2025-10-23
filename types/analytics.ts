@@ -1,0 +1,34 @@
+// types/analytics.ts
+// Analytics layer primitives shared across dashboards and API responses.
+
+import type { WritingCriterion } from './writing';
+
+export interface WritingAttemptSummary {
+  attemptId: string;
+  createdAt: string;
+  overallBand: number;
+  durationSeconds?: number | null;
+  goalBand?: number | null;
+}
+
+export interface WritingSummary {
+  averageBand: number;
+  averageDurationSeconds: number;
+  totalAttempts: number;
+  totalWords: number;
+  attempts: WritingAttemptSummary[];
+}
+
+export interface WritingProgressPoint {
+  attemptId: string;
+  createdAt: string;
+  overallBand: number;
+  bandScores: Record<WritingCriterion, number>;
+}
+
+export interface CriterionDelta {
+  criterion: WritingCriterion | 'overall';
+  current: number;
+  previous: number | null;
+  delta: number;
+}
