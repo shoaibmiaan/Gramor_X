@@ -28,6 +28,7 @@ ensure('TWILIO_ACCOUNT_SID', 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
 ensure('TWILIO_AUTH_TOKEN', 'dummytoken');
 ensure('TWILIO_VERIFY_SERVICE_SID', 'VAXxxxxxxxxxxxxxxxxxxxxxxxx');
 ensure('TWILIO_WHATSAPP_FROM', 'whatsapp:+10000000000');
+ensure('WHATSAPP_TASKS_SIGNING_SECRET', 'whatsapp_signing_secret');
 
 // ---- Collect tests from tests/ (skip lib/*.test.ts for now) ---
 const ROOT = process.cwd();
