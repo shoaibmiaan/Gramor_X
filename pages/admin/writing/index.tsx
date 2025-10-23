@@ -1,245 +1,307 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import { useDebounce } from 'use-debounce';
 
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
-import { Textarea } from '@/components/design-system/Textarea';
+import { Badge } from '@/components/design-system/Badge';
 import { useToast } from '@/components/design-system/Toaster';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import type { PlanId } from '@/types/pricing';
 
-type WritingPrompt = {
-  id: string;
-  title: string;
-  prompt: string;
-  task_type: string | null;
-  created_at: string;
-};
-
-const TASK_TYPES: Array<{ value: string; label: string }> = [
-  { value: '', label: 'Uncategorized' },
-  { value: 'task1', label: 'Task 1' },
-  { value: 'task2', label: 'Task 2' },
-  { value: 'general', label: 'General Writing' },
+const PLAN_FILTERS: Array<{ value: 'all' | PlanId; label: string }> = [
+  { value: 'all', label: 'All plans' },
+  { value: 'free', label: 'Free' },
+  { value: 'starter', label: 'Starter' },
+  { value: 'booster', label: 'Booster' },
+  { value: 'master', label: 'Master' },
 ];
 
-const getTaskTypeLabel = (value: string | null) => {
-  const match = TASK_TYPES.find((type) => type.value === (value ?? ''));
-  return match ? match.label : 'Uncategorized';
+type WritingAttemptRow = {
+  attemptId: string;
+  userId: string;
+  studentName: string | null;
+  email: string | null;
+  plan: PlanId;
+  averageBand: number;
+  submittedAt: string | null;
+  tasks: Array<{ task: string; band: number }>;
 };
 
-const AdminWritingPromptsPage: React.FC = () => {
-  const [title, setTitle] = useState('');
-  const [prompt, setPrompt] = useState('');
-  const [taskType, setTaskType] = useState<string>('');
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [prompts, setPrompts] = useState<WritingPrompt[]>([]);
+const escapeCsv = (value: string | number | null | undefined) => {
+  const str = value == null ? '' : String(value);
+  if (/[,"\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+};
 
-  const { success, error: toastError } = useToast();
+const escapePdf = (value: string) => value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 
-  const canSubmit = useMemo(
-    () => Boolean(title.trim()) && Boolean(prompt.trim()),
-    [prompt, title],
-  );
+function buildSummaryPdf(rows: WritingAttemptRow[]): Blob {
+  const headline = rows.length === 1 ? 'Writing attempt summary' : 'Writing attempts summary';
+  const lines = [headline, `Generated: ${new Date().toISOString()}`, `Total attempts: ${rows.length}`, ''];
+  rows.slice(0, 25).forEach((row) => {
+    lines.push(`Attempt ${row.attemptId}`);
+    lines.push(`Student: ${row.studentName ?? row.email ?? row.userId}`);
+    lines.push(`Plan: ${row.plan} · Band ${row.averageBand.toFixed(1)} · Submitted: ${row.submittedAt ?? 'pending'}`);
+    row.tasks.forEach((task) => {
+      lines.push(`  - Task ${task.task.replace('task', '')}: ${task.band.toFixed(1)}`);
+    });
+    lines.push('');
+  });
 
-  const resetForm = () => {
-    setTitle('');
-    setPrompt('');
-    setTaskType('');
-  };
+  const content = lines
+    .map((line, index) => `BT /F1 11 Tf 50 ${770 - index * 18} Td (${escapePdf(line)}) Tj ET`)
+    .join('\n');
 
-  const loadPrompts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabaseBrowser
-        .from('writing_prompts')
-        .select('id, title, prompt, task_type, created_at')
-        .order('created_at', { ascending: false })
-        .limit(100);
+  const objects = [
+    '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj',
+    '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj',
+    '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj',
+    `4 0 obj << /Length ${content.length} >> stream\n${content}\nendstream endobj`,
+    '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj',
+  ];
 
-      if (error) throw error;
-      setPrompts((data ?? []) as WritingPrompt[]);
-    } catch (err) {
-      toastError(
-        err instanceof Error ? err.message : 'Could not load writing prompts',
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [toastError]);
+  const header = '%PDF-1.4';
+  const parts: string[] = [header];
+  const xref: string[] = ['0000000000 65535 f '];
+  let offset = header.length + 1;
+  for (const object of objects) {
+    parts.push(object);
+    xref.push(`${offset.toString().padStart(10, '0')} 00000 n `);
+    offset += object.length + 1;
+  }
+  const xrefStart = offset;
+  parts.push('xref');
+  parts.push(`0 ${objects.length + 1}`);
+  parts.push(...xref);
+  parts.push('trailer << /Size ' + (objects.length + 1) + ' /Root 1 0 R >>');
+  parts.push('startxref');
+  parts.push(String(xrefStart));
+  parts.push('%%EOF');
+
+  return new Blob([parts.join('\n')], { type: 'application/pdf' });
+}
+
+export default function AdminWritingAttemptsPage() {
+  const [plan, setPlan] = useState<'all' | PlanId>('all');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 300);
+  const [loading, setLoading] = useState(true);
+  const [attempts, setAttempts] = useState<WritingAttemptRow[]>([]);
+  const { success, error } = useToast();
 
   useEffect(() => {
-    void loadPrompts();
-  }, [loadPrompts]);
+    let cancelled = false;
+    setLoading(true);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!canSubmit) {
-      toastError('Provide a title and prompt before saving.');
+    const params = new URLSearchParams();
+    if (plan !== 'all') params.set('plan', plan);
+    if (debouncedSearch) params.set('q', debouncedSearch);
+
+    fetch(`/api/admin/writing/list?${params.toString()}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error('Failed to load attempts');
+        return (await res.json()) as { attempts: WritingAttemptRow[] };
+      })
+      .then((payload) => {
+        if (cancelled) return;
+        setAttempts(payload.attempts);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        error(err instanceof Error ? err.message : 'Could not load attempts');
+        setAttempts([]);
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [plan, debouncedSearch, error]);
+
+  const handleExportCsv = () => {
+    if (attempts.length === 0) {
+      error('No attempts to export yet.');
       return;
     }
+    const rows = attempts.map((row) => [
+      row.attemptId,
+      row.userId,
+      row.studentName ?? '',
+      row.email ?? '',
+      row.plan,
+      row.averageBand.toFixed(1),
+      row.submittedAt ?? '',
+    ]);
+    const header = ['attempt_id', 'user_id', 'student', 'email', 'plan', 'average_band', 'submitted_at'];
+    const csv = [header, ...rows].map((line) => line.map(escapeCsv).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `writing-attempts-${Date.now()}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    success('Exported CSV for current view');
+  };
 
-    setSaving(true);
+  const handleExportPdf = () => {
+    if (attempts.length === 0) {
+      error('No attempts to export yet.');
+      return;
+    }
+    const blob = buildSummaryPdf(attempts);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `writing-attempts-${Date.now()}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    success('PDF summary downloaded');
+  };
+
+  const handleRegrade = async (attemptId: string) => {
     try {
-      const trimmedTitle = title.trim();
-      const trimmedPrompt = prompt.trim();
-
-      const { error } = await supabaseBrowser.from('writing_prompts').insert([
-        {
-          title: trimmedTitle,
-          prompt: trimmedPrompt,
-          task_type: taskType ? taskType : null,
-        },
-      ]);
-
-      if (error) throw error;
-
-      success('Writing prompt saved');
-      resetForm();
-      await loadPrompts();
+      const res = await fetch('/api/admin/writing/regrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attemptId }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error ?? 'Failed to regrade attempt');
+      }
+      success('Regrade queued');
     } catch (err) {
-      toastError(err instanceof Error ? err.message : 'Could not save prompt');
-    } finally {
-      setSaving(false);
+      error(err instanceof Error ? err.message : 'Could not queue regrade');
     }
   };
+
+  const visible = useMemo(() => attempts, [attempts]);
 
   return (
     <RoleGuard allow={['admin', 'teacher'] as any}>
       <Head>
-        <title>Admin · Writing Prompts</title>
+        <title>Admin · Writing attempts</title>
       </Head>
-
-      <Container as="main" className="py-8 space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-h2 font-semibold tracking-tight">
-            Writing Prompts
-          </h1>
-          <p className="text-muted-foreground max-w-2xl text-small">
-            Create new essay or chart description prompts for students. These
-            prompts will be available to the grading AI and other teacher tools.
-          </p>
+      <Container className="py-10 space-y-8">
+        <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Writing attempts</h1>
+            <p className="text-sm text-muted-foreground">Review recent submissions, export summaries, and queue regrades.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleExportCsv} disabled={loading}>
+              Export CSV
+            </Button>
+            <Button onClick={handleExportPdf} disabled={loading}>
+              Export PDF
+            </Button>
+          </div>
         </header>
 
-        <section className="rounded-2xl border bg-card p-6 shadow-sm space-y-6">
-          <div>
-            <h2 className="text-h4 font-semibold">Add a new prompt</h2>
-            <p className="text-small text-muted-foreground">
-              Provide a clear identifier and the full prompt text. You can
-              optionally tag the task type to make discovery easier.
-            </p>
+        <section className="grid gap-4 md:grid-cols-[240px_1fr]">
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-muted-foreground">Plan filter</label>
+            <select
+              value={plan}
+              onChange={(event) => setPlan(event.target.value as 'all' | PlanId)}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
+            >
+              {PLAN_FILTERS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-3">
             <Input
-              label="Prompt title"
-              placeholder="e.g., Task 2 — Technology and Society"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
+              label="Search"
+              placeholder="Filter by student name or email"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
             />
-
-            <Textarea
-              label="Prompt description"
-              placeholder="Paste or write the full instructions students should receive."
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-              rows={8}
-              required
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-small font-medium text-muted-foreground">
-                Task type
-                <select
-                  value={taskType}
-                  onChange={(event) => setTaskType(event.target.value)}
-                  className="mt-1 w-full rounded-xl border bg-transparent px-3 py-2"
-                >
-                  {TASK_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="flex items-end justify-end">
-                <button
-                  type="submit"
-                  disabled={!canSubmit || saving}
-                  className="h-11 rounded-xl border bg-primary px-6 text-small font-medium text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving ? 'Saving…' : 'Save prompt'}
-                </button>
-              </div>
-            </div>
-          </form>
+          </div>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-h4 font-semibold">Existing prompts</h2>
-              <p className="text-small text-muted-foreground">
-                {loading
-                  ? 'Loading prompts…'
-                  : prompts.length === 0
-                    ? 'No prompts saved yet. New prompts will appear here.'
-                    : 'Review saved prompts to avoid duplicates and plan lessons.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (!loading) void loadPrompts();
-              }}
-              disabled={loading}
-              className="h-10 rounded-xl border px-4 text-small font-medium transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? 'Refreshing…' : 'Refresh'}
-            </button>
-          </div>
-
-          <div className="rounded-2xl border overflow-hidden">
-            <table className="w-full text-small">
-              <thead className="bg-muted/60">
-                <tr>
-                  <th className="text-left p-3">Title</th>
-                  <th className="text-left p-3">Task type</th>
-                  <th className="text-left p-3">Prompt</th>
-                  <th className="text-left p-3">Created</th>
+        <section className="overflow-hidden rounded-2xl border border-border/60 bg-card">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border/50">
+              <thead className="bg-muted/40">
+                <tr className="text-left text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <th className="px-4 py-3">Attempt</th>
+                  <th className="px-4 py-3">Student</th>
+                  <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3">Band</th>
+                  <th className="px-4 py-3">Submitted</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {prompts.map((item) => (
-                  <tr key={item.id} className="border-t align-top">
-                    <td className="p-3 font-medium">{item.title}</td>
-                    <td className="p-3 capitalize">{getTaskTypeLabel(item.task_type)}</td>
-                    <td className="p-3">
-                      <details>
-                        <summary className="cursor-pointer select-none text-muted-foreground">
-                          Show prompt
-                        </summary>
-                        <p className="mt-2 whitespace-pre-wrap text-foreground">
-                          {item.prompt}
-                        </p>
-                      </details>
-                    </td>
-                    <td className="p-3 whitespace-nowrap text-muted-foreground">
-                      {item.created_at
-                        ? new Date(item.created_at).toLocaleString()
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-                {prompts.length === 0 && !loading && (
+              <tbody className="divide-y divide-border/40 text-sm">
+                {loading ? (
                   <tr>
-                    <td colSpan={4} className="p-6 text-center text-muted-foreground">
-                      No writing prompts have been saved yet.
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      Loading attempts…
                     </td>
                   </tr>
+                ) : visible.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      No attempts match the current filters.
+                    </td>
+                  </tr>
+                ) : (
+                  visible.map((row) => (
+                    <tr key={row.attemptId}>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{row.attemptId}</td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-foreground">{row.studentName ?? 'Unknown student'}</div>
+                        <div className="text-xs text-muted-foreground">{row.email ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" size="sm">
+                          {row.plan}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-foreground">{row.averageBand.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {row.submittedAt ? new Date(row.submittedAt).toLocaleString() : 'Pending'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/api/writing/export/pdf?attemptId=${row.attemptId}`, '_blank')}
+                          >
+                            PDF
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/cert/writing/${row.attemptId}`, '_blank')}
+                          >
+                            Certificate
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/admin/imp-as?u=${row.userId}`, '_self')}
+                          >
+                            Impersonate
+                          </Button>
+                          <Button variant="secondary" size="sm" onClick={() => handleRegrade(row.attemptId)}>
+                            Regrade
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -248,7 +310,5 @@ const AdminWritingPromptsPage: React.FC = () => {
       </Container>
     </RoleGuard>
   );
-};
-
-export default AdminWritingPromptsPage;
+}
 

@@ -4,6 +4,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DateTime } from 'luxon';
 
+import type { PlanId } from '@/types/pricing';
+import { xpDailyCap } from '@/lib/plan/gates';
+
 // ---------------------------------------------------------------------------
 // Vocabulary ritual XP helpers
 // ---------------------------------------------------------------------------
@@ -109,10 +112,10 @@ export type AwardVocabXpOutcome = {
   dayIso: string;
 };
 
-async function fetchPlanMultiplier(
+async function fetchPlanDetails(
   client: SupabaseClient<any>,
   userId: string,
-): Promise<number> {
+): Promise<{ plan: PlanId; multiplier: number }> {
   try {
     const { data } = await client
       .from('profiles')
@@ -121,9 +124,10 @@ async function fetchPlanMultiplier(
       .limit(1)
       .maybeSingle();
 
-    return multiplierForPlan((data as { plan?: string | null } | null)?.plan ?? undefined);
+    const plan = (data as { plan?: string | null } | null)?.plan ?? undefined;
+    return { plan: (plan as PlanId | undefined) ?? 'free', multiplier: multiplierForPlan(plan) };
   } catch {
-    return 1;
+    return { plan: 'free', multiplier: 1 };
   }
 }
 
@@ -154,15 +158,29 @@ export async function awardVocabXp({
   meta,
   logEvenIfZero = false,
 }: AwardVocabXpInput): Promise<AwardVocabXpOutcome> {
-  const multiplier = await fetchPlanMultiplier(client, userId);
+  const { plan, multiplier } = await fetchPlanDetails(client, userId);
   const requested = Math.max(0, Math.round(baseAmount * multiplier));
 
   const window = currentLearningDay();
   const existingToday = await fetchExistingXp(client, userId, window);
 
-  const remainingAllowance = Math.max(0, DAILY_VOCAB_XP_CAP - existingToday);
+  const cap = xpDailyCap(plan) ?? DAILY_VOCAB_XP_CAP;
+  const remainingAllowance = Math.max(0, cap - existingToday);
   const awarded = Math.min(requested, remainingAllowance);
   const capped = awarded < requested;
+
+  if (requested > 0 && awarded === 0 && remainingAllowance === 0) {
+    try {
+      await client.from('api_abuse_log').insert({
+        user_id: userId,
+        route: 'xp.vocab',
+        hits: requested,
+        window: 'daily',
+      });
+    } catch {
+      // ignore logging issues
+    }
+  }
 
   if (awarded <= 0 && !logEvenIfZero) {
     return {
@@ -194,7 +212,7 @@ export async function awardVocabXp({
     throw new Error(error.message ?? 'Failed to record XP');
   }
 
-  const totalToday = Math.min(DAILY_VOCAB_XP_CAP, existingToday + awarded);
+  const totalToday = Math.min(cap, existingToday + awarded);
 
   return {
     requested,

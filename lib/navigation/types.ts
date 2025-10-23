@@ -1,7 +1,7 @@
 // lib/navigation/types.ts
 import type { IconName } from '@/components/design-system/Icon';
 import type { FeatureToggleKey } from '@/lib/constants/features';
-import type { FeatureFlag } from '@/lib/flags';
+import type { FeatureFlagKey } from '@/lib/flags';
 
 export type SubscriptionTier = 'free' | 'seedling' | 'rocket' | 'owl';
 
@@ -13,7 +13,7 @@ export type FeatureGate = {
   /** Minimum subscription tier required to see this item */
   minTier?: SubscriptionTier;
   /** Legacy feature flag keys backed by lib/flags */
-  flag?: FeatureFlag;
+  flag?: FeatureFlagKey;
   /** Config-driven toggle, see lib/constants/features */
   featureToggle?: FeatureToggleKey;
 };
