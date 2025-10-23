@@ -1,6 +1,7 @@
 // components/layouts/ExamLayout.tsx
 import React from 'react';
 import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
 import FocusGuard from '@/components/exam/FocusGuard';
 import { DistractionFreeBanner } from '@/premium-ui/exam/DistractionFree';
 import { PrTimer } from '@/premium-ui/components/PrTimer';
@@ -49,9 +50,9 @@ export default function ExamLayout({
       </a>
       <DistractionFreeBanner />
       <FocusGuard exam={exam} slug={slug} />
-      <div className="flex min-h-[100dvh] flex-col bg-background text-foreground dark:bg-dark">
+      <div className="flex min-h-[100dvh] flex-col text-foreground">
         <header
-          className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 dark:bg-dark/95"
+          className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b border-border/70 bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/50"
           role="banner"
         >
           <Container className="flex flex-col gap-4 py-3 pt-safe sm:flex-row sm:items-center sm:justify-between">
@@ -74,9 +75,12 @@ export default function ExamLayout({
           <Container className="flex flex-col gap-6 py-6 sm:py-8 md:flex-row md:gap-4">
             {questionPalette && (
               <aside className="hidden w-60 shrink-0 md:block" aria-label="Question navigation">
-                <div className="card-surface sticky top-[calc(6.5rem+env(safe-area-inset-top,0px))] rounded-ds-xl p-3">
+                <Card
+                  padding="sm"
+                  className="sticky top-[calc(6.5rem+env(safe-area-inset-top,0px))] supports-[backdrop-filter]:bg-card/60"
+                >
                   {questionPalette}
-                </div>
+                </Card>
               </aside>
             )}
             <section className="flex-1 min-w-0">{children}</section>

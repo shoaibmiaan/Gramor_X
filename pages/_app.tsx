@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { ThemeProvider } from 'next-themes';
+import { ThemeProvider, useTheme } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 import '@/styles/tokens.css';
@@ -13,6 +13,8 @@ import '@/styles/tokens.css';
 import '@/styles/semantic.css';
 import '@/styles/globals.css';
 import '@/styles/themes/index.css';
+import '@/styles/theme.brave.css';
+import '@/styles/theme.utilities.css';
 
 import Layout from '@/components/Layout';
 import { ToastProvider } from '@/components/design-system/Toaster';
@@ -52,12 +54,13 @@ import TeacherProfile from '@/components/teacher/TeacherProfile';
 
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
-import { HighContrastProvider } from '@/context/HighContrastContext';
+import { HighContrastProvider, useHighContrast } from '@/context/HighContrastContext';
 
 // ✅ NEW: global plan guard (client-side gating + ribbon)
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
+import { cn } from '@/lib/utils';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -73,6 +76,28 @@ const slab = Roboto_Slab({
 });
 
 const IS_CI = process.env.NEXT_PUBLIC_CI === 'true';
+
+type ThemeSurfaceProps = Readonly<{ children: React.ReactNode }>;
+
+function ThemeSurface({ children }: ThemeSurfaceProps) {
+  const { resolvedTheme } = useTheme();
+  const { enabled: highContrastEnabled } = useHighContrast();
+  const activeTheme = resolvedTheme ?? 'light';
+  const isBraveTheme = activeTheme === 'brave' || activeTheme === 'dark';
+  const appliedTheme = !highContrastEnabled && isBraveTheme ? 'brave' : undefined;
+
+  const surfaceClassName = cn(
+    `${poppins.className} ${slab.className}`,
+    'min-h-screen min-h-[100dvh] bg-background text-foreground antialiased',
+    appliedTheme && 'gx-brave-bg text-text'
+  );
+
+  return (
+    <div data-theme={appliedTheme} className={surfaceClassName}>
+      {children}
+    </div>
+  );
+}
 
 function GuardSkeleton() {
   return (
@@ -471,7 +496,13 @@ function InnerApp({ Component, pageProps }: AppProps) {
   );
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="brave"
+      enableSystem={false}
+      value={{ light: 'light', dark: 'dark brave', brave: 'dark brave' }}
+      themes={['light', 'dark', 'brave']}
+    >
       <HighContrastProvider>
         {/* Load the compiled premium DS stylesheet globally */}
         <Head>
@@ -479,9 +510,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <link rel="stylesheet" href="/premium.css" />
         </Head>
 
-        <div
-          className={`${poppins.className} ${slab.className} min-h-screen min-h-[100dvh] bg-background text-foreground antialiased`}
-        >
+        <ThemeSurface>
           {/* ✅ NEW: Client-side plan guard + ribbon + route protection */}
           <GlobalPlanGuard />
 
@@ -505,7 +534,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <SidebarAI />
           <UpgradeModal />
           <RouteLoadingOverlay active={isRouteLoading} />
-        </div>
+        </ThemeSurface>
       </HighContrastProvider>
     </ThemeProvider>
   );
