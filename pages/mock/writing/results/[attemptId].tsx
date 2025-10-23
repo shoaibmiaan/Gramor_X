@@ -1,18 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
 import { Button } from '@/components/design-system/Button';
 import { Container } from '@/components/design-system/Container';
+import { Badge } from '@/components/design-system/Badge';
 import BandDiffView from '@/components/writing/BandDiffView';
 import BandProgressChart from '@/components/writing/BandProgressChart';
 import WritingResultCard from '@/components/writing/WritingResultCard';
 import AccessibilityHints from '@/components/writing/AccessibilityHints';
 import { computeWritingSummary } from '@/lib/analytics/writing';
-import { track } from '@/lib/analytics/track';
+import {
+  logWritingCoachEntry,
+  logWritingResultsAnalyticsClick,
+  logWritingResultsShare,
+  logWritingResultsView,
+} from '@/lib/analytics/writing-events';
 import { getServerClient } from '@/lib/supabaseServer';
 import { computeCriterionDeltas, trimProgressPoints } from '@/lib/writing/progress';
+import { calculateWritingXp, type WritingAchievement } from '@/lib/gamification/xp';
 import type { CriterionDelta, WritingProgressPoint } from '@/types/analytics';
 import type { WritingFeedback, WritingScorePayload, WritingTaskType } from '@/types/writing';
 
@@ -29,6 +36,13 @@ interface PageProps {
   highlight?: HighlightSection | null;
   progressPoints: WritingProgressPoint[];
   progressDeltas: CriterionDelta[];
+  xp: {
+    points: number;
+    reason: string;
+    achievements: WritingAchievement[];
+    improvement: number;
+    durationSeconds: number | null;
+  };
 }
 
 const CoachDock = dynamic(() => import('@/components/writing/CoachDock'), {
@@ -47,33 +61,130 @@ const WritingResultsPage: React.FC<PageProps> = ({
   highlight,
   progressPoints,
   progressDeltas,
+  xp,
 }) => {
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'error'>('idle');
+
   useEffect(() => {
-    track('writing.coach.entry', {
-      attemptId,
-      tasks: results.length,
-      averageBand,
-    });
+    logWritingCoachEntry({ attemptId, tasks: results.length, averageBand });
+    logWritingResultsView({ attemptId, tasks: results.length, averageBand });
   }, [attemptId, results.length, averageBand]);
+
+  const shareLabel = useMemo(() => {
+    if (shareStatus === 'copied') return 'Link copied!';
+    if (shareStatus === 'shared') return 'Shared — nice!';
+    if (shareStatus === 'error') return 'Sharing unavailable';
+    return 'Share results';
+  }, [shareStatus]);
+
+  const shareFeedback = useMemo(() => {
+    if (shareStatus === 'copied') return 'Share link copied to clipboard';
+    if (shareStatus === 'shared') return 'Shared successfully';
+    if (shareStatus === 'error') return 'Sharing failed';
+    return 'Ready to share';
+  }, [shareStatus]);
+
+  const handleShare = useCallback(async () => {
+    const shareText = `I just logged a band ${averageBand.toFixed(1)} IELTS writing mock on GramorX!`;
+    const shareUrl =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/mock/writing/results/${attemptId}`
+        : 'https://gramorx.com/writing';
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: 'GramorX Writing Results',
+          text: shareText,
+          url: shareUrl,
+        });
+        setShareStatus('shared');
+        logWritingResultsShare({ attemptId, method: 'web-share', status: 'shared' });
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareStatus('copied');
+        logWritingResultsShare({ attemptId, method: 'clipboard', status: 'copied' });
+        return;
+      }
+
+      throw new Error('Sharing not supported');
+    } catch (error) {
+      console.warn('[writing/results] share failed', error);
+      setShareStatus('error');
+      logWritingResultsShare({ attemptId, method: 'fallback', status: 'error' });
+    }
+  }, [attemptId, averageBand]);
+
+  const handleAnalyticsClick = useCallback(() => {
+    logWritingResultsAnalyticsClick({ attemptId });
+  }, [attemptId]);
 
   return (
     <Container className="py-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
-        <header className="flex flex-col gap-2">
+        <header className="flex flex-col gap-3">
           <h1 className="text-3xl font-semibold text-foreground">Mock writing results</h1>
           <p className="text-sm text-muted-foreground">Attempt ID: {attemptId}</p>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <span className="rounded-full border border-border px-3 py-1 font-medium text-foreground">
               Average band {averageBand.toFixed(1)}
             </span>
+            <Badge variant="success" size="sm">
+              +{xp.points} XP
+            </Badge>
             <Link href={`/mock/writing/review/${attemptId}`}>
               <Button size="sm" variant="secondary">
                 Detailed review
               </Button>
             </Link>
           </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button size="sm" variant="primary" onClick={handleShare} aria-describedby="share-status">
+              {shareLabel}
+            </Button>
+            <span id="share-status" className="sr-only" aria-live="polite">
+              {shareFeedback}
+            </span>
+            <Link href="/analytics/writing" onClick={handleAnalyticsClick} className="inline-flex">
+              <Button size="sm" variant="secondary">
+                Open analytics
+              </Button>
+            </Link>
+          </div>
         </header>
+
+        {xp.achievements.length > 0 ? (
+          <section className="rounded-ds-xl border border-border/60 bg-muted/20 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-base font-semibold text-foreground">Achievements unlocked</h2>
+              <Badge variant="success" size="sm">
+                +{xp.points} XP total
+              </Badge>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {xp.achievements.map((achievement) => (
+                <div
+                  key={`${achievement.id}-${achievement.label}`}
+                  className="rounded-lg border border-border/50 bg-background/80 p-4 shadow-sm"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-sm font-medium text-foreground">{achievement.label}</p>
+                    <span className="text-sm font-semibold text-primary">+{achievement.points} XP</span>
+                  </div>
+                  {achievement.description ? (
+                    <p className="mt-1 text-xs text-muted-foreground">{achievement.description}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <AccessibilityHints />
+
         {results.length === 0 ? (
           <p className="text-sm text-muted-foreground">Scores are still processing. Refresh this page in a few seconds.</p>
         ) : (
@@ -199,6 +310,20 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
 
   const progress = await loadProgress(supabase, user.id, attemptId);
 
+  const sortedPoints = [...progress.points].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+  const currentPoint = sortedPoints.find((point) => point.attemptId === attemptId) ?? null;
+  const previousPoint = sortedPoints.filter((point) => point.attemptId !== attemptId).pop() ?? null;
+
+  const xpSummary = calculateWritingXp({
+    currentOverall: currentPoint?.overallBand ?? summary.averageBand ?? 0,
+    previousOverall: previousPoint?.overallBand ?? null,
+    submittedAt: attempt.submitted_at ?? attempt.updated_at ?? attempt.created_at ?? null,
+    startedAt: attempt.started_at ?? attempt.created_at ?? null,
+    durationSeconds: attempt.duration_seconds ?? null,
+  });
+
   return {
     props: {
       attemptId,
@@ -224,6 +349,13 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
           : null,
       progressPoints: progress.points,
       progressDeltas: progress.deltas,
+      xp: {
+        points: xpSummary.points,
+        reason: xpSummary.reason,
+        achievements: xpSummary.achievements,
+        improvement: xpSummary.improvement,
+        durationSeconds: xpSummary.effectiveDuration,
+      },
     },
   };
 };
