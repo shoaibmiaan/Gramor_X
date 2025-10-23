@@ -7,11 +7,14 @@ import { trackor } from '@/lib/analytics/trackor.server';
 import { gradeReadingAttempt } from '@/lib/reading/grade';
 
 type ReadingAttemptResult = ReturnType<typeof gradeReadingAttempt>;
+type DifficultyKey = 'easy' | 'med' | 'hard';
+type DifficultyBreakdown = Record<DifficultyKey, { correct: number; total: number; pct: number }>;
+type ReadingAttemptOutcome = ReadingAttemptResult & { difficultyBreakdown: DifficultyBreakdown };
 type AttemptCacheEntry = {
   id: string;
   slug: string;
   answers: Record<string, unknown>;
-  result: ReadingAttemptResult;
+  result: ReadingAttemptOutcome;
   userId: string;
   createdAt: string;
   paper?: unknown;
@@ -157,32 +160,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
   });
 
+  const questionIds = normalizedQuestions.map((row) => row.id);
+  const difficultyMap = new Map<string, DifficultyKey>();
+
+  if (questionIds.length > 0) {
+    const { data: difficultyRows, error: difficultyErr } = await supabaseAdmin
+      .from('reading_items')
+      .select('question_id,difficulty')
+      .in('question_id', questionIds);
+
+    if (!difficultyErr && Array.isArray(difficultyRows)) {
+      difficultyRows.forEach((row: any) => {
+        const key = String(row.question_id);
+        const diff = typeof row.difficulty === 'string' ? row.difficulty.toLowerCase() : null;
+        if (diff === 'easy' || diff === 'med' || diff === 'hard') {
+          difficultyMap.set(key, diff);
+        }
+      });
+    }
+  }
+
   const result = gradeReadingAttempt(normalizedQuestions, answers);
+  const difficultyBreakdown = buildDifficultyBreakdown(result.items, difficultyMap);
+  const outcome = { ...result, difficultyBreakdown };
   const attemptId = randomUUID();
   const duration = coerceDuration(durationMs);
   const summary = {
-    correctCount: result.correctCount,
-    totalQuestions: result.totalQuestions,
-    totalPoints: result.totalPoints,
-    earnedPoints: result.earnedPoints,
-    percentage: result.percentage,
+    correctCount: outcome.correctCount,
+    totalQuestions: outcome.totalQuestions,
+    totalPoints: outcome.totalPoints,
+    earnedPoints: outcome.earnedPoints,
+    percentage: outcome.percentage,
   };
 
   const insertPayload = {
     id: attemptId,
     user_id: user.id,
     passage_slug: testSlug,
-    correct_count: result.correctCount,
-    total_questions: result.totalQuestions,
-    total_points: result.totalPoints,
-    earned_points: result.earnedPoints,
-    band: result.band,
+    correct_count: outcome.correctCount,
+    total_questions: outcome.totalQuestions,
+    total_points: outcome.totalPoints,
+    earned_points: outcome.earnedPoints,
+    band: outcome.band,
     duration_ms: duration,
     answers_json: answers,
     result_json: {
       summary,
-      items: result.items,
-      breakdown: result.breakdown,
+      items: outcome.items,
+      breakdown: outcome.breakdown,
+      difficultyBreakdown,
       meta: meta ?? null,
     },
     meta: meta ?? null,
@@ -202,7 +228,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     id: attemptId,
     slug: testSlug,
     answers,
-    result,
+    result: outcome,
     userId: user.id,
     createdAt,
     paper: isRecord(meta) && meta.paper ? meta.paper : undefined,
@@ -215,13 +241,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     attempt_id: attemptId,
     user_id: user.id,
     passage_slug: testSlug,
-    correct_count: result.correctCount,
-    total_questions: result.totalQuestions,
-    total_points: result.totalPoints,
-    earned_points: result.earnedPoints,
-    band: result.band,
+    correct_count: outcome.correctCount,
+    total_questions: outcome.totalQuestions,
+    total_points: outcome.totalPoints,
+    earned_points: outcome.earnedPoints,
+    band: outcome.band,
     duration_ms: duration,
-    percentage: result.percentage,
+    percentage: outcome.percentage,
   });
 
   try {
@@ -229,21 +255,73 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       attempt_id: attemptId,
       user_id: user.id,
       passage_slug: testSlug,
-      correct_count: result.correctCount,
-      total_questions: result.totalQuestions,
-      earned_points: result.earnedPoints,
-      band: result.band,
-      percentage: result.percentage,
+      correct_count: outcome.correctCount,
+      total_questions: outcome.totalQuestions,
+      earned_points: outcome.earnedPoints,
+      band: outcome.band,
+      percentage: outcome.percentage,
       assessment: 'reading',
     });
   } catch (error) {
     console.warn('[reading.submit] analytics failed', error);
   }
 
+  try {
+    await trackor.log('reading.accuracy.by_difficulty', {
+      attempt_id: attemptId,
+      user_id: user.id,
+      passage_slug: testSlug,
+      breakdown: difficultyBreakdown,
+    });
+  } catch (error) {
+    console.warn('[reading.submit] difficulty analytics failed', error);
+  }
+
   return res.status(200).json({
     attemptId,
-    score: { correct: result.correctCount, total: result.totalQuestions },
-    band: result.band,
-    breakdown: result.breakdown,
+    score: { correct: outcome.correctCount, total: outcome.totalQuestions },
+    band: outcome.band,
+    breakdown: outcome.breakdown,
+    difficultyBreakdown,
   });
+}
+
+function fallbackDifficulty(type: string): DifficultyKey {
+  const normalized = String(type || '').toLowerCase();
+  if (normalized === 'matching') return 'hard';
+  if (normalized === 'short') return 'hard';
+  if (normalized === 'tfng' || normalized === 'ynng') return 'med';
+  return 'med';
+}
+
+function buildDifficultyBreakdown(
+  items: ReadingAttemptResult['items'],
+  map: Map<string, DifficultyKey>,
+): DifficultyBreakdown {
+  const counters: Record<DifficultyKey, { correct: number; total: number }> = {
+    easy: { correct: 0, total: 0 },
+    med: { correct: 0, total: 0 },
+    hard: { correct: 0, total: 0 },
+  };
+
+  items.forEach((item) => {
+    const key = map.get(String(item.id)) ?? fallbackDifficulty(item.type);
+    const bucket = counters[key];
+    const points = typeof item.points === 'number' && !Number.isNaN(item.points) ? item.points : 1;
+    bucket.total += points;
+    if (item.isCorrect) bucket.correct += points;
+  });
+
+  const breakdown: DifficultyBreakdown = {
+    easy: { correct: counters.easy.correct, total: counters.easy.total, pct: 0 },
+    med: { correct: counters.med.correct, total: counters.med.total, pct: 0 },
+    hard: { correct: counters.hard.correct, total: counters.hard.total, pct: 0 },
+  };
+
+  (Object.keys(breakdown) as DifficultyKey[]).forEach((key) => {
+    const { correct, total } = breakdown[key];
+    breakdown[key].pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  });
+
+  return breakdown;
 }

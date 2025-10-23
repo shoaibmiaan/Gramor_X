@@ -42,7 +42,11 @@ export type AnalyticsEventName =
   | 'vocab_reward_shown'
   | 'vocab_share_clicked'
   | 'saved_view'
-  | 'saved_remove';
+  | 'saved_remove'
+  | 'reading.highlight.add'
+  | 'reading.note.add'
+  | 'reading.flag.toggle'
+  | 'reading.nav.filter';
 
 export type AnalyticsProps = Record<
   string,

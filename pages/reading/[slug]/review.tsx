@@ -8,9 +8,12 @@ import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+import type { ProgressTone } from '@/components/design-system/ProgressBar';
 import { getAttempt } from '@/pages/api/reading/submit';
 
 type BreakdownEntry = { correct: number; total: number; pct: number };
+type DifficultyBreakdown = Record<'easy' | 'med' | 'hard', BreakdownEntry>;
 
 type ReviewQuestion = {
   id: string;
@@ -32,6 +35,7 @@ type ReviewSummary = {
   correctCount: number;
   total: number;
   breakdown: Record<string, BreakdownEntry>;
+  difficultyBreakdown?: DifficultyBreakdown | null;
   createdAt?: string | null;
   userId?: string | null;
 };
@@ -47,13 +51,34 @@ type ReviewPageProps = {
   questions?: ReviewQuestion[];
 };
 
-type AIExplanation = {
-  id?: string;
-  correct: string;
-  user: string;
-  isCorrect: boolean;
-  explanation: string;
-  tip: string;
+type AIReason = {
+  questionId: string;
+  prompt: string;
+  userAnswer: string | null;
+  correctAnswer: string | null;
+  why: string;
+  passageSnippet: string | null;
+};
+
+type RecommendationLink = {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  tag: string;
+  source: 'study-hub' | 'coach' | 'resource';
+};
+
+const DIFFICULTY_KEYS: Array<keyof DifficultyBreakdown> = ['easy', 'med', 'hard'];
+const DIFFICULTY_LABEL: Record<keyof DifficultyBreakdown, string> = {
+  easy: 'Easy',
+  med: 'Medium',
+  hard: 'Hard',
+};
+const DIFFICULTY_TONE: Record<keyof DifficultyBreakdown, ProgressTone> = {
+  easy: 'success',
+  med: 'info',
+  hard: 'warning',
 };
 
 export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ctx) => {
@@ -218,6 +243,10 @@ export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ct
     ? Math.round(((4 + (correctCount / total) * 5) + Number.EPSILON) * 10) / 10
     : 0;
 
+  const difficultyBreakdown = (attempt?.result as any)?.difficultyBreakdown
+    ? (attempt.result.difficultyBreakdown as DifficultyBreakdown)
+    : computeDifficultyFromQuestions(questions);
+
   return {
     props: {
       attemptId,
@@ -229,6 +258,7 @@ export const getServerSideProps: GetServerSideProps<ReviewPageProps> = async (ct
         correctCount,
         total,
         breakdown: summaryBreakdown,
+        difficultyBreakdown: difficultyBreakdown ?? null,
         createdAt: null,
         userId: null,
       },
@@ -248,6 +278,113 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
   summary,
   questions,
 }) => {
+  const [aiState, setAiState] = React.useState<{
+    loading: boolean;
+    summary: string | null;
+    focus: string[];
+    data: Record<string, AIReason> | null;
+    error: string | null;
+  }>({ loading: false, summary: null, focus: [], data: null, error: null });
+
+  const [recoState, setRecoState] = React.useState<{
+    loading: boolean;
+    data: RecommendationLink[] | null;
+    error: string | null;
+  }>({ loading: false, data: null, error: null });
+
+  const weakTypes = React.useMemo(() => {
+    const entries = summary ? Object.entries(summary.breakdown) : [];
+    return entries
+      .filter(([, stats]) => stats.total > 0)
+      .sort((a, b) => a[1].pct - b[1].pct)
+      .filter(([, stats]) => stats.pct < 85)
+      .slice(0, 3)
+      .map(([type]) => type);
+  }, [summary]);
+
+  const weakDifficulty = React.useMemo(() => {
+    const diff = summary?.difficultyBreakdown;
+    if (!diff) return null;
+    const candidates = Object.entries(diff).filter(([, stats]) => stats.total > 0);
+    if (!candidates.length) return null;
+    const [worst] = candidates.sort((a, b) => a[1].pct - b[1].pct);
+    if (!worst || worst[1].pct >= 80) return null;
+    return worst[0];
+  }, [summary]);
+
+  React.useEffect(() => {
+    if (!weakTypes.length) {
+      setRecoState({ loading: false, data: null, error: null });
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+    setRecoState((prev) => ({ ...prev, loading: true, error: null }));
+
+    const payload: { weakTypes: string[]; limit: number; difficulty?: string } = {
+      weakTypes,
+      limit: 3,
+    };
+    if (weakDifficulty) payload.difficulty = weakDifficulty;
+
+    fetch('/api/reco/next-steps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    })
+      .then(async (resp) => {
+        const json = await resp.json();
+        if (cancelled) return;
+        if (!resp.ok || !json?.ok) {
+          throw new Error(json?.error || `Failed to load recommendations (${resp.status})`);
+        }
+        setRecoState({ loading: false, data: json.links ?? [], error: null });
+      })
+      .catch((err: any) => {
+        if (cancelled || err?.name === 'AbortError') return;
+        setRecoState({ loading: false, data: null, error: err?.message ?? 'Unable to load recommendations.' });
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [weakTypes, weakDifficulty]);
+
+  const requestAI = React.useCallback(async () => {
+    if (!attemptId) return;
+
+    setAiState((prev) => ({ ...prev, loading: true, error: null }));
+
+    try {
+      const resp = await fetch('/api/ai/reading/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attemptId, section: slug ?? 'overall' }),
+      });
+
+      const json = await resp.json();
+      if (!resp.ok || !json?.ok) {
+        throw new Error(json?.error || `Failed to generate feedback (${resp.status})`);
+      }
+
+      const map: Record<string, AIReason> = {};
+      (json.reasons as AIReason[] | undefined)?.forEach((reason) => {
+        map[reason.questionId] = reason;
+      });
+
+      const focus = Array.isArray(json.focus)
+        ? (json.focus as string[]).map((item) => item?.trim()).filter((item): item is string => !!item)
+        : [];
+
+      setAiState({ loading: false, summary: json.summary ?? null, focus, data: map, error: null });
+    } catch (aiErr: any) {
+      setAiState((prev) => ({ ...prev, loading: false, error: aiErr?.message ?? 'Unable to generate AI feedback.' }));
+    }
+  }, [attemptId, slug]);
+
   if (notFound || !questions || !summary) {
     return (
       <section className="py-24">
@@ -264,63 +401,7 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
   }
 
   const accuracy = summary.total ? Math.round((summary.correctCount / summary.total) * 100) : null;
-
-  const [aiState, setAiState] = React.useState<{
-    loading: boolean;
-    data: Record<string, AIExplanation> | null;
-    error: string | null;
-  }>({ loading: false, data: null, error: null });
-
-  const stringifyAnswer = React.useCallback((value: any): string => {
-    if (value == null) return '';
-    if (typeof value === 'string') return value;
-    if (Array.isArray(value)) return value.map((item) => stringifyAnswer(item)).join(', ');
-    if (typeof value === 'object') {
-      return Object.entries(value)
-        .map(([key, val]) => `${key}: ${stringifyAnswer(val)}`)
-        .join('; ');
-    }
-    return String(value);
-  }, []);
-
-  const requestAI = React.useCallback(async () => {
-    if (!questions?.length) return;
-
-    setAiState((prev) => ({ loading: true, data: prev.data, error: null }));
-
-    try {
-      const items = questions.map((q) => ({
-        id: q.id,
-        prompt: q.prompt,
-        options: Array.isArray(q.options) ? q.options : undefined,
-        answer: stringifyAnswer(q.correct ?? q.acceptable ?? ''),
-        userAnswer: stringifyAnswer(q.user),
-        passage,
-      }));
-
-      const resp = await fetch('/api/ai/explain', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ module: 'reading', items }),
-      });
-
-      const json = await resp.json();
-      if (!resp.ok || !json?.ok) {
-        throw new Error(json?.error || `Failed to generate feedback (${resp.status})`);
-      }
-
-      const map: Record<string, AIExplanation> = {};
-      (json.explanations as AIExplanation[]).forEach((exp, idx) => {
-        const fallback = questions[idx]?.id ?? `q-${idx}`;
-        const key = exp.id || fallback;
-        map[key] = { ...exp, id: key };
-      });
-
-      setAiState({ loading: false, data: map, error: null });
-    } catch (aiErr: any) {
-      setAiState({ loading: false, data: null, error: aiErr?.message ?? 'Unable to generate AI feedback.' });
-    }
-  }, [passage, questions, stringifyAnswer]);
+  const difficulty = summary.difficultyBreakdown ?? null;
 
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -364,18 +445,109 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
           ))}
         </div>
 
-        <div className="mb-8 flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            variant="primary"
-            className="rounded-ds-xl"
-            onClick={requestAI}
-            disabled={aiState.loading}
-          >
-            {aiState.data ? 'Refresh AI feedback' : 'Generate AI feedback'}
-          </Button>
-          {aiState.loading && <span className="text-small text-muted-foreground">Generating smart tips…</span>}
-          {aiState.error && <span className="text-small text-sunsetOrange">{aiState.error}</span>}
+        <div className="mb-8 grid gap-6 lg:grid-cols-2">
+          {difficulty && (
+            <Card className="h-full p-6">
+              <h2 className="text-body font-semibold">Accuracy by difficulty</h2>
+              <p className="text-small text-muted-foreground mt-1">See how you performed on easier versus harder questions.</p>
+              <div className="mt-4 space-y-4">
+                {DIFFICULTY_KEYS.map((key) => {
+                  const stats = difficulty[key];
+                  return (
+                    <div key={key}>
+                      <div className="flex items-center justify-between text-small font-medium">
+                        <span>{DIFFICULTY_LABEL[key]}</span>
+                        <span className="text-muted-foreground">{stats.correct}/{stats.total} • {stats.pct}%</span>
+                      </div>
+                      <ProgressBar
+                        value={stats.pct}
+                        tone={DIFFICULTY_TONE[key]}
+                        className="mt-2"
+                        ariaLabel={`${DIFFICULTY_LABEL[key]} accuracy`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {weakTypes.length > 0 && (
+            <Card className="h-full p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-body font-semibold">Next steps from Study Hub</h2>
+                  <p className="text-small text-muted-foreground">
+                    Practice sets chosen for your weaker question types.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 space-y-4">
+                {recoState.loading && (
+                  <p className="text-small text-muted-foreground">Loading personalised links…</p>
+                )}
+                {recoState.error && (
+                  <p className="text-small text-sunsetOrange">{recoState.error}</p>
+                )}
+                {!recoState.loading && !recoState.error && (recoState.data?.length ?? 0) === 0 && (
+                  <p className="text-small text-muted-foreground">
+                    Stay consistent—no extra drills needed right now.
+                  </p>
+                )}
+                {recoState.data && recoState.data.length > 0 && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {recoState.data.map((item) => (
+                      <a
+                        key={item.id}
+                        href={item.url}
+                        className="group flex flex-col rounded-ds border border-lightBorder/70 bg-background p-4 transition hover:border-primary hover:bg-primary/5 dark:border-white/10"
+                      >
+                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {item.tag}
+                        </span>
+                        <span className="mt-2 text-body font-semibold text-foreground group-hover:text-primary">
+                          {item.title}
+                        </span>
+                        <span className="mt-2 flex-1 text-small text-muted-foreground">{item.description}</span>
+                        <span className="mt-3 text-small font-medium text-primary">
+                          Open {item.source === 'coach' ? 'AI Coach' : 'Study Hub'} →
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
+
+        <div className="mb-8 flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="primary"
+              className="rounded-ds-xl"
+              onClick={requestAI}
+              disabled={aiState.loading}
+            >
+              {aiState.data ? 'Refresh AI review' : 'Generate AI review'}
+            </Button>
+            {aiState.loading && <span className="text-small text-muted-foreground">Generating smart tips…</span>}
+          </div>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3 md:ml-4">
+            {aiState.summary && <p className="text-small text-muted-foreground">{aiState.summary}</p>}
+            {aiState.focus.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-small font-medium text-muted-foreground">Focus:</span>
+                {aiState.focus.map((label) => (
+                  <Badge key={label} variant="info" size="xs">
+                    {label}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {aiState.error && <span className="text-small text-sunsetOrange">{aiState.error}</span>}
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.6fr)]">
@@ -393,7 +565,7 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
           <div className="space-y-6">
             {questions.map((q) => {
               const Icon = q.isCorrect ? CheckCircle2 : XCircle;
-              const ai = aiState.data?.[q.id];
+              const ai = aiState.data?.[q.id] ?? null;
               return (
                 <Card
                   key={q.id}
@@ -456,11 +628,20 @@ const ReadingReviewPage: NextPage<ReviewPageProps> = ({
                       </span>
                     </div>
                   </div>
-                  {ai && (
-                    <div className="mt-4 rounded-ds border border-primary/40 bg-primary/5 p-4">
-                      <p className="text-small font-semibold text-primary">AI feedback</p>
-                      <p className="mt-2 text-body text-pretty">{ai.explanation}</p>
-                      <p className="mt-2 text-small text-muted-foreground">Tip: {ai.tip}</p>
+                  {!q.isCorrect && ai && (
+                    <div className="mt-4 space-y-3 rounded-ds border border-primary/40 bg-primary/5 p-4">
+                      <div>
+                        <p className="text-small font-semibold uppercase tracking-wide text-primary">Why this is wrong</p>
+                        <p className="mt-2 text-body text-pretty">{ai.why}</p>
+                      </div>
+                      {ai.passageSnippet && (
+                        <div className="rounded-ds border border-primary/30 bg-background/70 p-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            What to read in passage
+                          </p>
+                          <p className="mt-1 text-small text-muted-foreground whitespace-pre-line">{ai.passageSnippet}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </Card>
@@ -494,6 +675,38 @@ function normaliseType(type: string): 'mcq' | 'tfng' | 'ynng' | 'short' | 'match
   if (lower === 'ynng') return 'ynng';
   if (lower === 'tfng') return 'tfng';
   return 'mcq';
+}
+
+function computeDifficultyFromQuestions(questions?: ReviewQuestion[]): DifficultyBreakdown | null {
+  if (!questions || questions.length === 0) return null;
+
+  const counters: DifficultyBreakdown = {
+    easy: { correct: 0, total: 0, pct: 0 },
+    med: { correct: 0, total: 0, pct: 0 },
+    hard: { correct: 0, total: 0, pct: 0 },
+  };
+
+  questions.forEach((question) => {
+    const bucket = deriveDifficultyBucket(question);
+    counters[bucket].total += 1;
+    if (question.isCorrect) counters[bucket].correct += 1;
+  });
+
+  (Object.keys(counters) as Array<keyof DifficultyBreakdown>).forEach((key) => {
+    const entry = counters[key];
+    entry.pct = entry.total > 0 ? Math.round((entry.correct / entry.total) * 100) : 0;
+  });
+
+  return counters;
+}
+
+function deriveDifficultyBucket(question: ReviewQuestion): keyof DifficultyBreakdown {
+  const type = question.type.toLowerCase();
+  if (type === 'matching' || type === 'short') return 'hard';
+  if (type === 'tfng' || type === 'ynng') return question.qNo <= 4 ? 'easy' : 'med';
+  if (question.qNo <= 5) return 'easy';
+  if (question.qNo >= 20) return 'hard';
+  return 'med';
 }
 
 function normaliseText(value: any): string {
