@@ -9,6 +9,14 @@ const DEFAULT_WEEKS = 8;
 const MIN_WEEKS = 4;
 const MAX_WEEKS = 52;
 
+type Dependencies = {
+  getClient: typeof getServerClient;
+};
+
+const dependencies: Dependencies = {
+  getClient: getServerClient,
+};
+
 const CRITERIA: WritingCriterion[] = [
   'task_response',
   'coherence_and_cohesion',
@@ -59,6 +67,21 @@ type WeeklyBucket = {
 };
 
 const cache = new Map<string, CacheEntry>();
+
+export function __setAnalyticsWritingOverviewTestOverrides(overrides: Partial<Dependencies>) {
+  if (process.env.NODE_ENV !== 'test') return;
+  if (overrides.getClient) {
+    dependencies.getClient = overrides.getClient;
+  }
+}
+
+export function __resetAnalyticsWritingOverviewTestOverrides() {
+  dependencies.getClient = getServerClient;
+}
+
+export function __clearAnalyticsWritingOverviewCache() {
+  cache.clear();
+}
 
 function clampWeeks(raw: unknown): number {
   const value = Array.isArray(raw) ? Number(raw[0]) : Number(raw);
@@ -252,7 +275,7 @@ export default async function handler(
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  const supabase = getServerClient(req, res);
+  const supabase = dependencies.getClient(req, res);
   const {
     data: { user },
     error: authError,

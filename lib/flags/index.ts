@@ -3,7 +3,7 @@
 // - Server: fetches flag rows with light caching, supports audience targeting.
 // - Client: hydrated via /api/debug/feature-flags snapshot and works offline.
 
-import { bool, env, isBrowser } from '@/lib/env';
+import { bool, env } from '@/lib/env';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import type { PlanId } from '@/types/pricing';
 
@@ -74,6 +74,8 @@ let inFlight: Promise<void> | null = null;
 
 let clientSnapshot: Record<string, boolean> = { ...STATIC_DEFAULTS };
 
+const inBrowser = () => typeof window !== 'undefined';
+
 const normalisePercentage = (value?: number | null): number | null => {
   if (typeof value !== 'number' || Number.isNaN(value)) return null;
   if (value <= 0) return 0;
@@ -122,7 +124,7 @@ function matchesAudience(flag: FlagRow, audience?: FlagAudience | null): boolean
 }
 
 async function ensureDynamicFlags(force = false): Promise<void> {
-  if (isBrowser) return;
+  if (inBrowser()) return;
   if (!supabaseAdmin) return;
   const now = Date.now();
   if (!force && now - lastRefresh < REFRESH_MS) return;
@@ -163,7 +165,7 @@ function resolveFlagValue(key: string, audience?: FlagAudience | null): boolean 
 export type FlagSnapshot = Record<string, boolean>;
 
 export async function resolveFlags(audience?: FlagAudience | null): Promise<FlagSnapshot> {
-  if (isBrowser) return { ...clientSnapshot };
+  if (inBrowser()) return { ...clientSnapshot };
   await ensureDynamicFlags(false);
   const entries = new Set<string>([
     ...Object.keys(STATIC_DEFAULTS),
@@ -194,13 +196,13 @@ export function invalidateFlagCache() {
 
 export const flags = {
   enabled(key: FeatureFlagKey, audience?: FlagAudience | null) {
-    if (isBrowser) {
+    if (inBrowser()) {
       return Boolean(clientSnapshot[key] ?? STATIC_DEFAULTS[key]);
     }
     return resolveFlagValue(key, audience);
   },
   snapshot() {
-    if (isBrowser) {
+    if (inBrowser()) {
       return { ...clientSnapshot };
     }
     const entries = new Set<string>([
