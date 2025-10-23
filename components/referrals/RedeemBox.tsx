@@ -20,8 +20,8 @@ export default function RedeemBox({ onSuccess, className = '' }: Props) {
     setErr(null);
     const res = await redeemReferral({ code, context: 'checkout' });
     if ('ok' in res && res.ok) {
-      setMsg(`Applied! Reward: ${res.rewardDays} days`);
-      onSuccess?.(res.rewardDays);
+      setMsg(`Referral applied! You received ${res.awarded} credits.`);
+      onSuccess?.(res.awarded);
     } else {
       setErr((res as any).error || 'Invalid code');
     }

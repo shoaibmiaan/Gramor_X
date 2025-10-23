@@ -3,6 +3,7 @@ import type { NextApiHandler } from 'next';
 import { buffer } from 'micro';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
+import { trackor } from '@/lib/analytics/trackor.server';
 
 // Important: disable body parsing so we can verify Stripe signatures
 export const config = { api: { bodyParser: false } };
@@ -78,6 +79,38 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
               updated_at: new Date().toISOString(),
             })
             .eq('id', userId);
+        }
+
+        if (session.id) {
+          const { data: intent } = await supabase
+            .from('payment_intents')
+            .select('id, user_id, plan_id, cycle')
+            .eq('gateway_session_id', session.id)
+            .eq('provider', 'stripe')
+            .maybeSingle();
+
+          if (intent) {
+            const confirmedAt = new Date().toISOString();
+            await supabase
+              .from('payment_intents')
+              .update({ status: 'succeeded', confirmed_at: confirmedAt, updated_at: confirmedAt })
+              .eq('id', intent.id);
+
+            await supabase.from('payment_intent_events').insert({
+              intent_id: intent.id,
+              user_id: intent.user_id,
+              event: 'webhook.success',
+              payload: { provider: 'stripe', sessionId: session.id },
+            });
+
+            await trackor.log('payments.intent.success', {
+              userId: intent.user_id ?? userId,
+              intentId: intent.id,
+              provider: 'stripe',
+              plan: intent.plan_id ?? plan,
+              cycle: intent.cycle,
+            });
+          }
         }
 
         await supabase.from('payment_events').insert([
