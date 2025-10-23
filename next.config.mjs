@@ -105,4 +105,7 @@ export default withPWA({
   skipWaiting: true,
   buildExcludes: [/.*\.map$/, /middleware-manifest\.json$/, /server\/middleware-manifest\.json$/],
   publicExcludes: ['**/*.map'],
+  workboxOptions: {
+    importScripts: ['sw-sync.js'],
+  },
 })(baseConfig);
