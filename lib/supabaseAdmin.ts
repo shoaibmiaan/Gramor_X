@@ -10,10 +10,12 @@ const url = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
 // Accept either name for the service key
 const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_KEY;
 
-if (!url && process.env.NODE_ENV !== 'test') {
+const isServer = typeof window === 'undefined';
+
+if (isServer && !url && process.env.NODE_ENV !== 'test') {
   throw new Error('Missing SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL fallback)');
 }
-if (!serviceRoleKey && process.env.NODE_ENV !== 'test') {
+if (isServer && !serviceRoleKey && process.env.NODE_ENV !== 'test') {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY)');
 }
 
@@ -51,6 +53,16 @@ declare global {
 export const supabaseAdmin: SupabaseClient =
   globalThis.__supabaseAdmin ??
   (() => {
+    if (!isServer) {
+      // Never expose service-role credentials in the browser; fall back to stub behaviour.
+      // @ts-expect-error test stub used for client fallbacks
+      const stub = makeAdminTestStub();
+      // @ts-expect-error cache
+      globalThis.__supabaseAdmin = stub;
+      // @ts-expect-error returning stub client shape
+      return stub;
+    }
+
     if (process.env.NODE_ENV === 'test' && !serviceRoleKey) {
       // CI/test path
       // @ts-expect-error test stub
