@@ -332,6 +332,15 @@ export interface WritingFeedbackRow extends TableBase {
   blocks?: Record<string, unknown>[] | null;
 }
 
+export interface ReviewCommentRow extends TableBase {
+  attempt_id: string;
+  parent_id?: string | null;
+  author_id?: string | null;
+  author_name?: string | null;
+  author_role?: string | null;
+  body: string;
+}
+
 export interface MistakesRow extends TableBase {
   user_id: string;
   source: 'writing';
@@ -462,6 +471,7 @@ export interface DBSchema {
   writing_prompts: WritingPrompts;
   writing_responses: WritingResponses;
   writing_feedback: WritingFeedbackRow;
+  review_comments: ReviewCommentRow;
   exam_attempts: ExamAttempts;
   exam_events: ExamEvents;
   mistakes: MistakesRow;

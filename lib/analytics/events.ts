@@ -52,6 +52,8 @@ export type AnalyticsEventName =
   | 'vocab_synonyms_submitted'
   | 'vocab_reward_shown'
   | 'vocab_share_clicked'
+  | 'coach.writing.session'
+  | 'coach.writing.reply'
   | 'saved_view'
   | 'saved_remove'
   | 'reading.highlight.add'
