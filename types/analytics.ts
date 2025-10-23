@@ -32,3 +32,29 @@ export interface CriterionDelta {
   previous: number | null;
   delta: number;
 }
+
+export interface WritingOverview {
+  totalAttempts: number;
+  totalWords: number;
+  averageOverallBand: number;
+  averageTaskResponseBand: number;
+  averageCoherenceBand: number;
+  averageLexicalBand: number;
+  averageGrammarBand: number;
+  averageWordCount: number | null;
+  averageDurationSeconds: number | null;
+  lastAttemptAt: string | null;
+}
+
+export interface WeeklySeriesPoint {
+  weekStart: string;
+  label: string;
+  attempts: number;
+  averageBand: number;
+  averageWordCount: number;
+}
+
+export interface WeeklySeries {
+  points: WeeklySeriesPoint[];
+  totalAttempts: number;
+}
