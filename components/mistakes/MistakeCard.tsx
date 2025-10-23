@@ -4,6 +4,7 @@ import React from 'react';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
+import type { MistakeTag } from '@/lib/mistakes';
 
 export type Mistake = {
   id: string;
@@ -15,6 +16,7 @@ export type Mistake = {
   createdAt: string;
   lastSeenAt: string;
   retryPath: string | null;
+  tags?: MistakeTag[];
 };
 
 export type MistakeCardProps = {
@@ -42,6 +44,20 @@ export const MistakeCard: React.FC<MistakeCardProps> = ({ mistake, onReview, onR
           {formatSkill(mistake.skill)}
         </Badge>
       </header>
+
+      {mistake.tags && mistake.tags.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {mistake.tags.map((tag) => (
+            <span
+              key={`${mistake.id}-${tag.key}-${tag.value}`}
+              className="inline-flex items-center gap-1 rounded-full border border-border/70 px-3 py-1 text-caption text-muted-foreground"
+            >
+              <span className="font-medium text-foreground/70">{tag.key}:</span>
+              <span>{tag.value}</span>
+            </span>
+          ))}
+        </div>
+      )}
 
       <dl className="mt-4 grid gap-3 text-caption text-muted-foreground sm:grid-cols-3">
         <div>
@@ -88,7 +104,7 @@ function formatDate(value: string | null): string {
 
 function formatSkill(skill: string): string {
   return skill
-    .split(/[\s_-]+/)
+    .split(/[\s_\-|]+/)
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');

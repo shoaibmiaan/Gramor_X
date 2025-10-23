@@ -228,12 +228,17 @@ function InnerApp({ Component, pageProps }: AppProps) {
     [pathname]
   );
 
+  const isMockTestsRoute = useMemo(() => pathname.startsWith('/mock-tests'), [pathname]);
+  const isMockTestsLanding = pathname === '/mock-tests';
+  const isMockTestsFlowRoute = isMockTestsRoute && !isMockTestsLanding;
+
   const isNoChromeRoute = useMemo(
     () =>
       /\/exam(\/|$)|\/exam-room(\/|$)|\/focus-mode(\/|$)/.test(pathname) ||
       isAuthPage ||
-      isPremiumRoomRoute,
-    [pathname, isAuthPage, isPremiumRoomRoute]
+      isPremiumRoomRoute ||
+      isMockTestsFlowRoute,
+    [pathname, isAuthPage, isPremiumRoomRoute, isMockTestsFlowRoute]
   );
 
   const showLayout = !needPremium && !isNoChromeRoute;
@@ -277,7 +282,8 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/proctoring/check') || pathname.startsWith('/proctoring/exam');
 
   const isExamRoute =
-    pathname.startsWith('/mock') ||
+    isMockTestsFlowRoute ||
+    pathname.startsWith('/mock/') ||
     pathname.startsWith('/listening') ||
     pathname.startsWith('/reading') ||
     pathname.startsWith('/writing') ||

@@ -35,6 +35,8 @@ export interface ChallengeLeaderboardEntry {
   totalTasks: number;
   rank: number;
   bandBoost?: number; // optional AI-predicted improvement
+  xp?: number;
+  snapshotDate?: string;
 }
 
 export interface ChallengeCohort {
