@@ -198,6 +198,7 @@ export interface Profiles extends TableBase {
   // from codex/add-whatsapp-opt-in-preferences-panel
   notification_channels?: string[] | null;
   whatsapp_opt_in?: boolean | null;
+  active_org_id?: string | null;
 
   // from main
   preferred_language?: string | null;
@@ -471,6 +472,41 @@ export interface CollocationAttempts {
   attempted_at: string;
 }
 
+export interface Organizations extends TableBase {
+  owner_id: string;
+  name: string;
+  slug: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface OrganizationMembers extends TableBase {
+  org_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member';
+  invited_by?: string | null;
+  joined_at: string;
+}
+
+export interface OrganizationInvites extends TableBase {
+  org_id: string;
+  email: string;
+  role: 'admin' | 'member';
+  token: string;
+  invited_by: string;
+  expires_at: string;
+  accepted_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface WritingTopics extends TableBase {
+  title: string;
+  prompt: string;
+  band_target: number;
+  tags: string[];
+  difficulty: 'starter' | 'intermediate' | 'advanced';
+  archived_at?: string | null;
+}
+
 export interface LifecycleEvents extends TableBase {
   user_id: string;
   event: 'first_mock_done' | 'band_up' | 'streak_broken';
@@ -531,6 +567,10 @@ export interface DBSchema {
   review_events: ReviewEvents;
   collocation_attempts: CollocationAttempts;
   lifecycle_events: LifecycleEvents;
+  organizations: Organizations;
+  organization_members: OrganizationMembers;
+  organization_invites: OrganizationInvites;
+  writing_topics: WritingTopics;
 
   // kept from main
   account_audit_log: AccountAuditLog;

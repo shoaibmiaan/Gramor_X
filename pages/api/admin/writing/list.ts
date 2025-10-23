@@ -38,7 +38,32 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuard
   }
 
   const attemptList = attempts ?? [];
-  const userIds = Array.from(new Set(attemptList.map((row) => row.user_id as string)));
+
+  let scopedAttempts = attemptList;
+  if (ctx.role === 'teacher') {
+    const { data: profileRow } = await ctx.supabase
+      .from('profiles')
+      .select('active_org_id')
+      .eq('id', ctx.user.id)
+      .maybeSingle();
+
+    const activeOrgId = (profileRow?.active_org_id as string | null) ?? null;
+
+    if (!activeOrgId) {
+      scopedAttempts = [];
+    } else {
+      const { data: memberRows } = await supabaseAdmin
+        .from('organization_members')
+        .select('user_id')
+        .eq('org_id', activeOrgId);
+
+      const allowed = new Set<string>((memberRows ?? []).map((row) => row.user_id as string));
+      allowed.add(ctx.user.id);
+      scopedAttempts = attemptList.filter((row) => allowed.has(row.user_id as string));
+    }
+  }
+
+  const userIds = Array.from(new Set(scopedAttempts.map((row) => row.user_id as string)));
 
   const { data: profiles } = await supabaseAdmin
     .from('profiles')
@@ -50,7 +75,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuard
     profileMap.set(profile.id as string, profile as any);
   });
 
-  const attemptIds = attemptList.map((row) => row.id as string);
+  const attemptIds = scopedAttempts.map((row) => row.id as string);
   const { data: responses } = await supabaseAdmin
     .from('writing_responses')
     .select('exam_attempt_id, task, overall_band')
@@ -78,7 +103,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuard
     grouped.set(attemptId, bucket);
   });
 
-  const enriched = attemptList.map((attempt) => {
+  const enriched = scopedAttempts.map((attempt) => {
     const profile = profileMap.get(attempt.user_id as string) ?? {};
     const stats = grouped.get(attempt.id as string) ?? { sum: 0, count: 0, tasks: [] };
     const averageBand = stats.count > 0 ? stats.sum / stats.count : 0;
