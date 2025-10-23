@@ -1,0 +1,57 @@
+/* styles/theme.brave.css */
+[data-theme='brave'] {
+  color-scheme: dark;
+
+  /* Surface + text tokens (RGB triplets) */
+  --gx-background: 10 12 26;
+  --gx-foreground: 228 233 241;
+  --gx-card: 17 21 39;
+  --gx-card-foreground: 228 233 241;
+  --gx-popover: 17 21 39;
+  --gx-popover-foreground: 228 233 241;
+  --gx-border: 42 50 75;
+  --gx-input: 42 50 75;
+  --gx-muted: 167 175 190;
+  --gx-muted-foreground: 198 205 224;
+
+  /* Alias tokens consumed by new utilities */
+  --gx-bg: 10 12 26;
+  --gx-text: 228 233 241;
+
+  /* Brand accents (purple→magenta→cyan like Brave cards) */
+  --color-primary: 85 68 238; /* electric indigo */
+  --color-primaryDark: 51 31 234;
+  --color-secondary: 246 40 143; /* magenta */
+  --color-accent: 49 210 246; /* cyan pop */
+  --color-success: 34 195 93;
+  --color-warning: 242 166 13;
+  --color-danger: 240 61 61;
+
+  /* Semantic hooks derived from brand tokens */
+  --gx-ring: 49 210 246;
+
+  --color-lightBg: var(--gx-background);
+  --color-lightCard: var(--gx-card);
+  --color-lightText: var(--gx-foreground);
+  --color-lightBorder: var(--gx-border);
+  --color-mutedText: var(--gx-muted-foreground);
+  --color-background: var(--gx-background);
+  --color-foreground: var(--gx-foreground);
+
+  /* Gradient tokens */
+  --gx-bg-grad-1: radial-gradient(1200px 600px at 10% -10%, hsl(246 83% 60% / 0.12), transparent);
+  --gx-bg-grad-2: radial-gradient(900px 500px at 90% 0%, hsl(330 92% 56% / 0.08), transparent);
+
+  /* Chart accents */
+  --chart-reading: rgba(85, 68, 238, 1);
+  --chart-listening: rgba(246, 40, 143, 1);
+  --chart-writing: rgba(49, 210, 246, 1);
+  --chart-speaking: rgba(228, 233, 241, 1);
+  --chart-grid: rgba(42, 50, 75, 0.35);
+  --chart-axis: rgba(198, 205, 224, 0.95);
+  --chart-tooltip-bg: rgba(17, 21, 39, 0.95);
+  --chart-tooltip-border: rgba(42, 50, 75, 0.65);
+  --chart-tooltip-fg: rgba(228, 233, 241, 0.98);
+  --chart-area: rgba(85, 68, 238, 0.9);
+  --chart-area-stroke: rgba(51, 31, 234, 1);
+}
