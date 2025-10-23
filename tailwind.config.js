@@ -93,6 +93,12 @@ module.exports = {
           strong: 'rgb(var(--gx-focus-ring-strong) / <alpha-value>)',
           muted: 'rgb(var(--gx-focus-ring-muted) / <alpha-value>)',
         },
+        certificate: {
+          background: 'rgb(var(--gx-card) / <alpha-value>)',
+          border: 'rgb(var(--gx-border) / <alpha-value>)',
+          accent: cv('primary'),
+          text: 'rgb(var(--gx-foreground) / <alpha-value>)',
+        },
       },
 
       borderRadius: {

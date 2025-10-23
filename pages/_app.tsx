@@ -23,6 +23,7 @@ import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 import { destinationByRole } from '@/lib/routeAccess';
+import { primeClientSnapshot } from '@/lib/flags';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
@@ -147,6 +148,21 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const { locale: activeLocale } = useLocale();
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const routeLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flagsHydratedRef = useRef(false);
+
+  const refreshClientFlags = useCallback(async () => {
+    try {
+      const res = await fetch('/api/debug/feature-flags', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const payload = (await res.json()) as { flags?: Record<string, boolean> };
+      if (payload?.flags) {
+        primeClientSnapshot(payload.flags);
+        flagsHydratedRef.current = true;
+      }
+    } catch {
+      // ignore hydration errors — feature checks fall back to defaults
+    }
+  }, []);
 
   useEffect(() => {
     const clearRouteLoadingTimeout = () => {
@@ -340,6 +356,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
     } finally {
       syncingRef.current = false;
     }
+
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+      await refreshClientFlags();
+    }
   };
 
   useEffect(() => {
@@ -366,6 +386,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
         await bridgeSession('SIGNED_IN', session);
       } else {
         await bridgeSession('SIGNED_OUT', null);
+      }
+
+      if (!flagsHydratedRef.current) {
+        await refreshClientFlags();
       }
 
       if (session?.user && isAuthPage) {
