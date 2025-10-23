@@ -8,6 +8,7 @@ import { Container } from '@/components/design-system/Container';
 import BandDiffView from '@/components/writing/BandDiffView';
 import BandProgressChart from '@/components/writing/BandProgressChart';
 import WritingResultCard from '@/components/writing/WritingResultCard';
+import AccessibilityHints from '@/components/writing/AccessibilityHints';
 import { computeWritingSummary } from '@/lib/analytics/writing';
 import { track } from '@/lib/analytics/track';
 import { getServerClient } from '@/lib/supabaseServer';
@@ -72,6 +73,7 @@ const WritingResultsPage: React.FC<PageProps> = ({
             </Link>
           </div>
         </header>
+        <AccessibilityHints />
         {results.length === 0 ? (
           <p className="text-sm text-muted-foreground">Scores are still processing. Refresh this page in a few seconds.</p>
         ) : (
