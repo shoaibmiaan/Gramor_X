@@ -284,10 +284,64 @@ export interface AccountExport extends TableBase {
 }
 
 export interface WritingPrompts extends TableBase {
+  slug?: string | null;
   title: string;
-  prompt: string;
-  task_type?: 'task1' | 'task2' | 'general' | 'other' | null;
+  prompt_text: string;
+  task_type?: 'task1' | 'task2' | null;
+  module?: 'academic' | 'general_training' | null;
+  difficulty?: 'easy' | 'medium' | 'hard' | null;
+  source?: string | null;
+  tags?: string[] | null;
+  estimated_minutes?: number | null;
+  word_target?: number | null;
   created_by?: string | null;
+  metadata?: Record<string, any> | null;
+}
+
+export interface WritingResponses extends TableBase {
+  user_id: string;
+  attempt_id?: string | null;
+  exam_attempt_id?: string | null;
+  prompt_id?: string | null;
+  task_type?: 'task1' | 'task2' | null;
+  task?: 'task1' | 'task2' | null;
+  answer_text: string;
+  word_count?: number | null;
+  ai_model?: string | null;
+  overall_band?: number | null;
+  task_response_band?: number | null;
+  coherence_band?: number | null;
+  lexical_band?: number | null;
+  grammar_band?: number | null;
+  feedback_summary?: string | null;
+  feedback_strengths?: string[] | null;
+  feedback_improvements?: string[] | null;
+  raw_response?: Record<string, unknown> | null;
+  duration_seconds?: number | null;
+  evaluation_version?: string | null;
+  band_scores?: Record<string, unknown> | null;
+  feedback?: Record<string, unknown> | null;
+  tokens_used?: number | null;
+  submitted_at?: string | null;
+}
+
+export interface ExamAttempts extends TableBase {
+  user_id: string;
+  exam_type: 'reading' | 'listening' | 'writing' | 'speaking';
+  status: 'in_progress' | 'submitted' | 'graded' | 'archived';
+  started_at: string;
+  submitted_at?: string | null;
+  duration_seconds?: number | null;
+  goal_band?: number | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface ExamEvents extends TableBase {
+  attempt_id: string;
+  user_id: string;
+  event_type: 'start' | 'autosave' | 'submit' | 'focus' | 'blur' | 'typing' | 'score';
+  payload?: Record<string, unknown> | null;
+  occurred_at: string;
 }
 
 export interface NotificationsOptIn extends TableBase {
@@ -372,6 +426,9 @@ export interface DBSchema {
   reading_notes: ReadingNoteTable;
   invoices: Invoices;
   writing_prompts: WritingPrompts;
+  writing_responses: WritingResponses;
+  exam_attempts: ExamAttempts;
+  exam_events: ExamEvents;
 
   // kept from codex/add-whatsapp-opt-in-preferences-panel
   notifications_opt_in: NotificationsOptIn;
