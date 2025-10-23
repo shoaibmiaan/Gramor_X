@@ -58,6 +58,12 @@ export default function ReviewAttemptPage() {
   const [reason, setReason] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
+  const [shareTtlHours, setShareTtlHours] = useState<number | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
   const startedRef = useRef(false);
 
   // Guard (teacher/admin only)
@@ -106,10 +112,27 @@ export default function ReviewAttemptPage() {
     });
   }, [data]);
 
+  useEffect(() => {
+    if (!shareCopied) return;
+    const timer = window.setTimeout(() => setShareCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [shareCopied]);
+
   const updatedAt = useMemo(
     () => (data ? new Date(data.last_activity).toLocaleString() : ''),
     [data]
   );
+
+  const shareExpiryLabel = useMemo(() => {
+    if (!shareExpiresAt) return null;
+    const date = new Date(shareExpiresAt);
+    if (Number.isNaN(date.getTime())) return null;
+    try {
+      return date.toLocaleString();
+    } catch {
+      return date.toString();
+    }
+  }, [shareExpiresAt]);
 
   async function submitOverride(e: React.FormEvent) {
     e.preventDefault();
@@ -158,6 +181,60 @@ export default function ReviewAttemptPage() {
       setError(e instanceof Error ? e.message : 'Failed to save override.');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function createShareLink() {
+    if (!attemptId) return;
+    setShareLoading(true);
+    setShareError(null);
+    try {
+      const response = await fetch('/api/review/share-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attemptId }),
+      });
+      const json = await response.json();
+      if (!response.ok || !json.ok) {
+        throw new Error(json.error ?? 'Unable to generate share link');
+      }
+      setShareUrl(json.data.url);
+      setShareExpiresAt(json.data.expiresAt ?? null);
+      setShareTtlHours(typeof json.data.ttlHours === 'number' ? json.data.ttlHours : null);
+      setShareCopied(false);
+      track('review.share.generated', {
+        attempt_id: attemptId,
+        exam_type: json.data.examType,
+        ttl_hours: json.data.ttlHours,
+      });
+    } catch (err: unknown) {
+      setShareError(err instanceof Error ? err.message : 'Unable to generate share link');
+    } finally {
+      setShareLoading(false);
+    }
+  }
+
+  async function copyShareLink() {
+    if (!shareUrl || !attemptId) return;
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setShareCopied(true);
+      setShareError(null);
+      track('review.share.copied', { attempt_id: attemptId });
+    } catch (err: unknown) {
+      setShareError('Unable to copy link');
     }
   }
 
@@ -224,6 +301,73 @@ export default function ReviewAttemptPage() {
                       <div className="font-semibold">{data.ai_band.toFixed(1)}</div>
                     </div>
                   </div>
+
+                  <section
+                    className="mt-6 rounded-ds border border-lightBorder bg-white/80 p-4 text-lightText shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    aria-labelledby="share-review-heading"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 id="share-review-heading" className="text-small font-semibold">
+                          Share review link
+                        </h3>
+                        <p className="text-xs opacity-70">
+                          Generate a secure link to invite feedback. Links expire automatically.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="rounded-ds"
+                        onClick={createShareLink}
+                        disabled={shareLoading || !attemptId}
+                      >
+                        {shareLoading ? 'Generating…' : shareUrl ? 'Refresh link' : 'Generate link'}
+                      </Button>
+                    </div>
+
+                    {shareUrl && (
+                      <div className="mt-4 space-y-2" aria-live="polite">
+                        <label htmlFor="review-share-link" className="text-xs font-medium opacity-80">
+                          Shareable URL
+                        </label>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <input
+                            id="review-share-link"
+                            value={shareUrl}
+                            readOnly
+                            className="w-full flex-1 rounded-ds border border-lightBorder bg-white px-3 py-2 text-small text-lightText dark:border-white/10 dark:bg-white/10 dark:text-white"
+                            aria-describedby="review-share-hint"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="rounded-ds"
+                            onClick={copyShareLink}
+                          >
+                            {shareCopied ? 'Copied!' : 'Copy link'}
+                          </Button>
+                        </div>
+                        <p id="review-share-hint" className="text-xs opacity-70">
+                          {shareExpiryLabel
+                            ? `Expires ${shareExpiryLabel}`
+                            : shareTtlHours
+                            ? `Expires in ${shareTtlHours} hours`
+                            : 'Expires soon for security.'}
+                        </p>
+                      </div>
+                    )}
+
+                    {(shareError || shareCopied) && (
+                      <p
+                        className={`mt-2 text-xs ${shareError ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}
+                        role={shareError ? 'alert' : undefined}
+                        aria-live="polite"
+                      >
+                        {shareError ?? 'Link copied to clipboard.'}
+                      </p>
+                    )}
+                  </section>
 
                   {data.overridden && (
                     <div className="mt-4">
