@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 
 import { Button } from '@/components/design-system/Button';
 import { Container } from '@/components/design-system/Container';
@@ -8,6 +9,7 @@ import BandDiffView from '@/components/writing/BandDiffView';
 import BandProgressChart from '@/components/writing/BandProgressChart';
 import WritingResultCard from '@/components/writing/WritingResultCard';
 import { computeWritingSummary } from '@/lib/analytics/writing';
+import { track } from '@/lib/analytics/track';
 import { getServerClient } from '@/lib/supabaseServer';
 import { computeCriterionDeltas, trimProgressPoints } from '@/lib/writing/progress';
 import type { CriterionDelta, WritingProgressPoint } from '@/types/analytics';
@@ -28,6 +30,15 @@ interface PageProps {
   progressDeltas: CriterionDelta[];
 }
 
+const CoachDock = dynamic(() => import('@/components/writing/CoachDock'), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-ds-xl border border-dashed border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+      Loading coach…
+    </div>
+  ),
+});
+
 const WritingResultsPage: React.FC<PageProps> = ({
   attemptId,
   results,
@@ -36,6 +47,14 @@ const WritingResultsPage: React.FC<PageProps> = ({
   progressPoints,
   progressDeltas,
 }) => {
+  useEffect(() => {
+    track('writing.coach.entry', {
+      attemptId,
+      tasks: results.length,
+      averageBand,
+    });
+  }, [attemptId, results.length, averageBand]);
+
   return (
     <Container className="py-12">
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
@@ -70,6 +89,14 @@ const WritingResultsPage: React.FC<PageProps> = ({
         )}
 
         <BandProgressChart points={progressPoints} deltas={progressDeltas} />
+
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Need a next step?</h2>
+          <p className="text-sm text-muted-foreground">
+            Chat with the AI writing coach to plan rewrites, upgrade paragraphs, or build lexical drills using this attempt.
+          </p>
+          <CoachDock attemptId={attemptId} />
+        </section>
       </div>
     </Container>
   );
