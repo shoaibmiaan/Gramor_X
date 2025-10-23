@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Button } from '@/components/design-system/Button';
 import { Modal } from '@/components/design-system/Modal';
 import { PLAN_LABEL, startCheckout } from '@/lib/payments';
+import { track } from '@/lib/analytics/track';
 import { evaluateQuota, nextPlanForQuota, type QuotaKey } from '@/lib/plan/quotas';
 import type { PaymentMethod, PlanKey } from '@/types/payments';
 import type { PlanId } from '@/types/pricing';
@@ -16,9 +17,20 @@ export type UpgradeDialogProps = {
   quota: { key: QuotaKey; used: number };
   referralCode?: string;
   methods?: PaymentMethod[];
+  source?: string;
+  onCheckoutStart?: (provider: PaymentMethod) => void;
 };
 
-export function UpgradeDialog({ open, onClose, plan, quota, referralCode, methods = DEFAULT_METHODS }: UpgradeDialogProps) {
+export function UpgradeDialog({
+  open,
+  onClose,
+  plan,
+  quota,
+  referralCode,
+  methods = DEFAULT_METHODS,
+  source,
+  onCheckoutStart,
+}: UpgradeDialogProps) {
   const [loading, setLoading] = React.useState<PaymentMethod | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -33,6 +45,15 @@ export function UpgradeDialog({ open, onClose, plan, quota, referralCode, method
       if (!canUpgrade) return;
       setLoading(provider);
       setError(null);
+      const analyticsPayload = {
+        source: source ?? 'upgrade-dialog',
+        provider,
+        plan: targetPlan,
+        quota: quota.key,
+      } as const;
+      track('subscribe_clicked', analyticsPayload);
+      track('payments.intent.create', analyticsPayload);
+      onCheckoutStart?.(provider);
       try {
         const result = await startCheckout(provider, {
           plan: targetPlan,
@@ -55,7 +76,7 @@ export function UpgradeDialog({ open, onClose, plan, quota, referralCode, method
         setLoading(null);
       }
     },
-    [canUpgrade, referralCode, targetPlan],
+    [canUpgrade, onCheckoutStart, quota.key, referralCode, source, targetPlan],
   );
 
   const quotaName: Record<QuotaKey, string> = {
