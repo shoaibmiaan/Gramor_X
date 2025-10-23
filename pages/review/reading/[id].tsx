@@ -37,7 +37,10 @@ type ResultMeta = {
 };
 
 const loadPaper = async (id: string): Promise<ReadingPaper> => {
-  try { const mod = await import(`@/data/reading/${id}.json`); return mod.default as ReadingPaper; } catch {
+  try { 
+    const mod = await import(`@/data/reading/${id}.json`); 
+    return mod.default as ReadingPaper; 
+  } catch {
     return {
       id: 'sample-001',
       title: 'Reading Sample 001',
@@ -71,12 +74,16 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
 export default function ReadingReviewPage() {
   const router = useRouter();
   const { id, attempt } = router.query as { id?: string; attempt?: string };
-
   const [paper, setPaper] = useState<ReadingPaper | null>(null);
   const [att, setAtt] = useState<Attempt | null>(null);
+  const [meta, setMeta] = useState<ResultMeta | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  useEffect(() => { if (!id) return; (async () => setPaper(await loadPaper(id)))(); }, [id]);
+  useEffect(() => { 
+    if (!id) return; 
+    (async () => setPaper(await loadPaper(id)))(); 
+  }, [id]);
+
   useEffect(() => {
     if (!attempt) return;
     let cancelled = false;
@@ -173,6 +180,10 @@ export default function ReadingReviewPage() {
     setExpanded((prev) => ({ ...prev, [qid]: !prev[qid] }));
   }, []);
 
+  const totalLabel = meta?.xpTotal ?? 0;
+  const percentLabel = meta?.xpPercent ?? 0;
+  const submittedAt = att?.submittedAt ? new Date(att.submittedAt) : null;
+
   if (!paper || !att) return <Shell title="Review — Loading…"><div className="rounded-2xl border border-border p-4">Loading…</div></Shell>;
 
   return (
@@ -192,88 +203,108 @@ export default function ReadingReviewPage() {
                 Toward Band {meta.targetBand.toFixed(1)}
               </p>
               <h2 className="text-h4 font-semibold text-foreground">
-                +{meta.xpAwarded} XP from this mock
+                +{meta.xpAwarded} XP earned
               </h2>
               <p className="text-small text-muted-foreground">
-                Total {totalLabel} XP • {percentLabel}% complete
-                {meta.streak > 0 ? ` • Streak ${meta.streak} day${meta.streak === 1 ? '' : 's'}` : ''}
+                {totalLabel} XP total • {percentLabel}% to Band {meta.targetBand.toFixed(1)}
               </p>
             </div>
-            <div className="w-full lg:max-w-sm">
-              <ProgressBar value={percentLabel} ariaLabel="Band progress" />
-              <p className="mt-2 text-caption text-muted-foreground">
-                {submittedAt
-                  ? `Submitted ${submittedAt.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                  : 'Submission time unavailable'}
-              </p>
+            <div className="w-full max-w-md">
+              <ProgressBar value={meta.xpPercent} label={`${percentLabel}%`} />
             </div>
           </div>
+          {meta.streak > 1 ? (
+            <p className="mt-3 text-small text-foreground/80">
+              🔥 {meta.streak}-test streak! Keep practicing to boost your band.
+            </p>
+          ) : null}
         </section>
       ) : null}
-
-      <section className="rounded-2xl border border-border p-4">
-        <h2 className="mb-2 text-body font-semibold">Performance by question type</h2>
-        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-          {statsByType.map((s) => (
-            <div key={s.type} className="rounded-lg border border-border p-3 text-small">
-              <div className="font-medium">{labelType(s.type)}</div>
-              <div className="text-foreground/80">{s.correct}/{s.total} correct • {s.pct}%</div>
+      <section className="rounded-2xl border border-border bg-background/60 p-4">
+        <h2 className="text-h4 font-semibold">Performance by question type</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {statsByType.map(({ type, correct, total, pct }) => (
+            <div key={type} className="rounded-lg border border-border bg-background/80 p-3">
+              <p className="text-small font-medium capitalize">{type}</p>
+              <p className="text-caption text-muted-foreground">
+                {correct}/{total} correct ({pct}%)
+              </p>
             </div>
           ))}
         </div>
       </section>
-
-      <section className="rounded-2xl border border-border p-4">
-        <h2 className="mb-2 text-body font-semibold">Answers & explanations</h2>
-        <div className="grid gap-3">
-          {flatQs.map((q, idx) => {
-            const given = (att.answers?.[q.id] ?? '').trim();
-            const ok = given.toLowerCase() === (q.answer ?? '').trim().toLowerCase();
-            const panelId = `ai-exp-${q.id}`;
-            const isOpen = Boolean(expanded[q.id]);
-            return (
-              <div key={q.id} className="rounded-lg border border-border p-3">
-                <div className="mb-1 text-small text-foreground/80">Q{idx + 1}. {q.prompt || q.id}</div>
-                <div className="text-small">
-                  <span className={`rounded px-2 py-0.5 text-background ${ok ? 'bg-primary' : 'bg-border'}`}>{ok ? 'Correct' : 'Wrong'}</span>
-                  <span className="ml-3">Your answer: <strong>{given || '—'}</strong></span>
-                  {!ok && <span className="ml-3">Correct: <strong>{q.answer}</strong></span>}
-                </div>
-                {q.explanation && (
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      onClick={() => toggleExplanation(q.id)}
-                      aria-expanded={isOpen}
-                      aria-controls={panelId}
-                      className="flex items-center gap-2 text-small font-medium text-primary hover:text-primary/80"
-                    >
-                      <span>{isOpen ? 'Hide AI explanation' : 'Show AI explanation'}</span>
-                      <span className={`inline-block text-xs transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} aria-hidden>
-                        ▾
-                      </span>
-                    </button>
-                    {isOpen && (
-                      <div
-                        id={panelId}
-                        className="mt-2 rounded-lg border border-dashed border-border/70 bg-foreground/5 p-3 text-small text-foreground/80"
-                      >
-                        <p className="whitespace-pre-wrap leading-6">{q.explanation}</p>
+      <section className="space-y-4">
+        <h2 className="text-h4 font-semibold">Your answers</h2>
+        {paper.passages.map((passage) => (
+          <div key={passage.id} className="rounded-2xl border border-border bg-background/60 p-4">
+            <h3 className="text-h5 font-semibold">{passage.title}</h3>
+            <div className="mt-3 space-y-3">
+              {passage.questions.map((q, idx) => {
+                const userAnswer = att.answers[q.id] ?? '';
+                const isCorrect = userAnswer.trim().toLowerCase() === q.answer.trim().toLowerCase();
+                const showExplanation = expanded[q.id];
+                return (
+                  <div
+                    key={q.id}
+                    className={`rounded-lg border p-3 ${isCorrect ? 'border-success/60 bg-success/10' : 'border-danger/60 bg-danger/10'}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">
+                          Question {idx + 1}
+                        </p>
+                        <p className="text-small font-medium">{q.prompt || q.id}</p>
                       </div>
-                    )}
+                      <div className="text-caption font-medium">
+                        {isCorrect ? '✅ Correct' : '❌ Incorrect'}
+                      </div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-small">
+                      <span className="text-muted-foreground">Your answer:</span>
+                      <span>{userAnswer || '—'}</span>
+                      <span className="text-muted-foreground">Correct answer:</span>
+                      <span>{q.answer}</span>
+                    </div>
+                    {q.explanation ? (
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleExplanation(q.id)}
+                          className="text-small text-primary underline underline-offset-4 hover:text-primary/80"
+                        >
+                          {showExplanation ? 'Hide explanation' : 'Show explanation'}
+                        </button>
+                        {showExplanation ? (
+                          <p className="mt-2 text-small text-foreground/80">{q.explanation}</p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
-                )}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </section>
+      <section className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-small text-muted-foreground">
+          {submittedAt ? `Submitted ${submittedAt.toLocaleString()}` : 'Completed recently'}
+        </p>
+        <div className="flex gap-3">
+          <Link
+            href={`/mock/reading/${id}`}
+            className="rounded-full border border-border px-4 py-2 text-small text-foreground hover:bg-background/80"
+          >
+            Retake test
+          </Link>
+          <Link
+            href="/reading"
+            className="rounded-full bg-primary px-4 py-2 text-small font-semibold text-background hover:opacity-90"
+          >
+            Try another test
+          </Link>
         </div>
       </section>
-
-      <div className="flex items-center justify-between">
-        <Link href="/reading" className="text-small underline underline-offset-4">Try another reading</Link>
-        <Link href="/dashboard" className="rounded-xl border border-border px-4 py-2 hover:border-primary">Go to dashboard</Link>
-      </div>
     </Shell>
   );
 }
-const labelType = (t: string) => t === 'tfng' ? 'True/False/Not Given' : t === 'yynn' ? 'Yes/No/Not Given' : t === 'heading' ? 'Headings' : t === 'match' ? 'Matching' : t === 'mcq' ? 'Multiple Choice' : 'Gap Fill';

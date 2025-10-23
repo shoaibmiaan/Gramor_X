@@ -8,7 +8,6 @@ import {
   clearMockDraft,
   ensureMockAttemptId,
   fetchMockCheckpoint,
-  loadMockDraft,
   saveMockCheckpoint,
   saveMockDraft,
 } from '@/lib/mock/state';
@@ -91,7 +90,12 @@ const sampleReading: ReadingPaper = {
 };
 
 const loadPaper = async (id: string): Promise<ReadingPaper> => {
-  try { const mod = await import(`@/data/reading/${id}.json`); return mod.default as ReadingPaper; } catch { return sampleReading; }
+  try {
+    const mod = await import(`@/data/reading/${id}.json`);
+    return mod.default as ReadingPaper;
+  } catch {
+    return sampleReading;
+  }
 };
 
 const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.ReactNode }> = ({ title, right, children }) => (
@@ -103,7 +107,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
       </header>
       <div className="grid gap-6 md:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
         {children}
-      </main>
+      </div>
     </div>
   </div>
 );
@@ -170,7 +174,7 @@ export default function ReadingMockPage() {
   }, [id]);
 
   useEffect(() => {
-    void router.prefetch('/mock/reading/review/demo-attempt');
+    void router.prefetch('/review/reading/demo-attempt');
   }, [router]);
 
   useEffect(() => {
@@ -291,27 +295,6 @@ export default function ReadingMockPage() {
     const t = setInterval(() => setTimeLeft((x) => (x > 0 ? x - 1 : 0)), 1000);
     return () => clearInterval(t);
   }, [paper, isStarted]);
-
-  useEffect(() => {
-    if (!paper || !checkpointHydrated) return;
-    if (initialPassageFocus.current) {
-      initialPassageFocus.current = false;
-      return;
-    }
-    passageHeadingRef.current?.focus();
-  }, [paper, passageIdx, checkpointHydrated]);
-
-  useEffect(() => {
-    if (!paper) return;
-    const shouldAnnounce =
-      timeLeft === paper.durationSec ||
-      timeLeft === 0 ||
-      timeLeft % 60 === 0 ||
-      (timeLeft <= 60 && (timeLeft <= 10 || timeLeft % 15 === 0));
-    if (shouldAnnounce) {
-      setTimerAnnouncement(`Time remaining: ${formatTimeForAnnouncement(timeLeft)}`);
-    }
-  }, [paper, timeLeft]);
 
   const debouncedLocalDraft = useDebouncedCallback(
     (payload: DraftState) => {
@@ -875,8 +858,6 @@ export default function ReadingMockPage() {
           attemptId: attemptRef.current,
           section: 'reading',
           mockId: paper.id,
-          // Include notes for resume flows as a fallback to the dedicated notes table
-          // to guard against offline autosave scenarios.
           payload: {
             paperId: paper.id,
             answers,
@@ -894,36 +875,9 @@ export default function ReadingMockPage() {
         });
         clearMockAttemptId('reading', paper.id);
       }
-
-      syncPromises.push(
-        applyStudyPlanReco({
-          attemptId,
-          module: 'reading',
-          focusAreas,
-          reasonCodes,
-        }),
-      );
-
-      if (syncPromises.length) {
-        await Promise.allSettled(syncPromises);
-      }
+      clearMockDraft('reading', id);
+      router.replace(`/review/reading/${id}?attempt=${attemptId}`);
     }
-
-    if (attemptRef.current) {
-      void saveMockCheckpoint({
-        attemptId: attemptRef.current,
-        section: 'reading',
-        mockId: paper.id,
-        payload: { paperId: paper.id, answers, passageIdx, timeLeft },
-        elapsed: paper.durationSec - timeLeft,
-        duration: paper.durationSec,
-        completed: true,
-      });
-      clearMockAttemptId('reading', paper.id);
-    }
-
-    clearMockDraft('reading', id);
-    router.replace(`/review/reading/${id}?attempt=${attemptId}`);
   };
 
   if (!paper || !current) return <Shell title="Loading..."><div className="rounded-2xl border border-border p-4">Loading paper…</div></Shell>;
@@ -1117,7 +1071,6 @@ export default function ReadingMockPage() {
             </section>
           </div>
       </div>
-      {/* Right rail */}
       <aside className="flex h-full min-w-0 flex-col gap-4">
         <QuestionNav
           questions={questionItems}
@@ -1250,7 +1203,6 @@ export default function ReadingMockPage() {
     </>
   );
 }
-
 
 type LayoutModeChipsProps = {
   value: LayoutMode;
@@ -1486,6 +1438,7 @@ function renderInput(
     />
   );
 }
+
 const Options: React.FC<{
   options: string[];
   value: string;
