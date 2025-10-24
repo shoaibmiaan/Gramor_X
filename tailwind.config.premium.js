@@ -3,7 +3,7 @@ const plugin = require('tailwindcss/plugin');
 
 module.exports = {
   prefix: 'pr-',
-  darkMode: ['class'],
+  darkMode: ['class', '[data-theme="brave"]'],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -16,9 +16,22 @@ module.exports = {
         xl: 'var(--pr-radius)',
         '2xl': 'calc(var(--pr-radius) + 8px)',
       },
+      colors: {
+        bg: 'rgb(var(--gx-bg) / <alpha-value>)',
+        card: 'rgb(var(--gx-card) / <alpha-value>)',
+        border: 'rgb(var(--gx-border) / <alpha-value>)',
+        text: 'rgb(var(--gx-text) / <alpha-value>)',
+        primary: 'rgb(var(--gx-primary) / <alpha-value>)',
+        secondary: 'rgb(var(--gx-secondary) / <alpha-value>)',
+        accent: 'rgb(var(--gx-accent) / <alpha-value>)',
+        success: 'rgb(var(--gx-success) / <alpha-value>)',
+        warning: 'rgb(var(--gx-warning) / <alpha-value>)',
+        danger: 'rgb(var(--gx-danger) / <alpha-value>)',
+      },
       boxShadow: {
         md: 'var(--pr-shadow-md)',
         lg: 'var(--pr-shadow-lg)',
+        'elev-1': '0 6px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05)',
       },
       fontSize: {
         h2: ['28px', { lineHeight: '1.2', fontWeight: '600' }],

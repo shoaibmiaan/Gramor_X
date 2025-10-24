@@ -38,13 +38,13 @@ type ButtonComponent = <E extends React.ElementType = 'button'>(
 
 // "solid" style variants from DS tokens
 const variantClass: Record<Variant, string> = {
-  primary:   'bg-primary text-white hover:bg-primary/90',
+  primary:   'bg-primary/90 text-white shadow-elev-1 hover:bg-primary',
   secondary: 'bg-secondary text-white hover:bg-secondary/90',
-  outline:   'border border-border bg-transparent hover:bg-white/5',
-  ghost:     'bg-transparent hover:bg-white/10',
+  outline:   'border border-border/70 bg-transparent hover:bg-card/40',
+  ghost:     'border border-border/60 bg-card/40 text-foreground hover:bg-card/60 supports-[backdrop-filter]:backdrop-blur-sm',
   link:      'underline underline-offset-4 hover:no-underline',
-  accent:    'bg-accent text-black hover:bg-accent/90',
-  warning:   'bg-warning text-black hover:bg-warning/90',
+  accent:    'bg-accent text-background hover:bg-accent/90',
+  warning:   'bg-warning text-background hover:bg-warning/90',
   danger:    'bg-danger text-white hover:bg-danger/90',
   error:     'bg-danger text-white hover:bg-danger/90',
   success:   'bg-success text-white hover:bg-success/90',
@@ -100,13 +100,13 @@ export const Button: ButtonComponent = (props) => {
 
   const classes = cx(
     // base
-    'inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 ring-primary/40',
-    'gap-2',
+    'inline-flex items-center justify-center gap-2 transition-colors transition-shadow',
+    'ring-1 ring-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     sizeClass[size as Size],
     fullWidth && 'w-full',
     variantCls,
     loading && 'cursor-not-allowed opacity-70',
-    elevateOnHover && 'shadow-none hover:shadow-md transition-shadow',
+    elevateOnHover && 'hover:shadow-elev-1 transition-shadow',
     // default rounded shape; allow explicit shape override
     shape === 'rounded' ? 'rounded-ds-xl' : 'rounded-2xl'
   );

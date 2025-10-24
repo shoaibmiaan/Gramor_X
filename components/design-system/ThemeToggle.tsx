@@ -4,24 +4,25 @@ import { SunIcon, MoonIcon } from "@/lib/icons";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const isDark = (resolvedTheme ?? "light") === "dark";
+  const activeTheme = resolvedTheme === 'dark' ? 'brave' : resolvedTheme;
+  const isBrave = (activeTheme ?? 'light') === 'brave';
 
   return (
     <button
       type="button"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => setTheme(isBrave ? 'light' : 'brave')}
       className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-small hover:shadow-sm
                  bg-card/70 dark:bg-card/10 backdrop-blur
                  border-border dark:border-border/20"
       aria-label="Toggle color theme"
       title="Toggle theme"
     >
-      {isDark ? (
+      {isBrave ? (
         <MoonIcon className="h-4 w-4" aria-hidden="true" />
       ) : (
         <SunIcon className="h-4 w-4" aria-hidden="true" />
       )}
-      <span className="opacity-80">{isDark ? "Dark" : "Light"}</span>
+      <span className="opacity-80">{isBrave ? 'Brave' : 'Light'}</span>
     </button>
   );
 }
