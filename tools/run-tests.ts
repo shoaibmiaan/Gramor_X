@@ -32,7 +32,7 @@ ensure('WHATSAPP_TASKS_SIGNING_SECRET', 'whatsapp_signing_secret');
 
 // ---- Collect tests from tests/ (skip lib/*.test.ts for now) ---
 const ROOT = process.cwd();
-const TEST_DIRS = ['tests/api', 'tests/pages', 'tests/admin', 'tests/perf', 'tests/a11y'];
+const TEST_DIRS = ['tests/api', 'tests/pages', 'tests/admin', 'tests/perf', 'tests/a11y', 'tests/mobile'];
 
 function collectTests(dir: string, out: string[] = []): string[] {
   if (!fs.existsSync(dir)) return out;
@@ -41,12 +41,13 @@ function collectTests(dir: string, out: string[] = []): string[] {
     const s = fs.statSync(p);
     if (s.isDirectory()) collectTests(p, out);
     else if (p.endsWith('.test.ts')) out.push(p);
+    else if (p.endsWith('.spec.ts') && p.includes(`${path.sep}offline${path.sep}`)) out.push(p);
   }
   return out;
 }
 
 (async () => {
-  const testFiles = TEST_DIRS.flatMap((d) => collectTests(path.join(ROOT, d)));
+  const testFiles = TARGET_DIRS.flatMap((dir) => collectTests(dir));
 
   if (testFiles.length === 0) {
     console.log('No tests found. Exiting OK.');
