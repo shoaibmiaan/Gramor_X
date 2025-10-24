@@ -24,6 +24,7 @@ import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 import { destinationByRole } from '@/lib/routeAccess';
 import { primeClientSnapshot } from '@/lib/flags';
+import { InstalledAppProvider } from '@/hooks/useInstalledApp';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
@@ -565,7 +566,9 @@ export default function App(props: AppProps) {
         <NotificationProvider>
           <UserProvider>
             <OrgProvider>
-              <InnerApp {...props} />
+              <InstalledAppProvider>
+                <InnerApp {...props} />
+              </InstalledAppProvider>
             </OrgProvider>
           </UserProvider>
         </NotificationProvider>
