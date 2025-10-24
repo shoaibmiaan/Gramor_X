@@ -363,7 +363,7 @@ const PricingPage: NextPage = () => {
                 <h3 className="text-h4 font-medium">Questions?</h3>
                 <ul className="mt-3 list-none space-y-2 text-small text-muted-foreground">
                   <li>
-                    <Link href="/terms" className="underline decoration-2 underline-offset-4 hover:opacity-90">Billing & refunds</Link>
+                    <Link href="/legal/terms" className="underline decoration-2 underline-offset-4 hover:opacity-90">Billing & refunds</Link>
                   </li>
                   <li>
                     <Link href="/privacy" className="underline decoration-2 underline-offset-4 hover:opacity-90">Privacy & data</Link>
