@@ -121,7 +121,5 @@ export default withPWA({
   buildExcludes: [/.*\.map$/, /middleware-manifest\.json$/, /server\/middleware-manifest\.json$/],
   publicExcludes: ['**/*.map'],
   importScripts: ['sw-sync.js', 'sw-push.js'],
-  workboxOptions: {
-    additionalManifestEntries: writingBundleAssets,
-  },
+  additionalManifestEntries: writingBundleAssets,
 })(baseConfig);
