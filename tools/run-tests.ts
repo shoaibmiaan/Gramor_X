@@ -41,6 +41,7 @@ function collectTests(dir: string, out: string[] = []): string[] {
     const s = fs.statSync(p);
     if (s.isDirectory()) collectTests(p, out);
     else if (p.endsWith('.test.ts')) out.push(p);
+    else if (p.endsWith('.spec.ts') && p.includes(`${path.sep}offline${path.sep}`)) out.push(p);
   }
   return out;
 }
