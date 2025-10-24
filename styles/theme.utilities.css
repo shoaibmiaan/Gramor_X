@@ -1,0 +1,4 @@
+/* styles/theme.utilities.css */
+.gx-brave-bg {
+  background: var(--gx-bg-grad-1), var(--gx-bg-grad-2), rgb(var(--gx-background));
+}

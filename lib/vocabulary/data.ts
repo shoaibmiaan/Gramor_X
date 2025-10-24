@@ -275,4 +275,9 @@ export const getWordDetail = (slug: string): WordDetail | null => {
   };
 };
 
+export const getVocabularyHighlights = (limit = 6): WordSummary[] => {
+  const safeLimit = Math.min(Math.max(limit, 0), 24);
+  return SORTED_WORDS.slice(0, safeLimit).map(toSummary);
+};
+
 export const listAllSummaries = (): WordSummary[] => SORTED_WORDS.map(toSummary);
