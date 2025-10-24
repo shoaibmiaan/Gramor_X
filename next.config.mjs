@@ -1,4 +1,5 @@
 // next.config.mjs
+import fs from 'node:fs';
 import withPWA from 'next-pwa';
 
 // --- Security: CSP ---
@@ -21,6 +22,20 @@ let supabaseHost = '';
 try {
   if (SUPABASE_URL) supabaseHost = new URL(SUPABASE_URL).host;
 } catch { /* ignore */ }
+
+const writingBundlePath = new URL('./lib/offline/packages/writing.bundle.json', import.meta.url);
+let writingBundleAssets = [];
+try {
+  const raw = fs.readFileSync(writingBundlePath, 'utf8');
+  const parsed = JSON.parse(raw);
+  if (Array.isArray(parsed?.assets)) {
+    writingBundleAssets = parsed.assets
+      .map((asset) => ({ url: asset?.url, revision: asset?.revision }))
+      .filter((asset) => typeof asset.url === 'string' && typeof asset.revision === 'string');
+  }
+} catch {
+  writingBundleAssets = [];
+}
 
 const baseConfig = {
   experimental: { esmExternals: false },
