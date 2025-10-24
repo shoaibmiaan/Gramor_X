@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -11,6 +11,9 @@ import BandProgressChart from '@/components/writing/BandProgressChart';
 import WritingResultCard from '@/components/writing/WritingResultCard';
 import AccessibilityHints from '@/components/writing/AccessibilityHints';
 import ExportButton from '@/components/writing/ExportButton';
+import ReferralCard from '@/components/account/ReferralCard';
+import { UpgradeDialog } from '@/components/billing/UpgradeDialog';
+import { Variant, useVariantConversion } from '@/components/exp/Variant';
 import { computeWritingSummary } from '@/lib/analytics/writing';
 import {
   logWritingCoachEntry,
@@ -26,6 +29,7 @@ import type { WritingFeedback, WritingScorePayload, WritingTaskType } from '@/ty
 import type { PlanId } from '@/types/pricing';
 import { resolveFlags } from '@/lib/flags';
 import { track } from '@/lib/analytics/track';
+import { evaluateQuota, type QuotaKey } from '@/lib/plan/quotas';
 
 interface HighlightSection {
   task: WritingTaskType;
@@ -52,6 +56,8 @@ interface PageProps {
     improvement: number;
     durationSeconds: number | null;
   };
+  quota: { key: QuotaKey; used: number } | null;
+  referralCode?: string | null;
 }
 
 const CoachDock = dynamic(() => import('@/components/writing/CoachDock'), {
@@ -63,6 +69,81 @@ const CoachDock = dynamic(() => import('@/components/writing/CoachDock'), {
   ),
 });
 
+const quotaCopy: Record<QuotaKey, { title: string; helper: string }> = {
+  dailyMocks: {
+    title: 'Daily mock limit reached',
+    helper: 'Upgrade to unlock more daily attempts and keep your streak going.',
+  },
+  aiEvaluationsPerDay: {
+    title: 'AI feedback limit reached',
+    helper: 'Upgrade for unlimited writing evaluations each day.',
+  },
+  storageGB: {
+    title: 'Storage limit reached',
+    helper: 'Upgrade to expand your library for essays and speaking recordings.',
+  },
+};
+
+type QuotaUpgradeNoticeProps = {
+  plan: PlanId;
+  quota: { key: QuotaKey; used: number } | null;
+  evaluation: ReturnType<typeof evaluateQuota> | null;
+  onUpgrade: () => void;
+};
+
+function QuotaUpgradeNotice({ plan, quota, evaluation, onUpgrade }: QuotaUpgradeNoticeProps) {
+  if (!quota || !evaluation || !evaluation.exceeded) return null;
+  const copy = quotaCopy[quota.key];
+  const limitText = evaluation.isUnlimited ? 'unlimited' : evaluation.limit;
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+  return (
+    <section className="rounded-ds-xl border border-destructive/40 bg-destructive/10 p-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-destructive">{copy.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            You have used {quota.used} of {limitText} available today on the {planLabel} plan. {copy.helper}
+          </p>
+        </div>
+        <Button size="sm" variant="primary" onClick={onUpgrade}>
+          Upgrade plan
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+type ReferralVariantSlotProps = { source?: string };
+
+function ReferralVariantSlot({ source = 'writing-results' }: ReferralVariantSlotProps) {
+  const trackConversion = useVariantConversion();
+
+  const handleCodeGenerated = useCallback(
+    (code: string) => {
+      void trackConversion({ action: 'referral-code', codeLength: code.length });
+    },
+    [trackConversion],
+  );
+
+  const handleShare = useCallback(
+    (mode: 'copy' | 'share' | 'error') => {
+      if (mode === 'error') return;
+      void trackConversion({ action: 'referral-share', method: mode });
+    },
+    [trackConversion],
+  );
+
+  return (
+    <ReferralCard
+      className="mt-6"
+      source={source}
+      onCodeGenerated={handleCodeGenerated}
+      onShare={handleShare}
+    />
+  );
+}
+
 const WritingResultsPage: React.FC<PageProps> = ({
   plan,
   featureFlags,
@@ -73,8 +154,23 @@ const WritingResultsPage: React.FC<PageProps> = ({
   progressPoints,
   progressDeltas,
   xp,
+  quota,
+  referralCode,
 }) => {
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'error'>('idle');
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const quotaEvaluation = useMemo(() => {
+    if (!quota) return null;
+    return evaluateQuota(plan, quota.key, quota.used);
+  }, [plan, quota?.key, quota?.used]);
+
+  const paywallTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!quota || !quotaEvaluation?.exceeded || paywallTrackedRef.current) return;
+    paywallTrackedRef.current = true;
+    track('paywall_view', { source: 'writing_results', quota: quota.key, plan });
+  }, [plan, quota, quotaEvaluation?.exceeded]);
 
   useEffect(() => {
     logWritingCoachEntry({ attemptId, tasks: results.length, averageBand });
@@ -133,8 +229,33 @@ const WritingResultsPage: React.FC<PageProps> = ({
     logWritingResultsAnalyticsClick({ attemptId });
   }, [attemptId]);
 
+  const openUpgrade = useCallback(() => setUpgradeOpen(true), []);
+  const closeUpgrade = useCallback(() => setUpgradeOpen(false), []);
+
+  const referralVariant = (
+    <Variant
+      experiment="writing_results_referral"
+      context={{ plan, attemptId, quota: quota?.key ?? null }}
+      fallback={null}
+      variants={{
+        control: null,
+        referral: <ReferralVariantSlot source="writing-results" />,
+      }}
+    />
+  );
+
   return (
     <Container className="py-12">
+      {quota ? (
+        <UpgradeDialog
+          open={upgradeOpen}
+          onClose={closeUpgrade}
+          plan={plan}
+          quota={quota}
+          referralCode={referralCode ?? undefined}
+          source="writing-results"
+        />
+      ) : null}
       <div className="mx-auto flex max-w-4xl flex-col gap-8">
         <header className="flex flex-col gap-3">
           <h1 className="text-3xl font-semibold text-foreground">Mock writing results</h1>
@@ -229,6 +350,10 @@ const WritingResultsPage: React.FC<PageProps> = ({
 
         <BandProgressChart points={progressPoints} deltas={progressDeltas} />
 
+        <QuotaUpgradeNotice plan={plan} quota={quota} evaluation={quotaEvaluation} onUpgrade={openUpgrade} />
+
+        {referralVariant}
+
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Need a next step?</h2>
           <p className="text-sm text-muted-foreground">
@@ -275,6 +400,33 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
 
   const plan = (profileRow?.plan as PlanId | undefined) ?? 'free';
   const role = (profileRow?.role as string | null) ?? null;
+
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  const todayIso = todayStart.toISOString();
+
+  const [{ count: dailyMocksCount }, { count: aiEvaluationsCount }] = await Promise.all([
+    supabase
+      .from('exam_attempts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('exam_type', 'writing')
+      .gte('started_at', todayIso),
+    supabase
+      .from('writing_responses')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', todayIso),
+  ]);
+
+  const quotaCandidates: Array<{ key: QuotaKey; used: number }> = [
+    { key: 'dailyMocks', used: dailyMocksCount ?? 0 },
+    { key: 'aiEvaluationsPerDay', used: aiEvaluationsCount ?? 0 },
+    { key: 'storageGB', used: 0 },
+  ];
+
+  const quotaHit =
+    quotaCandidates.find((candidate) => evaluateQuota(plan, candidate.key, candidate.used).exceeded) ?? null;
 
   const flagSnapshot = await resolveFlags({ plan, role, userId: user.id });
 
@@ -361,6 +513,8 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
     durationSeconds: attempt.duration_seconds ?? null,
   });
 
+  const referralCode = typeof ctx.query.code === 'string' ? ctx.query.code : null;
+
   return {
     props: {
       plan,
@@ -398,6 +552,8 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
         improvement: xpSummary.improvement,
         durationSeconds: xpSummary.effectiveDuration,
       },
+      quota: quotaHit,
+      referralCode,
     },
   };
 };
