@@ -53,6 +53,7 @@ import TeacherProfile from '@/components/teacher/TeacherProfile';
 
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
+import { OrgProvider } from '@/lib/orgs/context';
 import { HighContrastProvider } from '@/context/HighContrastContext';
 
 // ✅ NEW: global plan guard (client-side gating + ribbon)
@@ -563,7 +564,9 @@ export default function App(props: AppProps) {
       <ToastProvider>
         <NotificationProvider>
           <UserProvider>
-            <InnerApp {...props} />
+            <OrgProvider>
+              <InnerApp {...props} />
+            </OrgProvider>
           </UserProvider>
         </NotificationProvider>
       </ToastProvider>

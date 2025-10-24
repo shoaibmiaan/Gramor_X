@@ -1,11 +1,12 @@
 // lib/plan/gates.ts
 // Declarative feature limits per subscription tier.
 
-import type { PlanId } from '@/types/pricing';
+import { PLANS, type PlanId } from '@/types/pricing';
 
 type WritingGateConfig = {
   aiEvaluationsPerDay: number;
   mockStartsPerDay: number;
+  storageGB: number;
   exportPdf: boolean;
   certificateAccess: boolean;
   xpDailyCap: number;
@@ -30,8 +31,9 @@ type PlanGateConfig = {
 const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
   free: {
     writing: {
-      aiEvaluationsPerDay: 2,
-      mockStartsPerDay: 1,
+      aiEvaluationsPerDay: PLANS.free.quota.aiEvaluationsPerDay,
+      mockStartsPerDay: PLANS.free.quota.dailyMocks,
+      storageGB: PLANS.free.quota.storageGB,
       exportPdf: false,
       certificateAccess: false,
       xpDailyCap: 120,
@@ -47,8 +49,9 @@ const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
   },
   starter: {
     writing: {
-      aiEvaluationsPerDay: 10,
-      mockStartsPerDay: 2,
+      aiEvaluationsPerDay: PLANS.starter.quota.aiEvaluationsPerDay,
+      mockStartsPerDay: PLANS.starter.quota.dailyMocks,
+      storageGB: PLANS.starter.quota.storageGB,
       exportPdf: false,
       certificateAccess: false,
       xpDailyCap: 200,
@@ -64,8 +67,9 @@ const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
   },
   booster: {
     writing: {
-      aiEvaluationsPerDay: 40,
-      mockStartsPerDay: 5,
+      aiEvaluationsPerDay: PLANS.booster.quota.aiEvaluationsPerDay,
+      mockStartsPerDay: PLANS.booster.quota.dailyMocks,
+      storageGB: PLANS.booster.quota.storageGB,
       exportPdf: true,
       certificateAccess: true,
       xpDailyCap: 320,
@@ -81,8 +85,9 @@ const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
   },
   master: {
     writing: {
-      aiEvaluationsPerDay: 120,
-      mockStartsPerDay: 10,
+      aiEvaluationsPerDay: PLANS.master.quota.aiEvaluationsPerDay,
+      mockStartsPerDay: PLANS.master.quota.dailyMocks,
+      storageGB: PLANS.master.quota.storageGB,
       exportPdf: true,
       certificateAccess: true,
       xpDailyCap: 420,
@@ -103,6 +108,7 @@ export type PlanGateKey =
   | 'writing.certificate'
   | 'writing.ai.daily'
   | 'writing.mock.daily'
+  | 'writing.storage'
   | 'analytics.advanced'
   | 'analytics.perfBudgets'
   | 'admin.health'
@@ -123,6 +129,8 @@ export function planAllows(plan: PlanId, feature: PlanGateKey): boolean {
       return gates.writing.aiEvaluationsPerDay > 0;
     case 'writing.mock.daily':
       return gates.writing.mockStartsPerDay > 0;
+    case 'writing.storage':
+      return gates.writing.storageGB > 0;
     case 'analytics.advanced':
       return gates.analytics.advancedWriting;
     case 'analytics.perfBudgets':
@@ -146,5 +154,9 @@ export function writingMockLimit(plan: PlanId): number {
 
 export function xpDailyCap(plan: PlanId): number {
   return getPlanGates(plan).writing.xpDailyCap;
+}
+
+export function writingStorageLimit(plan: PlanId): number {
+  return getPlanGates(plan).writing.storageGB;
 }
 

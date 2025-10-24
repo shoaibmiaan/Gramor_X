@@ -35,9 +35,11 @@ export function track(
     // Map a couple of business events to Meta “standard” ones; rest as custom.
     switch (event) {
       case 'subscribe_clicked':
+      case 'payments.intent.create':
         metaTrack('InitiateCheckout', props);
         break;
       case 'plan_purchased':
+      case 'payments.intent.success':
         metaTrack('Purchase', props);
         break;
       case 'signup':
