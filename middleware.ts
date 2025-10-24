@@ -45,6 +45,16 @@ const PROTECTED_PREFIXES = [
   '/marketplace',
 ];
 
+const PUBLIC_PATHS = new Set([
+  '/manifest.json',
+  '/site.webmanifest',
+  '/sw.js',
+  '/favicon.ico',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/premium.css',
+]);
+
 function pathStartsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
@@ -61,15 +71,15 @@ export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   // Skip static and API routes (we only guard real pages)
+  if (PUBLIC_PATHS.has(pathname)) {
+    return NextResponse.next();
+  }
+
   if (
     pathname.startsWith('/_next') || // includes /_next/data prefetches
     pathname.startsWith('/assets') ||
     pathname.startsWith('/public') ||
     pathname.startsWith('/images') ||
-    pathname === '/premium.css' || // allow premium stylesheet
-    pathname === '/favicon.ico' ||
-    pathname === '/robots.txt' ||
-    pathname === '/sitemap.xml' ||
     pathname.startsWith('/api/')
   ) {
     return NextResponse.next();
