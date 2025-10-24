@@ -30,6 +30,12 @@ import type { PlanId } from '@/types/pricing';
 import { resolveFlags } from '@/lib/flags';
 import { track } from '@/lib/analytics/track';
 import { evaluateQuota, type QuotaKey } from '@/lib/plan/quotas';
+import { planAllows } from '@/lib/plan/gates';
+import { KeyboardAwareSheet } from '@/components/mobile/KeyboardAwareSheet';
+import { PushOptInCard } from '@/components/mobile/PushOptInCard';
+import { InstallBanner } from '@/components/mobile/InstallBanner';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import { useInstalledApp } from '@/hooks/useInstalledApp';
 
 interface HighlightSection {
   task: WritingTaskType;
@@ -159,6 +165,60 @@ const WritingResultsPage: React.FC<PageProps> = ({
 }) => {
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'shared' | 'error'>('idle');
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { isInstalled } = useInstalledApp();
+  const { promptEvent, clearPrompt } = useInstallPrompt();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [installDismissed, setInstallDismissed] = useState(false);
+  const [pushDismissed, setPushDismissed] = useState(false);
+  const [pushStatus, setPushStatus] = useState<NotificationPermission>(() => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') return 'default';
+    return Notification.permission;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') return;
+    setPushStatus(Notification.permission);
+  }, []);
+
+  const supportsPush = typeof window !== 'undefined' && typeof Notification !== 'undefined';
+
+  const shouldShowInstall = useMemo(() => {
+    if (!planAllows(plan, 'writing.install.prompt')) return false;
+    if (isInstalled || installDismissed) return false;
+    return Boolean(promptEvent);
+  }, [installDismissed, isInstalled, plan, promptEvent]);
+
+  const shouldShowPush = useMemo(() => {
+    if (!planAllows(plan, 'writing.push.optin')) return false;
+    if (!supportsPush) return false;
+    if (pushStatus === 'granted' || pushDismissed) return false;
+    return true;
+  }, [plan, pushDismissed, pushStatus, supportsPush]);
+
+  const hasEngagementPrompts = shouldShowInstall || shouldShowPush;
+
+  useEffect(() => {
+    if (!hasEngagementPrompts) {
+      setSheetOpen(false);
+    }
+  }, [hasEngagementPrompts]);
+
+  const handleInstallComplete = (outcome: 'accepted' | 'dismissed') => {
+    setInstallDismissed(true);
+    clearPrompt();
+    if (outcome === 'accepted') {
+      setSheetOpen(false);
+    }
+  };
+
+  const handlePushGranted = () => {
+    setPushStatus('granted');
+    setSheetOpen(false);
+  };
+
+  const handlePushDismiss = () => {
+    setPushDismissed(true);
+  };
 
   const quotaEvaluation = useMemo(() => {
     if (!quota) return null;
@@ -303,6 +363,25 @@ const WritingResultsPage: React.FC<PageProps> = ({
           </div>
         </header>
 
+        {hasEngagementPrompts ? (
+          <div className="hidden gap-4 md:grid md:grid-cols-2">
+            {shouldShowInstall ? (
+              <InstallBanner promptEvent={promptEvent} onComplete={handleInstallComplete} onDismiss={handleInstallComplete} />
+            ) : null}
+            {shouldShowPush ? (
+              <PushOptInCard onGranted={handlePushGranted} onDismiss={handlePushDismiss} />
+            ) : null}
+          </div>
+        ) : null}
+
+        {hasEngagementPrompts ? (
+          <div className="flex justify-center md:hidden">
+            <Button size="lg" variant="secondary" onClick={() => setSheetOpen(true)}>
+              Stay connected
+            </Button>
+          </div>
+        ) : null}
+
         {xp.achievements.length > 0 ? (
           <section className="rounded-ds-xl border border-border/60 bg-muted/20 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -362,6 +441,20 @@ const WritingResultsPage: React.FC<PageProps> = ({
           <CoachDock attemptId={attemptId} />
         </section>
       </div>
+
+      <KeyboardAwareSheet
+        open={sheetOpen && hasEngagementPrompts}
+        title="Stay connected"
+        description="Install the app or enable notifications to follow your progress on the go."
+        onClose={() => setSheetOpen(false)}
+      >
+        {shouldShowInstall ? (
+          <InstallBanner promptEvent={promptEvent} onComplete={handleInstallComplete} onDismiss={handleInstallComplete} />
+        ) : null}
+        {shouldShowPush ? (
+          <PushOptInCard onGranted={handlePushGranted} onDismiss={handlePushDismiss} />
+        ) : null}
+      </KeyboardAwareSheet>
     </Container>
   );
 };

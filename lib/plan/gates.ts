@@ -10,6 +10,8 @@ type WritingGateConfig = {
   exportPdf: boolean;
   certificateAccess: boolean;
   xpDailyCap: number;
+  installPrompt: boolean;
+  pushNotifications: boolean;
 };
 
 type AdminGateConfig = {
@@ -37,6 +39,8 @@ const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
       exportPdf: false,
       certificateAccess: false,
       xpDailyCap: 120,
+      installPrompt: false,
+      pushNotifications: false,
     },
     analytics: {
       advancedWriting: false,
@@ -55,6 +59,8 @@ const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
       exportPdf: false,
       certificateAccess: false,
       xpDailyCap: 200,
+      installPrompt: true,
+      pushNotifications: true,
     },
     analytics: {
       advancedWriting: true,
@@ -73,6 +79,8 @@ const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
       exportPdf: true,
       certificateAccess: true,
       xpDailyCap: 320,
+      installPrompt: true,
+      pushNotifications: true,
     },
     analytics: {
       advancedWriting: true,
@@ -91,6 +99,8 @@ const PLAN_GATES: Record<PlanId, PlanGateConfig> = {
       exportPdf: true,
       certificateAccess: true,
       xpDailyCap: 420,
+      installPrompt: true,
+      pushNotifications: true,
     },
     analytics: {
       advancedWriting: true,
@@ -109,6 +119,8 @@ export type PlanGateKey =
   | 'writing.ai.daily'
   | 'writing.mock.daily'
   | 'writing.storage'
+  | 'writing.install.prompt'
+  | 'writing.push.optin'
   | 'analytics.advanced'
   | 'analytics.perfBudgets'
   | 'admin.health'
@@ -131,6 +143,10 @@ export function planAllows(plan: PlanId, feature: PlanGateKey): boolean {
       return gates.writing.mockStartsPerDay > 0;
     case 'writing.storage':
       return gates.writing.storageGB > 0;
+    case 'writing.install.prompt':
+      return gates.writing.installPrompt;
+    case 'writing.push.optin':
+      return gates.writing.pushNotifications;
     case 'analytics.advanced':
       return gates.analytics.advancedWriting;
     case 'analytics.perfBudgets':
@@ -158,5 +174,13 @@ export function xpDailyCap(plan: PlanId): number {
 
 export function writingStorageLimit(plan: PlanId): number {
   return getPlanGates(plan).writing.storageGB;
+}
+
+export function writingInstallPromptEnabled(plan: PlanId): boolean {
+  return getPlanGates(plan).writing.installPrompt;
+}
+
+export function writingPushOptInEnabled(plan: PlanId): boolean {
+  return getPlanGates(plan).writing.pushNotifications;
 }
 
