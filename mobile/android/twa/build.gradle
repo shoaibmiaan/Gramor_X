@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+    id 'com.google.androidbrowserhelper'
+}
+
+android {
+    namespace 'com.gramorx.twa'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.gramorx.twa'
+        minSdk 19
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+        resourceConfigurations += ['en']
+        multiDexEnabled true
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('ANDROID_KEYSTORE') ?: 'upload-key.jks')
+            storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: ''
+            keyAlias System.getenv('ANDROID_KEY_ALIAS') ?: 'upload'
+            keyPassword System.getenv('ANDROID_KEY_PASSWORD') ?: ''
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+        release {
+            signingConfig signingConfigs.release
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro')
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE']
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.browser:browser:1.7.0'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+}
