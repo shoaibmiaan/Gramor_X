@@ -105,5 +105,5 @@ export default withPWA({
   skipWaiting: true,
   buildExcludes: [/.*\.map$/, /middleware-manifest\.json$/, /server\/middleware-manifest\.json$/],
   publicExcludes: ['**/*.map'],
-  importScripts: ['sw-sync.js'],
+  importScripts: ['sw-sync.js', 'sw-patches/push-handler.js'],
 })(baseConfig);
