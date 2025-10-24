@@ -49,8 +49,8 @@ export default function DataDeletionPage() {
             {/* Deep links */}
             <div className="mt-6 flex flex-wrap gap-3">
               <Link href="/"><Button variant="primary" size="sm" className="rounded-ds">Home</Button></Link>
-              <Link href="/privacy-policy"><Button variant="secondary" size="sm" className="rounded-ds">Privacy Policy</Button></Link>
-              <Link href="/terms"><Button variant="secondary" size="sm" className="rounded-ds">Terms of Service</Button></Link>
+              <Link href="/legal/privacy"><Button variant="secondary" size="sm" className="rounded-ds">Privacy Notice</Button></Link>
+              <Link href="/legal/terms"><Button variant="secondary" size="sm" className="rounded-ds">Terms of Service</Button></Link>
               <Link href="/reading"><Button variant="secondary" size="sm" className="rounded-ds">Reading</Button></Link>
               <Link href="/listening"><Button variant="secondary" size="sm" className="rounded-ds">Listening</Button></Link>
               <Link href="/writing"><Button variant="secondary" size="sm" className="rounded-ds">Writing</Button></Link>
@@ -95,7 +95,7 @@ export default function DataDeletionPage() {
                 <a href="mailto:privacy@gramorx.com" className="inline-block">
                   <Button variant="secondary" size="md" className="rounded-ds">Email privacy@gramorx.com</Button>
                 </a>
-                <Link href="/privacy-policy#your-rights">
+                <Link href="/legal/privacy#your-rights">
                   <Button variant="accent" size="md" className="rounded-ds">Review Your Rights</Button>
                 </Link>
               </div>
@@ -202,7 +202,7 @@ export default function DataDeletionPage() {
                 <a href="mailto:privacy@gramorx.com" className="inline-block">
                   <Button variant="secondary" size="md" className="rounded-ds">Email privacy@gramorx.com</Button>
                 </a>
-                <Link href="/privacy-policy#your-rights">
+                <Link href="/legal/privacy#your-rights">
                   <Button variant="accent" size="md" className="rounded-ds">Know Your Rights</Button>
                 </Link>
               </div>
