@@ -7,6 +7,7 @@ import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
 import TextareaAutosize from '@/components/design-system/TextareaAutosize';
 import { StickyActionBar } from '@/components/exam/StickyActionBar';
+import { BottomActionBar } from '@/components/mobile/BottomActionBar';
 import VoiceDraftToggle from '@/components/writing/VoiceDraftToggle';
 import WritingAutosaveIndicator from '@/components/writing/WritingAutosaveIndicator';
 import WritingTimer from '@/components/writing/WritingTimer';
@@ -231,14 +232,32 @@ export const WritingExamRoom: React.FC<Props> = ({
 
       {error && <Alert variant="danger" title="Submission failed">{error}</Alert>}
 
-      <StickyActionBar
-        left={<WritingAutosaveIndicator state={autosaveState} updatedAt={lastSavedAt} />}
-        right={
-          <Button onClick={() => handleSubmit(false)} loading={submitting} disabled={submitting}>
+      <div className="hidden md:block">
+        <StickyActionBar
+          left={<WritingAutosaveIndicator state={autosaveState} updatedAt={lastSavedAt} />}
+          right={
+            <Button onClick={() => handleSubmit(false)} loading={submitting} disabled={submitting}>
+              Submit for scoring
+            </Button>
+          }
+        />
+      </div>
+      <div className="md:hidden">
+        <BottomActionBar
+          leading={<WritingAutosaveIndicator state={autosaveState} updatedAt={lastSavedAt} />}
+          stacked
+        >
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => handleSubmit(false)}
+            loading={submitting}
+            disabled={submitting}
+          >
             Submit for scoring
           </Button>
-        }
-      />
+        </BottomActionBar>
+      </div>
     </div>
   );
 };
