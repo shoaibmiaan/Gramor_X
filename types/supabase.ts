@@ -521,6 +521,26 @@ export interface LifecycleEvents extends TableBase {
   last_attempt_at?: string | null;
 }
 
+export interface PushToken extends TableBase {
+  user_id: string;
+  token: string;
+  platform: 'web' | 'ios' | 'android';
+  topics: string[];
+  subscription?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
+  device_id?: string | null;
+  last_seen_at?: string | null;
+  expires_at?: string | null;
+}
+
+export interface MobileEvent extends TableBase {
+  user_id: string;
+  token_id?: string | null;
+  event_type: string;
+  topic?: string | null;
+  payload?: Record<string, unknown> | null;
+}
+
 /** Handy union for typed upserts/selects */
 export interface DBSchema {
   words: Words;
@@ -567,6 +587,8 @@ export interface DBSchema {
   review_events: ReviewEvents;
   collocation_attempts: CollocationAttempts;
   lifecycle_events: LifecycleEvents;
+  push_tokens: PushToken;
+  mobile_events: MobileEvent;
   organizations: Organizations;
   organization_members: OrganizationMembers;
   organization_invites: OrganizationInvites;
