@@ -77,6 +77,30 @@ module.exports = {
         lightBorder:    cv('lightBorder'),
         mutedText:      cv('mutedText'),
         neutral:        'rgb(var(--color-gray) / <alpha-value>)',  // Added 'neutral' color variant
+        chart: {
+          reading: 'rgb(var(--gx-chart-reading) / <alpha-value>)',
+          listening: 'rgb(var(--gx-chart-listening) / <alpha-value>)',
+          writing: 'rgb(var(--gx-chart-writing) / <alpha-value>)',
+          speaking: 'rgb(var(--gx-chart-speaking) / <alpha-value>)',
+          grid: 'rgb(var(--gx-chart-grid) / <alpha-value>)',
+          axis: 'rgb(var(--gx-chart-axis) / <alpha-value>)',
+          tooltip: {
+            bg: 'rgb(var(--gx-chart-tooltip-bg) / <alpha-value>)',
+            border: 'rgb(var(--gx-chart-tooltip-border) / <alpha-value>)',
+            fg: 'rgb(var(--gx-chart-tooltip-fg) / <alpha-value>)',
+          },
+        },
+        focus: {
+          ring: 'rgb(var(--gx-focus-ring) / <alpha-value>)',
+          strong: 'rgb(var(--gx-focus-ring-strong) / <alpha-value>)',
+          muted: 'rgb(var(--gx-focus-ring-muted) / <alpha-value>)',
+        },
+        certificate: {
+          background: 'rgb(var(--gx-card) / <alpha-value>)',
+          border: 'rgb(var(--gx-border) / <alpha-value>)',
+          accent: cv('primary'),
+          text: 'rgb(var(--gx-foreground) / <alpha-value>)',
+        },
       },
 
       borderRadius: {

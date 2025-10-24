@@ -12,16 +12,18 @@
   --gx-ring: var(--color-electricBlue);
   --gx-muted: 245 245 248;
   --gx-muted-foreground: 120 120 140;
-  --gx-bg: var(--gx-background);
-  --gx-text: var(--gx-foreground);
-  --gx-primary: var(--color-primary);
-  --gx-secondary: var(--color-secondary);
-  --gx-accent: var(--color-accent);
-  --gx-success: var(--color-success);
-  --gx-warning: var(--color-warning);
-  --gx-danger: var(--color-danger);
-  --gx-bg-grad-1: none;
-  --gx-bg-grad-2: none;
+  --gx-focus-ring: var(--color-electricBlue);
+  --gx-focus-ring-strong: var(--color-neonGreen);
+  --gx-focus-ring-muted: var(--gx-muted-foreground);
+  --gx-chart-reading: var(--color-primary);
+  --gx-chart-listening: var(--color-secondary);
+  --gx-chart-writing: var(--color-accent);
+  --gx-chart-speaking: var(--color-purpleVibe);
+  --gx-chart-grid: var(--gx-border);
+  --gx-chart-axis: var(--gx-muted-foreground);
+  --gx-chart-tooltip-bg: var(--gx-card);
+  --gx-chart-tooltip-border: var(--gx-border);
+  --gx-chart-tooltip-fg: var(--gx-card-foreground);
 }
 
 /* Dark overrides (works with .dark by next-themes) */
@@ -37,16 +39,18 @@
   --gx-ring: var(--color-neonGreen);
   --gx-muted: 32 32 48;
   --gx-muted-foreground: 180 180 200;
-  --gx-bg: var(--gx-background);
-  --gx-text: var(--gx-foreground);
-  --gx-primary: var(--color-primary);
-  --gx-secondary: var(--color-secondary);
-  --gx-accent: var(--color-accent);
-  --gx-success: var(--color-success);
-  --gx-warning: var(--color-warning);
-  --gx-danger: var(--color-danger);
-  --gx-bg-grad-1: none;
-  --gx-bg-grad-2: none;
+  --gx-focus-ring: var(--color-neonGreen);
+  --gx-focus-ring-strong: var(--color-electricBlue);
+  --gx-focus-ring-muted: var(--gx-muted-foreground);
+  --gx-chart-reading: var(--color-primary);
+  --gx-chart-listening: var(--color-secondary);
+  --gx-chart-writing: var(--color-accent);
+  --gx-chart-speaking: var(--color-purpleVibe);
+  --gx-chart-grid: var(--gx-border);
+  --gx-chart-axis: var(--gx-muted-foreground);
+  --gx-chart-tooltip-bg: var(--gx-card);
+  --gx-chart-tooltip-border: var(--gx-border);
+  --gx-chart-tooltip-fg: var(--gx-card-foreground);
 }
 
 [data-theme='hc'] {
@@ -61,16 +65,18 @@
   --gx-ring: 255 209 0;
   --gx-muted: 30 30 30;
   --gx-muted-foreground: 220 220 220;
-  --gx-bg: var(--gx-background);
-  --gx-text: var(--gx-foreground);
-  --gx-primary: var(--color-primary);
-  --gx-secondary: var(--color-secondary);
-  --gx-accent: var(--color-accent);
-  --gx-success: var(--color-success);
-  --gx-warning: var(--color-warning);
-  --gx-danger: var(--color-danger);
-  --gx-bg-grad-1: none;
-  --gx-bg-grad-2: none;
+  --gx-focus-ring: 255 209 0;
+  --gx-focus-ring-strong: 0 255 255;
+  --gx-focus-ring-muted: 220 220 220;
+  --gx-chart-reading: 255 234 0;
+  --gx-chart-listening: 0 255 255;
+  --gx-chart-writing: 255 105 180;
+  --gx-chart-speaking: 255 255 255;
+  --gx-chart-grid: 255 255 255;
+  --gx-chart-axis: 255 255 255;
+  --gx-chart-tooltip-bg: 0 0 0;
+  --gx-chart-tooltip-border: 255 255 255;
+  --gx-chart-tooltip-fg: 255 255 255;
 }
 
 /* Optional seasonal themes override selectively */

@@ -178,6 +178,7 @@ export interface UserPrefs {
 
 export interface Profiles extends TableBase {
   user_id: string;
+  email?: string | null;
   full_name?: string;
   country?: string | null;
   english_level?: string | null;
@@ -197,6 +198,7 @@ export interface Profiles extends TableBase {
   // from codex/add-whatsapp-opt-in-preferences-panel
   notification_channels?: string[] | null;
   whatsapp_opt_in?: boolean | null;
+  active_org_id?: string | null;
 
   // from main
   preferred_language?: string | null;
@@ -413,9 +415,20 @@ export interface AiAssistLog extends TableBase {
 export interface Experiments {
   key: string;
   name: string;
-  status: 'planned' | 'running' | 'paused' | 'completed';
+  status: 'draft' | 'planned' | 'running' | 'paused' | 'completed' | 'disabled';
   guardrail_reason?: string | null;
+  default_variant?: string | null;
+  traffic_percentage?: number | null;
+  metadata?: Record<string, unknown> | null;
   updated_at: string;
+}
+
+export interface ExperimentVariants extends TableBase {
+  experiment_key: string;
+  variant: string;
+  weight: number;
+  is_default: boolean;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface ExperimentAssignments {
@@ -424,6 +437,20 @@ export interface ExperimentAssignments {
   variant: string;
   assigned_at: string;
   guardrail_state: 'active' | 'disabled';
+  exposures?: number | null;
+  conversions?: number | null;
+  last_exposed_at?: string | null;
+  last_converted_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface ExperimentEvents extends TableBase {
+  experiment_key: string;
+  user_id: string | null;
+  variant: string;
+  event: 'assign' | 'expose' | 'convert';
+  context?: Record<string, unknown> | null;
+  recorded_at: string;
 }
 
 export interface ReviewEvents {
@@ -443,6 +470,75 @@ export interface CollocationAttempts {
   correct: number;
   source: string | null;
   attempted_at: string;
+}
+
+export interface Organizations extends TableBase {
+  owner_id: string;
+  name: string;
+  slug: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface OrganizationMembers extends TableBase {
+  org_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member';
+  invited_by?: string | null;
+  joined_at: string;
+}
+
+export interface OrganizationInvites extends TableBase {
+  org_id: string;
+  email: string;
+  role: 'admin' | 'member';
+  token: string;
+  invited_by: string;
+  expires_at: string;
+  accepted_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface WritingTopics extends TableBase {
+  title: string;
+  prompt: string;
+  band_target: number;
+  tags: string[];
+  difficulty: 'starter' | 'intermediate' | 'advanced';
+  archived_at?: string | null;
+}
+
+export interface LifecycleEvents extends TableBase {
+  user_id: string;
+  event: 'first_mock_done' | 'band_up' | 'streak_broken';
+  status: 'pending' | 'sent' | 'skipped' | 'failed';
+  channels?: string[] | null;
+  context?: Record<string, unknown> | null;
+  dedupe_key?: string | null;
+  error?: string | null;
+  attempts: number;
+  created_at: string;
+  processed_at?: string | null;
+  last_attempt_at?: string | null;
+}
+
+export interface PushToken extends TableBase {
+  user_id: string;
+  token: string;
+  platform: 'web' | 'ios' | 'android';
+  topics: string[];
+  subscription?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
+  device_id?: string | null;
+  last_seen_at?: string | null;
+  expires_at?: string | null;
+}
+
+export interface MobileEvent extends TableBase {
+  user_id: string;
+  token_id?: string | null;
+  event_type: string;
+  topic?: string | null;
+  payload?: Record<string, unknown> | null;
 }
 
 /** Handy union for typed upserts/selects */
@@ -485,9 +581,18 @@ export interface DBSchema {
   ai_assist_logs: AiAssistLog;
 
   experiments: Experiments;
+  experiment_variants: ExperimentVariants;
   experiment_assignments: ExperimentAssignments;
+  experiment_events: ExperimentEvents;
   review_events: ReviewEvents;
   collocation_attempts: CollocationAttempts;
+  lifecycle_events: LifecycleEvents;
+  push_tokens: PushToken;
+  mobile_events: MobileEvent;
+  organizations: Organizations;
+  organization_members: OrganizationMembers;
+  organization_invites: OrganizationInvites;
+  writing_topics: WritingTopics;
 
   // kept from main
   account_audit_log: AccountAuditLog;
