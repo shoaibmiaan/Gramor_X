@@ -3,11 +3,9 @@
 // autosave API endpoints.
 
 import {
-  ensureDraftSyncOrchestrator,
-  queueExamEvent,
-  queueWritingDraft,
-  registerDraftBackgroundSync,
-} from '@/lib/offline/syncOrchestrator';
+  queueDraftForOffline,
+  queueEventForOffline,
+} from '@/lib/offline/background-sync';
 import type { WritingDraftSnapshot } from '@/types/writing';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -69,7 +67,7 @@ export const saveWritingDraft = async (payload: SaveDraftPayload): Promise<SaveD
       throw error;
     }
 
-    const queued = await queueWritingDraft({
+    const queued = await queueDraftForOffline({
       attemptId: payload.attemptId,
       tasks: payload.tasks,
       activeTask: payload.activeTask,
@@ -79,10 +77,6 @@ export const saveWritingDraft = async (payload: SaveDraftPayload): Promise<SaveD
     if (!queued) {
       throw error;
     }
-
-    const orchestrator = ensureDraftSyncOrchestrator();
-    orchestrator?.requestSync('queued');
-    void registerDraftBackgroundSync();
 
     return { ok: true, savedAt: new Date().toISOString(), queued: true };
   }
@@ -117,7 +111,7 @@ export const persistExamEvent = async (
       throw error;
     }
 
-    const queued = await queueExamEvent({
+    const queued = await queueEventForOffline({
       attemptId,
       eventType: event,
       payload,
@@ -127,10 +121,6 @@ export const persistExamEvent = async (
     if (!queued) {
       throw error;
     }
-
-    const orchestrator = ensureDraftSyncOrchestrator();
-    orchestrator?.requestSync('queued');
-    void registerDraftBackgroundSync();
 
     return { ok: true, queued: true };
   }
