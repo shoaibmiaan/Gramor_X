@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { startCheckout } from '@/lib/payments';
+import { startCheckout } from '@/lib/payments/index';
 import type { PlanKey, Cycle, PaymentMethod } from '@/types/payments';
 
 export type CheckoutFormProps = {

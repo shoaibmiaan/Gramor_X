@@ -1,7 +1,7 @@
 // components/PlanPicker.tsx
 import * as React from 'react';
 
-import { startCheckout as startCheckoutRequest } from '@/lib/payments';
+import { startCheckout as startCheckoutRequest } from '@/lib/payments/index';
 import type { Cycle, PaymentMethod, PlanKey } from '@/types/payments';
 
 export type Plan = Readonly<{

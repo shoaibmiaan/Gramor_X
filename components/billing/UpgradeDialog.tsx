@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Button } from '@/components/design-system/Button';
 import { Modal } from '@/components/design-system/Modal';
-import { PLAN_LABEL, startCheckout } from '@/lib/payments';
+import { PLAN_LABEL, startCheckout } from '@/lib/payments/index';
 import { track } from '@/lib/analytics/track';
 import { evaluateQuota, nextPlanForQuota, type QuotaKey } from '@/lib/plan/quotas';
 import type { PaymentMethod, PlanKey } from '@/types/payments';
