@@ -32,25 +32,16 @@ ensure('WHATSAPP_TASKS_SIGNING_SECRET', 'whatsapp_signing_secret');
 
 // ---- Collect tests from tests/ (skip lib/*.test.ts for now) ---
 const ROOT = process.cwd();
-const TEST_DIRS = ['tests/api', 'tests/pages', 'tests/admin', 'tests/perf', 'tests/a11y'];
-const extraArgs = process.argv.slice(2).filter(Boolean);
-const TARGET_DIRS = (extraArgs.length > 0 ? extraArgs : TEST_DIRS).map((dir) =>
-  path.isAbsolute(dir) ? dir : path.join(ROOT, dir),
-);
+const TEST_DIRS = ['tests/api', 'tests/pages', 'tests/admin', 'tests/perf', 'tests/a11y', 'tests/mobile'];
 
 function collectTests(dir: string, out: string[] = []): string[] {
   if (!fs.existsSync(dir)) return out;
   for (const name of fs.readdirSync(dir)) {
     const p = path.join(dir, name);
     const s = fs.statSync(p);
-    if (s.isDirectory()) {
-      collectTests(p, out);
-      continue;
-    }
-
-    const normalized = p.split(path.sep).join('/');
-    const isPerfSpec = normalized.includes('/tests/perf/') && normalized.endsWith('.spec.ts');
-    if (p.endsWith('.test.ts') || isPerfSpec) out.push(p);
+    if (s.isDirectory()) collectTests(p, out);
+    else if (p.endsWith('.test.ts')) out.push(p);
+    else if (p.endsWith('.spec.ts') && p.includes(`${path.sep}offline${path.sep}`)) out.push(p);
   }
   return out;
 }
