@@ -140,45 +140,10 @@ function normalisePronunciations(wod: Record<string, unknown> | null | undefined
   maybePushLegacy('pronunciation_ipa_uk', 'pronunciation_audio_uk', 'en-GB', 'British');
 
   if (pronunciations.length === 0) {
-    return [];
+    return FALLBACK_WORD.pronunciations;
   }
 
-  const mergeKey = (value: string | null | undefined) =>
-    typeof value === 'string' && value.trim().length > 0 ? value.trim().toLowerCase() : '';
-
-  const merged = new Map<string, WordPronunciationPayload>();
-  const order: string[] = [];
-
-  pronunciations.forEach((entry) => {
-    const baseKeyParts = [mergeKey(entry.locale), mergeKey(entry.label), mergeKey(entry.ipa)];
-    let key = baseKeyParts.join('|');
-
-    if (!key.replace(/\|/g, '')) {
-      const audioKey = mergeKey(entry.audioUrl);
-      key = audioKey ? `audio|${audioKey}` : `index|${order.length}`;
-    }
-
-    const existing = merged.get(key);
-    if (existing) {
-      merged.set(key, {
-        ipa: existing.ipa ?? entry.ipa ?? null,
-        audioUrl: existing.audioUrl ?? entry.audioUrl ?? null,
-        locale: existing.locale ?? entry.locale ?? null,
-        label: existing.label ?? entry.label ?? null,
-      });
-    } else {
-      const copy: WordPronunciationPayload = {
-        ipa: entry.ipa ?? null,
-        audioUrl: entry.audioUrl ?? null,
-        locale: entry.locale ?? null,
-        label: entry.label ?? null,
-      };
-      merged.set(key, copy);
-      order.push(key);
-    }
-  });
-
-  return order.map((key) => merged.get(key)!).filter(Boolean);
+  return pronunciations;
 }
 
 export default async function handler(

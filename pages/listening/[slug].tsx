@@ -103,6 +103,8 @@ export default function ListeningTestPage() {
 
   // --- Timer ---
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME_SEC);
+  const [attemptStarted, setAttemptStarted] = useState(false);
+  const [attemptFinished, setAttemptFinished] = useState(false);
   const submittedRef = useRef(false);
 
   // --- Audio & timing handled via AudioSectionsPlayer ---
@@ -361,6 +363,7 @@ export default function ListeningTestPage() {
   const handleAutoSubmit = () => {
     if (submittedRef.current) return;
     submittedRef.current = true;
+    setAttemptFinished(true);
     setChecked(true);
     (async () => {
       let attemptId: string | null = null;
@@ -417,9 +420,18 @@ export default function ListeningTestPage() {
     );
   }
 
+  const focusActive = attemptStarted && !attemptFinished;
+
   return (
     <>
-      <FocusGuard exam="listening" slug={slug} />
+      <FocusGuard
+        exam="listening"
+        slug={slug}
+        active={focusActive}
+        onFullscreenExit={() => {
+          if (!attemptFinished) setAttemptStarted(false);
+        }}
+      />
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <Container>
           {/* Header */}
@@ -432,7 +444,13 @@ export default function ListeningTestPage() {
               <SaveItemButton resourceId={slug || ''} type="listening" category="bookmark" />
               <Timer
                 initialSeconds={TOTAL_TIME_SEC}
-                onTick={(s) => setTimeLeft(Math.ceil(s))}
+                onTick={(s) => {
+                  const remaining = Math.ceil(s);
+                  setTimeLeft(remaining);
+                  if (!attemptStarted && !attemptFinished && remaining < TOTAL_TIME_SEC) {
+                    setAttemptStarted(true);
+                  }
+                }}
                 onComplete={handleAutoSubmit}
                 running={!submittedRef.current}
               />
@@ -601,6 +619,7 @@ export default function ListeningTestPage() {
                         }
                       }
                       submittedRef.current = true;
+                      setAttemptFinished(true);
                       try {
                         autosaveRef.current?.clear();
                         if (slug) localStorage.removeItem(LEGACY_LISTEN_KEY(slug));
