@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-010",
+  "title": "IELTS Speaking Full Mock Exam 010",
+  "part1": [
+    "Do you enjoy going to the cinema?",
+    "What kind of films do you prefer?",
+    "When was the last time you watched a film at home?",
+    "Do you like discussing films with friends?",
+    "Have you ever been influenced by a film?",
+    "Are there any films you would watch again?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a film that made you think deeply about an issue.",
+      "You should say:",
+      "• what the film was",
+      "• what issue it explored",
+      "• how the film presented the issue",
+      "and explain how it influenced your thoughts."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "How does cinema reflect society?",
+    "Should films always have a moral lesson?",
+    "What impact do streaming services have on the film industry?",
+    "How might film-making change in the next decade?"
+  ]
+}
