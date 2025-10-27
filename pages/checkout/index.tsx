@@ -15,6 +15,7 @@ import { Badge } from '@/components/design-system/Badge';
 import PlanPicker, { type PlanPickerProps } from '@/components/payments/PlanPicker';
 import CheckoutForm from '@/components/payments/CheckoutForm';
 import RedeemBox, { type RedeemSuccessPayload } from '@/components/referrals/RedeemBox';
+import PromoCodeBox, { type PromoCodeApplyPayload } from '@/components/payments/PromoCodeBox';
 import SocialProofStrip from '@/components/marketing/SocialProofStrip';
 import {
   PLAN_LABEL,
@@ -24,6 +25,13 @@ import {
   type Cycle,
   type PlanKey,
 } from '@/lib/pricing';
+import {
+  checkPromoEligibility,
+  computePromoDiscount,
+  findPromoByCode,
+  normalizePromoCode,
+  type PromoCodeRule,
+} from '@/lib/promotions/codes';
 
 const toUsdCents = (amount: number) => Math.round(amount * 100);
 
@@ -65,6 +73,7 @@ const CheckoutPage: NextPage = () => {
   const router = useRouter();
   const planParam = String(router.query.plan ?? '');
   const codeParam = router.query.code ? String(router.query.code) : undefined;
+  const promoParam = router.query.promo ? String(router.query.promo) : undefined;
   const cycleParam = (String(router.query.billingCycle ?? 'monthly') as Cycle);
 
   const hasPlan = (PLAN_KEYS as PlanKey[]).includes(planParam as PlanKey);
@@ -72,47 +81,90 @@ const CheckoutPage: NextPage = () => {
   const selectedPlanData = plan ? PLANS[plan] : undefined;
 
   const [activeCode, setActiveCode] = React.useState<string | undefined>(codeParam);
+  const [activePromo, setActivePromo] = React.useState<PromoCodeRule | null>(null);
 
   React.useEffect(() => {
     setActiveCode(codeParam);
   }, [codeParam]);
 
-  const updateQuery = React.useCallback(
-    (nextCode?: string) => {
+  React.useEffect(() => {
+    if (!promoParam) {
+      setActivePromo(null);
+      return;
+    }
+    const normalized = normalizePromoCode(promoParam);
+    if (!normalized) {
+      setActivePromo(null);
+      return;
+    }
+    const rule = findPromoByCode(normalized);
+    if (!rule) {
+      setActivePromo(null);
+      return;
+    }
+    const eligibility = checkPromoEligibility(rule, { plan, cycle: cycleParam });
+    if (!eligibility.ok) {
+      setActivePromo(null);
+      return;
+    }
+    setActivePromo(rule);
+  }, [promoParam, plan, cycleParam]);
+
+  const buildQuery = React.useCallback(
+    (overrides: Partial<{ plan: PlanKey | null; cycle: Cycle; referral: string | null; promo: string | null }> = {}) => {
       const nextQuery: Record<string, string | string[]> = { ...router.query };
-      if (plan) {
-        nextQuery.plan = plan;
+      const nextPlan = overrides.plan === undefined ? plan : overrides.plan;
+      const nextCycle = overrides.cycle ?? cycleParam;
+      if (nextPlan) {
+        nextQuery.plan = nextPlan;
+        nextQuery.billingCycle = nextCycle;
       } else {
         delete nextQuery.plan;
+        delete nextQuery.billingCycle;
       }
-      nextQuery.billingCycle = cycleParam;
-      if (nextCode) {
-        nextQuery.code = nextCode;
+      const nextReferral = overrides.referral === undefined ? activeCode : overrides.referral;
+      if (nextReferral) {
+        nextQuery.code = nextReferral;
       } else {
         delete nextQuery.code;
       }
-      void router.replace({ pathname: '/checkout', query: nextQuery }, undefined, { shallow: true });
+      const nextPromo = overrides.promo === undefined ? activePromo?.code : overrides.promo;
+      if (nextPromo) {
+        nextQuery.promo = nextPromo;
+      } else {
+        delete nextQuery.promo;
+      }
+      return nextQuery;
     },
-    [router, router.query, plan, cycleParam],
+    [router.query, plan, cycleParam, activeCode, activePromo?.code],
   );
 
   const handleSelect: NonNullable<PlanPickerProps['onSelect']> = (p, c) => {
-    const nextQuery: Record<string, string | string[]> = { ...router.query, plan: p, billingCycle: c };
-    if (activeCode) {
-      nextQuery.code = activeCode;
-    } else {
-      delete nextQuery.code;
-    }
+    const nextQuery = buildQuery({ plan: p, cycle: c });
     void router.push({ pathname: '/checkout', query: nextQuery });
   };
 
   const handleRedeemSuccess = React.useCallback(
     ({ code }: RedeemSuccessPayload) => {
       setActiveCode(code);
-      updateQuery(code);
+      void router.replace({ pathname: '/checkout', query: buildQuery({ referral: code }) }, undefined, { shallow: true });
     },
-    [updateQuery],
+    [buildQuery, router],
   );
+
+  const handlePromoApply = React.useCallback(
+    ({ rule }: PromoCodeApplyPayload) => {
+      const normalized = normalizePromoCode(rule.code);
+      setActivePromo(rule);
+      void router.replace({ pathname: '/checkout', query: buildQuery({ promo: normalized }) }, undefined, { shallow: true });
+    },
+    [buildQuery, router],
+  );
+
+  const handlePromoClear = React.useCallback(() => {
+    setActivePromo(null);
+    void router.replace({ pathname: '/checkout', query: buildQuery({ promo: null }) }, undefined, { shallow: true });
+  }, [buildQuery, router]);
 
   const monthlyCents = selectedPlanData
     ? cycleParam === 'monthly'
@@ -123,6 +175,15 @@ const CheckoutPage: NextPage = () => {
     selectedPlanData && cycleParam === 'annual'
       ? toUsdCents(getPlanBillingAmount(selectedPlanData.key, 'annual'))
       : 0;
+
+  const subtotalCents = selectedPlanData
+    ? cycleParam === 'annual'
+      ? billedAnnualTotalCents
+      : monthlyCents
+    : 0;
+
+  const promoDiscountCents = activePromo ? computePromoDiscount(activePromo, subtotalCents) : 0;
+  const finalTotalCents = Math.max(subtotalCents - promoDiscountCents, 0);
 
   return (
     <>
@@ -168,7 +229,12 @@ const CheckoutPage: NextPage = () => {
             {!plan ? (
               <>
                 <Card className="card-surface rounded-ds-2xl p-8">
-                  <PlanPicker onSelect={handleSelect} defaultCycle={cycleParam} className="mt-0" />
+                  <PlanPicker
+                    onSelect={handleSelect}
+                    defaultCycle={cycleParam}
+                    className="mt-0"
+                    promoCode={activePromo?.code}
+                  />
                 </Card>
 
                 <div className="mt-8 text-center">
@@ -226,14 +292,24 @@ const CheckoutPage: NextPage = () => {
                             plan={plan}
                             billingCycle={cycleParam}
                             referralCode={activeCode}
+                            promoCode={activePromo?.code}
                             className=""
                           />
                         </div>
                       </div>
                     </Card>
 
-                    <div className="mt-6">
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
                       <RedeemBox onSuccess={handleRedeemSuccess} initialCode={activeCode} />
+                      <PromoCodeBox
+                        plan={plan}
+                        cycle={cycleParam}
+                        amountCents={subtotalCents}
+                        onApply={handlePromoApply}
+                        onClear={handlePromoClear}
+                        applied={activePromo}
+                        initialCode={promoParam}
+                      />
                     </div>
                   </div>
 
@@ -292,12 +368,17 @@ const CheckoutPage: NextPage = () => {
                           </div>
                         )}
 
+                        {promoDiscountCents > 0 && activePromo && (
+                          <div className="flex justify-between items-center py-2 border-b border-border/30 text-success">
+                            <span>Promo discount ({activePromo.code})</span>
+                            <span className="font-medium">-{fmtUsd(promoDiscountCents)}</span>
+                          </div>
+                        )}
+
                         <div className="pt-3 border-t border-border/50">
                           <div className="flex justify-between text-body mb-1">
                             <span className="text-muted-foreground">Subtotal</span>
-                            <span className="font-medium text-foreground">
-                              {cycleParam === 'annual' ? fmtUsd(billedAnnualTotalCents) : fmtUsd(monthlyCents)}
-                            </span>
+                            <span className="font-medium text-foreground">{fmtUsd(subtotalCents)}</span>
                           </div>
                           <div className="flex justify-between text-body">
                             <span className="text-muted-foreground">Taxes (calculated at checkout)</span>
@@ -309,7 +390,7 @@ const CheckoutPage: NextPage = () => {
                           <div className="flex justify-between items-center">
                             <span className="text-body font-semibold">Total</span>
                             <span className="text-h4 text-gradient-primary">
-                              {cycleParam === 'annual' ? fmtUsd(billedAnnualTotalCents) : fmtUsd(monthlyCents)}
+                              {fmtUsd(finalTotalCents)}
                             </span>
                           </div>
                           <p className="mt-2 text-caption text-muted-foreground">Final price shown at checkout.</p>
@@ -320,14 +401,7 @@ const CheckoutPage: NextPage = () => {
                         <Button
                           variant="secondary"
                           onClick={() => {
-                            const nextQuery: Record<string, string | string[]> = { ...router.query };
-                            delete nextQuery.plan;
-                            delete nextQuery.billingCycle;
-                            if (activeCode) {
-                              nextQuery.code = activeCode;
-                            } else {
-                              delete nextQuery.code;
-                            }
+                            const nextQuery = buildQuery({ plan: null });
                             void router.push({ pathname: '/checkout', query: nextQuery });
                           }}
                           className="w-full"
@@ -362,6 +436,11 @@ const CheckoutPage: NextPage = () => {
                   <Link href="/account/referrals" className="underline-offset-4 hover:underline flex items-center gap-1">
                     <i className="fas fa-ticket-alt text-caption" aria-hidden="true"></i>
                     Don&apos;t have a code? Generate yours
+                  </Link>
+                  <span>•</span>
+                  <Link href="/promotions" className="underline-offset-4 hover:underline flex items-center gap-1">
+                    <i className="fas fa-gift text-caption" aria-hidden="true"></i>
+                    View active promo codes
                   </Link>
                   <span>•</span>
                   <Link href="/partners" className="underline-offset-4 hover:underline flex items-center gap-1">
