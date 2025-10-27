@@ -273,6 +273,7 @@ export default function FullTestPage() {
         title={sectionTitle}
         seconds={sectionData.duration}
         onElapsed={mode === 'simulation' ? () => testRef.current?.submit() : undefined}
+        focusMode={{ active: stage === 'exam' && mode === 'simulation' }}
       >
         <div className="space-y-4">
           <Card className="rounded-ds-2xl border border-dashed border-border/60 bg-card/40 p-4 text-sm text-muted-foreground">
