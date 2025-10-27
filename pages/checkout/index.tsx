@@ -14,7 +14,7 @@ import { Badge } from '@/components/design-system/Badge';
 // Other components
 import PlanPicker, { type PlanPickerProps } from '@/components/payments/PlanPicker';
 import CheckoutForm from '@/components/payments/CheckoutForm';
-import RedeemBox from '@/components/referrals/RedeemBox';
+import RedeemBox, { type RedeemSuccessPayload } from '@/components/referrals/RedeemBox';
 import SocialProofStrip from '@/components/marketing/SocialProofStrip';
 import {
   PLAN_LABEL,
@@ -71,13 +71,48 @@ const CheckoutPage: NextPage = () => {
   const plan = (hasPlan ? (planParam as PlanKey) : undefined);
   const selectedPlanData = plan ? PLANS[plan] : undefined;
 
+  const [activeCode, setActiveCode] = React.useState<string | undefined>(codeParam);
+
+  React.useEffect(() => {
+    setActiveCode(codeParam);
+  }, [codeParam]);
+
+  const updateQuery = React.useCallback(
+    (nextCode?: string) => {
+      const nextQuery: Record<string, string | string[]> = { ...router.query };
+      if (plan) {
+        nextQuery.plan = plan;
+      } else {
+        delete nextQuery.plan;
+      }
+      nextQuery.billingCycle = cycleParam;
+      if (nextCode) {
+        nextQuery.code = nextCode;
+      } else {
+        delete nextQuery.code;
+      }
+      void router.replace({ pathname: '/checkout', query: nextQuery }, undefined, { shallow: true });
+    },
+    [router, router.query, plan, cycleParam],
+  );
+
   const handleSelect: NonNullable<PlanPickerProps['onSelect']> = (p, c) => {
-    const qs = new URLSearchParams();
-    qs.set('plan', p);
-    qs.set('billingCycle', c);
-    if (codeParam) qs.set('code', codeParam);
-    void router.push(`/checkout?${qs.toString()}`);
+    const nextQuery: Record<string, string | string[]> = { ...router.query, plan: p, billingCycle: c };
+    if (activeCode) {
+      nextQuery.code = activeCode;
+    } else {
+      delete nextQuery.code;
+    }
+    void router.push({ pathname: '/checkout', query: nextQuery });
   };
+
+  const handleRedeemSuccess = React.useCallback(
+    ({ code }: RedeemSuccessPayload) => {
+      setActiveCode(code);
+      updateQuery(code);
+    },
+    [updateQuery],
+  );
 
   const monthlyCents = selectedPlanData
     ? cycleParam === 'monthly'
@@ -190,7 +225,7 @@ const CheckoutPage: NextPage = () => {
                           <CheckoutForm
                             plan={plan}
                             billingCycle={cycleParam}
-                            referralCode={codeParam}
+                            referralCode={activeCode}
                             className=""
                           />
                         </div>
@@ -198,7 +233,7 @@ const CheckoutPage: NextPage = () => {
                     </Card>
 
                     <div className="mt-6">
-                      <RedeemBox />
+                      <RedeemBox onSuccess={handleRedeemSuccess} initialCode={activeCode} />
                     </div>
                   </div>
 
@@ -250,10 +285,10 @@ const CheckoutPage: NextPage = () => {
                           </>
                         )}
 
-                        {codeParam && (
+                        {activeCode && (
                           <div className="flex justify-between items-center py-2 border-y border-border/30">
                             <span>Referral code applied</span>
-                            <span className="font-mono text-caption bg-muted px-2 py-1 rounded-ds">{codeParam}</span>
+                            <span className="font-mono text-caption bg-muted px-2 py-1 rounded-ds">{activeCode}</span>
                           </div>
                         )}
 
@@ -285,9 +320,15 @@ const CheckoutPage: NextPage = () => {
                         <Button
                           variant="secondary"
                           onClick={() => {
-                            const qs = new URLSearchParams();
-                            if (codeParam) qs.set('code', codeParam);
-                            void router.push(`/checkout?${qs.toString()}`);
+                            const nextQuery: Record<string, string | string[]> = { ...router.query };
+                            delete nextQuery.plan;
+                            delete nextQuery.billingCycle;
+                            if (activeCode) {
+                              nextQuery.code = activeCode;
+                            } else {
+                              delete nextQuery.code;
+                            }
+                            void router.push({ pathname: '/checkout', query: nextQuery });
                           }}
                           className="w-full"
                         >
