@@ -16,6 +16,8 @@ type MistakeRow = {
   resolved_at?: string | null;
 };
 
+type MistakeTag = { key: string; value: string };
+
 type MistakePayload = {
   id: string;
   prompt: string;
@@ -27,6 +29,7 @@ type MistakePayload = {
   createdAt: string;
   lastSeenAt: string;
   resolvedAt: string | null;
+  tags: MistakeTag[];
 };
 
 const FALLBACK_CODES = new Set(['42P01', '42703']);
@@ -100,7 +103,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const hasMore = rows.length > limit;
     const trimmed = hasMore ? rows.slice(0, limit) : rows;
-    const items = trimmed.map(mapRow);
+    const items = trimmed.map(mapRow).filter((item): item is MistakePayload => item !== null);
     const nextCursor = hasMore ? trimmed[trimmed.length - 1]?.created_at ?? null : null;
 
     return res.status(200).json({ items, nextCursor });
@@ -208,6 +211,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 function mapRow(row: MistakeRow | null | undefined): MistakePayload | null {
   if (!row) return null;
+  const { retryPath, tags } = parseRetryPath(row.retry_path ?? null);
   return {
     id: row.id,
     prompt: row.mistake,
@@ -215,9 +219,52 @@ function mapRow(row: MistakeRow | null | undefined): MistakePayload | null {
     skill: row.type ?? 'general',
     repetitions: row.repetitions ?? 0,
     nextReview: row.next_review ?? null,
-    retryPath: row.retry_path ?? null,
+    retryPath,
     createdAt: row.created_at,
     lastSeenAt: row.last_seen_at ?? row.created_at,
     resolvedAt: row.resolved_at ?? null,
+    tags,
   };
+}
+
+function parseRetryPath(raw: string | null): { retryPath: string | null; tags: MistakeTag[] } {
+  if (!raw) return { retryPath: null, tags: [] };
+
+  try {
+    const url = new URL(raw, raw.startsWith('http') ? raw : `https://mistakes.local${raw.startsWith('/') ? '' : '/'}${raw}`);
+    const cleanParams = new URLSearchParams();
+    const tags: MistakeTag[] = [];
+
+    url.searchParams.forEach((value, key) => {
+      if (key.toLowerCase() === 'tag') {
+        const parsed = decodeTag(value);
+        if (parsed) tags.push(parsed);
+      } else {
+        cleanParams.append(key, value);
+      }
+    });
+
+    const search = cleanParams.toString();
+    const retryPath = `${url.pathname}${search ? `?${search}` : ''}${url.hash}`;
+    return { retryPath, tags };
+  } catch {
+    return { retryPath: raw, tags: [] };
+  }
+}
+
+function decodeTag(input: string): MistakeTag | null {
+  if (!input) return null;
+  const [rawKey, ...rest] = input.split(':');
+  const value = rest.join(':').trim();
+  if (!value) return null;
+  const key = prettifyTagKey(rawKey || 'Tag');
+  return { key, value };
+}
+
+function prettifyTagKey(raw: string): string {
+  return raw
+    .split(/[\s_\-|]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }

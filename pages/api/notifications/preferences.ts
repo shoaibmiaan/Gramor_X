@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { buildWhatsAppTaskMessage, dispatchWhatsAppTask } from '@/lib/tasks/whatsapp';
 import {
   NotificationPreferencesSchema,
   UpdateNotificationPreferencesSchema,
@@ -215,11 +216,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const shouldSendTest = Boolean(body.sendTest && nextOptIn.wa_opt_in);
       if (shouldSendTest) {
-        const { error: fnError } = await supabase.functions.invoke('whatsapp-tasks', {
-          body: { userId: user.id, type: 'test' },
+        const response = await dispatchWhatsAppTask(supabase, {
+          userId: user.id,
+          type: 'test',
+          message: buildWhatsAppTaskMessage('testPing'),
+          metadata: {
+            source: 'api/notifications/preferences',
+            trigger: 'sendTest',
+          },
         });
-        if (fnError) {
-          throw fnError;
+
+        if (response.error) {
+          const errMessage =
+            response.error instanceof Error
+              ? response.error.message
+              : typeof response.error === 'string'
+              ? response.error
+              : 'Failed to send WhatsApp test message';
+          throw new Error(errMessage);
         }
       }
 
