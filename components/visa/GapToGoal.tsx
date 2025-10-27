@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import type { Profile } from '@/types/profile';
 
@@ -47,21 +49,35 @@ export const GapToGoal: React.FC = () => {
   const gap = target.target_band - (currentBand ?? 0);
 
   return (
-    <Card className="p-6 rounded-ds-2xl">
-      <h3 className="font-slab text-h3 mb-2">Visa Target</h3>
-      <p className="text-body">
-        {target.institution}: band {target.target_band}
-      </p>
-      {currentBand !== null && (
-        <p className="mt-2 text-body">
-          Gap to goal: {gap <= 0 ? 'achieved' : gap.toFixed(1)}
+    <Card className="space-y-4 rounded-ds-2xl p-6">
+      <div>
+        <h3 className="font-slab text-h3">Visa Target</h3>
+        <p className="text-body mt-1">
+          {target.institution}: band {target.target_band}
         </p>
-      )}
-      {target.deadline && (
-        <p className="mt-1 text-small opacity-80">
-          Deadline: {new Date(target.deadline).toLocaleDateString()}
-        </p>
-      )}
+        {currentBand !== null && (
+          <p className="mt-2 text-body">
+            Gap to goal: {gap <= 0 ? 'achieved' : gap.toFixed(1)}
+          </p>
+        )}
+        {target.deadline && (
+          <p className="mt-1 text-small opacity-80">
+            Deadline: {new Date(target.deadline).toLocaleDateString()}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Link href="/reports" className="inline-flex">
+          <Button variant="soft" tone="info" size="sm" className="rounded-ds-xl">
+            Review latest scores
+          </Button>
+        </Link>
+        <Link href="/visa" className="inline-flex">
+          <Button variant="ghost" size="sm" className="rounded-ds-xl">
+            Update requirement
+          </Button>
+        </Link>
+      </div>
     </Card>
   );
 };
