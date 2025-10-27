@@ -21,16 +21,6 @@ export type ListeningPaper = {
   sections: ListeningSection[];
 };
 
-import practice01 from './listening-practice-01.json';
-import practice02 from './listening-practice-02.json';
-import practice03 from './listening-practice-03.json';
-import practice04 from './listening-practice-04.json';
-import practice05 from './listening-practice-05.json';
-
-const listeningPracticeJson = [practice01, practice02, practice03, practice04, practice05] satisfies ListeningPaper[];
-
-export const listeningPracticePapers: ListeningPaper[] = listeningPracticeJson;
-
 export type ListeningPracticeMeta = {
   id: string;
   title: string;
@@ -39,10 +29,18 @@ export type ListeningPracticeMeta = {
   totalQuestions: number;
 };
 
-export const listeningPracticeList: ListeningPracticeMeta[] = listeningPracticePapers.map((paper) => ({
-  id: paper.id,
-  title: paper.title,
-  durationSec: paper.durationSec,
-  sections: paper.sections.length,
-  totalQuestions: paper.sections.reduce((sum, section) => sum + section.questions.length, 0),
-}));
+export const buildListeningPracticeMeta = (paper: ListeningPaper): ListeningPracticeMeta => {
+  const sectionList = Array.isArray(paper.sections) ? paper.sections : [];
+  const questionTotal = sectionList.reduce(
+    (sum, section) => sum + (Array.isArray(section.questions) ? section.questions.length : 0),
+    0
+  );
+
+  return {
+    id: paper.id,
+    title: paper.title,
+    durationSec: paper.durationSec,
+    sections: sectionList.length,
+    totalQuestions: questionTotal,
+  };
+};
