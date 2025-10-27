@@ -62,9 +62,11 @@ export interface WordDetailResponse {
   item: WordDetail;
 }
 
-export type VocabularyTrendMomentum = 'rising' | 'steady' | 'new';
+export type VocabularyMomentum = 'rising' | 'steady' | 'new';
 
-export type VocabularyCategoryMomentum = 'surging' | 'steady' | 'emerging';
+export interface VocabularyTrendingWord extends WordSummary {
+  momentum: VocabularyMomentum;
+}
 
 export interface VocabularyHighlightWord extends WordSummary {
   example?: string | null;
@@ -72,19 +74,15 @@ export interface VocabularyHighlightWord extends WordSummary {
   frequencyBand?: string | null;
 }
 
-export interface VocabularyTrendingWord extends WordSummary {
-  momentum: VocabularyTrendMomentum;
-}
-
-export interface VocabularyHighlightCategory {
+export interface VocabularyTopCategory {
   name: string;
-  momentum: VocabularyCategoryMomentum;
+  count: number;
 }
 
 export interface VocabularyHighlights {
   wordOfTheDay: VocabularyHighlightWord;
   trendingWords: VocabularyTrendingWord[];
-  topCategories: VocabularyHighlightCategory[];
+  topCategories: VocabularyTopCategory[];
   recommendedDailyGoal: number;
   studyTip: string;
   totalWords: number;
@@ -92,5 +90,5 @@ export interface VocabularyHighlights {
 }
 
 export interface VocabularyHighlightsResponse {
-  highlights: VocabularyHighlights | null;
+  highlights: VocabularyHighlights;
 }

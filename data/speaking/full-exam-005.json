@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-005",
+  "title": "IELTS Speaking Full Mock Exam 005",
+  "part1": [
+    "What is your daily routine like on weekdays?",
+    "Do you consider yourself a morning person or a night owl?",
+    "How do you usually plan your day?",
+    "What do you do to stay productive when you feel tired?",
+    "Do you enjoy having a busy schedule?",
+    "How do you balance work and relaxation?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a time when you had to organise a complicated task.",
+      "You should say:",
+      "• what the task was",
+      "• why it was complicated",
+      "• how you went about organising it",
+      "and explain what you learned from the experience."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "What skills are necessary to manage multiple tasks effectively?",
+    "Do you think people today are busier than in the past?",
+    "How can employers help staff manage their workload?",
+    "Do you believe work-life balance will improve in the future?"
+  ]
+}
