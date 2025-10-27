@@ -2,7 +2,7 @@ import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
-import { listeningPracticeList } from '@/data/listening';
+import { listeningPracticeList } from '@/data/listening/index';
 import { mockSections } from '@/data/mockTests';
 
 const formatMinutes = (seconds: number) => `${Math.round(seconds / 60)} mins`;
