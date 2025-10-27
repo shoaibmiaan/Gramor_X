@@ -1,15 +1,13 @@
 import words from '@/data/generated/words-phase2.json';
 
 import type {
-  VocabularyCategoryMomentum,
-  VocabularyHighlightWord,
-  VocabularyHighlights,
-  VocabularyMomentum,
-  VocabularyTopCategory,
-  VocabularyTrendingWord,
   WordDetail,
   WordSense,
   WordSummary,
+  VocabularyHighlightWord,
+  VocabularyHighlights,
+  VocabularyTopCategory,
+  VocabularyTrendingWord,
 } from '@/types/vocabulary';
 
 interface RawWord {
@@ -176,6 +174,66 @@ const toSummary = (word: WordDetail): WordSummary => ({
   shortDefinition: word.shortDefinition ?? null,
 });
 
+const firstExample = (word: WordDetail): string | null => {
+  for (const sense of word.senses) {
+    const examples = toArray(sense.examples);
+    if (examples.length > 0) {
+      return examples[0];
+    }
+  }
+  return null;
+};
+
+const buildLearningHookForWord = (word: WordDetail): string => {
+  const category = word.categories[0] ?? 'IELTS topics';
+  const lowerCategory = category.toLowerCase();
+  switch (word.partOfSpeech.toLowerCase()) {
+    case 'verb':
+      return `Use it in Task 2 responses about ${lowerCategory} to show precise action.`;
+    case 'adjective':
+      return `Blend it into Task 1 comparisons to add colour to ${lowerCategory} charts.`;
+    case 'adverb':
+      return `Drop it into speaking answers to boost fluency when describing ${lowerCategory}.`;
+    case 'noun':
+      return `Use it when outlining ${lowerCategory} ideas to sound exam-ready.`;
+    default:
+      return `Bring it into your next ${lowerCategory} answer for extra range.`;
+  }
+};
+
+const computeCategoryHighlights = (): VocabularyTopCategory[] => {
+  const counts = new Map<string, number>();
+  SORTED_WORDS.forEach((word) => {
+    word.categories.forEach((category) => {
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    });
+  });
+
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+};
+
+const computeRecommendedDailyGoal = (totalWords: number, uniqueCategories: number): number => {
+  if (totalWords <= 0) {
+    return 5;
+  }
+
+  const base = Math.max(6, Math.round(totalWords / 90));
+  const categoryBoost = Math.min(4, Math.round(uniqueCategories / 2));
+  return Math.min(18, base + categoryBoost);
+};
+
+const dayOfYearIndex = (totalWords: number): number => {
+  if (totalWords <= 0) return 0;
+  const now = new Date();
+  const start = Date.UTC(now.getUTCFullYear(), 0, 0);
+  const diff = now.getTime() - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  const day = Math.floor(diff / oneDay);
+  return Math.abs(day) % totalWords;
+};
+
 interface QueryOptions {
   cursor?: string | null;
   limit?: number;
@@ -287,174 +345,86 @@ export const getWordDetail = (slug: string): WordDetail | null => {
 
 export const listAllSummaries = (): WordSummary[] => SORTED_WORDS.map(toSummary);
 
-const TREND_MOMENTUM_SEQUENCE: VocabularyMomentum[] = ['rising', 'steady', 'new'];
-const CATEGORY_MOMENTUM_SEQUENCE: VocabularyCategoryMomentum[] = ['surging', 'steady', 'emerging'];
-const DAILY_GOAL_OPTIONS = [6, 8, 10, 12, 14];
-const STUDY_TIPS: string[] = [
-  'Review yesterday’s words before introducing two fresh terms to strengthen memory.',
-  'Record yourself using new vocabulary in a 60-second voice note to audit pronunciation.',
-  'Pair every new word with a personal IELTS scenario so it sticks for Speaking Part 2.',
-  'Mix one high-frequency academic word into each Writing Task 1 summary you draft.',
-  'Build a spaced-review stack: revisit today’s word at 1, 3, and 7-day intervals.',
-];
+const buildFallbackHighlights = (): VocabularyHighlights => {
+  const fallbackWord: VocabularyHighlightWord = {
+    id: 'vocab-placeholder',
+    slug: 'start-here',
+    headword: 'Lexicon',
+    partOfSpeech: 'noun',
+    level: null,
+    categories: ['Academic'],
+    frequencyScore: null,
+    shortDefinition: 'Add words to unlock personalised highlights.',
+    example: 'Consistent vocabulary review builds IELTS confidence.',
+    learningHook: 'Bookmark new vocabulary to start receiving tailored study prompts.',
+    frequencyBand: null,
+  };
 
-const CATEGORY_LEARNING_HOOKS: Record<string, string> = {
-  Business: 'Use this when analysing company strategy or workplace culture in Writing Task 2.',
-  Technology: 'Drop it into Speaking Part 3 answers about innovation and digital trends.',
-  Travel: 'Perfect for describing destinations and experiences in Speaking Part 2 stories.',
-  'Daily Life': 'Work this into everyday scenarios to sound natural during the interview.',
-  Academic: 'Blend it into Task 1 data descriptions to boost lexical sophistication.',
-  Mindset: 'Great for reflecting on study habits and resilience during progress reviews.',
-  Communication: 'Use it to discuss collaboration and feedback loops in Speaking Part 3.',
-  Motivation: 'Tie it to your learning rituals when journaling mock-test reflections.',
-};
-
-const PART_OF_SPEECH_HOOKS: Record<string, string> = {
-  verb: 'Conjugate it in past, present, and future tenses for mock Speaking drills.',
-  adjective: 'Pair it with IELTS Writing Task 2 examples to make arguments vivid.',
-  noun: 'Use it to anchor Task 1 summaries with precise subject vocabulary.',
-  adverb: 'Practice positioning it before key verbs in sample essays for emphasis.',
-};
-
-const DAILY_SEED_MOD = 2 ** 32;
-
-const createDailySeed = (date = new Date()): number => {
-  const iso = Number.parseInt(date.toISOString().slice(0, 10).replace(/-/g, ''), 10);
-  return Number.isFinite(iso) && iso > 0 ? iso : Math.floor(Date.now() % DAILY_SEED_MOD);
-};
-
-const createRng = (seed: number) => {
-  let state = (seed >>> 0) || 1;
-  return () => {
-    state = (1664525 * state + 1013904223) % DAILY_SEED_MOD;
-    return state / DAILY_SEED_MOD;
+  return {
+    wordOfTheDay: fallbackWord,
+    trendingWords: [],
+    topCategories: [],
+    recommendedDailyGoal: 5,
+    studyTip: 'Save a few words to start receiving personalised recommendations.',
+    totalWords: 0,
+    uniqueCategories: 0,
   };
 };
 
-const pickOne = <T>(items: readonly T[], rng: () => number): T => {
-  if (items.length === 0) {
-    throw new Error('Cannot pick from an empty collection');
-  }
-  const index = Math.floor(rng() * items.length);
-  return items[index] ?? items[0];
-};
-
-const pickManyUnique = <T>(items: readonly T[], count: number, rng: () => number): T[] => {
-  if (count <= 0) return [];
-  if (items.length <= count) return [...items];
-
-  const pool = [...items];
-  const result: T[] = [];
-  while (pool.length > 0 && result.length < count) {
-    const index = Math.floor(rng() * pool.length);
-    const [item] = pool.splice(index, 1);
-    if (item !== undefined) {
-      result.push(item);
-    }
-  }
-  return result;
-};
-
-const resolveExample = (word: WordDetail): string | null => {
-  for (const sense of word.senses) {
-    const [first] = toArray(sense.examples);
-    if (first) {
-      return first;
-    }
-  }
-  return null;
-};
-
-const deriveLearningHook = (word: WordDetail): string => {
-  for (const category of word.categories) {
-    const hook = CATEGORY_LEARNING_HOOKS[category];
-    if (hook) {
-      return hook;
-    }
-  }
-
-  const pos = (word.partOfSpeech ?? '').toLowerCase();
-  if (pos && PART_OF_SPEECH_HOOKS[pos]) {
-    return PART_OF_SPEECH_HOOKS[pos];
-  }
-
-  return `Work “${word.headword}” into your next IELTS response to reinforce it.`;
-};
-
-const FALLBACK_HIGHLIGHTS: VocabularyHighlights = {
-  wordOfTheDay: {
-    id: 'fallback-persevere',
-    slug: 'persevere',
-    headword: 'Persevere',
-    partOfSpeech: 'verb',
-    categories: ['Mindset'],
-    frequencyScore: null,
-    shortDefinition: 'Continue studying even when practice tests feel challenging.',
-    example: 'Persevere through timed drills to build exam-day confidence.',
-    learningHook: 'Use this motivational verb when reflecting on study habits in Speaking Part 3.',
-    frequencyBand: null,
-  },
-  trendingWords: [],
-  topCategories: [],
-  recommendedDailyGoal: 10,
-  studyTip: 'Blend revision of known words with one fresh addition to keep momentum.',
-  totalWords: 0,
-  uniqueCategories: 0,
-};
-
-export const getVocabularyHighlights = (date = new Date()): VocabularyHighlights => {
+export const getVocabularyHighlights = (): VocabularyHighlights => {
   if (SORTED_WORDS.length === 0) {
-    return FALLBACK_HIGHLIGHTS;
+    return buildFallbackHighlights();
   }
 
-  const seed = createDailySeed(date);
-  const rng = createRng(seed);
+  const totalWords = SORTED_WORDS.length;
+  const categories = computeCategoryHighlights();
+  const uniqueCategories = categories.length;
+  const recommendedDailyGoal = computeRecommendedDailyGoal(totalWords, uniqueCategories);
+  const focusCategory = categories[0]?.name ?? 'IELTS topics';
+  const secondaryCategory = categories[1]?.name ?? categories[0]?.name ?? 'Academic';
 
-  const categoryCounts = new Map<string, number>();
-  SORTED_WORDS.forEach((word) => {
-    word.categories.forEach((category) => {
-      const key = category.trim() || 'Academic';
-      categoryCounts.set(key, (categoryCounts.get(key) ?? 0) + 1);
-    });
-  });
-
-  const highlightIndex = Math.floor(rng() * SORTED_WORDS.length);
-  const highlightWord = SORTED_WORDS[highlightIndex] ?? SORTED_WORDS[0];
+  const highlightIndex = dayOfYearIndex(totalWords);
+  const highlightWord = SORTED_WORDS[highlightIndex];
 
   const wordOfTheDay: VocabularyHighlightWord = {
-    ...toSummary(highlightWord),
-    example: resolveExample(highlightWord),
-    learningHook: deriveLearningHook(highlightWord),
+    id: highlightWord.id,
+    slug: highlightWord.slug,
+    headword: highlightWord.headword,
+    partOfSpeech: highlightWord.partOfSpeech,
+    level: highlightWord.level ?? null,
+    categories: [...highlightWord.categories],
+    frequencyScore: highlightWord.frequencyScore ?? null,
+    shortDefinition: highlightWord.shortDefinition ?? null,
+    example: firstExample(highlightWord),
+    learningHook: buildLearningHookForWord(highlightWord),
     frequencyBand: highlightWord.frequencyBand ?? null,
   };
 
-  const remainingWords = SORTED_WORDS.filter((word) => word.slug !== highlightWord.slug);
-  const trendingSelection = pickManyUnique(remainingWords, 3, rng);
+  const trendingCandidates = [...SORTED_WORDS]
+    .sort((a, b) => (b.frequencyScore ?? 0) - (a.frequencyScore ?? 0))
+    .slice(0, 6);
 
-  const trendingWords: VocabularyTrendingWord[] = trendingSelection.map((word, index) => ({
-    ...toSummary(word),
-    momentum: TREND_MOMENTUM_SEQUENCE[index % TREND_MOMENTUM_SEQUENCE.length],
+  const trendingWords: VocabularyTrendingWord[] = trendingCandidates.map((word, index) => ({
+    id: word.id,
+    slug: word.slug,
+    headword: word.headword,
+    partOfSpeech: word.partOfSpeech,
+    level: word.level ?? null,
+    categories: [...word.categories],
+    frequencyScore: word.frequencyScore ?? null,
+    shortDefinition: word.shortDefinition ?? null,
+    momentum: index === 0 ? 'rising' : index <= 2 ? 'steady' : 'new',
   }));
 
-  const topCategories: VocabularyTopCategory[] = Array.from(categoryCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([name, count], index) => ({
-      name,
-      count,
-      momentum: CATEGORY_MOMENTUM_SEQUENCE[index % CATEGORY_MOMENTUM_SEQUENCE.length],
-    }));
-
-  const recommendedDailyGoal = pickOne(DAILY_GOAL_OPTIONS, rng);
-  const studyTip = pickOne(STUDY_TIPS, rng);
+  const studyTip = `Cover ${recommendedDailyGoal} words today – mix ${focusCategory.toLowerCase()} with ${secondaryCategory.toLowerCase()} items for balanced prep.`;
 
   return {
     wordOfTheDay,
     trendingWords,
-    topCategories,
+    topCategories: categories.slice(0, 3),
     recommendedDailyGoal,
     studyTip,
-    totalWords: SORTED_WORDS.length,
-    uniqueCategories: categoryCounts.size,
+    totalWords,
+    uniqueCategories,
   };
 };

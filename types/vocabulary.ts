@@ -64,7 +64,9 @@ export interface WordDetailResponse {
 
 export type VocabularyMomentum = 'rising' | 'steady' | 'new';
 
-export type VocabularyCategoryMomentum = 'surging' | 'steady' | 'emerging';
+export interface VocabularyTrendingWord extends WordSummary {
+  momentum: VocabularyMomentum;
+}
 
 export interface VocabularyHighlightWord extends WordSummary {
   example?: string | null;
@@ -72,14 +74,9 @@ export interface VocabularyHighlightWord extends WordSummary {
   frequencyBand?: string | null;
 }
 
-export interface VocabularyTrendingWord extends WordSummary {
-  momentum: VocabularyMomentum;
-}
-
 export interface VocabularyTopCategory {
   name: string;
   count: number;
-  momentum?: VocabularyCategoryMomentum;
 }
 
 export interface VocabularyHighlights {
