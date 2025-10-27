@@ -3,6 +3,7 @@ import practice02 from './listening-practice-02.json';
 import practice03 from './listening-practice-03.json';
 import practice04 from './listening-practice-04.json';
 import practice05 from './listening-practice-05.json';
+
 import fullExam001 from './full-exam-001.json';
 import fullExam002 from './full-exam-002.json';
 import fullExam003 from './full-exam-003.json';
@@ -38,16 +39,6 @@ export type ListeningPaper = {
   sections: ListeningSection[];
 };
 
-import practice01 from './listening-practice-01.json';
-import practice02 from './listening-practice-02.json';
-import practice03 from './listening-practice-03.json';
-import practice04 from './listening-practice-04.json';
-import practice05 from './listening-practice-05.json';
-
-const listeningPracticeJson = [practice01, practice02, practice03, practice04, practice05] satisfies ListeningPaper[];
-
-export const listeningPracticePapers: ListeningPaper[] = listeningPracticeJson;
-
 export type ListeningPracticeMeta = {
   id: string;
   title: string;
@@ -72,12 +63,15 @@ export const buildListeningPracticeMeta = (paper: ListeningPaper): ListeningPrac
   };
 };
 
+const DEFAULT_DURATION_SEC = 40 * 60;
+
 const listeningPracticeJson = [
   practice01,
   practice02,
   practice03,
   practice04,
   practice05,
+  // Full mock exams
   fullExam001,
   fullExam002,
   fullExam003,
@@ -91,7 +85,13 @@ const listeningPracticeJson = [
   fullExam011,
 ] satisfies ListeningPaper[];
 
-export const listeningPracticePapers: ListeningPaper[] = listeningPracticeJson;
+export const listeningPracticePapers: ListeningPaper[] = listeningPracticeJson.map((paper) => ({
+  ...paper,
+  durationSec:
+    typeof paper.durationSec === 'number' && Number.isFinite(paper.durationSec)
+      ? paper.durationSec
+      : DEFAULT_DURATION_SEC,
+}));
 
 export const listeningPracticeList: ListeningPracticeMeta[] = listeningPracticePapers.map((paper) =>
   buildListeningPracticeMeta(paper),
