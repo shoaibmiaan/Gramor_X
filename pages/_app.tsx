@@ -47,7 +47,6 @@ import InstitutionsLayout from '@/components/layouts/InstitutionsLayout';
 import AuthLayout from '@/components/layouts/AuthLayout';
 import ReportsLayout from '@/components/layouts/ReportsLayout';
 import ProctoringLayout from '@/components/layouts/ProctoringLayout';
-import ExamLayout from '@/components/layouts/ExamLayout';
 
 import TeacherLayout from '@/components/layouts/TeacherLayout';
 import TeacherProfile from '@/components/teacher/TeacherProfile';
@@ -531,22 +530,13 @@ function InnerApp({ Component, pageProps }: AppProps) {
     else if (isLearningRoute) content = <LearningLayout>{basePage}</LearningLayout>;
     else if (isCommunityRoute) content = <CommunityLayout>{basePage}</CommunityLayout>;
     else if (isReportsRoute) content = <ReportsLayout>{basePage}</ReportsLayout>;
-    else if (isExamRoute) content = <ExamLayout>{basePage}</ExamLayout>;
     else if (isMarketingRoute) content = <PublicMarketingLayout>{basePage}</PublicMarketingLayout>;
   }
 
   const nakedContent = isAuthPage ? (
     <AuthLayout>{basePage}</AuthLayout>
   ) : isProctoringRoute ? (
-    pathname.startsWith('/proctoring/exam') ? (
-      <ProctoringLayout>
-        <ExamLayout>{basePage}</ExamLayout>
-      </ProctoringLayout>
-    ) : (
-      <ProctoringLayout>{basePage}</ProctoringLayout>
-    )
-  ) : isExamRoute ? (
-    <ExamLayout>{basePage}</ExamLayout>
+    <ProctoringLayout>{basePage}</ProctoringLayout>
   ) : (
     basePage
   );
