@@ -7,7 +7,7 @@ import {
   pickGuestWord,
   resolveUserId,
   type WordPayload,
-} from './shared';
+} from '@/lib/vocabulary/word-shared';
 
 export type LearnedWord = WordPayload & {
   learnedOn: string;

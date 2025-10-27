@@ -10,7 +10,7 @@ import {
   pickGuestWord,
   resolveUserId,
   type WordPayload,
-} from './shared';
+} from '@/lib/vocabulary/word-shared';
 
 type TodayOut = {
   word: WordPayload;
