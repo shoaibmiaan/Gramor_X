@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2340" viewBox="0 0 1080 2340" role="img" aria-labelledby="title desc">
+  <title id="title">Google Play screenshot — AI writing feedback</title>
+  <desc id="desc">Mobile screenshot of AI-powered writing evaluation.</desc>
+  <rect width="1080" height="2340" fill="#0B1120" />
+  <g transform="translate(96 120)">
+    <rect width="888" height="2100" rx="96" fill="#111827" stroke="#1F2937" stroke-width="5" />
+    <g transform="translate(120 220)" font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="0" y="0" font-size="46" fill="#A855F7" font-weight="600">Writing Task 2 feedback</text>
+      <text x="0" y="54" font-size="30" fill="#DDD6FE">Instant scoring with specific actions.</text>
+      <g transform="translate(0 120)">
+        <rect width="648" height="220" rx="28" fill="rgba(168,85,247,0.16)" />
+        <text x="48" y="90" font-size="26" fill="#F5F3FF">Band estimate 7.0</text>
+        <text x="48" y="140" font-size="22" fill="#EDE9FE">Task response 7 · Coherence 6 · Lexical resource 7 · Grammar 7</text>
+      </g>
+      <g transform="translate(0 380)">
+        <rect width="648" height="280" rx="28" fill="rgba(14,165,233,0.14)" />
+        <text x="48" y="90" font-size="26" fill="#E0F2FE">High-impact revision</text>
+        <text x="48" y="136" font-size="24" fill="#BAE6FD">Strengthen your thesis with a clear opinion statement in the introduction.</text>
+        <text x="48" y="186" font-size="24" fill="#BAE6FD">Use linking phrases to connect supporting points in paragraph two.</text>
+      </g>
+      <g transform="translate(0 700)">
+        <text x="0" y="0" font-size="34" fill="#C4B5FD" font-weight="600">Highlighted sentences</text>
+        <rect width="648" height="320" rx="28" fill="rgba(99,102,241,0.18)" />
+        <text x="48" y="120" font-size="24" fill="#F8FAFC">"Governments should increase investment in public transport because it reduces congestion and emissions."</text>
+        <text x="48" y="200" font-size="22" fill="#E0E7FF">Tip: Add a real-world example to strengthen the claim.</text>
+      </g>
+      <g transform="translate(0 1100)">
+        <rect width="648" height="180" rx="28" fill="rgba(34,211,238,0.16)" />
+        <text x="48" y="80" font-size="26" fill="#F8FAFC">Download annotated PDF</text>
+        <text x="48" y="126" font-size="22" fill="#CFFAFE">Share with your teacher or coach directly from GramorX.</text>
+      </g>
+    </g>
+  </g>
+</svg>

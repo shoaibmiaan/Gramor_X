@@ -4,6 +4,7 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import type { GetServerSideProps } from 'next';
 import type { HeroProps } from '@/components/sections/Hero';
+import type { VocabularySpotlightFeatureProps } from '@/components/feature/VocabularySpotlight';
 import type { HomeProps } from '@/types/home';
 import { createGuestHomeProps } from '@/lib/home';
 import { Icon } from '@/components/design-system/Icon';
@@ -25,6 +26,14 @@ const Hero = dynamic<HeroProps>(
 
 const Modules = dynamic(
   () => import('@/components/sections/Modules').then((m: any) => m.Modules ?? m.default),
+  { ssr: true, loading: () => <SectionSkeleton /> }
+);
+
+const VocabularyFeature = dynamic<VocabularySpotlightFeatureProps>(
+  () =>
+    import('@/components/feature/VocabularySpotlight').then(
+      (m: any) => m.VocabularySpotlightFeature ?? m.default
+    ),
   { ssr: true, loading: () => <SectionSkeleton /> }
 );
 
@@ -178,6 +187,14 @@ export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomeProps) {
               </span>
             </div>
           </Container>
+        </section>
+
+        <section
+          id="vocabulary-module"
+          aria-label="Vocabulary Module"
+          className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90"
+        >
+          <VocabularyFeature variant="guestSampler" />
         </section>
 
         <section

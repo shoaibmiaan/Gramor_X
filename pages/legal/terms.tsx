@@ -1,244 +1,298 @@
-// pages/legal/terms.tsx
-import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
+
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 
-const SECTIONS = [
-  { id: 'acceptance', title: 'Acceptance of Terms' },
-  { id: 'about-service', title: 'About the Service' },
-  { id: 'eligibility', title: 'Eligibility & Accounts' },
-  { id: 'security', title: 'Account Security' },
-  { id: 'acceptable-use', title: 'Acceptable Use' },
-  { id: 'user-content', title: 'User Content & License' },
-  { id: 'ai-features', title: 'AI Features & Limits' },
-  { id: 'fees-billing', title: 'Fees, Credits & Billing' },
-  { id: 'refunds', title: 'Cancellations & Refunds' },
-  { id: 'privacy', title: 'Privacy' },
-  { id: 'third-parties', title: 'Third-Party Services' },
-  { id: 'disclaimers', title: 'Disclaimers' },
-  { id: 'liability', title: 'Limitation of Liability' },
-  { id: 'indemnity', title: 'Indemnification' },
-  { id: 'termination', title: 'Termination' },
-  { id: 'law-disputes', title: 'Governing Law & Disputes' },
-  { id: 'changes', title: 'Changes to These Terms' },
-  { id: 'contact', title: 'Contact' },
-] as const;
+const EFFECTIVE_DATE = 'May 28, 2024';
+
+const SECTIONS: Array<{
+  id: string;
+  title: string;
+  content: ReactNode;
+}> = [
+  {
+    id: 'acceptance',
+    title: '1. Acceptance of Terms',
+    content: (
+      <p className="text-body text-muted-foreground">
+        By accessing or using GramorX you agree to these Terms, the Privacy Notice, and any policies referenced
+        here. If you are accepting on behalf of an organization, you represent that you have authority to bind
+        that organization. If you do not agree, you may not use the service.
+      </p>
+    ),
+  },
+  {
+    id: 'service',
+    title: '2. Service Overview',
+    content: (
+      <p className="text-body text-muted-foreground">
+        GramorX provides IELTS preparation tools, content, and analytics across web and mobile apps. We may
+        enhance, modify, or discontinue features with notice where practical. Certain capabilities may be offered
+        as beta or preview features and are provided as-is.
+      </p>
+    ),
+  },
+  {
+    id: 'eligibility',
+    title: '3. Eligibility &amp; Registration',
+    content: (
+      <ul className="list-disc space-y-2 pl-6 text-body text-muted-foreground">
+        <li>You must be at least 13 years old or the minimum age required in your jurisdiction.</li>
+        <li>Provide accurate registration details and keep them current.</li>
+        <li>Institutional or guardian-managed accounts must ensure appropriate consent is in place.</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'account-security',
+    title: '4. Account Security',
+    content: (
+      <p className="text-body text-muted-foreground">
+        You are responsible for safeguarding login credentials and for activities that occur under your account.
+        Notify us immediately at security@gramorx.com if you suspect unauthorized access. We may suspend accounts
+        to protect you, other users, or the platform.
+      </p>
+    ),
+  },
+  {
+    id: 'acceptable-use',
+    title: '5. Acceptable Use',
+    content: (
+      <>
+        <p className="text-body text-muted-foreground">
+          You agree not to misuse the service. Prohibited activities include:
+        </p>
+        <ul className="mt-3 list-disc space-y-2 pl-6 text-body text-muted-foreground">
+          <li>Cheating, plagiarism, or using GramorX to violate exam policies.</li>
+          <li>Reverse engineering, automated scraping, or attempts to access non-public areas.</li>
+          <li>Uploading unlawful, defamatory, or infringing content.</li>
+          <li>Harassing other users or interfering with platform security.</li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    id: 'user-content',
+    title: '6. User Content &amp; License',
+    content: (
+      <p className="text-body text-muted-foreground">
+        You retain ownership of content you upload. You grant GramorX a worldwide, non-exclusive license to host,
+        process, adapt, and display that content solely to operate, secure, and improve the service. You are
+        responsible for ensuring you have rights to the material you submit.
+      </p>
+    ),
+  },
+  {
+    id: 'ai-features',
+    title: '7. AI Guidance',
+    content: (
+      <p className="text-body text-muted-foreground">
+        AI-generated scores and recommendations are predictive guidance, not official IELTS scoring. You should
+        review suggestions critically and combine them with human instruction. We may use de-identified insights
+        derived from your usage to improve models while protecting your privacy.
+      </p>
+    ),
+  },
+  {
+    id: 'fees',
+    title: '8. Plans, Fees &amp; Billing',
+    content: (
+      <>
+        <p className="text-body text-muted-foreground">
+          Paid plans, credit packs, or institutional contracts may apply. You agree to pay listed prices and
+          applicable taxes. Unless stated otherwise, subscriptions renew automatically until cancelled.
+        </p>
+        <p className="mt-3 text-body text-muted-foreground">
+          If a payment fails we may suspend access to paid functionality. Billing support is available through the
+          in-product help desk or by contacting finance@gramorx.com.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'cancellations',
+    title: '9. Cancellations &amp; Refunds',
+    content: (
+      <p className="text-body text-muted-foreground">
+        You can cancel a subscription at any time to stop future charges. Refund eligibility follows local law and
+        any specific promises stated at purchase. Where refunds are not required, we may issue goodwill credits at
+        our discretion.
+      </p>
+    ),
+  },
+  {
+    id: 'privacy',
+    title: '10. Privacy',
+    content: (
+      <p className="text-body text-muted-foreground">
+        Our use of personal information is described in the{' '}
+        <Link href="/legal/privacy" className="underline">
+          Privacy Notice
+        </Link>
+        . We process data to deliver the service, meet legal obligations, and keep the platform secure.
+      </p>
+    ),
+  },
+  {
+    id: 'third-parties',
+    title: '11. Third-Party Services',
+    content: (
+      <p className="text-body text-muted-foreground">
+        Certain features rely on third-party providers (for example: authentication, file storage, payments,
+        communications). Their terms may apply when you interact with them. GramorX is not responsible for third
+        parties that it does not control.
+      </p>
+    ),
+  },
+  {
+    id: 'intellectual-property',
+    title: '12. Intellectual Property',
+    content: (
+      <p className="text-body text-muted-foreground">
+        The GramorX platform, trademarks, and content we supply are owned by GramorX or its licensors. Except as
+        permitted by these Terms, you may not copy, modify, or create derivative works from our materials without
+        prior written consent.
+      </p>
+    ),
+  },
+  {
+    id: 'disclaimers',
+    title: '13. Disclaimers',
+    content: (
+      <p className="text-body text-muted-foreground">
+        The service is provided &ldquo;as is&rdquo; without warranties of any kind, whether express, implied, or
+        statutory. We do not guarantee exam outcomes, uninterrupted availability, or error-free operation.
+      </p>
+    ),
+  },
+  {
+    id: 'liability',
+    title: '14. Limitation of Liability',
+    content: (
+      <p className="text-body text-muted-foreground">
+        To the fullest extent permitted by law, GramorX will not be liable for indirect, incidental, or
+        consequential damages, loss of profits, or data loss. Our aggregate liability for claims arising out of
+        these Terms will not exceed the fees paid by you in the three months preceding the claim.
+      </p>
+    ),
+  },
+  {
+    id: 'indemnity',
+    title: '15. Indemnification',
+    content: (
+      <p className="text-body text-muted-foreground">
+        You agree to indemnify and hold GramorX, its affiliates, and personnel harmless from claims, damages, or
+        expenses arising from your misuse of the service or violation of these Terms or applicable laws.
+      </p>
+    ),
+  },
+  {
+    id: 'termination',
+    title: '16. Suspension &amp; Termination',
+    content: (
+      <p className="text-body text-muted-foreground">
+        You may stop using the service at any time. We may suspend or terminate access for breach, non-payment,
+        unlawful activity, or risk to users. Sections that by their nature should survive termination (including
+        ownership, disclaimers, and limitations) will continue in effect.
+      </p>
+    ),
+  },
+  {
+    id: 'law',
+    title: '17. Governing Law &amp; Dispute Resolution',
+    content: (
+      <p className="text-body text-muted-foreground">
+        These Terms are governed by the laws of the State of Delaware, USA, without regard to conflict-of-law
+        principles. Disputes will be resolved exclusively in the state or federal courts located in Wilmington,
+        Delaware, unless your local law requires otherwise.
+      </p>
+    ),
+  },
+  {
+    id: 'changes',
+    title: '18. Changes to Terms',
+    content: (
+      <p className="text-body text-muted-foreground">
+        We may update these Terms when we launch new features or when legal requirements change. We will provide
+        notice of material updates through the product or by email. Continued use of the service after the notice
+        takes effect constitutes acceptance of the revised Terms.
+      </p>
+    ),
+  },
+  {
+    id: 'contact',
+    title: '19. Contact',
+    content: (
+      <>
+        <p className="text-body text-muted-foreground">
+          Questions about these Terms can be directed to legal@gramorx.com. Billing or account support is available
+          via the help desk.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href="/support?topic=billing">
+            <Button variant="primary" size="sm" className="rounded-ds">
+              Contact support
+            </Button>
+          </Link>
+          <a href="mailto:legal@gramorx.com" className="inline-block">
+            <Button variant="secondary" size="sm" className="rounded-ds">
+              legal@gramorx.com
+            </Button>
+          </a>
+        </div>
+      </>
+    ),
+  },
+];
 
 export default function TermsPage() {
   return (
     <>
       <Head>
-        <title>Terms of Service • IELTS Prep with AI — GramorX</title>
+        <title>Terms of Service • GramorX</title>
         <meta
           name="description"
-          content="GramorX Terms of Service. Clear, global, student-first terms for IELTS Prep with AI."
+          content="Review the Terms of Service that govern access to GramorX IELTS Prep with AI."
         />
       </Head>
 
-      <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+      <section className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <Container>
-          {/* Hero */}
-          <div className="mb-12">
-            <p className="uppercase tracking-wide text-caption text-grayish/80">Legal • Terms</p>
-            <h1 className="font-slab text-display text-gradient-primary">
-              Terms of Service — Learn Fast. Play Fair.
-            </h1>
-            <p className="text-body text-grayish max-w-2xl mt-3">
-              Welcome to <strong>IELTS Prep with AI</strong> by GramorX. These Terms govern your use of our
-              platform globally. By creating an account or using the service, you agree to them.
+          <header className="mb-12 space-y-4">
+            <p className="text-caption uppercase tracking-[0.18em] text-muted-foreground">Legal · Terms</p>
+            <h1 className="font-slab text-display text-gradient-primary">Terms of Service</h1>
+            <p className="max-w-2xl text-body text-muted-foreground">
+              These Terms set the rules for using GramorX. They describe your responsibilities, how subscriptions
+              and credits work, and what to expect from our AI-powered learning tools.
             </p>
-            <div className="mt-3 text-small text-grayish">Effective date: 25 Aug 2025</div>
+            <p className="text-small text-muted-foreground">Effective date: {EFFECTIVE_DATE}</p>
+          </header>
 
-            {/* Deep links */}
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/"><Button variant="primary" size="sm" className="rounded-ds">Home</Button></Link>
-              <Link href="/pricing"><Button variant="secondary" size="sm" className="rounded-ds">Pricing</Button></Link>
-              <Link href="/reading"><Button variant="secondary" size="sm" className="rounded-ds">Reading</Button></Link>
-              <Link href="/listening"><Button variant="secondary" size="sm" className="rounded-ds">Listening</Button></Link>
-              <Link href="/writing"><Button variant="secondary" size="sm" className="rounded-ds">Writing</Button></Link>
-              <Link href="/speaking"><Button variant="secondary" size="sm" className="rounded-ds">Speaking</Button></Link>
-              <Link href="/ai?sidebar=1"><Button variant="accent" size="sm" className="rounded-ds">Open AI Sidebar</Button></Link>
-              <Link href="/support"><Button variant="secondary" size="sm" className="rounded-ds">Support</Button></Link>
-            </div>
-          </div>
-
-          {/* TOC */}
-          <Card className="p-6 rounded-ds-2xl mb-10">
-            <h2 className="font-slab text-h3 mb-4">Jump to a section</h2>
-            <nav className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {SECTIONS.map((s) => (
+          <Card className="mb-10 rounded-ds-2xl p-6">
+            <h2 className="font-slab text-h4">Contents</h2>
+            <nav className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {SECTIONS.map((section) => (
                 <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  className="block p-3.5 rounded-ds border border-lightBorder dark:border-white/10 hover:bg-purpleVibe/10 dark:hover:bg-white/5 transition-colors"
+                  key={section.id}
+                  href={`#${section.id}`}
+                  className="rounded-ds border border-lightBorder p-3 text-small transition-colors hover:bg-purpleVibe/10 dark:border-white/10 dark:hover:bg-white/5"
                 >
-                  {s.title}
+                  {section.title}
                 </a>
               ))}
             </nav>
           </Card>
 
-          {/* Sections */}
           <div className="space-y-8">
-            <Card id="acceptance" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">1) Acceptance of Terms</h2>
-              <p className="text-body">
-                By accessing or using GramorX, you agree to these Terms and to any policies referenced here (including our{' '}
-                <Link href="/privacy-policy" className="underline">Privacy Policy</Link>). If you don’t agree, do not use the Service.
-              </p>
-            </Card>
-
-            <Card id="about-service" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">2) About the Service</h2>
-              <p className="text-body">
-                GramorX provides IELTS preparation tools across Listening, Reading, Writing, and Speaking, including AI evaluation,
-                analytics, and practice modules. We may improve, add, or remove features over time.
-              </p>
-            </Card>
-
-            <Card id="eligibility" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">3) Eligibility & Accounts</h2>
-              <p className="text-body">
-                You must be at least 13 years old (or the minimum age in your region) to use the Service. Provide accurate
-                information and keep it updated. You are responsible for activities under your account.
-              </p>
-            </Card>
-
-            <Card id="security" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">4) Account Security</h2>
-              <p className="text-body">
-                Keep your credentials confidential. Notify us immediately of any unauthorized use. We may suspend accounts to
-                protect you and the community.
-              </p>
-            </Card>
-
-            <Card id="acceptable-use" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">5) Acceptable Use</h2>
-              <p className="text-body">
-                Don’t misuse the Service. Prohibited activities include cheating, automating unfair attempts, scraping, reverse
-                engineering, unauthorized sharing of content, harassment, or violating any applicable laws.
-              </p>
-            </Card>
-
-            <Card id="user-content" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">6) User Content & License</h2>
-              <p className="text-body">
-                You retain ownership of essays, recordings, and other materials you submit. You grant GramorX a worldwide,
-                non-exclusive license to host, process, and display your content solely to operate and improve the Service,
-                including generating feedback and analytics.
-              </p>
-            </Card>
-
-            <Card id="ai-features" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">7) AI Features & Limits</h2>
-              <p className="text-body">
-                AI outputs (scores, explanations, suggestions) are generated predictions and may not be error-free. Use your
-                judgment and treat AI feedback as guidance, not official scores. We may use de-identified aggregates to improve models.
-              </p>
-            </Card>
-
-            <Card id="fees-billing" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">8) Fees, Credits & Billing</h2>
-              <p className="text-body">
-                Paid plans and credits enable premium features and AI evaluations. Prices, taxes, and limits may vary by region.
-                If a payment fails, access to paid features may pause until resolved. We’ll show prices clearly before you buy.
-              </p>
-            </Card>
-
-            <Card id="refunds" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">9) Cancellations & Refunds</h2>
-              <p className="text-body">
-                Cancel anytime to stop future charges. Unless required by law or stated otherwise in writing, fees and consumed credits
-                are non-refundable. We may provide good-faith credits for service issues at our discretion.
-              </p>
-            </Card>
-
-            <Card id="privacy" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">10) Privacy</h2>
-              <p className="text-body">
-                We respect your privacy. See our <Link href="/privacy-policy" className="underline">Privacy Policy</Link> for how
-                we collect, use, and protect information.
-              </p>
-            </Card>
-
-            <Card id="third-parties" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">11) Third-Party Services</h2>
-              <p className="text-body">
-                We rely on trusted providers (e.g., auth, storage, email/SMS, payments). Their terms may apply where relevant.
-                We’re not responsible for third-party sites or services outside our control.
-              </p>
-            </Card>
-
-            <Card id="disclaimers" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">12) Disclaimers</h2>
-              <p className="text-body">
-                The Service is provided “as is” without warranties of any kind. We don’t guarantee score outcomes or uninterrupted
-                availability. Your study effort and exam conditions affect results.
-              </p>
-            </Card>
-
-            <Card id="liability" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">13) Limitation of Liability</h2>
-              <p className="text-body">
-                To the fullest extent permitted by law, GramorX is not liable for indirect, incidental, or consequential damages,
-                or loss of data, profits, or business. Our total liability for any claim is limited to the amounts you paid in
-                the 3 months before the claim.
-              </p>
-            </Card>
-
-            <Card id="indemnity" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">14) Indemnification</h2>
-              <p className="text-body">
-                You agree to defend and hold harmless GramorX from claims arising out of your misuse of the Service or violation
-                of these Terms or applicable laws.
-              </p>
-            </Card>
-
-            <Card id="termination" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">15) Termination</h2>
-              <p className="text-body">
-                You may stop using the Service at any time. We may suspend or terminate access for violations or risks to users,
-                the platform, or law. Some provisions survive termination (e.g., IP, payments due, disclaimers, limitations).
-              </p>
-            </Card>
-
-            <Card id="law-disputes" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">16) Governing Law & Disputes</h2>
-              <p className="text-body">
-                These Terms are governed by the laws of <strong>[Set Your Jurisdiction]</strong>, without regard to conflict-of-law
-                principles. Disputes will be resolved in the courts of <strong>[Set Venue]</strong>. If you need us to insert your
-                preferred jurisdiction/venue, let us know and we’ll update this page text.
-              </p>
-            </Card>
-
-            <Card id="changes" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">17) Changes to These Terms</h2>
-              <p className="text-body">
-                We may update Terms as laws and features evolve. For material changes, we’ll notify you in-app or via email.
-                Continued use means you accept the updated Terms.
-              </p>
-            </Card>
-
-            <Card id="contact" className="p-6 rounded-ds-2xl scroll-mt-24">
-              <h2 className="font-slab text-h2 mb-3">18) Contact</h2>
-              <p className="text-body">
-                Questions? Compliance requests? We’re here to help.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <a href="mailto:legal@gramorx.com" className="inline-block">
-                  <Button variant="primary" size="md" className="rounded-ds">Email Legal</Button>
-                </a>
-                <Link href="/support">
-                  <Button variant="secondary" size="md" className="rounded-ds">Open Support</Button>
-                </Link>
-                <Link href="/privacy-policy">
-                  <Button variant="accent" size="md" className="rounded-ds">View Privacy Policy</Button>
-                </Link>
-              </div>
-            </Card>
+            {SECTIONS.map((section) => (
+              <Card key={section.id} id={section.id} className="rounded-ds-2xl p-6 scroll-mt-28">
+                <h2 className="font-slab text-h3">{section.title}</h2>
+                <div className="mt-3 space-y-3">{section.content}</div>
+              </Card>
+            ))}
           </div>
         </Container>
       </section>

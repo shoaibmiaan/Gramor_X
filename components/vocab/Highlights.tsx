@@ -181,7 +181,12 @@ export const VocabularyHighlightsPanel: React.FC<VocabularyHighlightsPanelProps>
               {topCategories.map((category, index) => (
                 <React.Fragment key={category.name}>
                   {index > 0 && <span>, </span>}
-                  <span>{category.name}</span>
+                  <span>
+                    {category.name}
+                    {typeof category.count === 'number' && category.count > 0 && (
+                      <span className="text-muted-foreground/70"> ({category.count})</span>
+                    )}
+                  </span>
                 </React.Fragment>
               ))}
             </div>
