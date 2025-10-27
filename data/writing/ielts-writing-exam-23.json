@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-23",
+  "title": "General Training Set 23 — Library Workshop & Screen Time",
+  "description": "Semi-formal letter about hosting a creative workshop and an essay on managing children's screen time.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter to a library manager",
+    "type": "general training",
+    "prompt": "You volunteer at your local library and would like to organise a weekend creative writing workshop for teenagers. Write a letter to the library manager. In your letter: explain the aim of the workshop, describe the activities you would like to include, and ask for the resources or support you need.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Maintain a respectful and cooperative tone appropriate for a semi-formal letter.",
+      "Provide a clear structure for the workshop sessions.",
+      "Specify any materials or staff assistance required."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Discussion essay — Children's screen time",
+    "prompt": "Many parents worry about the amount of time their children spend using digital devices. Some believe strict limits are necessary, while others think technology can be beneficial if used wisely. Discuss both views and give your opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: present the debate and indicate you will discuss both sides.",
+      "Body paragraph 1: outline reasons for imposing strict limits, with examples.",
+      "Body paragraph 2: explain how technology can support learning and social interaction when managed well.",
+      "Conclusion: share your viewpoint and suggest balanced strategies for families."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "You volunteer at your local library and would like to organise a weekend creative writing workshop for teenagers. Write a letter to the library manager. In your letter: explain the aim of the workshop, describe the activities you would like to include, and ask for the resources or support you need.",
+  "task2Prompt": "Many parents worry about the amount of time their children spend using digital devices. Some believe strict limits are necessary, while others think technology can be beneficial if used wisely. Discuss both views and give your opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}
