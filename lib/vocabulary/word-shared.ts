@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { getServerClient } from '@/lib/supabaseServer';
 
@@ -27,12 +28,12 @@ export type WordOfTheDayGuestWord = WordPayload & {
 
 const DEFAULT_PRONUNCIATIONS: WordPronunciationPayload[] = [
   {
-    ipa: '/pər.sə\u02c8v\u026ar/',
+    ipa: '/pər.səˈvɪr/',
     locale: 'en-US',
     label: 'American',
   },
   {
-    ipa: '/\u02c8p\u025c\u02d0.s\u026a\u02c8v\u026a\u0259/',
+    ipa: '/ˈpɜː.sɪˌvɪə/',
     locale: 'en-GB',
     label: 'British',
   },
@@ -129,7 +130,10 @@ export function normalisePronunciations(wod: Record<string, unknown> | null | un
   return pronunciations;
 }
 
-export function normaliseWordPayload(wod: Record<string, unknown> | null | undefined, fallback: WordPayload): WordPayload {
+export function normaliseWordPayload(
+  wod: Record<string, unknown> | null | undefined,
+  fallback: WordPayload,
+): WordPayload {
   if (!wod) return fallback;
 
   return {
@@ -173,8 +177,8 @@ export const GUEST_WORDS: WordOfTheDayGuestWord[] = [
     partOfSpeech: 'verb',
     categories: ['Speaking', 'Communication'],
     pronunciations: [
-      { ipa: '/\u0251r\u02c8t\u026akj\u0259l\u0259t/', locale: 'en-US', label: 'American' },
-      { ipa: '/\u0251\u02d0\u02c8t\u026akj\u028al\u0259t/', locale: 'en-GB', label: 'British' },
+      { ipa: '/ɑrˈtɪkjələt/', locale: 'en-US', label: 'American' },
+      { ipa: '/ɑːˈtɪkjʊlənt/', locale: 'en-GB', label: 'British' },
     ],
     source: 'guest-sampler',
   },
@@ -188,8 +192,8 @@ export const GUEST_WORDS: WordOfTheDayGuestWord[] = [
     partOfSpeech: 'adjective',
     categories: ['Writing', 'Study habits'],
     pronunciations: [
-      { ipa: '/m\u0259\u02c8t\u026akj\u0259l\u0259s/', locale: 'en-US', label: 'American' },
-      { ipa: '/m\u026a\u02c8t\u026akj\u028al\u0259s/', locale: 'en-GB', label: 'British' },
+      { ipa: '/məˈtɪkjələs/', locale: 'en-US', label: 'American' },
+      { ipa: '/mɪˈtɪkjʊləs/', locale: 'en-GB', label: 'British' },
     ],
     source: 'guest-sampler',
   },
@@ -203,25 +207,10 @@ export const GUEST_WORDS: WordOfTheDayGuestWord[] = [
     partOfSpeech: 'adjective',
     categories: ['Mindset', 'Motivation'],
     pronunciations: [
-      { ipa: '/r\u026a\u02c8z\u026alj\u0259nt/', locale: 'en-US', label: 'American' },
-      { ipa: '/r\u026a\u02c8z\u026alj\u0259nt/', locale: 'en-GB', label: 'British' },
+      { ipa: '/rɪˈzɪljənt/', locale: 'en-US', label: 'American' },
+      { ipa: '/rɪˈzɪljənt/', locale: 'en-GB', label: 'British' },
     ],
     source: 'guest-sampler',
-  },
-  {
-    id: 'guest-eloquent',
-    word: 'eloquent',
-    meaning: 'fluent or persuasive in speaking or writing',
-    example: 'An eloquent introduction can captivate IELTS examiners from the first sentence.',
-    synonyms: ['expressive', 'persuasive', 'artful'],
-    interest: 'Ideal when describing confident speakers or polished essays.',
-    partOfSpeech: 'adjective',
-    categories: ['Speaking', 'Writing'],
-    pronunciations: [
-      { ipa: '/\u02c8\u025bl\u0259kw\u0259nt/', locale: 'en-US', label: 'American' },
-      { ipa: '/\u02c8\u025bl\u0259kw\u0259nt/', locale: 'en-GB', label: 'British' },
-    ],
-    source: 'guest-spotlight',
   },
 ];
 
@@ -244,11 +233,25 @@ export const ZERO_STREAK = {
   streakValueUSD: 0,
 };
 
+const globalState = globalThis as typeof globalThis & {
+  __gramorGuestWordIndex?: number;
+};
+
 export function pickGuestWord(): WordPayload {
   if (GUEST_WORDS.length === 0) {
     return FALLBACK_WORD;
   }
-  const index = Math.floor(Math.random() * GUEST_WORDS.length);
+
+  const lastIndex = typeof globalState.__gramorGuestWordIndex === 'number'
+    ? globalState.__gramorGuestWordIndex
+    : -1;
+
+  let index = Math.floor(Math.random() * GUEST_WORDS.length);
+  if (index === lastIndex) {
+    index = (index + 1) % GUEST_WORDS.length;
+  }
+
+  globalState.__gramorGuestWordIndex = index;
   return GUEST_WORDS[index];
 }
 
@@ -266,3 +269,4 @@ export async function resolveUserId(req: NextApiRequest, res: NextApiResponse): 
   const { data: { user } } = await supabase.auth.getUser();
   return user?.id ?? null;
 }
+

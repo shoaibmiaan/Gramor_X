@@ -77,7 +77,6 @@ type WordExperienceState = {
 type VocabularySpotlightVariant = 'default' | 'guestSampler';
 
 const highlightPills = ['Daily boost', 'Audio rich', 'Adaptive review'] as const;
-const GUEST_WORD_TOTAL = 4;
 
 const groups: FeatureGroup[] = [
   {
@@ -204,6 +203,8 @@ const GUEST_SAMPLER_WORDS: WordInfo[] = [
     ],
   },
 ];
+
+const GUEST_WORD_TOTAL = GUEST_SAMPLER_WORDS.length;
 
 function normalizeWordInfo(word: Partial<WordInfo> | null | undefined): WordInfo {
   const synonymSource = Array.isArray(word?.synonyms) ? word?.synonyms ?? [] : [];
