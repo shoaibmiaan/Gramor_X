@@ -187,6 +187,116 @@ export const writingExamSummaries: WritingExamSummary[] = [
     durationMinutes: 60,
     tags: ['letters', 'health', 'technology'],
     register: 'Informal'
+  },
+  {
+    id: 'ielts-writing-exam-16',
+    title: 'Academic Set 16 — Remote Collaboration & Coworking',
+    description: 'Bar chart on telecommuting paired with an essay about funding coworking spaces.',
+    task1Type: 'Academic',
+    task1Focus: 'Bar chart • remote work frequency • 2015–2022',
+    task2Focus: 'Evaluate company support for coworking memberships',
+    durationMinutes: 60,
+    tags: ['work', 'technology'],
+    register: 'Neutral'
+  },
+  {
+    id: 'ielts-writing-exam-17',
+    title: 'General Training Set 17 — Community Garden & Digital Payments',
+    description: 'Semi-formal garden proposal letter with an essay debating a cashless society.',
+    task1Type: 'General Training',
+    task1Focus: 'Semi-formal letter • residents’ association proposal',
+    task2Focus: 'Discuss pros and cons of a cashless economy',
+    durationMinutes: 60,
+    tags: ['letters', 'community', 'technology'],
+    register: 'Semi-formal'
+  },
+  {
+    id: 'ielts-writing-exam-18',
+    title: 'Academic Set 18 — Streaming Habits & Cultural Heritage',
+    description: 'Line graph on music streaming followed by a problem-solution essay on traditional arts.',
+    task1Type: 'Academic',
+    task1Focus: 'Line graph • music subscribers • 2014–2023',
+    task2Focus: 'Address threats to cultural heritage',
+    durationMinutes: 60,
+    tags: ['charts', 'culture', 'technology'],
+    register: 'Neutral'
+  },
+  {
+    id: 'ielts-writing-exam-19',
+    title: 'General Training Set 19 — Volunteer Fair & Four-day Weeks',
+    description: 'Friendly invitation letter coupled with an essay on four-day work schedules.',
+    task1Type: 'General Training',
+    task1Focus: 'Informal letter • invite a friend to volunteer',
+    task2Focus: 'Weigh advantages and drawbacks of shorter weeks',
+    durationMinutes: 60,
+    tags: ['letters', 'community', 'work'],
+    register: 'Informal'
+  },
+  {
+    id: 'ielts-writing-exam-20',
+    title: 'Academic Set 20 — Urban Cycling Hubs & Public Health',
+    description: 'Bike-share usage table paired with an essay on city health initiatives.',
+    task1Type: 'Academic',
+    task1Focus: 'Table • bike-share journeys • 2019 vs 2023',
+    task2Focus: 'Examine effects of municipal health programmes',
+    durationMinutes: 60,
+    tags: ['transport', 'health', 'cities'],
+    register: 'Neutral'
+  },
+  {
+    id: 'ielts-writing-exam-21',
+    title: 'General Training Set 21 — Language Club & Public Transport',
+    description: 'Formal workplace letter and an essay on subsidised transport.',
+    task1Type: 'General Training',
+    task1Focus: 'Formal letter • propose a workplace language club',
+    task2Focus: 'Argue for or against free public transport',
+    durationMinutes: 60,
+    tags: ['letters', 'work', 'transport'],
+    register: 'Formal'
+  },
+  {
+    id: 'ielts-writing-exam-22',
+    title: 'Academic Set 22 — Household Energy Storage & Climate Action',
+    description: 'Process diagram on home batteries paired with a climate responsibility essay.',
+    task1Type: 'Academic',
+    task1Focus: 'Process diagram • solar and battery system',
+    task2Focus: 'Discuss individual vs institutional climate action',
+    durationMinutes: 60,
+    tags: ['process', 'environment', 'technology'],
+    register: 'Neutral'
+  },
+  {
+    id: 'ielts-writing-exam-23',
+    title: 'General Training Set 23 — Library Workshop & Screen Time',
+    description: 'Semi-formal library letter combined with an essay on children’s screen time.',
+    task1Type: 'General Training',
+    task1Focus: 'Semi-formal letter • request resources for a workshop',
+    task2Focus: 'Debate managing children’s device use',
+    durationMinutes: 60,
+    tags: ['letters', 'education', 'family'],
+    register: 'Semi-formal'
+  },
+  {
+    id: 'ielts-writing-exam-24',
+    title: 'Academic Set 24 — Apprenticeships & Innovation Funding',
+    description: 'Apprenticeship completion chart followed by an essay on funding innovation.',
+    task1Type: 'Academic',
+    task1Focus: 'Bar chart • apprenticeship completion • 2016–2022',
+    task2Focus: 'Compare funding for universities and start-ups',
+    durationMinutes: 60,
+    tags: ['education', 'economy', 'charts'],
+    register: 'Neutral'
+  },
+  {
+    id: 'ielts-writing-exam-25',
+    title: 'General Training Set 25 — Fitness Class & Shared Workspaces',
+    description: 'Neighbour invitation letter paired with an essay on shared offices for freelancers.',
+    task1Type: 'General Training',
+    task1Focus: 'Informal letter • invite neighbour to fitness class',
+    task2Focus: 'Assess pros and cons of shared workspaces',
+    durationMinutes: 60,
+    tags: ['letters', 'health', 'work'],
+    register: 'Informal'
   }
 ];
 

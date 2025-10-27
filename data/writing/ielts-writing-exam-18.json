@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-18",
+  "title": "Academic Set 18 — Streaming Habits & Cultural Heritage",
+  "description": "Line graph on music streaming platforms followed by an essay on preserving traditional arts.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Music streaming subscriptions",
+    "type": "academic",
+    "prompt": "The line graph illustrates the number of monthly subscribers (in millions) to three music streaming services between 2014 and 2023. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Comment on the overall growth patterns for each service.",
+      "Identify any periods where trends diverge or plateau.",
+      "Provide approximate figures when describing key changes."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Problem-solution essay — Safeguarding traditional arts",
+    "prompt": "In many countries, traditional music, dance, and crafts are at risk of disappearing as people focus on modern entertainment. What problems can this cause? What solutions could help protect cultural heritage?",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: present the issue and outline what the essay will address.",
+      "Body paragraph 1: explain negative consequences such as loss of identity or tourism impacts.",
+      "Body paragraph 2: propose practical solutions from governments, schools, or communities.",
+      "Conclusion: summarise key points and emphasise the importance of action."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "The line graph illustrates the number of monthly subscribers (in millions) to three music streaming services between 2014 and 2023. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "In many countries, traditional music, dance, and crafts are at risk of disappearing as people focus on modern entertainment. What problems can this cause? What solutions could help protect cultural heritage?",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

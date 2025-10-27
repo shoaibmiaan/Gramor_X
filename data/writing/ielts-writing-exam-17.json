@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-17",
+  "title": "General Training Set 17 — Community Garden & Digital Payments",
+  "description": "Semi-formal letter about starting a neighbourhood garden and an essay debating a cashless society.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter to a residents' association",
+    "type": "general training",
+    "prompt": "You live in an apartment complex that has an unused courtyard. Write a letter to the residents' association proposing the creation of a community vegetable garden. In your letter: describe why the space is currently unused, explain how the garden would benefit residents, and outline how you plan to organise volunteers.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Use a polite and persuasive tone suitable for a residents' committee.",
+      "Include practical steps for maintaining the garden.",
+      "Address potential concerns such as cost or noise."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Discussion essay — Moving towards a cashless society",
+    "prompt": "Some people believe that replacing cash with digital payments will benefit individuals and businesses, while others worry about privacy and accessibility. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: introduce the topic and state that you will discuss both perspectives.",
+      "Body paragraph 1: explain reasons why cashless payments can be advantageous.",
+      "Body paragraph 2: explore concerns about privacy, security, and inclusion.",
+      "Conclusion: present your opinion and suggest how to balance innovation with safeguards."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "You live in an apartment complex that has an unused courtyard. Write a letter to the residents' association proposing the creation of a community vegetable garden. In your letter: describe why the space is currently unused, explain how the garden would benefit residents, and outline how you plan to organise volunteers.",
+  "task2Prompt": "Some people believe that replacing cash with digital payments will benefit individuals and businesses, while others worry about privacy and accessibility. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}
