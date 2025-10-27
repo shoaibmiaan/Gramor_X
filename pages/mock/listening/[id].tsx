@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { getListeningPaperById } from '@/data/listening';
 import {
   clearMockAttemptId,
   clearMockDraft,
@@ -39,12 +40,8 @@ const samplePaper: ListeningPaper = {
 };
 
 const loadPaper = async (id: string): Promise<ListeningPaper> => {
-  try {
-    const mod = await import(`@/data/listening/${id}.json`);
-    return mod.default as ListeningPaper;
-  } catch {
-    return samplePaper;
-  }
+  const paper = getListeningPaperById(id);
+  return paper ?? samplePaper;
 };
 
 const Shell: React.FC<{ title: string; children: React.ReactNode; right?: React.ReactNode }> = ({ title, children, right }) => (

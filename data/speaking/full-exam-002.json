@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-002",
+  "title": "IELTS Speaking Full Mock Exam 002",
+  "part1": [
+    "Do you prefer living in a house or an apartment? Why?",
+    "What kind of neighbourhood would you like to live in the future?",
+    "How often do you meet your neighbours?",
+    "What local services or facilities do you use the most?",
+    "Have you ever taken part in a community event?",
+    "Would you like to live in the same place when you retire?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a community project you would like to volunteer for.",
+      "You should say:",
+      "• what the project is",
+      "• why it interests you",
+      "• what tasks you would probably do",
+      "and explain how this project could benefit the people involved."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "Why do some people feel strongly about supporting their community?",
+    "How can local governments encourage more volunteering?",
+    "Do you think community work should be a part of school programmes?",
+    "How might community life change in the future?"
+  ]
+}
