@@ -1,0 +1,348 @@
+{
+  "id": "ielts-listening-full-009",
+  "title": "IELTS Listening Full Mock Exam 009",
+  "durationSec": 2400,
+  "transcript": "Learners will work through a language centre placement call, a study abroad briefing, an alumni mentoring meeting, and a lecture on social impact metrics.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Language Centre Placement",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-009-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-009-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Elm House Seminar Suite",
+            "Harborview Loft",
+            "Old Mill Barn",
+            "Sunset Terrace"
+          ],
+          "answer": "Elm House Seminar Suite"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "6th September"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "4:00 pm"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "45"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Global tasting platters",
+            "Vegan street food",
+            "Plated degustation",
+            "Coffee and pastries"
+          ],
+          "answer": "Global tasting platters"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "120 pounds"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "digital recording booth"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Marco"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Language centre courtyard",
+            "Multi-storey level 1",
+            "Riverside lay-by",
+            "Overflow paddock"
+          ],
+          "answer": "Language centre courtyard"
+        },
+        {
+          "id": "ielts-listening-full-009-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "seminar pods"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Study Abroad Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-009-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-009-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "international programmes advisor",
+            "visa consultant",
+            "travel agent",
+            "student ambassador"
+          ],
+          "answer": "international programmes advisor"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "pre-departure orientation"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "24 minutes"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Global Hub theatre"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": [
+            "Visa documentation desk",
+            "Accommodation counter",
+            "Insurance kiosk",
+            "Language lounge"
+          ],
+          "answer": "Visa documentation desk"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Table 5"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "GlobalPrep-11"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Thursday"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": [
+            "passport photocopies",
+            "formal evening wear",
+            "sports uniforms",
+            "studio microphones"
+          ],
+          "answer": "passport photocopies"
+        },
+        {
+          "id": "ielts-listening-full-009-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0141 305 6672"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Alumni Mentoring Roundtable",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-009-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-009-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "alumni mentoring platform launch",
+            "campus bike hire expansion",
+            "student theatre festival",
+            "nutrition awareness week"
+          ],
+          "answer": "alumni mentoring platform launch"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Tara"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "8 January"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "bi-weekly on Mondays"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "matching algorithm testing",
+            "door-to-door fundraising",
+            "satellite imaging",
+            "kitchen audits"
+          ],
+          "answer": "matching algorithm testing"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "MentorMesh"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£360"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Dr. Sato"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "keeping mentors engaged long-term",
+            "scheduling the swimming pool",
+            "cataloguing costume storage",
+            "managing greenhouse humidity"
+          ],
+          "answer": "keeping mentors engaged long-term"
+        },
+        {
+          "id": "ielts-listening-full-009-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "9 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Social Impact Metrics",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-009-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-009-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "measuring social impact outcomes",
+            "marine archaeology",
+            "culinary history",
+            "urban street art"
+          ],
+          "answer": "measuring social impact outcomes"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "11 core indicators"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "outcome attribution matrix"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Cape Town"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "donor reporting expectations",
+            "tourist souvenir sales",
+            "regional food trends",
+            "student art fairs"
+          ],
+          "answer": "donor reporting expectations"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Impact Evaluation Consortium"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Evidence for Change Handbook"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2018"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "capturing long-term follow-up data",
+            "training diving crews",
+            "sourcing spice blends",
+            "restoring murals"
+          ],
+          "answer": "capturing long-term follow-up data"
+        },
+        {
+          "id": "ielts-listening-full-009-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "link metrics to lived experience"
+        }
+      ]
+    }
+  ]
+}
