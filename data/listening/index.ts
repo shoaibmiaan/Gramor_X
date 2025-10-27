@@ -1,9 +1,20 @@
-import fullExam from './full-exam-001.json';
 import practice01 from './listening-practice-01.json';
 import practice02 from './listening-practice-02.json';
 import practice03 from './listening-practice-03.json';
 import practice04 from './listening-practice-04.json';
 import practice05 from './listening-practice-05.json';
+
+import fullExam001 from './full-exam-001.json';
+import fullExam002 from './full-exam-002.json';
+import fullExam003 from './full-exam-003.json';
+import fullExam004 from './full-exam-004.json';
+import fullExam005 from './full-exam-005.json';
+import fullExam006 from './full-exam-006.json';
+import fullExam007 from './full-exam-007.json';
+import fullExam008 from './full-exam-008.json';
+import fullExam009 from './full-exam-009.json';
+import fullExam010 from './full-exam-010.json';
+import fullExam011 from './full-exam-011.json';
 
 export type ListeningQuestion = {
   id: string;
@@ -40,7 +51,7 @@ export const buildListeningPracticeMeta = (paper: ListeningPaper): ListeningPrac
   const sectionList = Array.isArray(paper.sections) ? paper.sections : [];
   const questionTotal = sectionList.reduce(
     (sum, section) => sum + (Array.isArray(section.questions) ? section.questions.length : 0),
-    0
+    0,
   );
 
   return {
@@ -60,16 +71,28 @@ const listeningPracticeJson = [
   practice03,
   practice04,
   practice05,
-  fullExam,
+  // Full mock exams
+  fullExam001,
+  fullExam002,
+  fullExam003,
+  fullExam004,
+  fullExam005,
+  fullExam006,
+  fullExam007,
+  fullExam008,
+  fullExam009,
+  fullExam010,
+  fullExam011,
 ] satisfies ListeningPaper[];
 
 export const listeningPracticePapers: ListeningPaper[] = listeningPracticeJson.map((paper) => ({
   ...paper,
-  durationSec: typeof paper.durationSec === 'number' && Number.isFinite(paper.durationSec)
-    ? paper.durationSec
-    : DEFAULT_DURATION_SEC,
+  durationSec:
+    typeof paper.durationSec === 'number' && Number.isFinite(paper.durationSec)
+      ? paper.durationSec
+      : DEFAULT_DURATION_SEC,
 }));
 
 export const listeningPracticeList: ListeningPracticeMeta[] = listeningPracticePapers.map((paper) =>
-  buildListeningPracticeMeta(paper)
+  buildListeningPracticeMeta(paper),
 );
