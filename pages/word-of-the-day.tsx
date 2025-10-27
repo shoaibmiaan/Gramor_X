@@ -12,13 +12,8 @@ const WordOfTheDayPage: React.FC = () => {
           content="Immerse yourself in today&apos;s IELTS-ready word with meanings, examples, and streak insights."
         />
       </Head>
-      <main className="min-h-[100dvh] bg-gradient-to-br from-lightBg via-white to-electricBlue/10 py-16 sm:py-20">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-x-0 -top-24 h-48 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_65%)]" />
-          <div className="relative z-10">
-            <WordOfTheDayDeepDive />
-          </div>
-        </div>
+      <main className="py-12 sm:py-16 lg:py-20">
+        <WordOfTheDayDeepDive />
       </main>
     </>
   );
