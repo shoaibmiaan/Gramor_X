@@ -47,7 +47,6 @@ import InstitutionsLayout from '@/components/layouts/InstitutionsLayout';
 import AuthLayout from '@/components/layouts/AuthLayout';
 import ReportsLayout from '@/components/layouts/ReportsLayout';
 import ProctoringLayout from '@/components/layouts/ProctoringLayout';
-import ExamLayout from '@/components/layouts/ExamLayout';
 
 import TeacherLayout from '@/components/layouts/TeacherLayout';
 import TeacherProfile from '@/components/teacher/TeacherProfile';
@@ -61,7 +60,7 @@ import { HighContrastProvider } from '@/context/HighContrastContext';
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
-import { logWritingAnalyticsView } from '@/lib/analytics/writing-events';
+import type { SubscriptionTier } from '@/lib/navigation/types';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -150,21 +149,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const { locale: activeLocale } = useLocale();
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const routeLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const flagsHydratedRef = useRef(false);
-
-  const refreshClientFlags = useCallback(async () => {
-    try {
-      const res = await fetch('/api/debug/feature-flags', { credentials: 'same-origin' });
-      if (!res.ok) return;
-      const payload = (await res.json()) as { flags?: Record<string, boolean> };
-      if (payload?.flags) {
-        primeClientSnapshot(payload.flags);
-        flagsHydratedRef.current = true;
-      }
-    } catch {
-      // ignore hydration errors — feature checks fall back to defaults
-    }
-  }, []);
+  const routeLoadingFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const clearRouteLoadingTimeout = () => {
@@ -174,29 +159,58 @@ function InnerApp({ Component, pageProps }: AppProps) {
       }
     };
 
+    const clearRouteLoadingFallback = () => {
+      if (routeLoadingFallbackRef.current) {
+        clearTimeout(routeLoadingFallbackRef.current);
+        routeLoadingFallbackRef.current = null;
+      }
+    };
+
     const startLoading = () => {
       clearRouteLoadingTimeout();
+      clearRouteLoadingFallback();
       routeLoadingTimeoutRef.current = setTimeout(() => {
         setIsRouteLoading(true);
+        routeLoadingFallbackRef.current = setTimeout(() => {
+          setIsRouteLoading(false);
+        }, 12000);
       }, 200);
     };
 
     const stopLoading = () => {
       clearRouteLoadingTimeout();
+      clearRouteLoadingFallback();
       setIsRouteLoading(false);
     };
 
     router.events.on('routeChangeStart', startLoading);
+    router.events.on('beforeHistoryChange', stopLoading);
     router.events.on('routeChangeComplete', stopLoading);
     router.events.on('routeChangeError', stopLoading);
+    router.events.on('hashChangeStart', startLoading);
+    router.events.on('hashChangeComplete', stopLoading);
+    router.events.on('hashChangeError', stopLoading);
 
     return () => {
       router.events.off('routeChangeStart', startLoading);
+      router.events.off('beforeHistoryChange', stopLoading);
       router.events.off('routeChangeComplete', stopLoading);
       router.events.off('routeChangeError', stopLoading);
+      router.events.off('hashChangeStart', startLoading);
+      router.events.off('hashChangeComplete', stopLoading);
+      router.events.off('hashChangeError', stopLoading);
       clearRouteLoadingTimeout();
+      clearRouteLoadingFallback();
     };
   }, [router]);
+
+  useEffect(() => {
+    if (routeLoadingFallbackRef.current) {
+      clearTimeout(routeLoadingFallbackRef.current);
+      routeLoadingFallbackRef.current = null;
+    }
+    setIsRouteLoading(false);
+  }, [router.asPath]);
 
   useEffect(() => {
     void loadTranslations(activeLocale as SupportedLocale);
@@ -229,6 +243,24 @@ function InnerApp({ Component, pageProps }: AppProps) {
     role?: string | null;
     isTeacherApproved?: boolean | null;
   };
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('free');
+
+  useEffect(() => {
+    const metadata = (user?.user_metadata ?? {}) as { tier?: SubscriptionTier | null };
+    const appMeta = (user?.app_metadata ?? {}) as { tier?: SubscriptionTier | null };
+    const nextTier = metadata.tier ?? appMeta.tier ?? 'free';
+    setSubscriptionTier(nextTier);
+  }, [user]);
+
+  useEffect(() => {
+    const handleTierUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ tier?: SubscriptionTier }>).detail;
+      if (detail?.tier) setSubscriptionTier(detail.tier);
+    };
+
+    window.addEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
+    return () => window.removeEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
+  }, []);
 
   const needPremium = useMemo(
     () => pathname.startsWith('/premium'),
@@ -498,22 +530,13 @@ function InnerApp({ Component, pageProps }: AppProps) {
     else if (isLearningRoute) content = <LearningLayout>{basePage}</LearningLayout>;
     else if (isCommunityRoute) content = <CommunityLayout>{basePage}</CommunityLayout>;
     else if (isReportsRoute) content = <ReportsLayout>{basePage}</ReportsLayout>;
-    else if (isExamRoute) content = <ExamLayout>{basePage}</ExamLayout>;
     else if (isMarketingRoute) content = <PublicMarketingLayout>{basePage}</PublicMarketingLayout>;
   }
 
   const nakedContent = isAuthPage ? (
     <AuthLayout>{basePage}</AuthLayout>
   ) : isProctoringRoute ? (
-    pathname.startsWith('/proctoring/exam') ? (
-      <ProctoringLayout>
-        <ExamLayout>{basePage}</ExamLayout>
-      </ProctoringLayout>
-    ) : (
-      <ProctoringLayout>{basePage}</ProctoringLayout>
-    )
-  ) : isExamRoute ? (
-    <ExamLayout>{basePage}</ExamLayout>
+    <ProctoringLayout>{basePage}</ProctoringLayout>
   ) : (
     basePage
   );
@@ -552,7 +575,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <AuthAssistant />
           <SidebarAI />
           <UpgradeModal />
-          <RouteLoadingOverlay active={isRouteLoading} />
+          <RouteLoadingOverlay active={isRouteLoading} tier={subscriptionTier} />
         </div>
       </HighContrastProvider>
     </ThemeProvider>
