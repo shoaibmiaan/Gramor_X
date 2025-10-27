@@ -24,6 +24,11 @@ export type ExamLayoutProps = {
   questionPalette?: React.ReactNode;
   /** Main content */
   children: React.ReactNode;
+  /** Controls focus/fullscreen guard behaviour */
+  focusMode?: {
+    active: boolean;
+    onFullscreenExit?: () => void;
+  };
 };
 
 export default function ExamLayout({
@@ -36,6 +41,7 @@ export default function ExamLayout({
   partNavigator,
   questionPalette,
   children,
+  focusMode,
 }: ExamLayoutProps) {
   const mainId = React.useId();
 
@@ -48,7 +54,12 @@ export default function ExamLayout({
         Skip to main content
       </a>
       <DistractionFreeBanner />
-      <FocusGuard exam={exam} slug={slug} />
+      <FocusGuard
+        exam={exam}
+        slug={slug}
+        active={focusMode?.active ?? false}
+        onFullscreenExit={focusMode?.onFullscreenExit}
+      />
       <div className="flex min-h-[100dvh] flex-col bg-background text-foreground dark:bg-dark">
         <header
           className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 dark:bg-dark/95"
