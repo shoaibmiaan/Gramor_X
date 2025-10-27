@@ -425,8 +425,8 @@ export function VocabularySpotlightFeature({
   const cardInteractive = Boolean(data) && !isComplete;
 
   return (
-    <Container>
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+    <Container className="max-w-6xl">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
         <Card
           padding="lg"
           interactive={cardInteractive}
@@ -555,7 +555,7 @@ export function VocabularySpotlightFeature({
           </div>
         </Card>
 
-        <div className="space-y-6">
+        <div className="space-y-6 self-start">
           {groups.map((group) => (
             <Card
               key={group.label}
@@ -641,7 +641,7 @@ export function WordOfTheDayDeepDive() {
   const { data, error, loading, busy, markLearned } = useWordOfTheDay();
 
   return (
-    <Container>
+    <Container className="max-w-6xl">
       <div className="mx-auto max-w-3xl text-center">
         <Badge variant="info" size="sm" className="inline-flex items-center gap-2">
           <Icon name="Sparkles" size={16} className="text-electricBlue" />
@@ -656,7 +656,7 @@ export function WordOfTheDayDeepDive() {
         </p>
       </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
         <Card padding="lg" className="relative overflow-hidden border-border/60">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_transparent_60%)]" />
           <div className="relative z-10">
@@ -695,7 +695,7 @@ export function WordOfTheDayDeepDive() {
           </div>
         </Card>
 
-        <div className="space-y-6">
+        <div className="space-y-6 self-start">
           {groups.map((group) => (
             <Card
               key={group.label}
