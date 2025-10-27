@@ -1,0 +1,343 @@
+{
+  "id": "ielts-listening-full-011",
+  "title": "IELTS Listening Full Mock Exam 011",
+  "durationSec": 2400,
+  "transcript": "Listeners encounter an art fair coordination call, a curator walkthrough briefing, a symposium on creative economies, and a lecture on creative placemaking.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Art Fair Coordination",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-011-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-011-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Gallery Quarter Atrium",
+            "Harbor Promenade",
+            "Skyline Terrace",
+            "Old Mill Warehouse"
+          ],
+          "answer": "Gallery Quarter Atrium"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "2nd April"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "1:00 pm"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "85"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Local artisan platters",
+            "Street vendor alley",
+            "Formal tasting menu",
+            "Coffeehouse service"
+          ],
+          "answer": "Local artisan platters"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "210 pounds"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "hanging lighting rails"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Naomi"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Artists' loading zone",
+            "City garage level 5",
+            "Riverside strip",
+            "East meadow parking"
+          ],
+          "answer": "Artists' loading zone"
+        },
+        {
+          "id": "ielts-listening-full-011-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "gallery walkways"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Curator Walkthrough Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-011-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-011-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": ["lead curator", "logistics director", "press liaison", "security chief"],
+          "answer": "lead curator"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "preview of the international art fair"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "23 minutes"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Atrium welcome desk"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": [
+            "Emerging artists hall",
+            "Sculpture courtyard",
+            "Video art studio",
+            "Collectors lounge"
+          ],
+          "answer": "Emerging artists hall"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Booth 12"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "ArtFair-2025"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Friday"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": [
+            "artist accreditation lanyard",
+            "formal tuxedo",
+            "paper invitations",
+            "sports trainers"
+          ],
+          "answer": "artist accreditation lanyard"
+        },
+        {
+          "id": "ielts-listening-full-011-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0203 988 5511"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Creative Economies Symposium",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-011-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-011-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "creative economies impact report",
+            "campus recycling drive",
+            "student robotics league",
+            "wellness retreat"
+          ],
+          "answer": "creative economies impact report"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Jules"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "14 September"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "weekly on Mondays"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "case-study interviews",
+            "bulk email survey",
+            "soil nutrient testing",
+            "video rehearsals"
+          ],
+          "answer": "case-study interviews"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "CultureScope"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£480"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Professor Lane"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "obtaining comparable financial data",
+            "arranging snow grooming",
+            "booking theatre seats",
+            "restoring antique furniture"
+          ],
+          "answer": "obtaining comparable financial data"
+        },
+        {
+          "id": "ielts-listening-full-011-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "18 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Creative Placemaking",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-011-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-011-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "creative placemaking for urban renewal",
+            "marine biodiversity tracking",
+            "molecular gastronomy",
+            "ancient epic poetry"
+          ],
+          "answer": "creative placemaking for urban renewal"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "15-year investment horizon"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "cultural anchor sites"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Glasgow"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "public-private partnership funding",
+            "seasonal tourist cruises",
+            "culinary awards circuit",
+            "student fashion week"
+          ],
+          "answer": "public-private partnership funding"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Civic Arts Observatory"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Placemakers Field Guide"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2017"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "balancing community voices",
+            "monitoring coral spawn",
+            "sourcing specialty ingredients",
+            "translating manuscripts"
+          ],
+          "answer": "balancing community voices"
+        },
+        {
+          "id": "ielts-listening-full-011-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "build with residents, not for them"
+        }
+      ]
+    }
+  ]
+}
