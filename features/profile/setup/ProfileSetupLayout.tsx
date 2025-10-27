@@ -67,7 +67,7 @@ const SkeletonLine: React.FC<{ className?: string }> = ({ className }) => (
   <div className={`animate-pulse rounded-md bg-muted ${className ?? 'h-4 w-full'}`} />
 );
 
-export default function ProfileSetup() {
+export function ProfileSetupLayout() {
   const router = useRouter();
   const { t, setLocale, setExplanationLocale } = useLocale();
 
