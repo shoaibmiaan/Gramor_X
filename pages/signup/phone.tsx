@@ -88,7 +88,7 @@ export default function SignupWithPhone() {
       try { await supabase.auth.updateUser({ data: { status: 'active' } }); } catch {}
       if (referral) {
         try {
-          await fetch('/api/referrals', {
+          await fetch('/api/referrals/redeem', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -4,11 +4,18 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-import { getServerClient } from '@/lib/supabaseServer';
+import { withPlan, type PlanGuardContext } from '@/lib/api/withPlan';
+import { createRequestLogger } from '@/lib/obs/logger';
+import { recordSloSample } from '@/lib/obs/slo';
+import { applyRateLimit } from '@/lib/limits/rate';
 import { scoreEssay } from '@/lib/writing/scoring';
 import { sanitiseWritingErrors } from '@/lib/writing/diff';
 import { writingScoreV2RequestSchema } from '@/lib/validation/writing.v2';
 import type { WritingCriterion, WritingFeedbackBlock, WritingError } from '@/types/writing';
+
+const ROUTE = 'ai.writing.score-v2';
+const RATE_LIMIT = { windowMs: 60_000, max: 12 } as const;
+const SLO_TARGET_MS = 4000;
 
 const CRITERION_LABEL: Record<WritingCriterion, string> = {
   task_response: 'Task Response',
@@ -107,144 +114,198 @@ const buildFocusBlocks = (
 
 const ok = (res: NextApiResponse, payload: Record<string, unknown>) => res.status(200).json(payload);
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const supabase = getServerClient(req, res);
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  const parsed = writingScoreV2RequestSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid payload', issues: parsed.error.flatten() });
-  }
-
-  const payload = parsed.data;
-
-  let wordTarget: number | undefined;
-  if (payload.promptId) {
-    const { data: promptRow } = await supabase
-      .from('writing_prompts')
-      .select('word_target, task_type')
-      .eq('id', payload.promptId)
-      .maybeSingle();
-    if (promptRow?.word_target) wordTarget = promptRow.word_target;
-    if (!payload.task && promptRow?.task_type) {
-      payload.task = promptRow.task_type as typeof payload.task;
-    }
-  }
-
-  const score = scoreEssay({
-    essay: payload.essay,
-    task: payload.task,
-    wordTarget,
-    durationSeconds: payload.durationSeconds,
+async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuardContext) {
+  const start = Date.now();
+  const logger = createRequestLogger(ROUTE, {
+    requestId: req.headers['x-request-id'] as string | undefined,
+    userId: ctx.user.id,
+    plan: ctx.plan,
   });
 
-  const rewrite = buildBand9Rewrite(payload.essay);
-  const heuristicsErrors = [
-    ...detectRepetition(payload.essay),
-    ...detectShortParagraphs(payload.essay),
-    ...detectSentenceFragments(payload.essay),
-  ];
-  const errors = sanitiseWritingErrors(payload.essay, heuristicsErrors);
-  const blocks = buildFocusBlocks(score.bandScores, score.feedback.perCriterion);
-
-  const enrichedFeedback = {
-    ...score.feedback,
-    band9Rewrite: rewrite,
-    errors,
-    blocks,
+  const finish = (status: number) => {
+    recordSloSample({ route: ROUTE, durationMs: Date.now() - start, status, targetMs: SLO_TARGET_MS });
   };
 
-  const result = {
-    version: 'v2',
-    overallBand: score.overallBand,
-    bandScores: score.bandScores,
-    feedback: enrichedFeedback,
-    wordCount: score.wordCount,
-    durationSeconds: score.durationSeconds,
-    tokensUsed: score.tokensUsed ?? 0,
-  };
-
-  const attemptId = payload.examAttemptId ?? payload.attemptId ?? null;
-  const nowIso = new Date().toISOString();
-
-  const upsertPayload = {
-    user_id: user.id,
-    exam_attempt_id: attemptId,
-    prompt_id: payload.promptId ?? null,
-    task: payload.task,
-    task_type: payload.task,
-    answer_text: payload.essay,
-    word_count: score.wordCount,
-    duration_seconds: payload.durationSeconds ?? null,
-    evaluation_version: 'v2',
-    band_scores: score.bandScores,
-    feedback: enrichedFeedback,
-    overall_band: score.overallBand,
-    task_response_band: score.bandScores.task_response,
-    coherence_band: score.bandScores.coherence_and_cohesion,
-    lexical_band: score.bandScores.lexical_resource,
-    grammar_band: score.bandScores.grammatical_range,
-    tokens_used: score.tokensUsed ?? 0,
-    submitted_at: nowIso,
-  };
-
-  const { data: responseRow, error: upsertError } = await supabase
-    .from('writing_responses')
-    .upsert(upsertPayload, { onConflict: 'exam_attempt_id,task' })
-    .select('id')
-    .maybeSingle();
-
-  if (upsertError) {
-    console.error('[writing/score-v2] upsert failed', upsertError);
-    return res.status(500).json({ error: 'Failed to persist score' });
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    res.status(405).json({ error: 'Method not allowed' });
+    finish(405);
+    return;
   }
 
-  if (responseRow?.id) {
-    const { error: feedbackError } = await supabase
-      .from('writing_feedback')
-      .upsert(
-        {
-          attempt_id: responseRow.id,
-          band9_rewrite: rewrite,
-          errors,
-          blocks,
-          created_at: nowIso,
-        },
-        { onConflict: 'attempt_id' },
-      );
-    if (feedbackError) {
-      console.error('[writing/score-v2] feedback insert failed', feedbackError);
+  try {
+    const ipHeader = req.headers['x-forwarded-for'];
+    const ip = Array.isArray(ipHeader)
+      ? ipHeader[0]
+      : ipHeader?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+
+    const rateResult = await applyRateLimit(
+      { route: 'ai:writing:score-v2', identifier: `user:${ctx.user.id}:ip:${ip}`, userId: ctx.user.id },
+      { windowMs: RATE_LIMIT.windowMs, max: RATE_LIMIT.max },
+    );
+
+    res.setHeader('X-RateLimit-Limit', String(RATE_LIMIT.max));
+    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, rateResult.remaining)));
+
+    if (rateResult.blocked) {
+      const retryAfter = Math.max(1, rateResult.retryAfter || Math.ceil(RATE_LIMIT.windowMs / 1000));
+      res.setHeader('Retry-After', String(retryAfter));
+      res.status(429).json({ error: 'Too many requests', retryAfter });
+      logger.warn('rate limit blocked', { retryAfter, hits: rateResult.hits });
+      finish(429);
+      return;
     }
-  }
 
-  if (attemptId) {
-    const { error: eventError } = await supabase.from('exam_events').insert({
-      attempt_id: attemptId,
-      user_id: user.id,
-      event_type: 'score',
-      payload: {
-        task: payload.task,
-        version: 'v2',
-        event: 'writing.score.v2',
-        score: result,
-      },
+    const parsed = writingScoreV2RequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const issues = parsed.error.flatten();
+      res.status(400).json({ error: 'Invalid payload', issues });
+      logger.warn('invalid payload', { issues });
+      finish(400);
+      return;
+    }
+
+    const payload = parsed.data;
+
+    let wordTarget: number | undefined;
+    if (payload.promptId) {
+      const { data: promptRow, error: promptError } = await ctx.supabase
+        .from('writing_prompts')
+        .select('word_target, task_type')
+        .eq('id', payload.promptId)
+        .maybeSingle();
+      if (promptError) {
+        logger.error('failed to load prompt metadata', { promptId: payload.promptId, error: promptError.message });
+      }
+      if (promptRow?.word_target) wordTarget = promptRow.word_target;
+      if (!payload.task && promptRow?.task_type) {
+        payload.task = promptRow.task_type as typeof payload.task;
+      }
+    }
+
+    const score = scoreEssay({
+      essay: payload.essay,
+      task: payload.task,
+      wordTarget,
+      durationSeconds: payload.durationSeconds,
     });
-    if (eventError) {
-      console.error('[writing/score-v2] event insert failed', eventError);
-    }
-  }
 
-  return ok(res, { ok: true, result });
+    const rewrite = buildBand9Rewrite(payload.essay);
+    const heuristicsErrors = [
+      ...detectRepetition(payload.essay),
+      ...detectShortParagraphs(payload.essay),
+      ...detectSentenceFragments(payload.essay),
+    ];
+    const errors = sanitiseWritingErrors(payload.essay, heuristicsErrors);
+    const blocks = buildFocusBlocks(score.bandScores, score.feedback.perCriterion);
+
+    const enrichedFeedback = {
+      ...score.feedback,
+      band9Rewrite: rewrite,
+      errors,
+      blocks,
+    };
+
+    const result = {
+      version: 'v2',
+      overallBand: score.overallBand,
+      bandScores: score.bandScores,
+      feedback: enrichedFeedback,
+      wordCount: score.wordCount,
+      durationSeconds: score.durationSeconds,
+      tokensUsed: score.tokensUsed ?? 0,
+    };
+
+    const attemptId = payload.examAttemptId ?? payload.attemptId ?? null;
+    const nowIso = new Date().toISOString();
+
+    const upsertPayload = {
+      user_id: ctx.user.id,
+      exam_attempt_id: attemptId,
+      prompt_id: payload.promptId ?? null,
+      task: payload.task,
+      task_type: payload.task,
+      answer_text: payload.essay,
+      word_count: score.wordCount,
+      duration_seconds: payload.durationSeconds ?? null,
+      evaluation_version: 'v2',
+      band_scores: score.bandScores,
+      feedback: enrichedFeedback,
+      overall_band: score.overallBand,
+      task_response_band: score.bandScores.task_response,
+      coherence_band: score.bandScores.coherence_and_cohesion,
+      lexical_band: score.bandScores.lexical_resource,
+      grammar_band: score.bandScores.grammatical_range,
+      tokens_used: score.tokensUsed ?? 0,
+      submitted_at: nowIso,
+    };
+
+    const { data: responseRow, error: upsertError } = await ctx.supabase
+      .from('writing_responses')
+      .upsert(upsertPayload, { onConflict: 'exam_attempt_id,task' })
+      .select('id')
+      .maybeSingle();
+
+    if (upsertError) {
+      logger.error('failed to persist writing response', { error: upsertError.message });
+      res.status(500).json({ error: 'Failed to persist score' });
+      finish(500);
+      return;
+    }
+
+    if (responseRow?.id) {
+      const { error: feedbackError } = await ctx.supabase
+        .from('writing_feedback')
+        .upsert(
+          {
+            attempt_id: responseRow.id,
+            band9_rewrite: rewrite,
+            errors,
+            blocks,
+            created_at: nowIso,
+          },
+          { onConflict: 'attempt_id' },
+        );
+      if (feedbackError) {
+        logger.warn('failed to upsert feedback', { attemptId: responseRow.id, error: feedbackError.message });
+      }
+    }
+
+    if (attemptId) {
+      const { error: eventError } = await ctx.supabase.from('exam_events').insert({
+        attempt_id: attemptId,
+        user_id: ctx.user.id,
+        event_type: 'score',
+        payload: {
+          task: payload.task,
+          version: 'v2',
+          event: 'writing.score.v2',
+          score: result,
+        },
+      });
+      if (eventError) {
+        logger.warn('failed to log exam event', { attemptId, error: eventError.message });
+      }
+    }
+
+    logger.info('scored writing response', {
+      attemptId: attemptId ?? undefined,
+      responseId: responseRow?.id,
+      task: payload.task,
+      overallBand: score.overallBand,
+    });
+
+    ok(res, { ok: true, result });
+    finish(200);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error('unhandled error scoring writing response', { error: message });
+    res.status(500).json({ error: 'Failed to score writing response' });
+    finish(500);
+  }
 }
+
+export default withPlan('starter', handler, {
+  allowRoles: ['admin', 'teacher'],
+  killSwitchFlag: 'killSwitchWriting',
+});

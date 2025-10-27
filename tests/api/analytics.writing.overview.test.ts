@@ -1,5 +1,11 @@
-import { strict as assert } from 'node:assert';
-import { test, vi } from 'vitest';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import handler, {
+  __setAnalyticsWritingOverviewTestOverrides as setOverviewTestOverrides,
+  __resetAnalyticsWritingOverviewTestOverrides as resetOverviewTestOverrides,
+  __clearAnalyticsWritingOverviewCache as clearOverviewCache,
+} from '../../pages/api/analytics/writing/overview';
 
 const rows = [
   {
@@ -79,19 +85,6 @@ const queryBuilder = {
   },
 };
 
-vi.mock('../../lib/supabaseServer', () => ({
-  getServerClient: () => ({
-    auth: {
-      async getUser() {
-        return { data: { user: { id: 'user-123' } }, error: null };
-      },
-    },
-    from() {
-      return queryBuilder as any;
-    },
-  }),
-}));
-
 function createResponse() {
   let statusCode = 0;
   let payload: any;
@@ -116,10 +109,29 @@ function createResponse() {
   } as any;
 }
 
-test('overview API aggregates metrics and caches responses', async () => {
+test('overview API aggregates metrics and caches responses', async (t) => {
   const req = { method: 'GET', query: {} } as any;
   const res1 = createResponse();
-  const { default: handler } = await import('../../pages/api/analytics/writing/overview');
+
+  clearOverviewCache();
+  queryCount = 0;
+  setOverviewTestOverrides({
+    getClient: () => ({
+      auth: {
+        async getUser() {
+          return { data: { user: { id: 'user-123' } }, error: null };
+        },
+      },
+      from() {
+        return queryBuilder as any;
+      },
+    }) as any,
+  });
+
+  t.after(() => {
+    resetOverviewTestOverrides();
+    clearOverviewCache();
+  });
 
   await handler(req, res1);
 

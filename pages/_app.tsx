@@ -23,6 +23,8 @@ import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 import { destinationByRole } from '@/lib/routeAccess';
+import { primeClientSnapshot } from '@/lib/flags';
+import { InstalledAppProvider } from '@/hooks/useInstalledApp';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
@@ -52,13 +54,14 @@ import TeacherProfile from '@/components/teacher/TeacherProfile';
 
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
+import { OrgProvider } from '@/lib/orgs/context';
 import { HighContrastProvider } from '@/context/HighContrastContext';
 
 // ✅ NEW: global plan guard (client-side gating + ribbon)
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
-import type { SubscriptionTier } from '@/lib/navigation/types';
+import { logWritingAnalyticsView } from '@/lib/analytics/writing-events';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -147,6 +150,21 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const { locale: activeLocale } = useLocale();
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const routeLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flagsHydratedRef = useRef(false);
+
+  const refreshClientFlags = useCallback(async () => {
+    try {
+      const res = await fetch('/api/debug/feature-flags', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const payload = (await res.json()) as { flags?: Record<string, boolean> };
+      if (payload?.flags) {
+        primeClientSnapshot(payload.flags);
+        flagsHydratedRef.current = true;
+      }
+    } catch {
+      // ignore hydration errors — feature checks fall back to defaults
+    }
+  }, []);
 
   useEffect(() => {
     const clearRouteLoadingTimeout = () => {
@@ -183,6 +201,27 @@ function InnerApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     void loadTranslations(activeLocale as SupportedLocale);
   }, [activeLocale]);
+
+  useEffect(() => {
+    const logRoute = (url: string) => {
+      if (!url) return;
+      if (url.startsWith('/analytics/writing')) {
+        logWritingAnalyticsView({ source: 'route' });
+      }
+    };
+
+    logRoute(router.asPath);
+
+    const handleRouteChange = (url: string) => {
+      logRoute(url);
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
 
   // Expecting UserContext to expose approval status; default false if missing
   const { user, role, isTeacherApproved } = useUserContext() as {
@@ -337,6 +376,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
     } finally {
       syncingRef.current = false;
     }
+
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+      await refreshClientFlags();
+    }
   };
 
   useEffect(() => {
@@ -363,6 +406,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
         await bridgeSession('SIGNED_IN', session);
       } else {
         await bridgeSession('SIGNED_OUT', null);
+      }
+
+      if (!flagsHydratedRef.current) {
+        await refreshClientFlags();
       }
 
       if (session?.user && isAuthPage) {
@@ -536,7 +583,11 @@ export default function App(props: AppProps) {
       <ToastProvider>
         <NotificationProvider>
           <UserProvider>
-            <InnerApp {...props} />
+            <OrgProvider>
+              <InstalledAppProvider>
+                <InnerApp {...props} />
+              </InstalledAppProvider>
+            </OrgProvider>
           </UserProvider>
         </NotificationProvider>
       </ToastProvider>

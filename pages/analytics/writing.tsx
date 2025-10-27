@@ -6,7 +6,7 @@ import { Select } from '@/components/design-system/Select';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import WritingKPIs from '@/components/analytics/WritingKPIs';
 import WritingWeeklyTrend from '@/components/analytics/WritingWeeklyTrend';
-import { track } from '@/lib/analytics/track';
+import { logWritingAnalyticsView, logWritingAnalyticsTrendChange } from '@/lib/analytics/writing-events';
 import type { WritingOverview, WeeklySeries } from '@/types/analytics';
 
 type ApiSuccess = {
@@ -72,10 +72,11 @@ export default function WritingAnalyticsPage() {
 
   useEffect(() => {
     if (!loading && data) {
-      track('analytics.writing.view', {
+      logWritingAnalyticsView({
+        source: 'load',
         weeks,
         attempts: data.overview.totalAttempts,
-        cached: data.cached ? 1 : 0,
+        cached: data.cached,
       });
     }
   }, [loading, data, weeks]);
@@ -96,6 +97,7 @@ export default function WritingAnalyticsPage() {
     const value = Number(event.target.value);
     if (!Number.isFinite(value)) return;
     setWeeks(value);
+    logWritingAnalyticsTrendChange({ weeks: value, source: 'filter' });
   };
 
   return (
