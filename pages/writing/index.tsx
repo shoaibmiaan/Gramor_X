@@ -267,7 +267,7 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness }: PageProps) => 
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {attempt.status === 'scored' ? (
-                        <Button size="sm" variant="primary" href={`/writing/${attempt.id}/review`}>
+                        <Button size="sm" variant="primary" href={`/writing/review/${attempt.id}`}>
                           View feedback
                         </Button>
                       ) : (

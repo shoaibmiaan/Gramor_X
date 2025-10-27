@@ -182,7 +182,7 @@ const WritingPromptPage = ({ prompt, attempt }: PromptPageProps) => {
       }
       setStatus('submitted');
       window.setTimeout(() => {
-        void router.push(`/writing/${attemptId}/review`);
+        void router.push(`/writing/review/${attemptId}`);
       }, 600);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit attempt');
