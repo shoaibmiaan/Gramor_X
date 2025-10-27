@@ -30,17 +30,17 @@ type NormalizedSpeakingScript = {
   speakSeconds: number;
 };
 
-import fullExam001 from './full-exam-001.json';
-import fullExam002 from './full-exam-002.json';
-import fullExam003 from './full-exam-003.json';
-import fullExam004 from './full-exam-004.json';
-import fullExam005 from './full-exam-005.json';
-import fullExam006 from './full-exam-006.json';
-import fullExam007 from './full-exam-007.json';
-import fullExam008 from './full-exam-008.json';
-import fullExam009 from './full-exam-009.json';
-import fullExam010 from './full-exam-010.json';
-import fullExam011 from './full-exam-011.json';
+import fullExam001 from './ielts-speaking-full-001.json';
+import fullExam002 from './ielts-speaking-full-002.json';
+import fullExam003 from './ielts-speaking-full-003.json';
+import fullExam004 from './ielts-speaking-full-004.json';
+import fullExam005 from './ielts-speaking-full-005.json';
+import fullExam006 from './ielts-speaking-full-006.json';
+import fullExam007 from './ielts-speaking-full-007.json';
+import fullExam008 from './ielts-speaking-full-008.json';
+import fullExam009 from './ielts-speaking-full-009.json';
+import fullExam010 from './ielts-speaking-full-010.json';
+import fullExam011 from './ielts-speaking-full-011.json';
 import sample from './sample-001.json';
 
 const scripts = [
