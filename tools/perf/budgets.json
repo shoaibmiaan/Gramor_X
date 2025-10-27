@@ -1,0 +1,20 @@
+{
+  "routes": [
+    {
+      "pattern": "/mock/writing/*",
+      "budgets": {
+        "ttfb": 1200,
+        "lcp": 2500,
+        "inp": 200
+      }
+    },
+    {
+      "pattern": "/writing/results/*",
+      "budgets": {
+        "ttfb": 1400,
+        "lcp": 2600,
+        "inp": 220
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 import type { ChallengeLeaderboardEntry } from "@/types/challenge";
 
 export type LeaderboardProps = {
@@ -13,6 +14,7 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
   const [rows, setRows] = useState<ChallengeLeaderboardEntry[]>([...initial]);
   const [loading, setLoading] = useState<boolean>(!initial.length);
   const [error, setError] = useState<string | null>(null);
+  const snapshotDate = useMemo(() => rows[0]?.snapshotDate ?? null, [rows]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -56,6 +58,11 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
           {error}
         </div>
       )}
+      {snapshotDate ? (
+        <p className="text-caption text-muted-foreground">
+          Snapshot {new Date(snapshotDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </p>
+      ) : null}
 
       <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
         {loading && !rows.length ? (
@@ -84,16 +91,17 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
                 <div className="truncate text-small text-foreground">{r.fullName}</div>
                 <div className="text-caption text-muted-foreground">
                   {r.completedTasks}/{r.totalTasks} tasks
+                  {typeof r.xp === 'number' ? ` • ${r.xp} XP` : ''}
                 </div>
               </div>
 
-              <div className="w-28">
-                <Progress
-                  value={
-                    r.totalTasks > 0 ? Math.round((r.completedTasks / r.totalTasks) * 100) : 0
-                  }
-                />
-              </div>
+              <ProgressBar
+                value={
+                  r.totalTasks > 0 ? Math.round((r.completedTasks / r.totalTasks) * 100) : 0
+                }
+                ariaLabel="Task completion"
+                className="w-28"
+              />
             </li>
           ))
         ) : (
@@ -106,14 +114,6 @@ export function Leaderboard({ cohortId, initial = [] }: LeaderboardProps) {
           🏆 Congrats to the top performers! Keep pushing for Band&nbsp;9!
         </p>
       )}
-    </div>
-  );
-}
-
-function Progress({ value }: { value: number }) {
-  return (
-    <div className="relative h-2 w-full overflow-hidden rounded bg-border/50">
-      <div className="absolute left-0 top-0 h-full bg-primary" style={{ width: `${value}%` }} />
     </div>
   );
 }

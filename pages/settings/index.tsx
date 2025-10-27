@@ -15,7 +15,7 @@ import { badges } from '@/data/badges';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
 import QuickDrillButton from '@/components/quick/QuickDrillButton';
-import { WordOfTheDayCard } from '@/components/feature/WordOfTheDayCard';
+import { VocabularySpotlightFeature } from '@/components/feature/VocabularySpotlight';
 import { HeaderStreakChip } from '@/components/feature/HeaderStreakChip';
 
 import { useStreak } from '@/hooks/useStreak';
@@ -268,9 +268,9 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {/* Word of the day */}
+        {/* Vocabulary spotlight */}
         <div className="mt-10">
-          <WordOfTheDayCard />
+          <VocabularySpotlightFeature />
         </div>
 
         {/* Top summary cards */}

@@ -1,6 +1,8 @@
 // lib/mistakes.ts
 // Client helpers for the Mistakes Book experience.
 
+export type MistakeTag = { key: string; value: string };
+
 export type MistakeRecord = {
   id: string;
   prompt: string;
@@ -11,6 +13,7 @@ export type MistakeRecord = {
   createdAt: string;
   lastSeenAt: string;
   retryPath: string | null;
+  tags?: MistakeTag[];
 };
 
 export type MistakePage = {
