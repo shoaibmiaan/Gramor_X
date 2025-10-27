@@ -26,29 +26,29 @@ const tiers: readonly Tier[] = [
   {
     name: 'Compass',
     headline: 'Kickstart your prep',
-    description: 'Core modules plus daily streak nudges to build momentum.',
+    description: 'Core lessons plus focused nudges to build a steady study rhythm.',
     price: { monthly: 'Free', quarterly: 'Free' },
     featured: false,
     features: [
-      'IELTS basics across all four skills',
+      'Foundations across all four skills',
       'Daily vocab streak challenge',
-      'Weekly grammar micro-drill',
-      'Two AI essay checks per month',
+      'Weekly grammar micro drills',
+      '2 AI essay reviews monthly',
     ],
     guarantee: 'Preview the adaptive system before upgrading.',
   },
   {
     name: 'Seedling',
     headline: 'Guided growth',
-    description: 'Adaptive plans, twice-monthly mocks, and AI feedback for steady gains.',
+    description: 'Adaptive plans, twice-monthly mocks, and fast AI feedback for steady gains.',
     price: { monthly: '$9.99', quarterly: '$25.50' },
-    savings: 'Save 15% billed quarterly',
+    savings: 'Save 15% with quarterly billing',
     featured: false,
     features: [
       'Adaptive daily lessons with diagnostics',
-      'Two full mock tests each month',
-      'Five AI writing reviews per month',
-      'Three speaking partner sessions with transcripts',
+      '2 full mock tests monthly',
+      '5 AI writing reviews monthly',
+      '3 speaking partner sessions + transcripts',
       'Skill analytics dashboard',
       'Email + community support',
     ],
@@ -57,19 +57,19 @@ const tiers: readonly Tier[] = [
   {
     name: 'Rocket',
     headline: 'Exam sprint',
-    description: 'Unlimited mocks, deeper analytics, and human coaching when it counts.',
+    description: 'Unlimited mocks, richer analytics, and human coaching when it counts.',
     price: { monthly: '$14.99', quarterly: '$38.25' },
     savings: 'Includes priority teacher reviews',
     featured: true,
     features: [
       'Unlimited full-length mock exams',
-      'Unlimited AI writing + speaking transcripts',
-      'Weekly teacher review on writing & speaking',
-      'Advanced performance intelligence sprints',
+      'Unlimited AI writing & speaking transcripts',
+      'Weekly teacher review for writing & speaking',
+      'Advanced performance intel sprints',
       'Premium rooms and live workshops',
-      'Band predictor with personalised reports',
+      'Band predictor with personal reports',
     ],
-    guarantee: 'Score-improvement guarantee or next month free.',
+    guarantee: 'Improve your score or the next month is on us.',
   },
 ];
 
@@ -77,17 +77,17 @@ const valueProps = [
   {
     icon: 'ShieldCheck',
     title: '14-day satisfaction',
-    description: 'Not a fit within 14 days? We refund the latest charge.',
+    description: 'Not a fit within 14 days? We refund your latest charge—no friction.',
   },
   {
     icon: 'Sparkles',
     title: 'All plans include',
-    description: 'AI feedback, speaking transcripts, and an exam-day style UI.',
+    description: 'AI feedback, speaking transcripts, and an exam-day inspired interface.',
   },
   {
     icon: 'Headphones',
     title: 'Human help when stuck',
-    description: 'Mentors reply with rubric notes within 24 hours on paid tiers.',
+    description: 'Mentors reply with rubric notes inside 24 hours on paid tiers.',
   },
 ] as const;
 
@@ -109,8 +109,10 @@ export const Pricing: React.FC = () => {
             <Icon name="Layers" className="text-electricBlue" size={16} />
             Flexible access for every mission
           </Badge>
-          <h2 className="font-slab text-display tracking-tight text-gradient-primary">Choose your launch velocity</h2>
-          <p className="mt-3 text-lg text-muted-foreground">
+          <h2 className="font-slab text-display tracking-tight text-gradient-primary text-balance">
+            Choose your launch velocity
+          </h2>
+          <p className="mt-3 text-lg text-muted-foreground text-pretty text-balance">
             Start free, upgrade when you need unlimited mocks and coaching.
           </p>
         </div>
@@ -156,15 +158,23 @@ export const Pricing: React.FC = () => {
               >
                 {tier.featured ? <Ribbon label="Most popular" variant="accent" position="top-right" /> : null}
 
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-2xl font-semibold text-foreground">{tier.name}</h3>
-                  <Badge variant={tier.featured ? 'accent' : 'secondary'} size="sm">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-2xl font-semibold text-foreground text-balance sm:pr-3">{tier.name}</h3>
+                  <Badge
+                    variant={tier.featured ? 'accent' : 'secondary'}
+                    size="sm"
+                    className="self-start sm:self-auto"
+                  >
                     {tier.featured ? 'Full access' : 'Core access'}
                   </Badge>
                 </div>
 
-                <p className="mt-2 text-sm uppercase tracking-[0.3em] text-muted-foreground/80">{tier.headline}</p>
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{tier.description}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-muted-foreground/80 sm:text-sm">
+                  {tier.headline}
+                </p>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed text-pretty text-balance">
+                  {tier.description}
+                </p>
 
                 <div className="mt-6 flex items-end gap-2">
                   <span className="font-slab text-4xl font-semibold text-gradient-primary">{price}</span>
@@ -176,18 +186,18 @@ export const Pricing: React.FC = () => {
                   </div>
                 ) : null}
 
-                <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
+                <ul className="mt-6 space-y-2.5 text-sm text-muted-foreground">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-neonGreen/15 text-neonGreen">
                         <Icon name="Check" size={16} />
                       </span>
-                      <span>{feature}</span>
+                      <span className="flex-1 text-pretty text-balance leading-snug">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <div className="mt-6 rounded-2xl border border-dashed border-electricBlue/40 bg-electricBlue/5 px-4 py-3 text-sm text-electricBlue/90">
+                <div className="mt-6 rounded-2xl border border-dashed border-electricBlue/40 bg-electricBlue/5 px-4 py-3 text-sm text-electricBlue/90 text-pretty text-balance">
                   <Icon name="ShieldCheck" size={16} className="mr-2 inline-block align-middle" />
                   {tier.guarantee}
                 </div>
@@ -219,7 +229,7 @@ export const Pricing: React.FC = () => {
                 <Icon name={value.icon} size={22} />
               </div>
               <h3 className="mt-4 text-lg font-semibold text-foreground">{value.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{value.description}</p>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed text-pretty">{value.description}</p>
             </Card>
           ))}
         </div>

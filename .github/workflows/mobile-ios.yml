@@ -1,0 +1,196 @@
+name: Mobile iOS (Archive)
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 'Semver version matching the web release'
+        required: true
+        default: '0.1.2'
+      build_number:
+        description: 'Xcode build number override (defaults to derived value)'
+        required: false
+        default: ''
+      scheme:
+        description: 'Xcode scheme to archive'
+        required: true
+        default: 'GramorX'
+      release_notes:
+        description: 'Optional changelog notes for this build'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: macos-latest
+    env:
+      NODE_VERSION: '20'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_ENV: production
+
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: anon_dummy
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_SERVICE_KEY: service_dummy
+      SUPABASE_SERVICE_ROLE_KEY: role_dummy
+      TWILIO_ACCOUNT_SID: ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      TWILIO_AUTH_TOKEN: dummytoken
+      TWILIO_VERIFY_SERVICE_SID: VAXxxxxxxxxxxxxxxxxxxxxxxxx
+      TWILIO_WHATSAPP_FROM: whatsapp:+10000000000
+      NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: '60'
+      STRIPE_PRICE_STARTER_MONTHLY: price_dummy
+      STRIPE_PRICE_STARTER_ANNUAL: price_dummy
+      STRIPE_PRICE_BOOSTER_MONTHLY: price_dummy
+      STRIPE_PRICE_BOOSTER_ANNUAL: price_dummy
+      STRIPE_PRICE_MASTER_MONTHLY: price_dummy
+      STRIPE_PRICE_MASTER_ANNUAL: price_dummy
+      NEXT_PUBLIC_DEV_PAYMENTS: '1'
+      EASYPASA_MERCHANT_ID: dummy_merchant
+      EASYPASA_SECRET: dummy_secret
+      JAZZCASH_MERCHANT_ID: dummy_merchant
+      JAZZCASH_INTEGRITY_SALT: dummy_salt
+      SPEAKING_DAILY_LIMIT: '5'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance guardrails (tests/perf)
+        run: npm test -- tests/perf
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Sync versions & changelog
+        env:
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+        run: |
+          set -euo pipefail
+          ARGS=(--platform ios --version "${{ inputs.app_version }}")
+          if [ -n "${BUILD_NUMBER}" ]; then
+            ARGS+=(--ios-build "${BUILD_NUMBER}")
+          fi
+          if [ -n "${RELEASE_NOTES}" ]; then
+            ARGS+=(--notes "${RELEASE_NOTES}")
+          fi
+          npx tsx tools/mobile/versioning.ts "${ARGS[@]}"
+
+      - name: Install CocoaPods (if needed)
+        working-directory: mobile/ios
+        run: |
+          set -euo pipefail
+          if [ -f Podfile ]; then
+            gem install cocoapods --user-install
+            GEM_BIN=$(ruby -e 'print Gem.user_dir')/bin
+            export PATH="${GEM_BIN}:$PATH"
+            pod install
+          else
+            echo "No Podfile found – skipping pod install"
+          fi
+
+      - name: Create unsigned archive
+        working-directory: mobile/ios
+        env:
+          SCHEME: ${{ inputs.scheme }}
+          MARKETING_VERSION: ${{ inputs.app_version }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          set -euo pipefail
+          TARGET=""
+          if ls *.xcworkspace >/dev/null 2>&1; then
+            TARGET="-workspace $(ls *.xcworkspace | head -n1)"
+          elif ls *.xcodeproj >/dev/null 2>&1; then
+            TARGET="-project $(ls *.xcodeproj | head -n1)"
+          else
+            echo "No Xcode workspace or project found under mobile/ios" >&2
+            exit 1
+          fi
+
+          ARCHIVE_DIR="${PWD}/build"
+          mkdir -p "${ARCHIVE_DIR}"
+          ARCHIVE_PATH="${ARCHIVE_DIR}/${SCHEME}.xcarchive"
+          DERIVED_BUILD_NUMBER="${BUILD_NUMBER}"
+          if [ -z "${DERIVED_BUILD_NUMBER}" ]; then
+            DERIVED_BUILD_NUMBER=$(node -e "console.log(require('./version.json').buildNumber)")
+          fi
+
+          xcodebuild ${TARGET} \
+            -scheme "${SCHEME}" \
+            -configuration Release \
+            -archivePath "${ARCHIVE_PATH}" \
+            archive \
+            MARKETING_VERSION="${MARKETING_VERSION}" \
+            CURRENT_PROJECT_VERSION="${DERIVED_BUILD_NUMBER}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export ad-hoc IPA (manual signing)
+        working-directory: mobile/ios
+        env:
+          SCHEME: ${{ inputs.scheme }}
+        run: |
+          set -euo pipefail
+          ARCHIVE_PATH="${PWD}/build/${SCHEME}.xcarchive"
+          if [ ! -d "${ARCHIVE_PATH}" ]; then
+            echo "Archive not found at ${ARCHIVE_PATH}" >&2
+            exit 1
+          fi
+          EXPORT_DIR="${PWD}/build/export"
+          mkdir -p "${EXPORT_DIR}"
+          cat <<'PLIST' > exportOptions.plist
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>ad-hoc</string>
+  <key>signingStyle</key>
+  <string>manual</string>
+  <key>compileBitcode</key>
+  <false/>
+</dict>
+</plist>
+PLIST
+          xcodebuild -exportArchive \
+            -archivePath "${ARCHIVE_PATH}" \
+            -exportPath "${EXPORT_DIR}" \
+            -exportOptionsPlist exportOptions.plist \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-archive-${{ inputs.app_version }}
+          path: |
+            mobile/ios/build/${{ inputs.scheme }}.xcarchive
+            mobile/ios/build/export/*.ipa
+          if-no-files-found: warn
+
+      - name: Upload release metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-release-${{ inputs.app_version }}
+          path: |
+            docs/mobile/CHANGELOG.md
+            mobile/ios/version.json
+          if-no-files-found: error
+
+      - name: Upload performance budgets snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-guardrails
+          path: tools/perf/budgets.json
+          if-no-files-found: error

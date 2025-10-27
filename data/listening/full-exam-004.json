@@ -1,0 +1,343 @@
+{
+  "id": "ielts-listening-full-004",
+  "title": "IELTS Listening Full Mock Exam 004",
+  "durationSec": 2400,
+  "transcript": "Expect a community sports day booking call, an outdoor festival layout briefing, a planning debate on a community garden, and a lecture on heat island mitigation.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Community Sports Day Booking",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-004-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-004-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Lakeside Activity Center",
+            "Harbor Loft",
+            "City Library Hall",
+            "Greenfield Barn"
+          ],
+          "answer": "Lakeside Activity Center"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "22nd May"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "10:00 am"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "95"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Healthy picnic packs",
+            "Gala dinner service",
+            "Food truck lineup",
+            "Dessert tasting bar"
+          ],
+          "answer": "Healthy picnic packs"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "180 pounds"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "portable sound system"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Jordan"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "North overflow lot",
+            "Riverbank street parking",
+            "Staff garage",
+            "Community center basement"
+          ],
+          "answer": "North overflow lot"
+        },
+        {
+          "id": "ielts-listening-full-004-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "cluster tables"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Outdoor Festival Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-004-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-004-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "events safety manager",
+            "stage producer",
+            "volunteer marshal",
+            "marketing officer"
+          ],
+          "answer": "events safety manager"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "layout briefing for riverside festival"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "22 minutes"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Harbor information tent"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": ["Vendor row", "Main stage", "Children's zone", "Boat launch"],
+          "answer": "Vendor row"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Zone C"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "HarborFest-24"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Thursday"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": [
+            "high-visibility vest",
+            "formal invitations",
+            "passport copies",
+            "chef jackets"
+          ],
+          "answer": "high-visibility vest"
+        },
+        {
+          "id": "ielts-listening-full-004-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0191 443 7720"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Debate on Community Garden",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-004-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-004-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "community garden expansion",
+            "campus shuttle redesign",
+            "digital library archive",
+            "winter sports program"
+          ],
+          "answer": "community garden expansion"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Mateo"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "5 June"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "every Wednesday lunchtime"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "doorstep surveys",
+            "mass emails",
+            "automated phone calls",
+            "satellite analysis"
+          ],
+          "answer": "doorstep surveys"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "CivicPulse"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£310"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Ms. Patel"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "securing council permits",
+            "training volunteer guides",
+            "maintaining snow machines",
+            "booking recording studios"
+          ],
+          "answer": "securing council permits"
+        },
+        {
+          "id": "ielts-listening-full-004-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "10 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Urban Heat Islands",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-004-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-004-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "urban heat island mitigation",
+            "deep sea exploration",
+            "classical poetry translation",
+            "culinary nutrition trends"
+          ],
+          "answer": "urban heat island mitigation"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "7 degrees Celsius"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "cool roof corridors"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Phoenix"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "community tree planting incentives",
+            "luxury tourism demand",
+            "student enrolment growth",
+            "celebrity chef endorsements"
+          ],
+          "answer": "community tree planting incentives"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Climate Resilience Unit"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Heatwise City Playbook"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2020"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "funding long-term maintenance",
+            "recruiting docents",
+            "training divers",
+            "securing script rights"
+          ],
+          "answer": "funding long-term maintenance"
+        },
+        {
+          "id": "ielts-listening-full-004-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "layer nature-based solutions"
+        }
+      ]
+    }
+  ]
+}
