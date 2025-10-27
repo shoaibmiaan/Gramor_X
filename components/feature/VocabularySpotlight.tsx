@@ -5,8 +5,16 @@ import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Container } from '@/components/design-system/Container';
 import { Icon } from '@/components/design-system/Icon';
+import { AudioBar } from '@/components/design-system/AudioBar';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { fetchStreak } from '@/lib/streak';
+
+type WordPronunciation = {
+  ipa: string | null;
+  audioUrl: string | null;
+  locale: string | null;
+  label: string | null;
+};
 
 type WordInfo = {
   id: string;
@@ -15,6 +23,9 @@ type WordInfo = {
   example: string | null;
   synonyms: string[];
   interest: string | null;
+  partOfSpeech: string | null;
+  categories: string[];
+  pronunciations: WordPronunciation[];
 };
 
 type WordOfTheDayPayload = {
@@ -65,11 +76,8 @@ type WordExperienceState = {
 
 type VocabularySpotlightVariant = 'default' | 'guestSampler';
 
-const highlightPills = [
-  'Daily boost',
-  'Audio rich',
-  'Adaptive review',
-] as const;
+const highlightPills = ['Daily boost', 'Audio rich', 'Adaptive review'] as const;
+const GUEST_WORD_TOTAL = 4;
 
 const groups: FeatureGroup[] = [
   {
@@ -160,6 +168,12 @@ const GUEST_SAMPLER_WORDS: WordInfo[] = [
     example: 'In Speaking Part 3 you must articulate complex opinions with confidence.',
     synonyms: ['express', 'voice', 'enunciate'],
     interest: 'Describe articulate speakers to impress examiners and show command over precision language.',
+    partOfSpeech: 'verb',
+    categories: ['Speaking', 'Communication'],
+    pronunciations: [
+      { ipa: '/ɑrˈtɪkjələt/', audioUrl: null, locale: 'en-US', label: 'American' },
+      { ipa: '/ɑːˈtɪkjʊlənt/', audioUrl: null, locale: 'en-GB', label: 'British' },
+    ],
   },
   {
     id: 'guest-meticulous',
@@ -168,6 +182,12 @@ const GUEST_SAMPLER_WORDS: WordInfo[] = [
     example: 'Her meticulous notes helped her spot patterns in IELTS Reading passages.',
     synonyms: ['thorough', 'careful', 'precise'],
     interest: 'Use it in Writing Task 2 when praising meticulous planning and structured arguments.',
+    partOfSpeech: 'adjective',
+    categories: ['Writing', 'Study habits'],
+    pronunciations: [
+      { ipa: '/məˈtɪkjələs/', audioUrl: null, locale: 'en-US', label: 'American' },
+      { ipa: '/mɪˈtɪkjʊləs/', audioUrl: null, locale: 'en-GB', label: 'British' },
+    ],
   },
   {
     id: 'guest-resilient',
@@ -176,8 +196,49 @@ const GUEST_SAMPLER_WORDS: WordInfo[] = [
     example: 'Staying resilient after a tough mock test is crucial for long-term progress.',
     synonyms: ['tough', 'persistent', 'hardy'],
     interest: 'Perfect for Speaking stories about overcoming setbacks and persevering.',
+    partOfSpeech: 'adjective',
+    categories: ['Mindset', 'Motivation'],
+    pronunciations: [
+      { ipa: '/rɪˈzɪljənt/', audioUrl: null, locale: 'en-US', label: 'American' },
+      { ipa: '/rɪˈzɪljənt/', audioUrl: null, locale: 'en-GB', label: 'British' },
+    ],
   },
 ];
+
+function normalizeWordInfo(word: Partial<WordInfo> | null | undefined): WordInfo {
+  const synonymSource = Array.isArray(word?.synonyms) ? word?.synonyms ?? [] : [];
+  const synonyms = synonymSource
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry): entry is string => entry.length > 0);
+
+  const categorySource = Array.isArray(word?.categories) ? word?.categories ?? [] : [];
+  const categories = categorySource
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry): entry is string => entry.length > 0);
+
+  const pronunciationSource = Array.isArray(word?.pronunciations) ? word.pronunciations ?? [] : [];
+  const pronunciations = pronunciationSource
+    .map((entry) => ({
+      ipa: typeof entry?.ipa === 'string' && entry.ipa.trim().length > 0 ? entry.ipa.trim() : null,
+      audioUrl: typeof entry?.audioUrl === 'string' && entry.audioUrl.trim().length > 0 ? entry.audioUrl.trim() : null,
+      locale: typeof entry?.locale === 'string' && entry.locale.trim().length > 0 ? entry.locale.trim() : null,
+      label: typeof entry?.label === 'string' && entry.label.trim().length > 0 ? entry.label.trim() : null,
+    }))
+    .filter((entry) => entry.ipa || entry.audioUrl || entry.locale || entry.label);
+
+  return {
+    id: typeof word?.id === 'string' && word.id.trim().length > 0 ? word.id : 'word-of-day',
+    word: typeof word?.word === 'string' && word.word.trim().length > 0 ? word.word : 'Word of the day',
+    meaning: typeof word?.meaning === 'string' && word.meaning.trim().length > 0 ? word.meaning : 'Meaning coming soon.',
+    example: typeof word?.example === 'string' && word.example.trim().length > 0 ? word.example : null,
+    synonyms,
+    interest: typeof word?.interest === 'string' && word.interest.trim().length > 0 ? word.interest : null,
+    partOfSpeech:
+      typeof word?.partOfSpeech === 'string' && word.partOfSpeech.trim().length > 0 ? word.partOfSpeech : null,
+    categories,
+    pronunciations,
+  };
+}
 
 export function useWordOfTheDay(options: { enabled?: boolean } = {}): WordExperienceState {
   const { enabled = true } = options;
@@ -228,11 +289,16 @@ export function useWordOfTheDay(options: { enabled?: boolean } = {}): WordExperi
       }
 
       const json = (await res.json()) as WordOfTheDayPayload;
-      const streakDays = await syncStreak(json.streakDays ?? 0);
+      const word = normalizeWordInfo(json?.word ?? null);
+      const streakDays = await syncStreak(
+        typeof json?.streakDays === 'number' && Number.isFinite(json.streakDays) ? json.streakDays : 0,
+      );
       const normalized: WordOfTheDayPayload = {
         ...json,
+        word,
         streakDays,
         longestStreak: Math.max(json.longestStreak ?? 0, streakDays),
+        streakValueUSD: Number.isFinite(json.streakValueUSD) ? json.streakValueUSD : 0,
       };
       setData(normalized);
       return normalized;
@@ -362,14 +428,55 @@ const SynonymBadge: React.FC<{ value: string }> = ({ value }) => (
   <span className="rounded-full bg-muted/60 px-3 py-1 text-xs font-medium text-foreground/70">{value}</span>
 );
 
+const CategoryBadge: React.FC<{ value: string }> = ({ value }) => (
+  <Badge variant="neutral" size="xs" className="rounded-full bg-muted/70 text-[0.6rem] uppercase tracking-wide">
+    {value}
+  </Badge>
+);
+
+const WordPronunciations: React.FC<{ items: WordPronunciation[] }> = ({ items }) => {
+  const filtered = items.filter((item) => item.ipa || item.audioUrl);
+  if (filtered.length === 0) return null;
+
+  return (
+    <div className="mt-6 space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-electricBlue">Pronunciation</p>
+      <div className="space-y-3">
+        {filtered.map((item, index) => (
+          <div
+            key={`${item.locale ?? 'pron'}-${item.ipa ?? index}`}
+            className="flex flex-col gap-2 rounded-xl border border-border/40 bg-background/80 p-4 sm:flex-row sm:items-center"
+          >
+            <div className="flex flex-col">
+              <span className="text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
+                {item.label ?? item.locale ?? 'IPA'}
+              </span>
+              {item.ipa && <span className="text-base font-semibold text-foreground">{item.ipa}</span>}
+            </div>
+            {item.audioUrl && (
+              <AudioBar src={item.audioUrl} preload="none" className="sm:ml-auto sm:w-auto" />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 function WordContent({ data }: { data: WordOfTheDayPayload }) {
   return (
     <>
       <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-electricBlue">
         <Icon name="Sparkles" size={16} />
-        Word studio
+        Word studio 1.1
       </div>
       <h3 className="mt-3 text-4xl font-semibold capitalize sm:text-5xl">{data.word.word}</h3>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+        {data.word.partOfSpeech && <Badge variant="subtle">{data.word.partOfSpeech}</Badge>}
+        {data.word.categories.slice(0, 4).map((category) => (
+          <CategoryBadge key={category} value={category} />
+        ))}
+      </div>
       <p className="mt-3 max-w-xl text-base text-muted-foreground sm:text-lg">{data.word.meaning}</p>
       {data.word.synonyms.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -384,6 +491,7 @@ function WordContent({ data }: { data: WordOfTheDayPayload }) {
       {data.word.interest && (
         <p className="mt-3 text-sm text-primary">{data.word.interest}</p>
       )}
+      <WordPronunciations items={data.word.pronunciations ?? []} />
     </>
   );
 }
@@ -536,8 +644,8 @@ export function VocabularySpotlightFeature({
                   {data && (
                     <div className="text-sm text-muted-foreground">
                       🔥 <span className="font-semibold text-foreground">{data.streakDays}</span> day
-                      {data.streakDays === 1 ? '' : 's'} streak &bull; value $
-                      {Number.isFinite(data.streakValueUSD) ? data.streakValueUSD.toFixed(2) : '0.00'}
+                      {data.streakDays === 1 ? '' : 's'} streak • Personal best {Math.max(data.longestStreak, data.streakDays)}
+                      day{Math.max(data.longestStreak, data.streakDays) === 1 ? '' : 's'}
                     </div>
                   )}
                   {isGuestSampler && totalCount > 0 && (
@@ -639,13 +747,36 @@ export function VocabularySpotlightFeature({
 
 export function WordOfTheDayDeepDive() {
   const { data, error, loading, busy, markLearned } = useWordOfTheDay();
+  const [guestProgress, setGuestProgress] = React.useState<{ explored: number; total: number } | null>(null);
+
+  React.useEffect(() => {
+    if (!data?.word?.id) return;
+    if (typeof window === 'undefined') return;
+
+    if (data.word.id.startsWith('guest-')) {
+      const storageKey = 'gramorx.wordstudio.guestWords';
+      try {
+        const existing = JSON.parse(window.localStorage.getItem(storageKey) ?? '[]') as string[];
+        const nextSet = new Set(existing);
+        nextSet.add(data.word.id);
+        const list = Array.from(nextSet);
+        window.localStorage.setItem(storageKey, JSON.stringify(list));
+        setGuestProgress({ explored: list.length, total: GUEST_WORD_TOTAL });
+      } catch (err) {
+        console.warn('[WordOfTheDayDeepDive] guest progress failed', err);
+        setGuestProgress({ explored: 1, total: GUEST_WORD_TOTAL });
+      }
+    } else {
+      setGuestProgress(null);
+    }
+  }, [data?.word?.id]);
 
   return (
     <Container className="max-w-6xl">
       <div className="mx-auto max-w-3xl text-center">
         <Badge variant="info" size="sm" className="inline-flex items-center gap-2">
           <Icon name="Sparkles" size={16} className="text-electricBlue" />
-          Word studio
+          Word studio 1.1
         </Badge>
         <h1 className="mt-4 font-slab text-4xl font-semibold text-foreground sm:text-5xl">
           Discover today&apos;s IELTS-ready word
@@ -654,6 +785,18 @@ export function WordOfTheDayDeepDive() {
           Explore pronunciation-friendly definitions, context sentences, synonym webs, and streak insights that rival the WordUp
           experience.
         </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          {highlightPills.map((pill) => (
+            <Badge key={pill} variant="neutral" size="xs" className="uppercase tracking-[0.35em] text-[0.6rem]">
+              {pill}
+            </Badge>
+          ))}
+          {guestProgress && (
+            <Badge variant="info" size="xs" className="uppercase tracking-[0.35em] text-[0.6rem]">
+              {guestProgress.explored}/{guestProgress.total} words explored
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
@@ -683,8 +826,7 @@ export function WordOfTheDayDeepDive() {
                 <div className="text-sm text-muted-foreground">
                   🔥 <span className="font-semibold text-foreground">{data.streakDays}</span> day
                   {data.streakDays === 1 ? '' : 's'} streak • Personal best {Math.max(data.longestStreak, data.streakDays)} day
-                  {Math.max(data.longestStreak, data.streakDays) === 1 ? '' : 's'} • Value $
-                  {Number.isFinite(data.streakValueUSD) ? data.streakValueUSD.toFixed(2) : '0.00'}
+                  {Math.max(data.longestStreak, data.streakDays) === 1 ? '' : 's'}
                 </div>
               )}
             </div>
@@ -758,6 +900,15 @@ export function WordOfTheDayDeepDive() {
                   trailingIcon={<Icon name="ArrowUpRight" size={16} />}
                 >
                   Open vocabulary browser
+                </Button>
+                <Button
+                  href="/vocabulary/learned"
+                  variant="soft"
+                  tone="success"
+                  className="rounded-ds-xl"
+                  trailingIcon={<Icon name="BookmarkCheck" size={16} />}
+                >
+                  View learned words
                 </Button>
                 <Button
                   href="/dashboard"
