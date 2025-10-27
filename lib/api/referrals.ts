@@ -1,27 +1,13 @@
 // lib/api/referrals.ts
-export type CreateReferralResponse =
-  | Readonly<{ ok: true; code: string }>
-  | Readonly<{ ok: false; error: string }>;
-
-export type RedeemBody = Readonly<{ code: string; context?: 'signup' | 'checkout' }>;
-export type RedeemResponse =
-  | Readonly<{ ok: true; rewardDays: number }>
-  | Readonly<{ ok: false; error: string }>;
-
-export type ReferralStats = Readonly<{
-  myCode?: string;
-  totalRedemptions: number;
-  approvedRedemptions: number;
-  pendingRedemptions: number;
-  estimatedRewardDays: number;
-}>;
-
-export type StatsResponse =
-  | Readonly<{ ok: true; stats: ReferralStats }>
-  | Readonly<{ ok: false; error: string }>;
+import type {
+  CreateReferralResponse,
+  RedeemBody,
+  RedeemResponse,
+  StatsResponse,
+} from '@/types/referrals';
 
 export async function createReferralCode(): Promise<CreateReferralResponse> {
-  const res = await fetch('/api/referrals/create', { method: 'POST' });
+  const res = await fetch('/api/referrals/create-code', { method: 'POST' });
   return (await res.json()) as CreateReferralResponse;
 }
 

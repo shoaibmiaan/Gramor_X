@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500" role="img" aria-labelledby="title desc">
+  <title id="title">GramorX IELTS Prep with AI - App Store feature graphic</title>
+  <desc id="desc">Blue feature graphic summarizing the learning journey for the App Store.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="45%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(15,23,42,0.88)" />
+      <stop offset="100%" stop-color="rgba(15,23,42,0.6)" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="500" rx="32" fill="url(#bg)" />
+  <g transform="translate(80 90)">
+    <text x="0" y="0" font-size="60" font-family="'Roboto Slab', 'Segoe UI', sans-serif" font-weight="700" fill="#E0F2FE">
+      IELTS Prep with AI
+    </text>
+    <text x="0" y="56" font-size="28" font-family="'Inter', 'Segoe UI', sans-serif" fill="#BAE6FD">
+      Trusted by ambitious learners and institutions in 40+ countries.
+    </text>
+  </g>
+  <g transform="translate(80 170)" fill="#F8FAFC" font-family="'Inter', 'Segoe UI', sans-serif">
+    <text x="0" y="0" font-size="24">What&apos;s inside:</text>
+    <text x="0" y="38" font-size="22">• Speaking AI coach with pronunciation heatmaps</text>
+    <text x="0" y="72" font-size="22">• Reading labs that adapt to your target band</text>
+    <text x="0" y="106" font-size="22">• Writing scoring rubric with instant band insights</text>
+    <text x="0" y="140" font-size="22">• Progress dashboards for learners and guardians</text>
+  </g>
+  <g transform="translate(580 160)">
+    <rect width="360" height="220" rx="28" fill="url(#panel)" stroke="rgba(255,255,255,0.35)" />
+    <text x="40" y="70" font-size="54" font-family="'Roboto Slab', 'Segoe UI', sans-serif" fill="#F8FAFC" font-weight="600">
+      Band 8.0
+    </text>
+    <text x="40" y="120" font-size="22" font-family="'Inter', 'Segoe UI', sans-serif" fill="#C4B5FD">
+      Target locked · Smart reminders keep you on track
+    </text>
+    <g transform="translate(40 150)">
+      <rect width="280" height="52" rx="26" fill="#2563EB" />
+      <text x="140" y="34" text-anchor="middle" font-size="22" font-family="'Inter', 'Segoe UI', sans-serif" fill="#F8FAFC">
+        Download on the App Store
+      </text>
+    </g>
+  </g>
+</svg>

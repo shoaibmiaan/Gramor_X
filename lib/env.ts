@@ -26,6 +26,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_FEATURE_NOTIFICATIONS: z.string().optional(),
   NEXT_PUBLIC_FEATURE_QUICK_TEN: z.string().optional(),
   NEXT_PUBLIC_FEATURE_AI_ASSIST: z.string().optional(),
+  NEXT_PUBLIC_PUSH_PUBLIC_KEY: z.string().optional(),
 
   // Optional analytics/monitoring
   NEXT_PUBLIC_GA4_ID: z.string().optional(),
@@ -40,6 +41,9 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+
+  REVIEW_SHARE_SECRET: z.string().optional(),
+  REVIEW_SHARE_TTL_HOURS: z.coerce.number().optional(),
 
   ADMIN_EMAILS: z.string().optional(),
 
@@ -79,6 +83,7 @@ const envSchema = z.object({
   TWILIO_VERIFY_SERVICE_SID: z.string().min(1),
   TWILIO_WHATSAPP_FROM: z.string().min(1),
   TWILIO_BYPASS: z.string().optional(),
+  WHATSAPP_TASKS_SIGNING_SECRET: z.string().min(1),
 
   NEXT_PUBLIC_DEV_PAYMENTS: z.string().optional(),
   EASYPASA_MERCHANT_ID: z.string().optional(),
@@ -117,6 +122,7 @@ const raw = {
   NEXT_PUBLIC_FEATURE_NOTIFICATIONS: process.env.NEXT_PUBLIC_FEATURE_NOTIFICATIONS,
   NEXT_PUBLIC_FEATURE_QUICK_TEN: process.env.NEXT_PUBLIC_FEATURE_QUICK_TEN,
   NEXT_PUBLIC_FEATURE_AI_ASSIST: process.env.NEXT_PUBLIC_FEATURE_AI_ASSIST,
+  NEXT_PUBLIC_PUSH_PUBLIC_KEY: process.env.NEXT_PUBLIC_PUSH_PUBLIC_KEY,
 
   NEXT_PUBLIC_GA4_ID: process.env.NEXT_PUBLIC_GA4_ID,
   NEXT_PUBLIC_META_PIXEL_ID: process.env.NEXT_PUBLIC_META_PIXEL_ID,
@@ -128,6 +134,9 @@ const raw = {
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+
+  REVIEW_SHARE_SECRET: process.env.REVIEW_SHARE_SECRET,
+  REVIEW_SHARE_TTL_HOURS: process.env.REVIEW_SHARE_TTL_HOURS,
 
   ADMIN_EMAILS: process.env.ADMIN_EMAILS,
 
@@ -167,6 +176,7 @@ const raw = {
   TWILIO_VERIFY_SERVICE_SID: process.env.TWILIO_VERIFY_SERVICE_SID,
   TWILIO_WHATSAPP_FROM: process.env.TWILIO_WHATSAPP_FROM,
   TWILIO_BYPASS: process.env.TWILIO_BYPASS,
+  WHATSAPP_TASKS_SIGNING_SECRET: process.env.WHATSAPP_TASKS_SIGNING_SECRET,
 
   NEXT_PUBLIC_DEV_PAYMENTS: process.env.NEXT_PUBLIC_DEV_PAYMENTS,
   EASYPASA_MERCHANT_ID: process.env.EASYPASA_MERCHANT_ID,
@@ -215,10 +225,13 @@ const defaults = {
   SUPABASE_URL: 'http://localhost:54321',
   SUPABASE_SERVICE_KEY: 'service_key',
   SUPABASE_SERVICE_ROLE_KEY: 'service_role_key',
+  REVIEW_SHARE_SECRET: 'review_share_secret',
+  REVIEW_SHARE_TTL_HOURS: 72,
   TWILIO_ACCOUNT_SID: 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
   TWILIO_AUTH_TOKEN: 'auth_token',
   TWILIO_VERIFY_SERVICE_SID: 'VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
   TWILIO_WHATSAPP_FROM: 'whatsapp:+10000000000',
+  WHATSAPP_TASKS_SIGNING_SECRET: 'whatsapp_signing_secret',
   PAYMENTS_PROVIDER: 'none',
   NEXT_PUBLIC_PAYMENTS_PROVIDER: 'none',
 };
@@ -229,6 +242,9 @@ export const env = (parsed.success
       ...defaults,
       ...raw,
       NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: Number(raw.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30),
+      REVIEW_SHARE_TTL_HOURS: Number(
+        raw.REVIEW_SHARE_TTL_HOURS ?? defaults.REVIEW_SHARE_TTL_HOURS ?? 72,
+      ),
     });
 
 export const isBrowser = typeof window !== 'undefined';

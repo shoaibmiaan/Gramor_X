@@ -1,0 +1,22 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.gramorx.twa",
+      "sha256_cert_fingerprints": [
+        "8E:9F:6A:2C:44:C8:89:33:DA:38:B7:86:AA:0E:C1:DB:13:CF:4A:98:10:2B:26:0A:3E:F6:22:6D:87:95:41:72"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "web",
+      "site": "https://gramorx.com"
+    }
+  }
+]

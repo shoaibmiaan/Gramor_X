@@ -23,6 +23,8 @@ import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 import { destinationByRole } from '@/lib/routeAccess';
+import { primeClientSnapshot } from '@/lib/flags';
+import { InstalledAppProvider } from '@/hooks/useInstalledApp';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
@@ -52,6 +54,7 @@ import TeacherProfile from '@/components/teacher/TeacherProfile';
 
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
+import { OrgProvider } from '@/lib/orgs/context';
 import { HighContrastProvider } from '@/context/HighContrastContext';
 
 // ✅ NEW: global plan guard (client-side gating + ribbon)
@@ -214,6 +217,27 @@ function InnerApp({ Component, pageProps }: AppProps) {
     void loadTranslations(activeLocale as SupportedLocale);
   }, [activeLocale]);
 
+  useEffect(() => {
+    const logRoute = (url: string) => {
+      if (!url) return;
+      if (url.startsWith('/analytics/writing')) {
+        logWritingAnalyticsView({ source: 'route' });
+      }
+    };
+
+    logRoute(router.asPath);
+
+    const handleRouteChange = (url: string) => {
+      logRoute(url);
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
+
   // Expecting UserContext to expose approval status; default false if missing
   const { user, role, isTeacherApproved } = useUserContext() as {
     user: SupabaseUser | null;
@@ -258,12 +282,17 @@ function InnerApp({ Component, pageProps }: AppProps) {
     [pathname]
   );
 
+  const isMockTestsRoute = useMemo(() => pathname.startsWith('/mock-tests'), [pathname]);
+  const isMockTestsLanding = pathname === '/mock-tests';
+  const isMockTestsFlowRoute = isMockTestsRoute && !isMockTestsLanding;
+
   const isNoChromeRoute = useMemo(
     () =>
       /\/exam(\/|$)|\/exam-room(\/|$)|\/focus-mode(\/|$)/.test(pathname) ||
       isAuthPage ||
-      isPremiumRoomRoute,
-    [pathname, isAuthPage, isPremiumRoomRoute]
+      isPremiumRoomRoute ||
+      isMockTestsFlowRoute,
+    [pathname, isAuthPage, isPremiumRoomRoute, isMockTestsFlowRoute]
   );
 
   const showLayout = !needPremium && !isNoChromeRoute;
@@ -307,7 +336,8 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/proctoring/check') || pathname.startsWith('/proctoring/exam');
 
   const isExamRoute =
-    pathname.startsWith('/mock') ||
+    isMockTestsFlowRoute ||
+    pathname.startsWith('/mock/') ||
     pathname.startsWith('/listening') ||
     pathname.startsWith('/reading') ||
     pathname.startsWith('/writing') ||
@@ -361,6 +391,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
     } finally {
       syncingRef.current = false;
     }
+
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+      await refreshClientFlags();
+    }
   };
 
   useEffect(() => {
@@ -387,6 +421,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
         await bridgeSession('SIGNED_IN', session);
       } else {
         await bridgeSession('SIGNED_OUT', null);
+      }
+
+      if (!flagsHydratedRef.current) {
+        await refreshClientFlags();
       }
 
       if (session?.user && isAuthPage) {
@@ -560,7 +598,11 @@ export default function App(props: AppProps) {
       <ToastProvider>
         <NotificationProvider>
           <UserProvider>
-            <InnerApp {...props} />
+            <OrgProvider>
+              <InstalledAppProvider>
+                <InnerApp {...props} />
+              </InstalledAppProvider>
+            </OrgProvider>
           </UserProvider>
         </NotificationProvider>
       </ToastProvider>

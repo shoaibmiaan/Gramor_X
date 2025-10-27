@@ -1,516 +1,311 @@
-import OpenAI from 'openai';
+// pages/api/ai/writing/score-v2.ts
+// Second-pass scoring endpoint that enriches the baseline heuristics with
+// rewrite suggestions and highlight metadata.
+
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { z } from 'zod';
 
-import { trackor } from '@/lib/analytics/trackor.server';
-import { withPlan } from '@/lib/apiGuard';
-import { env } from '@/lib/env';
-import { redis } from '@/lib/redis';
-import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan, type PlanGuardContext } from '@/lib/api/withPlan';
+import { createRequestLogger } from '@/lib/obs/logger';
+import { recordSloSample } from '@/lib/obs/slo';
+import { applyRateLimit } from '@/lib/limits/rate';
+import { scoreEssay } from '@/lib/writing/scoring';
+import { sanitiseWritingErrors } from '@/lib/writing/diff';
+import { writingScoreV2RequestSchema } from '@/lib/validation/writing.v2';
+import type { WritingCriterion, WritingFeedbackBlock, WritingError } from '@/types/writing';
 
-const BodySchema = z.object({
-  attemptId: z.string().uuid().optional(),
-  taskType: z.enum(['task1', 'task2']),
-  promptId: z.string().uuid().optional(),
-  text: z.string().trim().min(80).max(8000),
-  words: z.number().int().min(50).max(2000).optional(),
-  targetBand: z.number().min(4).max(9).optional(),
-  locale: z.enum(['en']).default('en'),
-});
+const ROUTE = 'ai.writing.score-v2';
+const RATE_LIMIT = { windowMs: 60_000, max: 12 } as const;
+const SLO_TARGET_MS = 4000;
 
-const ModelBreakdownSchema = z
-  .object({
-    taskResponse: z.number(),
-    coherence: z.number(),
-    lexicalResource: z.number().optional(),
-    lexical_resource: z.number().optional(),
-    lexical: z.number().optional(),
-    lexicalRange: z.number().optional(),
-    lexical_range: z.number().optional(),
-    grammar: z.number().optional(),
-    grammaticalRange: z.number().optional(),
-    grammatical_range: z.number().optional(),
-    cohesion: z.number().optional(),
-    coherenceCohesion: z.number().optional(),
-  })
-  .passthrough();
-
-const ModelFeedbackSchema = z
-  .object({
-    summary: z.string(),
-    strengths: z.array(z.string()).optional(),
-    improvements: z.array(z.string()).optional(),
-  })
-  .partial({ strengths: true, improvements: true })
-  .passthrough();
-
-const ModelScoreSchema = z
-  .object({
-    overallBand: z.number(),
-    breakdown: ModelBreakdownSchema,
-    feedback: ModelFeedbackSchema.optional(),
-  })
-  .passthrough();
-
-type WritingScore = {
-  overall: number;
-  breakdown: { taskResponse: number; coherence: number; lexical: number; grammar: number };
-  suggestions: string[];
-  wordCount: number;
-  feedback?: {
-    summary: string;
-    strengths?: string[];
-    improvements?: string[];
-  };
-  provider?: string;
+const CRITERION_LABEL: Record<WritingCriterion, string> = {
+  task_response: 'Task Response',
+  coherence_and_cohesion: 'Coherence & Cohesion',
+  lexical_resource: 'Lexical Resource',
+  grammatical_range: 'Grammatical Range',
 };
 
-type WritingResponse =
-  | { ok: true; attemptId?: string; score: WritingScore }
-  | {
-      ok: false;
-      error: string;
-      code?: 'UNAUTHORIZED' | 'BAD_REQUEST' | 'NOT_FOUND' | 'DB_ERROR' | 'RATE_LIMITED';
-    };
+const capitalise = (value: string) => {
+  if (!value) return value;
+  return value
+    .split(/([.!?]\s+)/)
+    .map((segment) => {
+      const trimmed = segment.trim();
+      if (!trimmed) return segment;
+      return segment.charAt(0).toUpperCase() + segment.slice(1);
+    })
+    .join('');
+};
 
-type ModelScorePayload = z.infer<typeof ModelScoreSchema>;
+const buildBand9Rewrite = (essay: string) => {
+  const cleaned = essay
+    .split('\n')
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => capitalise(paragraph.replace(/\b(very|really)\b/gi, 'exceedingly')));
+  return cleaned.join('\n\n');
+};
 
-const openaiClient = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
-const openaiModel = (env.OPENAI_MODEL || 'gpt-4o-mini').trim();
-
-const DEFAULT_SUGGESTIONS = [
-  'Strengthen the overview and ensure each body paragraph clearly answers the task.',
-  'Use clearer linking phrases to improve cohesion between ideas.',
-  'Broaden your vocabulary choices and double-check complex grammar.',
-];
-
-function clampHalf(n: number, min = 0, max = 9) {
-  if (!Number.isFinite(n)) return min;
-  return Math.max(min, Math.min(max, Math.round(n * 2) / 2));
-}
-
-function countWords(text: string) {
-  return text.trim() ? text.trim().split(/\s+/).length : 0;
-}
-
-function sanitizeStrings(input?: string[] | null) {
-  if (!Array.isArray(input)) return [];
-  return Array.from(
-    new Set(
-      input
-        .map((s) => (typeof s === 'string' ? s.trim() : ''))
-        .filter((s) => s.length > 0)
-    ),
-  );
-}
-
-function pickNumber(obj: Record<string, unknown>, keys: string[], fallback: number) {
-  for (const key of keys) {
-    const val = obj[key];
-    if (typeof val === 'number' && Number.isFinite(val)) return val;
-    if (typeof val === 'string') {
-      const num = Number(val);
-      if (Number.isFinite(num)) return num;
-    }
-  }
-  return fallback;
-}
-
-type PromptLookupSource = Record<string, unknown> | null | undefined;
-
-function collectPromptCandidates(source: PromptLookupSource, taskType: 'task1' | 'task2') {
-  if (!source || typeof source !== 'object') return [] as { text: string; path: string }[];
-  const matches: { text: string; path: string }[] = [];
-  const stack: { value: unknown; path: string }[] = [{ value: source, path: '' }];
-
-  while (stack.length) {
-    const { value, path } = stack.pop()!;
-    if (value == null) continue;
-    if (typeof value === 'string') continue;
-    if (Array.isArray(value)) {
-      value.forEach((entry, idx) => stack.push({ value: entry, path: `${path}[${idx}]` }));
-      continue;
-    }
-    const entries = Object.entries(value as Record<string, unknown>);
-    for (const [key, val] of entries) {
-      const keyLower = key.toLowerCase();
-      const nextPath = path ? `${path}.${keyLower}` : keyLower;
-      if (typeof val === 'string') {
-        if (keyLower.includes('prompt') || keyLower.includes('question')) {
-          const text = val.trim();
-          if (text.length >= 12) matches.push({ text, path: nextPath });
-        }
-      } else if (val && typeof val === 'object') {
-        stack.push({ value: val, path: nextPath });
-      }
-    }
-  }
-
-  if (!matches.length) return matches;
-  const typeMatches = matches.filter((m) => m.path.includes(taskType));
-  return (typeMatches.length ? typeMatches : matches).sort((a, b) => b.text.length - a.text.length);
-}
-
-function extractPromptText(row: PromptLookupSource, taskType: 'task1' | 'task2') {
-  const candidates = collectPromptCandidates(row, taskType);
-  if (candidates.length) return candidates[0].text;
-  return null;
-}
-
-async function fetchPromptText(
-  supabase: ReturnType<typeof supabaseServer>,
-  promptId: string,
-  taskType: 'task1' | 'task2',
-) {
-  const tables: { name: string; columns: string }[] = [
-    { name: 'writing_prompts', columns: 'prompt, task1_prompt, task2_prompt, task1_question, task2_question, metadata_json' },
-    { name: 'content_items', columns: 'metadata_json' },
-  ];
-
-  for (const table of tables) {
-    try {
-      const { data, error } = await supabase.from(table.name).select(table.columns).eq('id', promptId).maybeSingle();
-      if (error || !data) continue;
-      const direct = extractPromptText(data, taskType);
-      if (direct) return direct;
-      if ('metadata_json' in data) {
-        const meta = (data as Record<string, unknown>).metadata_json;
-        const metaPrompt = extractPromptText(meta as PromptLookupSource, taskType);
-        if (metaPrompt) return metaPrompt;
-      }
-    } catch {
-      // Table might not exist in this environment; ignore and continue.
-    }
-  }
-
-  return null;
-}
-
-async function resolvePrompt(
-  supabase: ReturnType<typeof supabaseServer>,
-  attemptPromptId: string | null | undefined,
-  requestPromptId: string | undefined,
-  taskType: 'task1' | 'task2',
-) {
-  const ids = Array.from(new Set([requestPromptId, attemptPromptId].filter(Boolean))) as string[];
-  for (const id of ids) {
-    const text = await fetchPromptText(supabase, id, taskType);
-    if (text) return { promptId: id, promptText: text };
-  }
-  return { promptId: ids[0] ?? null, promptText: null };
-}
-
-function parseModelJson(raw: string) {
-  const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start >= 0 && end > start) {
-      const slice = cleaned.slice(start, end + 1);
-      try {
-        return JSON.parse(slice);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-}
-
-function normaliseModelScore(payload: ModelScorePayload, wordCount: number): WritingScore {
-  const breakdown = payload.breakdown ?? ({} as Record<string, unknown>);
-  const summary = payload.feedback?.summary?.trim();
-  const improvements = sanitizeStrings(payload.feedback?.improvements);
-  const strengths = sanitizeStrings(payload.feedback?.strengths);
-
-  const taskResponse = clampHalf(pickNumber(breakdown, ['taskResponse'], payload.overallBand));
-  const cohesion = clampHalf(
-    pickNumber(breakdown, ['coherence', 'cohesion', 'coherenceCohesion'], payload.overallBand),
-  );
-  const lexical = clampHalf(
-    pickNumber(
-      breakdown,
-      ['lexicalResource', 'lexical_resource', 'lexical', 'lexicalRange', 'lexical_range'],
-      payload.overallBand,
-    ),
-  );
-  const grammar = clampHalf(
-    pickNumber(breakdown, ['grammar', 'grammaticalRange', 'grammatical_range'], payload.overallBand),
-  );
-
-  const suggestions = improvements.length
-    ? improvements
-    : summary
-      ? [summary]
-      : DEFAULT_SUGGESTIONS;
-
-  return {
-    overall: clampHalf(payload.overallBand),
-    breakdown: {
-      taskResponse,
-      coherence: cohesion,
-      lexical,
-      grammar,
-    },
-    suggestions,
-    wordCount,
-    feedback: summary
-      ? {
-          summary,
-          strengths: strengths.length ? strengths : undefined,
-          improvements: improvements.length ? improvements : undefined,
-        }
-      : undefined,
-  };
-}
-
-function heuristic(text: string, wordsHint?: number): WritingScore {
-  const wordCount = wordsHint ?? countWords(text);
-  const longSentences = (text.match(/[,;:—-]/g) ?? []).length;
-  const paragraphs = text.split(/\n{2,}/).length;
-  const base = 6 + (paragraphs >= 3 ? 0.5 : 0) + (longSentences > 8 ? 0.5 : 0) + (wordCount > 260 ? 0.5 : 0);
-  const overall = clampHalf(base, 4.5, 8.5);
-  const improvements = [
-    'Strengthen the overview and maintain a clear position from the introduction.',
-    'Use topic sentences and cohesive devices to guide the reader.',
-    'Vary complex sentences while checking agreement and punctuation carefully.',
-  ];
-  const strengths = [
-    'Essay meets basic IELTS length expectations.',
-    'Multiple paragraphs indicate an attempt at clear structure.',
-  ];
-  return {
-    overall,
-    breakdown: {
-      taskResponse: clampHalf(base - 0.5, 4.5, 8.5),
-      coherence: clampHalf(base, 4.5, 8.5),
-      lexical: clampHalf(base - 0.5, 4.5, 8.5),
-      grammar: clampHalf(base - 0.5, 4.5, 8.5),
-    },
-    suggestions: improvements,
-    wordCount,
-    feedback: {
-      summary: 'Heuristic estimate. Provide more precise evaluation using the AI scorer when available.',
-      strengths,
-      improvements,
-    },
-    provider: 'heuristic',
-  };
-}
-
-async function scoreWithModel(opts: {
-  text: string;
-  promptText: string | null;
-  taskType: 'task1' | 'task2';
-  targetBand?: number;
-  wordCount: number;
-  locale?: string;
-}): Promise<{ score: WritingScore; provider: string; raw: unknown }>
-{
-  if (!openaiClient) {
-    return { score: heuristic(opts.text, opts.wordCount), provider: 'heuristic', raw: { reason: 'openai_disabled' } };
-  }
-
-  const taskLabel = opts.taskType === 'task1' ? 'Task 1' : 'Task 2';
-  const promptLines = [
-    `You are an IELTS Writing examiner. Evaluate the candidate's ${taskLabel} response using official band descriptors.`,
-    'Return a JSON object that matches this TypeScript type:',
-    '{',
-    '  "overallBand": number,',
-    '  "breakdown": {',
-    '    "taskResponse": number,',
-    '    "coherence": number,',
-    '    "lexicalResource": number,',
-    '    "grammar": number',
-    '  },',
-    '  "feedback": {',
-    '    "summary": string,',
-    '    "strengths": string[],',
-    '    "improvements": string[]',
-    '  }',
-    '}',
-    'Use 0.5 increments (e.g. 6.5). Keep the summary to two sentences.',
-  ];
-
-  if (opts.targetBand) {
-    promptLines.push(`The student is aiming for approximately band ${opts.targetBand}. Use this for coaching tone only.`);
-  }
-
-  const questionText = opts.promptText
-    ? `Task question:\n${opts.promptText.trim()}`
-    : 'Task question: Not available. Infer reasonable expectations from the answer.';
-
-  promptLines.push(questionText);
-  promptLines.push(`Candidate answer (${opts.wordCount} words):\n${opts.text.trim()}`);
-
-  try {
-    const completion = await openaiClient.chat.completions.create({
-      model: openaiModel,
-      temperature: 0,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: 'You are an IELTS Writing examiner providing band scores and feedback.' },
-        { role: 'user', content: promptLines.join('\n\n') },
-      ],
-    });
-
-    const rawText = completion.choices?.[0]?.message?.content ?? '{}';
-    const parsed = parseModelJson(rawText);
-    if (!parsed) throw new Error('Model response was not valid JSON');
-    const validated = ModelScoreSchema.safeParse(parsed);
-    if (!validated.success) throw new Error(`Invalid model response: ${validated.error.message}`);
-
-    const score = normaliseModelScore(validated.data, opts.wordCount);
-    return { score: { ...score, provider: openaiModel }, provider: openaiModel, raw: validated.data };
-  } catch (error) {
-    console.error('writing.score-v2 AI failure', error);
+const detectRepetition = (essay: string): WritingError[] => {
+  const matches = essay.match(/\b(\w+)\b(?=[^\w]+\1\b)/gi) ?? [];
+  const unique = Array.from(new Set(matches.map((token) => token.toLowerCase()))).slice(0, 5);
+  return unique.map((word) => {
+    const excerpt = `Repeated use of "${word}"`;
     return {
-      score: heuristic(opts.text, opts.wordCount),
-      provider: 'heuristic',
-      raw: { error: error instanceof Error ? error.message : String(error) },
+      type: 'lexical',
+      excerpt,
+      message: `The word "${word}" is repeated. Consider replacing with a synonym.`,
+      suggestion: `Introduce a synonym for "${word}" to demonstrate lexical range.`,
+      severity: 'medium' as const,
+    } satisfies WritingError;
+  });
+};
+
+const detectShortParagraphs = (essay: string): WritingError[] => {
+  const paragraphs = essay.split(/\n+/).filter((p) => p.trim().length > 0);
+  return paragraphs
+    .map((paragraph, index) => {
+      if (paragraph.length >= 120) return null;
+      return {
+        type: 'coherence',
+        excerpt: paragraph.trim().slice(0, 120),
+        message: `Paragraph ${index + 1} is brief. Develop the idea further for cohesion.`,
+        suggestion: 'Add supporting evidence or examples to strengthen this paragraph.',
+        severity: 'low' as const,
+      } satisfies WritingError;
+    })
+    .filter(Boolean) as WritingError[];
+};
+
+const detectSentenceFragments = (essay: string): WritingError[] => {
+  const sentences = essay.split(/(?<=[.!?])\s+/);
+  return sentences
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0 && !/[.!?]$/.test(sentence))
+    .slice(0, 3)
+    .map((sentence) =>
+      ({
+        type: 'grammar',
+        excerpt: sentence.slice(0, 140),
+        message: 'Sentence appears to be missing an ending punctuation mark.',
+        suggestion: 'Ensure each sentence has proper punctuation and forms a complete thought.',
+        severity: 'medium' as const,
+      }) satisfies WritingError,
+    );
+};
+
+const buildFocusBlocks = (
+  bands: Record<WritingCriterion, number>,
+  feedback: Record<WritingCriterion, { feedback: string }>,
+): WritingFeedbackBlock[] => {
+  const entries = Object.entries(bands).sort((a, b) => a[1] - b[1]).slice(0, 3);
+  return entries.map(([criterion, band], index) => {
+    const typedCriterion = criterion as WritingCriterion;
+    const weight = Number(Math.min(1, Math.max(0.25, (9 - band) / 6)).toFixed(2));
+    return {
+      tag: `writing-${typedCriterion}`,
+      title: `${CRITERION_LABEL[typedCriterion]} focus`,
+      description: feedback[typedCriterion]?.feedback ?? 'Deepen this criterion to unlock higher bands.',
+      weight,
+      criterion: typedCriterion,
+      action: index === 0 ? 'Review guided drills in study plan' : undefined,
+    } satisfies WritingFeedbackBlock;
+  });
+};
+
+const ok = (res: NextApiResponse, payload: Record<string, unknown>) => res.status(200).json(payload);
+
+async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuardContext) {
+  const start = Date.now();
+  const logger = createRequestLogger(ROUTE, {
+    requestId: req.headers['x-request-id'] as string | undefined,
+    userId: ctx.user.id,
+    plan: ctx.plan,
+  });
+
+  const finish = (status: number) => {
+    recordSloSample({ route: ROUTE, durationMs: Date.now() - start, status, targetMs: SLO_TARGET_MS });
+  };
+
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    res.status(405).json({ error: 'Method not allowed' });
+    finish(405);
+    return;
+  }
+
+  try {
+    const ipHeader = req.headers['x-forwarded-for'];
+    const ip = Array.isArray(ipHeader)
+      ? ipHeader[0]
+      : ipHeader?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+
+    const rateResult = await applyRateLimit(
+      { route: 'ai:writing:score-v2', identifier: `user:${ctx.user.id}:ip:${ip}`, userId: ctx.user.id },
+      { windowMs: RATE_LIMIT.windowMs, max: RATE_LIMIT.max },
+    );
+
+    res.setHeader('X-RateLimit-Limit', String(RATE_LIMIT.max));
+    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, rateResult.remaining)));
+
+    if (rateResult.blocked) {
+      const retryAfter = Math.max(1, rateResult.retryAfter || Math.ceil(RATE_LIMIT.windowMs / 1000));
+      res.setHeader('Retry-After', String(retryAfter));
+      res.status(429).json({ error: 'Too many requests', retryAfter });
+      logger.warn('rate limit blocked', { retryAfter, hits: rateResult.hits });
+      finish(429);
+      return;
+    }
+
+    const parsed = writingScoreV2RequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      const issues = parsed.error.flatten();
+      res.status(400).json({ error: 'Invalid payload', issues });
+      logger.warn('invalid payload', { issues });
+      finish(400);
+      return;
+    }
+
+    const payload = parsed.data;
+
+    let wordTarget: number | undefined;
+    if (payload.promptId) {
+      const { data: promptRow, error: promptError } = await ctx.supabase
+        .from('writing_prompts')
+        .select('word_target, task_type')
+        .eq('id', payload.promptId)
+        .maybeSingle();
+      if (promptError) {
+        logger.error('failed to load prompt metadata', { promptId: payload.promptId, error: promptError.message });
+      }
+      if (promptRow?.word_target) wordTarget = promptRow.word_target;
+      if (!payload.task && promptRow?.task_type) {
+        payload.task = promptRow.task_type as typeof payload.task;
+      }
+    }
+
+    const score = scoreEssay({
+      essay: payload.essay,
+      task: payload.task,
+      wordTarget,
+      durationSeconds: payload.durationSeconds,
+    });
+
+    const rewrite = buildBand9Rewrite(payload.essay);
+    const heuristicsErrors = [
+      ...detectRepetition(payload.essay),
+      ...detectShortParagraphs(payload.essay),
+      ...detectSentenceFragments(payload.essay),
+    ];
+    const errors = sanitiseWritingErrors(payload.essay, heuristicsErrors);
+    const blocks = buildFocusBlocks(score.bandScores, score.feedback.perCriterion);
+
+    const enrichedFeedback = {
+      ...score.feedback,
+      band9Rewrite: rewrite,
+      errors,
+      blocks,
     };
-  }
-}
 
-async function handler(req: NextApiRequest, res: NextApiResponse<WritingResponse>) {
-  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+    const result = {
+      version: 'v2',
+      overallBand: score.overallBand,
+      bandScores: score.bandScores,
+      feedback: enrichedFeedback,
+      wordCount: score.wordCount,
+      durationSeconds: score.durationSeconds,
+      tokensUsed: score.tokensUsed ?? 0,
+    };
 
-  const supabase = supabaseServer(req);
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth?.user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
+    const attemptId = payload.examAttemptId ?? payload.attemptId ?? null;
+    const nowIso = new Date().toISOString();
 
-  const parsed = BodySchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ ok: false, error: parsed.error.message, code: 'BAD_REQUEST' });
-  }
+    const upsertPayload = {
+      user_id: ctx.user.id,
+      exam_attempt_id: attemptId,
+      prompt_id: payload.promptId ?? null,
+      task: payload.task,
+      task_type: payload.task,
+      answer_text: payload.essay,
+      word_count: score.wordCount,
+      duration_seconds: payload.durationSeconds ?? null,
+      evaluation_version: 'v2',
+      band_scores: score.bandScores,
+      feedback: enrichedFeedback,
+      overall_band: score.overallBand,
+      task_response_band: score.bandScores.task_response,
+      coherence_band: score.bandScores.coherence_and_cohesion,
+      lexical_band: score.bandScores.lexical_resource,
+      grammar_band: score.bandScores.grammatical_range,
+      tokens_used: score.tokensUsed ?? 0,
+      submitted_at: nowIso,
+    };
 
-  const { attemptId, taskType, promptId, text, words, targetBand } = parsed.data;
-
-  const limitEnv = process.env.LIMIT_FREE_WRITING ?? process.env.LIMIT_FREE_WRITING_AI;
-  const limit = limitEnv ? Number(limitEnv) : 0;
-  if (Number.isFinite(limit) && limit > 0) {
-    const today = new Date().toISOString().slice(0, 10);
-    const key = `writing:auto:${auth.user.id}:${today}`;
-    const currentRaw = await redis.get(key);
-    const current = currentRaw ? Number(currentRaw) : 0;
-    if (current >= limit) {
-      return res.status(429).json({ ok: false, error: 'Daily auto-scoring limit reached', code: 'RATE_LIMITED' });
-    }
-    const next = await redis.incr(key);
-    if (next === 1) await redis.expire(key, 24 * 60 * 60);
-  }
-
-  let attemptPromptId: string | null | undefined;
-  if (attemptId) {
-    const { data, error } = await supabase
-      .from('attempts_writing')
-      .select('user_id, prompt_id')
-      .eq('id', attemptId)
+    const { data: responseRow, error: upsertError } = await ctx.supabase
+      .from('writing_responses')
+      .upsert(upsertPayload, { onConflict: 'exam_attempt_id,task' })
+      .select('id')
       .maybeSingle();
-    if (error || !data || data.user_id !== auth.user.id) {
-      return res.status(404).json({ ok: false, error: 'Attempt not found', code: 'NOT_FOUND' });
+
+    if (upsertError) {
+      logger.error('failed to persist writing response', { error: upsertError.message });
+      res.status(500).json({ error: 'Failed to persist score' });
+      finish(500);
+      return;
     }
-    attemptPromptId = data.prompt_id;
-  }
 
-  const wordCount = words ?? countWords(text);
-  const { promptId: resolvedPromptId, promptText } = await resolvePrompt(
-    supabase,
-    attemptPromptId,
-    promptId,
-    taskType,
-  );
-
-  const aiResult = await scoreWithModel({
-    text,
-    promptText,
-    taskType,
-    targetBand,
-    wordCount,
-    locale: parsed.data.locale,
-  });
-
-  const score = aiResult.score;
-
-  if (attemptId) {
-    try {
-      await supabase
-        .from('attempts_writing')
-        .update({
-          score_json: score,
-          ai_feedback_json: {
-            v: 3,
-            score,
-            feedback: score.feedback ?? null,
-            provider: score.provider ?? aiResult.provider,
+    if (responseRow?.id) {
+      const { error: feedbackError } = await ctx.supabase
+        .from('writing_feedback')
+        .upsert(
+          {
+            attempt_id: responseRow.id,
+            band9_rewrite: rewrite,
+            errors,
+            blocks,
+            created_at: nowIso,
           },
-        })
-        .eq('id', attemptId);
-    } catch (error) {
-      console.error('attempts_writing update failed', error);
+          { onConflict: 'attempt_id' },
+        );
+      if (feedbackError) {
+        logger.warn('failed to upsert feedback', { attemptId: responseRow.id, error: feedbackError.message });
+      }
     }
-  }
 
-  try {
-    await supabase.from('writing_responses').insert({
-      user_id: auth.user.id,
-      attempt_id: attemptId ?? null,
-      prompt_id: resolvedPromptId,
-      task_type: taskType,
-      answer_text: text,
-      word_count: wordCount,
-      ai_model: score.provider ?? aiResult.provider,
-      overall_band: score.overall,
-      task_response_band: score.breakdown.taskResponse,
-      coherence_band: score.breakdown.coherence,
-      lexical_band: score.breakdown.lexical,
-      grammar_band: score.breakdown.grammar,
-      feedback_summary: score.feedback?.summary ?? null,
-      feedback_strengths: score.feedback?.strengths ?? [],
-      feedback_improvements: score.feedback?.improvements ?? [],
-      raw_response: aiResult.raw,
+    if (attemptId) {
+      const { error: eventError } = await ctx.supabase.from('exam_events').insert({
+        attempt_id: attemptId,
+        user_id: ctx.user.id,
+        event_type: 'score',
+        payload: {
+          task: payload.task,
+          version: 'v2',
+          event: 'writing.score.v2',
+          score: result,
+        },
+      });
+      if (eventError) {
+        logger.warn('failed to log exam event', { attemptId, error: eventError.message });
+      }
+    }
+
+    logger.info('scored writing response', {
+      attemptId: attemptId ?? undefined,
+      responseId: responseRow?.id,
+      task: payload.task,
+      overallBand: score.overallBand,
     });
+
+    ok(res, { ok: true, result });
+    finish(200);
   } catch (error) {
-    console.error('writing_responses insert failed', error);
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error('unhandled error scoring writing response', { error: message });
+    res.status(500).json({ error: 'Failed to score writing response' });
+    finish(500);
   }
-
-  await trackor.log('writing_essay_scored', {
-    user_id: auth.user.id,
-    attempt_id: attemptId ?? null,
-    prompt_id: resolvedPromptId,
-    task_type: taskType,
-    word_count: wordCount,
-    overall: score.overall,
-    breakdown: score.breakdown,
-    provider: score.provider ?? aiResult.provider,
-  });
-
-  try {
-    await trackor.log('writing_eval', {
-      user_id: auth.user.id,
-      attempt_id: attemptId ?? null,
-      prompt_id: resolvedPromptId,
-      task_type: taskType,
-      word_count: wordCount,
-      overall: score.overall,
-      provider: score.provider ?? aiResult.provider,
-    });
-
-    await trackor.log('grade_submitted', {
-      user_id: auth.user.id,
-      attempt_id: attemptId ?? null,
-      prompt_id: resolvedPromptId,
-      task_type: taskType,
-      overall: score.overall,
-      assessment: 'writing',
-    });
-  } catch (error) {
-    console.warn('[writing.score] analytics failed', error);
-  }
-
-  return res.status(200).json({ ok: true, attemptId: attemptId ?? undefined, score });
 }
 
-export default withPlan('starter', handler);
+export default withPlan('starter', handler, {
+  allowRoles: ['admin', 'teacher'],
+  killSwitchFlag: 'killSwitchWriting',
+});

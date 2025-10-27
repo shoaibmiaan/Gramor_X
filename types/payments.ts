@@ -10,14 +10,15 @@ export type CreateCheckoutBody = Readonly<{
 }>;
 
 export type CreateCheckoutResponse =
-  | Readonly<{ ok: true; url: string; sessionId?: string }>
+  | Readonly<{ ok: true; provider: PaymentMethod; url: string; sessionId?: string | null }>
+  | Readonly<{ ok: true; manual: true; message: string }>
   | Readonly<{ ok: false; error: string }>;
 
 export type Invoice = Readonly<{
   id: string;
-  amount: number;           // minor units
+  amount: number; // minor units
   currency: string;
-  createdAt: string;        // ISO
+  createdAt: string; // ISO
   hostedInvoiceUrl?: string;
   status: 'paid' | 'open' | 'void' | 'uncollectible';
 }>;
