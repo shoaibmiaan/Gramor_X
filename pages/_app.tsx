@@ -229,6 +229,24 @@ function InnerApp({ Component, pageProps }: AppProps) {
     role?: string | null;
     isTeacherApproved?: boolean | null;
   };
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('free');
+
+  useEffect(() => {
+    const metadata = (user?.user_metadata ?? {}) as { tier?: SubscriptionTier | null };
+    const appMeta = (user?.app_metadata ?? {}) as { tier?: SubscriptionTier | null };
+    const nextTier = metadata.tier ?? appMeta.tier ?? 'free';
+    setSubscriptionTier(nextTier);
+  }, [user]);
+
+  useEffect(() => {
+    const handleTierUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ tier?: SubscriptionTier }>).detail;
+      if (detail?.tier) setSubscriptionTier(detail.tier);
+    };
+
+    window.addEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
+    return () => window.removeEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
+  }, []);
 
   const needPremium = useMemo(
     () => pathname.startsWith('/premium'),
@@ -552,7 +570,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <AuthAssistant />
           <SidebarAI />
           <UpgradeModal />
-          <RouteLoadingOverlay active={isRouteLoading} />
+          <RouteLoadingOverlay active={isRouteLoading} tier={subscriptionTier} />
         </div>
       </HighContrastProvider>
     </ThemeProvider>
