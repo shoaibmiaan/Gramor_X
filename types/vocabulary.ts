@@ -61,3 +61,37 @@ export interface PaginatedVocabularyResponse<T = WordSummary> {
 export interface WordDetailResponse {
   item: WordDetail;
 }
+
+export type VocabularyMomentum = 'rising' | 'steady' | 'new';
+
+export type VocabularyCategoryMomentum = 'surging' | 'steady' | 'emerging';
+
+export interface VocabularyHighlightWord extends WordSummary {
+  example?: string | null;
+  learningHook: string;
+  frequencyBand?: string | null;
+}
+
+export interface VocabularyTrendingWord extends WordSummary {
+  momentum: VocabularyMomentum;
+}
+
+export interface VocabularyTopCategory {
+  name: string;
+  count: number;
+  momentum?: VocabularyCategoryMomentum;
+}
+
+export interface VocabularyHighlights {
+  wordOfTheDay: VocabularyHighlightWord;
+  trendingWords: VocabularyTrendingWord[];
+  topCategories: VocabularyTopCategory[];
+  recommendedDailyGoal: number;
+  studyTip: string;
+  totalWords: number;
+  uniqueCategories: number;
+}
+
+export interface VocabularyHighlightsResponse {
+  highlights: VocabularyHighlights;
+}
