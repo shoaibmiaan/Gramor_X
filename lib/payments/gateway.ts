@@ -4,7 +4,9 @@ import { getPlanBillingAmount, type Cycle, type PlanKey } from '@/lib/pricing';
 import { initiateEasypaisa } from '@/lib/payments/easypaisa';
 import { initiateJazzCash } from '@/lib/payments/jazzcash';
 
-export type PaymentProvider = 'stripe' | 'easypaisa' | 'jazzcash';
+const CRYPTO_CHECKOUT_PATH = '/checkout/crypto';
+
+export type PaymentProvider = 'stripe' | 'easypaisa' | 'jazzcash' | 'crypto';
 
 export type GatewayIntent = Readonly<{
   provider: PaymentProvider;
@@ -19,6 +21,9 @@ export type CreateGatewayIntentInput = Readonly<{
   origin: string;
   userId: string;
   referralCode?: string;
+  promoCode?: string;
+  amountCents: number;
+  intentId: string;
 }>;
 
 export function amountInCents(plan: PlanKey, cycle: Cycle): number {
@@ -54,7 +59,7 @@ async function createStripeCheckout(input: CreateGatewayIntentInput): Promise<Ga
   const successUrl = `${input.origin}/account/billing?success=1&plan=${input.plan}`;
   const cancelUrl = `${input.origin}/pricing?canceled=1&plan=${input.plan}${
     input.referralCode ? `&code=${encodeURIComponent(input.referralCode)}` : ''
-  }`;
+  }${input.promoCode ? `&promo=${encodeURIComponent(input.promoCode)}` : ''}`;
 
   const session = await stripe.checkout.sessions.create(
     {
@@ -69,6 +74,7 @@ async function createStripeCheckout(input: CreateGatewayIntentInput): Promise<Ga
         billingCycle: input.cycle,
         referralCode: input.referralCode || '',
         userId: input.userId,
+        promoCode: input.promoCode || '',
       },
       subscription_data: {
         metadata: {
@@ -76,6 +82,7 @@ async function createStripeCheckout(input: CreateGatewayIntentInput): Promise<Ga
           billingCycle: input.cycle,
           referralCode: input.referralCode || '',
           userId: input.userId,
+          promoCode: input.promoCode || '',
         },
       },
     },
@@ -96,9 +103,29 @@ async function createLocalSession(input: CreateGatewayIntentInput): Promise<Gate
   return { provider: 'jazzcash', url: session.url, sessionId: session.sessionId };
 }
 
+function createCryptoCheckout(input: CreateGatewayIntentInput): GatewayIntent {
+  const params = new URLSearchParams({
+    intent: input.intentId,
+    plan: input.plan,
+    cycle: input.cycle,
+    amount: String(input.amountCents),
+  });
+  if (input.referralCode) {
+    params.set('code', input.referralCode);
+  }
+  if (input.promoCode) {
+    params.set('promo', input.promoCode);
+  }
+  const url = `${input.origin}${CRYPTO_CHECKOUT_PATH}?${params.toString()}`;
+  return { provider: 'crypto', url, sessionId: input.intentId };
+}
+
 export async function createGatewayIntent(input: CreateGatewayIntentInput): Promise<GatewayIntent> {
   if (input.provider === 'stripe') {
     return createStripeCheckout(input);
+  }
+  if (input.provider === 'crypto') {
+    return createCryptoCheckout(input);
   }
   return createLocalSession(input);
 }
