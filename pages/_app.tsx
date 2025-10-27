@@ -23,7 +23,7 @@ import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 import { destinationByRole } from '@/lib/routeAccess';
-import { primeClientSnapshot } from '@/lib/flags';
+import { refreshClientFlags, flagsHydratedRef } from '@/lib/flags/refresh';
 import { InstalledAppProvider } from '@/hooks/useInstalledApp';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
@@ -392,7 +392,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
     }
 
     if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
-      await refreshClientFlags();
+      void refreshClientFlags();
     }
   };
 
@@ -423,7 +423,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
       }
 
       if (!flagsHydratedRef.current) {
-        await refreshClientFlags();
+        void refreshClientFlags();
       }
 
       if (session?.user && isAuthPage) {

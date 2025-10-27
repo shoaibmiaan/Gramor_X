@@ -51,7 +51,10 @@ export const GapToGoal: React.FC = () => {
   const hasCurrentScore = typeof currentBand === 'number';
   const latestBand = hasCurrentScore ? currentBand ?? 0 : 0;
   const gap = targetBand - latestBand;
-  const progress = targetBand > 0 && hasCurrentScore ? Math.max(0, Math.min(100, (latestBand / targetBand) * 100)) : 0;
+  const progress =
+    targetBand > 0 && hasCurrentScore
+      ? Math.max(0, Math.min(100, (latestBand / targetBand) * 100))
+      : 0;
   const hasAchieved = hasCurrentScore && gap <= 0;
 
   return (
@@ -63,6 +66,7 @@ export const GapToGoal: React.FC = () => {
             {target.institution}: band {target.target_band}
           </p>
         </div>
+
         <div className="space-y-2">
           <ProgressBar
             value={progress}
@@ -73,6 +77,7 @@ export const GapToGoal: React.FC = () => {
                 : `Target band ${targetBand.toFixed(1)}`
             }
           />
+
           <p className="text-small text-muted-foreground">
             {hasCurrentScore
               ? hasAchieved
@@ -80,11 +85,15 @@ export const GapToGoal: React.FC = () => {
                 : `You are ${gap.toFixed(1)} bands away from the requirement. Focus your next sessions on the weakest skills to close the gap.`
               : 'Log your latest mock test score so we can show exactly how far you are from the requirement.'}
           </p>
+
           {target.deadline && (
-            <p className="text-small opacity-80">Deadline: {new Date(target.deadline).toLocaleDateString()}</p>
+            <p className="text-small opacity-80">
+              Deadline: {new Date(target.deadline).toLocaleDateString()}
+            </p>
           )}
         </div>
       </div>
+
       <div className="flex flex-wrap gap-2">
         <Link href="/progress" className="inline-flex">
           <Button variant="soft" tone="info" size="sm" className="rounded-ds-xl">
