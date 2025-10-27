@@ -258,6 +258,81 @@ export default function Dashboard() {
   const prefs = profile?.study_prefs ?? [];
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
 
+  type SummaryCard = {
+    title: string;
+    value: string;
+    caption: string;
+    ctaLabel: string;
+    ctaHref: string;
+    renderExtra?: React.ReactNode;
+  };
+
+  const sessionMixEntries = (ai.sessionMix && ai.sessionMix.length > 0
+    ? ai.sessionMix
+    : (ai.sequence ?? prefs).map((skill) => ({ skill, topic: '' })))
+    .slice(0, 4);
+
+  const focusTopics = ((profile?.focus_topics ?? []).length
+    ? (profile?.focus_topics as string[])
+    : (ai.sessionMix ?? [])
+        .map((entry) => entry.topic)
+        .filter((topic): topic is string => Boolean(topic)))
+    .slice(0, 3);
+
+  const summaryCards: SummaryCard[] = [
+    {
+      title: 'Goal Band',
+      value: profile?.goal_band?.toFixed?.(1) ?? (ai.suggestedGoal?.toFixed?.(1) || '—'),
+      caption: profile?.english_level ? `Current level: ${profile.english_level}` : 'Define the score you are aiming for.',
+      ctaLabel: profile?.goal_band ? 'Adjust goal' : 'Set goal',
+      ctaHref: '/profile/setup',
+      renderExtra: profile?.english_level ? (
+        <div className="mt-3">
+          <Badge variant="info" size="sm">{profile.english_level}</Badge>
+        </div>
+      ) : undefined,
+    },
+    {
+      title: 'ETA to Goal',
+      value: ai.etaWeeks ? `${ai.etaWeeks} wk` : '—',
+      caption: `Stay on track with ${profile?.time_commitment || '1–2h/day'} of focused study.`,
+      ctaLabel: 'View study plan',
+      ctaHref: '/study-plan',
+    },
+    {
+      title: 'Session mix',
+      value: sessionMixEntries.length ? `${sessionMixEntries[0]?.skill ?? 'Customised'} first` : '—',
+      caption: 'Follow this sequence to close the biggest gaps.',
+      ctaLabel: 'See practice path',
+      ctaHref: '/learning',
+      renderExtra: (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {sessionMixEntries.map((entry, index) => (
+            <Badge key={`${entry.skill}-${entry.topic || index}`} size="sm">
+              {entry.topic ? `${entry.skill} • ${entry.topic}` : entry.skill}
+            </Badge>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: 'Daily quota',
+      value: `${ai.dailyQuota ?? profile?.daily_quota_goal ?? '—'} sessions`,
+      caption: 'Complete these each day to protect your streak.',
+      ctaLabel: 'Track progress',
+      ctaHref: '/progress',
+      renderExtra: (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {focusTopics.map((topic) => (
+            <Badge key={topic} variant="secondary" size="sm" className="capitalize">
+              {topic}
+            </Badge>
+          ))}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
@@ -325,254 +400,273 @@ export default function Dashboard() {
             <StreakCounter current={streak} longest={longest} loading={streakLoading} shields={shields} />
 
             {nextRestart && (
-          <Alert variant="info" className="mt-6">
-            Streak will restart on {nextRestart}.
-          </Alert>
-        )}
-
-        {showTips && (
-          <Alert variant="info" className="mt-6">
-            <div className="flex items-center justify-between gap-4">
-              <span>Explore practice modules and track your progress from here.</span>
-              <Button size="sm" variant="secondary" onClick={dismissTips} className="rounded-ds-xl">
-                Got it
-              </Button>
-            </div>
-          </Alert>
-        )}
-
-        {/* Vocabulary spotlight */}
-        <div className="mt-10">
-          <VocabularySpotlightFeature />
-        </div>
-
-        <div className="mt-10">
-          {challengeLoading ? (
-            <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
-              <div className="h-6 w-40 animate-pulse rounded bg-border" />
-              <div className="mt-4 h-24 w-full animate-pulse rounded bg-border" />
-            </Card>
-          ) : challengeEnrollment ? (
-            <ChallengeSpotlightCard
-              cohortId={challengeEnrollment.cohort}
-              progress={challengeEnrollment.progress ?? null}
-            />
-          ) : (
-            <JoinWeeklyChallengeCard />
-          )}
-        </div>
-
-        <div className="mt-6">
-          <DailyWeeklyChallenges />
-        </div>
-
-        {/* Top summary cards */}
-        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="p-6 rounded-ds-2xl">
-            <div className="text-small opacity-70 mb-1">Goal Band</div>
-            <div className="text-h1 font-semibold">
-              {profile?.goal_band?.toFixed?.(1) ?? (ai.suggestedGoal?.toFixed?.(1) || '—')}
-            </div>
-            <div className="mt-3">
-              <Badge variant="info" size="sm">{profile?.english_level || 'Level —'}</Badge>
-            </div>
-          </Card>
-
-          <Card className="p-6 rounded-ds-2xl">
-            <div className="text-small opacity-70 mb-1">ETA to Goal</div>
-            <div className="text-h1 font-semibold">
-              {ai.etaWeeks ?? '—'}
-              <span className="text-h3 ml-1">weeks</span>
-            </div>
-            <div className="mt-3 text-small opacity-80">
-              Assuming {profile?.time_commitment || '1–2h/day'}
-            </div>
-          </Card>
-
-          <Card className="p-6 rounded-ds-2xl">
-            <div className="text-small opacity-70 mb-1">Session mix</div>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {(ai.sessionMix && ai.sessionMix.length > 0
-                ? ai.sessionMix
-                : (ai.sequence ?? prefs).map((skill) => ({ skill, topic: '' })))
-                .slice(0, 4)
-                .map((entry, index) => (
-                  <Badge key={`${entry.skill}-${entry.topic || index}`} size="sm">
-                    {entry.topic ? `${entry.skill} • ${entry.topic}` : entry.skill}
-                  </Badge>
-                ))}
-            </div>
-          </Card>
-
-          <Card className="p-6 rounded-ds-2xl">
-            <div className="text-small opacity-70 mb-1">Daily quota</div>
-            <div className="text-h1 font-semibold">
-              {ai.dailyQuota ?? profile?.daily_quota_goal ?? '—'}
-              <span className="text-h3 ml-1">sessions</span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {((profile?.focus_topics ?? []).length
-                ? (profile?.focus_topics as string[])
-                : (ai.sessionMix ?? [])
-                    .map((entry) => entry.topic)
-                    .filter((topic): topic is string => Boolean(topic))
-              )
-                .slice(0, 3)
-                .map((topic) => (
-                  <Badge key={topic} variant="secondary" size="sm" className="capitalize">
-                    {topic}
-                  </Badge>
-                ))}
-            </div>
-            <p className="mt-3 text-caption text-muted-foreground">
-              Targets personalised daily practice volume.
-            </p>
-          </Card>
-        </div>
-
-        {/* Next suggested lessons */}
-        {((ai.sessionMix ?? ai.sequence) ?? []).length > 0 && (
-          <div className="mt-10">
-            <h2 className="font-slab text-h2 mb-4">Next Lessons</h2>
-            <div className="grid gap-6 md:grid-cols-3">
-              {((ai.sessionMix && ai.sessionMix.length
-                ? ai.sessionMix
-                : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
-              )
-                .slice(0, 3)
-                .map((entry, index) => {
-                  const hrefSkill = entry.skill.toLowerCase();
-                  const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
-                  return (
-                    <Card key={`${entry.skill}-${entry.topic || index}`} className="p-6 rounded-ds-2xl flex flex-col">
-                      <h3 className="font-slab text-h3 mb-2 capitalize">{title}</h3>
-                      <div className="mt-auto">
-                        <Link href={`/learning/skills/${hrefSkill}`} className="w-full inline-block">
-                          <Button variant="primary" className="rounded-ds-xl w-full">
-                            Start
-                          </Button>
-                        </Link>
-                      </div>
-                    </Card>
-                  );
-                }))}
-            </div>
-          </div>
-        )}
-
-        {/* Visa gap summary */}
-        <div className="mt-10">
-          <GapToGoal />
-        </div>
-
-        {/* Study calendar */}
-        <div className="mt-10">
-          <StudyCalendar />
-        </div>
-
-        {/* Goal roadmap */}
-        <div className="mt-10">
-          <GoalRoadmap examDate={profile?.exam_date ?? null} />
-        </div>
-
-        {/* Actions + Reading stats */}
-        <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_.9fr]">
-          <Card className="p-6 rounded-ds-2xl">
-            <h2 className="font-slab text-h2">Quick Actions</h2>
-            <p className="text-grayish mt-1">Jump back in with one click.</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <QuickDrillButton />
-              <Link href="/learning">
-                <Button variant="primary" className="rounded-ds-xl">Start Today’s Lesson</Button>
-              </Link>
-              <Link href="/mock-tests">
-                <Button variant="secondary" className="rounded-ds-xl">Take a Mock Test</Button>
-              </Link>
-              <Link href="/writing">
-                <Button variant="accent" className="rounded-ds-xl">Practice Writing</Button>
-              </Link>
-              <Link href="/reading">
-                <Button variant="secondary" className="rounded-ds-xl">Practice Reading</Button>
-              </Link>
-              <Button onClick={handleShare} variant="secondary" className="rounded-ds-xl">
-                Share Progress
-              </Button>
-            </div>
-          </Card>
-
-          <ReadingStatsCard />
-        </div>
-
-        {/* Engagement */}
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
-          <ShareLinkCard />
-          <WhatsAppOptIn />
-        </div>
-
-        {/* Skill analytics */}
-        <div className="mt-10">
-          <Card className="p-6 rounded-ds-2xl">
-            <h3 className="font-slab text-h3 mb-2">Skill Focus</h3>
-            {(ai.sequence ?? []).length ? (
-              <ul className="list-disc pl-6 text-body">
-                {(ai.sequence ?? []).map((s, i, arr) => (
-                  <li key={s}>
-                    {s} {i === 0 ? '- prioritize' : i === arr.length - 1 ? '- strong' : ''}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-body">Add preferences in your profile to see analytics.</p>
-            )}
-          </Card>
-        </div>
-
-        {/* Saved items */}
-        <div className="mt-10">
-          <SavedItems />
-        </div>
-
-        {/* Upgrade */}
-        <div className="mt-10">
-          <Card className="p-6 rounded-ds-2xl">
-            <h3 className="font-slab text-h3 mb-2">Upgrade to Rocket 🚀</h3>
-            <p className="text-body opacity-90">
-              Unlock AI deep feedback, speaking evaluator, and full analytics.
-            </p>
-            <div className="mt-4">
-              <Link href="/pricing">
-                <Button variant="primary" className="rounded-ds-xl">
-                  See Plans
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        </div>
-
-        {/* Coach notes */}
-        <div className="mt-10">
-          <Card className="p-6 rounded-ds-2xl">
-            <h3 className="font-slab text-h3">Coach Notes</h3>
-            {Array.isArray(ai?.notes) && ai.notes.length ? (
-              <ul className="mt-3 list-disc pl-6 text-body">
-                {ai.notes.map((n: string, i: number) => (
-                  <li key={i}>{n}</li>
-                ))}
-              </ul>
-            ) : (
-              <Alert variant="info" className="mt-3">
-                Add more details in <b>Profile</b> to refine your AI plan.
+              <Alert variant="info" className="mt-6">
+                Streak will restart on {nextRestart}.
               </Alert>
             )}
-            <div className="mt-4">
-              <Link href="/profile/setup">
-                <Button variant="secondary" className="rounded-ds-xl">
-                  Edit Profile
-                </Button>
-              </Link>
+
+            {showTips && (
+              <Alert variant="info" className="mt-6">
+                <div className="flex items-center justify-between gap-4">
+                  <span>Explore practice modules and track your progress from here.</span>
+                  <Button size="sm" variant="secondary" onClick={dismissTips} className="rounded-ds-xl">
+                    Got it
+                  </Button>
+                </div>
+              </Alert>
+            )}
+
+            {/* Vocabulary spotlight */}
+            <div className="mt-10 space-y-4">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-slab text-h2">Vocabulary spotlight</h2>
+                  <p className="text-grayish">Boost your lexical score with today’s curated picks.</p>
+                </div>
+                <Link href="/vocabulary" className="shrink-0">
+                  <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                    Open vocabulary lab
+                  </Button>
+                </Link>
+              </div>
+              <VocabularySpotlightFeature />
             </div>
-          </Card>
-        </div>
+
+            <div className="mt-10">
+              {challengeLoading ? (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+                  <div className="h-6 w-40 animate-pulse rounded bg-border" />
+                  <div className="mt-4 h-24 w-full animate-pulse rounded bg-border" />
+                </Card>
+              ) : challengeEnrollment ? (
+                <ChallengeSpotlightCard
+                  cohortId={challengeEnrollment.cohort}
+                  progress={challengeEnrollment.progress ?? null}
+                />
+              ) : (
+                <JoinWeeklyChallengeCard />
+              )}
+            </div>
+
+            <div className="mt-6">
+              <DailyWeeklyChallenges />
+            </div>
+
+            {/* Top summary cards */}
+            <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {summaryCards.map((card) => (
+                <Card key={card.title} className="flex h-full flex-col justify-between gap-4 rounded-ds-2xl p-6">
+                  <div>
+                    <div className="text-small opacity-70 mb-1">{card.title}</div>
+                    <div className="text-h1 font-semibold">{card.value}</div>
+                    <p className="mt-3 text-small text-muted-foreground">{card.caption}</p>
+                    {card.renderExtra}
+                  </div>
+                  <div>
+                    <Link href={card.ctaHref} className="inline-flex">
+                      <Button variant="soft" tone="primary" size="sm" className="rounded-ds-xl">
+                        {card.ctaLabel}
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Next suggested lessons */}
+            {((ai.sessionMix ?? ai.sequence) ?? []).length > 0 && (
+              <div className="mt-10">
+                <h2 className="font-slab text-h2 mb-4">Next Lessons</h2>
+                <div className="grid gap-6 md:grid-cols-3">
+                  {((ai.sessionMix && ai.sessionMix.length
+                    ? ai.sessionMix
+                    : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
+                  )
+                    .slice(0, 3)
+                    .map((entry, index) => {
+                      const hrefSkill = entry.skill.toLowerCase();
+                      const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
+                      return (
+                        <Card key={`${entry.skill}-${entry.topic || index}`} className="p-6 rounded-ds-2xl flex flex-col">
+                          <h3 className="font-slab text-h3 mb-2 capitalize">{title}</h3>
+                          <div className="mt-auto">
+                            <Link href={`/learning/skills/${hrefSkill}`} className="w-full inline-block">
+                              <Button variant="primary" className="rounded-ds-xl w-full">
+                                Start
+                              </Button>
+                            </Link>
+                          </div>
+                        </Card>
+                      );
+                    }))}
+                </div>
+              </div>
+            )}
+
+            {/* Visa gap summary */}
+            <div className="mt-10 space-y-4">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-slab text-h2">Visa & admissions target</h2>
+                  <p className="text-grayish">Track how close you are to the band requirement.</p>
+                </div>
+                <Link href="/visa" className="shrink-0">
+                  <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                    Update target
+                  </Button>
+                </Link>
+              </div>
+              <GapToGoal />
+            </div>
+
+            {/* Study calendar */}
+            <div className="mt-10 space-y-4">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-slab text-h2">Weekly momentum</h2>
+                  <p className="text-grayish">Protect your streak by finishing the scheduled sessions.</p>
+                </div>
+                <Link href="/study-plan" className="shrink-0">
+                  <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                    Adjust schedule
+                  </Button>
+                </Link>
+              </div>
+              <StudyCalendar />
+            </div>
+
+            {/* Goal roadmap */}
+            <div className="mt-10 space-y-4">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-slab text-h2">Roadmap to exam day</h2>
+                  <p className="text-grayish">See which stage you are in and what to do next.</p>
+                </div>
+                <Link href="/exam-day" className="shrink-0">
+                  <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                    Plan exam day
+                  </Button>
+                </Link>
+              </div>
+              <GoalRoadmap examDate={profile?.exam_date ?? null} />
+            </div>
+
+            {/* Actions + Reading stats */}
+            <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_.9fr]">
+              <Card className="p-6 rounded-ds-2xl">
+                <h2 className="font-slab text-h2">Quick Actions</h2>
+                <p className="text-grayish mt-1">Jump back in with one click.</p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <QuickDrillButton />
+                  <Link href="/learning">
+                    <Button variant="primary" className="rounded-ds-xl">Start Today’s Lesson</Button>
+                  </Link>
+                  <Link href="/mock-tests">
+                    <Button variant="secondary" className="rounded-ds-xl">Take a Mock Test</Button>
+                  </Link>
+                  <Link href="/writing">
+                    <Button variant="accent" className="rounded-ds-xl">Practice Writing</Button>
+                  </Link>
+                  <Link href="/reading">
+                    <Button variant="secondary" className="rounded-ds-xl">Practice Reading</Button>
+                  </Link>
+                  <Button onClick={handleShare} variant="secondary" className="rounded-ds-xl">
+                    Share Progress
+                  </Button>
+                </div>
+              </Card>
+
+              <ReadingStatsCard />
+            </div>
+
+            {/* Engagement */}
+            <div className="mt-10 grid gap-6 md:grid-cols-2">
+              <ShareLinkCard />
+              <WhatsAppOptIn />
+            </div>
+
+            {/* Skill analytics */}
+            <div className="mt-10">
+              <Card className="space-y-4 rounded-ds-2xl p-6">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="font-slab text-h3">Skill focus</h3>
+                  <Link href="/learning" className="shrink-0">
+                    <Button variant="link" size="sm" className="rounded-ds-xl">
+                      Dive into lessons
+                    </Button>
+                  </Link>
+                </div>
+                {(ai.sequence ?? []).length ? (
+                  <ul className="list-disc pl-6 text-body">
+                    {(ai.sequence ?? []).map((s, i, arr) => (
+                      <li key={s}>
+                        {s} {i === 0 ? '- prioritize now' : i === arr.length - 1 ? '- strength area' : ''}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-body">Add preferences in your profile to see analytics.</p>
+                )}
+              </Card>
+            </div>
+
+            {/* Saved items */}
+            <div className="mt-10 space-y-4">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-slab text-h2">Saved for later</h2>
+                  <p className="text-grayish">Jump back to lessons and drills you flagged.</p>
+                </div>
+                <Link href="/saved" className="shrink-0">
+                  <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                    Manage saved items
+                  </Button>
+                </Link>
+              </div>
+              <SavedItems />
+            </div>
+
+            {/* Upgrade */}
+            <div className="mt-10">
+              <Card className="p-6 rounded-ds-2xl">
+                <h3 className="font-slab text-h3 mb-2">Upgrade to Rocket 🚀</h3>
+                <p className="text-body opacity-90">
+                  Unlock AI deep feedback, speaking evaluator, and full analytics.
+                </p>
+                <div className="mt-4">
+                  <Link href="/pricing">
+                    <Button variant="primary" className="rounded-ds-xl">
+                      See Plans
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            </div>
+
+            {/* Coach notes */}
+            <div className="mt-10">
+              <Card className="p-6 rounded-ds-2xl">
+                <h3 className="font-slab text-h3">Coach Notes</h3>
+                {Array.isArray(ai?.notes) && ai.notes.length ? (
+                  <ul className="mt-3 list-disc pl-6 text-body">
+                    {ai.notes.map((n: string, i: number) => (
+                      <li key={i}>{n}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <Alert variant="info" className="mt-3">
+                    Add more details in <b>Profile</b> to refine your AI plan.
+                  </Alert>
+                )}
+                <div className="mt-4">
+                  <Link href="/profile/setup">
+                    <Button variant="secondary" className="rounded-ds-xl">
+                      Edit Profile
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </Container>
