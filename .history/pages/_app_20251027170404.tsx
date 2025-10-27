@@ -392,7 +392,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
     }
 
     if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
-      void refreshClientFlags();
+      await refreshClientFlags();
     }
   };
 
@@ -423,7 +423,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
       }
 
       if (!flagsHydratedRef.current) {
-        void refreshClientFlags();
+        await refreshClientFlags();
       }
 
       if (session?.user && isAuthPage) {
