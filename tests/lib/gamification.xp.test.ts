@@ -7,6 +7,7 @@ import {
   baseXpForSentence,
   computeSynonymRound,
   multiplierForPlan,
+  calculateWritingXp,
   DAILY_VOCAB_XP_CAP,
   VOCAB_XP_RULES,
 } from '@/lib/gamification/xp';
@@ -125,6 +126,8 @@ describe('gamification/xp rules', () => {
     assert.equal(outcome.awarded, outcome.requested);
     assert.equal(stub.__state.events.length, 1);
     assert.equal(stub.__state.events[0].amount, outcome.awarded);
+    assert.equal(stub.__state.events[0].meta?.kind, 'meaning');
+    assert.equal(typeof outcome.dayIso, 'string');
   });
 
   it('enforces the daily XP cap', async () => {
@@ -161,5 +164,39 @@ describe('gamification/xp rules', () => {
     assert.equal(stub.__state.events.length, 1);
     assert.equal(stub.__state.events[0].amount, 0);
     assert.equal(stub.__state.events[0].meta?.kind, 'meaning');
+    assert.equal(typeof stub.__state.events[0].meta?.dayIso, 'string');
+  });
+
+  it('derives writing achievements for improvements', () => {
+    const result = calculateWritingXp({
+      currentOverall: 7.4,
+      previousOverall: 6.6,
+      startedAt: '2024-03-01T00:00:00Z',
+      submittedAt: '2024-03-01T00:52:00Z',
+    });
+
+    assert.ok(result.points > 20);
+    const achievementIds = result.achievements.map((item) => item.id);
+    assert.ok(achievementIds.includes('attempt_completed'));
+    assert.ok(achievementIds.includes('personal_best') || achievementIds.includes('steady_gain'));
+    assert.ok(achievementIds.includes('band_milestone'));
+    assert.ok(achievementIds.includes('pace_bonus'));
+    assert.ok(result.reason.includes('Completed writing mock exam'));
+    assert.equal(result.improvement > 0, true);
+  });
+
+  it('rewards first attempts without prior history', () => {
+    const result = calculateWritingXp({
+      currentOverall: 6.2,
+      previousOverall: null,
+      durationSeconds: 4000,
+    });
+
+    const achievementIds = result.achievements.map((item) => item.id);
+    assert.ok(achievementIds.includes('attempt_completed'));
+    assert.ok(achievementIds.includes('first_attempt'));
+    assert.ok(!achievementIds.includes('personal_best'));
+    assert.ok(result.points >= 26);
+    assert.equal(result.improvement, 0);
   });
 });

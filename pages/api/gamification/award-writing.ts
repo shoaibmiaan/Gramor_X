@@ -122,6 +122,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       event: 'xp.award.writing',
       points: xp.points,
       reason: xp.reason,
+      achievements: xp.achievements,
+      improvement: xp.improvement,
+      duration_seconds: xp.effectiveDuration,
     },
   });
 
@@ -129,5 +132,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('[gamification/award-writing] failed to insert tracking event', eventError);
   }
 
-  return ok(res, { points: xp.points, reason: xp.reason });
+  return ok(res, {
+    points: xp.points,
+    reason: xp.reason,
+    achievements: xp.achievements,
+    improvement: xp.improvement,
+    durationSeconds: xp.effectiveDuration,
+  });
 }
