@@ -26,10 +26,24 @@ import practice02 from './listening-practice-02.json';
 import practice03 from './listening-practice-03.json';
 import practice04 from './listening-practice-04.json';
 import practice05 from './listening-practice-05.json';
+import fullExam from './full-exam-001.json';
 
-const listeningPracticeJson = [practice01, practice02, practice03, practice04, practice05] satisfies ListeningPaper[];
+const listeningPracticeJson = [
+  practice01,
+  practice02,
+  practice03,
+  practice04,
+  practice05,
+  fullExam,
+] satisfies ListeningPaper[];
 
 export const listeningPracticePapers: ListeningPaper[] = listeningPracticeJson;
+
+export const listeningPracticeMap: Record<string, ListeningPaper> = Object.fromEntries(
+  listeningPracticePapers.map((paper) => [paper.id, paper]),
+);
+
+export const getListeningPaperById = (id: string): ListeningPaper | null => listeningPracticeMap[id] ?? null;
 
 export type ListeningPracticeMeta = {
   id: string;
