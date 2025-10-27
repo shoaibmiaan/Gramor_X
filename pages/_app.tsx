@@ -61,7 +61,7 @@ import { HighContrastProvider } from '@/context/HighContrastContext';
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
-import { logWritingAnalyticsView } from '@/lib/analytics/writing-events';
+import type { SubscriptionTier } from '@/lib/navigation/types';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -150,21 +150,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const { locale: activeLocale } = useLocale();
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const routeLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const flagsHydratedRef = useRef(false);
-
-  const refreshClientFlags = useCallback(async () => {
-    try {
-      const res = await fetch('/api/debug/feature-flags', { credentials: 'same-origin' });
-      if (!res.ok) return;
-      const payload = (await res.json()) as { flags?: Record<string, boolean> };
-      if (payload?.flags) {
-        primeClientSnapshot(payload.flags);
-        flagsHydratedRef.current = true;
-      }
-    } catch {
-      // ignore hydration errors — feature checks fall back to defaults
-    }
-  }, []);
+  const routeLoadingFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const clearRouteLoadingTimeout = () => {
@@ -174,29 +160,58 @@ function InnerApp({ Component, pageProps }: AppProps) {
       }
     };
 
+    const clearRouteLoadingFallback = () => {
+      if (routeLoadingFallbackRef.current) {
+        clearTimeout(routeLoadingFallbackRef.current);
+        routeLoadingFallbackRef.current = null;
+      }
+    };
+
     const startLoading = () => {
       clearRouteLoadingTimeout();
+      clearRouteLoadingFallback();
       routeLoadingTimeoutRef.current = setTimeout(() => {
         setIsRouteLoading(true);
+        routeLoadingFallbackRef.current = setTimeout(() => {
+          setIsRouteLoading(false);
+        }, 12000);
       }, 200);
     };
 
     const stopLoading = () => {
       clearRouteLoadingTimeout();
+      clearRouteLoadingFallback();
       setIsRouteLoading(false);
     };
 
     router.events.on('routeChangeStart', startLoading);
+    router.events.on('beforeHistoryChange', stopLoading);
     router.events.on('routeChangeComplete', stopLoading);
     router.events.on('routeChangeError', stopLoading);
+    router.events.on('hashChangeStart', startLoading);
+    router.events.on('hashChangeComplete', stopLoading);
+    router.events.on('hashChangeError', stopLoading);
 
     return () => {
       router.events.off('routeChangeStart', startLoading);
+      router.events.off('beforeHistoryChange', stopLoading);
       router.events.off('routeChangeComplete', stopLoading);
       router.events.off('routeChangeError', stopLoading);
+      router.events.off('hashChangeStart', startLoading);
+      router.events.off('hashChangeComplete', stopLoading);
+      router.events.off('hashChangeError', stopLoading);
       clearRouteLoadingTimeout();
+      clearRouteLoadingFallback();
     };
   }, [router]);
+
+  useEffect(() => {
+    if (routeLoadingFallbackRef.current) {
+      clearTimeout(routeLoadingFallbackRef.current);
+      routeLoadingFallbackRef.current = null;
+    }
+    setIsRouteLoading(false);
+  }, [router.asPath]);
 
   useEffect(() => {
     void loadTranslations(activeLocale as SupportedLocale);
@@ -570,7 +585,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <AuthAssistant />
           <SidebarAI />
           <UpgradeModal />
-          <RouteLoadingOverlay active={isRouteLoading} />
+          <RouteLoadingOverlay active={isRouteLoading} tier={subscriptionTier} />
         </div>
       </HighContrastProvider>
     </ThemeProvider>
