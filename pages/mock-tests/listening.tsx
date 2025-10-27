@@ -1,3 +1,8 @@
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
+
+import type { GetStaticProps } from 'next';
+
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
@@ -6,6 +11,7 @@ import { listeningPracticeList } from '@/data/listening';
 import { mockSections } from '@/data/mockTests';
 
 const formatMinutes = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 'Self-paced';
   const minutes = Math.round(seconds / 60);
   return `${minutes} minute${minutes === 1 ? '' : 's'}`;
 };

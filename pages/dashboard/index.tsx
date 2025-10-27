@@ -1,9 +1,9 @@
 // pages/dashboard/index.tsx
-
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -11,34 +11,36 @@ import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
 import { StreakIndicator } from '@/components/design-system/StreakIndicator';
-import { badges } from '@/data/badges';
 
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { getDayKeyInTZ } from '@/lib/streak';
+
 import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
 import QuickDrillButton from '@/components/quick/QuickDrillButton';
 import { VocabularySpotlightFeature } from '@/components/feature/VocabularySpotlight';
 import { StreakCounter } from '@/components/streak/StreakCounter';
-
 import { useStreak } from '@/hooks/useStreak';
-import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
-import dynamic from 'next/dynamic';
+
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
 import GapToGoal from '@/components/visa/GapToGoal';
-import type { Profile, AIPlan } from '@/types/profile';
+
 import { SavedItems } from '@/components/dashboard/SavedItems';
 import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
 import WhatsAppOptIn from '@/components/dashboard/WhatsAppOptIn';
 import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeCard';
 import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCard';
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
+
+import type { Profile, AIPlan } from '@/types/profile';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { ChallengeTaskStatus } from '@/types/challenge';
-import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
+import { badges } from '@/data/badges';
 
 export default function Dashboard() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -50,7 +52,7 @@ export default function Dashboard() {
     progress: Record<string, ChallengeTaskStatus> | null;
   } | null>(null);
 
-  // Hook now exposes: nextRestart + shields + claimShield + useShield
+  // Streak hooks (AI habit loop)
   const {
     current: streak,
     longest,
@@ -73,28 +75,25 @@ export default function Dashboard() {
     }
   };
 
+  // Auth + profile bootstrap
   useEffect(() => {
     let cancelled = false;
-
     (async () => {
       try {
-        // Handle OAuth callback on first load
         if (typeof window !== 'undefined') {
           const url = window.location.href;
           if (url.includes('code=') || url.includes('access_token=')) {
-            const { error } = await supabaseBrowser.auth.exchangeCodeForSession(url);
+            const supabase = supabaseBrowser();
+            const { error } = await supabase.auth.exchangeCodeForSession(url);
             if (!error) {
               await router.replace('/dashboard');
-              // continue to load dashboard normally
             }
           }
         }
 
-        const {
-          data: { session },
-        } = await supabaseBrowser.auth.getSession();
-
-        const authUser = session?.user ?? null;
+        const supabase = supabaseBrowser();
+        const { data: sessionRes } = await supabase.auth.getSession();
+        const authUser = sessionRes.session?.user ?? null;
         setSessionUserId(authUser?.id ?? null);
 
         if (!authUser) {
@@ -102,8 +101,8 @@ export default function Dashboard() {
           return;
         }
 
-        // Load (or create minimal) profile
-        const { data, error } = await supabaseBrowser
+        // Load or create minimal profile
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', authUser.id)
@@ -111,40 +110,27 @@ export default function Dashboard() {
 
         if (cancelled) return;
 
-        if (error) {
-          console.error('[dashboard] profile load error:', error);
-          setLoading(false);
-          return;
-        }
+        let p = (data as Profile | null) ?? null;
 
-        let p = data as Profile | null;
-
-        // If the profile row doesn't exist yet, create a minimal one so we don't bounce
         if (!p) {
           const minimal = {
             user_id: authUser.id,
             email: authUser.email,
             preferred_language: 'en',
             onboarding_complete: false,
-          } as any;
+          } as Partial<Profile>;
 
-          const { data: created, error: insertErr } = await supabaseBrowser
+          const { data: created, error: insertErr } = await supabase
             .from('profiles')
             .insert(minimal)
             .select('*')
             .single();
 
-          if (insertErr) {
-            console.error('[dashboard] profile insert error:', insertErr);
-          } else {
-            p = created as Profile;
-          }
+          if (!insertErr) p = created as Profile;
         }
 
-        // Determine if onboarding is incomplete WITHOUT redirecting
         const draftFlag = (p as any)?.draft === true;
         const explicitIncomplete = (p as any)?.onboarding_complete === false;
-        // Heuristic fallback (if schema doesn't have flags)
         const heuristicIncomplete =
           (p as any)?.onboarding_complete == null &&
           (!p?.full_name || !p?.preferred_language);
@@ -154,6 +140,7 @@ export default function Dashboard() {
         setProfile(p ?? null);
         setLoading(false);
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('[dashboard] fatal load error:', e);
         if (!cancelled) setLoading(false);
       }
@@ -164,6 +151,7 @@ export default function Dashboard() {
     };
   }, [router]);
 
+  // Challenge enrollment
   useEffect(() => {
     if (!sessionUserId) {
       setChallengeEnrollment(null);
@@ -176,9 +164,10 @@ export default function Dashboard() {
 
     (async () => {
       try {
-        const { data, error } = await supabaseBrowser
+        const supabase = supabaseBrowser();
+        const { data, error } = await supabase
           .from('challenge_enrollments')
-          .select('cohort, progress, enrolled_at')
+          .select('cohort,progress,enrolled_at')
           .eq('user_id', sessionUserId)
           .order('enrolled_at', { ascending: false })
           .limit(1);
@@ -186,6 +175,7 @@ export default function Dashboard() {
         if (cancelled) return;
 
         if (error) {
+          // eslint-disable-next-line no-console
           console.error('[dashboard] challenge enrollment fetch error:', error);
           setChallengeEnrollment(null);
         } else {
@@ -200,6 +190,7 @@ export default function Dashboard() {
           }
         }
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('[dashboard] challenge enrollment error:', err);
         if (!cancelled) setChallengeEnrollment(null);
       } finally {
@@ -212,13 +203,12 @@ export default function Dashboard() {
     };
   }, [sessionUserId]);
 
+  // First-run tip
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem('dashboardTipsDismissed');
-      if (!dismissed) setShowTips(true);
-    }
+    if (typeof window === 'undefined') return;
+    const dismissed = localStorage.getItem('dashboardTipsDismissed');
+    if (!dismissed) setShowTips(true);
   }, []);
-
   const dismissTips = () => {
     setShowTips(false);
     if (typeof window !== 'undefined') {
@@ -226,6 +216,7 @@ export default function Dashboard() {
     }
   };
 
+  // Auto-complete today’s streak if needed
   useEffect(() => {
     if (streakLoading) return;
     const today = getDayKeyInTZ();
@@ -234,28 +225,80 @@ export default function Dashboard() {
     }
   }, [streakLoading, lastDayKey, completeToday]);
 
+  // Avatar
   const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
-  const loadingSkeleton = (
-    <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-      <Container>
-        <div className="grid gap-6 md:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="p-6 rounded-ds-2xl">
-              <div className="animate-pulse h-6 w-40 bg-gray-2 00 dark:bg-white/10 rounded" />
-              <div className="mt-4 animate-pulse h-24 bg-muted dark:bg-white/10 rounded" />
-            </Card>
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
+  // Loading skeleton
+  if (loading) {
+    return (
+      <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Container>
+          <div className="grid gap-6 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="p-6 rounded-ds-2xl">
+                <div className="h-6 w-40 rounded bg-border animate-pulse" />
+                <div className="mt-4 h-24 w-full rounded bg-border animate-pulse" />
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+    );
+  }
 
+  // Derived plan & targets
   const ai: AIPlan = (profile?.ai_recommendation ?? {}) as AIPlan;
   const subscriptionTier: SubscriptionTier = (profile?.tier as SubscriptionTier | undefined) ?? 'free';
+
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
   const topBadges = earnedBadges.slice(0, 3);
 
+  const sessionMixEntries = useMemo(() => {
+    const fallbackPrefs = (profile?.study_prefs as string[] | undefined) ?? [];
+    const mixSource =
+      ai.sessionMix && ai.sessionMix.length > 0
+        ? ai.sessionMix
+        : (ai.sequence ?? fallbackPrefs).map((skill) => ({ skill, topic: '' }));
+
+    return Array.isArray(mixSource) ? mixSource.slice(0, 4) : [];
+  }, [ai.sessionMix, ai.sequence, profile?.study_prefs]);
+
+  const focusTopics = useMemo(() => {
+    const declaredTopics = (profile?.focus_topics as string[] | null) ?? null;
+    if (Array.isArray(declaredTopics) && declaredTopics.length) {
+      return declaredTopics.slice(0, 3);
+    }
+    const topicCandidates = (ai.sessionMix ?? [])
+      .map((entry) => entry.topic)
+      .filter((topic): topic is string => Boolean(topic));
+    return topicCandidates.slice(0, 3);
+  }, [ai.sessionMix, profile?.focus_topics]);
+
+  const goalBand =
+    typeof profile?.goal_band === 'number'
+      ? profile.goal_band
+      : (typeof ai.suggestedGoal === 'number' ? ai.suggestedGoal : null);
+
+  const englishLevel = profile?.english_level ?? null;
+  const targetStudyTime = profile?.time_commitment || '1–2h/day';
+  const dailyQuota = ai.dailyQuota ?? profile?.daily_quota_goal ?? null;
+
+  const examDate = useMemo(() => {
+    if (!profile?.exam_date) return null;
+    const parsed = new Date(profile.exam_date);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [profile?.exam_date]);
+
+  const daysUntilExam = useMemo(() => {
+    if (!examDate) return null;
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffMs = examDate.getTime() - startOfToday.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 ? diffDays : 0;
+  }, [examDate]);
+
+  // Goal-linked summary cards
   type SummaryCard = {
     id: string;
     title: string;
@@ -265,47 +308,6 @@ export default function Dashboard() {
     secondaryCta?: { label: string; href: string };
     supporting?: React.ReactNode;
   };
-
-  const sessionMixEntries = useMemo(() => {
-    const fallbackPrefs = profile?.study_prefs ?? [];
-    const mixSource =
-      ai.sessionMix && ai.sessionMix.length > 0
-        ? ai.sessionMix
-        : (ai.sequence ?? fallbackPrefs).map((skill) => ({ skill, topic: '' }));
-
-    return mixSource.slice(0, 4);
-  }, [ai.sessionMix, ai.sequence, profile?.study_prefs]);
-
-  const focusTopics = useMemo(() => {
-    const declaredTopics = (profile?.focus_topics as string[] | null) ?? null;
-    if (declaredTopics && declaredTopics.length) {
-      return declaredTopics.slice(0, 3);
-    }
-
-    const topicCandidates = (ai.sessionMix ?? [])
-      .map((entry) => entry.topic)
-      .filter((topic): topic is string => Boolean(topic));
-
-    return topicCandidates.slice(0, 3);
-  }, [ai.sessionMix, profile?.focus_topics]);
-
-  const goalBand = typeof profile?.goal_band === 'number' ? profile.goal_band : ai.suggestedGoal ?? null;
-  const englishLevel = profile?.english_level ?? null;
-  const targetStudyTime = profile?.time_commitment || '1–2h/day';
-  const dailyQuota = ai.dailyQuota ?? profile?.daily_quota_goal ?? null;
-  const examDate = useMemo(() => {
-    if (!profile?.exam_date) return null;
-    const parsed = new Date(profile.exam_date);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }, [profile?.exam_date]);
-  const daysUntilExam = useMemo(() => {
-    if (!examDate) return null;
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const diffMs = examDate.getTime() - startOfToday.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 ? diffDays : 0;
-  }, [examDate]);
 
   const summaryCards: SummaryCard[] = useMemo(() => {
     const cards: SummaryCard[] = [
@@ -380,9 +382,7 @@ export default function Dashboard() {
         primaryCta: { label: 'View checklist', href: '/mock-tests' },
         secondaryCta: { label: 'Manage calendar', href: '#study-calendar' },
         supporting: (
-          <div className="text-small text-muted-foreground">
-            Exam date: {examDate.toLocaleDateString()}
-          </div>
+          <div className="text-small text-muted-foreground">Exam date: {examDate.toLocaleDateString()}</div>
         ),
       });
     }
@@ -390,23 +390,24 @@ export default function Dashboard() {
     return cards;
   }, [dailyQuota, daysUntilExam, englishLevel, examDate, focusTopics, goalBand, sessionMixEntries, targetStudyTime]);
 
-  if (loading) {
-    return loadingSkeleton;
-  }
-
   return (
     <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <Container>
         <div className="flex flex-col gap-8 lg:flex-row">
           <DashboardSidebar subscriptionTier={subscriptionTier} />
+
           <div className="flex-1 space-y-8">
             {/* Setup banner instead of redirect */}
             {needsSetup && (
               <Alert variant="warning" className="mb-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <div className="font-medium">Complete your profile to unlock a personalized plan.</div>
-                    <div className="text-small opacity-80">It only takes a minute—target band, exam date and study prefs.</div>
+                    <div className="font-medium">
+                      Complete your profile to unlock a personalized plan.
+                    </div>
+                    <div className="text-small opacity-80">
+                      It only takes a minute—target band, exam date and study prefs.
+                    </div>
                   </div>
                   <Link href="/profile/setup" className="shrink-0">
                     <Button variant="secondary" className="rounded-ds-xl">
@@ -417,6 +418,7 @@ export default function Dashboard() {
               </Alert>
             )}
 
+            {/* Header */}
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-4">
                 {profileAvatarUrl ? (
@@ -436,6 +438,7 @@ export default function Dashboard() {
                       .join('') || 'L'}
                   </div>
                 )}
+
                 <div className="space-y-2">
                   <div>
                     <h1 className="font-slab text-display text-gradient-primary">
@@ -445,6 +448,7 @@ export default function Dashboard() {
                       Every module below is wired into your IELTS goal—choose where to dive in next.
                     </p>
                   </div>
+
                   <div className="flex flex-wrap items-center gap-2 text-small text-muted-foreground">
                     <span>Preferred language: {(profile?.preferred_language ?? 'en').toUpperCase()}</span>
                     {typeof goalBand === 'number' ? (
@@ -460,7 +464,11 @@ export default function Dashboard() {
               <div className="flex flex-col items-start gap-3 md:items-end">
                 <div className="flex flex-wrap items-center gap-3">
                   <StreakIndicator value={streak} />
-                  {streak >= 7 && <Badge variant="success" size="sm">🔥 {streak}-day streak!</Badge>}
+                  {streak >= 7 && (
+                    <Badge variant="success" size="sm">
+                      🔥 {streak}-day streak!
+                    </Badge>
+                  )}
                   <Badge size="sm">🛡 {shields}</Badge>
                   <Button onClick={claimShield} variant="secondary" className="rounded-ds-xl">
                     Claim Shield
@@ -471,6 +479,7 @@ export default function Dashboard() {
                     </Button>
                   )}
                 </div>
+
                 {topBadges.length ? (
                   <div className="flex flex-wrap items-center gap-2 text-2xl">
                     {topBadges.map((meta) => (
@@ -480,12 +489,14 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : null}
+
                 <Button onClick={handleShare} variant="ghost" size="sm" className="rounded-ds-xl">
                   Share progress
                 </Button>
               </div>
             </div>
 
+            {/* Streak panel */}
             <div id="streak-panel">
               <StreakCounter current={streak} longest={longest} loading={streakLoading} shields={shields} />
               {nextRestart && (
@@ -495,6 +506,7 @@ export default function Dashboard() {
               )}
             </div>
 
+            {/* Tips */}
             {showTips && (
               <Alert variant="info" className="mt-6">
                 <div className="flex items-center justify-between gap-4">
@@ -522,6 +534,7 @@ export default function Dashboard() {
               <VocabularySpotlightFeature />
             </div>
 
+            {/* Weekly challenge */}
             <div className="mt-10" id="weekly-challenge">
               {challengeLoading ? (
                 <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
@@ -536,10 +549,6 @@ export default function Dashboard() {
               ) : (
                 <JoinWeeklyChallengeCard />
               )}
-            </div>
-
-            <div className="mt-6">
-              <DailyWeeklyChallenges />
             </div>
 
             {/* Goal-aligned summary */}
@@ -572,13 +581,15 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Next suggested lessons */}
+            {/* Next lessons */}
             {((ai.sessionMix ?? ai.sequence) ?? []).length > 0 && (
               <div className="mt-10" id="next-sessions">
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="font-slab text-h2">Next Lessons</h2>
-                    <p className="text-grayish text-small">Work through these in order to stay aligned with your goal.</p>
+                    <p className="text-grayish text-small">
+                      Work through these in order to stay aligned with your goal.
+                    </p>
                   </div>
                   <Link
                     href="#goal-summary"
@@ -587,33 +598,34 @@ export default function Dashboard() {
                     Revisit your plan
                   </Link>
                 </div>
+
                 <div className="grid gap-6 md:grid-cols-3">
-                  {((ai.sessionMix && ai.sessionMix.length
-                    ? ai.sessionMix
-                    : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
-                  )
-                    .slice(0, 3)
-                    .map((entry, index) => {
-                      const hrefSkill = entry.skill.toLowerCase();
-                      const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
-                      return (
-                        <Card key={`${entry.skill}-${entry.topic || index}`} className="p-6 rounded-ds-2xl flex flex-col">
-                          <h3 className="font-slab text-h3 mb-2 capitalize">{title}</h3>
-                          <div className="mt-auto">
-                            <Link href={`/learning/skills/${hrefSkill}`} className="w-full inline-block">
-                              <Button variant="primary" className="rounded-ds-xl w-full">
-                                Start
-                              </Button>
-                            </Link>
-                          </div>
-                        </Card>
-                      );
-                    }))}
+                  {(
+                    (ai.sessionMix && ai.sessionMix.length
+                      ? ai.sessionMix
+                      : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
+                    ).slice(0, 3)
+                  ).map((entry, index) => {
+                    const hrefSkill = (entry.skill || '').toLowerCase();
+                    const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
+                    return (
+                      <Card key={`${entry.skill}-${entry.topic || index}`} className="p-6 rounded-ds-2xl flex flex-col">
+                        <h3 className="font-slab text-h3 mb-2 capitalize">{title}</h3>
+                        <div className="mt-auto">
+                          <Link href={`/learning/skills/${hrefSkill}`} className="w-full inline-block">
+                            <Button variant="primary" className="rounded-ds-xl w-full">
+                              Start
+                            </Button>
+                          </Link>
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Visa gap summary */}
+            {/* Visa target */}
             <div className="mt-10 space-y-4" id="visa-target">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -645,7 +657,7 @@ export default function Dashboard() {
               <StudyCalendar />
             </div>
 
-            {/* Goal roadmap */}
+            {/* Roadmap */}
             <div className="mt-10 space-y-4">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -661,7 +673,7 @@ export default function Dashboard() {
               <GoalRoadmap examDate={profile?.exam_date ?? null} />
             </div>
 
-            {/* Actions + Reading stats */}
+            {/* Quick actions + Reading stats */}
             <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_.9fr]">
               <Card className="p-6 rounded-ds-2xl">
                 <h2 className="font-slab text-h2">Quick Actions</h2>
