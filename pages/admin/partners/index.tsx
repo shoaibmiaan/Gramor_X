@@ -88,9 +88,9 @@ const AdminPartnersPage: NextPage = () => {
 
               <section className="mt-8 rounded-xl border border-border p-4">
                 <h2 className="text-h4 font-medium">Your latest code</h2>
-                {stats?.myCode ? (
+                {stats?.code ? (
                   <code className="rounded-md border border-border bg-muted px-2 py-1 font-mono text-small">
-                    {stats.myCode}
+                    {stats.code}
                   </code>
                 ) : (
                   <p className="text-small text-muted-foreground">No active code. Generate one on the Referrals page.</p>
