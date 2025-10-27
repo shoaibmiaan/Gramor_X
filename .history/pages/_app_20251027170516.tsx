@@ -423,7 +423,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
       }
 
       if (!flagsHydratedRef.current) {
-        void refreshClientFlags();
+        await refreshClientFlags();
       }
 
       if (session?.user && isAuthPage) {
