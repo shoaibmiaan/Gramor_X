@@ -718,6 +718,47 @@ export default function Dashboard() {
                     Share Progress
                   </Button>
                 </div>
+
+                <div className="mt-8 rounded-ds-2xl border border-border/60 bg-muted/40 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Writing studio shortcuts</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Jump straight to drafts, feedback, drills, or your retake plan.
+                      </p>
+                    </div>
+                    <Badge variant="soft" tone="info" size="sm">
+                      Writing
+                    </Badge>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Link href="/writing">
+                      <Button size="sm" variant="primary" className="rounded-ds-xl">
+                        New task
+                      </Button>
+                    </Link>
+                    <Link href="/writing#continue-drafts">
+                      <Button size="sm" variant="secondary" className="rounded-ds-xl">
+                        Continue drafts
+                      </Button>
+                    </Link>
+                    <Link href="/writing#recent-attempts">
+                      <Button size="sm" variant="secondary" className="rounded-ds-xl">
+                        Review feedback
+                      </Button>
+                    </Link>
+                    <Link href="/writing/drills">
+                      <Button size="sm" variant="ghost" className="rounded-ds-xl">
+                        Micro-drills
+                      </Button>
+                    </Link>
+                    <Link href="/writing#retake-plan">
+                      <Button size="sm" variant="ghost" className="rounded-ds-xl">
+                        Retake plan
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </Card>
 
               <ReadingStatsCard />
