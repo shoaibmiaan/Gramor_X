@@ -17,6 +17,7 @@ export async function startCheckout(
     cycle: body.billingCycle,
     billingCycle: body.billingCycle,
     provider: method,
+    promoCode: body.promoCode,
   };
   const res = await fetch('/api/payments/create-intent', {
     method: 'POST',

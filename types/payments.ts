@@ -1,12 +1,13 @@
 // types/payments.ts
 export type PlanKey = 'starter' | 'booster' | 'master';
 export type Cycle = 'monthly' | 'annual';
-export type PaymentMethod = 'stripe' | 'easypaisa' | 'jazzcash';
+export type PaymentMethod = 'stripe' | 'easypaisa' | 'jazzcash' | 'crypto';
 
 export type CreateCheckoutBody = Readonly<{
   plan: PlanKey;
   referralCode?: string;
   billingCycle?: Cycle;
+  promoCode?: string;
 }>;
 
 export type CreateCheckoutResponse =
