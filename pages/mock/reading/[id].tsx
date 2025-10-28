@@ -118,7 +118,7 @@ const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.
           <div className="flex flex-wrap items-center gap-3">{right}</div>
         </div>
       </header>
-      <div className="grid gap-8 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+      <div className="grid gap-8 md:grid-cols-[minmax(0,1.55fr)_minmax(0,0.85fr)] xl:grid-cols-[minmax(0,1.75fr)_minmax(0,0.9fr)]">
         {children}
       </div>
     </div>
@@ -928,7 +928,7 @@ export default function ReadingMockPage() {
 
   const layoutIsSplit = layoutMode === 'split';
   const layoutContainerClass = layoutIsSplit
-    ? 'flex flex-col gap-8 md:grid md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]'
+    ? 'flex flex-col gap-8 md:grid md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]'
     : 'flex flex-col gap-8';
   const reviewBarClasses = [
     'sticky bottom-0 mt-8 -mx-6 border-t border-border/70 bg-background/95 px-6 py-4 shadow-lg shadow-black/5 backdrop-blur supports-[backdrop-filter]:backdrop-blur',
@@ -1109,7 +1109,7 @@ export default function ReadingMockPage() {
             </section>
           </div>
       </div>
-      <aside className="flex h-full min-w-0 flex-col gap-4">
+      <aside className="flex h-full min-w-0 flex-col gap-4 md:max-w-sm xl:max-w-md">
         <QuestionNav
           questions={questionItems}
           answers={answers}
