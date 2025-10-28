@@ -2,12 +2,14 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Flag } from 'lucide-react';
+import { readingPracticePapers } from '@/data/reading';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import {
   clearMockAttemptId,
   clearMockDraft,
   ensureMockAttemptId,
   fetchMockCheckpoint,
+  loadMockDraft,
   saveMockCheckpoint,
   saveMockDraft,
 } from '@/lib/mock/state';
@@ -89,7 +91,16 @@ const sampleReading: ReadingPaper = {
   ],
 };
 
+const readingPaperLookup = new Map<string, ReadingPaper>(
+  readingPracticePapers.map((paper) => [paper.id, JSON.parse(JSON.stringify(paper)) as ReadingPaper]),
+);
+
 const loadPaper = async (id: string): Promise<ReadingPaper> => {
+  const staticPaper = readingPaperLookup.get(id);
+  if (staticPaper) {
+    return JSON.parse(JSON.stringify(staticPaper)) as ReadingPaper;
+  }
+
   try {
     const mod = await import(`@/data/reading/${id}.json`);
     return mod.default as ReadingPaper;
@@ -909,7 +920,7 @@ export default function ReadingMockPage() {
   return (
     <>
       <Shell
-        title={`Reading — ${paper.title}`}
+        title={paper.title}
         right={
           <>
             <div className="text-small text-foreground/80">Answered {percent}%</div>
