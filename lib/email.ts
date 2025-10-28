@@ -5,16 +5,14 @@ type SendEmailOptions = {
   subject: string;
   text: string;
   html?: string;
+  attachments?: { filename: string; content: string; mimetype?: string }[];
 };
 
-export async function sendTransactionalEmail({ to, subject, text, html }: SendEmailOptions) {
+export async function sendTransactionalEmail({ to, subject, text, html, attachments }: SendEmailOptions) {
   const apiKey = env.RESEND_API_KEY ?? process.env.RESEND_API_KEY;
   const from = env.RESEND_FROM_EMAIL ?? 'GramorX <no-reply@gramorx.com>';
 
   if (!apiKey) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.warn('RESEND_API_KEY not configured; skipping email send for', subject);
-    }
     return { sent: false, reason: 'missing_api_key' as const };
   }
 
@@ -24,7 +22,7 @@ export async function sendTransactionalEmail({ to, subject, text, html }: SendEm
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from, to, subject, text, html }),
+    body: JSON.stringify({ from, to, subject, text, html, attachments }),
   });
 
   if (!response.ok) {
