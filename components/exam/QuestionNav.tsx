@@ -63,7 +63,7 @@ export function QuestionNav({
   return (
     <aside
       className={[
-        'rounded-2xl border border-border bg-card p-4 shadow-card text-foreground',
+        'rounded-3xl border border-border/80 bg-background/70 p-5 text-foreground shadow-lg shadow-black/10 backdrop-blur supports-[backdrop-filter]:backdrop-blur',
         className || '',
       ].join(' ')}
     >
