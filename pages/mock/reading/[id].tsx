@@ -20,7 +20,17 @@ import { track } from '@/lib/analytics/track';
 import { Checkbox } from '@/components/design-system/Checkbox';
 
 type QType = 'tfng' | 'yynn' | 'heading' | 'match' | 'mcq' | 'gap';
-type Q = { id: string; type: QType; prompt?: string; options?: string[]; answer: string };
+type MatchOptionObject = {
+  pairs?: Array<{ left: string; right: string | string[] }>;
+  choices?: string[];
+};
+type Q = {
+  id: string;
+  type: QType;
+  prompt?: string;
+  options?: string[] | MatchOptionObject;
+  answer: string;
+};
 type Passage = { id: string; title: string; text: string; questions: Q[] };
 type ReadingPaper = { id: string; title: string; durationSec: number; passages: Passage[] };
 
@@ -111,12 +121,14 @@ const loadPaper = async (id: string): Promise<ReadingPaper> => {
 
 const Shell: React.FC<{ title: string; right?: React.ReactNode; children: React.ReactNode }> = ({ title, right, children }) => (
   <div className="min-h-[100dvh] bg-background text-foreground pb-safe">
-    <div className="mx-auto w-full max-w-6xl px-4 pb-8 pt-safe sm:px-6 lg:px-8">
-      <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-h3 font-semibold">{title}</h1>
-        <div className="flex flex-wrap items-center gap-3">{right}</div>
+    <div className="mx-auto w-full max-w-screen-2xl px-3 pb-12 pt-safe sm:px-6 lg:px-8 xl:px-10">
+      <header className="mb-8 rounded-3xl border border-border/80 bg-background/70 px-5 py-5 shadow-lg shadow-black/5 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-h3 font-semibold tracking-tight">{title}</h1>
+          <div className="flex flex-wrap items-center gap-3">{right}</div>
+        </div>
       </header>
-      <div className="grid gap-6 md:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
+      <div className="grid gap-8 md:grid-cols-[minmax(0,1.85fr)_minmax(0,0.7fr)] xl:grid-cols-[minmax(0,2.05fr)_minmax(0,0.75fr)]">
         {children}
       </div>
     </div>
@@ -135,6 +147,7 @@ export default function ReadingMockPage() {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('split');
   const [isStarted, setIsStarted] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [layoutHydrated, setLayoutHydrated] = useState(false);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const attemptRef = useRef<string>('');
@@ -830,9 +843,10 @@ export default function ReadingMockPage() {
   }, []);
 
   const submit = async () => {
-    if (!paper || !id) return;
+    if (!paper || !id || isSubmitting) return;
+    setIsSubmitting(true);
+
     const flatQ = paper.passages.flatMap((p) => p.questions);
-    const wrongDetails: WrongDetail[] = [];
     let correct = 0;
     for (const q of flatQ) {
       const entry = answers[q.id];
@@ -841,7 +855,7 @@ export default function ReadingMockPage() {
     }
     const percentage = Math.round((correct / flatQ.length) * 100);
     let attemptId = '';
-    let persisted = false;
+    let fallbackAttemptId = '';
 
     try {
       const { data: u } = await supabase.auth.getUser();
@@ -859,11 +873,22 @@ export default function ReadingMockPage() {
       const { data, error } = await supabase.from('attempts_reading').insert(payload).select('id').single();
       if (error) throw error;
       attemptId = data.id as unknown as string;
-      persisted = true;
-    } catch {
-      attemptId = `local-${Date.now()}`;
-      try { localStorage.setItem(`read:attempt-res:${attemptId}`, JSON.stringify({ paper, answers })); } catch {}
+    } catch (error) {
+      fallbackAttemptId = `local-${Date.now()}`;
+      attemptId = fallbackAttemptId;
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console -- surfaced in development to aid debugging failures
+        console.warn('[reading] Failed to persist attempt remotely, falling back to local storage.', error);
+      }
+      try {
+        localStorage.setItem(`read:attempt-res:${attemptId}`, JSON.stringify({ paper, answers }));
+      } catch {
+        // ignore local storage failures so the flow can continue
+      }
     } finally {
+      if (!attemptId) {
+        attemptId = fallbackAttemptId || `local-${Date.now()}`;
+      }
       if (attemptRef.current) {
         void saveMockCheckpoint({
           attemptId: attemptRef.current,
@@ -887,7 +912,16 @@ export default function ReadingMockPage() {
         clearMockAttemptId('reading', paper.id);
       }
       clearMockDraft('reading', id);
-      router.replace(`/review/reading/${id}?attempt=${attemptId}`);
+      const targetUrl = `/review/reading/${id}?attempt=${encodeURIComponent(attemptId)}`;
+      try {
+        await router.replace(targetUrl);
+      } catch (error) {
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console -- surfaced in development to aid debugging navigation issues
+          console.error('[reading] Failed to navigate to review screen after submission.', error);
+        }
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -904,14 +938,14 @@ export default function ReadingMockPage() {
 
   const layoutIsSplit = layoutMode === 'split';
   const layoutContainerClass = layoutIsSplit
-    ? 'flex flex-col gap-6 md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]'
-    : 'flex flex-col gap-6';
+    ? 'flex flex-col gap-8 md:grid md:grid-cols-[minmax(0,1.55fr)_minmax(0,0.9fr)]'
+    : 'flex flex-col gap-8';
   const reviewBarClasses = [
-    'sticky bottom-0 mt-6 -mx-4 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:backdrop-blur',
+    'sticky bottom-0 mt-8 -mx-6 border-t border-border/70 bg-background/95 px-6 py-4 shadow-lg shadow-black/5 backdrop-blur supports-[backdrop-filter]:backdrop-blur',
   ];
   if (layoutIsSplit) {
     reviewBarClasses.push(
-      'md:static md:mx-0 md:mt-auto md:rounded-xl md:border md:bg-background/80 md:px-4 md:shadow-sm md:backdrop-blur-none md:supports-[backdrop-filter]:backdrop-blur-none'
+      'md:static md:mx-0 md:mt-auto md:rounded-2xl md:border md:bg-background/90 md:px-6 md:py-5 md:shadow-md md:backdrop-blur-none md:supports-[backdrop-filter]:backdrop-blur-none'
     );
   }
 
@@ -930,7 +964,7 @@ export default function ReadingMockPage() {
           </>
         }
       >
-        <div className="min-w-0 rounded-2xl border border-border bg-background/50 p-4">
+        <div className="min-w-0 rounded-3xl border border-border/80 bg-background/60 p-6 shadow-lg shadow-black/5">
           {focusMode && isStarted ? <FocusModeNotice onExit={exitFocusMode} /> : null}
           <div className={layoutContainerClass}>
             <section className="min-w-0 space-y-4">
@@ -1055,7 +1089,7 @@ export default function ReadingMockPage() {
                       if (nextUnanswered) scrollToQuestion(nextUnanswered.id);
                     }}
                     className="rounded-full border border-border px-3 py-1 text-small text-foreground transition hover:border-primary disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={!nextUnanswered}
+                    disabled={isSubmitting || !nextUnanswered}
                   >
                     Review unanswered
                   </button>
@@ -1066,15 +1100,18 @@ export default function ReadingMockPage() {
                       if (nextFlagged) scrollToQuestion(nextFlagged.id);
                     }}
                     className="rounded-full border border-border px-3 py-1 text-small text-foreground transition hover:border-warning disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={!nextFlagged}
+                    disabled={isSubmitting || !nextFlagged}
                   >
                     Review flagged
                   </button>
                   <button
+                    type="button"
                     onClick={submit}
-                    className="rounded-full bg-primary px-4 py-2 text-small font-semibold text-background transition hover:opacity-90"
+                    className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-small font-semibold text-background transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={isSubmitting}
+                    aria-busy={isSubmitting}
                   >
-                    Submit for scoring
+                    {isSubmitting ? 'Submitting…' : 'Submit for scoring'}
                   </button>
                 </div>
               </div>
@@ -1082,7 +1119,7 @@ export default function ReadingMockPage() {
             </section>
           </div>
       </div>
-      <aside className="flex h-full min-w-0 flex-col gap-4">
+      <aside className="flex h-full min-w-0 flex-col gap-4 md:max-w-[18rem] xl:max-w-[20rem]">
         <QuestionNav
           questions={questionItems}
           answers={answers}
@@ -1092,7 +1129,7 @@ export default function ReadingMockPage() {
           onToggleFlag={toggleFlag}
           currentQuestionId={currentQuestionId}
         />
-        <div className="flex-1 rounded-2xl border border-border bg-background/50 p-4">
+        <div className="flex-1 rounded-3xl border border-border/80 bg-background/60 p-5 shadow-lg shadow-black/5">
           <div className="mb-2 flex items-center justify-between gap-3">
             <div className="text-small font-medium">Highlights &amp; notes</div>
             {!notesLoaded && <span className="text-caption text-foreground/60">Syncing…</span>}
@@ -1436,8 +1473,25 @@ function renderInput(
     const opts = ['Yes', 'No', 'Not Given'];
     return <Options options={opts} value={value} onPick={handlers.onChange} onFocus={handlers.onFocus} />;
   }
-  if (q.type === 'heading' || q.type === 'match' || q.type === 'mcq') {
-    return <Options options={q.options || []} value={value} onPick={handlers.onChange} onFocus={handlers.onFocus} />;
+  if (q.type === 'heading' || q.type === 'mcq') {
+    return (
+      <Options
+        options={normalizeOptionList(q.options)}
+        value={value}
+        onPick={handlers.onChange}
+        onFocus={handlers.onFocus}
+      />
+    );
+  }
+  if (q.type === 'match') {
+    return (
+      <MatchOptions
+        options={normalizeOptionList(q.options)}
+        value={value}
+        onPick={handlers.onChange}
+        onFocus={handlers.onFocus}
+      />
+    );
   }
   return (
     <input
@@ -1448,6 +1502,21 @@ function renderInput(
       placeholder="Type your answer"
     />
   );
+}
+
+function normalizeOptionList(options: Q['options']): string[] {
+  if (!options) return [];
+  if (Array.isArray(options)) return options;
+  const fromPairs = Array.isArray(options.pairs)
+    ? options.pairs.flatMap((pair) => {
+        if (!pair) return [];
+        const rights = Array.isArray(pair.right) ? pair.right : pair.right ? [pair.right] : [];
+        if (rights.length === 0) return pair.left ? [pair.left] : [];
+        return rights.map((right) => `${pair.left} -> ${right}`);
+      })
+    : [];
+  const extras = Array.isArray(options.choices) ? options.choices : [];
+  return [...fromPairs, ...extras];
 }
 
 const Options: React.FC<{
@@ -1467,6 +1536,32 @@ const Options: React.FC<{
         onFocus={onFocus}
         type="button"
         className={`rounded-lg border px-3 py-1 text-small transition hover:border-primary ${value === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground'}`}
+      >
+        {opt}
+      </button>
+    ))}
+  </div>
+);
+
+const MatchOptions: React.FC<{
+  options: string[];
+  value: string;
+  onPick: (v: string) => void;
+  onFocus: () => void;
+}> = ({ options, value, onPick, onFocus }) => (
+  <div className="grid gap-2 sm:grid-cols-2">
+    {options.map((opt, index) => (
+      <button
+        key={toOptionId(opt, index)}
+        onClick={() => {
+          onFocus();
+          onPick(opt);
+        }}
+        onFocus={onFocus}
+        type="button"
+        className={`rounded-lg border px-3 py-2 text-left text-small leading-snug transition hover:border-primary ${
+          value === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground'
+        }`}
       >
         {opt}
       </button>
