@@ -67,6 +67,7 @@
     "next-themes": "^0.3.0",
     "openai": "^5.12.2",
     "parquetjs-lite": "^0.8.7",
+    "pdfkit": "^0.17.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-markdown": "9.1.0",
@@ -80,6 +81,7 @@
     "swr": "^2.3.6",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "tesseract.js": "^6.0.1",
     "twilio": "^5.8.0",
     "use-debounce": "^10.0.6",
     "zod": "^3.25.76"
