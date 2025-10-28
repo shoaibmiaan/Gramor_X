@@ -4,7 +4,6 @@ import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Input } from '@/components/design-system/Input';
-import { Spinner } from '@/components/design-system/Spinner';
 import type { ParaphraseOption } from '@/lib/writing/languageTools';
 
 export type ParaphraseStudioProps = {
@@ -63,8 +62,9 @@ export const ParaphraseStudio = ({ onInsert }: ParaphraseStudioProps) => {
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={runParaphrase} disabled={loading}>
             {loading ? (
-              <span className="flex items-center gap-2">
-                <Spinner size="xs" /> Generating
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" aria-hidden />
+                Generating…
               </span>
             ) : (
               'Generate paraphrases'

@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
-import { Spinner } from '@/components/design-system/Spinner';
 import type { LiveSuggestion } from '@/lib/writing/languageTools';
 
 export type LiveCritiquePanelProps = {
@@ -52,8 +51,9 @@ export const LiveCritiquePanel = ({ text, disabled, onApply }: LiveCritiquePanel
         </div>
         <Button size="sm" variant="outline" onClick={runCritique} disabled={disabled || loading}>
           {loading ? (
-            <span className="flex items-center gap-2">
-              <Spinner size="xs" /> Analyzing
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" aria-hidden />
+              Analyzing…
             </span>
           ) : (
             'Refresh critique'

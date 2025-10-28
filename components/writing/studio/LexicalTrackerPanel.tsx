@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Badge } from '@/components/design-system/Badge';
 import { Card } from '@/components/design-system/Card';
-import { Progress } from '@/components/design-system/Progress';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 import type { LexicalReport } from '@/lib/writing/languageTools';
 
 export type LexicalTrackerPanelProps = {
@@ -64,7 +64,7 @@ export const LexicalTrackerPanel = ({ text, timeSpentMs }: LexicalTrackerPanelPr
               {report.typeTokenRatio.toFixed(2)}
             </Badge>
           </div>
-          <Progress value={report.typeTokenRatio * 100} aria-label="Type-token ratio" />
+          <ProgressBar value={report.typeTokenRatio * 100} ariaLabel="Type-token ratio" />
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
             {ttrTargets.map((target) => (
               <span key={target.label}>{target.label}: {target.value.toFixed(2)}</span>
