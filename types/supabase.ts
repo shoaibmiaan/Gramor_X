@@ -250,7 +250,7 @@ export interface ReadingNoteTable extends TableBase {
 
 export interface Invoices extends TableBase {
   user_id: string;
-  provider: 'stripe' | 'easypaisa' | 'jazzcash';
+  provider: 'stripe' | 'easypaisa' | 'jazzcash' | 'crypto';
   status: 'draft' | 'paid' | 'void' | 'refunded' | 'failed';
   amount_minor: number;
   currency: 'USD' | 'PKR';
