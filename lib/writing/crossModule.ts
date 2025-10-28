@@ -73,7 +73,7 @@ export async function fetchReadingEvidence(
   responses.forEach((response) => {
     const test = tests?.find((row) => row.slug === response.test_slug);
     if (!test) return;
-    const text = (test.summary ?? '') || test.passage_text ?? '';
+    const text = (test.summary ?? '') || (test.passage_text ?? '');
     if (!text) return;
     const ranked = rankSentences(text, keywordList);
     ranked.forEach((sentence) => {

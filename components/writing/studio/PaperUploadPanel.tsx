@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
-import { Progress } from '@/components/design-system/Progress';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 
 interface PaperUploadPanelProps {
   attemptId: string | null;
@@ -69,7 +69,7 @@ export function PaperUploadPanel({ attemptId, onInsert }: PaperUploadPanelProps)
       {typeof legibility === 'number' && (
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">Legibility score</p>
-          <Progress value={legibility * 100} />
+          <ProgressBar value={legibility * 100} ariaLabel="Legibility score" />
         </div>
       )}
       {message && <p className="text-xs text-muted-foreground">{message}</p>}
