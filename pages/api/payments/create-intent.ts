@@ -8,7 +8,7 @@ import { createGatewayIntent, amountInCents, type PaymentProvider } from '@/lib/
 import { createPendingPayment } from '@/lib/billing/manual';
 import type { Cycle, PlanKey } from '@/lib/pricing';
 
-const providers: PaymentProvider[] = ['stripe', 'easypaisa', 'jazzcash'];
+const providers: PaymentProvider[] = ['stripe', 'easypaisa', 'jazzcash', 'crypto'];
 const isPlan = (val: unknown): val is PlanKey => typeof val === 'string' && ['starter', 'booster', 'master'].includes(val);
 const isCycle = (val: unknown): val is Cycle => typeof val === 'string' && ['monthly', 'annual'].includes(val);
 const isProvider = (val: unknown): val is PaymentProvider => typeof val === 'string' && providers.includes(val as PaymentProvider);
@@ -19,7 +19,13 @@ const getOrigin = (req: NextApiRequest) => {
   return `${proto}://${host}`;
 };
 
-type Body = Readonly<{ plan: PlanKey; cycle?: Cycle; provider?: PaymentProvider; referralCode?: string }>;
+type Body = Readonly<{
+  plan: PlanKey;
+  cycle?: Cycle;
+  provider?: PaymentProvider;
+  referralCode?: string;
+  promoCode?: string;
+}>;
 
 type SuccessRedirect = Readonly<{ ok: true; provider: PaymentProvider; url: string; sessionId?: string | null }>;
 type SuccessManual = Readonly<{ ok: true; manual: true; message: string }>;
@@ -37,6 +43,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   const cycle = cycleCandidate ?? 'monthly';
   const provider = isProvider(body.provider) ? body.provider : 'stripe';
   const referralCode = typeof body.referralCode === 'string' ? body.referralCode.slice(0, 64) : undefined;
+  const promoCode = typeof body.promoCode === 'string' ? body.promoCode.slice(0, 64) : undefined;
 
   const supabase = createSupabaseServerClient({ req, res });
   const { data: auth } = await supabase.auth.getUser();
@@ -58,7 +65,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       amount_cents: amountCents,
       currency,
       status: 'pending',
-      metadata: { referralCode },
+      metadata: { referralCode, promoCode },
     })
     .select('id')
     .single();
@@ -74,7 +81,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
     intent_id: intentId,
     user_id: userId,
     event: 'created',
-    payload: { provider, plan, cycle, referralCode },
+    payload: { provider, plan, cycle, referralCode, promoCode },
   });
 
   await trackor.log('payments.intent.create', {
@@ -93,6 +100,9 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       origin,
       userId,
       referralCode,
+      promoCode,
+      amountCents,
+      intentId,
     });
 
     await supabaseService
@@ -108,7 +118,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       intent_id: intentId,
       user_id: userId,
       event: 'gateway.created',
-      payload: { url: gateway.url, sessionId: gateway.sessionId ?? null },
+      payload: { url: gateway.url, sessionId: gateway.sessionId ?? null, promoCode },
     });
 
     return res.status(200).json({ ok: true, provider, url: gateway.url, sessionId: gateway.sessionId ?? null });
@@ -133,7 +143,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
             status: 'manual',
             confirmed_at: confirmedAt,
             updated_at: confirmedAt,
-            metadata: { referralCode, manual: true },
+            metadata: { referralCode, promoCode, manual: true },
           })
           .eq('id', intentId);
 
