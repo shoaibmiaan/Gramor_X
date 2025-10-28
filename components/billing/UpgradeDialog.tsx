@@ -8,7 +8,7 @@ import { evaluateQuota, nextPlanForQuota, type QuotaKey } from '@/lib/plan/quota
 import type { PaymentMethod, PlanKey } from '@/types/payments';
 import type { PlanId } from '@/types/pricing';
 
-const DEFAULT_METHODS: PaymentMethod[] = ['stripe', 'easypaisa', 'jazzcash'];
+const DEFAULT_METHODS: PaymentMethod[] = ['stripe', 'crypto', 'easypaisa', 'jazzcash'];
 
 export type UpgradeDialogProps = {
   open: boolean;
@@ -128,7 +128,15 @@ export function UpgradeDialog({
                 loading={loading === method}
                 onClick={() => void start(method)}
               >
-                {loading === method ? 'Starting…' : `Upgrade via ${method === 'stripe' ? 'Card' : method}`}
+                {loading === method
+                  ? 'Starting…'
+                  : `Upgrade via ${
+                      method === 'stripe'
+                        ? 'Card'
+                        : method === 'crypto'
+                        ? 'Crypto'
+                        : method
+                    }`}
               </Button>
             ))}
           </div>
