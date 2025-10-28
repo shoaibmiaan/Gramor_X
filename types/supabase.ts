@@ -343,6 +343,16 @@ export interface ReviewCommentRow extends TableBase {
   body: string;
 }
 
+export interface WritingNotificationEvent extends TableBase {
+  user_id: string;
+  attempt_id?: string | null;
+  channel: 'in_app' | 'whatsapp' | 'email';
+  type: 'micro_prompt' | 'retake_reminder';
+  message: string;
+  metadata?: Record<string, unknown> | null;
+  created_at?: string | null;
+}
+
 export interface MistakesRow extends TableBase {
   user_id: string;
   source: 'writing';
@@ -567,6 +577,7 @@ export interface DBSchema {
   writing_prompts: WritingPrompts;
   writing_responses: WritingResponses;
   writing_feedback: WritingFeedbackRow;
+  writing_notification_events: WritingNotificationEvent;
   review_comments: ReviewCommentRow;
   exam_attempts: ExamAttempts;
   exam_events: ExamEvents;
