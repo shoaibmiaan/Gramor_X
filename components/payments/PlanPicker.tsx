@@ -22,6 +22,7 @@ export type PlanPickerProps = {
   onSelect?: (plan: PlanKey, cycle: Cycle) => void;
   methods?: PaymentMethod[];
   referralCode?: string;
+  promoCode?: string;
 };
 
 const DEFAULT_PLANS: Plan[] = [
@@ -57,6 +58,7 @@ const PROVIDER_LABEL: Record<PaymentMethod, string> = {
   stripe: 'Card',
   easypaisa: 'Easypaisa',
   jazzcash: 'JazzCash',
+  crypto: 'Crypto',
 };
 
 export default function PlanPicker({
@@ -66,6 +68,7 @@ export default function PlanPicker({
   onSelect,
   methods,
   referralCode,
+  promoCode,
 }: PlanPickerProps) {
   const [cycle, setCycle] = React.useState<Cycle>(defaultCycle);
   const [busyKey, setBusyKey] = React.useState<PlanKey | null>(null);
@@ -111,6 +114,7 @@ export default function PlanPicker({
           plan: planKey,
           billingCycle: cycle,
           referralCode,
+          promoCode,
         });
 
         if (!result.ok) {
@@ -134,7 +138,7 @@ export default function PlanPicker({
         setBusyKey(null);
       }
     },
-    [availableMethods, cycle, onSelect, referralCode, selectedMethod],
+    [availableMethods, cycle, onSelect, referralCode, selectedMethod, promoCode],
   );
 
   return (
