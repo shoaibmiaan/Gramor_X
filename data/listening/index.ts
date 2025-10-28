@@ -96,3 +96,8 @@ export const listeningPracticePapers: ListeningPaper[] = listeningPracticeJson.m
 export const listeningPracticeList: ListeningPracticeMeta[] = listeningPracticePapers.map((paper) =>
   buildListeningPracticeMeta(paper),
 );
+
+export function getListeningPaperById(id: string): ListeningPaper | undefined {
+  if (!id) return undefined;
+  return listeningPracticePapers.find((paper) => paper.id === id || paper.title === id);
+}

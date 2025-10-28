@@ -1,8 +1,6 @@
 // middleware.ts
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { getMiddlewareClient } from '@/lib/supabaseServer';
-
 // Pages that should be accessible without being logged in
 const AUTH_PAGES = [
   '/login',
@@ -57,6 +55,56 @@ function redirectWithCookies(from: NextResponse, url: URL) {
   return r;
 }
 
+type AuthState =
+  | {
+      authenticated: false;
+    }
+  | {
+      authenticated: true;
+      userId: string;
+      role: string | null;
+      onboardingComplete: boolean;
+    };
+
+async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthState> {
+  const cookieHeader = req.headers.get('cookie');
+  if (!cookieHeader) {
+    return { authenticated: false };
+  }
+
+  try {
+    const response = await fetch(`${req.nextUrl.origin}/api/internal/auth/state`, {
+      method: 'GET',
+      headers: {
+        cookie: cookieHeader,
+        'x-gramor-internal': 'middleware',
+      },
+      cache: 'no-store',
+    });
+
+    const headerAccessor = response.headers as unknown as { getSetCookie?: () => string[] };
+    const setCookies = headerAccessor.getSetCookie?.();
+    if (Array.isArray(setCookies)) {
+      setCookies.forEach((cookieValue) => {
+        res.headers.append('set-cookie', cookieValue);
+      });
+    }
+
+    if (!response.ok) {
+      return { authenticated: false };
+    }
+
+    const json = (await response.json()) as AuthState | { error: string };
+    if ('authenticated' in json) {
+      return json;
+    }
+  } catch {
+    // Ignore network errors and treat as unauthenticated; downstream guards will handle fallbacks.
+  }
+
+  return { authenticated: false };
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
@@ -75,14 +123,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Create a mutable response FIRST so Supabase can attach refreshed cookies
   const res = NextResponse.next();
-
-  // Auth-helpers client that works in Edge middleware and handles cookies correctly
-  const supabase = getMiddlewareClient(req, res);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const authState = await loadAuthState(req, res);
 
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
@@ -120,7 +162,7 @@ export async function middleware(req: NextRequest) {
   // ----- end Premium PIN gate -----
 
   // If not signed in and trying to view a protected route -> redirect to login
-  if (!user && isProtected && !isAuthPage) {
+  if (!authState.authenticated && isProtected && !isAuthPage) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
     url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
@@ -128,7 +170,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // If already signed in and on an auth page -> bounce to intended next or home
-  if (user && isAuthPage) {
+  if (authState.authenticated && isAuthPage) {
     const url = req.nextUrl.clone();
     const nextParam = req.nextUrl.searchParams.get('next');
     url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/';
@@ -136,40 +178,24 @@ export async function middleware(req: NextRequest) {
     return redirectWithCookies(res, url);
   }
 
-  if (user) {
-    const role =
-      (user.app_metadata?.role as string | undefined) ||
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ((user.user_metadata as any)?.role as string | undefined);
-
+  if (authState.authenticated) {
+    const role = authState.role ?? undefined;
     const skipOnboardingGuard = role === 'teacher' || role === 'admin';
 
     if (!skipOnboardingGuard) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('onboarding_complete,onboarding_step')
-        .or(`user_id.eq.${user.id},id.eq.${user.id}`)
-        .maybeSingle();
-
-      const loadFailed = !!profileError && profileError.code !== 'PGRST116';
-      if (!loadFailed) {
-        const noProfile = profileError?.code === 'PGRST116' || !profile;
-        const onboardingComplete = profile?.onboarding_complete === true;
-
-        if (!onboardingComplete) {
-          if (!isOnboardingRoute && (isProtected || pathname === '/dashboard')) {
-            const url = req.nextUrl.clone();
-            url.pathname = '/onboarding';
-            url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
-            return redirectWithCookies(res, url);
-          }
-        } else if (isOnboardingRoute && !noProfile) {
+      if (!authState.onboardingComplete) {
+        if (!isOnboardingRoute && (isProtected || pathname === '/dashboard')) {
           const url = req.nextUrl.clone();
-          const nextParam = req.nextUrl.searchParams.get('next');
-          url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
-          url.search = '';
+          url.pathname = '/onboarding';
+          url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
           return redirectWithCookies(res, url);
         }
+      } else if (isOnboardingRoute) {
+        const url = req.nextUrl.clone();
+        const nextParam = req.nextUrl.searchParams.get('next');
+        url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
+        url.search = '';
+        return redirectWithCookies(res, url);
       }
     }
   }
