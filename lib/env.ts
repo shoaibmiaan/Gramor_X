@@ -35,7 +35,7 @@ const envSchema = z.object({
 
   // Optional client-side toggles/util
   NEXT_PUBLIC_TWILIO_BYPASS: z.string().optional(),
-  NEXT_PUBLIC_PAYMENTS_PROVIDER: z.enum(['none', 'stripe', 'easypaisa', 'jazzcash']).optional(),
+  NEXT_PUBLIC_PAYMENTS_PROVIDER: z.enum(['none', 'stripe', 'easypaisa', 'jazzcash', 'crypto']).optional(),
 
   // Server-only vars (required in prod)
   SUPABASE_URL: z.string().url(),
@@ -94,7 +94,7 @@ const envSchema = z.object({
   LOCAL_ADMIN_TOKEN: z.string().optional(),
   ADMIN_API_TOKEN: z.string().optional(),
   SITE_URL: z.string().url().optional(),
-  PAYMENTS_PROVIDER: z.enum(['none', 'stripe', 'easypaisa', 'jazzcash']).optional(),
+  PAYMENTS_PROVIDER: z.enum(['none', 'stripe', 'easypaisa', 'jazzcash', 'crypto']).optional(),
   PORT: z.coerce.number().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
