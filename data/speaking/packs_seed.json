@@ -1,0 +1,45 @@
+[
+  {
+    "slug": "p2-education-pack-a",
+    "title": "Part 2 Education Deep Dive",
+    "description": "Cue cards exploring mentors, skills, and lifelong learning for band 7+ responses.",
+    "visibility": "public",
+    "prompts": ["p2-describe-mentor-004", "p2-describe-skill-007", "p2-describe-invention-003"]
+  },
+  {
+    "slug": "p2-travel-pack-a",
+    "title": "Part 2 Travel Stories",
+    "description": "City adventures, celebrations, and cultural journeys to sharpen storytelling.",
+    "visibility": "public",
+    "prompts": ["p2-describe-city-002", "p2-describe-event-006", "p2-describe-book-001"]
+  },
+  {
+    "slug": "p3-society-pack-a",
+    "title": "Part 3 Society & Policy",
+    "description": "High-level follow-up questions on community, environment, and innovation.",
+    "visibility": "public",
+    "prompts": [
+      "p3-community-support-001",
+      "p3-environment-policy-002",
+      "p3-workplace-innovation-003"
+    ]
+  },
+  {
+    "slug": "interview-starter-pack",
+    "title": "Interview Essentials",
+    "description": "Prove your value with behavioural interview questions used in global firms.",
+    "visibility": "public",
+    "prompts": ["interview-job-strengths-001", "interview-teamwork-002", "interview-failure-003"]
+  },
+  {
+    "slug": "scenario-health-pack",
+    "title": "Healthcare & Research Scenarios",
+    "description": "Scenario drills for academic and healthcare professionals needing English on the job.",
+    "visibility": "public",
+    "prompts": [
+      "scenario-healthcare-communication-004",
+      "scenario-research-collaboration-003",
+      "scenario-academic-presentation-001"
+    ]
+  }
+]

@@ -37,6 +37,14 @@ const VocabularyFeature = dynamic<VocabularySpotlightFeatureProps>(
   { ssr: true, loading: () => <SectionSkeleton /> }
 );
 
+const SpeakingPracticeHighlight = dynamic(
+  () =>
+    import('@/components/sections/SpeakingPracticeHighlight').then(
+      (m: any) => m.SpeakingPracticeHighlight ?? m.default
+    ),
+  { ssr: true, loading: () => <SectionSkeleton /> }
+);
+
 const Testimonials = dynamic(
   () =>
     import('@/components/sections/Testimonials').then(
@@ -187,6 +195,10 @@ export default function HomePage({ serverNowMsUTC, launchMsUTC }: HomeProps) {
               </span>
             </div>
           </Container>
+        </section>
+
+        <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+          <SpeakingPracticeHighlight />
         </section>
 
         <section
