@@ -1,12 +1,14 @@
 // pages/challenge/index.tsx
-import * as React from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import Link from "next/link";
-import { Container } from "@/components/design-system/Container";
-import { ChallengeCohortCard } from "@/components/challenge/ChallengeCohortCard";
-import type { ChallengeCohortId } from "@/types/challenge";
-import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import * as React from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+
+import { ChallengeCohortCard } from '@/components/challenge/ChallengeCohortCard';
+import { Container } from '@/components/design-system/Container';
+import type { ChallengeCohortId } from '@/types/challenge';
+import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
+import { useSupabaseSessionUser } from '@/hooks/useSupabaseSessionUser';
 
 type UiCohort = {
   id: ChallengeCohortId;
@@ -44,33 +46,10 @@ const COHORTS: UiCohort[] = [
   },
 ];
 
-type EnrollmentRow = {
-  id: string;
-  cohort: string;
-  progress: Record<string, "pending" | "done" | "skipped">;
-};
-
 export default function ChallengeIndexPage() {
   const router = useRouter();
-  const [enrollments, setEnrollments] = React.useState<EnrollmentRow[]>([]);
-  const [userId, setUserId] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    (async () => {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const uid = data.session?.user?.id ?? null;
-      setUserId(uid);
-
-      if (!uid) return;
-
-      const { data: rows } = await supabaseBrowser
-        .from("challenge_enrollments")
-        .select("id, cohort, progress")
-        .eq("user_id", uid);
-
-      setEnrollments((rows as any) ?? []);
-    })();
-  }, []);
+  const { userId } = useSupabaseSessionUser();
+  const { enrollments, refresh } = useChallengeEnrollments(userId);
 
   const enrollmentFor = React.useCallback(
     (cohortId: string) => enrollments.find((e) => e.cohort === cohortId),
@@ -79,24 +58,20 @@ export default function ChallengeIndexPage() {
 
   const onEnroll = async (cohortId: ChallengeCohortId) => {
     if (!userId) {
-      router.push(`/login?next=${encodeURIComponent("/challenge")}`);
+      router.push(`/login?next=${encodeURIComponent('/challenge')}`);
       return;
     }
-    const res = await fetch("/api/challenge/enroll", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/challenge/enroll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cohort: cohortId }),
     });
     if (res.ok) {
       // refresh client enrollments
-      const { data } = await supabaseBrowser
-        .from("challenge_enrollments")
-        .select("id, cohort, progress")
-        .eq("user_id", userId);
-      setEnrollments((data as any) ?? []);
+      await refresh();
     } else {
       const j = await res.json().catch(() => ({}));
-      alert(j?.error ?? "Failed to enroll");
+      alert(j?.error ?? 'Failed to enroll');
     }
   };
 
