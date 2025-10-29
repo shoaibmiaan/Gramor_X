@@ -59,3 +59,7 @@ storybook-static
 # Generated audio fixtures
 public/audio/*.mp3
 public/placement/audio/*.mp3
+
+# Artifacts
+*.zip
+supabase/.temp/
