@@ -17,10 +17,13 @@ import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
 import QuickDrillButton from '@/components/quick/QuickDrillButton';
 import { VocabularySpotlightFeature } from '@/components/feature/VocabularySpotlight';
 import { StreakCounter } from '@/components/streak/StreakCounter';
+import { NextTaskCard } from '@/components/reco/NextTaskCard';
 
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
+import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
+import { useNextTask } from '@/hooks/useNextTask';
 
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
@@ -33,8 +36,6 @@ import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeC
 import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCard';
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
-import type { ChallengeTaskStatus } from '@/types/challenge';
-
 import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 
 export default function Dashboard() {
@@ -44,11 +45,6 @@ export default function Dashboard() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
-  const [challengeLoading, setChallengeLoading] = useState(true);
-  const [challengeEnrollment, setChallengeEnrollment] = useState<{
-    cohort: string;
-    progress: Record<string, ChallengeTaskStatus> | null;
-  } | null>(null);
 
   const {
     current: streak,
@@ -111,6 +107,7 @@ export default function Dashboard() {
         if (cancelled) return;
 
         if (error) {
+          // eslint-disable-next-line no-console
           console.error('[dashboard] profile load error:', error);
           setLoading(false);
           return;
@@ -134,6 +131,7 @@ export default function Dashboard() {
             .single();
 
           if (insertErr) {
+            // eslint-disable-next-line no-console
             console.error('[dashboard] profile insert error:', insertErr);
           } else {
             p = created as Profile;
@@ -152,6 +150,7 @@ export default function Dashboard() {
         setProfile(p ?? null);
         setLoading(false);
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('[dashboard] fatal load error:', e);
         if (!cancelled) setLoading(false);
       }
@@ -162,53 +161,9 @@ export default function Dashboard() {
     };
   }, [router]);
 
-  useEffect(() => {
-    if (!sessionUserId) {
-      setChallengeEnrollment(null);
-      setChallengeLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setChallengeLoading(true);
-
-    (async () => {
-      try {
-        const { data, error } = await supabaseBrowser
-          .from('challenge_enrollments')
-          .select('cohort, progress, enrolled_at')
-          .eq('user_id', sessionUserId)
-          .order('enrolled_at', { ascending: false })
-          .limit(1);
-
-        if (cancelled) return;
-
-        if (error) {
-          console.error('[dashboard] challenge enrollment fetch error:', error);
-          setChallengeEnrollment(null);
-        } else {
-          const record = Array.isArray(data) ? (data as any)[0] ?? null : (data as any) ?? null;
-          if (record) {
-            setChallengeEnrollment({
-              cohort: record.cohort as string,
-              progress: (record.progress as Record<string, ChallengeTaskStatus> | null) ?? null,
-            });
-          } else {
-            setChallengeEnrollment(null);
-          }
-        }
-      } catch (err) {
-        console.error('[dashboard] challenge enrollment error:', err);
-        if (!cancelled) setChallengeEnrollment(null);
-      } finally {
-        if (!cancelled) setChallengeLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionUserId]);
+  const { latestEnrollment: challengeEnrollment, loading: challengeLoading } = useChallengeEnrollments(
+    sessionUserId,
+  );
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -233,6 +188,17 @@ export default function Dashboard() {
   }, [streakLoading, lastDayKey, completeToday]);
 
   const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
+
+  const {
+    recommendationId: nextRecommendationId,
+    task: nextTask,
+    reason: nextTaskReason,
+    evidence: nextTaskEvidence,
+    score: nextTaskScore,
+    loading: nextTaskLoading,
+    error: nextTaskError,
+    refresh: refreshNextTask,
+  } = useNextTask();
 
   const loadingSkeleton = (
     <section className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -494,6 +460,17 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
+
+            <NextTaskCard
+              loading={nextTaskLoading}
+              task={nextTask}
+              reason={nextTaskReason}
+              evidence={nextTaskEvidence}
+              recommendationId={nextRecommendationId}
+              score={nextTaskScore}
+              error={nextTaskError}
+              onRefresh={() => refreshNextTask()}
+            />
 
             {/* Streak block */}
             <div id="streak-panel">

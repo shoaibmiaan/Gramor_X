@@ -1,0 +1,252 @@
+[
+  {
+    "slug": "phoneme-th",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Sustain the /θ/ sound for four seconds.",
+    "ipa": "/θ/",
+    "targetWpm": null,
+    "tags": ["/θ/", "articulation"],
+    "tip": "Place your tongue lightly between your teeth and push air without voicing."
+  },
+  {
+    "slug": "phoneme-dh",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Alternate /ð/ and /d/ for clarity.",
+    "ipa": "/ð/",
+    "targetWpm": null,
+    "tags": ["/ð/", "voicing"],
+    "tip": "Keep the tongue forward but switch the vocal cords on to voice the sound."
+  },
+  {
+    "slug": "phoneme-r",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Practice the /r/ glide with ‘river’.",
+    "ipa": "/r/",
+    "targetWpm": null,
+    "tags": ["/r/", "linking"],
+    "tip": "Lift the tongue slightly without touching the palate to keep the sound smooth."
+  },
+  {
+    "slug": "phoneme-l",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Hold the light /l/ at the start of ‘light’.",
+    "ipa": "/l/",
+    "targetWpm": null,
+    "tags": ["/l/", "tongue"],
+    "tip": "Touch the alveolar ridge gently and release cleanly to avoid vowel distortion."
+  },
+  {
+    "slug": "phoneme-v",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Buzz the /v/ sound with steady airflow.",
+    "ipa": "/v/",
+    "targetWpm": null,
+    "tags": ["/v/", "voicing"],
+    "tip": "Bite the lower lip softly and vibrate with voiced airflow."
+  },
+  {
+    "slug": "phoneme-w",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Round lips for the /w/ glide repeatedly.",
+    "ipa": "/w/",
+    "targetWpm": null,
+    "tags": ["/w/", "lip-rounding"],
+    "tip": "Keep the jaw relaxed and glide into the following vowel without inserting a vowel sound."
+  },
+  {
+    "slug": "phoneme-ae",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Contrast /æ/ in ‘cat’ with /ʌ/ in ‘cup’.",
+    "ipa": "/æ/",
+    "targetWpm": null,
+    "tags": ["/æ/", "vowel"],
+    "tip": "Open the mouth wider than for /ʌ/ and keep the tongue forward."
+  },
+  {
+    "slug": "phoneme-uh",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Sustain the relaxed /ʌ/ vowel.",
+    "ipa": "/ʌ/",
+    "targetWpm": null,
+    "tags": ["/ʌ/", "vowel"],
+    "tip": "Relax the jaw and keep the tongue low and central."
+  },
+  {
+    "slug": "phoneme-ih",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Clip the short /ɪ/ vowel quickly.",
+    "ipa": "/ɪ/",
+    "targetWpm": null,
+    "tags": ["/ɪ/", "vowel"],
+    "tip": "Keep the lips slightly spread and the vowel brief to avoid sliding into /iː/."
+  },
+  {
+    "slug": "phoneme-ee",
+    "level": "B1",
+    "type": "phoneme",
+    "prompt": "Stretch the long /iː/ vowel smoothly.",
+    "ipa": "/iː/",
+    "targetWpm": null,
+    "tags": ["/iː/", "vowel"],
+    "tip": "Maintain steady airflow and keep the tongue high and forward."
+  },
+  {
+    "slug": "word-think",
+    "level": "B1",
+    "type": "word",
+    "prompt": "Say ‘think’ three times with clear /θ/.",
+    "ipa": "θɪŋk",
+    "targetWpm": 90,
+    "tags": ["/θ/", "word-stress"],
+    "tip": "Focus on the initial /θ/ and keep the final /ŋk/ crisp."
+  },
+  {
+    "slug": "word-this",
+    "level": "B1",
+    "type": "word",
+    "prompt": "Say ‘this’ three times emphasising /ð/.",
+    "ipa": "ðɪs",
+    "targetWpm": 95,
+    "tags": ["/ð/", "word-stress"],
+    "tip": "Start voicing as soon as the tongue touches your teeth."
+  },
+  {
+    "slug": "word-world",
+    "level": "B2",
+    "type": "word",
+    "prompt": "Repeat ‘world’ focusing on dark /l/.",
+    "ipa": "wɜːld",
+    "targetWpm": 80,
+    "tags": ["/l/", "clusters"],
+    "tip": "Keep the tongue back for the dark /l/ and blend smoothly into the final consonant cluster."
+  },
+  {
+    "slug": "sentence-weather",
+    "level": "B1",
+    "type": "sentence",
+    "prompt": "‘The weather there was thrilling.’",
+    "ipa": "ðə ˈwɛðə ðeə wəz ˈθrɪlɪŋ",
+    "targetWpm": 110,
+    "tags": ["/ð/", "/θ/", "intonation"],
+    "tip": "Rise gently on ‘weather’ and fall on ‘thrilling’ to show confident tone."
+  },
+  {
+    "slug": "sentence-travel",
+    "level": "B2",
+    "type": "sentence",
+    "prompt": "‘Traveling regularly helps relax me.’",
+    "ipa": "ˈtrævəlɪŋ ˈrɛgjələli hɛlps rɪˈlæks miː",
+    "targetWpm": 120,
+    "tags": ["/r/", "rhythm"],
+    "tip": "Keep the rhythm steady and connect the /r/ sounds without inserting extra vowels."
+  },
+  {
+    "slug": "sentence-science",
+    "level": "B2",
+    "type": "sentence",
+    "prompt": "‘Science allows us to solve real issues.’",
+    "ipa": "ˈsaɪəns əˈlaʊz ʌs tuː sɒlv ˈrɪəl ˈɪʃuːz",
+    "targetWpm": 115,
+    "tags": ["/s/", "/z/", "pace"],
+    "tip": "Alternate clean /s/ and /z/ sounds while keeping the pitch varied."
+  },
+  {
+    "slug": "sentence-future",
+    "level": "B2",
+    "type": "sentence",
+    "prompt": "‘In the future I will work abroad.’",
+    "ipa": "ɪn ðə ˈfjuːtʃə aɪ wɪl wɜːk əˈbrɔːd",
+    "targetWpm": 115,
+    "tags": ["/ð/", "/w/", "intonation"],
+    "tip": "Use a rising-falling melody to highlight ‘future’ and ‘abroad’."
+  },
+  {
+    "slug": "cuecard-healthy-food",
+    "level": "B1",
+    "type": "cue_card",
+    "prompt": "Describe a healthy meal you enjoy cooking.",
+    "ipa": null,
+    "targetWpm": 140,
+    "tags": ["topic:health", "fluency"],
+    "tip": "Set up the dish, describe ingredients, and finish with why it matters to you."
+  },
+  {
+    "slug": "cuecard-study-place",
+    "level": "B1",
+    "type": "cue_card",
+    "prompt": "Talk about a place where you like to study.",
+    "ipa": null,
+    "targetWpm": 135,
+    "tags": ["topic:study", "fluency"],
+    "tip": "Cover location, environment, and how it helps you concentrate."
+  },
+  {
+    "slug": "cuecard-important-event",
+    "level": "B2",
+    "type": "cue_card",
+    "prompt": "Describe an important event from your childhood.",
+    "ipa": null,
+    "targetWpm": 145,
+    "tags": ["topic:memory", "storytelling"],
+    "tip": "Tell the setting, key people, and what you learned from it."
+  },
+  {
+    "slug": "cuecard-technology",
+    "level": "B2",
+    "type": "cue_card",
+    "prompt": "Explain how technology helps you learn languages.",
+    "ipa": null,
+    "targetWpm": 150,
+    "tags": ["topic:technology", "fluency"],
+    "tip": "Give two tools you use, how often, and what progress you have noticed."
+  },
+  {
+    "slug": "cuecard-travel",
+    "level": "B2",
+    "type": "cue_card",
+    "prompt": "Talk about a memorable trip you took recently.",
+    "ipa": null,
+    "targetWpm": 145,
+    "tags": ["topic:travel", "narrative"],
+    "tip": "Cover destination, highlight moments, and feelings afterwards."
+  },
+  {
+    "slug": "sentence-energy",
+    "level": "C1",
+    "type": "sentence",
+    "prompt": "‘Innovative energy policies drive change.’",
+    "ipa": "ˌɪnəˈveɪtɪv ˈɛnədʒi ˈpɒlɪsiz draɪv tʃeɪnʤ",
+    "targetWpm": 125,
+    "tags": ["/v/", "stress"],
+    "tip": "Stress ‘energy’ and ‘change’ while keeping a firm /v/ sound."
+  },
+  {
+    "slug": "sentence-environment",
+    "level": "C1",
+    "type": "sentence",
+    "prompt": "‘Environmental issues require bold action.’",
+    "ipa": "ɪnˌvaɪərənˈmɛntl ˈɪʃuːz rɪˈkwaɪə bəʊld ˈækʃən",
+    "targetWpm": 125,
+    "tags": ["/r/", "intonation"],
+    "tip": "Stretch the syllable stress pattern and connect /r/ sounds smoothly."
+  },
+  {
+    "slug": "cuecard-community",
+    "level": "C1",
+    "type": "cue_card",
+    "prompt": "Describe a community project you supported.",
+    "ipa": null,
+    "targetWpm": 150,
+    "tags": ["topic:community", "fluency"],
+    "tip": "Outline the goal, your role, and the impact on the community."
+  }
+]

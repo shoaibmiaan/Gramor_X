@@ -1,284 +1,219 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { useToast } from '@/components/design-system/Toaster';
-import { useRecorder } from '@/hooks/useRecorder';
+'use client';
 
-type Phase = 'idle' | 'recording' | 'preview' | 'uploading';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-type PreviewState = {
-  file: File;
-  meta: { durationSec: number; mime: string };
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+
+import { Waveform } from './Waveform';
+
+type RecorderResult = {
+  blob: Blob;
+  durationMs: number;
+  waveform: number[];
+  url: string;
 };
 
-export type RecorderHandle = {
-  start: () => Promise<void>;
-  pause: () => void;
-  resume: () => void;
-  stop: () => Promise<{ file?: File }>;
-  reset: () => void;
-};
-export type RecorderProps = {
-  autoStart?: boolean;
-  maxDurationSec?: number; // hard stop
-  onComplete?: (file: File, meta: { durationSec: number; mime: string }) => void | Promise<void>;
-  onError?: (msg: string) => void;
-  className?: string;
+type RecorderProps = {
+  disabled?: boolean;
+  onComplete?: (result: RecorderResult) => void;
+  onReset?: () => void;
+  maxDurationMs?: number;
 };
 
-export const Recorder = forwardRef<RecorderHandle, RecorderProps>(
-  (
-    {
-      autoStart = false,
-      maxDurationSec = 120,
-      onComplete,
-      onError,
-      className = '',
-    },
-    ref,
-  ) => {
-    const { success: toastSuccess, error: toastError } = useToast();
-    const {
-      isRecording,
-      isPaused,
-      durationSec,
-      mimeType,
-      audioUrl,
-      start,
-      pause,
-      resume,
-      stop,
-      error,
-      reset,
-    } = useRecorder({ preferredMimeType: 'audio/webm' });
+const MAX_DURATION_DEFAULT = 120_000;
 
-    const [phase, setPhase] = useState<Phase>('idle');
-    const [preview, setPreview] = useState<PreviewState | null>(null);
-    const startedRef = useRef(false);
-    const durationRef = useRef(0);
+export function Recorder({ disabled, onComplete, onReset, maxDurationMs = MAX_DURATION_DEFAULT }: RecorderProps) {
+  const [supported, setSupported] = useState<boolean>(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [durationMs, setDurationMs] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [waveform, setWaveform] = useState<number[]>([]);
+  const chunks = useRef<Blob[]>([]);
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-    useEffect(() => {
-      durationRef.current = durationSec;
-    }, [durationSec]);
-
-    useEffect(() => {
-      if (error) {
-        const message = error;
-        toastError('Recorder error', message);
-        onError?.(message);
+  useEffect(() => {
+    setSupported(typeof window !== 'undefined' && !!navigator.mediaDevices && 'MediaRecorder' in window);
+    return () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
       }
-    }, [error, onError, toastError]);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
-    useEffect(() => {
-      if (!audioUrl) return;
-      return () => {
-        try {
-          URL.revokeObjectURL(audioUrl);
-        } catch {}
-      };
-    }, [audioUrl]);
+  const resetState = useCallback(() => {
+    setIsRecording(false);
+    setDurationMs(0);
+    chunks.current = [];
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    mediaRecorder.current = null;
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setWaveform([]);
+    setPermissionError(null);
+    onReset?.();
+  }, [onReset, previewUrl]);
 
-    const finalizeRecording = useCallback(async () => {
-      try {
-        const result = await stop();
-        const file = result.file;
-        if (file) {
-          const meta = { durationSec: Math.max(1, durationRef.current), mime: mimeType };
-          setPreview({ file, meta });
-          setPhase('preview');
-        } else {
-          setPhase('idle');
+  const extractWaveform = useCallback(async (blob: Blob) => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const arrayBuffer = await blob.arrayBuffer();
+    const decoded = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+    await audioContext.close();
+    const channelData = decoded.getChannelData(0);
+    const bucketSize = Math.max(256, Math.floor(channelData.length / 200));
+    const buckets: number[] = [];
+
+    for (let i = 0; i < channelData.length; i += bucketSize) {
+      let sum = 0;
+      for (let j = 0; j < bucketSize && i + j < channelData.length; j += 1) {
+        sum += Math.abs(channelData[i + j]);
+      }
+      buckets.push(sum / bucketSize);
+    }
+
+    return buckets.map((value) => Math.min(1, value * 2));
+  }, []);
+
+  const finalizeRecording = useCallback(async () => {
+    if (chunks.current.length === 0) return;
+    const blob = new Blob(chunks.current, { type: 'audio/webm' });
+    const url = URL.createObjectURL(blob);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(url);
+
+    const computedWaveform = await extractWaveform(blob);
+    setWaveform(computedWaveform);
+    onComplete?.({ blob, durationMs, waveform: computedWaveform, url });
+  }, [durationMs, extractWaveform, onComplete, previewUrl]);
+
+  const stopRecording = useCallback(async () => {
+    mediaRecorder.current?.stop();
+    setIsRecording(false);
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    if (!supported || disabled) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const recorder = new MediaRecorder(stream);
+      mediaRecorder.current = recorder;
+      chunks.current = [];
+      setPermissionError(null);
+
+      recorder.addEventListener('dataavailable', (event) => {
+        if (event.data && event.data.size > 0) {
+          chunks.current.push(event.data);
         }
-        return result;
-      } catch (e) {
-        const message = (e as { message?: string })?.message ?? 'Failed to stop recording';
-        toastError('Recorder error', message);
-        onError?.(message);
-        setPhase('idle');
-        return {};
+      });
+      recorder.addEventListener('stop', () => {
+        finalizeRecording().finally(() => {
+          chunks.current = [];
+        });
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop());
+          streamRef.current = null;
+        }
+      });
+
+      recorder.start(1000);
+      setIsRecording(true);
+      setDurationMs(0);
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
       }
-    }, [mimeType, onError, stop, toastError]);
+      timerRef.current = window.setInterval(() => {
+        setDurationMs((prev) => {
+          const next = prev + 200;
+          if (next >= maxDurationMs) {
+            stopRecording();
+            return maxDurationMs;
+          }
+          return next;
+        });
+      }, 200);
+    } catch (error: any) {
+      setPermissionError(error?.message ?? 'Microphone permission denied');
+      resetState();
+    }
+  }, [disabled, finalizeRecording, maxDurationMs, resetState, stopRecording, supported]);
 
-    const handleStart = useCallback(async () => {
-      try {
-        await start();
-        setPhase('recording');
-      } catch (e) {
-        const message = (e as { message?: string })?.message ?? 'Microphone access denied';
-        toastError('Could not start recording', message);
-        onError?.(message);
-        setPhase('idle');
-      }
-    }, [onError, start, toastError]);
+  const formattedDuration = useMemo(() => {
+    const seconds = Math.floor(durationMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }, [durationMs]);
 
-    const handlePause = useCallback(() => {
-      pause();
-    }, [pause]);
-
-    const handleResume = useCallback(() => {
-      resume();
-    }, [resume]);
-
-    const handleReset = useCallback(() => {
-      setPreview(null);
-      setPhase('idle');
-      reset();
-    }, [reset]);
-
-    const handleSubmit = useCallback(async () => {
-      if (!preview) return;
-      try {
-        setPhase('uploading');
-        await Promise.resolve(onComplete?.(preview.file, preview.meta));
-        toastSuccess('Recording submitted');
-        handleReset();
-      } catch (e) {
-        const message = (e as { message?: string })?.message ?? 'Upload failed';
-        toastError('Upload failed', message);
-        onError?.(message);
-        setPhase('preview');
-      }
-    }, [handleReset, onComplete, onError, preview, toastError, toastSuccess]);
-
-    const handleAutoStart = useCallback(() => {
-      if (!autoStart || startedRef.current || isRecording || durationSec > 0) return;
-      startedRef.current = true;
-      void handleStart();
-    }, [autoStart, durationSec, handleStart, isRecording]);
-
-    useEffect(() => {
-      handleAutoStart();
-    }, [handleAutoStart]);
-
-    useEffect(() => {
-      if (isRecording) {
-        setPhase((prev) => (prev === 'uploading' ? prev : 'recording'));
-      }
-    }, [isRecording]);
-
-    useEffect(() => {
-      if (isRecording && durationSec >= maxDurationSec) {
-        void finalizeRecording();
-      }
-    }, [durationSec, finalizeRecording, isRecording, maxDurationSec]);
-
-    useImperativeHandle(ref, () => ({
-      start: handleStart,
-      pause: handlePause,
-      resume: handleResume,
-      stop: finalizeRecording,
-      reset: handleReset,
-    }));
-
-    const minutes = Math.floor(durationSec / 60)
-      .toString()
-      .padStart(2, '0');
-    const seconds = (durationSec % 60).toString().padStart(2, '0');
-
-    const status = useMemo(() => {
-      if (phase === 'uploading') return 'Uploading';
-      if (phase === 'preview') return 'Preview';
-      if (phase === 'recording') return isPaused ? 'Paused' : 'Recording';
-      return 'Idle';
-    }, [phase, isPaused]);
-
-    const canStart = phase === 'idle';
-    const canPause = phase === 'recording' && !isPaused;
-    const canResume = phase === 'recording' && isPaused;
-    const canStop = phase === 'recording';
-    const canSubmit = phase === 'preview';
-
-    const loading = phase === 'uploading';
-
-    return (
-      <div className={`card-surface p-4 ${className}`} aria-busy={loading}>
-        <div className="flex items-center justify-between">
-          <div className="text-small text-grayish">
-            Status: <span className="font-medium">{status}</span>
-          </div>
-          <div className="font-mono text-h4 tabular-nums">
-            {minutes}:{seconds}
-          </div>
+  return (
+    <Card className="flex flex-col gap-4 p-4 md:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">Recording duration</p>
+          <p className="text-2xl font-semibold text-foreground">{formattedDuration}</p>
         </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            className="px-3 py-2 rounded-xl bg-success text-white disabled:bg-grayish/30 disabled:text-grayish"
-            disabled={!canStart || loading}
-            onClick={handleStart}
-          >
-            Start
-          </button>
-          <button
-            className="px-3 py-2 rounded-xl bg-warning text-black disabled:bg-grayish/30 disabled:text-grayish"
-            disabled={!canPause || loading}
-            onClick={handlePause}
-          >
-            Pause
-          </button>
-          <button
-            className="px-3 py-2 rounded-xl bg-electricBlue text-white disabled:bg-grayish/30 disabled:text-grayish"
-            disabled={!canResume || loading}
-            onClick={handleResume}
-          >
-            Resume
-          </button>
-          <button
-            className="px-3 py-2 rounded-xl bg-danger text-white disabled:bg-grayish/30 disabled:text-grayish"
-            disabled={!canStop || loading}
-            onClick={() => void finalizeRecording()}
-          >
-            Stop
-          </button>
-          <button
-            className="ml-auto px-3 py-2 rounded-xl border border-lightBorder text-lightText disabled:opacity-60 dark:border-white/10 dark:text-white"
-            onClick={handleReset}
-            disabled={phase === 'recording' || loading}
-          >
-            Reset
-          </button>
+        <div className="flex gap-2">
+          {isRecording ? (
+            <Button tone="danger" variant="soft" onClick={stopRecording} iconOnly shape="rounded">
+              Stop
+            </Button>
+          ) : (
+            <Button onClick={startRecording} disabled={!supported || disabled} iconOnly shape="rounded">
+              Record
+            </Button>
+          )}
+          {!isRecording && (previewUrl || durationMs > 0) && (
+            <Button variant="ghost" tone="secondary" onClick={resetState}>
+              Reset
+            </Button>
+          )}
         </div>
-
-        {preview && phase !== 'uploading' && (
-          <div className="mt-4 space-y-3">
-            <audio src={audioUrl ?? undefined} controls className="w-full" />
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="px-3 py-2 rounded-xl border border-lightBorder text-lightText dark:border-white/10 dark:text-white"
-                onClick={handleReset}
-                disabled={loading}
-              >
-                Re-record
-              </button>
-              <button
-                type="button"
-                className="px-3 py-2 rounded-xl bg-primary text-white disabled:bg-grayish/30"
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-              >
-                Submit recording
-              </button>
-            </div>
-            <div className="text-caption text-grayish">
-              Duration: ~{preview.meta.durationSec}s • Format: {preview.meta.mime}
-            </div>
-          </div>
-        )}
-
-        {phase === 'uploading' && (
-          <div className="mt-4 text-small text-grayish">Uploading your recording…</div>
-        )}
       </div>
-    );
-  },
-);
+      <ProgressBar value={(durationMs / maxDurationMs) * 100} aria-label="Recording progress" />
 
-Recorder.displayName = 'Recorder';
+      {permissionError && (
+        <p className="rounded-ds-lg bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
+          {permissionError}
+        </p>
+      )}
+
+      {previewUrl && (
+        <div className="flex flex-col gap-3">
+          <Waveform samples={waveform} label="Recording waveform" />
+          <audio src={previewUrl} controls className="w-full" />
+        </div>
+      )}
+
+      {!supported && (
+        <p className="text-sm text-muted-foreground">
+          Your browser does not support in-app recording. Please update your browser or try a different device.
+        </p>
+      )}
+    </Card>
+  );
+}
+
 export default Recorder;
