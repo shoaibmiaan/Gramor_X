@@ -1,58 +1,125 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { z } from 'zod';
 
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { buildWhatsAppTaskMessage, dispatchWhatsAppTask } from '@/lib/tasks/whatsapp';
-import {
-  NotificationPreferencesSchema,
-  UpdateNotificationPreferencesSchema,
-  type NotificationPreferences,
-  type UpdateNotificationPreferences,
-} from '@/lib/schemas/notifications';
+import { getServerClient } from '@/lib/supabaseServer';
+import type { NotificationChannel, NotificationsOptIn, Profiles } from '@/types/supabase';
+import { Channel, PreferencesBody, type PreferencesBodyInput } from '@/types/notifications';
 
-async function loadPreferences(
-  supabase: ReturnType<typeof createSupabaseServerClient>,
-  userId: string,
-  fallbackEmail: string | null,
-): Promise<NotificationPreferences> {
-  const [{ data: profile, error: profileError }, { data: optIn, error: optError }] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('email, phone, phone_verified, notification_channels, whatsapp_opt_in')
-      .eq('user_id', userId)
-      .maybeSingle(),
-    supabase
-      .from('notifications_opt_in')
-      .select('email_opt_in, sms_opt_in, wa_opt_in')
-      .eq('user_id', userId)
-      .maybeSingle(),
-  ]);
+type PreferencesRow = Pick<
+  NotificationsOptIn,
+  'channels' | 'email_opt_in' | 'wa_opt_in' | 'quiet_hours_start' | 'quiet_hours_end' | 'timezone'
+> & { user_id: string };
 
-  if (profileError) {
-    throw new Error(profileError.message);
-  }
-  if (optError) {
-    throw new Error(optError.message);
+type ProfileContact = Pick<Profiles, 'email' | 'phone' | 'phone_verified' | 'timezone'> & { user_id: string };
+
+type PreferencesResponse = PreferencesBodyInput & {
+  email: string | null;
+  emailOptIn: boolean;
+  whatsappOptIn: boolean;
+  smsOptIn: boolean;
+  phone: string | null;
+  phoneVerified: boolean;
+};
+
+function toChannelSet(row?: PreferencesRow | null): Set<NotificationChannel> {
+  const next = new Set<NotificationChannel>();
+  if (!row) {
+    next.add('email');
+    return next;
   }
 
-  const rawEmail = profile?.email ?? fallbackEmail ?? null;
-  const emailParse = rawEmail ? z.string().email().safeParse(rawEmail) : null;
-  const safeEmail = emailParse && emailParse.success ? rawEmail : null;
-
-  const preferences = NotificationPreferencesSchema.parse({
-    email: safeEmail,
-    emailOptIn: optIn?.email_opt_in ?? true,
-    whatsappOptIn: optIn?.wa_opt_in ?? Boolean(profile?.whatsapp_opt_in),
-    smsOptIn: optIn?.sms_opt_in ?? false,
-    phone: profile?.phone ?? null,
-    phoneVerified: Boolean(profile?.phone_verified),
+  const channels = (row.channels ?? []) as NotificationChannel[];
+  channels.forEach((channel) => {
+    if (Channel.safeParse(channel).success) {
+      next.add(channel);
+    }
   });
 
-  return preferences;
+  if (row.email_opt_in ?? true) {
+    next.add('email');
+  }
+
+  if (row.wa_opt_in ?? false) {
+    next.add('whatsapp');
+  }
+
+  return next;
+}
+
+function buildResponse(row: PreferencesRow | null, profile: ProfileContact | null): PreferencesResponse {
+  const enabled = toChannelSet(row);
+  const parsed = PreferencesBody.parse({
+    channels: {
+      email: enabled.has('email'),
+      whatsapp: enabled.has('whatsapp'),
+    },
+    quietHoursStart: (row?.quiet_hours_start as string | null) ?? null,
+    quietHoursEnd: (row?.quiet_hours_end as string | null) ?? null,
+    timezone: row?.timezone ?? profile?.timezone ?? undefined,
+  });
+
+  const email = profile?.email ? profile.email.trim() : null;
+  const phone = profile?.phone ? profile.phone.trim() : null;
+  const phoneVerified = profile?.phone_verified === null ? false : Boolean(profile?.phone_verified);
+
+  return {
+    ...parsed,
+    email: email && email.length > 0 ? email : null,
+    emailOptIn: parsed.channels.email,
+    whatsappOptIn: parsed.channels.whatsapp,
+    smsOptIn: false,
+    phone: phone && phone.length > 0 ? phone : null,
+    phoneVerified,
+  };
+}
+
+async function loadPreferences(
+  supabase: ReturnType<typeof getServerClient>,
+  userId: string,
+): Promise<PreferencesResponse> {
+  const [prefRes, profileRes] = await Promise.all([
+    supabase
+      .from('notifications_opt_in')
+      .select(
+        'user_id, channels, email_opt_in, wa_opt_in, quiet_hours_start, quiet_hours_end, timezone',
+      )
+      .eq('user_id', userId)
+      .maybeSingle<PreferencesRow>(),
+    supabase
+      .from('profiles')
+      .select('user_id, email, phone, phone_verified, timezone')
+      .eq('user_id', userId)
+      .maybeSingle<ProfileContact>(),
+  ]);
+
+  if (prefRes.error) {
+    throw prefRes.error;
+  }
+
+  if (profileRes.error && profileRes.error.code !== 'PGRST116') {
+    throw profileRes.error;
+  }
+
+  return buildResponse(prefRes.data ?? null, profileRes.data ?? null);
+}
+
+function normaliseTime(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function buildChannelsArray(channels: Record<NotificationChannel, boolean>): NotificationChannel[] {
+  const next: NotificationChannel[] = [];
+  (Object.entries(channels) as [NotificationChannel, boolean][]).forEach(([key, enabled]) => {
+    if (enabled && Channel.options.includes(key)) {
+      next.push(key);
+    }
+  });
+  return next;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = createSupabaseServerClient({ req, res });
+  const supabase = getServerClient(req, res);
   const {
     data: { user },
     error: authError,
@@ -64,187 +131,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
-      const preferences = await loadPreferences(supabase, user.id, user.email ?? null);
+      const preferences = await loadPreferences(supabase, user.id);
       return res.status(200).json({ preferences });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = error instanceof Error ? error.message : 'Failed to load preferences';
       return res.status(500).json({ error: message });
     }
   }
 
-  if (req.method === 'PATCH') {
-    const parsed = UpdateNotificationPreferencesSchema.safeParse(req.body);
+  if (req.method === 'POST') {
+    const parsed = PreferencesBody.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid request body' });
+      return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
     }
 
-    const body: UpdateNotificationPreferences = parsed.data;
+    const body = parsed.data;
+
+    const recordChannels: Record<NotificationChannel, boolean> = {
+      email: body.channels.email ?? false,
+      whatsapp: body.channels.whatsapp ?? false,
+    };
+
+    const upsertPayload = {
+      user_id: user.id,
+      channels: buildChannelsArray(recordChannels),
+      email_opt_in: recordChannels.email,
+      wa_opt_in: recordChannels.whatsapp,
+      quiet_hours_start: normaliseTime(body.quietHoursStart ?? null),
+      quiet_hours_end: normaliseTime(body.quietHoursEnd ?? null),
+      timezone: body.timezone ?? 'UTC',
+    } satisfies Partial<PreferencesRow> & { user_id: string };
+
+    const { error: upsertError } = await supabase
+      .from('notifications_opt_in')
+      .upsert(upsertPayload, { onConflict: 'user_id' });
+
+    if (upsertError) {
+      return res.status(500).json({ error: upsertError.message });
+    }
 
     try {
-      const [{ data: profile }, { data: currentOptIn }] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('user_id, phone, phone_verified, notification_channels, whatsapp_opt_in')
-          .eq('user_id', user.id)
-          .maybeSingle(),
-        supabase
-          .from('notifications_opt_in')
-          .select('email_opt_in, sms_opt_in, wa_opt_in')
-          .eq('user_id', user.id)
-          .maybeSingle(),
-      ]);
-
-      const nextOptIn = {
-        email_opt_in: currentOptIn?.email_opt_in ?? true,
-        sms_opt_in: currentOptIn?.sms_opt_in ?? false,
-        wa_opt_in: currentOptIn?.wa_opt_in ?? Boolean(profile?.whatsapp_opt_in),
-      };
-
-      if (typeof body.emailOptIn === 'boolean') {
-        nextOptIn.email_opt_in = body.emailOptIn;
-      }
-      if (typeof body.smsOptIn === 'boolean') {
-        nextOptIn.sms_opt_in = body.smsOptIn;
-      }
-      if (typeof body.whatsappOptIn === 'boolean') {
-        nextOptIn.wa_opt_in = body.whatsappOptIn;
-      }
-
-      const upsertOpt = await supabase
-        .from('notifications_opt_in')
-        .upsert({ user_id: user.id, ...nextOptIn });
-      if (upsertOpt.error) {
-        throw upsertOpt.error;
-      }
-
-      const currentChannels = new Set<string>((profile?.notification_channels ?? []) as string[]);
-      const shouldUpdateChannels =
-        typeof body.emailOptIn === 'boolean' || typeof body.whatsappOptIn === 'boolean' || typeof body.smsOptIn === 'boolean';
-
-      const profileUpdate: Record<string, unknown> = {};
-      if (typeof body.phoneVerified === 'boolean') {
-        profileUpdate.phone_verified = body.phoneVerified;
-      }
-      if (body.phone) {
-        profileUpdate.phone = body.phone;
-      }
-
-      if (typeof body.emailOptIn === 'boolean') {
-        if (body.emailOptIn) {
-          currentChannels.add('email');
-        } else {
-          currentChannels.delete('email');
-        }
-      }
-      if (typeof body.whatsappOptIn === 'boolean') {
-        if (body.whatsappOptIn) {
-          currentChannels.add('whatsapp');
-        } else {
-          currentChannels.delete('whatsapp');
-        }
-        profileUpdate.whatsapp_opt_in = body.whatsappOptIn;
-      }
-      if (typeof body.smsOptIn === 'boolean') {
-        if (body.smsOptIn) {
-          currentChannels.add('sms');
-        } else {
-          currentChannels.delete('sms');
-        }
-      }
-
-      if (shouldUpdateChannels) {
-        profileUpdate.notification_channels = Array.from(currentChannels);
-      }
-
-      if (Object.keys(profileUpdate).length > 0) {
-        const upsertProfile = await supabase
-          .from('profiles')
-          .upsert({ user_id: user.id, ...profileUpdate });
-        if (upsertProfile.error) {
-          throw upsertProfile.error;
-        }
-      }
-
-      const events: {
-        user_id: string;
-        actor_id: string;
-        channel: 'email' | 'sms' | 'whatsapp';
-        action: 'opt_in' | 'opt_out' | 'verify' | 'test_message' | 'task';
-        metadata?: Record<string, unknown>;
-      }[] = [];
-
-      if (
-        typeof body.emailOptIn === 'boolean' &&
-        body.emailOptIn !== (currentOptIn?.email_opt_in ?? true)
-      ) {
-        events.push({
-          user_id: user.id,
-          actor_id: user.id,
-          channel: 'email',
-          action: body.emailOptIn ? 'opt_in' : 'opt_out',
-        });
-      }
-
-      if (
-        typeof body.whatsappOptIn === 'boolean' &&
-        body.whatsappOptIn !== (currentOptIn?.wa_opt_in ?? Boolean(profile?.whatsapp_opt_in))
-      ) {
-        events.push({
-          user_id: user.id,
-          actor_id: user.id,
-          channel: 'whatsapp',
-          action: body.whatsappOptIn ? 'opt_in' : 'opt_out',
-        });
-      }
-
-      if (body.phoneVerified && !profile?.phone_verified) {
-        events.push({
-          user_id: user.id,
-          actor_id: user.id,
-          channel: 'whatsapp',
-          action: 'verify',
-          metadata: { method: 'otp' },
-        });
-      }
-
-      if (events.length > 0) {
-        const insertEvents = await supabase.from('notification_consent_events').insert(events);
-        if (insertEvents.error) {
-          throw insertEvents.error;
-        }
-      }
-
-      const shouldSendTest = Boolean(body.sendTest && nextOptIn.wa_opt_in);
-      if (shouldSendTest) {
-        const response = await dispatchWhatsAppTask(supabase, {
-          userId: user.id,
-          type: 'test',
-          message: buildWhatsAppTaskMessage('testPing'),
-          metadata: {
-            source: 'api/notifications/preferences',
-            trigger: 'sendTest',
-          },
-        });
-
-        if (response.error) {
-          const errMessage =
-            response.error instanceof Error
-              ? response.error.message
-              : typeof response.error === 'string'
-              ? response.error
-              : 'Failed to send WhatsApp test message';
-          throw new Error(errMessage);
-        }
-      }
-
-      const preferences = await loadPreferences(supabase, user.id, user.email ?? null);
+      const preferences = await loadPreferences(supabase, user.id);
       return res.status(200).json({ preferences });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = error instanceof Error ? error.message : 'Failed to load preferences';
       return res.status(500).json({ error: message });
     }
   }
 
-  res.setHeader('Allow', 'GET,PATCH');
+  res.setHeader('Allow', 'GET,POST');
   return res.status(405).end('Method Not Allowed');
 }
