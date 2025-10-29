@@ -21,6 +21,9 @@ export type AnalyticsEventName =
   | 'referral.code.redeem'
   | 'payments.intent.create'
   | 'payments.intent.success'
+  | 'notification_enqueued'
+  | 'delivery_sent'
+  | 'delivery_failed'
   | 'exp.assign'
   | 'exp.expose'
   | 'exp.convert'
@@ -110,7 +113,8 @@ export type AnalyticsEventName =
   | 'export.pdf'
   | 'cert.view'
   | 'slo.breach'
-  | 'ratelimit.block';
+  | 'ratelimit.block'
+  | 'unsubscribe_clicked';
 
 export type AnalyticsProps = Record<
   string,
