@@ -1,0 +1,338 @@
+{
+  "id": "ielts-listening-full-006",
+  "title": "IELTS Listening Full Mock Exam 006",
+  "durationSec": 2400,
+  "transcript": "Audio features include a healthcare workshop registration, a hospital induction briefing, a nursing research meeting, and a lecture on wearable biomedical sensors.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Healthcare Workshop Registration",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-006-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-006-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Wellness Centre Auditorium",
+            "Riverlight Pavilion",
+            "Heritage Gallery",
+            "Summit Lodge"
+          ],
+          "answer": "Wellness Centre Auditorium"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "18th January"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "8:45 am"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "150"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Plant-based lunch bowls",
+            "Sushi platters",
+            "High tea service",
+            "Street taco bar"
+          ],
+          "answer": "Plant-based lunch bowls"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "300 pounds"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "live streaming kit"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Daniel"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": ["South clinic garage", "Harbor deck", "Main quad bays", "Hilltop overflow"],
+          "answer": "South clinic garage"
+        },
+        {
+          "id": "ielts-listening-full-006-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "classroom pods"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Hospital Induction Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-006-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-006-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "clinical training manager",
+            "ward administrator",
+            "pharmacy lead",
+            "volunteer supervisor"
+          ],
+          "answer": "clinical training manager"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "orientation for new ward technology"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "30 minutes"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Education suite lobby"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": [
+            "Simulation theatre",
+            "Pharmacy lab",
+            "Patient lounge",
+            "Diagnostic imaging wing"
+          ],
+          "answer": "Simulation theatre"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Station D"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "WardTech-9"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Wednesday"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": ["staff ID lanyard", "formal cufflinks", "travel documents", "sports shoes"],
+          "answer": "staff ID lanyard"
+        },
+        {
+          "id": "ielts-listening-full-006-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0121 774 0058"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Nursing Research Meeting",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-006-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-006-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "post-operative recovery study",
+            "campus bike audit",
+            "student art showcase",
+            "culinary entrepreneurship project"
+          ],
+          "answer": "post-operative recovery study"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Felix"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "12 March"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "every Friday morning"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "patient diary analysis",
+            "random phone surveys",
+            "library cataloguing",
+            "stage rehearsals"
+          ],
+          "answer": "patient diary analysis"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "RecoverySync"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£640"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Professor Malik"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "ensuring consistent follow-up calls",
+            "printing brochures",
+            "booking gallery spaces",
+            "repairing drones"
+          ],
+          "answer": "ensuring consistent follow-up calls"
+        },
+        {
+          "id": "ielts-listening-full-006-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "16 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Biomedical Sensors",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-006-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-006-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "wearable biomedical sensors",
+            "ancient maritime routes",
+            "culinary anthropology",
+            "modern poetry movements"
+          ],
+          "answer": "wearable biomedical sensors"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "millisecond precision"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "closed-loop monitoring"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Singapore"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "aging population needs",
+            "tourism marketing",
+            "sports festival demand",
+            "fashion cycles"
+          ],
+          "answer": "aging population needs"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Vital Metrics Group"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Sensor Futures Whitepaper"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2023"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "standardising regulatory approvals",
+            "keeping trails clean",
+            "maintaining coral farms",
+            "curating museum loans"
+          ],
+          "answer": "standardising regulatory approvals"
+        },
+        {
+          "id": "ielts-listening-full-006-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "prioritise patient trust"
+        }
+      ]
+    }
+  ]
+}

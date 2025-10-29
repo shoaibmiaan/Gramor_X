@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-11",
+  "title": "Reading Practice Test 16 — Coastal Defences",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Riverside's Harbourline Barrier",
+      "text": "The Harbourline Barrier shields Riverside City from storm surges sweeping up the estuary. Built in the 1980s, it relied on manually lowered gates that took hours to prepare. Following several near misses, engineers retrofitted the structure with inflatable bladders that raise flood walls within minutes. They also dredged silt from the approach channel and installed fish-friendly turbines that generate electricity from tidal flows when the barrier is open.\n\nA new operations centre now receives live sea-level forecasts and deploys the barrier automatically when thresholds are exceeded. Maintenance crews conduct monthly dives to inspect the hinges and replace sacrificial anodes that prevent corrosion. Community volunteers practise evacuation drills alongside harbour police each spring. The retrofit included constructing a public promenade with educational displays about coastal resilience. Sensors embedded in the barrier transmit performance data to universities researching climate adaptation.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The Harbourline Barrier originally operated with manual gates.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. Inflatable bladders now lift the flood walls quickly.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Engineers allowed silt to accumulate near the barrier.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. Turbines generate power only when the barrier is closed.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Automatic deployment is based on real-time sea-level forecasts.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Maintenance dives occur annually.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Community volunteers join emergency drills every spring.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. The retrofit removed public access to the waterfront.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. Sensors send data to universities studying climate adaptation.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. Sacrificial anodes help protect the structure from corrosion.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. The barrier retrofit eliminated the need for harbour police involvement.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Inflatable bladders replaced the turbines entirely.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. Educational displays explain coastal resilience strategies.",
+          "answer": "True"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Open Textbooks for All",
+      "text": "Professor Minh Nguyen advocates for open-source textbooks to reduce student costs and expand access to knowledge. She highlights universities where faculty collaborate to write and peer-review course materials published under permissive licences. Nguyen argues that students learn more effectively when they can annotate and adapt digital texts without restrictive digital rights management. She cautions, however, that open textbooks require sustainable funding for regular updates.\n\nNguyen supports grants that pay faculty for the time needed to revise materials each year. She rejects the notion that commercial publishers are the only source of quality content, pointing to studies showing comparable outcomes with open resources. At the same time, she insists that open textbooks should meet accessibility standards, including screen-reader compatibility. Nguyen urges institutions to invest in librarians who can help curate and distribute materials. She concludes that open educational resources flourish when communities share responsibility for maintaining them.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Nguyen promotes open-source textbooks to improve affordability.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. She believes strict digital rights management enhances learning.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Nguyen recognises the need to fund regular updates to open texts.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. She argues that only commercial publishers produce quality materials.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Nguyen supports grants compensating faculty for revision work.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. She thinks accessibility requirements are optional.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Nguyen recommends involving librarians in resource distribution.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. She cites studies showing open textbooks can match commercial outcomes.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Nguyen wants open resources to be collaborative efforts.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. She discourages faculty from peer-reviewing open materials.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Nguyen claims students should not edit their course materials.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. She emphasises compatibility with assistive technologies.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Nguyen believes shared stewardship is vital for open textbooks.",
+          "answer": "Yes"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Reconstructing Ancient Acoustics",
+      "text": "Acoustic archaeologist Elena Petrov leads a project recreating the soundscapes of ancient amphitheatres. Her team deploys arrays of microphones and speakers to test how voices carried in the ruins. They fire short bursts of sound to map echoes, then feed the data into 3D acoustic models. Petrov collaborates with stone conservators to understand how weathering changes a structure's resonance over centuries.\n\nThe project invites actors to perform historical scripts in reconstructed sound environments, comparing audience experiences with and without amplification. Portable sensors measure how modern seating installations affect sound distribution. Petrov's group works with local communities to collect oral histories about traditional performances once held in the sites. Results are shared through immersive exhibits where visitors wear headphones that simulate ancient acoustics. Insights from the research help engineers design contemporary open-air theatres with better natural amplification.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What is the main goal of Petrov's project?",
+          "options": [
+            "A. To rebuild amphitheatres from scratch.",
+            "B. To recreate and analyse ancient soundscapes.",
+            "C. To replace stone seats with metal ones.",
+            "D. To increase tourist ticket sales."
+          ],
+          "answer": "B. To recreate and analyse ancient soundscapes."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. How does the team map echoes?",
+          "options": [
+            "A. By recording rainstorms.",
+            "B. By firing short bursts of sound and capturing the reflections.",
+            "C. By placing mirrors around the stage.",
+            "D. By analysing historic paintings."
+          ],
+          "answer": "B. By firing short bursts of sound and capturing the reflections."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. Why do they work with stone conservators?",
+          "options": [
+            "A. To repair amphitheatre seating.",
+            "B. To understand how weathering affects resonance.",
+            "C. To organise ticketing systems.",
+            "D. To transport equipment between sites."
+          ],
+          "answer": "B. To understand how weathering affects resonance."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. What role do actors play in the research?",
+          "options": [
+            "A. They design the acoustic models.",
+            "B. They perform scripts to compare amplified and natural sound.",
+            "C. They oversee equipment maintenance.",
+            "D. They interview local communities."
+          ],
+          "answer": "B. They perform scripts to compare amplified and natural sound."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. What do portable sensors measure?",
+          "options": [
+            "A. The temperature of stone surfaces.",
+            "B. The impact of modern seating on sound distribution.",
+            "C. Visitor satisfaction levels.",
+            "D. The number of tourists per day."
+          ],
+          "answer": "B. The impact of modern seating on sound distribution."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. How are local communities involved?",
+          "options": [
+            "A. By funding the entire project.",
+            "B. By sharing oral histories of performances.",
+            "C. By providing costumes for actors.",
+            "D. By operating the microphone arrays."
+          ],
+          "answer": "B. By sharing oral histories of performances."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. How are research findings presented to visitors?",
+          "options": [
+            "A. Through printed brochures only.",
+            "B. Via immersive exhibits using headphones.",
+            "C. Through televised documentaries.",
+            "D. By staging rock concerts in the ruins."
+          ],
+          "answer": "B. Via immersive exhibits using headphones."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. What practical application comes from the research?",
+          "options": [
+            "A. Designing modern open-air theatres with improved acoustics.",
+            "B. Building indoor recording studios.",
+            "C. Developing new instruments for orchestras.",
+            "D. Replacing tourist guides with holograms."
+          ],
+          "answer": "A. Designing modern open-air theatres with improved acoustics."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. What do the 3D models represent?",
+          "options": [
+            "A. The geological history of amphitheatre sites.",
+            "B. Acoustic behaviour inside the structures.",
+            "C. The seating capacity of each ruin.",
+            "D. The locations of nearby towns."
+          ],
+          "answer": "B. Acoustic behaviour inside the structures."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. Why compare performances with and without amplification?",
+          "options": [
+            "A. To decide which microphones to purchase.",
+            "B. To understand original audience experiences.",
+            "C. To create new musical compositions.",
+            "D. To reduce ticket prices."
+          ],
+          "answer": "B. To understand original audience experiences."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. What equipment helps collect echo data?",
+          "options": [
+            "A. Arrays of microphones and speakers.",
+            "B. Solar-powered projectors.",
+            "C. Subterranean hydrophones.",
+            "D. Radio telescopes."
+          ],
+          "answer": "A. Arrays of microphones and speakers."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. How do weathered stones influence the research?",
+          "options": [
+            "A. They block access for performers.",
+            "B. They alter how sound resonates over time.",
+            "C. They eliminate the need for amplification.",
+            "D. They amplify echoes naturally."
+          ],
+          "answer": "B. They alter how sound resonates over time."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each project element with its purpose.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Microphone arrays",
+                "right": ["Capturing echo patterns"]
+              },
+              {
+                "left": "Actors",
+                "right": ["Testing performance acoustics"]
+              },
+              {
+                "left": "Community oral histories",
+                "right": ["Documenting traditional performances"]
+              },
+              {
+                "left": "Immersive exhibits",
+                "right": ["Sharing reconstructed soundscapes"]
+              }
+            ]
+          },
+          "answer": "Microphone arrays -> Capturing echo patterns"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What wider field benefits from Petrov's findings?",
+          "options": [
+            "A. Agricultural engineering.",
+            "B. Modern theatre design.",
+            "C. Marine biology.",
+            "D. Aerospace navigation."
+          ],
+          "answer": "B. Modern theatre design."
+        }
+      ]
+    }
+  ]
+}

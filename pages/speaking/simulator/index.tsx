@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
@@ -93,20 +94,20 @@ const DUR = {
   p2SpeakMs: 120000,   // 120s
   p3PerAnswer: 40000,  // 40s
 };
-const P1_QUESTIONS = [
+const DEFAULT_P1_QUESTIONS = [
   'Do you work or study?',
   'What do you like most about your hometown?',
   'How often do you read books?',
   'Do you prefer mornings or evenings?',
   'What is a skill you want to learn, and why?',
 ];
-const P2_CUE = `Describe a book that left a strong impression on you.
+const DEFAULT_P2_CUE = `Describe a book that left a strong impression on you.
 You should say:
 • what the book is
 • what it is about
 • why you chose to read it
 and explain why it left a strong impression on you.`;
-const P3_QUESTIONS = [
+const DEFAULT_P3_QUESTIONS = [
   'How has technology changed the way people read and learn?',
   'Do you think libraries will remain important in the future? Why or why not?',
 ];
@@ -116,6 +117,10 @@ type PartKey = 'p1'|'p2'|'p3';
 type RunState = 'idle'|'asking'|'recording'|'uploading'|'review';
 
 export default function SpeakingSimulator() {
+  const router = useRouter();
+  const [p1Questions, setP1Questions] = useState(DEFAULT_P1_QUESTIONS);
+  const [p2Cue, setP2Cue] = useState(DEFAULT_P2_CUE);
+  const [p3Questions, setP3Questions] = useState(DEFAULT_P3_QUESTIONS);
   const [micReady, setMicReady] = useState(false);
   const [part, setPart] = useState<PartKey>('p1');
   const [run, setRun] = useState<RunState>('idle');
@@ -129,6 +134,39 @@ export default function SpeakingSimulator() {
   const [p1, setP1] = useState<Array<{ url?: string; fb?: any }>>([]);
   const [p2, setP2] = useState<{ url?: string; fb?: any } | null>(null);
   const [p3, setP3] = useState<Array<{ url?: string; fb?: any }>>([]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    const partParam = typeof router.query.part === 'string' ? router.query.part : null;
+    const textParam = typeof router.query.text === 'string' ? router.query.text : null;
+    const followupsParam = typeof router.query.followups === 'string' ? router.query.followups : null;
+
+    if (textParam) {
+      const trimmed = textParam.trim();
+      if (partParam === 'p2') {
+        setPart('p2');
+        setP2Cue(trimmed);
+        if (followupsParam) {
+          const followupList = followupsParam
+            .split('|')
+            .map((item) => item.trim())
+            .filter(Boolean);
+          if (followupList.length) {
+            setP3Questions(followupList);
+          }
+        }
+      } else if (partParam === 'p3') {
+        setPart('p3');
+        setP3Questions([trimmed, ...DEFAULT_P3_QUESTIONS.filter((q) => q !== trimmed)]);
+      } else {
+        const normalizedPart = partParam === 'p1' ? 'p1' : 'p2';
+        setPart(normalizedPart as PartKey);
+        setP1Questions([trimmed, ...DEFAULT_P1_QUESTIONS.filter((q) => q !== trimmed)]);
+      }
+    } else if (partParam === 'p2' || partParam === 'p3') {
+      setPart(partParam as PartKey);
+    }
+  }, [router.isReady, router.query.part, router.query.text, router.query.followups]);
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -172,9 +210,9 @@ export default function SpeakingSimulator() {
   const runP1 = useCallback(async () => {
     setRun('asking');
     const out: Array<{ url?: string; fb?: any }> = [];
-    for (let i = 0; i < P1_QUESTIONS.length; i++) {
+    for (let i = 0; i < p1Questions.length; i++) {
       setQIndex(i);
-      speak(P1_QUESTIONS[i], { rate: 1 });
+      speak(p1Questions[i], { rate: 1 });
       await sleep(DUR.p1AskMs);
       setRun('recording');
       const blob = await timedRecord(DUR.p1SpeakMs);
@@ -188,12 +226,12 @@ export default function SpeakingSimulator() {
     }
     setP1(out);
     setRun('review');
-  }, [attemptId, timedRecord]);
+  }, [attemptId, p1Questions, timedRecord]);
 
   const runP2 = useCallback(async () => {
     setRun('asking');
     speak('Part two. You have one minute to prepare. Then speak for up to two minutes.', { rate: 0.95 });
-    speak(P2_CUE, { rate: 1 });
+    speak(p2Cue, { rate: 1 });
     await startCountdown(DUR.p2PrepMs, setPrepLeft);
     await tripleBeep();
 
@@ -205,14 +243,14 @@ export default function SpeakingSimulator() {
     const fb = await evaluateClip(attemptId, 'p2', fileUrl, 0);
     setP2({ url: fileUrl, fb });
     setRun('review');
-  }, [attemptId, startCountdown, timedRecord]);
+  }, [attemptId, p2Cue, startCountdown, timedRecord]);
 
   const runP3 = useCallback(async () => {
     setRun('asking');
     const out: Array<{ url?: string; fb?: any }> = [];
-    for (let i = 0; i < P3_QUESTIONS.length; i++) {
+    for (let i = 0; i < p3Questions.length; i++) {
       setQIndex(i);
-      speak(P3_QUESTIONS[i], { rate: 1 });
+      speak(p3Questions[i], { rate: 1 });
       await sleep(DUR.p1AskMs);
       setRun('recording');
       const blob = await timedRecord(DUR.p3PerAnswer);
@@ -226,7 +264,7 @@ export default function SpeakingSimulator() {
     }
     setP3(out);
     setRun('review');
-  }, [attemptId, timedRecord]);
+  }, [attemptId, p3Questions, timedRecord]);
 
   const fmt = (ms: number) => {
     const s = Math.ceil(ms/1000), m = Math.floor(s/60), r = s % 60;
@@ -262,7 +300,7 @@ export default function SpeakingSimulator() {
 
                 {run === 'idle' && (
                   <Alert title="Ready to start Part 1?">
-                    You will answer {P1_QUESTIONS.length} short questions. Recording will auto-start after each question.
+                    You will answer {p1Questions.length} short questions. Recording will auto-start after each question.
                     <div className="mt-4 flex gap-3">
                       <Button onClick={runP1} variant="primary" disabled={!micReady}>Start Part 1</Button>
                       <Button onClick={() => setPart('p2')} variant="secondary">Skip to Part 2</Button>
@@ -272,8 +310,8 @@ export default function SpeakingSimulator() {
 
                 {run === 'asking' && (
                   <Card className="p-4">
-                    <Badge>Question {qIndex + 1} of {P1_QUESTIONS.length}</Badge>
-                    <p className="mt-2 text-h4">{P1_QUESTIONS[qIndex]}</p>
+                    <Badge>Question {qIndex + 1} of {p1Questions.length}</Badge>
+                    <p className="mt-2 text-h4">{p1Questions[qIndex]}</p>
                     <p className="text-small text-grayish mt-2">Listening… recording will start automatically.</p>
                   </Card>
                 )}
@@ -338,7 +376,7 @@ export default function SpeakingSimulator() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <Card className="p-4">
                       <Badge>Cue Card</Badge>
-                      <pre className="whitespace-pre-wrap font-sans mt-2">{P2_CUE}</pre>
+                      <pre className="whitespace-pre-wrap font-sans mt-2">{p2Cue}</pre>
                     </Card>
                     <div className="space-y-3">
                       {run === 'asking' && (
@@ -389,7 +427,7 @@ export default function SpeakingSimulator() {
 
                 {run === 'idle' && (
                   <Alert title="Ready to start Part 3?">
-                    You will answer {P3_QUESTIONS.length} discussion questions. Recording will auto-start after each question.
+                    You will answer {p3Questions.length} discussion questions. Recording will auto-start after each question.
                     <div className="mt-4 flex gap-3">
                       <Button onClick={runP3} variant="primary" disabled={!micReady}>Start Part 3</Button>
                       <Button onClick={() => setPart('p2')} variant="secondary">Back to Part 2</Button>
@@ -399,8 +437,8 @@ export default function SpeakingSimulator() {
 
                 {run === 'asking' && (
                   <Card className="p-4">
-                    <Badge>Question {qIndex + 1} of {P3_QUESTIONS.length}</Badge>
-                    <p className="mt-2 text-h4">{P3_QUESTIONS[qIndex]}</p>
+                    <Badge>Question {qIndex + 1} of {p3Questions.length}</Badge>
+                    <p className="mt-2 text-h4">{p3Questions[qIndex]}</p>
                     <p className="text-small text-grayish mt-2">Listening… recording will start automatically.</p>
                   </Card>
                 )}

@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { enrollInChallenge } from "@/lib/challenge";
 import { ChallengeEnrollRequest, ChallengeEnrollResponse } from "@/types/challenge";
-import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { supabaseServer } from "@/lib/supabaseServer";
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,9 +12,9 @@ export default async function handler(
 
   const { cohort } = req.body as ChallengeEnrollRequest;
 
-  const {
-    data: { user },
-  } = await supabaseBrowser.auth.getUser();
+  const client = supabaseServer(req, res);
+  const { data: auth } = await client.auth.getUser();
+  const user = auth?.user ?? null;
 
   if (!user) return res.status(401).json({ ok: false, error: "Unauthorized" });
 

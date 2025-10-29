@@ -3,6 +3,9 @@ import type { NextApiHandler } from 'next';
 import { buffer } from 'micro';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
+import { trackor } from '@/lib/analytics/trackor.server';
+import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
+import { getBaseUrl } from '@/lib/url';
 
 // Important: disable body parsing so we can verify Stripe signatures
 export const config = { api: { bodyParser: false } };
@@ -19,6 +22,40 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
   const supabase = createSupabaseServerClient({ serviceRole: true });
+  const baseUrl = getBaseUrl();
+
+  const notifyPayment = async (
+    userId: string | null | undefined,
+    eventKey: 'payment_success' | 'payment_failed',
+    id: string,
+    extras: Record<string, unknown> = {},
+  ) => {
+    if (!userId) return;
+    const contact = await getNotificationContact(userId);
+    if (!contact.email) return;
+
+    const payload: Record<string, unknown> = {
+      deep_link: `${baseUrl}/settings/billing`,
+      user_email: contact.email,
+      ...extras,
+    };
+
+    if (contact.phone) {
+      payload.user_phone = contact.phone;
+    }
+
+    const result = await queueNotificationEvent({
+      event_key: eventKey,
+      user_id: userId,
+      payload,
+      channels: ['email'],
+      idempotency_key: `${eventKey}:${id}`,
+    });
+
+    if (!result.ok && result.reason !== 'duplicate') {
+      console.error('[payments:notify]', eventKey, result.message);
+    }
+  };
 
   // If Stripe not configured, accept as no-op (useful when testing local gateways)
   if (!secretKey || !webhookSecret) {
@@ -80,6 +117,38 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
             .eq('id', userId);
         }
 
+        if (session.id) {
+          const { data: intent } = await supabase
+            .from('payment_intents')
+            .select('id, user_id, plan_id, cycle')
+            .eq('gateway_session_id', session.id)
+            .eq('provider', 'stripe')
+            .maybeSingle();
+
+          if (intent) {
+            const confirmedAt = new Date().toISOString();
+            await supabase
+              .from('payment_intents')
+              .update({ status: 'succeeded', confirmed_at: confirmedAt, updated_at: confirmedAt })
+              .eq('id', intent.id);
+
+            await supabase.from('payment_intent_events').insert({
+              intent_id: intent.id,
+              user_id: intent.user_id,
+              event: 'webhook.success',
+              payload: { provider: 'stripe', sessionId: session.id },
+            });
+
+            await trackor.log('payments.intent.success', {
+              userId: intent.user_id ?? userId,
+              intentId: intent.id,
+              provider: 'stripe',
+              plan: intent.plan_id ?? plan,
+              cycle: intent.cycle,
+            });
+          }
+        }
+
         await supabase.from('payment_events').insert([
           {
             provider: 'stripe',
@@ -89,6 +158,12 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
             metadata: { plan, subscription: session.subscription, customer: session.customer },
           },
         ]);
+
+        await notifyPayment(userId, 'payment_success', intent?.id ?? session.id, {
+          provider: 'stripe',
+          plan: intent?.plan_id ?? plan,
+          cycle: intent?.cycle ?? 'monthly',
+        });
         break;
       }
 
@@ -103,6 +178,57 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
             metadata: { amount_paid: invoice.amount_paid, currency: invoice.currency },
           },
         ]);
+
+        if (invoice.customer) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('stripe_customer_id', invoice.customer as string)
+            .maybeSingle<{ user_id: string }>();
+
+          await notifyPayment(profile?.user_id ?? null, 'payment_success', invoice.id, {
+            provider: 'stripe',
+            amount: invoice.amount_paid,
+            currency: invoice.currency,
+            invoice_id: invoice.id,
+          });
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as any;
+
+        await supabase.from('payment_events').insert([
+          {
+            provider: 'stripe',
+            status: 'invoice.payment_failed',
+            external_id: invoice.id,
+            user_id: null,
+            metadata: { amount_due: invoice.amount_due, currency: invoice.currency },
+          },
+        ]);
+
+        if (invoice.customer) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('stripe_customer_id', invoice.customer as string)
+            .maybeSingle<{ user_id: string }>();
+
+          const reason =
+            (invoice.last_payment_error?.message as string | undefined) ??
+            'Payment failed';
+
+          await notifyPayment(profile?.user_id ?? null, 'payment_failed', invoice.id, {
+            provider: 'stripe',
+            amount: invoice.amount_due,
+            currency: invoice.currency,
+            reason,
+            invoice_id: invoice.id,
+          });
+        }
+
         break;
       }
 

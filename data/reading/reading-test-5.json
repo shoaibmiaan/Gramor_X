@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-5",
+  "title": "Reading Practice Test 10 — Urban Forests",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Charting Larkhaven's Canopy",
+      "text": "After a 2015 heatwave, the city of Larkhaven discovered that only 21 percent of its streets were shaded by tree canopy. The council launched a canopy audit that combined drone-mounted LiDAR with neighbourhood volunteers walking assigned blocks. Participants used a mobile app to photograph tree pits, tag empty ones, and report where roots were damaging pavements. University ecologists processed the scans to build a 3D model showing gaps in coverage during peak afternoon heat. The survey also recorded species diversity, revealing that two-thirds of the canopy relied on just three types of plane tree vulnerable to the same blight.\n\nArmed with the data, Larkhaven created a planting schedule that prioritised bus corridors, public-housing courtyards, and schools with asphalt playgrounds. Engineers trialled structural soil cells beneath footpaths to give roots more space without disturbing utilities. The council introduced cooling grants for businesses willing to host micro-forest planters on flat roofs, and stormwater teams mapped where new trees could double as flood buffers. Residents now receive seasonal care reminders through the same app used for the audit, while a public dashboard shows canopy gains street by street. Within four years the city increased its shaded area by five percentage points.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The canopy audit began in response to a prolonged heatwave.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. Larkhaven already had more than half its streets shaded before the project.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Volunteers collected information while walking through neighbourhoods.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. The audit relied exclusively on satellite imagery.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Researchers produced a three-dimensional map of shade coverage.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Most of the existing canopy consisted of a few tree species.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. The planting plan ignored public transport routes.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. Structural soil cells were tested to protect underground services.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. Cooling grants encouraged rooftop micro-forests.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. Stormwater teams considered flood mitigation when placing new trees.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. The mobile app was discarded once planting finished.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Residents can track canopy progress via an online dashboard.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. The project reduced overall canopy coverage within four years.",
+          "answer": "False"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Libraries Beyond the Card",
+      "text": "Cultural critic Mateo Ruiz argues that public libraries should rethink how they measure membership. He notes that many branches still prioritise issuing plastic cards, even though digital borrowing and community workshops drive most visits. Ruiz praises libraries that treat anyone attending an event as a member for the day, making it easier to justify funding for programmes beyond book lending. He rejects subscription models that require monthly fees, insisting that libraries remain one of the few civic spaces without purchase requirements.\n\nRuiz acknowledges that data about who uses libraries can help tailor services, but he warns against surveillance-style tracking of individual reading habits. Instead he proposes anonymous surveys and community panels to decide which services matter most. He also champions libraries that offer fabrication labs and job clinics, arguing that such resources expand their social mission. The essay concludes by calling on city councils to evaluate success through measures of community wellbeing rather than the number of active cards in the database.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Ruiz believes library membership should be linked to more than card ownership.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. He supports charging monthly fees to fund library services.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Ruiz approves of counting event attendees as temporary members.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. He argues that libraries should focus solely on lending books.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Ruiz cautions against tracking individual borrowing habits too closely.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. He proposes anonymous surveys to understand community needs.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Ruiz disapproves of libraries providing job-related support.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. He wants city councils to assess libraries using wellbeing indicators.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Ruiz thinks plastic cards remain the best way to justify funding.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. He states that fabrication labs fall outside a library's mission.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Ruiz claims people should have to purchase something to use library space.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. He believes digital borrowing has little impact on visits.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Ruiz argues that data can help tailor services when gathered respectfully.",
+          "answer": "Yes"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Coral Nurseries of West Africa",
+      "text": "Marine ecologist Farah Mensah coordinates coral nurseries across a chain of West African islands. Divers collect small fragments from resilient parent colonies and attach them to suspended ropes where currents deliver nutrients without smothering sediment. Mensah's team logs each fragment's growth with waterproof tablets and rotates the ropes monthly to ensure even sunlight exposure. When fragments reach a target size, they are outplanted on degraded reefs using eco-friendly cement that dissolves once the coral secures itself. Local fishers assist by mapping areas where reef recovery could boost spawning grounds.\n\nTo protect the nurseries from temperature spikes, the team installs shade sails made from recycled sails donated by racing crews. Marine meteorologists feed real-time forecasts into a dashboard that alerts divers when bleaching conditions loom, prompting them to lower nursery racks into deeper, cooler water. Mensah partners with tourism operators who offer snorkel tours that fund monitoring while educating visitors about reef stewardship. Researchers also experiment with probiotics that may help corals resist disease, carefully documenting outcomes before scaling up. The programme's success has inspired neighbouring countries to adopt similar rope-based nurseries.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. Why are coral fragments suspended on ropes?",
+          "options": [
+            "A. To keep them away from herbivorous fish.",
+            "B. To ensure water flows bring nutrients without burying them in sediment.",
+            "C. To reduce the need for divers to monitor them.",
+            "D. To simplify transportation between islands."
+          ],
+          "answer": "B. To ensure water flows bring nutrients without burying them in sediment."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. How does the team document coral growth?",
+          "options": [
+            "A. By sketching illustrations on waterproof paper.",
+            "B. By photographing fragments with drones.",
+            "C. By recording measurements on waterproof tablets.",
+            "D. By estimating size from boat-based observations."
+          ],
+          "answer": "C. By recording measurements on waterproof tablets."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. What happens when fragments reach the desired size?",
+          "options": [
+            "A. They are sold to aquariums.",
+            "B. They are relocated onto damaged reefs.",
+            "C. They are stored in laboratory tanks.",
+            "D. They are exchanged with other nurseries."
+          ],
+          "answer": "B. They are relocated onto damaged reefs."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. What role do local fishers play?",
+          "options": [
+            "A. They regulate tourist numbers at the nurseries.",
+            "B. They map restoration sites that support spawning.",
+            "C. They supply boats for meteorological surveys.",
+            "D. They provide coral fragments from their nets."
+          ],
+          "answer": "B. They map restoration sites that support spawning."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. Why are shade sails installed above the nurseries?",
+          "options": [
+            "A. To prevent birds from landing on the ropes.",
+            "B. To stabilise the racks during storms.",
+            "C. To limit temperature spikes caused by intense sunlight.",
+            "D. To harvest rainwater for use on land."
+          ],
+          "answer": "C. To limit temperature spikes caused by intense sunlight."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. What triggers divers to lower nursery racks deeper?",
+          "options": [
+            "A. Forecasts indicating bleaching conditions.",
+            "B. Requests from tourism operators.",
+            "C. Monthly funding cycles.",
+            "D. The growth of nuisance algae."
+          ],
+          "answer": "A. Forecasts indicating bleaching conditions."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. How are the nurseries funded in part?",
+          "options": [
+            "A. Through government fines on fishing vessels.",
+            "B. Via snorkel tours organised with tourism operators.",
+            "C. By selling eco-cement recipes to contractors.",
+            "D. By charging divers monthly membership fees."
+          ],
+          "answer": "B. Via snorkel tours organised with tourism operators."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. What experimental treatment is being tested?",
+          "options": [
+            "A. Robotic cleaning arms.",
+            "B. Artificial lighting systems.",
+            "C. Beneficial probiotics applied to corals.",
+            "D. Acoustic speakers playing reef sounds."
+          ],
+          "answer": "C. Beneficial probiotics applied to corals."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. Why does the eco-friendly cement dissolve over time?",
+          "options": [
+            "A. To release nutrients into the water.",
+            "B. To allow coral to secure itself naturally to the substrate.",
+            "C. To avoid leaving metal hardware on the reef.",
+            "D. To make room for new fragments."
+          ],
+          "answer": "B. To allow coral to secure itself naturally to the substrate."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. Who supplies the material for the shade sails?",
+          "options": [
+            "A. Local fishermen repairing nets.",
+            "B. Racing crews donating old sails.",
+            "C. Manufacturers producing recycled plastics.",
+            "D. Government-run textile factories."
+          ],
+          "answer": "B. Racing crews donating old sails."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. What information feeds into the team's alert dashboard?",
+          "options": [
+            "A. Satellite images of tourism boats.",
+            "B. Weather forecasts from marine meteorologists.",
+            "C. Financial reports from partner resorts.",
+            "D. Real-estate data about coastal development."
+          ],
+          "answer": "B. Weather forecasts from marine meteorologists."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. How are visitors educated about reef care?",
+          "options": [
+            "A. Through interactive exhibits at the airport.",
+            "B. During snorkel tours that fund monitoring.",
+            "C. Via mail-out pamphlets sent annually.",
+            "D. By mandatory online exams before travel."
+          ],
+          "answer": "B. During snorkel tours that fund monitoring."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each action with its purpose in the nursery programme.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Rotating nursery ropes",
+                "right": ["Ensuring even sunlight"]
+              },
+              {
+                "left": "Lowering racks",
+                "right": ["Escaping heat stress"]
+              },
+              {
+                "left": "Eco-friendly cement",
+                "right": ["Securing fragments to reefs"]
+              },
+              {
+                "left": "Probiotic trials",
+                "right": ["Testing resistance to disease"]
+              }
+            ]
+          },
+          "answer": "Rotating nursery ropes -> Ensuring even sunlight"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What broader impact has the programme achieved?",
+          "options": [
+            "A. Inspiring neighbouring countries to adopt similar nurseries.",
+            "B. Replacing fishing as the islands' main industry.",
+            "C. Eliminating the need for reef monitoring.",
+            "D. Ending tourism partnerships on the islands."
+          ],
+          "answer": "A. Inspiring neighbouring countries to adopt similar nurseries."
+        }
+      ]
+    }
+  ]
+}

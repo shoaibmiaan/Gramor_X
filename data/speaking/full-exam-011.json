@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-011",
+  "title": "IELTS Speaking Full Mock Exam 011",
+  "part1": [
+    "Do you like cooking?",
+    "How often do you prepare meals at home?",
+    "What is your favourite dish to cook?",
+    "Did you learn cooking from someone in your family?",
+    "Do you enjoy trying new recipes?",
+    "How important is healthy eating to you?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a meal that left a lasting impression on you.",
+      "You should say:",
+      "• what the meal was",
+      "• where you had it",
+      "• who you shared it with",
+      "and explain why it was memorable."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "Why do people enjoy eating together?",
+    "How has globalisation affected local cuisines?",
+    "Should schools teach children how to cook?",
+    "Do you think our diets will change significantly in the future?"
+  ]
+}
