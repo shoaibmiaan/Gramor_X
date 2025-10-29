@@ -119,6 +119,59 @@ export interface WordListeningAttempt extends TableBase {
 export type LiveSessionType = 'human' | 'ai' | 'peer';
 export type LiveSessionStatus = 'pending' | 'active' | 'completed' | 'cancelled';
 
+export type SpeakingExerciseType = 'phoneme' | 'word' | 'sentence' | 'cue_card';
+export type SpeakingExerciseLevel = 'B1' | 'B2' | 'C1' | 'C2';
+export type SpeakingAttemptRefType = 'exercise' | 'free_speech';
+export type SpeakingSegmentTokenType = 'word' | 'phoneme';
+
+export interface SpeakingExercise extends TableBase {
+  slug: string;
+  level: SpeakingExerciseLevel;
+  type: SpeakingExerciseType;
+  prompt: string;
+  ipa?: string | null;
+  target_wpm?: number | null;
+  tags: string[];
+}
+
+export interface SpeakingAttempt extends TableBase {
+  user_id: string;
+  exercise_id?: string | null;
+  ref_type: SpeakingAttemptRefType;
+  ref_text?: string | null;
+  audio_path: string;
+  duration_ms: number;
+  wpm?: number | null;
+  fillers_count?: number | null;
+  overall_pron?: number | null;
+  overall_intonation?: number | null;
+  overall_stress?: number | null;
+  overall_fluency?: number | null;
+  band_estimate?: number | null;
+  engine: Record<string, unknown>;
+}
+
+export interface SpeakingSegment {
+  id: string;
+  created_at: string;
+  attempt_id: string;
+  token_type: SpeakingSegmentTokenType;
+  token: string;
+  start_ms: number;
+  end_ms: number;
+  accuracy?: number | null;
+  stress_ok?: boolean | null;
+  notes?: string | null;
+}
+
+export interface SpeakingPronGoal extends TableBase {
+  user_id: string;
+  ipa: string;
+  target_accuracy: number;
+  current_accuracy?: number | null;
+  last_practiced_at?: string | null;
+}
+
 export interface SpeakingSession extends TableBase {
   host_user_id: string;
   participant_user_id?: string | null;
@@ -629,6 +682,10 @@ export interface DBSchema {
   writing_topics: WritingTopics;
   speaking_sessions: SpeakingSession;
   session_recordings: SessionRecording;
+  speaking_exercises: SpeakingExercise;
+  speaking_attempts: SpeakingAttempt;
+  speaking_segments: SpeakingSegment;
+  speaking_pron_goals: SpeakingPronGoal;
 
   // kept from main
   account_audit_log: AccountAuditLog;

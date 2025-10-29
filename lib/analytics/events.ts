@@ -33,6 +33,8 @@ export type AnalyticsEventName =
   | 'vocab_review_finish'
   | 'grade_submitted'
   | 'speaking_attempt'
+  | 'speaking_attempt_started'
+  | 'speaking_attempt_scored'
   | 'writing_eval'
   | 'badge_unlocked'
   | 'challenge_started'
