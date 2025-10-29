@@ -108,7 +108,7 @@ export function QuestionNav({
       </div>
 
       <div
-        className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-5 xl:grid-cols-6"
+        className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-6"
         role="list"
         aria-label="Question navigator"
       >
