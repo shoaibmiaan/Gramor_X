@@ -1,6 +1,23 @@
--- 20260330_pronunciation_coach.sql
--- Schema for pronunciation coach exercises, attempts, segments, and goals.
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Safety helpers
+-- ─────────────────────────────────────────────────────────────────────────────
+create extension if not exists pgcrypto;
 
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  if TG_OP = 'UPDATE' then
+    new.updated_at := timezone('utc', now());
+  end if;
+  return new;
+end;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- speaking_exercises
+-- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists public.speaking_exercises (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -17,18 +34,18 @@ create table if not exists public.speaking_exercises (
 create index if not exists speaking_exercises_level_idx
   on public.speaking_exercises (level, type);
 
+drop trigger if exists speaking_exercises_touch_updated on public.speaking_exercises;
 create trigger speaking_exercises_touch_updated
   before update on public.speaking_exercises
   for each row
-  execute procedure public.touch_updated_at();
+  execute function public.touch_updated_at();
 
 alter table public.speaking_exercises enable row level security;
 
 drop policy if exists "Anyone can read speaking exercises" on public.speaking_exercises;
 create policy "Anyone can read speaking exercises"
   on public.speaking_exercises
-  for select
-  using (true);
+  for select using (true);
 
 drop policy if exists "Staff manage speaking exercises" on public.speaking_exercises;
 create policy "Staff manage speaking exercises"
@@ -37,12 +54,13 @@ create policy "Staff manage speaking exercises"
   using (auth.jwt()->>'role' in ('admin','teacher'))
   with check (auth.jwt()->>'role' in ('admin','teacher'));
 
--- Attempts -------------------------------------------------------------------
-
+-- ─────────────────────────────────────────────────────────────────────────────
+-- speaking_attempts (repair drift: ensure exercise_id column + FK)
+-- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists public.speaking_attempts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  exercise_id uuid references public.speaking_exercises(id) on delete set null,
+  -- exercise_id might be missing on older table versions; we add it below.
   ref_type text not null check (ref_type in ('exercise','free_speech')),
   ref_text text,
   audio_path text not null,
@@ -59,45 +77,69 @@ create table if not exists public.speaking_attempts (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+-- Add the column if missing
+alter table public.speaking_attempts
+  add column if not exists exercise_id uuid;
+
+-- Add/ensure the FK (idempotent via DO block)
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    where t.relname = 'speaking_attempts'
+      and c.conname = 'speaking_attempts_exercise_id_fkey'
+  ) then
+    alter table public.speaking_attempts
+      add constraint speaking_attempts_exercise_id_fkey
+      foreign key (exercise_id)
+      references public.speaking_exercises(id)
+      on delete set null;
+  end if;
+end$$;
+
+-- Indexes
 create index if not exists speaking_attempts_user_idx
   on public.speaking_attempts (user_id, created_at desc);
+
 create index if not exists speaking_attempts_exercise_idx
   on public.speaking_attempts (exercise_id, created_at desc);
 
+-- Trigger
+drop trigger if exists speaking_attempts_touch_updated on public.speaking_attempts;
 create trigger speaking_attempts_touch_updated
   before update on public.speaking_attempts
   for each row
-  execute procedure public.touch_updated_at();
+  execute function public.touch_updated_at();
 
+-- RLS
 alter table public.speaking_attempts enable row level security;
 
 drop policy if exists "Users select their speaking attempts" on public.speaking_attempts;
 create policy "Users select their speaking attempts"
-  on public.speaking_attempts
-  for select
+  on public.speaking_attempts for select
   using (auth.uid() = user_id);
 
 drop policy if exists "Users insert speaking attempts" on public.speaking_attempts;
 create policy "Users insert speaking attempts"
-  on public.speaking_attempts
-  for insert
+  on public.speaking_attempts for insert
   with check (auth.uid() = user_id);
 
 drop policy if exists "Users update their speaking attempts" on public.speaking_attempts;
 create policy "Users update their speaking attempts"
-  on public.speaking_attempts
-  for update
+  on public.speaking_attempts for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
 drop policy if exists "Users delete their speaking attempts" on public.speaking_attempts;
 create policy "Users delete their speaking attempts"
-  on public.speaking_attempts
-  for delete
+  on public.speaking_attempts for delete
   using (auth.uid() = user_id);
 
--- Segments -------------------------------------------------------------------
-
+-- ─────────────────────────────────────────────────────────────────────────────
+-- speaking_segments
+-- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists public.speaking_segments (
   id uuid primary key default gen_random_uuid(),
   attempt_id uuid not null references public.speaking_attempts(id) on delete cascade,
@@ -118,8 +160,7 @@ alter table public.speaking_segments enable row level security;
 
 drop policy if exists "Attempt owners read segments" on public.speaking_segments;
 create policy "Attempt owners read segments"
-  on public.speaking_segments
-  for select
+  on public.speaking_segments for select
   using (
     exists (
       select 1 from public.speaking_attempts a
@@ -130,8 +171,7 @@ create policy "Attempt owners read segments"
 
 drop policy if exists "Attempt owners insert segments" on public.speaking_segments;
 create policy "Attempt owners insert segments"
-  on public.speaking_segments
-  for insert
+  on public.speaking_segments for insert
   with check (
     exists (
       select 1 from public.speaking_attempts a
@@ -142,8 +182,7 @@ create policy "Attempt owners insert segments"
 
 drop policy if exists "Attempt owners update segments" on public.speaking_segments;
 create policy "Attempt owners update segments"
-  on public.speaking_segments
-  for update
+  on public.speaking_segments for update
   using (
     exists (
       select 1 from public.speaking_attempts a
@@ -161,8 +200,7 @@ create policy "Attempt owners update segments"
 
 drop policy if exists "Attempt owners delete segments" on public.speaking_segments;
 create policy "Attempt owners delete segments"
-  on public.speaking_segments
-  for delete
+  on public.speaking_segments for delete
   using (
     exists (
       select 1 from public.speaking_attempts a
@@ -171,8 +209,9 @@ create policy "Attempt owners delete segments"
     )
   );
 
--- Pronunciation goals --------------------------------------------------------
-
+-- ─────────────────────────────────────────────────────────────────────────────
+-- speaking_pron_goals
+-- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists public.speaking_pron_goals (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -188,30 +227,32 @@ create table if not exists public.speaking_pron_goals (
 create index if not exists speaking_pron_goals_user_idx
   on public.speaking_pron_goals (user_id, ipa);
 
+drop trigger if exists speaking_pron_goals_touch_updated on public.speaking_pron_goals;
 create trigger speaking_pron_goals_touch_updated
   before update on public.speaking_pron_goals
   for each row
-  execute procedure public.touch_updated_at();
+  execute function public.touch_updated_at();
 
 alter table public.speaking_pron_goals enable row level security;
 
 drop policy if exists "Users manage their pron goals" on public.speaking_pron_goals;
 create policy "Users manage their pron goals"
-  on public.speaking_pron_goals
-  for all
+  on public.speaking_pron_goals for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Reporting view -------------------------------------------------------------
-
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Reporting view (depends on attempts + exercises)
+-- ─────────────────────────────────────────────────────────────────────────────
 create or replace view public.v_speaking_latest as
 select a.*, e.slug as exercise_slug
 from public.speaking_attempts a
 left join public.speaking_exercises e on e.id = a.exercise_id
 where a.created_at > timezone('utc', now()) - interval '90 days';
 
--- Seed curated exercises -----------------------------------------------------
-
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Seed curated exercises (idempotent upsert by slug)
+-- ─────────────────────────────────────────────────────────────────────────────
 insert into public.speaking_exercises (slug, level, type, prompt, ipa, target_wpm, tags)
 values
   ('phoneme-th', 'B1', 'phoneme', 'Sustain the /θ/ sound for four seconds.', '/θ/', null, array['/θ/', 'articulation']),
@@ -239,11 +280,11 @@ values
   ('sentence-energy', 'C1', 'sentence', '“Innovative energy policies drive change.”', 'ˌɪnəˈveɪtɪv ˈɛnədʒi ˈpɒlɪsiz draɪv tʃeɪnʤ', 125, array['/v/', 'stress']),
   ('sentence-environment', 'C1', 'sentence', '“Environmental issues require bold action.”', 'ɪnˌvaɪərənˈmɛntl ˈɪʃuːz rɪˈkwaɪə bəʊld ˈækʃən', 125, array['/r/', 'intonation']),
   ('cuecard-community', 'C1', 'cue_card', 'Describe a community project you supported.', null, 150, array['topic:community', 'fluency'])
-  on conflict (slug) do update set
-    level = excluded.level,
-    type = excluded.type,
-    prompt = excluded.prompt,
-    ipa = excluded.ipa,
-    target_wpm = excluded.target_wpm,
-    tags = excluded.tags,
-    updated_at = timezone('utc', now());
+on conflict (slug) do update set
+  level = excluded.level,
+  type = excluded.type,
+  prompt = excluded.prompt,
+  ipa = excluded.ipa,
+  target_wpm = excluded.target_wpm,
+  tags = excluded.tags,
+  updated_at = timezone('utc', now());
