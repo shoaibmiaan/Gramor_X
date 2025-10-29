@@ -17,7 +17,7 @@ import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { env } from '@/lib/env';
-import { LocaleProvider, useLocale } from '@/lib/locale'; // ⬅️ UPDATED
+import { LocaleProvider, useLocale } from '@/lib/locale';
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 import { destinationByRole } from '@/lib/routeAccess';
@@ -63,97 +63,135 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const pathname = router.pathname;
   const { locale: activeLocale } = useLocale();
+
+  // -------- Route Loading (stable on auth + shallow/hash) --------
   const [isRouteLoading, setIsRouteLoading] = useState(false);
   const routeLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const routeLoadingFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPathRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const clearRouteLoadingTimeout = () => {
+    const toComparablePath = (value: string) => {
+      if (!value) return '/';
+      const withoutOrigin = value.replace(/^https?:\/\/[^/]+/, '');
+      const withoutHash = withoutOrigin.split('#')[0] ?? '';
+      const withoutQuery = withoutHash.split('?')[0] ?? '';
+      return (withoutQuery || '/').replace(/\/+$/, '') || '/';
+    };
+
+    const hasMeaningfulPathChange = (nextUrl: string) => {
+      const nextPath = toComparablePath(nextUrl);
+      const currentPath = toComparablePath(router.asPath);
+      return nextPath !== currentPath;
+    };
+
+    const clearTimers = () => {
       if (routeLoadingTimeoutRef.current) {
         clearTimeout(routeLoadingTimeoutRef.current);
         routeLoadingTimeoutRef.current = null;
       }
-    };
-
-    const clearRouteLoadingFallback = () => {
       if (routeLoadingFallbackRef.current) {
         clearTimeout(routeLoadingFallbackRef.current);
         routeLoadingFallbackRef.current = null;
       }
     };
 
-    const startLoading = () => {
-      clearRouteLoadingTimeout();
-      clearRouteLoadingFallback();
+    const startLoading = (url: string, options: { shallow?: boolean } = {}) => {
+      // Ignore shallow and non-meaningful changes
+      if (options.shallow) return;
+      if (!hasMeaningfulPathChange(url)) {
+        pendingPathRef.current = null;
+        clearTimers();
+        return;
+      }
+      pendingPathRef.current = toComparablePath(url);
+      clearTimers();
+      // Small delay to avoid flicker on fast transitions
       routeLoadingTimeoutRef.current = setTimeout(() => {
         setIsRouteLoading(true);
+        // Hard cap to recover in edge cases
         routeLoadingFallbackRef.current = setTimeout(() => {
+          pendingPathRef.current = null;
           setIsRouteLoading(false);
         }, 12000);
-      }, 200);
+      }, 160);
     };
 
-    const stopLoading = () => {
-      clearRouteLoadingTimeout();
-      clearRouteLoadingFallback();
+    const stopLoading = (url?: string) => {
+      if (url && pendingPathRef.current) {
+        const completedPath = toComparablePath(url);
+        if (completedPath !== pendingPathRef.current) {
+          pendingPathRef.current = null;
+        }
+      } else {
+        pendingPathRef.current = null;
+      }
+      clearTimers();
       setIsRouteLoading(false);
     };
 
-    router.events.on('routeChangeStart', startLoading);
-    router.events.on('beforeHistoryChange', stopLoading);
-    router.events.on('routeChangeComplete', stopLoading);
-    router.events.on('routeChangeError', stopLoading);
-    router.events.on('hashChangeStart', startLoading);
-    router.events.on('hashChangeComplete', stopLoading);
-    router.events.on('hashChangeError', stopLoading);
+    const handleRouteError = () => stopLoading();
+
+    router.events.on('routeChangeStart', startLoading as any);
+    router.events.on('beforeHistoryChange', (url, opts) => {
+      // When Next is about to mutate history, ensure our pending path matches
+      if (!opts?.shallow && hasMeaningfulPathChange(url as string)) {
+        pendingPathRef.current = toComparablePath(url as string);
+      } else {
+        stopLoading();
+      }
+    });
+    router.events.on('routeChangeComplete', stopLoading as any);
+    router.events.on('routeChangeError', handleRouteError);
+
+    // Avoid a stuck overlay on tab switch/pagehide
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') stopLoading();
+    };
+    const handlePageHide = () => stopLoading();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
 
     return () => {
-      router.events.off('routeChangeStart', startLoading);
-      router.events.off('beforeHistoryChange', stopLoading);
-      router.events.off('routeChangeComplete', stopLoading);
-      router.events.off('routeChangeError', stopLoading);
-      router.events.off('hashChangeStart', startLoading);
-      router.events.off('hashChangeComplete', stopLoading);
-      router.events.off('hashChangeError', stopLoading);
-      clearRouteLoadingTimeout();
-      clearRouteLoadingFallback();
+      router.events.off('routeChangeStart', startLoading as any);
+      router.events.off('beforeHistoryChange', stopLoading as any);
+      router.events.off('routeChangeComplete', stopLoading as any);
+      router.events.off('routeChangeError', handleRouteError);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      clearTimers();
     };
   }, [router]);
 
+  // Reset any fallback on final path
   useEffect(() => {
     if (routeLoadingFallbackRef.current) {
       clearTimeout(routeLoadingFallbackRef.current);
       routeLoadingFallbackRef.current = null;
     }
+    pendingPathRef.current = null;
     setIsRouteLoading(false);
   }, [router.asPath]);
 
+  // ---------- i18n ----------
   useEffect(() => {
     void loadTranslations(activeLocale as SupportedLocale);
   }, [activeLocale]);
 
+  // ---------- Lightweight route analytics hook (safe placeholder) ----------
   useEffect(() => {
     const logRoute = (url: string) => {
       if (!url) return;
-      if (url.startsWith('/analytics/writing')) {
-        logWritingAnalyticsView({ source: 'route' });
-      }
+      // add selective logs here if needed
     };
-
     logRoute(router.asPath);
-
-    const handleRouteChange = (url: string) => {
-      logRoute(url);
-    };
-
+    const handleRouteChange = (url: string) => logRoute(url);
     router.events.on('routeChangeComplete', handleRouteChange);
-
-    return () => {
-      router.events.off('routeChangeComplete', handleRouteChange);
-    };
+    return () => router.events.off('routeChangeComplete', handleRouteChange);
   }, [router]);
 
-  // Expecting UserContext to expose approval status; default false if missing
+  // ---------- User / Tier ----------
   const { user, role, isTeacherApproved } = useUserContext() as {
     user: SupabaseUser | null;
     role?: string | null;
@@ -173,22 +211,16 @@ function InnerApp({ Component, pageProps }: AppProps) {
       const detail = (event as CustomEvent<{ tier?: SubscriptionTier }>).detail;
       if (detail?.tier) setSubscriptionTier(detail.tier);
     };
-
     window.addEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
     return () => window.removeEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
   }, []);
 
-  const needPremium = useMemo(
-    () => pathname.startsWith('/premium'),
-    [pathname]
-  );
-
-  // Check if it's a premium room route that requires PIN access
+  // ---------- Route partitions ----------
+  const needPremium = useMemo(() => pathname.startsWith('/premium'), [pathname]);
   const isPremiumRoomRoute = useMemo(
     () => pathname.startsWith('/premium/') && !pathname.startsWith('/premium-pin'),
     [pathname]
   );
-
   const isAuthPage = useMemo(
     () =>
       /^\/(login|signup|register)(\/|$)/.test(pathname) ||
@@ -224,9 +256,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/mistakes') ||
     pathname.startsWith('/pwa');
 
-  // IMPORTANT: do NOT include '/teacher' in admin routes
   const isAdminRoute = pathname.startsWith('/admin');
-
   const isMarketingRoute =
     pathname === '/' ||
     pathname.startsWith('/pricing') ||
@@ -234,34 +264,26 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/faq') ||
     pathname.startsWith('/legal') ||
     pathname.startsWith('/data-deletion');
-
   const isLearningRoute = pathname.startsWith('/learning') || pathname.startsWith('/content/studio');
   const isCommunityRoute = pathname.startsWith('/community');
-
   const isMarketplaceRoute =
     pathname.startsWith('/marketplace') ||
     pathname.startsWith('/coach') ||
     pathname.startsWith('/classes') ||
     pathname === '/partners';
-
   const isInstitutionsRoute = pathname.startsWith('/institutions');
   const isReportsRoute = pathname.startsWith('/reports') || pathname.startsWith('/placement');
+  const isProctoringRoute = pathname.startsWith('/proctoring/check') || pathname.startsWith('/proctoring/exam');
 
-  const isProctoringRoute =
-    pathname.startsWith('/proctoring/check') || pathname.startsWith('/proctoring/exam');
-
-  // Idle timeout (coerce to number safely)
-  const idleMinutes = useMemo(
-    () => Number(env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30),
-    []
-  );
+  // ---------- Idle timeout ----------
+  const idleMinutes = useMemo(() => Number(env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30), []);
   useEffect(() => {
     if (IS_CI) return;
     const cleanup = initIdleTimeout(idleMinutes);
     return cleanup;
   }, [idleMinutes]);
 
-  // ---------- AUTH BRIDGE: sync server cookies + correct redirects ----------
+  // ---------- AUTH BRIDGE ----------
   const syncingRef = useRef(false);
   const lastBridgeKeyRef = useRef<string | null>(null);
   const subscribedRef = useRef(false);
@@ -280,7 +302,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     syncingRef.current = true;
 
     const previousKey = lastBridgeKeyRef.current;
-
     try {
       await fetch('/api/auth/set-session', {
         method: 'POST',
@@ -305,19 +326,16 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
     // Avoid double-subscribe during fast-refresh in dev
     if (typeof window !== 'undefined') {
-      // @ts-expect-error TODO: type global flag
+      // @ts-expect-error dev guard
       if (window.__GX_AUTH_BRIDGE_ACTIVE) return;
-      // @ts-expect-error TODO: type global flag
+      // @ts-expect-error dev guard
       window.__GX_AUTH_BRIDGE_ACTIVE = true;
     }
 
     let isMounted = true;
 
-    // 1) On mount, sync initial session and leave auth pages if already signed-in
     (async () => {
-      const {
-        data: { session },
-      } = await supabaseBrowser.auth.getSession();
+      const { data: { session } } = await supabaseBrowser.auth.getSession();
       if (!isMounted) return;
 
       if (session) {
@@ -333,17 +351,13 @@ function InnerApp({ Component, pageProps }: AppProps) {
       if (session?.user && isAuthPage) {
         const url = new URL(window.location.href);
         const next = url.searchParams.get('next');
-        const target =
-          next && next.startsWith('/') ? next : destinationByRole(session.user) ?? '/';
+        const target = next && next.startsWith('/') ? next : destinationByRole(session.user) ?? '/';
         router.replace(target);
       }
     })();
 
-    // 2) Subscribe to auth changes
     if (!subscribedRef.current) {
-      const {
-        data: { subscription },
-      } = supabaseBrowser.auth.onAuthStateChange((event, sessionNow) => {
+      const { data: { subscription } } = supabaseBrowser.auth.onAuthStateChange((event, sessionNow) => {
         (async () => {
           await bridgeSession(event, sessionNow);
 
@@ -351,12 +365,8 @@ function InnerApp({ Component, pageProps }: AppProps) {
           if (event === 'SIGNED_IN' && sessionNow?.user) {
             const url = new URL(window.location.href);
             const next = url.searchParams.get('next');
-
-            if (next && next.startsWith('/')) {
-              router.replace(next);
-            } else if (isAuthPage) {
-              router.replace(destinationByRole(sessionNow.user));
-            }
+            if (next && next.startsWith('/')) router.replace(next);
+            else if (isAuthPage) router.replace(destinationByRole(sessionNow.user));
           }
 
           if (event === 'SIGNED_OUT') {
@@ -374,28 +384,26 @@ function InnerApp({ Component, pageProps }: AppProps) {
         subscription?.unsubscribe();
         subscribedRef.current = false;
         if (typeof window !== 'undefined') {
-          // @ts-expect-error TODO: type global flag
+          // @ts-expect-error dev guard
           window.__GX_AUTH_BRIDGE_ACTIVE = false;
         }
       };
     }
   }, [router, isAuthPage]);
 
-  // Hard redirect teachers away from non-teacher sections
+  // ---------- Teacher hard-redirect ----------
   useEffect(() => {
     if (!role) return;
     if (role === 'teacher') {
       const onTeacherArea = pathname.startsWith('/teacher') || isAuthPage;
-      if (!onTeacherArea) {
-        router.replace('/teacher');
-      }
+      if (!onTeacherArea) router.replace('/teacher');
     }
   }, [role, pathname, isAuthPage, router]);
 
   const { isChecking } = useRouteGuard();
   if (isChecking) return <GuardSkeleton />;
 
-  // For premium room routes, wrap with PremiumThemeProvider and don't use regular layout
+  // Premium wrapper only for premium room routes
   const basePage = needPremium || isPremiumRoomRoute ? (
     <PremiumThemeProvider>
       <Component {...pageProps} />
@@ -407,15 +415,12 @@ function InnerApp({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <HighContrastProvider>
-        {/* Load the compiled premium DS stylesheet globally */}
         <Head>
           <link rel="preload" href="/premium.css" as="style" />
           <link rel="stylesheet" href="/premium.css" />
         </Head>
 
-        <div
-          className={`${poppins.className} ${slab.className} min-h-screen min-h-[100dvh] bg-background text-foreground antialiased`}
-        >
+        <div className={`${poppins.className} ${slab.className} min-h-screen min-h-[100dvh] bg-background text-foreground antialiased`}>
           <AppLayoutManager
             isAuthPage={isAuthPage}
             isProctoringRoute={isProctoringRoute}
