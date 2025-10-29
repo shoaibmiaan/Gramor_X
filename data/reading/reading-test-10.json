@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-10",
+  "title": "Reading Practice Test 15 — Railworks Museum",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Meridian Railworks Museum",
+      "text": "The Meridian Railworks Museum occupies a decommissioned roundhouse that once serviced steam locomotives. When the site closed in 1978, many artefacts were sold off, leaving only a few engine shells behind. A preservation trust reacquired three locomotives from scrapyards and restored the turntable so visitors can watch engines rotate during demonstrations. Conservation staff catalogued thousands of brass fittings, polishing some for display while storing others in climate-controlled drawers.\n\nTo connect the museum to the modern rail network, volunteers rebuilt a kilometre of track linking the roundhouse to the active main line. Weekend heritage services now run short excursions operated by retired drivers who share stories about railway life. A digital studio records oral histories from former employees, and interactive exhibits let visitors simulate scheduling trains across the 1930s network. Ticket revenue funds apprenticeships in metalworking and boiler maintenance. The museum partners with the national railway company to test hydrogen retrofit kits on one of the preserved engines.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The roundhouse had remained fully stocked with artefacts after 1978.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. A trust retrieved locomotives from scrapyards for restoration.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. The turntable was repaired so visitors can see it in use.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. All brass fittings are displayed without protection.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Volunteers reconnected the museum to the main railway line.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Heritage train rides are operated by current trainee drivers.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Oral histories are collected in a digital studio.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. Interactive exhibits allow visitors to manage a historic timetable.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. Ticket sales help support technical apprenticeships.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. The museum works with the national railway on hydrogen retrofits.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. The restored engines never leave the roundhouse.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. The trust chose not to maintain the turntable.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. Climate-controlled storage protects certain components.",
+          "answer": "True"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Micro-Credentials in Context",
+      "text": "Education analyst Priyanka Das assesses the rise of micro-credentials—short, focused qualifications offered online. She observes that employers increasingly request proof of specific skills rather than broad degrees. Das applauds universities that co-design micro-credentials with industry partners while ensuring credits can stack toward full qualifications. She warns, however, that poorly regulated providers may sell badges with little academic oversight.\n\nDas argues that micro-credentials should complement, not replace, foundational learning. She supports public funding to help mid-career workers update skills, provided courses include transparent assessments. While she recognises the convenience of self-paced study, she cautions that learners still need mentorship and peer interaction. Das also insists that credential platforms publish completion rates to reveal whether students finish modules. Ultimately she believes micro-credentials work best when embedded within a system that values both depth and flexibility.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Das notes employer demand for evidence of specific skills.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. She opposes universities collaborating with industry on course design.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Das is concerned about unregulated providers selling weak credentials.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. She thinks micro-credentials should replace foundational study entirely.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Das supports funding to help workers access credible courses.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. She believes assessments should be opaque to avoid discouraging students.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Das acknowledges the benefits of flexible online formats.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. She argues that learners need mentorship alongside digital content.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Das wants platforms to publish completion statistics.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. She claims micro-credentials cannot coexist with traditional degrees.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Das believes stacking credits toward larger qualifications is valuable.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. She sees no role for public funding in lifelong learning.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Das envisions micro-credentials within a balanced education system.",
+          "answer": "Yes"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Farming Beneath the City",
+      "text": "Agronomist Rafael Costa manages a subterranean farm network built in disused subway tunnels beneath São Verdan. LED arrays tuned to specific wavelengths support leafy greens, mushrooms, and root vegetables. The tunnels maintain a constant 16°C, reducing energy needed for climate control. Hydroponic systems circulate nutrient solutions filtered by biochar columns that remove impurities. Costa's team tracks plant growth using sensors embedded in modular growing racks.\n\nTo integrate with the city's food system, the farm supplies produce to nearby schools and hospitals via cargo bikes, cutting delivery emissions. Researchers run taste panels comparing tunnel-grown crops with those from traditional farms to ensure flavour remains high. The operation captures condensation from tunnel ceilings, purifying it for reuse in irrigation. A collaboration with the transit authority schedules maintenance during overnight train closures. Data scientists analyse yield forecasts to adjust planting densities weekly. Community groups offer compost scraps that are processed into fertiliser for the hydroponic mix.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. Why is the subterranean farm located in tunnels?",
+          "options": [
+            "A. The tunnels provide stable temperatures and unused space.",
+            "B. The tunnels offer direct sunlight for plants.",
+            "C. The tunnels are owned by local supermarkets.",
+            "D. The tunnels are cheaper to heat during winter."
+          ],
+          "answer": "A. The tunnels provide stable temperatures and unused space."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. What types of crops are mentioned?",
+          "options": [
+            "A. Only fruit trees.",
+            "B. Leafy greens, mushrooms, and root vegetables.",
+            "C. Grain crops like wheat and barley.",
+            "D. Coffee and cocoa plants."
+          ],
+          "answer": "B. Leafy greens, mushrooms, and root vegetables."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. How are nutrient solutions purified?",
+          "options": [
+            "A. With chemical additives from factories.",
+            "B. Using biochar columns as filters.",
+            "C. By boiling water daily.",
+            "D. Through ultraviolet sterilisation only."
+          ],
+          "answer": "B. Using biochar columns as filters."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. What do the embedded sensors monitor?",
+          "options": [
+            "A. Passenger movements in the subway.",
+            "B. Plant growth within modular racks.",
+            "C. Ticket sales for train rides.",
+            "D. Security incidents underground."
+          ],
+          "answer": "B. Plant growth within modular racks."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. How is produce delivered to local institutions?",
+          "options": [
+            "A. Via refrigerated trucks.",
+            "B. By cargo bikes to schools and hospitals.",
+            "C. Through aerial drones.",
+            "D. Using the city's sewage system."
+          ],
+          "answer": "B. By cargo bikes to schools and hospitals."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. Why are taste panels conducted?",
+          "options": [
+            "A. To develop new recipes for restaurants.",
+            "B. To ensure tunnel-grown crops match traditional flavours.",
+            "C. To market the farm to tourists.",
+            "D. To select which crops to export overseas."
+          ],
+          "answer": "B. To ensure tunnel-grown crops match traditional flavours."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. Where does irrigation water come from?",
+          "options": [
+            "A. Condensation captured from tunnel ceilings.",
+            "B. Tankers filled with river water.",
+            "C. Imported bottled water.",
+            "D. Rainwater collected on rooftops."
+          ],
+          "answer": "A. Condensation captured from tunnel ceilings."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. What coordination occurs with the transit authority?",
+          "options": [
+            "A. Marketing campaigns for subway riders.",
+            "B. Scheduling maintenance during overnight train closures.",
+            "C. Selling farm produce at ticket counters.",
+            "D. Sharing subway fare revenue."
+          ],
+          "answer": "B. Scheduling maintenance during overnight train closures."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. Why do data scientists analyse yield forecasts?",
+          "options": [
+            "A. To choose music for the farm's workspace.",
+            "B. To adjust planting densities each week.",
+            "C. To design advertising campaigns.",
+            "D. To manage ticket prices for tours."
+          ],
+          "answer": "B. To adjust planting densities each week."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. What role do community groups play?",
+          "options": [
+            "A. They invest money in the farm's expansion.",
+            "B. They provide compostable scraps for fertiliser.",
+            "C. They operate the cargo bikes.",
+            "D. They manage the hydroponic systems."
+          ],
+          "answer": "B. They provide compostable scraps for fertiliser."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. What benefit do LED arrays provide?",
+          "options": [
+            "A. They emit natural sunlight for free.",
+            "B. They deliver specific light wavelengths suited to crops.",
+            "C. They heat the tunnels to higher temperatures.",
+            "D. They sterilise the hydroponic solution."
+          ],
+          "answer": "B. They deliver specific light wavelengths suited to crops."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. How does the farm reduce delivery emissions?",
+          "options": [
+            "A. By using biofuel trucks.",
+            "B. By transporting produce via cargo bikes.",
+            "C. By shipping goods overseas by boat.",
+            "D. By restricting sales to on-site customers."
+          ],
+          "answer": "B. By transporting produce via cargo bikes."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each component with its role in the subterranean farm.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Biochar columns",
+                "right": ["Filtering hydroponic solutions"]
+              },
+              {
+                "left": "Cargo bikes",
+                "right": ["Delivering produce to local institutions"]
+              },
+              {
+                "left": "Sensors",
+                "right": ["Tracking plant growth metrics"]
+              },
+              {
+                "left": "Community compost",
+                "right": ["Supplementing fertiliser"]
+              }
+            ]
+          },
+          "answer": "Biochar columns -> Filtering hydroponic solutions"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What overarching aim does the subterranean farm pursue?",
+          "options": [
+            "A. Generating tourism revenue from subway tours.",
+            "B. Producing food efficiently in unused urban infrastructure.",
+            "C. Replacing all surface agriculture in São Verdan.",
+            "D. Building underground housing units."
+          ],
+          "answer": "B. Producing food efficiently in unused urban infrastructure."
+        }
+      ]
+    }
+  ]
+}

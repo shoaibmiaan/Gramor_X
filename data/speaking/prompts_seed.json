@@ -1,0 +1,349 @@
+[
+  {
+    "slug": "p1-hometown-routines-001",
+    "part": "p1",
+    "topic": "daily routines",
+    "question": "What is the first thing you usually do after you wake up?",
+    "cueCard": null,
+    "followups": [],
+    "difficulty": "B1",
+    "locale": "en",
+    "tags": ["topic:home", "band6"]
+  },
+  {
+    "slug": "p1-food-cooking-002",
+    "part": "p1",
+    "topic": "food",
+    "question": "Do you enjoy cooking or do you prefer eating out?",
+    "cueCard": null,
+    "followups": [],
+    "difficulty": "B1",
+    "locale": "en",
+    "tags": ["topic:food", "band6"]
+  },
+  {
+    "slug": "p1-technology-phone-003",
+    "part": "p1",
+    "topic": "technology",
+    "question": "How often do you use your mobile phone for learning?",
+    "cueCard": null,
+    "followups": [],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:technology", "band6+"]
+  },
+  {
+    "slug": "p1-reading-habits-004",
+    "part": "p1",
+    "topic": "reading",
+    "question": "What kinds of books do you like reading most?",
+    "cueCard": null,
+    "followups": [],
+    "difficulty": "B1",
+    "locale": "en",
+    "tags": ["topic:reading", "band6"]
+  },
+  {
+    "slug": "p1-environment-activities-005",
+    "part": "p1",
+    "topic": "outdoor activities",
+    "question": "Do you spend much time outdoors in your free time?",
+    "cueCard": null,
+    "followups": [],
+    "difficulty": "B1",
+    "locale": "en",
+    "tags": ["topic:nature", "band6"]
+  },
+  {
+    "slug": "p2-describe-book-001",
+    "part": "p2",
+    "topic": "books",
+    "question": null,
+    "cueCard": "Describe a book you have read more than once.\nYou should say:\n• what the book is called\n• what it is about\n• why you read it more than once\nand explain how you felt after reading it again.",
+    "followups": [
+      "Do people in your country like reading physical books or e-books more?",
+      "How important are libraries for communities today?"
+    ],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:books", "band7"]
+  },
+  {
+    "slug": "p2-describe-city-002",
+    "part": "p2",
+    "topic": "travel",
+    "question": null,
+    "cueCard": "Describe a city you would like to live in for a short time.\nYou should say:\n• which city it is\n• why you chose it\n• what you would do there\nand explain how living there would help you.",
+    "followups": [
+      "Why do some people prefer living in cities to the countryside?",
+      "How will smart technology change cities in the future?"
+    ],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:travel", "band7"]
+  },
+  {
+    "slug": "p2-describe-invention-003",
+    "part": "p2",
+    "topic": "innovation",
+    "question": null,
+    "cueCard": "Describe an invention that has changed people’s lives.\nYou should say:\n• what the invention is\n• who invented it\n• how it has changed people’s lives\nand explain whether it has had any negative effects.",
+    "followups": [
+      "Do you think we rely too much on modern inventions?",
+      "Which invention do you think will be developed next?"
+    ],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:technology", "band7+", "cue"]
+  },
+  {
+    "slug": "p2-describe-mentor-004",
+    "part": "p2",
+    "topic": "people",
+    "question": null,
+    "cueCard": "Describe a person who has helped you learn something important.\nYou should say:\n• who the person is\n• what you learned from them\n• how they helped you learn it\nand explain how this knowledge has influenced you.",
+    "followups": [
+      "Do people still need teachers when so much learning is online?",
+      "What qualities make a good mentor?"
+    ],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:education", "band7"]
+  },
+  {
+    "slug": "p2-describe-habit-005",
+    "part": "p2",
+    "topic": "lifestyle",
+    "question": null,
+    "cueCard": "Describe a healthy habit you have developed.\nYou should say:\n• what the habit is\n• when you started it\n• how often you practise it\nand explain how it has improved your life.",
+    "followups": [
+      "How has people’s understanding of health changed recently?",
+      "Should governments encourage healthy lifestyles more actively?"
+    ],
+    "difficulty": "B1",
+    "locale": "en",
+    "tags": ["topic:health", "band6+"]
+  },
+  {
+    "slug": "p3-community-support-001",
+    "part": "p3",
+    "topic": "community",
+    "question": "How can local communities encourage people to volunteer?",
+    "cueCard": null,
+    "followups": [
+      "What are the benefits of volunteering for young people?",
+      "Should companies give employees time off to volunteer?"
+    ],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:community", "band7"]
+  },
+  {
+    "slug": "p3-environment-policy-002",
+    "part": "p3",
+    "topic": "environment",
+    "question": "How effective are government campaigns in changing people’s environmental behaviour?",
+    "cueCard": null,
+    "followups": [
+      "What environmental responsibilities do big companies have?",
+      "Do you think environmental education should start at a young age?"
+    ],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:environment", "band7+"]
+  },
+  {
+    "slug": "p3-workplace-innovation-003",
+    "part": "p3",
+    "topic": "work",
+    "question": "How can employers encourage innovation in the workplace?",
+    "cueCard": null,
+    "followups": [
+      "Do you think people will still work in offices in the future?",
+      "How important is teamwork for innovation?"
+    ],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:work", "band7+"]
+  },
+  {
+    "slug": "p3-technology-learning-004",
+    "part": "p3",
+    "topic": "education",
+    "question": "What role should technology play in the classroom?",
+    "cueCard": null,
+    "followups": [
+      "How has online learning changed education?",
+      "What are the drawbacks of relying on technology for study?"
+    ],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:education", "band7"]
+  },
+  {
+    "slug": "p3-culture-identity-005",
+    "part": "p3",
+    "topic": "culture",
+    "question": "Is it important for young people to learn about traditional culture?",
+    "cueCard": null,
+    "followups": [
+      "How can governments protect traditional culture?",
+      "What role do festivals play in cultural identity?"
+    ],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:culture", "band7"]
+  },
+  {
+    "slug": "interview-job-strengths-001",
+    "part": "interview",
+    "topic": "job interview",
+    "question": "Can you tell me about a time you solved a difficult problem at work?",
+    "cueCard": null,
+    "followups": ["What did you learn from the situation?", "How would your manager describe you?"],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:career", "band8", "interview"]
+  },
+  {
+    "slug": "interview-teamwork-002",
+    "part": "interview",
+    "topic": "teamwork",
+    "question": "Describe a time when you had to work closely with someone whose personality was very different from yours.",
+    "cueCard": null,
+    "followups": ["How did you handle disagreements?", "What was the final result?"],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:career", "teamwork", "band8"]
+  },
+  {
+    "slug": "interview-failure-003",
+    "part": "interview",
+    "topic": "reflection",
+    "question": "Tell me about a time you failed and what you learned from it.",
+    "cueCard": null,
+    "followups": ["How did the experience change your approach in the future?"],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:career", "growth", "band8"]
+  },
+  {
+    "slug": "scenario-academic-presentation-001",
+    "part": "scenario",
+    "topic": "academic",
+    "question": "You need to present a complex graph to international students. How will you make sure everyone understands it?",
+    "cueCard": null,
+    "followups": ["What visual aids would you use?", "How would you handle difficult questions?"],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:academic", "band7+"]
+  },
+  {
+    "slug": "scenario-customer-service-002",
+    "part": "scenario",
+    "topic": "customer service",
+    "question": "A customer claims they received the wrong order and is upset. How do you handle the situation?",
+    "cueCard": null,
+    "followups": ["What steps would you take to prevent it happening again?"],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:work", "band7"]
+  },
+  {
+    "slug": "scenario-research-collaboration-003",
+    "part": "scenario",
+    "topic": "research",
+    "question": "You need to collaborate with a researcher from another country who speaks limited English. How do you coordinate the project?",
+    "cueCard": null,
+    "followups": [
+      "What tools might help with communication?",
+      "How would you ensure deadlines are met?"
+    ],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:research", "band8"]
+  },
+  {
+    "slug": "p1-music-preferences-006",
+    "part": "p1",
+    "topic": "music",
+    "question": "What kind of music helps you relax?",
+    "cueCard": null,
+    "followups": [],
+    "difficulty": "B1",
+    "locale": "en",
+    "tags": ["topic:music", "band6"]
+  },
+  {
+    "slug": "p1-learning-language-007",
+    "part": "p1",
+    "topic": "language learning",
+    "question": "Have you ever tried to learn a foreign language on your own?",
+    "cueCard": null,
+    "followups": [],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:language", "band6+"]
+  },
+  {
+    "slug": "p2-describe-event-006",
+    "part": "p2",
+    "topic": "celebrations",
+    "question": null,
+    "cueCard": "Describe a celebration you enjoyed attending.\nYou should say:\n• what the celebration was\n• where it was held\n• who attended the celebration\nand explain what made it enjoyable for you.",
+    "followups": [
+      "Why do people celebrate important events with others?",
+      "How have celebrations changed compared with the past?"
+    ],
+    "difficulty": "B1",
+    "locale": "en",
+    "tags": ["topic:celebration", "band6+"]
+  },
+  {
+    "slug": "p2-describe-skill-007",
+    "part": "p2",
+    "topic": "skills",
+    "question": null,
+    "cueCard": "Describe a skill you would like to improve.\nYou should say:\n• what the skill is\n• why you want to improve it\n• what steps you plan to take\nand explain how improving this skill will benefit you.",
+    "followups": [
+      "Is it easier to learn new skills alone or with a teacher?",
+      "How can employers support skill development?"
+    ],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:skills", "band7"]
+  },
+  {
+    "slug": "p3-health-technology-006",
+    "part": "p3",
+    "topic": "health",
+    "question": "How can technology help people develop healthier lifestyles?",
+    "cueCard": null,
+    "followups": ["Are fitness apps reliable?", "What are the drawbacks of tracking health data?"],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:health", "band7"]
+  },
+  {
+    "slug": "interview-leadership-004",
+    "part": "interview",
+    "topic": "leadership",
+    "question": "Tell me about a time you had to lead a project under pressure.",
+    "cueCard": null,
+    "followups": ["How did you motivate the team?"],
+    "difficulty": "C1",
+    "locale": "en",
+    "tags": ["topic:leadership", "band8"]
+  },
+  {
+    "slug": "scenario-healthcare-communication-004",
+    "part": "scenario",
+    "topic": "healthcare",
+    "question": "You are a nurse explaining a treatment plan to a patient who is anxious. How do you reassure them?",
+    "cueCard": null,
+    "followups": ["What if the patient refuses the plan?"],
+    "difficulty": "B2",
+    "locale": "en",
+    "tags": ["topic:healthcare", "band7"]
+  }
+]

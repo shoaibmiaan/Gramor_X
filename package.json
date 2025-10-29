@@ -45,6 +45,7 @@
     "lhci": "lhci autorun --config=.lighthouserc.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.916.0",
     "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/ssr": "^0.7.0",
@@ -64,7 +65,10 @@
     "next": "14.2.31",
     "next-pwa": "5.6.0",
     "next-themes": "^0.3.0",
+    "nodemailer": "^6.9.15",
     "openai": "^5.12.2",
+    "parquetjs-lite": "^0.8.7",
+    "pdfkit": "^0.17.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-markdown": "9.1.0",
@@ -78,6 +82,7 @@
     "swr": "^2.3.6",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "tesseract.js": "^6.0.1",
     "twilio": "^5.8.0",
     "use-debounce": "^10.0.6",
     "zod": "^3.25.76"
@@ -125,8 +130,10 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-storybook": "^0.8.0",
     "husky": "^9.1.7",
+    "jsdom": "^27.0.1",
     "lighthouse": "^12.8.2",
     "lint-staged": "^16.1.6",
+    "node-mocks-http": "^1.17.2",
     "playwright": "^1.55.0",
     "postcss": "^8.4.41",
     "prettier": "^3.3.3",

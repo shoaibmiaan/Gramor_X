@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-8",
+  "title": "Reading Practice Test 13 — Rewilding Agriculture",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Rewilding Greenmere Farm",
+      "text": "When the owners of Greenmere Farm retired, they opted to rewild half their land instead of selling to an industrial grower. Ecologists created mosaics of wildflower meadows, scrub, and ponds, while leaving the remaining fields for rotational grazing. Hedgerows were allowed to expand into wide shelterbelts, and veteran oak trees once isolated in ploughed fields now anchor patches of woodland. The team installed low wooden bridges so cattle could access grazing without trampling sensitive wetland areas.\n\nMonitoring revealed that skylark numbers tripled within two seasons and water voles returned to ditches after decades of absence. Former farmhands now guide visitors along boardwalks, explaining how grazing regimes are timed to avoid ground-nesting bird seasons. Local schools use the site for field studies, and a small tannery produces leather from cattle raised on the regenerative pastures. Revenue from eco-tourism offsets the reduced crop income, and the farm sells carbon credits verified by soil sampling. A long-term agreement with a conservation trust ensures the rewilded area cannot be converted back to intensive agriculture.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. Greenmere Farm sold all its land to an industrial grower upon retirement.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. Part of the property was kept for grazing animals.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. New ponds were created as part of the rewilding effort.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. Cattle are prevented from reaching wetland areas entirely.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Skylark populations increased significantly after the changes.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Water voles were already abundant before the project began.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Former workers now lead tours across the site.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. Grazing schedules consider nesting seasons for birds.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. The farm closed its educational programmes to focus on tourism.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. A tannery uses materials from cattle raised on the regenerative fields.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. Eco-tourism revenue helps compensate for lower crop yields.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Soil sampling is used to certify carbon credits.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. The conservation trust agreement allows the land to revert to intensive farming at any time.",
+          "answer": "False"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Craft Economies as Infrastructure",
+      "text": "Essayist Nia Calder champions small-scale craft economies, arguing that they build resilient local networks. She observes that when a town hosts shared studios, residents learn to repair goods rather than discard them, keeping skills circulating. Calder highlights cooperatives where artisans pool marketing costs and train apprentices together, noting that such models create dignified employment without relying on distant supply chains. She rejects the idea that crafts are outdated luxuries, insisting that well-made everyday items can outlast mass-produced imports.\n\nCalder does, however, acknowledge that craft economies need municipal support for affordable workspace. She supports business rates relief and public procurement policies that prioritise local makers. While she appreciates online marketplaces, she cautions that platforms should not undercut artisans by demanding steep commissions. Calder believes schools should integrate craft literacy alongside digital skills, preventing students from seeing manual work as second-class. Ultimately she urges policymakers to treat craft ecosystems as essential infrastructure for sustainable towns.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Calder believes craft economies strengthen local resilience.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. She claims shared studios encourage repair culture.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Calder thinks cooperatives can provide quality employment.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. She argues that handmade goods are merely luxury items.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Calder says crafts rely on distant supply chains to survive.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. She supports municipal policies that lower workspace costs.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Calder opposes public procurement favouring local makers.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. She warns that some online platforms charge excessive commissions.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Calder wants craft education taught alongside digital skills.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. She suggests manual work should remain separate from school curricula.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Calder views craft ecosystems as vital civic infrastructure.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. She dismisses the need for apprenticeships in artisan cooperatives.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Calder says municipalities have no role in supporting craft economies.",
+          "answer": "No"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Cobots in the Warehouse",
+      "text": "Logistics company Orbital Freight is retrofitting its urban warehouses with fleets of collaborative robots, or cobots, that work alongside human pickers. Ceiling-mounted cameras track inventory bins, while cobots navigate using lidar to avoid workers and pallets. Each robot carries modular trays that can be swapped depending on product size. Warehouse staff wear lightweight badges that vibrate if a cobot approaches too quickly, prompting automatic speed reductions.\n\nThe company analysed order histories to programme cobots to handle repetitive tasks, leaving humans to pack fragile or unusual items. A central scheduling system assigns robots to aisles based on real-time demand spikes from e-commerce sales. Maintenance teams use augmented reality headsets to diagnose issues without halting operations. Orbital Freight partners with a technical college to train employees in robot supervision and data analysis. Energy dashboards compare electricity use before and after automation to ensure efficiency gains are genuine. Quarterly safety drills simulate power outages to practise manual overrides.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What technology helps cobots navigate the warehouse?",
+          "options": [
+            "A. Magnetic strips embedded in the floor.",
+            "B. Lidar sensors that detect surroundings.",
+            "C. GPS signals from satellites.",
+            "D. Coloured wall markers."
+          ],
+          "answer": "B. Lidar sensors that detect surroundings."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. Why do workers wear vibrating badges?",
+          "options": [
+            "A. To unlock storage rooms.",
+            "B. To signal when a cobot is approaching too quickly.",
+            "C. To monitor employee heart rates.",
+            "D. To prevent theft."
+          ],
+          "answer": "B. To signal when a cobot is approaching too quickly."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. How are the robots' trays configured?",
+          "options": [
+            "A. They are welded in place permanently.",
+            "B. They are modular and swapped based on product size.",
+            "C. They are filled with packing foam.",
+            "D. They are replaced monthly regardless of use."
+          ],
+          "answer": "B. They are modular and swapped based on product size."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. What tasks are cobots programmed to handle?",
+          "options": [
+            "A. Complex custom packaging.",
+            "B. Repetitive picking based on order history.",
+            "C. Supervising human workers.",
+            "D. Managing company finances."
+          ],
+          "answer": "B. Repetitive picking based on order history."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. Who is responsible for packing fragile items?",
+          "options": [
+            "A. Cobots exclusively.",
+            "B. Human workers.",
+            "C. External contractors.",
+            "D. Automated conveyor belts."
+          ],
+          "answer": "B. Human workers."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. What does the central scheduling system do?",
+          "options": [
+            "A. Assigns robots to aisles according to current demand.",
+            "B. Orders replacement parts from suppliers.",
+            "C. Calculates employee salaries.",
+            "D. Handles customer service queries."
+          ],
+          "answer": "A. Assigns robots to aisles according to current demand."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. How do maintenance teams troubleshoot equipment?",
+          "options": [
+            "A. By shipping robots back to the manufacturer.",
+            "B. Using augmented reality headsets on site.",
+            "C. By reading printed manuals exclusively.",
+            "D. By shutting down the warehouse nightly."
+          ],
+          "answer": "B. Using augmented reality headsets on site."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. What educational partnership supports staff development?",
+          "options": [
+            "A. A collaboration with a technical college.",
+            "B. Sponsorship of a professional sports team.",
+            "C. Funding for overseas internships.",
+            "D. An exchange with a hospital training centre."
+          ],
+          "answer": "A. A collaboration with a technical college."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. Why does Orbital Freight monitor electricity use?",
+          "options": [
+            "A. To qualify for tax rebates.",
+            "B. To verify that automation improves energy efficiency.",
+            "C. To schedule deliveries at night.",
+            "D. To detect employee overtime."
+          ],
+          "answer": "B. To verify that automation improves energy efficiency."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. What happens during quarterly safety drills?",
+          "options": [
+            "A. Robots are disconnected from the network permanently.",
+            "B. Staff practise manual overrides during simulated power outages.",
+            "C. Employees compete in obstacle courses with cobots.",
+            "D. Customers tour the facility."
+          ],
+          "answer": "B. Staff practise manual overrides during simulated power outages."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. What role do ceiling-mounted cameras play?",
+          "options": [
+            "A. They track inventory bins for the system.",
+            "B. They monitor employee attendance.",
+            "C. They provide entertainment footage.",
+            "D. They project advertisements onto floors."
+          ],
+          "answer": "A. They track inventory bins for the system."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. Why were cobots introduced?",
+          "options": [
+            "A. To replace all human workers immediately.",
+            "B. To support humans by automating repetitive tasks.",
+            "C. To transform warehouses into tourist attractions.",
+            "D. To store extra inventory on their trays."
+          ],
+          "answer": "B. To support humans by automating repetitive tasks."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each technology with its purpose in the warehouse.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Lidar",
+                "right": ["Guiding cobot navigation"]
+              },
+              {
+                "left": "Badges",
+                "right": ["Alerting workers to nearby robots"]
+              },
+              {
+                "left": "AR headsets",
+                "right": ["Diagnosing maintenance issues"]
+              },
+              {
+                "left": "Energy dashboard",
+                "right": ["Comparing power consumption"]
+              }
+            ]
+          },
+          "answer": "Lidar -> Guiding cobot navigation"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What is the goal of partnering with the technical college?",
+          "options": [
+            "A. To outsource hiring entirely.",
+            "B. To train employees in supervising robots and analysing data.",
+            "C. To market products to students.",
+            "D. To develop new warehouse locations."
+          ],
+          "answer": "B. To train employees in supervising robots and analysing data."
+        }
+      ]
+    }
+  ]
+}

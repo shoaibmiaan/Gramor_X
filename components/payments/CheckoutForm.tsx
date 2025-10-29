@@ -1,24 +1,14 @@
 import * as React from 'react';
 
-type PlanKey = 'starter' | 'booster' | 'master';
-type Cycle = 'monthly' | 'annual';
-type Method = 'stripe' | 'easypaisa' | 'jazzcash';
-
-type CreateCheckoutBody = Readonly<{
-  plan: PlanKey;
-  referralCode?: string;
-  billingCycle?: Cycle;
-}>;
-
-type CreateCheckoutResponse =
-  | Readonly<{ ok: true; url: string; sessionId?: string }>
-  | Readonly<{ ok: false; error: string }>;
+import { startCheckout } from '@/lib/payments/index';
+import type { PlanKey, Cycle, PaymentMethod } from '@/types/payments';
 
 export type CheckoutFormProps = {
   plan: PlanKey;
   billingCycle?: Cycle;
   referralCode?: string;
-  methods?: Method[]; // default: all
+  promoCode?: string;
+  methods?: PaymentMethod[]; // default: all
   className?: string;
   onError?: (msg: string) => void;
 };
@@ -27,48 +17,50 @@ export default function CheckoutForm({
   plan,
   billingCycle = 'monthly',
   referralCode,
-  methods = ['stripe', 'easypaisa', 'jazzcash'],
+  promoCode,
+  methods = ['stripe', 'crypto', 'easypaisa', 'jazzcash'],
   className = '',
   onError,
 }: CheckoutFormProps) {
-  const [loading, setLoading] = React.useState<Method | null>(null);
+  const [loading, setLoading] = React.useState<PaymentMethod | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
-  const start = React.useCallback(async (method: Method) => {
+  const start = React.useCallback(async (method: PaymentMethod) => {
     setErr(null);
     setLoading(method);
 
-    const body: CreateCheckoutBody = { plan, referralCode, billingCycle };
-    const endpoint =
-      method === 'stripe'
-        ? '/api/payments/create-checkout-session'
-        : method === 'easypaisa'
-        ? '/api/payments/create-easypaisa-session'
-        : '/api/payments/create-jazzcash-session';
-
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = (await res.json()) as CreateCheckoutResponse;
-
-      if (!res.ok || !('ok' in data) || !data.ok) {
-        const message = (data as any)?.error || `Failed to start ${method} checkout`;
+      const result = await startCheckout(method, { plan, referralCode, billingCycle, promoCode });
+      if (!result.ok) {
+        const message = result.error || `Failed to start ${method} checkout`;
         setErr(message);
         onError?.(message);
         setLoading(null);
         return;
       }
-      window.location.href = data.url;
+
+      if ('manual' in result && result.manual) {
+        window.location.href = '/account/billing?due=1';
+        return;
+      }
+
+      if ('url' in result && result.url) {
+        window.location.href = result.url;
+        return;
+      }
+
+      const fallbackMessage = `Failed to start ${method} checkout`;
+      setErr(fallbackMessage);
+      onError?.(fallbackMessage);
+      setLoading(null);
+      return;
     } catch (e) {
       const message = (e as Error).message;
       setErr(message);
       onError?.(message);
       setLoading(null);
     }
-  }, [plan, referralCode, billingCycle, onError]);
+  }, [plan, referralCode, billingCycle, promoCode, onError]);
 
   return (
     <div className={`grid gap-4 md:grid-cols-3 ${className}`}>
@@ -114,6 +106,24 @@ export default function CheckoutForm({
           >
             {loading === 'jazzcash' ? 'Starting…' : 'Pay with JazzCash'}
           </button>
+        </div>
+      )}
+
+      {methods.includes('crypto') && (
+        <div className="rounded-xl border border-border p-4 md:col-span-3 lg:col-span-1">
+          <h3 className="mb-1 text-h4 font-medium">Pay with Crypto</h3>
+          <p className="mb-4 text-small text-muted-foreground">Bitcoin, Ethereum, USDT (manual confirmation)</p>
+          <button
+            type="button"
+            onClick={() => start('crypto')}
+            disabled={loading !== null}
+            className="w-full rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-60"
+          >
+            {loading === 'crypto' ? 'Preparing…' : 'Continue with Crypto'}
+          </button>
+          <p className="mt-3 text-xs text-muted-foreground">
+            You&apos;ll see wallet details and submit proof after initiating the crypto checkout.
+          </p>
         </div>
       )}
 

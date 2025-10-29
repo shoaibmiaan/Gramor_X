@@ -1,0 +1,361 @@
+{
+  "id": "reading-test-7",
+  "title": "Reading Practice Test 12 — Solar Health Clinics",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Solar Clinics of Kavira",
+      "text": "Kavira Province's health ministry began building solar clinics in 2020 after storms repeatedly cut power to rural dispensaries. Engineers designed modular clinic blocks with rooftop panels feeding lithium batteries housed in elevated cabinets to avoid flood damage. Each clinic includes a cold room for vaccines, ultrasound equipment, and a water purification system driven by surplus solar power. Community technicians receive six months of training so they can replace inverters and monitor battery health without waiting for city engineers.\n\nMobile outreach teams use electric motorbikes charged at the clinics to deliver prenatal care to villages beyond the paved roads. Because staff once relied on diesel generators, the ministry tracked fuel savings and reinvested the funds into hiring midwives. Data connectivity hubs mounted on clinic roofs beam patient records to the provincial hospital, reducing the need for paper files. The programme partnered with a women's cooperative that manages clinic gardens supplying nutritious meals to recovering patients. Within three years, emergency referrals requiring backup generators dropped by 70 percent.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The solar clinics were introduced after storms disrupted electricity supplies.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. Batteries are stored underground to keep them cool.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Each clinic contains facilities for vaccine storage.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. Local technicians receive training to maintain the equipment.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Outreach teams travel by diesel vehicles to remote villages.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Fuel savings were redirected to employ additional midwives.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Patient records are still handled exclusively on paper.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. Clinic gardens are maintained by a women's cooperative.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. The programme eliminated the need for water purification systems.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. Solar power runs ultrasound machines in the clinics.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. Technicians must wait for city engineers to fix minor issues.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Emergency generator use has fallen significantly since implementation.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. The clinics were built primarily to expand dental services.",
+          "answer": "False"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Universal Basic Mobility",
+      "text": "Transport advocate Lionel Becker argues that universal basic mobility should guarantee people a minimum amount of travel each month, similar to how utilities provide baseline electricity. He notes that job seekers often decline interviews because they cannot afford bus fares, and that older residents struggle to reach medical appointments when routes are cut. Becker praises cities that provide free transit passes tied to income, but he warns that mobility must include safe infrastructure for walking and cycling, not just tickets.\n\nBecker rejects claims that unlimited free transport encourages unnecessary trips, pointing to studies showing people mainly travel to meet essential needs. He supports using congestion charges on private cars to fund the scheme, yet he urges planners to consult disability advocates to ensure services are truly accessible. Becker is wary of smartphone-only ticketing systems, arguing that they exclude citizens without reliable devices. He concludes that universal basic mobility should be treated as a public good that unlocks participation in civic life.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Becker wants everyone to receive a guaranteed amount of travel.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. He thinks the current system already meets the needs of job seekers.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Becker highlights difficulties faced by older residents when routes are reduced.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. He argues that mobility only requires cheaper bus tickets.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Becker believes free travel leads to widespread frivolous journeys.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. He supports funding the scheme through congestion charges on cars.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Becker recommends consulting disability advocates.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. He welcomes ticketing that works solely through smartphones.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Becker views universal basic mobility as a public good.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. He opposes including walking and cycling infrastructure in the plan.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Becker cites research suggesting most travel meets essential needs.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. He considers income-based transit passes a positive step.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Becker thinks people without devices are adequately served by current systems.",
+          "answer": "No"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Sentinel Peaks Network",
+      "text": "Volcanologist Marta Spinelli coordinates Sentinel Peaks, a network of observatories monitoring stratovolcanoes across the Pacific Rim. Each site deploys infrasound arrays that detect low-frequency rumblings hours before tremors are felt at the surface. Drones map crater geometry monthly, producing digital twins that highlight new fissures. Spinelli's team installs fibre-optic cables in existing lava tubes to act as distributed temperature sensors, revealing how heat pulses move beneath the crust.\n\nData streams feed into a forecasting hub where machine-learning models compare live signals with decades of eruption records. Civil defence agencies receive alerts via an encrypted app that also tracks evacuation drill participation. Sentinel Peaks partners with Indigenous communities who share oral histories about past eruptions, enriching hazard maps with place-based knowledge. The programme tests autonomous sirens powered by geothermal generators so warnings continue if grids fail. After a recent eruption, researchers analysed ash samples to refine aviation advisories for nearby airports.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What do the infrasound arrays detect?",
+          "options": [
+            "A. Changes in volcanic gas chemistry.",
+            "B. Low-frequency vibrations preceding tremors.",
+            "C. Fluctuations in local weather patterns.",
+            "D. Movements of wildlife near volcanoes."
+          ],
+          "answer": "B. Low-frequency vibrations preceding tremors."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. Why are drones used at each volcano?",
+          "options": [
+            "A. To deliver supplies to summit camps.",
+            "B. To map crater shapes and track fissures.",
+            "C. To measure rainfall around the mountain.",
+            "D. To test new aviation routes."
+          ],
+          "answer": "B. To map crater shapes and track fissures."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. What purpose do fibre-optic cables in lava tubes serve?",
+          "options": [
+            "A. Acting as communication lines for tourists.",
+            "B. Monitoring temperature changes under the surface.",
+            "C. Providing lighting for research teams.",
+            "D. Measuring ash fall in nearby towns."
+          ],
+          "answer": "B. Monitoring temperature changes under the surface."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. How does the forecasting hub operate?",
+          "options": [
+            "A. By comparing current data with historical eruption records using machine learning.",
+            "B. By polling residents about their concerns.",
+            "C. By following instructions from international airlines.",
+            "D. By simulating eruptions with physical models only."
+          ],
+          "answer": "A. By comparing current data with historical eruption records using machine learning."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. What information do civil defence agencies receive?",
+          "options": [
+            "A. Tourist itineraries.",
+            "B. Alerts through an encrypted application.",
+            "C. Geological textbooks for training.",
+            "D. Subsidies for equipment purchases."
+          ],
+          "answer": "B. Alerts through an encrypted application."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. How do Indigenous communities contribute?",
+          "options": [
+            "A. By funding the construction of observatories.",
+            "B. By sharing oral histories that enhance hazard maps.",
+            "C. By operating drone fleets.",
+            "D. By exporting volcanic ash for industry."
+          ],
+          "answer": "B. By sharing oral histories that enhance hazard maps."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. What feature keeps warning systems functioning during power failures?",
+          "options": [
+            "A. Battery banks transported by helicopter.",
+            "B. Autonomous sirens powered by geothermal generators.",
+            "C. Diesel backup generators owned by airlines.",
+            "D. Volunteers shouting warnings in villages."
+          ],
+          "answer": "B. Autonomous sirens powered by geothermal generators."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. Why are ash samples analysed after eruptions?",
+          "options": [
+            "A. To design souvenirs for tourists.",
+            "B. To improve aviation advisories for airports.",
+            "C. To determine mining potential.",
+            "D. To predict rainfall patterns."
+          ],
+          "answer": "B. To improve aviation advisories for airports."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. What does the encrypted app monitor besides alerts?",
+          "options": [
+            "A. Participation in evacuation drills.",
+            "B. Temperature data from lava tubes.",
+            "C. Tourist numbers on trails.",
+            "D. Sales of emergency supplies."
+          ],
+          "answer": "A. Participation in evacuation drills."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. How often are crater geometries mapped?",
+          "options": ["A. Daily.", "B. Monthly.", "C. Yearly.", "D. Only after eruptions."],
+          "answer": "B. Monthly."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. What energy source powers the autonomous sirens?",
+          "options": [
+            "A. Hydroelectric turbines.",
+            "B. Geothermal generators.",
+            "C. Diesel engines.",
+            "D. Wind farms."
+          ],
+          "answer": "B. Geothermal generators."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. What is the role of machine learning in Sentinel Peaks?",
+          "options": [
+            "A. Organising tourist visits to volcanoes.",
+            "B. Comparing real-time signals with historical data to forecast eruptions.",
+            "C. Manufacturing fibre-optic cables.",
+            "D. Replacing human observers entirely."
+          ],
+          "answer": "B. Comparing real-time signals with historical data to forecast eruptions."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each monitoring tool with its primary purpose.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Infrasound arrays",
+                "right": ["Detecting deep rumblings"]
+              },
+              {
+                "left": "Drones",
+                "right": ["Mapping crater geometry"]
+              },
+              {
+                "left": "Fibre-optic cables",
+                "right": ["Tracking subsurface heat"]
+              },
+              {
+                "left": "Encrypted app",
+                "right": ["Delivering alerts to civil defence"]
+              }
+            ]
+          },
+          "answer": "Infrasound arrays -> Detecting deep rumblings"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What overarching objective drives Sentinel Peaks?",
+          "options": [
+            "A. Promoting volcano tourism packages.",
+            "B. Providing early warnings and improved hazard planning.",
+            "C. Extracting geothermal energy for export.",
+            "D. Documenting archaeological sites near volcanoes."
+          ],
+          "answer": "B. Providing early warnings and improved hazard planning."
+        }
+      ]
+    }
+  ]
+}

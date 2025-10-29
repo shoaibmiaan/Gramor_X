@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { Container } from '@/components/design-system/Container';
@@ -10,6 +10,7 @@ import { QuestionBlock } from '@/components/reading/QuestionBlock';
 import { QuestionNav } from '@/components/reading/QuestionNav';
 import FocusGuard from '@/components/exam/FocusGuard';
 import { SaveItemButton } from '@/components/SaveItemButton';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 
 type BaseQ = { id: string; qNo: number; type: 'mcq'|'tfng'|'ynng'|'gap'|'match'; prompt: string };
 type MCQ = BaseQ & { type: 'mcq'; options: string[]; answer?: string };
@@ -43,11 +44,14 @@ export default function ReadingRunnerPage() {
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [attemptStarted, setAttemptStarted] = useState(false);
+  const [attemptFinished, setAttemptFinished] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   const dirtyRef = useRef(false);
   const preventRouteBlockRef = useRef(false);
+  const initialDurationRef = useRef<number | null>(null);
 
   // load test
   useEffect(() => {
@@ -64,12 +68,29 @@ export default function ReadingRunnerPage() {
         if (saved) setAnswers(JSON.parse(saved));
         if (savedFlags) setFlags(JSON.parse(savedFlags));
 
-        setSecondsLeft(data.durationMinutes * 60);
+        const total = data.durationMinutes * 60;
+        initialDurationRef.current = total;
+        setSecondsLeft(total);
+        setAttemptStarted(false);
+        setAttemptFinished(false);
       } catch (e:any) {
         setErr(e?.message || 'Failed to load test');
       }
     })();
   }, [slug]);
+
+  const handleSubmit = useCallback(
+    async (auto = false) => {
+      setAttemptFinished(true);
+      try {
+        await submit.call(undefined, auto);
+      } catch (error) {
+        setAttemptFinished(false);
+        throw error;
+      }
+    },
+    []
+  );
 
   // countdown + time-up auto-submit
   useEffect(() => {
@@ -79,14 +100,24 @@ export default function ReadingRunnerPage() {
         if (s == null) return s;
         if (s <= 1) {
           clearInterval(t);
-          if (!submitting) submit(true);
+          if (!submitting) void handleSubmit(true);
           return 0;
         }
         return s - 1;
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [secondsLeft]); // eslint-disable-line
+  }, [secondsLeft, submitting, handleSubmit]);
+
+  useEffect(() => {
+    if (secondsLeft == null || initialDurationRef.current == null) return;
+    if (!attemptStarted && !attemptFinished && secondsLeft < initialDurationRef.current) {
+      setAttemptStarted(true);
+    }
+    if (secondsLeft <= 0) {
+      setAttemptFinished(true);
+    }
+  }, [secondsLeft, attemptStarted, attemptFinished]);
 
   // autosave answers/flags
   useEffect(() => {
@@ -211,7 +242,14 @@ export default function ReadingRunnerPage() {
 
   return (
     <>
-      <FocusGuard exam="reading" slug={slug} />
+      <FocusGuard
+        exam="reading"
+        slug={slug}
+        active={attemptStarted && !attemptFinished}
+        onFullscreenExit={() => {
+          if (!attemptFinished) setAttemptStarted(false);
+        }}
+      />
       <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <Container>
         {!test ? (
@@ -223,9 +261,12 @@ export default function ReadingRunnerPage() {
             {/* Sticky bar */}
             <div className="sticky top-16 z-10 card-surface border border-lightBorder dark:border-white/10 rounded-ds p-3 flex items-center gap-3 flex-wrap">
               <Badge variant="info">Time Left: {mm}:{ss}</Badge>
-              <div className="flex-1 h-2 bg-muted/60 dark:bg-white/10 rounded-ds" aria-label="Progress" role="progressbar" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100}>
-                <div className="h-2 bg-primary rounded-ds" style={{ width: `${progressPct}%` }} />
-              </div>
+              <ProgressBar
+                value={progressPct}
+                className="flex-1 min-w-[160px]"
+                tone={progressPct === 100 ? 'success' : 'info'}
+                ariaLabel="Progress"
+              />
               <Badge variant={progressPct===100 ? 'success' : 'warning'}>{progressPct}%</Badge>
 
               {/* Per-type progress badges */}
@@ -239,7 +280,14 @@ export default function ReadingRunnerPage() {
 
               <SaveItemButton resourceId={slug || ''} type="reading" category="bookmark" />
               <Button variant="secondary" className="rounded-ds" onClick={() => router.back()}>Exit</Button>
-              <Button variant="primary" className="rounded-ds" onClick={() => submit()} disabled={submitting}>
+              <Button
+                variant="primary"
+                className="rounded-ds"
+                onClick={() => {
+                  void handleSubmit();
+                }}
+                disabled={submitting}
+              >
                 {submitting ? 'Submitting…' : 'Submit'}
               </Button>
             </div>

@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-3",
+  "title": "Reading Practice Test 8 — Digital Archives",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Digitising Northborough's Archives",
+      "text": "The Northborough Museum cares for more than two million objects, but until recently barely five percent had any digital record. When a flood warning in 2019 threatened its riverside storage wing, curators realised they needed a faster method to document fragile manuscripts. They approached the Civic Makers Collective, a local group of photographers and technologists, who designed portable scanning stations that could be assembled inside the museum's reading rooms. Each rig combines a lightweight camera cradle with custom software that logs the object's accession number and condition in a single workflow.\n\nVolunteers were recruited from the city's adult education college and trained in basic conservation handling. Before they scan a manuscript, pairs of volunteers brush away dust, record existing tears, and add metadata about the author. A quality-control coordinator reviews images each evening and flags any pages needing to be rescanned. The museum also collaborates with linguistics students to transcribe marginal notes written in dialects that would otherwise be hard to search. Funding from a regional innovation grant paid for heat sensors that monitor the temporary scanning spaces, ensuring that light levels stay within preservation limits. Within eighteen months the team digitised 120,000 pages, and the project now lends equipment to smaller museums across the county.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The museum had already digitised most of its collection before 2019.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. A weather alert prompted staff to speed up their documentation process.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. The Civic Makers Collective supplied equipment tailored to the museum's needs.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. The scanning rigs require special rooms to be built at the museum.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Volunteers receive training on how to handle delicate items.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Each manuscript is scanned by a single volunteer working alone.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. The workflow records physical damage alongside digital images.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. Linguistics students help interpret unusual handwritten notes.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. The project could not secure any external funding.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. Environmental sensors help maintain safe conditions during scanning.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. The team digitised fewer than ten thousand pages in total.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Other museums now make use of the scanning equipment.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. The project plans to sell the digital files to private collectors.",
+          "answer": "Not Given"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Rethinking Remote Work",
+      "text": "In a recent editorial, futurist Dana Ikeda contends that the debate about remote work has become too focused on individual convenience and not enough on the structure of cities. She acknowledges that home-working saved many employees from long commutes, yet she worries that office towers now sitting half empty could destabilise municipal budgets that rely on commuter spending. Ikeda rejects nostalgic calls to force everyone back to desks, arguing that hybrid schedules already help caregivers and disabled workers participate more fully in the labour market. Still, she maintains that companies have a responsibility to fund public spaces if they continue reducing their physical footprints.\n\nIkeda applauds a pilot scheme in which businesses converted unused boardrooms into bookable classrooms for local colleges, seeing it as proof that commercial real estate can serve community needs. She dismisses the idea that remote workers are inherently less collaborative, pointing to software firms that open their code reviews to global contributors. However, she criticises executives who expect staff to maintain home offices without subsidising equipment or energy costs. The essay concludes with a call for city planners, landlords, and unions to co-design a civic compact that balances flexibility with shared investment in downtown districts.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Ikeda believes remote work discussions overlook urban economic impacts.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. She thinks commuting should be made longer to support public transport.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Ikeda agrees that everyone should return to the office full-time.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. She recognises the benefits hybrid schedules bring to certain workers.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Ikeda wants companies that shrink offices to contribute to civic infrastructure.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. She opposes repurposing corporate spaces for educational use.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Ikeda cites global software collaborations as evidence of remote cooperation.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. She praises executives who refuse to pay for employee equipment.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Ikeda suggests that remote workers are naturally less creative.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. She proposes a partnership between urban planners and worker representatives.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Ikeda argues that downtown areas no longer need investment.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. She believes municipal budgets benefit from empty office towers.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Ikeda views hybrid schedules as harmful to disabled workers.",
+          "answer": "No"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Reclaiming the Aridia Desert",
+      "text": "The Aridia Desert Observatory sits on a plateau overlooking a patchwork of experimental restoration plots. Ecologist Jamal Mostafa and his team irrigate some plots with captured dew while leaving others to rely solely on seasonal rainfall. They sow native grass seeds alongside nitrogen-fixing shrubs, then record how quickly the plants stabilise dune surfaces. Drones fitted with multispectral cameras fly weekly transects to measure plant health. Because water is scarce, the observatory uses solar-powered condensers that collect moisture at night and store it in underground tanks insulated with recycled glass.\n\nBeyond plant monitoring, the researchers collaborate with local herders who have agreed to rotate grazing schedules around the restored plots. Soil technicians sample microbial communities to see whether dung from goats accelerates nutrient cycles. The project also partners with an indigenous weavers' cooperative that harvests limited quantities of grass stems for traditional baskets, ensuring the restoration has cultural as well as ecological value. To share results, Mostafa hosts open days where visiting policymakers can compare experimental treatments. The observatory hopes to expand its methods to neighboring regions threatened by dune encroachment.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What is the main focus of the Aridia Desert Observatory's plots?",
+          "options": [
+            "A. Testing irrigation systems for commercial farms.",
+            "B. Restoring native vegetation to stabilise dunes.",
+            "C. Mining minerals from the plateau.",
+            "D. Breeding livestock suited to arid climates."
+          ],
+          "answer": "B. Restoring native vegetation to stabilise dunes."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. How do some plots receive additional moisture?",
+          "options": [
+            "A. Through underground aquifers.",
+            "B. From artificial rainmaking chemicals.",
+            "C. Via dew captured and stored by the team.",
+            "D. Using diverted river water."
+          ],
+          "answer": "C. Via dew captured and stored by the team."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. Why are drones flown across the plots each week?",
+          "options": [
+            "A. To track illegal grazing.",
+            "B. To measure the growth and health of plants.",
+            "C. To deliver seeds to remote areas.",
+            "D. To record tourist visits to the site."
+          ],
+          "answer": "B. To measure the growth and health of plants."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. What purpose do the solar-powered condensers serve?",
+          "options": [
+            "A. They power the drones during daylight.",
+            "B. They generate electricity for the observatory's offices.",
+            "C. They capture night-time moisture for storage.",
+            "D. They cool the laboratory equipment."
+          ],
+          "answer": "C. They capture night-time moisture for storage."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. How do local herders participate in the project?",
+          "options": [
+            "A. By donating livestock for scientific experiments.",
+            "B. By suspending grazing entirely in the region.",
+            "C. By adjusting grazing times around restoration plots.",
+            "D. By funding the observatory's expansion."
+          ],
+          "answer": "C. By adjusting grazing times around restoration plots."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. What do soil technicians investigate?",
+          "options": [
+            "A. The mineral composition of plateau rocks.",
+            "B. The impact of animal waste on microbial life.",
+            "C. The number of tourists visiting each month.",
+            "D. The best routes for transporting baskets."
+          ],
+          "answer": "B. The impact of animal waste on microbial life."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. Why does the project work with an indigenous weaving cooperative?",
+          "options": [
+            "A. To sell baskets in international markets.",
+            "B. To ensure the restoration supports cultural practices.",
+            "C. To replace grass species with imported fibres.",
+            "D. To train researchers in traditional art forms."
+          ],
+          "answer": "B. To ensure the restoration supports cultural practices."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. What is the goal of the open days hosted by Mostafa?",
+          "options": [
+            "A. To recruit international tourists.",
+            "B. To compare restoration methods with visiting officials.",
+            "C. To sell restored land to private investors.",
+            "D. To advertise academic conferences."
+          ],
+          "answer": "B. To compare restoration methods with visiting officials."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. What broader ambition does the observatory have?",
+          "options": [
+            "A. To convert the plateau into farmland.",
+            "B. To export desert grasses internationally.",
+            "C. To scale restoration techniques to nearby regions.",
+            "D. To establish a wildlife reserve for predators."
+          ],
+          "answer": "C. To scale restoration techniques to nearby regions."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. What combination of plants do researchers sow in the plots?",
+          "options": [
+            "A. Only nitrogen-fixing shrubs.",
+            "B. Imported ornamental species.",
+            "C. Native grasses with nitrogen-fixing shrubs.",
+            "D. Exclusively drought-resistant cacti."
+          ],
+          "answer": "C. Native grasses with nitrogen-fixing shrubs."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. What aspect of the project highlights community involvement?",
+          "options": [
+            "A. Private investors funding dew collectors.",
+            "B. Local herders coordinating grazing schedules.",
+            "C. International tourists volunteering on weekends.",
+            "D. Government ministers staffing the drones."
+          ],
+          "answer": "B. Local herders coordinating grazing schedules."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. How are the underground tanks insulated?",
+          "options": [
+            "A. With imported aluminium sheeting.",
+            "B. With layers of recycled glass.",
+            "C. With thick clay walls.",
+            "D. With woven grass mats."
+          ],
+          "answer": "B. With layers of recycled glass."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each group involved with the contribution they make.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Herders",
+                "right": ["Staggering grazing around plots"]
+              },
+              {
+                "left": "Soil technicians",
+                "right": ["Assessing microbial communities"]
+              },
+              {
+                "left": "Weavers' cooperative",
+                "right": ["Using grasses in traditional crafts"]
+              },
+              {
+                "left": "Policymakers",
+                "right": ["Observing treatment comparisons on open days"]
+              }
+            ]
+          },
+          "answer": "Herders -> Staggering grazing around plots"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What motivates the observatory's collaboration with policymakers?",
+          "options": [
+            "A. To secure permits for mining operations.",
+            "B. To demonstrate restoration outcomes for wider adoption.",
+            "C. To negotiate grazing rights for private ranchers.",
+            "D. To market tourist packages in the desert."
+          ],
+          "answer": "B. To demonstrate restoration outcomes for wider adoption."
+        }
+      ]
+    }
+  ]
+}

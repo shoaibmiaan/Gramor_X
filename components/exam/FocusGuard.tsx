@@ -5,19 +5,37 @@ import { recordFocusViolation } from '@/lib/examSecurity';
 interface Props {
   exam: string;
   slug?: string;
+  /** Whether the guard should actively request fullscreen + track focus. */
+  active?: boolean;
+  /** Called when fullscreen is exited while the guard is active. */
+  onFullscreenExit?: () => void;
 }
 
-export default function FocusGuard({ exam, slug }: Props) {
+export default function FocusGuard({ exam, slug, active = false, onFullscreenExit }: Props) {
   const [warn, setWarn] = useState(false);
 
   useEffect(() => {
-    const el = document.documentElement as HTMLElement & { requestFullscreen?: () => Promise<void> };
-    el.requestFullscreen?.().catch(() => {});
+    if (!active) {
+      setWarn(false);
+      if (document.fullscreenElement === document.documentElement) {
+        void document.exitFullscreen().catch(() => {});
+      }
+      return;
+    }
 
+    const root = document.documentElement as HTMLElement & { requestFullscreen?: () => Promise<void> };
+    let enteredFullscreen = false;
     let wasHidden = false;
     let timer: number | undefined;
 
+    root.requestFullscreen?.().then(() => {
+      enteredFullscreen = true;
+    }).catch(() => {
+      enteredFullscreen = false;
+    });
+
     const onVisibility = () => {
+      if (!active) return;
       if (document.hidden) {
         wasHidden = true;
         recordFocusViolation({ exam, testSlug: slug, type: 'visibilitychange' });
@@ -28,12 +46,24 @@ export default function FocusGuard({ exam, slug }: Props) {
       }
     };
 
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement && enteredFullscreen) {
+        onFullscreenExit?.();
+      }
+    };
+
     document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
       if (timer) window.clearTimeout(timer);
+      if (enteredFullscreen && document.fullscreenElement === document.documentElement) {
+        void document.exitFullscreen().catch(() => {});
+      }
     };
-  }, [exam, slug]);
+  }, [active, exam, slug, onFullscreenExit]);
 
   return warn ? (
     <div className="fixed top-4 left-1/2 z-50 w-full max-w-md -translate-x-1/2">

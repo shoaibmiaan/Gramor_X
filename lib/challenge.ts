@@ -1,5 +1,6 @@
 // lib/challenge.ts
-import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { supabaseService } from "@/lib/supabaseServer";
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { createSignedAvatarUrl, isStoragePath } from '@/lib/avatar';
 import {
   ChallengeEnrollment,
@@ -18,15 +19,16 @@ import {
  */
 export async function enrollInChallenge(
   userId: string,
-  payload: ChallengeEnrollRequest
+  payload: ChallengeEnrollRequest,
 ): Promise<ChallengeEnrollResponse> {
-  const { data, error } = await supabaseBrowser
-    .from("challenge_enrollments")
+  const client = supabaseService();
+  const { data, error } = await client
+    .from('challenge_enrollments')
     .insert({
       user_id: userId,
       cohort: payload.cohort,
     })
-    .select("*")
+    .select('*')
     .single();
 
   if (error) return { ok: false, error: error.message };
@@ -49,15 +51,15 @@ export async function enrollInChallenge(
  */
 export async function updateChallengeProgress(
   userId: string,
-  payload: ChallengeProgressUpdateRequest
+  payload: ChallengeProgressUpdateRequest,
 ): Promise<ChallengeProgressResponse> {
-  // Fetch enrollment first
-  const { data: enrollment, error: fetchErr } = await supabaseBrowser
-    .from("challenge_enrollments")
-    .select("id, progress")
-    .eq("id", payload.enrollmentId)
-    .eq("user_id", userId)
-    .single();
+  const client = supabaseService();
+  const { data: enrollment, error: fetchErr } = await client
+    .from('challenge_enrollments')
+    .select('id, progress')
+    .eq('id', payload.enrollmentId)
+    .eq('user_id', userId)
+    .maybeSingle();
 
   if (fetchErr || !enrollment) {
     return { ok: false, error: fetchErr?.message || "Enrollment not found" };
@@ -69,11 +71,11 @@ export async function updateChallengeProgress(
     [`day${payload.day}`]: payload.status,
   };
 
-  const { error: updateErr } = await supabaseBrowser
-    .from("challenge_enrollments")
+  const { error: updateErr } = await client
+    .from('challenge_enrollments')
     .update({ progress: updatedProgress })
-    .eq("id", payload.enrollmentId)
-    .eq("user_id", userId);
+    .eq('id', payload.enrollmentId)
+    .eq('user_id', userId);
 
   if (updateErr) return { ok: false, error: updateErr.message };
 
@@ -83,13 +85,94 @@ export async function updateChallengeProgress(
 /**
  * Fetch leaderboard for a cohort.
  */
+async function loadSnapshotLeaderboard(
+  cohort: ChallengeCohortId,
+): Promise<ChallengeLeaderboardEntry[] | null> {
+  const client = supabaseService();
+  const { data: snapshot, error: snapshotErr } = await client
+    .from('mock_reading_leaderboard_snapshots')
+    .select('snapshot_date')
+    .eq('cohort', cohort)
+    .order('snapshot_date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (snapshotErr) {
+    throw snapshotErr;
+  }
+
+  const snapshotDate = snapshot?.snapshot_date;
+  const snapshotIso = snapshotDate
+    ? typeof snapshotDate === 'string'
+      ? snapshotDate
+      : new Date(snapshotDate).toISOString()
+    : null;
+  if (!snapshotDate) {
+    return null;
+  }
+
+  const { data, error } = await client
+    .from('mock_reading_leaderboard_snapshots')
+    .select('user_id, rank, xp, completed_tasks, total_tasks, profiles(full_name, avatar_url)')
+    .eq('cohort', cohort)
+    .eq('snapshot_date', snapshotDate)
+    .order('rank', { ascending: true })
+    .limit(50);
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = Array.isArray(data) ? data : [];
+
+  const leaderboard: ChallengeLeaderboardEntry[] = [];
+  for (const row of rows) {
+    const rawAvatar: string | null = row?.profiles?.avatar_url ?? null;
+    let avatarUrl: string | undefined;
+    if (typeof rawAvatar === 'string') {
+      if (isStoragePath(rawAvatar)) {
+        try {
+          avatarUrl = (await createSignedAvatarUrl(rawAvatar)) ?? undefined;
+        } catch (error) {
+          console.warn('[challenge] failed to sign avatar', error);
+        }
+      } else {
+        avatarUrl = rawAvatar;
+      }
+    }
+
+    leaderboard.push({
+      userId: row?.user_id,
+      fullName: row?.profiles?.full_name || 'Anonymous',
+      avatarUrl,
+      completedTasks: Number(row?.completed_tasks ?? 0),
+      totalTasks: Number(row?.total_tasks ?? 7),
+      rank: Number(row?.rank ?? leaderboard.length + 1),
+      xp: Number(row?.xp ?? 0),
+      snapshotDate: snapshotIso ?? undefined,
+    });
+  }
+
+  return leaderboard.length ? leaderboard : null;
+}
+
 export async function getChallengeLeaderboard(
-  cohort: ChallengeCohortId
+  cohort: ChallengeCohortId,
 ): Promise<ChallengeLeaderboardResponse> {
-  const { data, error } = await supabaseBrowser
-    .from("challenge_enrollments")
-    .select("user_id, progress, profiles(full_name, avatar_url)")
-    .eq("cohort", cohort);
+  try {
+    const snapshot = await loadSnapshotLeaderboard(cohort);
+    if (snapshot && snapshot.length) {
+      return { ok: true, cohort, leaderboard: snapshot };
+    }
+  } catch (error) {
+    console.warn('[challenge] snapshot leaderboard fallback', error);
+  }
+
+  const client = supabaseService();
+  const { data, error } = await client
+    .from('challenge_enrollments')
+    .select('user_id, progress, profiles(full_name, avatar_url)')
+    .eq('cohort', cohort);
 
   if (error) return { ok: false, error: error.message };
 
@@ -97,7 +180,7 @@ export async function getChallengeLeaderboard(
     (data ?? []).map(async (row: any, idx: number) => {
       const progress: ChallengeProgress = row.progress || {};
       const completedTasks = Object.values(progress).filter((s) => s === 'done').length;
-      const totalTasks = Object.keys(progress).length || 14; // assume 14-day challenge
+      const totalTasks = Object.keys(progress).length || 14;
 
       const rawAvatar: string | null = row.profiles?.avatar_url ?? null;
       let avatarUrl: string | undefined;
@@ -125,11 +208,10 @@ export async function getChallengeLeaderboard(
     }),
   );
 
-  // Sort by completed tasks desc
   leaderboard.sort((a, b) => b.completedTasks - a.completedTasks);
-
-  // Reassign ranks after sorting
-  leaderboard.forEach((entry, i) => (entry.rank = i + 1));
+  leaderboard.forEach((entry, i) => {
+    entry.rank = i + 1;
+  });
 
   return { ok: true, cohort, leaderboard };
 }

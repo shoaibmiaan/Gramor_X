@@ -10,6 +10,11 @@ import type { SubscriptionTier } from '@/lib/navigation/types';
 type ThemeMode = 'light' | 'dark';
 type VariantId = 'studyBuddy' | 'aiCoach' | 'owl';
 
+interface RouteLoadingOverlayProps {
+  active: boolean;
+  tier?: SubscriptionTier | null;
+}
+
 type VariantDefinition = {
   id: VariantId;
   label: string;
@@ -17,21 +22,21 @@ type VariantDefinition = {
   statusMessages: readonly string[];
   stepDuration: number;
   overlayBackground: Record<ThemeMode, string>;
-  cardBackground: Record<ThemeMode, string>;
-  accentText: Record<ThemeMode, string>;
-  Hero: (props: HeroProps) => JSX.Element;
+  render: (props: VariantRendererProps) => JSX.Element;
 };
 
-type HeroProps = {
+type VariantRendererProps = {
+  friendlyMessage: string;
+  statusMessages: readonly string[];
+  currentStatus: string;
+  statusIndex: number;
+  label: string;
   themeMode: ThemeMode;
   shouldReduceMotion: boolean;
+  stepDuration: number;
 };
 
-interface RouteLoadingOverlayProps {
-  active: boolean;
-  tier?: SubscriptionTier | null;
-}
-
+// ----- Mapping tiers to variants -----
 const TIER_TO_VARIANT: Record<SubscriptionTier, VariantId> = {
   free: 'studyBuddy',
   seedling: 'studyBuddy',
@@ -39,377 +44,299 @@ const TIER_TO_VARIANT: Record<SubscriptionTier, VariantId> = {
   owl: 'owl',
 };
 
-const friendlyStudyBuddy = Object.freeze([
+// ----- Messages -----
+const STUDY_BUDDY_MESSAGES = Object.freeze([
   'Warming up your study plan…',
   'Loading your daily challenge…',
   'Hang tight — almost there 🚀',
 ]);
-
-const statusStudyBuddy = Object.freeze([
+const STUDY_BUDDY_STATUSES = Object.freeze([
   'Authenticating your buddy…',
   'Preparing your workspace…',
   'Loading play modules…',
 ]);
 
-const friendlyAiCoach = Object.freeze([
+const AI_COACH_MESSAGES = Object.freeze([
   'Setting up your IELTS dashboard…',
   'Analysing your study DNA…',
   'Calibrating your AI coach…',
 ]);
-
-const statusAiCoach = Object.freeze([
+const AI_COACH_STATUSES = Object.freeze([
   'Authenticating your profile…',
   'Preparing your workspace…',
   'Loading AI modules…',
 ]);
 
-const friendlyOwl = Object.freeze([
+const OWL_MESSAGES = Object.freeze([
   'Refining your IELTS mastery…',
   'Polishing elite insight decks…',
   'Your Owl mentor is almost ready…',
 ]);
-
-const statusOwl = Object.freeze([
+const OWL_STATUSES = Object.freeze([
   'Authenticating Owl tier…',
   'Preparing your workspace…',
   'Loading premium modules…',
 ]);
 
-const StudyBuddyHero = ({ themeMode, shouldReduceMotion }: HeroProps) => (
-  <motion.div
-    className="relative flex h-16 w-16 items-center justify-center rounded-3xl sm:h-20 sm:w-20"
-    animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.05, 1], rotate: [0, 4, -2, 0] }}
-    transition={{ repeat: shouldReduceMotion ? 0 : Infinity, duration: 2.6, ease: 'easeInOut' }}
-    aria-hidden
-  >
-    <span
-      className={clsx(
-        'absolute inset-[-18%] rounded-[2.75rem] blur-xl',
-        themeMode === 'dark'
-          ? 'bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.5),rgba(59,130,246,0))]'
-          : 'bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.35),rgba(59,130,246,0))]'
-      )}
-    />
-    <div
-      className={clsx(
-        'absolute inset-0 rounded-[2.2rem] border backdrop-blur-sm',
-        themeMode === 'dark'
-          ? 'border-indigo-400/20 bg-indigo-900/50'
-          : 'border-indigo-200/30 bg-white/60'
-      )}
-    />
-    <div className="relative flex space-x-2 text-2xl sm:text-3xl">
-      {['📘', '💬', '🎯', '💡'].map((icon) => (
-        <motion.span
-          key={icon}
-          animate={shouldReduceMotion ? { y: 0 } : { y: [0, -6, 0] }}
-          transition={{ repeat: shouldReduceMotion ? 0 : Infinity, duration: 1.8, ease: 'easeInOut' }}
-          className="drop-shadow-[0_18px_30px_rgba(49,46,129,0.35)]"
-        >
-          {icon}
-        </motion.span>
-      ))}
-    </div>
-  </motion.div>
-);
-
-const AiCoachHero = ({ themeMode, shouldReduceMotion }: HeroProps) => (
-  <motion.div
-    className="relative flex h-16 w-16 items-center justify-center rounded-[1.75rem] sm:h-20 sm:w-20"
-    animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.08, 1] }}
-    transition={{ repeat: shouldReduceMotion ? 0 : Infinity, duration: 2.2, ease: 'easeInOut' }}
-    aria-hidden
-  >
-    <span
-      className={clsx(
-        'absolute inset-[-22%] rounded-[2.4rem] blur-xl',
-        themeMode === 'dark'
-          ? 'bg-[radial-gradient(circle,rgba(56,189,248,0.45),rgba(14,165,233,0))]'
-          : 'bg-[radial-gradient(circle,rgba(59,130,246,0.35),rgba(59,130,246,0))]'
-      )}
-    />
-    <div
-      className={clsx(
-        'absolute inset-0 rounded-[1.75rem] border backdrop-blur-sm',
-        themeMode === 'dark'
-          ? 'border-sky-300/25 bg-sky-950/50'
-          : 'border-sky-200/40 bg-white/60'
-      )}
-    />
-    <motion.span
-      className={clsx(
-        'relative flex h-10 w-10 items-center justify-center rounded-[1.25rem] bg-gradient-to-br text-2xl font-semibold text-white',
-        themeMode === 'dark'
-          ? 'from-sky-400 to-cyan-400'
-          : 'from-sky-500 to-indigo-400'
-      )}
-      animate={shouldReduceMotion ? { rotate: 0 } : { rotate: [0, 3, -3, 0] }}
-      transition={{ repeat: shouldReduceMotion ? 0 : Infinity, duration: 3, ease: 'easeInOut' }}
-    >
-      GX
-    </motion.span>
-  </motion.div>
-);
-
-const OwlHero = ({ themeMode, shouldReduceMotion }: HeroProps) => (
-  <motion.div
-    className="relative flex h-16 w-16 items-center justify-center rounded-[1.75rem] sm:h-20 sm:w-20"
-    animate={shouldReduceMotion ? { scale: 1 } : { scale: [1, 1.06, 1] }}
-    transition={{ repeat: shouldReduceMotion ? 0 : Infinity, duration: 2.8, ease: 'easeInOut' }}
-    aria-hidden
-  >
-    <span
-      className={clsx(
-        'absolute inset-[-18%] rounded-[2.2rem] blur-xl',
-        themeMode === 'dark'
-          ? 'bg-[radial-gradient(circle,rgba(250,204,21,0.4),rgba(250,204,21,0))]'
-          : 'bg-[radial-gradient(circle,rgba(217,119,6,0.35),rgba(217,119,6,0))]'
-      )}
-    />
-    <div
-      className={clsx(
-        'absolute inset-0 rounded-[1.75rem] border backdrop-blur-sm',
-        themeMode === 'dark'
-          ? 'border-yellow-200/20 bg-slate-900/70'
-          : 'border-yellow-500/20 bg-white/70'
-      )}
-    />
-    <motion.span
-      className={clsx(
-        'relative flex h-10 w-10 items-center justify-center rounded-[1.25rem] bg-gradient-to-br text-xl font-semibold',
-        themeMode === 'dark'
-          ? 'from-amber-300 via-amber-400 to-amber-500 text-slate-900'
-          : 'from-amber-200 via-amber-300 to-amber-400 text-slate-800'
-      )}
-      animate={shouldReduceMotion ? { rotate: 0 } : { rotate: 360 }}
-      transition={{ repeat: shouldReduceMotion ? 0 : Infinity, duration: 8, ease: 'linear' }}
-    >
-      ✶
-    </motion.span>
-  </motion.div>
-);
-
-const VARIANTS: Record<VariantId, VariantDefinition> = {
-  studyBuddy: {
-    id: 'studyBuddy',
-    label: 'Study buddy is on it',
-    friendlyMessages: friendlyStudyBuddy,
-    statusMessages: statusStudyBuddy,
-    stepDuration: 2600,
-    overlayBackground: {
-      dark: 'bg-gradient-to-br from-[#0f172a]/95 via-[#1f1b4d]/92 to-[#1e3a8a]/94',
-      light: 'bg-gradient-to-br from-[#eef2ff]/95 via-[#e0f2fe]/92 to-[#ede9fe]/95',
-    },
-    cardBackground: {
-      dark: 'bg-slate-950/55 border-indigo-400/20',
-      light: 'bg-white/70 border-indigo-200/40',
-    },
-    accentText: {
-      dark: 'text-indigo-200/80',
-      light: 'text-indigo-500/70',
-    },
-    Hero: StudyBuddyHero,
-  },
-  aiCoach: {
-    id: 'aiCoach',
-    label: 'AI coach is prepping',
-    friendlyMessages: friendlyAiCoach,
-    statusMessages: statusAiCoach,
-    stepDuration: 2400,
-    overlayBackground: {
-      dark: 'bg-gradient-to-br from-[#020617]/96 via-[#0f172a]/92 to-[#082f49]/94',
-      light: 'bg-gradient-to-br from-[#f1f5f9]/95 via-[#e0f2fe]/92 to-[#e2e8f0]/95',
-    },
-    cardBackground: {
-      dark: 'bg-slate-950/60 border-sky-300/25',
-      light: 'bg-white/70 border-sky-200/35',
-    },
-    accentText: {
-      dark: 'text-sky-200/80',
-      light: 'text-sky-600/80',
-    },
-    Hero: AiCoachHero,
-  },
-  owl: {
-    id: 'owl',
-    label: 'Owl concierge engaged',
-    friendlyMessages: friendlyOwl,
-    statusMessages: statusOwl,
-    stepDuration: 2800,
-    overlayBackground: {
-      dark: 'bg-gradient-to-br from-[#020617]/96 via-[#0f172a]/92 to-[#111827]/95',
-      light: 'bg-gradient-to-br from-[#fefce8]/92 via-[#fef3c7]/88 to-[#ede9fe]/92',
-    },
-    cardBackground: {
-      dark: 'bg-slate-950/60 border-amber-200/20',
-      light: 'bg-white/70 border-amber-300/30',
-    },
-    accentText: {
-      dark: 'text-amber-200/75',
-      light: 'text-amber-600/70',
-    },
-    Hero: OwlHero,
-  },
-};
-
-function pickNext(messages: readonly string[], previous?: string) {
+// ----- Helpers -----
+function pickMessage(messages: readonly string[], previous?: string) {
   if (!messages.length) return '';
   if (messages.length === 1) return messages[0];
-  const pool = previous ? messages.filter((message) => message !== previous) : [...messages];
+  const pool = previous ? messages.filter((m) => m !== previous) : [...messages];
   const index = Math.floor(Math.random() * pool.length);
   return pool[index] ?? messages[0];
 }
 
 function useFriendlyMessage(messages: readonly string[], active: boolean, variantId: VariantId) {
-  const [message, setMessage] = useState(() => pickNext(messages));
-
+  const [message, setMessage] = useState(() => pickMessage(messages));
   useEffect(() => {
-    setMessage(pickNext(messages));
+    setMessage(pickMessage(messages));
   }, [messages, variantId]);
-
   useEffect(() => {
     if (!active) return;
-    setMessage((previous) => pickNext(messages, previous));
+    setMessage((prev) => pickMessage(messages, prev));
   }, [active, messages, variantId]);
-
   return message;
 }
 
-function useStatus(messages: readonly string[], active: boolean, stepDuration: number, variantId: VariantId) {
+function useProgressCycle(messages: readonly string[], active: boolean, stepDuration: number, variantId: VariantId) {
   const [index, setIndex] = useState(0);
-
   useEffect(() => {
     setIndex(0);
-  }, [variantId, messages]);
-
-  useEffect(() => {
-    if (!active) {
-      setIndex(0);
-    }
-  }, [active]);
-
+  }, [variantId, messages, active]);
   useEffect(() => {
     if (!active || messages.length <= 1) return;
-    const timeoutId = window.setTimeout(() => {
-      setIndex((current) => (current + 1) % messages.length);
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % messages.length);
     }, stepDuration);
-    return () => window.clearTimeout(timeoutId);
-  }, [active, messages, stepDuration, variantId, index]);
+    return () => window.clearInterval(id);
+  }, [active, messages, stepDuration, variantId]);
+  const currentStatus = messages[index] ?? messages[0] ?? '';
+  return { currentStatus, statusIndex: index } as const;
+}
 
-  const current = messages[index] ?? messages[0] ?? '';
-  return { current, index, total: messages.length || 1 } as const;
+// ----- Minimal, token-only renders (no hex colors, all DS-friendly) -----
+const Card = ({
+  children,
+  themeMode,
+}: {
+  children: React.ReactNode;
+  themeMode: ThemeMode;
+}) => (
+  <motion.div
+    className={clsx(
+      'relative w-full max-w-sm sm:max-w-md isolate rounded-3xl border bg-card/80 text-card-foreground shadow-xl backdrop-blur-xl px-6 py-8 sm:px-8 sm:py-10',
+      themeMode === 'dark' ? 'border-white/10' : 'border-foreground/10'
+    )}
+    initial={{ opacity: 0, scale: 0.96, y: 16 }}
+    animate={{ opacity: 1, scale: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.96, y: 16 }}
+    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+    role="status"
+    aria-live="polite"
+  >
+    {children}
+  </motion.div>
+);
+
+function Header({
+  label,
+  friendlyMessage,
+  themeMode,
+}: {
+  label: string;
+  friendlyMessage: string;
+  themeMode: ThemeMode;
+}) {
+  return (
+    <div className="space-y-3 sm:space-y-4 text-center">
+      <p
+        className={clsx(
+          'text-[0.65rem] uppercase tracking-[0.28em] sm:text-xs',
+          themeMode === 'dark' ? 'text-foreground/70' : 'text-foreground/70'
+        )}
+      >
+        {label}
+      </p>
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={friendlyMessage}
+          className="text-lg sm:text-xl font-semibold leading-tight"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {friendlyMessage}
+        </motion.p>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function Progress({
+  statusMessages,
+  currentStatus,
+  statusIndex,
+  stepDuration,
+  themeMode,
+}: {
+  statusMessages: readonly string[];
+  currentStatus: string;
+  statusIndex: number;
+  stepDuration: number;
+  themeMode: ThemeMode;
+}) {
+  return (
+    <div className="w-full space-y-3 text-sm">
+      <div
+        className={clsx(
+          'relative h-1.5 overflow-hidden rounded-full',
+          themeMode === 'dark' ? 'bg-foreground/10' : 'bg-foreground/10'
+        )}
+        aria-hidden
+      >
+        <motion.span
+          className="absolute inset-y-0 rounded-full bg-foreground/40"
+          key={`progress-${statusIndex}`}
+          initial={{ width: '10%' }}
+          animate={{ width: `${Math.min(100, ((statusIndex + 1) / statusMessages.length) * 100)}%` }}
+          transition={{ duration: Math.min(0.6, stepDuration / 1000), ease: 'easeInOut' }}
+        />
+      </div>
+      <div className="relative h-7 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={currentStatus}
+            className="absolute inset-0 flex items-center justify-center text-center text-xs sm:text-sm"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {currentStatus}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+      <p className="text-[0.65rem] sm:text-xs font-semibold uppercase tracking-[0.28em] text-foreground/60">
+        Step {statusIndex + 1} of {statusMessages.length}
+      </p>
+    </div>
+  );
+}
+
+// Simple variant renderers (brand-safe, token-only)
+const renderStudyBuddy = (p: VariantRendererProps) => (
+  <Card themeMode={p.themeMode}>
+    <Header label={p.label} friendlyMessage={p.friendlyMessage} themeMode={p.themeMode} />
+    <Progress
+      statusMessages={p.statusMessages}
+      currentStatus={p.currentStatus}
+      statusIndex={p.statusIndex}
+      stepDuration={p.stepDuration}
+      themeMode={p.themeMode}
+    />
+  </Card>
+);
+const renderAiCoach = renderStudyBuddy;
+const renderOwl = renderStudyBuddy;
+
+// ----- Variant Registry (overlay uses semantic tokens only) -----
+const VARIANTS: Record<VariantId, VariantDefinition> = {
+  studyBuddy: {
+    id: 'studyBuddy',
+    label: 'Study Buddy',
+    friendlyMessages: STUDY_BUDDY_MESSAGES,
+    statusMessages: STUDY_BUDDY_STATUSES,
+    stepDuration: 1900,
+    overlayBackground: {
+      light: 'bg-background/90 text-foreground',
+      dark: 'bg-background/90 text-foreground',
+    },
+    render: renderStudyBuddy,
+  },
+  aiCoach: {
+    id: 'aiCoach',
+    label: 'AI Coach',
+    friendlyMessages: AI_COACH_MESSAGES,
+    statusMessages: AI_COACH_STATUSES,
+    stepDuration: 1800,
+    overlayBackground: {
+      light: 'bg-background/90 text-foreground',
+      dark: 'bg-background/90 text-foreground',
+    },
+    render: renderAiCoach,
+  },
+  owl: {
+    id: 'owl',
+    label: 'Owl Premium',
+    friendlyMessages: OWL_MESSAGES,
+    statusMessages: OWL_STATUSES,
+    stepDuration: 2100,
+    overlayBackground: {
+      light: 'bg-background/90 text-foreground',
+      dark: 'bg-background/90 text-foreground',
+    },
+    render: renderOwl,
+  },
+};
+
+function resolveVariant(tier?: SubscriptionTier | null): VariantDefinition {
+  if (!tier) return VARIANTS.studyBuddy;
+  const key = TIER_TO_VARIANT[tier];
+  return key ? VARIANTS[key] : VARIANTS.studyBuddy;
 }
 
 export function RouteLoadingOverlay({ active, tier }: RouteLoadingOverlayProps) {
   const shouldReduceMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
-  const themeMode: ThemeMode = resolvedTheme === 'light' ? 'light' : 'dark';
+  const themeMode: ThemeMode = resolvedTheme === 'dark' ? 'dark' : 'light';
 
-  const variantId: VariantId = useMemo(() => {
-    if (tier && tier in TIER_TO_VARIANT) return TIER_TO_VARIANT[tier];
-    return 'studyBuddy';
-  }, [tier]);
-
-  const variant = VARIANTS[variantId];
-  const friendlyMessage = useFriendlyMessage(variant.friendlyMessages, active, variantId);
-  const { current: statusMessage, index: statusIndex, total: statusTotal } = useStatus(
+  const variant = resolveVariant(tier);
+  const friendlyMessage = useFriendlyMessage(variant.friendlyMessages, active, variant.id);
+  const { currentStatus, statusIndex } = useProgressCycle(
     variant.statusMessages,
     active,
     variant.stepDuration,
-    variantId
+    variant.id
   );
-  const hasStatusMessage = statusMessage.trim().length > 0;
 
-  const [shouldRender, setShouldRender] = useState(active);
-
+  const [render, setRender] = useState(active);
   useEffect(() => {
     if (active) {
-      setShouldRender(true);
+      setRender(true);
       return;
     }
-
-    const timeout = window.setTimeout(() => setShouldRender(false), 220);
-    return () => window.clearTimeout(timeout);
-  }, [active]);
-
-  if (!shouldRender && !active) {
-    return null;
-  }
+    const t = window.setTimeout(() => setRender(false), shouldReduceMotion ? 0 : 180);
+    return () => window.clearTimeout(t);
+  }, [active, shouldReduceMotion]);
 
   return (
     <AnimatePresence>
-      {(active || shouldRender) && (
+      {render ? (
         <motion.div
           className={clsx(
             'fixed inset-0 z-[1000] flex items-center justify-center px-6 py-10 sm:px-10',
-            'backdrop-blur-xl transition-colors duration-300',
+            'backdrop-blur-2xl transition-opacity',
             variant.overlayBackground[themeMode]
           )}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: active ? 1 : 0 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
         >
-          <motion.div
-            className={clsx(
-              'relative flex w-full max-w-md flex-col items-center gap-5 rounded-[2rem] border px-6 py-8 text-center shadow-[0_24px_70px_rgba(15,23,42,0.35)] sm:max-w-lg sm:gap-6 sm:px-10 sm:py-10',
-              variant.cardBackground[themeMode]
-            )}
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            role="status"
-            aria-live="polite"
-          >
-            <variant.Hero themeMode={themeMode} shouldReduceMotion={shouldReduceMotion} />
-
-            <div className="space-y-3 sm:space-y-4">
-              <p className={clsx('text-[0.65rem] uppercase tracking-[0.28em] sm:text-xs', variant.accentText[themeMode])}>
-                {variant.label}
-              </p>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={friendlyMessage}
-                  className={clsx(
-                    'text-lg font-semibold leading-tight sm:text-xl',
-                    themeMode === 'dark' ? 'text-white' : 'text-slate-900'
-                  )}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-                >
-                  {friendlyMessage}
-                </motion.p>
-              </AnimatePresence>
-            </div>
-
-            {hasStatusMessage && (
-              <div className="w-full space-y-3 text-sm sm:text-[0.95rem]">
-                <div
-                  className={clsx(
-                    'relative h-1.5 overflow-hidden rounded-full',
-                    themeMode === 'dark' ? 'bg-white/10' : 'bg-slate-200/70'
-                  )}
-                  aria-hidden
-                >
-                  <motion.span
-                    className={clsx(
-                      'absolute inset-y-0 rounded-full bg-gradient-to-r',
-                      themeMode === 'dark' ? 'from-white/70 to-white/40' : 'from-slate-900/70 to-slate-900/30'
-                    )}
-                    initial={{ width: '15%' }}
-                    animate={{ width: `${Math.min(100, ((statusIndex + 1) / statusTotal) * 100)}%` }}
-                    transition={{ duration: 0.4, ease: 'easeInOut' }}
-                  />
-                </div>
-                <p className={themeMode === 'dark' ? 'text-slate-200/80' : 'text-slate-600'}>{statusMessage}</p>
-              </div>
-            )}
-          </motion.div>
+          {variant.render({
+            friendlyMessage,
+            statusMessages: variant.statusMessages,
+            currentStatus,
+            statusIndex,
+            label: variant.label,
+            themeMode,
+            shouldReduceMotion,
+            stepDuration: variant.stepDuration,
+          })}
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 }

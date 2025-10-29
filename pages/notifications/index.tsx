@@ -1,230 +1,253 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import type { GetServerSideProps } from 'next';
+import { DateTime } from 'luxon';
+
 import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
-import { env } from '@/lib/env';
-import { flags } from '@/lib/flags';
-import NotificationPreferencesPanel from '@/components/notifications/NotificationPreferencesPanel';
+import { Alert } from '@/components/design-system/Alert';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import {
   NotificationListResponseSchema,
+  type NotificationListResponse,
   type NotificationNudge,
 } from '@/lib/schemas/notifications';
 
-const notificationsCanonical = env.NEXT_PUBLIC_SITE_URL
-  ? `${env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')}/notifications`
-  : undefined;
-const notificationsEnabled = flags.enabled('notifications');
 const PAGE_SIZE = 20;
 
-function NotificationsComingSoon() {
-  return (
-    <>
-      <Head>
-        <title>Notifications coming soon</title>
-        {notificationsCanonical ? <link rel="canonical" href={notificationsCanonical} /> : null}
-        <meta name="robots" content="noindex, nofollow" />
-        <meta
-          name="description"
-          content="Custom notifications and quiet hours are almost ready. You can keep studying while we finish the controls."
-        />
-      </Head>
-      <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-        <Container>
-          <Card className="max-w-2xl mx-auto space-y-5 p-6 rounded-ds-2xl text-center">
-            <h1 className="font-slab text-h2">Notifications are almost ready</h1>
-            <p className="text-body text-mutedText">
-              We&apos;re wrapping up daily nudges and quiet hours so you can control how GramorX reaches you.
-            </p>
-            <p className="text-body text-mutedText">
-              Sit tight—we&apos;ll switch this on for your account soon and let you choose email, SMS, or WhatsApp updates.
-            </p>
-            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Button asChild size="lg">
-                <Link href="/account">Go to account settings</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/study-plan">Continue studying</Link>
-              </Button>
-            </div>
-          </Card>
-        </Container>
-      </section>
-    </>
-  );
-}
+type NotificationsPageProps = {
+  initial: NotificationListResponse;
+  loadError?: string | null;
+};
 
-function formatTimestamp(dateFormatter: Intl.DateTimeFormat, isoString: string) {
-  try {
-    return dateFormatter.format(new Date(isoString));
-  } catch (error) {
-    return isoString;
-  }
-}
-
-function NotificationItem({ nudge, dateFormatter }: { nudge: NotificationNudge; dateFormatter: Intl.DateTimeFormat }) {
-  return (
-    <li className="rounded-ds-xl border border-border/60 bg-surface p-4 shadow-xs dark:bg-dark/40">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-2">
-          <p className="text-body text-foreground">{nudge.message}</p>
-          <p className="text-sm text-mutedText">{formatTimestamp(dateFormatter, nudge.createdAt)}</p>
-          {nudge.url ? (
-            <Button asChild variant="ghost" size="sm">
-              <Link href={nudge.url}>View details</Link>
-            </Button>
-          ) : null}
-        </div>
-        {!nudge.read ? <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand" aria-hidden /> : null}
-      </div>
-    </li>
-  );
-}
-
-export default function NotificationsCenter() {
-  if (!notificationsEnabled) {
-    return <NotificationsComingSoon />;
+function formatTimestamp(iso: string): string {
+  const dt = DateTime.fromISO(iso);
+  if (!dt.isValid) {
+    return '';
   }
 
-  const [notifications, setNotifications] = useState<NotificationNudge[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [fetchingMore, setFetchingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const relative = dt.toRelative({ style: 'long' });
+  if (relative) {
+    return relative;
+  }
 
-  const dateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-    [],
-  );
+  return dt.toLocaleString(DateTime.DATETIME_MED);
+}
 
-  const fetchPage = useCallback(
-    async (cursor?: string | null) => {
-      if (cursor) {
-        setFetchingMore(true);
-      } else {
-        setLoading(true);
+const EMPTY_PAYLOAD: NotificationListResponse = {
+  items: [],
+  nextCursor: null,
+  unreadCount: 0,
+};
+
+const NotificationsPage: React.FC<NotificationsPageProps> = ({ initial, loadError = null }) => {
+  const [items, setItems] = React.useState<NotificationNudge[]>(initial.items);
+  const [nextCursor, setNextCursor] = React.useState<string | null>(initial.nextCursor);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(loadError);
+
+  const handleLoadMore = React.useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
+      if (nextCursor) params.set('cursor', nextCursor);
+
+      const response = await fetch(`/api/notifications/list?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to load more notifications.');
       }
 
-      try {
-        setError(null);
-        const params = new URLSearchParams({ limit: PAGE_SIZE.toString() });
-        if (cursor) {
-          params.set('cursor', cursor);
-        }
-        const response = await fetch(`/api/notifications/list?${params.toString()}`);
-        if (!response.ok) {
-          throw new Error('Unable to load notifications');
-        }
+      const json = await response.json();
+      const payload = NotificationListResponseSchema.parse(json);
 
-        const json = await response.json();
-        const parsed = NotificationListResponseSchema.parse(json);
-
-        setNotifications((prev) => {
-          const seen = new Set(prev.map((item) => item.id));
-          const merged = [...prev];
-          for (const item of parsed.items) {
-            if (!seen.has(item.id)) {
-              merged.push(item);
-              seen.add(item.id);
-            }
-          }
-          return merged;
-        });
-        setNextCursor(parsed.nextCursor);
-      } catch (requestError) {
-        const message = requestError instanceof Error ? requestError.message : 'Unknown error';
-        setError(message);
-      } finally {
-        if (cursor) {
-          setFetchingMore(false);
-        } else {
-          setLoading(false);
-        }
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    void fetchPage();
-  }, [fetchPage]);
-
-  const handleLoadMore = useCallback(() => {
-    if (!nextCursor || fetchingMore) {
-      return;
+      setItems((prev) => [...prev, ...payload.items]);
+      setNextCursor(payload.nextCursor);
+    } catch (err) {
+      console.error('[notifications] load more error', err);
+      setError('Unable to load more notifications.');
+    } finally {
+      setLoadingMore(false);
     }
-    void fetchPage(nextCursor);
-  }, [fetchPage, fetchingMore, nextCursor]);
+  }, [loadingMore, nextCursor]);
+
+  const hasNotifications = items.length > 0;
 
   return (
     <>
       <Head>
-        <title>Notifications</title>
-        {notificationsCanonical ? <link rel="canonical" href={notificationsCanonical} /> : null}
-        <meta
-          name="description"
-          content="Review your latest GramorX nudges and release updates in one place."
-        />
+        <title>Notifications | GramorX</title>
       </Head>
-      <section className="py-24">
-        <Container>
-          <Card className="mx-auto max-w-3xl space-y-6 p-6">
-            <div className="space-y-2">
-              <h1 className="font-slab text-display">Notifications</h1>
-              <p className="text-body text-mutedText">
-                Nudges from the GramorX team about your progress, feature rollouts, and important account updates.
+      <Container className="mx-auto max-w-4xl space-y-8 py-10">
+        <header className="space-y-3">
+          <p className="text-caption uppercase tracking-[0.2em] text-muted-foreground">Inbox</p>
+          <h1 className="font-slab text-h2 text-foreground">Notifications</h1>
+          <p className="text-body text-muted-foreground">
+            See announcements, study nudges, and progress updates across your GramorX workspace.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button href="/settings/notifications" variant="soft" tone="info" size="sm">
+              Manage preferences
+            </Button>
+            <Button href="/dashboard" variant="outline" size="sm">
+              Back to dashboard
+            </Button>
+          </div>
+        </header>
+
+        {error ? (
+          <Alert variant="error" title="Something went wrong" className="max-w-2xl" role="alert">
+            {error}
+          </Alert>
+        ) : null}
+
+        <section aria-live="polite" className="space-y-6">
+          {hasNotifications ? (
+            <ul className="divide-y divide-border rounded-2xl border border-border bg-card/50">
+              {items.map((notification) => {
+                const formatted = formatTimestamp(notification.createdAt);
+                const unreadBadge = notification.read ? null : (
+                  <span className="inline-flex items-center rounded-full bg-electricBlue/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-electricBlue">
+                    New
+                  </span>
+                );
+
+                const content = (
+                  <article className="flex flex-col gap-1 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h2 className="text-small font-semibold text-foreground">{notification.message}</h2>
+                      {unreadBadge}
+                    </div>
+                    <p className="text-caption text-muted-foreground">{formatted}</p>
+                  </article>
+                );
+
+                return (
+                  <li key={notification.id} className="px-5">
+                    {notification.url ? (
+                      <Link
+                        href={notification.url}
+                        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      >
+                        {content}
+                      </Link>
+                    ) : (
+                      content
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 p-8 text-center">
+              <h2 className="font-slab text-h4 text-foreground">You&apos;re all caught up</h2>
+              <p className="mt-2 text-small text-muted-foreground">
+                We&apos;ll drop a notification here when there&apos;s something new—like streak milestones, study reminders, or
+                payment updates.
               </p>
-            </div>
-
-            <NotificationPreferencesPanel />
-
-            {error ? (
-              <div className="rounded-ds-lg border border-destructive/50 bg-destructive/5 p-4 text-destructive">
-                {error}
-              </div>
-            ) : null}
-
-            {loading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-20 animate-pulse rounded-ds-xl bg-muted/40 dark:bg-dark/40"
-                    aria-hidden
-                  />
-                ))}
-              </div>
-            ) : null}
-
-            {!loading && notifications.length === 0 && !error ? (
-              <div className="rounded-ds-xl border border-border/60 bg-muted/20 p-6 text-center text-mutedText">
-                You&apos;re all caught up. We&apos;ll drop new nudges here when something needs your attention.
-              </div>
-            ) : null}
-
-            {notifications.length > 0 ? (
-              <ul className="space-y-3">
-                {notifications.map((nudge) => (
-                  <NotificationItem key={nudge.id} nudge={nudge} dateFormatter={dateFormatter} />
-                ))}
-              </ul>
-            ) : null}
-
-            {nextCursor ? (
-              <div className="flex justify-center">
-                <Button onClick={handleLoadMore} disabled={fetchingMore} variant="outline">
-                  {fetchingMore ? 'Loading…' : 'Load more'}
+              <div className="mt-6 flex justify-center">
+                <Button href="/learning" size="sm" variant="primary">
+                  Explore practice modules
                 </Button>
               </div>
-            ) : null}
-          </Card>
-        </Container>
-      </section>
+            </div>
+          )}
+
+          {nextCursor ? (
+            <div className="flex justify-center">
+              <Button onClick={handleLoadMore} disabled={loadingMore} variant="ghost" size="sm">
+                {loadingMore ? 'Loading…' : 'Load older notifications'}
+              </Button>
+            </div>
+          ) : null}
+        </section>
+      </Container>
     </>
   );
-}
+};
+
+export const getServerSideProps: GetServerSideProps<NotificationsPageProps> = async (ctx) => {
+  const supabase = createSupabaseServerClient({ req: ctx.req, res: ctx.res });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    const next = encodeURIComponent(ctx.resolvedUrl ?? '/notifications');
+    return {
+      redirect: {
+        destination: `/login?next=${next}`,
+        permanent: false,
+      },
+    };
+  }
+
+  const limitPlusOne = PAGE_SIZE + 1;
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('id, message, url, read, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(limitPlusOne);
+
+  if (error) {
+    return {
+      props: {
+        initial: EMPTY_PAYLOAD,
+        loadError: error.message,
+      },
+    };
+  }
+
+  const notifications = (data ?? []).map((row) => ({
+    id: row.id,
+    message: row.message ?? 'Notification',
+    url: row.url ?? null,
+    read: Boolean(row.read),
+    createdAt: row.created_at ?? new Date().toISOString(),
+  }));
+
+  const items = notifications.slice(0, PAGE_SIZE);
+  const unreadIds = items.filter((item) => !item.read).map((item) => item.id);
+
+  let loadError: string | null = null;
+
+  if (unreadIds.length > 0) {
+    const { error: markError } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', user.id)
+      .in('id', unreadIds);
+
+    if (markError) {
+      loadError = markError.message;
+    } else {
+      for (const item of items) {
+        if (unreadIds.includes(item.id)) {
+          item.read = true;
+        }
+      }
+    }
+  }
+
+  const hasMore = notifications.length > PAGE_SIZE;
+  const nextCursor = hasMore ? items[items.length - 1]?.createdAt ?? null : null;
+
+  const initial = NotificationListResponseSchema.parse({
+    items,
+    nextCursor,
+    unreadCount: unreadIds.length,
+  });
+
+  return {
+    props: {
+      initial,
+      loadError,
+    },
+  };
+};
+
+export default NotificationsPage;
