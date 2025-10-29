@@ -19,6 +19,7 @@ type HeatmapCell = Datum & {
   description: string;
   displayDate: string;
   globalIndex: number;
+  parsedDate: Date;
 };
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -35,7 +36,30 @@ type MonthGroup = {
   key: string;
   label: string;
   leading: number;
+  order: number;
   cells: HeatmapCell[];
+};
+
+const parseISODate = (iso: string): Date | null => {
+  if (typeof iso !== 'string') return null;
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month, day));
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
 };
 
 function getColorClass(entry: Datum) {
@@ -81,21 +105,29 @@ export const StreakHeatmap: React.FC<Props> = ({ data }) => {
   const months = useMemo<MonthGroup[]>(() => {
     if (!data.length) return [];
 
-    const sorted = [...data].sort((a, b) => (a.date > b.date ? 1 : -1));
+    const sorted = [...data]
+      .map((entry) => {
+        const parsedDate = parseISODate(entry.date);
+        return parsedDate ? { entry, parsedDate } : null;
+      })
+      .filter((item): item is { entry: Datum; parsedDate: Date } => item !== null)
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
     const map = new Map<string, MonthGroup>();
 
-    for (const entry of sorted) {
-      const current = new Date(`${entry.date}T00:00:00Z`);
-      const monthKey = `${current.getUTCFullYear()}-${current.getUTCMonth()}`;
+    for (const { entry, parsedDate } of sorted) {
+      const monthKey = `${parsedDate.getUTCFullYear()}-${parsedDate.getUTCMonth()}`;
       let bucket = map.get(monthKey);
 
       if (!bucket) {
-        const firstOfMonth = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), 1));
+        const firstOfMonth = new Date(
+          Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), 1),
+        );
         const leading = (firstOfMonth.getUTCDay() + 6) % 7;
         bucket = {
           key: monthKey,
           label: monthFormatter.format(firstOfMonth),
           leading,
+          order: firstOfMonth.getTime(),
           cells: [],
         };
         map.set(monthKey, bucket);
@@ -109,34 +141,30 @@ export const StreakHeatmap: React.FC<Props> = ({ data }) => {
         description: '',
         displayDate: '',
         globalIndex: -1,
+        parsedDate,
       });
     }
 
     const result: MonthGroup[] = [];
-    const groups = Array.from(map.values()).sort((a, b) => {
-      const firstA = a.cells[0]?.date ?? '';
-      const firstB = b.cells[0]?.date ?? '';
-      return firstA.localeCompare(firstB);
-    });
+    const groups = Array.from(map.values()).sort((a, b) => a.order - b.order);
 
     let runningIndex = 0;
 
     for (const group of groups) {
-      group.cells.sort((a, b) => a.date.localeCompare(b.date));
+      group.cells.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
 
       group.cells = group.cells.map((cell, index) => {
         const offset = group.leading + index;
         const column = offset % 7;
         const weekRow = Math.floor(offset / 7);
-        const dateObj = new Date(`${cell.date}T00:00:00Z`);
         const description = cell.total === 0 ? 'No tasks scheduled' : `${cell.completed} of ${cell.total} completed`;
         return {
           ...cell,
           column,
           weekRow,
-          displayDate: shortFormatter.format(dateObj),
+          displayDate: shortFormatter.format(cell.parsedDate),
           description,
-          ariaLabel: `${dayFormatter.format(dateObj)} — ${description}`,
+          ariaLabel: `${dayFormatter.format(cell.parsedDate)} — ${description}`,
           globalIndex: runningIndex++,
         };
       });
