@@ -1,25 +1,20 @@
--- Enums
-CREATE TYPE public.subscription_tier AS ENUM ('free', 'seedling', 'rocket', 'owl');
+-- Add subscription_tier enum and profile column (idempotent + safe backfill)
 
--- Add to profiles
-ALTER TABLE public.profiles ADD COLUMN tier public.subscription_tier DEFAULT 'free';
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'subscription_tier' and typnamespace = 'public'::regnamespace) then
+    create type public.subscription_tier as enum ('free', 'seedling', 'rocket', 'owl');
+  end if;
+end$$;
 
--- Backfill
-UPDATE public.profiles SET tier = 'free' WHERE tier IS NULL;
+alter table if exists public.profiles
+  add column if not exists tier public.subscription_tier default 'free';
 
--- Enforce non-null
-ALTER TABLE public.profiles ALTER COLUMN tier SET NOT NULL;
+update public.profiles
+set tier = 'free'
+where tier is null;
 
--- TODO: Add RLS for tier-gated tables once they exist (e.g., content, bookings)
--- Example (uncomment after creating tables):
-/*
-ALTER TABLE public.content ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "public content access" ON public.content;
-CREATE POLICY "Tiered content access" ON public.content
-FOR SELECT USING (
-  auth.uid() = user_id
-  OR (SELECT tier FROM public.profiles WHERE id = auth.uid()) = 'owl'
-)
-FOR INSERT WITH CHECK (auth.uid() = user_id OR (SELECT tier FROM public.profiles WHERE id = auth.uid()) IN ('rocket', 'owl'))
-FOR UPDATE USING (auth.uid() = user_id OR (SELECT tier FROM public.profiles WHERE id = auth.uid()) = 'owl');
-*/
+alter table if exists public.profiles
+  alter column tier set not null;
+
+-- (Future) RLS/tier gates go in later migrations when content tables exist.
