@@ -7,6 +7,8 @@ import { trackor } from '@/lib/analytics/trackor.server';
 import { createGatewayIntent, amountInCents, type PaymentProvider } from '@/lib/payments/gateway';
 import { createPendingPayment } from '@/lib/billing/manual';
 import type { Cycle, PlanKey } from '@/lib/pricing';
+import { queueNotificationEvent, getNotificationContact, type NotificationContact } from '@/lib/notify';
+import { getBaseUrl } from '@/lib/url';
 
 const providers: PaymentProvider[] = ['stripe', 'easypaisa', 'jazzcash', 'crypto'];
 const isPlan = (val: unknown): val is PlanKey => typeof val === 'string' && ['starter', 'booster', 'master'].includes(val);
@@ -54,6 +56,15 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   const origin = getOrigin(req);
   const amountCents = amountInCents(plan, cycle);
   const currency = 'USD';
+  const baseUrl = getBaseUrl();
+
+  let contactPromise: Promise<NotificationContact> | null = null;
+  const ensureContact = () => {
+    if (!contactPromise) {
+      contactPromise = getNotificationContact(userId);
+    }
+    return contactPromise;
+  };
 
   const { data: intentRow, error: insertErr } = await supabaseService
     .from('payment_intents')
@@ -75,6 +86,39 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   }
 
   const intentId = intentRow.id as string;
+  const notify = async (eventKey: 'payment_success' | 'payment_failed', reason?: string) => {
+    const contact = await ensureContact();
+    if (!contact.email) {
+      return;
+    }
+
+    const payload: Record<string, unknown> = {
+      plan,
+      cycle,
+      provider,
+      deep_link: `${baseUrl}/settings/billing`,
+      user_email: contact.email,
+    };
+
+    if (contact.phone) {
+      payload.user_phone = contact.phone;
+    }
+    if (reason) {
+      payload.reason = reason;
+    }
+
+    const result = await queueNotificationEvent({
+      event_key: eventKey,
+      user_id: userId,
+      payload,
+      channels: ['email'],
+      idempotency_key: `${eventKey}:${intentId}`,
+    });
+
+    if (!result.ok && result.reason !== 'duplicate') {
+      console.error('[payments:notify]', eventKey, result.message);
+    }
+  };
   const nowIso = new Date().toISOString();
 
   await supabaseService.from('payment_intent_events').insert({
@@ -162,6 +206,8 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
           cycle,
         });
 
+        await notify('payment_success');
+
         return res.status(200).json({
           ok: true,
           manual: true,
@@ -185,6 +231,8 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
           payload: { message: (manualErr as Error).message },
         });
 
+        await notify('payment_failed', (manualErr as Error).message);
+
         return res.status(500).json({ ok: false, error: 'manual_fallback_failed' });
       }
     }
@@ -200,6 +248,8 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       event: 'gateway.error',
       payload: { message },
     });
+
+    await notify('payment_failed', message);
 
     return res.status(500).json({ ok: false, error: message });
   }
