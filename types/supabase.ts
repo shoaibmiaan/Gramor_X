@@ -3,6 +3,7 @@
 
 import type { StudyPlan } from './plan';
 import type { AnyAttempt } from './attempts';
+import type { PlanId } from './pricing';
 
 export interface TableBase {
   id: string | number;
@@ -114,6 +115,142 @@ export interface WordListeningAttempt extends TableBase {
   word_id: string;
   item_type: 'word' | 'collocation' | 'gap';
   audio_url?: string | null;
+}
+
+export type LiveSessionType = 'human' | 'ai' | 'peer';
+export type LiveSessionStatus = 'pending' | 'active' | 'completed' | 'cancelled';
+
+export type SpeakingExerciseType = 'phoneme' | 'word' | 'sentence' | 'cue_card';
+export type SpeakingExerciseLevel = 'B1' | 'B2' | 'C1' | 'C2';
+export type SpeakingAttemptRefType = 'exercise' | 'free_speech';
+export type SpeakingSegmentTokenType = 'word' | 'phoneme';
+
+export type LearningModule = 'listening' | 'reading' | 'writing' | 'speaking' | 'vocab';
+export type LearningTaskType = 'drill' | 'mock' | 'lesson' | 'review';
+
+export interface LearningTask extends TableBase {
+  slug: string;
+  module: LearningModule;
+  type: LearningTaskType;
+  est_minutes: number;
+  tags: string[];
+  difficulty?: string | null;
+  metadata: Record<string, unknown>;
+  min_plan: PlanId;
+  is_active: boolean;
+}
+
+export interface LearningSignal {
+  id: number;
+  user_id: string;
+  module: LearningModule;
+  key: string;
+  value: number;
+  source: string;
+  occurred_at: string;
+}
+
+export interface LearningProfileRow {
+  user_id: string;
+  target_band?: number | null;
+  speaking_pron?: number | null;
+  speaking_fluency?: number | null;
+  reading_tfng?: number | null;
+  reading_mcq?: number | null;
+  writing_task2?: number | null;
+  vocab_range?: number | null;
+  listening_accuracy?: number | null;
+  last_updated_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RecommendationStatus = 'pending' | 'shown' | 'accepted' | 'skipped' | 'completed';
+
+export interface RecommendationRow extends TableBase {
+  user_id: string;
+  task_id: string;
+  reason: string;
+  score: number;
+  status: RecommendationStatus;
+}
+
+export interface TaskRunRow extends TableBase {
+  user_id: string;
+  task_id: string;
+  recommendation_id?: string | null;
+  started_at: string;
+  completed_at?: string | null;
+  outcome?: Record<string, unknown> | null;
+  band_delta?: number | null;
+}
+
+export interface SpeakingExercise extends TableBase {
+  slug: string;
+  level: SpeakingExerciseLevel;
+  type: SpeakingExerciseType;
+  prompt: string;
+  ipa?: string | null;
+  target_wpm?: number | null;
+  tags: string[];
+}
+
+export interface SpeakingAttempt extends TableBase {
+  user_id: string;
+  exercise_id?: string | null;
+  ref_type: SpeakingAttemptRefType;
+  ref_text?: string | null;
+  audio_path: string;
+  duration_ms: number;
+  wpm?: number | null;
+  fillers_count?: number | null;
+  overall_pron?: number | null;
+  overall_intonation?: number | null;
+  overall_stress?: number | null;
+  overall_fluency?: number | null;
+  band_estimate?: number | null;
+  engine: Record<string, unknown>;
+}
+
+export interface SpeakingSegment {
+  id: string;
+  created_at: string;
+  attempt_id: string;
+  token_type: SpeakingSegmentTokenType;
+  token: string;
+  start_ms: number;
+  end_ms: number;
+  accuracy?: number | null;
+  stress_ok?: boolean | null;
+  notes?: string | null;
+}
+
+export interface SpeakingPronGoal extends TableBase {
+  user_id: string;
+  ipa: string;
+  target_accuracy: number;
+  current_accuracy?: number | null;
+  last_practiced_at?: string | null;
+}
+
+export interface SpeakingSession extends TableBase {
+  host_user_id: string;
+  participant_user_id?: string | null;
+  type: LiveSessionType;
+  status: LiveSessionStatus;
+  scheduled_at?: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface SessionRecording extends TableBase {
+  session_id: string;
+  storage_path: string;
+  transcript_path?: string | null;
+  duration_seconds?: number | null;
+  metadata: Record<string, unknown>;
+  created_by?: string | null;
 }
 
 export interface UserWordStats {
@@ -659,6 +796,17 @@ export interface DBSchema {
   organization_members: OrganizationMembers;
   organization_invites: OrganizationInvites;
   writing_topics: WritingTopics;
+  speaking_sessions: SpeakingSession;
+  session_recordings: SessionRecording;
+  speaking_exercises: SpeakingExercise;
+  speaking_attempts: SpeakingAttempt;
+  speaking_segments: SpeakingSegment;
+  speaking_pron_goals: SpeakingPronGoal;
+  learning_tasks: LearningTask;
+  learning_signals: LearningSignal;
+  learning_profiles: LearningProfileRow;
+  recommendations: RecommendationRow;
+  task_runs: TaskRunRow;
 
   // kept from main
   account_audit_log: AccountAuditLog;
