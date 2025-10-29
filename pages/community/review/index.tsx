@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Input } from '@/components/design-system/Input';
@@ -7,6 +7,7 @@ import { Button } from '@/components/design-system/Button';
 import { useToast } from '@/components/design-system/Toaster';
 import { Section } from '@/components/design-system/Section';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { useUserContext } from '@/context/UserContext';
 
 interface Review {
   id: number;
@@ -20,6 +21,8 @@ export default function PeerReviewPage() {
   const [newReview, setNewReview] = useState('');
   const [comment, setComment] = useState<Record<number, string>>({});
   const { error: toastError, success: toastSuccess } = useToast();
+  const { user, loading: userLoading } = useUserContext();
+  const isLoggedIn = useMemo(() => Boolean(user?.id), [user?.id]);
 
   useEffect(() => {
     fetchReviews();
@@ -35,8 +38,14 @@ export default function PeerReviewPage() {
   }
 
   async function submitReview() {
-    if (!newReview) return;
-    const { error } = await supabase.from('peer_reviews').insert({ content: newReview });
+    const content = newReview.trim();
+    if (!content) return;
+
+    if (!isLoggedIn) {
+      return toastError('Please sign in to share a review.');
+    }
+
+    const { error } = await supabase.from('peer_reviews').insert({ content });
     if (error) return toastError('Could not submit review');
     setNewReview('');
     toastSuccess('Review shared');
@@ -44,8 +53,13 @@ export default function PeerReviewPage() {
   }
 
   async function submitComment(reviewId: number) {
-    const text = comment[reviewId];
+    const text = comment[reviewId]?.trim();
     if (!text) return;
+
+    if (!isLoggedIn) {
+      return toastError('Please sign in to comment.');
+    }
+
     await supabase.from('peer_review_comments').insert({ review_id: reviewId, content: text });
     setComment((c) => ({ ...c, [reviewId]: '' }));
     fetchReviews();
@@ -56,7 +70,12 @@ export default function PeerReviewPage() {
       <Container>
         <Card className="p-6 mb-6 space-y-2">
           <Textarea value={newReview} onChange={(e) => setNewReview(e.target.value)} placeholder="Share your work for review" />
-          <Button onClick={submitReview} fullWidth className="px-4 py-3 text-body">
+          <Button
+            onClick={submitReview}
+            fullWidth
+            className="px-4 py-3 text-body"
+            disabled={!newReview.trim() || userLoading}
+          >
             Share
           </Button>
         </Card>
@@ -78,6 +97,7 @@ export default function PeerReviewPage() {
                 onClick={() => submitComment(r.id)}
                 fullWidth
                 className="px-4 py-3 text-body sm:w-auto"
+                disabled={!comment[r.id]?.trim() || userLoading}
               >
                 Comment
               </Button>
