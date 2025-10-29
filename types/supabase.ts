@@ -233,6 +233,47 @@ export interface SpeakingPronGoal extends TableBase {
   last_practiced_at?: string | null;
 }
 
+export type SpeakingPromptPart = 'p1' | 'p2' | 'p3' | 'interview' | 'scenario';
+export type SpeakingPromptDifficulty = 'B1' | 'B2' | 'C1' | 'C2';
+
+export interface SpeakingPrompt extends TableBase {
+  slug: string;
+  part: SpeakingPromptPart;
+  topic: string;
+  question?: string | null;
+  cue_card?: string | null;
+  followups: string[];
+  difficulty: SpeakingPromptDifficulty;
+  locale: string;
+  tags: string[];
+  is_active: boolean;
+}
+
+export interface SpeakingPromptPack extends TableBase {
+  slug: string;
+  title: string;
+  description?: string | null;
+  visibility: 'public' | 'cohort' | 'private';
+  is_active: boolean;
+}
+
+export interface SpeakingPromptPackItem {
+  pack_id: string;
+  prompt_id: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface SpeakingPromptSave {
+  id: string;
+  user_id: string;
+  prompt_id: string;
+  is_bookmarked: boolean;
+  last_seen_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SpeakingSession extends TableBase {
   host_user_id: string;
   participant_user_id?: string | null;
@@ -802,6 +843,10 @@ export interface DBSchema {
   speaking_attempts: SpeakingAttempt;
   speaking_segments: SpeakingSegment;
   speaking_pron_goals: SpeakingPronGoal;
+  speaking_prompts: SpeakingPrompt;
+  speaking_prompt_packs: SpeakingPromptPack;
+  speaking_prompt_pack_items: SpeakingPromptPackItem;
+  speaking_prompt_saves: SpeakingPromptSave;
   learning_tasks: LearningTask;
   learning_signals: LearningSignal;
   learning_profiles: LearningProfileRow;

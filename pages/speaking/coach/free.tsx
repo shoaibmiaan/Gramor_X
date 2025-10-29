@@ -64,6 +64,12 @@ export const getServerSideProps: GetServerSideProps<PageProps> = withPlanPage('s
 
   const promptCards = (exercises as PromptCard[]).filter((exercise) => exercise.slug.startsWith('cuecard-'));
 
+  const queryText = typeof ctx.query.text === 'string' ? ctx.query.text.trim() : '';
+  const querySlug = typeof ctx.query.promptSlug === 'string' ? ctx.query.promptSlug : 'library';
+  if (queryText) {
+    promptCards.unshift({ slug: `library-${querySlug}`, prompt: queryText, level: 'custom' });
+  }
+
   return {
     props: {
       prompts: promptCards.slice(0, 10),
