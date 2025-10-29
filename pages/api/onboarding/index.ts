@@ -11,7 +11,8 @@ import {
 } from '@/lib/onboarding/schema';
 
 const SELECT_COLUMNS =
-  'user_id,preferred_language,locale,goal_band,exam_date,study_days,study_minutes_per_day,whatsapp_opt_in,phone,notification_channels,onboarding_step,onboarding_complete';
+  // Alias DB "id" -> JSON "user_id" so your existing types continue to work
+  'user_id:id,preferred_language,locale,goal_band,exam_date,study_days,study_minutes_per_day,whatsapp_opt_in,phone,notification_channels,onboarding_step,onboarding_complete';
 
 type ErrorResponse = { error: string };
 
@@ -70,7 +71,7 @@ async function fetchProfileRow(
   const { data, error } = await supabase
     .from('profiles')
     .select(SELECT_COLUMNS)
-    .eq('user_id', userId)
+    .eq('id', userId) // canonical column
     .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
@@ -87,9 +88,10 @@ async function upsertProfile(
 ): Promise<ProfileRow> {
   const { data, error } = await supabase
     .from('profiles')
-    .upsert({ user_id: userId, ...payload }, { onConflict: 'user_id' })
+    // IMPORTANT: never set user_id (generated); write id instead
+    .upsert({ id: userId, ...payload }, { onConflict: 'id' })
     .select(SELECT_COLUMNS)
-    .eq('user_id', userId)
+    .eq('id', userId)
     .maybeSingle();
 
   if (error) {
@@ -248,13 +250,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<OnboardingState | ErrorResponse>,
 ) {
-  if (req.method === 'GET') {
-    return handleGet(req, res);
-  }
-
-  if (req.method === 'POST') {
-    return handlePost(req, res);
-  }
+  if (req.method === 'GET') return handleGet(req, res);
+  if (req.method === 'POST') return handlePost(req, res);
 
   res.setHeader('Allow', 'GET,POST');
   return res.status(405).json({ error: 'Method not allowed' });

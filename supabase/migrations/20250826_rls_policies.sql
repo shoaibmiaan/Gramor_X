@@ -2,87 +2,138 @@
 
 -- Profiles
 alter table if exists public.profiles enable row level security;
--- ensure admin policy uses with check
-drop policy if exists "Admins can manage profiles" on public.profiles;
-create policy "Admins can manage profiles"
-  on public.profiles
-  for all
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
 
-create policy "Students manage own profile"
-  on public.profiles
-  for all
-  using (auth.uid() = id and auth.jwt()->>'role' = 'student')
-  with check (auth.uid() = id and auth.jwt()->>'role' = 'student');
+DO $$ BEGIN
+  BEGIN DROP POLICY IF EXISTS "Admins can manage profiles" ON public.profiles; EXCEPTION WHEN undefined_table THEN NULL; END;
+  BEGIN DROP POLICY IF EXISTS "Students manage own profile" ON public.profiles; EXCEPTION WHEN undefined_table THEN NULL; END;
+
+  CREATE POLICY "Admins can manage profiles"
+    ON public.profiles
+    FOR ALL
+    USING (auth.jwt()->>'role' = 'admin')
+    WITH CHECK (auth.jwt()->>'role' = 'admin');
+
+  CREATE POLICY "Students manage own profile"
+    ON public.profiles
+    FOR ALL
+    USING (auth.uid() = id AND auth.jwt()->>'role' = 'student')
+    WITH CHECK (auth.uid() = id AND auth.jwt()->>'role' = 'student');
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Subscriptions
 alter table if exists public.subscriptions enable row level security;
-drop policy if exists "users can view own subscriptions" on public.subscriptions;
-create policy "Students manage own subscriptions"
-  on public.subscriptions
-  for all
-  using (auth.uid() = user_id and auth.jwt()->>'role' = 'student')
-  with check (auth.uid() = user_id and auth.jwt()->>'role' = 'student');
 
-create policy "Admins manage subscriptions"
-  on public.subscriptions
-  for all
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+DO $$ BEGIN
+  BEGIN DROP POLICY IF EXISTS "Students manage own subscriptions" ON public.subscriptions; EXCEPTION WHEN undefined_table THEN NULL; END;
+  BEGIN DROP POLICY IF EXISTS "Admins manage subscriptions" ON public.subscriptions; EXCEPTION WHEN undefined_table THEN NULL; END;
+
+  CREATE POLICY "Students manage own subscriptions"
+    ON public.subscriptions
+    FOR ALL
+    USING (auth.uid() = user_id AND auth.jwt()->>'role' = 'student')
+    WITH CHECK (auth.uid() = user_id AND auth.jwt()->>'role' = 'student');
+
+  CREATE POLICY "Admins manage subscriptions"
+    ON public.subscriptions
+    FOR ALL
+    USING (auth.jwt()->>'role' = 'admin')
+    WITH CHECK (auth.jwt()->>'role' = 'admin');
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Reading attempts
 alter table if exists public.reading_attempts enable row level security;
-create policy "Students manage own reading_attempts"
-  on public.reading_attempts
-  for all
-  using (auth.uid() = user_id and auth.jwt()->>'role' = 'student')
-  with check (auth.uid() = user_id and auth.jwt()->>'role' = 'student');
 
-create policy "Admins manage reading_attempts"
-  on public.reading_attempts
-  for all
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+DO $$ BEGIN
+  BEGIN DROP POLICY IF EXISTS "Students manage own reading_attempts" ON public.reading_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+  BEGIN DROP POLICY IF EXISTS "Admins manage reading_attempts" ON public.reading_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+
+  CREATE POLICY "Students manage own reading_attempts"
+    ON public.reading_attempts
+    FOR ALL
+    USING (auth.uid() = user_id AND auth.jwt()->>'role' = 'student')
+    WITH CHECK (auth.uid() = user_id AND auth.jwt()->>'role' = 'student');
+
+  CREATE POLICY "Admins manage reading_attempts"
+    ON public.reading_attempts
+    FOR ALL
+    USING (auth.jwt()->>'role' = 'admin')
+    WITH CHECK (auth.jwt()->>'role' = 'admin');
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Listening attempts
 alter table if exists public.listening_attempts enable row level security;
-create policy "Students manage own listening_attempts"
-  on public.listening_attempts
-  for all
-  using (auth.uid() = user_id and auth.jwt()->>'role' = 'student')
-  with check (auth.uid() = user_id and auth.jwt()->>'role' = 'student');
 
-create policy "Admins manage listening_attempts"
-  on public.listening_attempts
-  for all
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+DO $$ BEGIN
+  BEGIN DROP POLICY IF EXISTS "Students manage own listening_attempts" ON public.listening_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+  BEGIN DROP POLICY IF EXISTS "Admins manage listening_attempts" ON public.listening_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+
+  CREATE POLICY "Students manage own listening_attempts"
+    ON public.listening_attempts
+    FOR ALL
+    USING (auth.uid() = user_id AND auth.jwt()->>'role' = 'student')
+    WITH CHECK (auth.uid() = user_id AND auth.jwt()->>'role' = 'student');
+
+  CREATE POLICY "Admins manage listening_attempts"
+    ON public.listening_attempts
+    FOR ALL
+    USING (auth.jwt()->>'role' = 'admin')
+    WITH CHECK (auth.jwt()->>'role' = 'admin');
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Writing attempts
 alter table if exists public.writing_attempts enable row level security;
-create policy "Students manage own writing_attempts"
-  on public.writing_attempts
-  for all
-  using (auth.uid() = user_id and auth.jwt()->>'role' = 'student')
-  with check (auth.uid() = user_id and auth.jwt()->>'role' = 'student');
 
-create policy "Admins manage writing_attempts"
-  on public.writing_attempts
-  for all
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+DO $$ BEGIN
+  BEGIN DROP POLICY IF EXISTS "Students manage own writing_attempts" ON public.writing_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+  BEGIN DROP POLICY IF EXISTS "Admins manage writing_attempts" ON public.writing_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+
+  CREATE POLICY "Students manage own writing_attempts"
+    ON public.writing_attempts
+    FOR ALL
+    USING (auth.uid() = user_id AND auth.jwt()->>'role' = 'student')
+    WITH CHECK (auth.uid() = user_id AND auth.jwt()->>'role' = 'student');
+
+  CREATE POLICY "Admins manage writing_attempts"
+    ON public.writing_attempts
+    FOR ALL
+    USING (auth.jwt()->>'role' = 'admin')
+    WITH CHECK (auth.jwt()->>'role' = 'admin');
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Speaking attempts
 alter table if exists public.speaking_attempts enable row level security;
-create policy "Students manage own speaking_attempts"
-  on public.speaking_attempts
-  for all
-  using (auth.uid() = user_id and auth.jwt()->>'role' = 'student')
-  with check (auth.uid() = user_id and auth.jwt()->>'role' = 'student');
 
-create policy "Admins manage speaking_attempts"
-  on public.speaking_attempts
-  for all
-  using (auth.jwt()->>'role' = 'admin')
-  with check (auth.jwt()->>'role' = 'admin');
+DO $$ BEGIN
+  BEGIN DROP POLICY IF EXISTS "Students manage own speaking_attempts" ON public.speaking_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+  BEGIN DROP POLICY IF EXISTS "Admins manage speaking_attempts" ON public.speaking_attempts; EXCEPTION WHEN undefined_table THEN NULL; END;
+
+  CREATE POLICY "Students manage own speaking_attempts"
+    ON public.speaking_attempts
+    FOR ALL
+    USING (auth.uid() = user_id AND auth.jwt()->>'role' = 'student')
+    WITH CHECK (auth.uid() = user_id AND auth.jwt()->>'role' = 'student');
+
+  CREATE POLICY "Admins manage speaking_attempts"
+    ON public.speaking_attempts
+    FOR ALL
+    USING (auth.jwt()->>'role' = 'admin')
+    WITH CHECK (auth.jwt()->>'role' = 'admin');
+EXCEPTION
+  WHEN undefined_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;

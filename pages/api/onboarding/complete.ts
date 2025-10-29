@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
+import { getServerClient } from '@/lib/supabaseServer';
 
 const BodySchema = z.object({
   examType: z.enum(['Academic','General Training']),
   goalBand: z.number().min(4).max(9),
   locale: z.enum(['en','ur']),
-  examDate: z.string().optional(), // ISO date
+  examDate: z.string().optional(), // ISO date (YYYY-MM-DD)
   skills: z.object({
     listening: z.number().optional(),
     reading: z.number().optional(),
@@ -26,38 +26,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
 
   const parse = BodySchema.safeParse(req.body);
-  if (!parse.success) return res.status(400).json({ ok: false, error: parse.error.issues.map(i => i.message).join(', ') });
+  if (!parse.success) {
+    return res.status(400).json({ ok: false, error: parse.error.issues.map(i => i.message).join(', ') });
+  }
   const body = parse.data;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) return res.status(503).json({ ok: false, error: 'Supabase env missing' });
-
-  // Authenticate the caller (user) via Authorization bearer token
-  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  if (!token) return res.status(401).json({ ok: false, error: 'Missing Authorization bearer token' });
-
-  const supabase = createClient(supabaseUrl, supabaseKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+  // Use per-request server client (cookie/JWT from the session)
+  const supabase = getServerClient(req, res);
   const { data: userRes, error: userErr } = await supabase.auth.getUser();
   if (userErr || !userRes.user?.id) return res.status(401).json({ ok: false, error: 'Unauthorized' });
   const userId = userRes.user.id;
 
-  // 1) Update profile
-  const { error: pErr } = await supabase.from('profiles').update({
-    exam_type: body.examType,
-    goal_band: body.goalBand,
-    locale: body.locale,
-  }).eq('id', userId);
+  // 1) Update profile (note: write to canonical "id"; never to "user_id")
+  const { error: pErr } = await supabase
+    .from('profiles')
+    .update({
+      exam_type: body.examType,
+      goal_band: body.goalBand,
+      locale: body.locale,
+    })
+    .eq('id', userId);
   if (pErr) return res.status(500).json({ ok: false, error: pErr.message });
 
   // 2) Generate plan (4 weeks from today OR until examDate, whichever is sooner)
   const today = new Date();
-  const exam = body.examDate ? new Date(body.examDate + 'T00:00:00') : addDays(today, 28);
+  const exam = body.examDate ? new Date(`${body.examDate}T00:00:00`) : addDays(today, 28);
   const fourWeeks = addDays(today, 28);
   const end = exam.getTime() < fourWeeks.getTime() ? exam : fourWeeks;
 
   const plan = generatePlan(today, end, body.schedule.days, body.schedule.minutesPerDay);
 
+  // study_plans still uses user_id (separate table) — that’s OK
   const { error: sErr } = await supabase.from('study_plans').upsert(
     {
       user_id: userId,
@@ -70,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   );
   if (sErr) return res.status(500).json({ ok: false, error: sErr.message });
 
-  // 3) Save skills (if table exists)
+  // 3) Save skills (best-effort)
   if (body.skills) {
     try {
       await supabase.from('skill_snapshots').insert({
@@ -81,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         speaking: body.skills.speaking ?? null,
         weaknesses: body.skills.weaknesses ?? [],
         created_at: new Date().toISOString(),
-      } as any);
+      } as Record<string, unknown>);
     } catch {
       // ignore if table missing
     }
