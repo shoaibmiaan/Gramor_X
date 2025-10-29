@@ -1,8 +1,7 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
-import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -14,7 +13,6 @@ import '@/styles/semantic.css';
 import '@/styles/globals.css';
 import '@/styles/themes/index.css';
 
-import Layout from '@/components/Layout';
 import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
@@ -27,37 +25,13 @@ import { refreshClientFlags, flagsHydratedRef } from '@/lib/flags/refresh';
 import { InstalledAppProvider } from '@/hooks/useInstalledApp';
 
 import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
-import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
-import SidebarAI from '@/components/ai/SidebarAI';
-import AuthAssistant from '@/components/auth/AuthAssistant';
-import { Card } from '@/components/design-system/Card';
-import { Input } from '@/components/design-system/Input';
-import { Textarea } from '@/components/design-system/Textarea';
-import { Button } from '@/components/design-system/Button';
-import UpgradeModal from '@/components/premium/UpgradeModal';
-import { RouteLoadingOverlay } from '@/components/common/RouteLoadingOverlay';
-
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import PublicMarketingLayout from '@/components/layouts/PublicMarketingLayout';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import LearningLayout from '@/components/layouts/LearningLayout';
-import CommunityLayout from '@/components/layouts/CommunityLayout';
-import MarketplaceLayout from '@/components/layouts/MarketplaceLayout';
-import InstitutionsLayout from '@/components/layouts/InstitutionsLayout';
-import AuthLayout from '@/components/layouts/AuthLayout';
-import ReportsLayout from '@/components/layouts/ReportsLayout';
-import ProctoringLayout from '@/components/layouts/ProctoringLayout';
-
-import TeacherLayout from '@/components/layouts/TeacherLayout';
-import TeacherProfile from '@/components/teacher/TeacherProfile';
+import AppLayoutManager from '@/components/layouts/AppLayoutManager';
 
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { UserProvider, useUserContext } from '@/context/UserContext';
 import { OrgProvider } from '@/lib/orgs/context';
 import { HighContrastProvider } from '@/context/HighContrastContext';
 
-// ✅ NEW: global plan guard (client-side gating + ribbon)
-import GlobalPlanGuard from '@/components/GlobalPlanGuard';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
 import type { SubscriptionTier } from '@/lib/navigation/types';
@@ -82,64 +56,6 @@ function GuardSkeleton() {
     <div className="grid min-h-[100dvh] place-items-center">
       <div className="h-6 w-40 animate-pulse rounded bg-border" />
     </div>
-  );
-}
-
-// Minimal inline onboarding gate (no extra imports)
-function TeacherOnboardingGate() {
-  const router = useRouter();
-
-  const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      void router.push('/teacher/register');
-    },
-    [router]
-  );
-
-  return (
-    <Card className="mx-auto max-w-2xl" padding="lg" insetBorder>
-      <form
-        className="space-y-5"
-        onSubmit={handleSubmit}
-        aria-describedby="teacher-onboarding-note"
-      >
-        <div className="space-y-2">
-          <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">Teacher onboarding</p>
-          <h2 className="text-h3 font-semibold text-foreground">Complete your profile</h2>
-          <p className="text-small text-muted-foreground">
-            Your account is created but not approved yet. Share a quick profile so our team can unlock the teacher
-            workspace for you.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input name="full-name" label="Full name" placeholder="Your name" autoComplete="name" />
-          <Input name="subject" label="Subject / expertise" placeholder="e.g., IELTS Writing" />
-        </div>
-
-        <Textarea
-          name="experience"
-          label="Experience"
-          placeholder="Tell us about your IELTS teaching experience"
-          hint="This is a placeholder form. Connect it to your API when ready."
-          rows={4}
-        />
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Button type="submit" size="lg">
-            Open onboarding form
-          </Button>
-          <Button asChild variant="link" size="sm">
-            <Link href="/teacher/register">Fill it later</Link>
-          </Button>
-        </div>
-
-        <p id="teacher-onboarding-note" className="text-caption text-muted-foreground">
-          Data entered here is not saved yet — you&apos;ll complete the official onboarding on the next screen.
-        </p>
-      </form>
-    </Card>
   );
 }
 
@@ -334,18 +250,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const isProctoringRoute =
     pathname.startsWith('/proctoring/check') || pathname.startsWith('/proctoring/exam');
 
-  const isExamRoute =
-    isMockTestsFlowRoute ||
-    pathname.startsWith('/mock/') ||
-    pathname.startsWith('/listening') ||
-    pathname.startsWith('/reading') ||
-    pathname.startsWith('/writing') ||
-    pathname.startsWith('/speaking') ||
-    pathname.startsWith('/exam/rehearsal') ||
-    pathname.startsWith('/premium/listening') ||
-    pathname.startsWith('/premium/reading') ||
-    pathname.startsWith('/proctoring/exam');
-
   // Idle timeout (coerce to number safely)
   const idleMinutes = useMemo(
     () => Number(env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30),
@@ -500,47 +404,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     <Component {...pageProps} />
   );
 
-  let content = basePage;
-
-  if (showLayout) {
-    if (isAdminRoute) content = <AdminLayout>{basePage}</AdminLayout>;
-    else if (pathname.startsWith('/teacher')) {
-      // Gate teacher area
-      if (role === 'admin') {
-        // Admins can view teacher screens for QA
-        content = (
-          <TeacherLayout userRole={role ?? 'guest'}>
-            <TeacherProfile />
-          </TeacherLayout>
-        );
-      } else if (role === 'teacher') {
-        const approved = Boolean(isTeacherApproved);
-        content = (
-          <TeacherLayout userRole={role ?? 'guest'}>
-            {approved ? <TeacherProfile /> : <TeacherOnboardingGate />}
-          </TeacherLayout>
-        );
-      } else {
-        router.push('/restricted');
-        content = <GuardSkeleton />;
-      }
-    } else if (isInstitutionsRoute) content = <InstitutionsLayout>{basePage}</InstitutionsLayout>;
-    else if (isDashboardRoute) content = <DashboardLayout>{basePage}</DashboardLayout>;
-    else if (isMarketplaceRoute) content = <MarketplaceLayout>{basePage}</MarketplaceLayout>;
-    else if (isLearningRoute) content = <LearningLayout>{basePage}</LearningLayout>;
-    else if (isCommunityRoute) content = <CommunityLayout>{basePage}</CommunityLayout>;
-    else if (isReportsRoute) content = <ReportsLayout>{basePage}</ReportsLayout>;
-    else if (isMarketingRoute) content = <PublicMarketingLayout>{basePage}</PublicMarketingLayout>;
-  }
-
-  const nakedContent = isAuthPage ? (
-    <AuthLayout>{basePage}</AuthLayout>
-  ) : isProctoringRoute ? (
-    <ProctoringLayout>{basePage}</ProctoringLayout>
-  ) : (
-    basePage
-  );
-
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <HighContrastProvider>
@@ -553,29 +416,27 @@ function InnerApp({ Component, pageProps }: AppProps) {
         <div
           className={`${poppins.className} ${slab.className} min-h-screen min-h-[100dvh] bg-background text-foreground antialiased`}
         >
-          {/* ✅ NEW: Client-side plan guard + ribbon + route protection */}
-          <GlobalPlanGuard />
-
-          {forceLayoutOnAuthPage ? (
-            <Layout>
-              <ImpersonationBanner />
-              {nakedContent}
-            </Layout>
-          ) : showLayout ? (
-            <Layout>
-              <ImpersonationBanner />
-              {content}
-            </Layout>
-          ) : (
-            <>
-              <ImpersonationBanner />
-              {nakedContent}
-            </>
-          )}
-          <AuthAssistant />
-          <SidebarAI />
-          <UpgradeModal />
-          <RouteLoadingOverlay active={isRouteLoading} tier={subscriptionTier} />
+          <AppLayoutManager
+            isAuthPage={isAuthPage}
+            isProctoringRoute={isProctoringRoute}
+            showLayout={showLayout}
+            forceLayoutOnAuthPage={forceLayoutOnAuthPage}
+            isAdminRoute={isAdminRoute}
+            isInstitutionsRoute={isInstitutionsRoute}
+            isDashboardRoute={isDashboardRoute}
+            isMarketplaceRoute={isMarketplaceRoute}
+            isLearningRoute={isLearningRoute}
+            isCommunityRoute={isCommunityRoute}
+            isReportsRoute={isReportsRoute}
+            isMarketingRoute={isMarketingRoute}
+            subscriptionTier={subscriptionTier}
+            isRouteLoading={isRouteLoading}
+            role={role}
+            isTeacherApproved={isTeacherApproved}
+            guardFallback={() => <GuardSkeleton />}
+          >
+            {basePage}
+          </AppLayoutManager>
         </div>
       </HighContrastProvider>
     </ThemeProvider>
