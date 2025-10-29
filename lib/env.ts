@@ -236,16 +236,20 @@ const defaults = {
   NEXT_PUBLIC_PAYMENTS_PROVIDER: 'none',
 };
 
-export const env = (parsed.success
+const filteredRaw = Object.fromEntries(
+  Object.entries(raw).filter(([, value]) => value !== undefined && value !== null),
+);
+
+export const env = parsed.success
   ? parsed.data
   : {
       ...defaults,
-      ...raw,
+      ...filteredRaw,
       NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: Number(raw.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30),
       REVIEW_SHARE_TTL_HOURS: Number(
         raw.REVIEW_SHARE_TTL_HOURS ?? defaults.REVIEW_SHARE_TTL_HOURS ?? 72,
       ),
-    });
+    };
 
 export const isBrowser = typeof window !== 'undefined';
 export const isServer = !isBrowser;

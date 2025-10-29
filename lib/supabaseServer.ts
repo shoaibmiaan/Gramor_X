@@ -48,6 +48,11 @@ const isTest =
   (process.env.NODE_ENV === 'test' || process.env.VITEST || process.env.JEST_WORKER_ID ||
     process.env.SKIP_ENV_VALIDATION === 'true');
 
+const isProdRuntime =
+  typeof process !== 'undefined' &&
+  process.env.NODE_ENV === 'production' &&
+  process.env.VERCEL_ENV === 'production';
+
 // Internal helpers ----------------------------------------------------------
 
 const resolved = <T,>(payload: T) => Promise.resolve(payload);
@@ -285,7 +290,14 @@ function buildHeaders(
 
 function ensureEnvVars(key: string | undefined, message: string) {
   if (key || isTest) return;
-  throw new Error(message);
+
+  if (isProdRuntime) {
+    throw new Error(message);
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    console.warn(`${message}. Falling back to stub Supabase client.`);
+  }
 }
 
 // Public helpers ------------------------------------------------------------

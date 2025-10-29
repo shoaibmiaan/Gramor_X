@@ -6,6 +6,8 @@ import { trackor } from '@/lib/analytics/trackor.server';
 import { verifyEasypaisa } from '@/lib/payments/easypaisa';
 import { verifyJazzCash } from '@/lib/payments/jazzcash';
 import type { PaymentProvider } from '@/lib/payments/gateway';
+import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
+import { getBaseUrl } from '@/lib/url';
 
 const providers: PaymentProvider[] = ['stripe', 'easypaisa', 'jazzcash'];
 const isProvider = (val: unknown): val is PaymentProvider => typeof val === 'string' && providers.includes(val as PaymentProvider);
@@ -62,6 +64,7 @@ const handler: NextApiHandler = async (req, res) => {
   }
 
   const confirmedAt = new Date().toISOString();
+  const baseUrl = getBaseUrl();
 
   await supabaseService
     .from('payment_intents')
@@ -87,6 +90,34 @@ const handler: NextApiHandler = async (req, res) => {
     plan: intent.plan_id,
     cycle: intent.cycle,
   });
+
+  if (intent.user_id) {
+    const contact = await getNotificationContact(intent.user_id);
+    if (contact.email) {
+      const payload: Record<string, unknown> = {
+        plan: intent.plan_id,
+        cycle: intent.cycle,
+        provider,
+        deep_link: `${baseUrl}/settings/billing`,
+        user_email: contact.email,
+      };
+      if (contact.phone) {
+        payload.user_phone = contact.phone;
+      }
+
+      const result = await queueNotificationEvent({
+        event_key: 'payment_success',
+        user_id: intent.user_id,
+        payload,
+        channels: ['email'],
+        idempotency_key: `payment_success:${intent.id}`,
+      });
+
+      if (!result.ok && result.reason !== 'duplicate') {
+        console.error('[payments:webhook:notify]', provider, result.message);
+      }
+    }
+  }
 
   return res.status(200).json({ ok: true });
 };
