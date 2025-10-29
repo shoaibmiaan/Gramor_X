@@ -144,19 +144,19 @@
         {
           "id": "S2-Q22",
           "type": "gap",
-          "prompt": "22. Volcanic eruptions of this magnitude can lead to shortages of ______ in a wide area.",
+          "prompt": "22. Such eruptions can lead to shortages of ______ in a wide area.",
           "answer": "food"
         },
         {
           "id": "S2-Q23",
           "type": "gap",
-          "prompt": "23. An asteroid hitting the Earth could create a ______ that would result in a new ice age.",
+          "prompt": "23. An asteroid hitting the Earth could create a ______ and result in a new ice age.",
           "answer": "tidal wave"
         },
         {
           "id": "S2-Q24",
           "type": "gap",
-          "prompt": "24. An asteroid hitting the Earth could create a tidal wave that would result in a new ______.",
+          "prompt": "24. Such an impact could trigger a new ______.",
           "answer": "ice age"
         },
         {
