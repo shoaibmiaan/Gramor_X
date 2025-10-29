@@ -86,6 +86,14 @@ const StreakPage: NextPage<Props> = ({ streak, history }) => {
                 <dd className="font-semibold">{formatDisplayDate(streak.lastActive)}</dd>
               </div>
             </dl>
+            <div className="rounded-xl bg-muted/30 px-4 py-3 text-small text-muted-foreground">
+              <h3 className="font-semibold text-foreground">How your streak works</h3>
+              <ul className="mt-2 list-disc space-y-2 pl-4">
+                <li>Complete at least one scheduled study task before midnight Pakistan time (PKT) each day.</li>
+                <li>Every productive day extends your streak and fills the heatmap for that date.</li>
+                <li>Missing a day resets your current streak, but your longest streak stays recorded for motivation.</li>
+              </ul>
+            </div>
             <div className="pt-4">
               <Button variant="primary" fullWidth asChild>
                 <Link href="/study-plan">Go to study plan</Link>
