@@ -82,15 +82,20 @@ function InnerApp({ Component, pageProps }: AppProps) {
       }
     };
 
-    const startLoading = () => {
+    // Start loading only for real navigation changes (skip no-op transitions)
+    const startLoading = (url?: string) => {
+      // If router gives us the same path, skip (no-op)
+      if (typeof url === 'string' && url === router.asPath) return;
       clearRouteLoadingTimeout();
       clearRouteLoadingFallback();
+      // Short initial delay to avoid flashing for fast transitions
       routeLoadingTimeoutRef.current = setTimeout(() => {
         setIsRouteLoading(true);
+        // Long fallback in case something gets stuck
         routeLoadingFallbackRef.current = setTimeout(() => {
           setIsRouteLoading(false);
-        }, 12000);
-      }, 200);
+        }, 8000);
+      }, 160);
     };
 
     const stopLoading = () => {
@@ -107,6 +112,19 @@ function InnerApp({ Component, pageProps }: AppProps) {
     router.events.on('hashChangeComplete', stopLoading);
     router.events.on('hashChangeError', stopLoading);
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stopLoading();
+      }
+    };
+
+    const handlePageHide = () => {
+      stopLoading();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+
     return () => {
       router.events.off('routeChangeStart', startLoading);
       router.events.off('beforeHistoryChange', stopLoading);
@@ -115,11 +133,14 @@ function InnerApp({ Component, pageProps }: AppProps) {
       router.events.off('hashChangeStart', startLoading);
       router.events.off('hashChangeComplete', stopLoading);
       router.events.off('hashChangeError', stopLoading);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
       clearRouteLoadingTimeout();
       clearRouteLoadingFallback();
     };
   }, [router]);
 
+  // Ensure we clear any fallback timer when path actually changes
   useEffect(() => {
     if (routeLoadingFallbackRef.current) {
       clearTimeout(routeLoadingFallbackRef.current);
