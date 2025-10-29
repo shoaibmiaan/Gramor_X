@@ -116,6 +116,29 @@ export interface WordListeningAttempt extends TableBase {
   audio_url?: string | null;
 }
 
+export type LiveSessionType = 'human' | 'ai' | 'peer';
+export type LiveSessionStatus = 'pending' | 'active' | 'completed' | 'cancelled';
+
+export interface SpeakingSession extends TableBase {
+  host_user_id: string;
+  participant_user_id?: string | null;
+  type: LiveSessionType;
+  status: LiveSessionStatus;
+  scheduled_at?: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface SessionRecording extends TableBase {
+  session_id: string;
+  storage_path: string;
+  transcript_path?: string | null;
+  duration_seconds?: number | null;
+  metadata: Record<string, unknown>;
+  created_by?: string | null;
+}
+
 export interface UserWordStats {
   created_at: string;
   updated_at?: string;
@@ -604,6 +627,8 @@ export interface DBSchema {
   organization_members: OrganizationMembers;
   organization_invites: OrganizationInvites;
   writing_topics: WritingTopics;
+  speaking_sessions: SpeakingSession;
+  session_recordings: SessionRecording;
 
   // kept from main
   account_audit_log: AccountAuditLog;
