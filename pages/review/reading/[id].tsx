@@ -36,10 +36,12 @@ type ResultMeta = {
   streak: number;
 };
 
+const isLocalAttemptId = (value: string) => value.startsWith('local-');
+
 const loadPaper = async (id: string): Promise<ReadingPaper> => {
-  try { 
-    const mod = await import(`@/data/reading/${id}.json`); 
-    return mod.default as ReadingPaper; 
+  try {
+    const mod = await import(`@/data/reading/${id}.json`);
+    return mod.default as ReadingPaper;
   } catch {
     return {
       id: 'sample-001',
@@ -87,37 +89,8 @@ export default function ReadingReviewPage() {
   useEffect(() => {
     if (!attempt) return;
     let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/mock/reading/result?attemptId=${encodeURIComponent(attempt)}`);
-        if (!res.ok) throw new Error('Failed to load attempt');
-        const json = (await res.json()) as MockReadingResultResponse;
-        if (!json.ok) throw new Error(json.error || 'Failed to load attempt');
-        if (cancelled) return;
-        const attemptData = json.attempt;
-        setAtt({
-          id: attemptData.id,
-          answers: attemptData.answers ?? {},
-          correct: attemptData.correct,
-          total: attemptData.total,
-          percentage: attemptData.percentage,
-          submittedAt: attemptData.submittedAt ?? null,
-          band: attemptData.band,
-          durationSec: attemptData.durationSec,
-        });
-        setMeta({
-          xpAwarded: json.xp.awarded,
-          xpTotal: json.xp.total,
-          xpRequired: json.xp.required,
-          xpPercent: json.xp.percent,
-          targetBand: json.xp.targetBand,
-          streak: json.streak?.current ?? 0,
-        });
-        return;
-      } catch (error) {
-        console.warn('[review/reading] attempt fetch failed', error);
-      }
 
+    const loadFromLocal = async () => {
       try {
         const raw = localStorage.getItem(`read:attempt-res:${attempt}`);
         if (!raw) return;
@@ -154,6 +127,45 @@ export default function ReadingReviewPage() {
       } catch (error) {
         console.warn('[review/reading] local fallback failed', error);
       }
+    };
+
+    (async () => {
+      if (isLocalAttemptId(attempt)) {
+        await loadFromLocal();
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/mock/reading/result?attemptId=${encodeURIComponent(attempt)}`);
+        if (!res.ok) throw new Error('Failed to load attempt');
+        const json = (await res.json()) as MockReadingResultResponse;
+        if (!json.ok) throw new Error(json.error || 'Failed to load attempt');
+        if (cancelled) return;
+        const attemptData = json.attempt;
+        setAtt({
+          id: attemptData.id,
+          answers: attemptData.answers ?? {},
+          correct: attemptData.correct,
+          total: attemptData.total,
+          percentage: attemptData.percentage,
+          submittedAt: attemptData.submittedAt ?? null,
+          band: attemptData.band,
+          durationSec: attemptData.durationSec,
+        });
+        setMeta({
+          xpAwarded: json.xp.awarded,
+          xpTotal: json.xp.total,
+          xpRequired: json.xp.required,
+          xpPercent: json.xp.percent,
+          targetBand: json.xp.targetBand,
+          streak: json.streak?.current ?? 0,
+        });
+        return;
+      } catch (error) {
+        console.warn('[review/reading] attempt fetch failed', error);
+      }
+
+      await loadFromLocal();
     })();
 
     return () => {

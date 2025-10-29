@@ -21,6 +21,7 @@ import { StreakCounter } from '@/components/streak/StreakCounter';
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
+import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
 
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
@@ -33,8 +34,6 @@ import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeC
 import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCard';
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
-import type { ChallengeTaskStatus } from '@/types/challenge';
-
 import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 
 export default function Dashboard() {
@@ -44,11 +43,6 @@ export default function Dashboard() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
-  const [challengeLoading, setChallengeLoading] = useState(true);
-  const [challengeEnrollment, setChallengeEnrollment] = useState<{
-    cohort: string;
-    progress: Record<string, ChallengeTaskStatus> | null;
-  } | null>(null);
 
   const {
     current: streak,
@@ -162,53 +156,9 @@ export default function Dashboard() {
     };
   }, [router]);
 
-  useEffect(() => {
-    if (!sessionUserId) {
-      setChallengeEnrollment(null);
-      setChallengeLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setChallengeLoading(true);
-
-    (async () => {
-      try {
-        const { data, error } = await supabaseBrowser
-          .from('challenge_enrollments')
-          .select('cohort, progress, enrolled_at')
-          .eq('user_id', sessionUserId)
-          .order('enrolled_at', { ascending: false })
-          .limit(1);
-
-        if (cancelled) return;
-
-        if (error) {
-          console.error('[dashboard] challenge enrollment fetch error:', error);
-          setChallengeEnrollment(null);
-        } else {
-          const record = Array.isArray(data) ? (data as any)[0] ?? null : (data as any) ?? null;
-          if (record) {
-            setChallengeEnrollment({
-              cohort: record.cohort as string,
-              progress: (record.progress as Record<string, ChallengeTaskStatus> | null) ?? null,
-            });
-          } else {
-            setChallengeEnrollment(null);
-          }
-        }
-      } catch (err) {
-        console.error('[dashboard] challenge enrollment error:', err);
-        if (!cancelled) setChallengeEnrollment(null);
-      } finally {
-        if (!cancelled) setChallengeLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionUserId]);
+  const { latestEnrollment: challengeEnrollment, loading: challengeLoading } = useChallengeEnrollments(
+    sessionUserId,
+  );
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
