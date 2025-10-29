@@ -2,7 +2,7 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -33,6 +33,7 @@ import { Input } from '@/components/design-system/Input';
 import { Textarea } from '@/components/design-system/Textarea';
 import { Button } from '@/components/design-system/Button';
 import UpgradeModal from '@/components/premium/UpgradeModal';
+import { RouteLoadingOverlay } from '@/components/common/RouteLoadingOverlay';
 
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import PublicMarketingLayout from '@/components/layouts/PublicMarketingLayout';
@@ -57,6 +58,7 @@ import { HighContrastProvider } from '@/context/HighContrastContext';
 import GlobalPlanGuard from '@/components/GlobalPlanGuard';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
+import type { SubscriptionTier } from '@/lib/navigation/types';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -143,6 +145,124 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const pathname = router.pathname;
   const { locale: activeLocale } = useLocale();
+  const [isRouteLoading, setIsRouteLoading] = useState(false);
+  const routeLoadingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const routeLoadingFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const toComparablePath = (value: string) => {
+      if (!value) return '/';
+      const withoutOrigin = value.replace(/^https?:\/\/[^/]+/, '');
+      const withoutHash = withoutOrigin.split('#')[0] ?? '';
+      const withoutQuery = withoutHash.split('?')[0] ?? '';
+      if (!withoutQuery) return '/';
+      if (withoutQuery === '/') return '/';
+      return withoutQuery.replace(/\/+$/, '') || '/';
+    };
+
+    const hasMeaningfulPathChange = (nextUrl: string) => {
+      const nextPath = toComparablePath(nextUrl);
+      const currentPath = toComparablePath(router.asPath);
+      return nextPath !== currentPath;
+    };
+
+    const clearPendingTimers = () => {
+      if (routeLoadingTimeoutRef.current) {
+        clearTimeout(routeLoadingTimeoutRef.current);
+        routeLoadingTimeoutRef.current = null;
+      }
+      if (routeLoadingFallbackRef.current) {
+        clearTimeout(routeLoadingFallbackRef.current);
+        routeLoadingFallbackRef.current = null;
+      }
+    };
+
+    const startLoading = (url: string, options: { shallow: boolean } = { shallow: false }) => {
+      if (options.shallow) return;
+      if (!hasMeaningfulPathChange(url)) {
+        pendingPathRef.current = null;
+        clearPendingTimers();
+        return;
+      }
+
+      pendingPathRef.current = toComparablePath(url);
+      clearPendingTimers();
+      routeLoadingTimeoutRef.current = setTimeout(() => {
+        setIsRouteLoading(true);
+        routeLoadingFallbackRef.current = setTimeout(() => {
+          pendingPathRef.current = null;
+          setIsRouteLoading(false);
+        }, 6000);
+      }, 140);
+    };
+
+    const stopLoading = (url?: string) => {
+      if (url && pendingPathRef.current) {
+        const completedPath = toComparablePath(url);
+        if (completedPath !== pendingPathRef.current) {
+          pendingPathRef.current = null;
+        }
+      } else {
+        pendingPathRef.current = null;
+      }
+      clearPendingTimers();
+      setIsRouteLoading(false);
+    };
+
+    const handleBeforeHistoryChange = (
+      url: string,
+      options: { shallow: boolean } = { shallow: false }
+    ) => {
+      if (options.shallow) return;
+      if (!hasMeaningfulPathChange(url)) {
+        stopLoading();
+        return;
+      }
+      pendingPathRef.current = toComparablePath(url);
+    };
+
+    const handleRouteChangeError = () => {
+      stopLoading();
+    };
+
+    router.events.on('routeChangeStart', startLoading);
+    router.events.on('beforeHistoryChange', handleBeforeHistoryChange);
+    router.events.on('routeChangeComplete', stopLoading);
+    router.events.on('routeChangeError', handleRouteChangeError);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        stopLoading();
+      }
+    };
+
+    const handlePageHide = () => {
+      stopLoading();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+
+    return () => {
+      router.events.off('routeChangeStart', startLoading);
+      router.events.off('beforeHistoryChange', handleBeforeHistoryChange);
+      router.events.off('routeChangeComplete', stopLoading);
+      router.events.off('routeChangeError', handleRouteChangeError);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      clearPendingTimers();
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (routeLoadingFallbackRef.current) {
+      clearTimeout(routeLoadingFallbackRef.current);
+      routeLoadingFallbackRef.current = null;
+    }
+    pendingPathRef.current = null;
+    setIsRouteLoading(false);
+  }, [router.asPath]);
 
   useEffect(() => {
     void loadTranslations(activeLocale as SupportedLocale);
@@ -154,6 +274,24 @@ function InnerApp({ Component, pageProps }: AppProps) {
     role?: string | null;
     isTeacherApproved?: boolean | null;
   };
+  const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('free');
+
+  useEffect(() => {
+    const metadata = (user?.user_metadata ?? {}) as { tier?: SubscriptionTier | null };
+    const appMeta = (user?.app_metadata ?? {}) as { tier?: SubscriptionTier | null };
+    const nextTier = metadata.tier ?? appMeta.tier ?? 'free';
+    setSubscriptionTier(nextTier);
+  }, [user]);
+
+  useEffect(() => {
+    const handleTierUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ tier?: SubscriptionTier }>).detail;
+      if (detail?.tier) setSubscriptionTier(detail.tier);
+    };
+
+    window.addEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
+    return () => window.removeEventListener('subscription:tier-updated', handleTierUpdated as EventListener);
+  }, []);
 
   const needPremium = useMemo(
     () => pathname.startsWith('/premium'),
@@ -463,6 +601,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
           <AuthAssistant />
           <SidebarAI />
           <UpgradeModal />
+          <RouteLoadingOverlay active={isRouteLoading} tier={subscriptionTier} />
         </div>
       </HighContrastProvider>
     </ThemeProvider>
