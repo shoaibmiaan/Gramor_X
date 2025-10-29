@@ -1,0 +1,18 @@
+name: cron-daily
+on:
+  schedule:
+    - cron: "0 13 * * *"   # daily 13:00 UTC
+  workflow_dispatch: {}
+jobs:
+  reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger study reminder
+        env:
+          BASE_URL: ${{ secrets.PUBLIC_APP_URL }}
+          SIGNING: ${{ secrets.WHATSAPP_TASKS_SIGNING_SECRET }}
+        run: |
+          curl -fsS --retry 5 --retry-delay 10 \
+            -X POST \
+            -H "X-Signature: $SIGNING" \
+            "$BASE_URL/api/cron/notifications-study-reminder"

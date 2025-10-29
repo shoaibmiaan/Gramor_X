@@ -1203,10 +1203,6 @@ html[data-pr-theme] {
   animation-delay: 0.2s;
 }
 
-.\[payments\:notify\] {
-  payments: notify;
-}
-
 /* ---------- Base tokens & themes ---------- */
 
 /* ---------- Components used on Premium pages ---------- */
