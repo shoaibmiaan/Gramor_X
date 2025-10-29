@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { BellIcon } from '@/lib/icons';
 import { useNotifications } from '@/components/notifications/NotificationProvider';
 
-export const NotificationBell: React.FC = React.memo(() => {
+const NotificationBellComponent: React.FC = () => {
   const [open, setOpen] = React.useState(false);
   const { notifications, unread, markRead } = useNotifications();
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const popoverRef = React.useRef<HTMLDivElement | null>(null);
   const itemsRef = React.useRef<Array<HTMLAnchorElement | HTMLButtonElement | null>>([]);
+
+  itemsRef.current = [];
 
   React.useEffect(() => {
     if (!open) return;
@@ -154,11 +156,27 @@ export const NotificationBell: React.FC = React.memo(() => {
             {notifications.length === 0 && (
               <li className="px-3 py-3 text-muted-foreground">No notifications</li>
             )}
+            <li className="border-t border-border/70">
+              <Link
+                href="/notifications"
+                role="menuitem"
+                ref={(el) => {
+                  itemsRef.current[notifications.length] = el as HTMLAnchorElement | null;
+                }}
+                className="block px-3 py-2 text-center text-caption font-semibold text-primary hover:underline"
+                onClick={() => setOpen(false)}
+              >
+                View all notifications
+              </Link>
+            </li>
           </ul>
         </div>
       )}
     </div>
   );
-});
+};
+
+export const NotificationBell = React.memo(NotificationBellComponent);
+NotificationBell.displayName = 'NotificationBell';
 
 export default NotificationBell;
