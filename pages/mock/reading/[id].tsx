@@ -20,7 +20,17 @@ import { track } from '@/lib/analytics/track';
 import { Checkbox } from '@/components/design-system/Checkbox';
 
 type QType = 'tfng' | 'yynn' | 'heading' | 'match' | 'mcq' | 'gap';
-type Q = { id: string; type: QType; prompt?: string; options?: string[]; answer: string };
+type MatchOptionObject = {
+  pairs?: Array<{ left: string; right: string | string[] }>;
+  choices?: string[];
+};
+type Q = {
+  id: string;
+  type: QType;
+  prompt?: string;
+  options?: string[] | MatchOptionObject;
+  answer: string;
+};
 type Passage = { id: string; title: string; text: string; questions: Q[] };
 type ReadingPaper = { id: string; title: string; durationSec: number; passages: Passage[] };
 
@@ -1463,8 +1473,25 @@ function renderInput(
     const opts = ['Yes', 'No', 'Not Given'];
     return <Options options={opts} value={value} onPick={handlers.onChange} onFocus={handlers.onFocus} />;
   }
-  if (q.type === 'heading' || q.type === 'match' || q.type === 'mcq') {
-    return <Options options={q.options || []} value={value} onPick={handlers.onChange} onFocus={handlers.onFocus} />;
+  if (q.type === 'heading' || q.type === 'mcq') {
+    return (
+      <Options
+        options={normalizeOptionList(q.options)}
+        value={value}
+        onPick={handlers.onChange}
+        onFocus={handlers.onFocus}
+      />
+    );
+  }
+  if (q.type === 'match') {
+    return (
+      <MatchOptions
+        options={normalizeOptionList(q.options)}
+        value={value}
+        onPick={handlers.onChange}
+        onFocus={handlers.onFocus}
+      />
+    );
   }
   return (
     <input
@@ -1475,6 +1502,21 @@ function renderInput(
       placeholder="Type your answer"
     />
   );
+}
+
+function normalizeOptionList(options: Q['options']): string[] {
+  if (!options) return [];
+  if (Array.isArray(options)) return options;
+  const fromPairs = Array.isArray(options.pairs)
+    ? options.pairs.flatMap((pair) => {
+        if (!pair) return [];
+        const rights = Array.isArray(pair.right) ? pair.right : pair.right ? [pair.right] : [];
+        if (rights.length === 0) return pair.left ? [pair.left] : [];
+        return rights.map((right) => `${pair.left} -> ${right}`);
+      })
+    : [];
+  const extras = Array.isArray(options.choices) ? options.choices : [];
+  return [...fromPairs, ...extras];
 }
 
 const Options: React.FC<{
@@ -1494,6 +1536,32 @@ const Options: React.FC<{
         onFocus={onFocus}
         type="button"
         className={`rounded-lg border px-3 py-1 text-small transition hover:border-primary ${value === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground'}`}
+      >
+        {opt}
+      </button>
+    ))}
+  </div>
+);
+
+const MatchOptions: React.FC<{
+  options: string[];
+  value: string;
+  onPick: (v: string) => void;
+  onFocus: () => void;
+}> = ({ options, value, onPick, onFocus }) => (
+  <div className="grid gap-2 sm:grid-cols-2">
+    {options.map((opt, index) => (
+      <button
+        key={toOptionId(opt, index)}
+        onClick={() => {
+          onFocus();
+          onPick(opt);
+        }}
+        onFocus={onFocus}
+        type="button"
+        className={`rounded-lg border px-3 py-2 text-left text-small leading-snug transition hover:border-primary ${
+          value === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border text-foreground'
+        }`}
       >
         {opt}
       </button>
