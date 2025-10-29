@@ -17,11 +17,13 @@ import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
 import QuickDrillButton from '@/components/quick/QuickDrillButton';
 import { VocabularySpotlightFeature } from '@/components/feature/VocabularySpotlight';
 import { StreakCounter } from '@/components/streak/StreakCounter';
+import { NextTaskCard } from '@/components/reco/NextTaskCard';
 
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
+import { useNextTask } from '@/hooks/useNextTask';
 
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), { ssr: false });
 import GoalRoadmap from '@/components/feature/GoalRoadmap';
@@ -105,6 +107,7 @@ export default function Dashboard() {
         if (cancelled) return;
 
         if (error) {
+          // eslint-disable-next-line no-console
           console.error('[dashboard] profile load error:', error);
           setLoading(false);
           return;
@@ -128,6 +131,7 @@ export default function Dashboard() {
             .single();
 
           if (insertErr) {
+            // eslint-disable-next-line no-console
             console.error('[dashboard] profile insert error:', insertErr);
           } else {
             p = created as Profile;
@@ -146,6 +150,7 @@ export default function Dashboard() {
         setProfile(p ?? null);
         setLoading(false);
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('[dashboard] fatal load error:', e);
         if (!cancelled) setLoading(false);
       }
@@ -183,6 +188,17 @@ export default function Dashboard() {
   }, [streakLoading, lastDayKey, completeToday]);
 
   const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
+
+  const {
+    recommendationId: nextRecommendationId,
+    task: nextTask,
+    reason: nextTaskReason,
+    evidence: nextTaskEvidence,
+    score: nextTaskScore,
+    loading: nextTaskLoading,
+    error: nextTaskError,
+    refresh: refreshNextTask,
+  } = useNextTask();
 
   const loadingSkeleton = (
     <section className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -444,6 +460,17 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
+
+            <NextTaskCard
+              loading={nextTaskLoading}
+              task={nextTask}
+              reason={nextTaskReason}
+              evidence={nextTaskEvidence}
+              recommendationId={nextRecommendationId}
+              score={nextTaskScore}
+              error={nextTaskError}
+              onRefresh={() => refreshNextTask()}
+            />
 
             {/* Streak block */}
             <div id="streak-panel">

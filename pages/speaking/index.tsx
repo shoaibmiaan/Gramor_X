@@ -1,4 +1,3 @@
-import { env } from "@/lib/env";
 // pages/speaking/index.tsx
 import React from 'react';
 import type { GetServerSideProps } from 'next';
@@ -7,6 +6,9 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { getUserServer } from '@/lib/authServer';
+import { NextTaskCard } from '@/components/reco/NextTaskCard';
+import { useNextTask } from '@/hooks/useNextTask';
+import { env } from '@/lib/env';
 
 type Parts = Record<'p1' | 'p2' | 'p3', number | null>;
 type AttemptRow = {
@@ -28,6 +30,16 @@ export default function SpeakingHub({
   signedIn: boolean;
 }) {
   const limitLeft = Math.max(0, limit - attemptsToday);
+  const {
+    recommendationId: speakingRecommendationId,
+    task: speakingNextTask,
+    reason: speakingNextReason,
+    evidence: speakingNextEvidence,
+    score: speakingNextScore,
+    loading: speakingNextLoading,
+    error: speakingNextError,
+    refresh: refreshSpeakingNextTask,
+  } = useNextTask();
 
   const featureHighlights = [
     {
@@ -87,6 +99,20 @@ export default function SpeakingHub({
               <Badge variant="warning" size="sm">Daily limit reached</Badge>
             )
           )}
+        </div>
+
+        <div className="mt-8">
+          <NextTaskCard
+            variant="compact"
+            loading={speakingNextLoading}
+            task={speakingNextTask}
+            reason={speakingNextReason}
+            evidence={speakingNextEvidence}
+            recommendationId={speakingRecommendationId}
+            score={speakingNextScore}
+            error={speakingNextError}
+            onRefresh={() => refreshSpeakingNextTask()}
+          />
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">

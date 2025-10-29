@@ -3,6 +3,7 @@
 
 import type { StudyPlan } from './plan';
 import type { AnyAttempt } from './attempts';
+import type { PlanId } from './pricing';
 
 export interface TableBase {
   id: string | number;
@@ -123,6 +124,66 @@ export type SpeakingExerciseType = 'phoneme' | 'word' | 'sentence' | 'cue_card';
 export type SpeakingExerciseLevel = 'B1' | 'B2' | 'C1' | 'C2';
 export type SpeakingAttemptRefType = 'exercise' | 'free_speech';
 export type SpeakingSegmentTokenType = 'word' | 'phoneme';
+
+export type LearningModule = 'listening' | 'reading' | 'writing' | 'speaking' | 'vocab';
+export type LearningTaskType = 'drill' | 'mock' | 'lesson' | 'review';
+
+export interface LearningTask extends TableBase {
+  slug: string;
+  module: LearningModule;
+  type: LearningTaskType;
+  est_minutes: number;
+  tags: string[];
+  difficulty?: string | null;
+  metadata: Record<string, unknown>;
+  min_plan: PlanId;
+  is_active: boolean;
+}
+
+export interface LearningSignal {
+  id: number;
+  user_id: string;
+  module: LearningModule;
+  key: string;
+  value: number;
+  source: string;
+  occurred_at: string;
+}
+
+export interface LearningProfileRow {
+  user_id: string;
+  target_band?: number | null;
+  speaking_pron?: number | null;
+  speaking_fluency?: number | null;
+  reading_tfng?: number | null;
+  reading_mcq?: number | null;
+  writing_task2?: number | null;
+  vocab_range?: number | null;
+  listening_accuracy?: number | null;
+  last_updated_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RecommendationStatus = 'pending' | 'shown' | 'accepted' | 'skipped' | 'completed';
+
+export interface RecommendationRow extends TableBase {
+  user_id: string;
+  task_id: string;
+  reason: string;
+  score: number;
+  status: RecommendationStatus;
+}
+
+export interface TaskRunRow extends TableBase {
+  user_id: string;
+  task_id: string;
+  recommendation_id?: string | null;
+  started_at: string;
+  completed_at?: string | null;
+  outcome?: Record<string, unknown> | null;
+  band_delta?: number | null;
+}
 
 export interface SpeakingExercise extends TableBase {
   slug: string;
@@ -686,6 +747,11 @@ export interface DBSchema {
   speaking_attempts: SpeakingAttempt;
   speaking_segments: SpeakingSegment;
   speaking_pron_goals: SpeakingPronGoal;
+  learning_tasks: LearningTask;
+  learning_signals: LearningSignal;
+  learning_profiles: LearningProfileRow;
+  recommendations: RecommendationRow;
+  task_runs: TaskRunRow;
 
   // kept from main
   account_audit_log: AccountAuditLog;
