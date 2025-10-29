@@ -47,7 +47,7 @@ function collectTests(dir: string, out: string[] = []): string[] {
 }
 
 (async () => {
-  const testFiles = TARGET_DIRS.flatMap((dir) => collectTests(dir));
+  const testFiles = TEST_DIRS.flatMap((dir) => collectTests(dir));
 
   if (testFiles.length === 0) {
     console.log('No tests found. Exiting OK.');

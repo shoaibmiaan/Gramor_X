@@ -7,6 +7,8 @@ import { createRequestLogger } from '@/lib/obs/logger';
 import { rateLimit } from '@/lib/rateLimit';
 import { getServerClient } from '@/lib/supabaseServer';
 import { FeedbackJson, ScoresJson } from '@/lib/writing/schemas';
+import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
+import { getBaseUrl } from '@/lib/url';
 
 const Body = z.object({
   attemptId: z.string().uuid(),
@@ -85,6 +87,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     request_id: requestId,
     ip: clientIp,
   });
+
+  if (attemptRow.user_id) {
+    const contact = await getNotificationContact(attemptRow.user_id);
+    if (contact.email) {
+      const baseUrl = getBaseUrl();
+      const payload: Record<string, unknown> = {
+        module: 'Writing',
+        band: scores.overall,
+        deep_link: `${baseUrl}/writing/results/${attemptId}`,
+        user_email: contact.email,
+      };
+      if (contact.phone) {
+        payload.user_phone = contact.phone;
+      }
+
+      const result = await queueNotificationEvent({
+        event_key: 'score_ready',
+        user_id: attemptRow.user_id,
+        payload,
+        channels: ['email'],
+        idempotency_key: `writing_score:${attemptId}`,
+      });
+
+      if (!result.ok && result.reason !== 'duplicate') {
+        logger.error('failed to enqueue score notification', {
+          attemptId,
+          userId: attemptRow.user_id,
+          error: result.message,
+        });
+      }
+    } else {
+      logger.warn('skipping score notification because email is missing', {
+        attemptId,
+        userId: attemptRow.user_id,
+      });
+    }
+  }
 
   return res.status(200).json({ ok: true });
 }
