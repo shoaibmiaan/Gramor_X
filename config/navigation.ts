@@ -53,6 +53,7 @@ const aiTools: NavItemConfig[] = [
 
 const profileMenu: NavItemConfig[] = [
   { id: 'profile', label: 'My Profile', href: '/profile', featureGate: authenticatedGate },
+  { id: 'notifications', label: 'Notifications', href: '/notifications', featureGate: authenticatedGate },
   {
     id: 'mistakes',
     label: 'My Mistakes',
@@ -75,7 +76,7 @@ export const navigationSchema: AppNavigationSchema = {
     optional: {
       themeToggle: true,
       localeSwitch: false,
-      notifications: false,
+      notifications: true,
     },
   },
   sidebar: [
