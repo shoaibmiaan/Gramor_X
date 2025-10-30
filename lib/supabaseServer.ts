@@ -13,7 +13,7 @@ import { parse, serialize } from 'cookie';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { NextRequest, NextResponse } from 'next/server';
 
-import { env } from '@/lib/env';
+import { env, supabaseEnvState } from '@/lib/env';
 import type { Database } from '@/types/supabase';
 
 // Shared types ---------------------------------------------------------------
@@ -41,6 +41,8 @@ type CreateOpts = ServerClientOptions & {
 const URL = env.NEXT_PUBLIC_SUPABASE_URL || env.SUPABASE_URL;
 const ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const SERVICE_KEY = (env as any).SUPABASE_SERVICE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY;
+const SHOULD_STUB_CLIENT = !supabaseEnvState.hasUrl || !supabaseEnvState.hasAnonKey;
+const SHOULD_STUB_SERVICE = SHOULD_STUB_CLIENT || !supabaseEnvState.hasServiceKey;
 const CLIENT_HEADER = 'gramorx/pages-router';
 
 const isTest =
@@ -58,40 +60,125 @@ const isProdRuntime =
 const resolved = <T,>(payload: T) => Promise.resolve(payload);
 
 function makeTestStub<T = Database>(): SupabaseClient<T> {
-  const fromHandler = (_table: string) => ({
-    async insert(rows: any) {
-      return resolved({
-        data: Array.isArray(rows)
+  const createQueryBuilder = (initialData: any = []) => {
+    const payload = { data: initialData, error: null as any, count: null as number | null };
+    const builder: any = {
+      select() {
+        return builder;
+      },
+      returns() {
+        return builder;
+      },
+      eq() {
+        return builder;
+      },
+      neq() {
+        return builder;
+      },
+      lt() {
+        return builder;
+      },
+      lte() {
+        return builder;
+      },
+      gt() {
+        return builder;
+      },
+      gte() {
+        return builder;
+      },
+      in() {
+        return builder;
+      },
+      or() {
+        return builder;
+      },
+      ilike() {
+        return builder;
+      },
+      textSearch() {
+        return builder;
+      },
+      order() {
+        return builder;
+      },
+      limit() {
+        return builder;
+      },
+      range() {
+        return builder;
+      },
+      maybeSingle() {
+        payload.data = Array.isArray(payload.data) ? payload.data[0] ?? null : payload.data ?? null;
+        return builder;
+      },
+      single() {
+        payload.data = Array.isArray(payload.data) ? payload.data[0] ?? null : payload.data ?? null;
+        return builder;
+      },
+      then(onFulfilled: (value: any) => any, onRejected?: (reason: unknown) => any) {
+        return resolved({ ...payload }).then(onFulfilled, onRejected);
+      },
+    };
+    return builder;
+  };
+
+  const fromHandler = (_table: string) => {
+    const builder = createQueryBuilder();
+    return Object.assign(builder, {
+      insert(rows: any) {
+        const normalized = Array.isArray(rows)
           ? rows.map((r, i) => ({ id: `stub-${i + 1}`, ...r }))
-          : [{ id: 'stub-1', ...rows }],
-        error: null,
-      });
+          : rows != null
+          ? [{ id: 'stub-1', ...rows }]
+          : [];
+        return resolved({ data: normalized, error: null });
+      },
+      update(_rows: any) {
+        return createQueryBuilder(null);
+      },
+      upsert(_rows: any) {
+        return createQueryBuilder(null);
+      },
+      delete() {
+        return createQueryBuilder(null);
+      },
+    });
+  };
+
+  const authStub = {
+    async getUser() {
+      return resolved({ data: { user: null }, error: null });
     },
-    async select(_cols?: string) {
-      return resolved({ data: [], error: null });
+    async getSession() {
+      return resolved({ data: { session: null }, error: null });
     },
-    async update(_rows: any) {
+    async setSession(_session: any) {
       return resolved({ data: null, error: null });
     },
-    async delete() {
-      return resolved({ data: null, error: null });
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } }, error: null }),
+  };
+
+  const channelStub = () => ({
+    on() {
+      return this;
+    },
+    subscribe() {
+      return resolved({ error: null, status: 'SUBSCRIBED' });
+    },
+    unsubscribe() {
+      return resolved({ error: null });
     },
   });
 
   return {
-    auth: {
-      async getUser() {
-        return resolved({ data: { user: null }, error: null });
-      },
-      async getSession() {
-        return resolved({ data: { session: null }, error: null });
-      },
-      async setSession(_session: any) {
-        return resolved({ data: null, error: null });
-      },
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } }, error: null }),
-    },
+    auth: authStub,
     from: fromHandler,
+    rpc() {
+      return resolved({ data: null, error: null });
+    },
+    channel: channelStub,
+    removeAllChannels: () => undefined,
   } as unknown as SupabaseClient<T>;
 }
 
@@ -307,10 +394,12 @@ export function getServerClient<T = Database>(
   res?: ServerResponseLike,
   opts: ServerClientOptions = {},
 ): SupabaseClient<T> {
+  if (SHOULD_STUB_CLIENT) {
+    return makeTestStub<T>();
+  }
+
   ensureEnvVars(URL, 'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL');
   ensureEnvVars(ANON_KEY, 'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
-
-  if (!URL || !ANON_KEY) return makeTestStub<T>();
 
   const cookieJar = readRequestCookies(req);
   const cookies = {
@@ -342,10 +431,12 @@ export function getServerClient<T = Database>(
 }
 
 export function getMiddlewareClient<T = Database>(req: NextRequest, res: NextResponse) {
+  if (SHOULD_STUB_CLIENT) {
+    return makeTestStub<T>();
+  }
+
   ensureEnvVars(URL, 'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL');
   ensureEnvVars(ANON_KEY, 'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
-
-  if (!URL || !ANON_KEY) return makeTestStub<T>();
 
   const cookieJar = new Map<string, string>();
   req.cookies.getAll().forEach((cookie) => {
@@ -380,10 +471,12 @@ export function createSupabaseServerClient<T = Database>(opts: CreateOpts = {}):
     return getServerClient<T>(opts.req, opts.res, opts);
   }
 
+  if (SHOULD_STUB_CLIENT) {
+    return makeTestStub<T>();
+  }
+
   ensureEnvVars(URL, 'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL');
   ensureEnvVars(ANON_KEY, 'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
-
-  if (!URL || !ANON_KEY) return makeTestStub<T>();
 
   return createClient<T>(URL, ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -396,10 +489,12 @@ export function supabaseService<T = Database>(): SupabaseClient<T> {
     throw new Error('supabaseService() can only be used on the server.');
   }
 
+  if (SHOULD_STUB_SERVICE) {
+    return makeTestStub<T>();
+  }
+
   ensureEnvVars(URL, 'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL');
   ensureEnvVars(SERVICE_KEY, 'Missing SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY).');
-
-  if (!URL || !SERVICE_KEY) return makeTestStub<T>();
 
   const existing = (globalThis as typeof globalThis & {
     __supabaseServiceClient?: SupabaseClient<T>;

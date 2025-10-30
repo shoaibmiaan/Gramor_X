@@ -201,15 +201,26 @@ const isProdBuild =
 
 const parsed = envSchema.safeParse(raw);
 
+const globalEnv = globalThis as typeof globalThis & { __envWarnings?: Set<string> };
+
 if (!parsed.success && typeof window === 'undefined') {
   if (skipValidation || !isProdBuild) {
     const warnings = parsed.error.issues
       .map((i) => `${i.path.join('.')}: ${i.message}`)
       .join('\n');
-    console.warn(
+
+    const message =
       'Skipping strict environment validation (non-prod or SKIP_ENV_VALIDATION=true). Falling back to safe defaults:\n' +
-        warnings
-    );
+      warnings;
+
+    if (!globalEnv.__envWarnings) {
+      globalEnv.__envWarnings = new Set();
+    }
+
+    if (!globalEnv.__envWarnings.has(message)) {
+      globalEnv.__envWarnings.add(message);
+      console.warn(message);
+    }
   } else {
     const errors = parsed.error.issues
       .map((i) => `${i.path.join('.')}: ${i.message}`)
@@ -253,6 +264,18 @@ export const env = parsed.success
 
 export const isBrowser = typeof window !== 'undefined';
 export const isServer = !isBrowser;
+
+const hasSupabaseUrlEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL);
+const hasSupabaseAnonKeyEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const hasSupabaseServiceKeyEnv = Boolean(
+  (process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY) ?? '',
+);
+
+export const supabaseEnvState = {
+  hasUrl: hasSupabaseUrlEnv,
+  hasAnonKey: hasSupabaseAnonKeyEnv,
+  hasServiceKey: hasSupabaseServiceKeyEnv,
+};
 
 export function bool(val?: string, fallback = false) {
   if (val == null) return fallback;
