@@ -15,7 +15,11 @@ type LeaderboardEntry = {
 };
 
 type ResponseBody =
-  | { ok: true; entries: Record<Scope, LeaderboardEntry[]> }
+  | {
+      ok: true;
+      entries: Record<Scope, LeaderboardEntry[]>;
+      warnings?: Array<{ scope: Scope; message: string }>;
+    }
   | { ok: false; error: string };
 
 async function latestSnapshot(scope: Scope) {
@@ -59,26 +63,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
-  try {
-    const scopeParam = (req.query.scope as string | undefined)?.toLowerCase();
-    const scopes: Scope[] = scopeParam && VALID_SCOPES.has(scopeParam as Scope)
-      ? [scopeParam as Scope]
-      : ['daily', 'weekly'];
+  const scopeParam = (req.query.scope as string | undefined)?.toLowerCase();
+  const scopes: Scope[] = scopeParam && VALID_SCOPES.has(scopeParam as Scope)
+    ? [scopeParam as Scope]
+    : ['daily', 'weekly'];
 
-    const result: Record<Scope, LeaderboardEntry[]> = { daily: [], weekly: [] } as Record<Scope, LeaderboardEntry[]>;
+  const result: Record<Scope, LeaderboardEntry[]> = { daily: [], weekly: [] } as Record<Scope, LeaderboardEntry[]>;
+  const warnings: Array<{ scope: Scope; message: string }> = [];
 
-    for (const scope of scopes) {
-      const snapshotDate = await latestSnapshot(scope);
-      if (!snapshotDate) {
+  await Promise.all(
+    scopes.map(async (scope) => {
+      try {
+        const snapshotDate = await latestSnapshot(scope);
+        if (!snapshotDate) {
+          result[scope] = [];
+          return;
+        }
+
+        result[scope] = await loadEntries(scope, snapshotDate);
+      } catch (error: any) {
+        const message = error?.message ?? 'Unexpected error';
+        warnings.push({ scope, message });
         result[scope] = [];
-        continue;
+        console.error(`[api/leaderboard/xp] failed to load ${scope} snapshot`, error);
       }
-      result[scope] = await loadEntries(scope, snapshotDate);
-    }
+    }),
+  );
 
-    return res.status(200).json({ ok: true, entries: result });
-  } catch (error: any) {
-    console.error('[api/leaderboard/xp] failed', error);
-    return res.status(500).json({ ok: false, error: error?.message ?? 'Unexpected error' });
+  if (warnings.length > 0) {
+    return res.status(200).json({ ok: true, entries: result, warnings });
   }
+
+  return res.status(200).json({ ok: true, entries: result });
 }
