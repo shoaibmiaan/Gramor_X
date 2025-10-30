@@ -1,4 +1,0 @@
-pages/mock-tests/[section].tsx
-pages/mock-tests/analytics.tsx
-pages/mock-tests/full.tsx
-pages/mock-tests/index.tsx

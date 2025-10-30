@@ -1,7 +1,0 @@
-Risk,Severity,Likelihood,Mitigation,Owner,Target Phase,Notes
-"Mobile performance regressions","High","Medium","Lock LH floors; PR checklist; image budgets","", "Phase 2","Use lighthouserc floors"
-"A11y blockers slip to later","High","Medium","Axe sweep per PR; fail on criticals","", "Phase 2","Track violations trend"
-"Auth friction (OTP/email)","Medium","Medium","Shorten flows; cache error states","", "Phase 2","Measure time-to-sign-in"
-"Token drift (raw hex/px)","Medium","High","Tokens-only rule + lint","", "Phase 2","Add lint rule later"
-"Unclear pricing path","Medium","Medium","Above-the-fold CTA; link after mock","", "Phase 2","Heatmap later"
-"CI env differences (Node/Chrome)","Low","Medium","Pin LH Chrome via Playwright path","", "Phase 2","Already using CHROME_PATH"
