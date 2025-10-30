@@ -1,1 +1,2112 @@
-const ROUTES_JSON_URL = "./gramorx_all_routes_seed.json";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gramor X — Modules Review (Single File, ≤20 Modules, Link‑Fixed)</title>
+  <style>
+    :root{ --bg:#0b0b10; --panel:#11121a; --muted:#9aa3af; --text:#e5e7eb;
+      --accent:#7c3aed; --accent-2:#22d3ee; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --chip:#1f2937; --card:#0f172a; --border:#1f2937; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;
+      background:linear-gradient(180deg,#0b0b10 0%, #0b0b10 60%, #0e121a 100%); color:var(--text);}
+    header{position:sticky;top:0;z-index:50;backdrop-filter:saturate(180%) blur(10px);
+      background:rgba(11,11,16,.7);border-bottom:1px solid var(--border);}
+    .container{max-width:1200px;margin:0 auto;padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .row>*{flex:0 0 auto}
+    h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.2px}
+    .muted{color:var(--muted)}
+    .pill{background:var(--chip);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:999px;font-size:12px}
+    .search{flex:1 1 320px;display:flex;gap:8px}
+    .search input,.select{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:10px 12px;font-size:14px;outline:none;}
+    .select{appearance:none;min-width:180px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 16px, calc(100% - 12px) 16px;background-size:6px 6px;background-repeat:no-repeat;}
+    main{padding:24px 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,var(--card),#0b1020);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:220px;}
+    .card header{background:transparent;border:none;padding:14px 14px 0}
+    .card h3{margin:0 0 4px 0;font-size:16px}
+    .tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+    .tag{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--muted)}
+    .body{padding:10px 14px 14px;display:flex;flex-direction:column;gap:10px}
+    .pages{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto}
+    .page{display:flex;align-items:center;gap:10px;padding:8px;border:1px dashed var(--border);border-radius:10px;background:#0c1320}
+    .page .path{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:12px}
+    .status{margin-left:auto;display:flex;gap:8px;align-items:center}
+    .badge{font-size:10px;padding:2px 6px;border-radius:6px;border:1px solid var(--border);background:var(--chip)}
+    .badge.ok{color:#dcfce7;background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)}
+    .badge.warn{color:#fff7ed;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35)}
+    .badge.bad{color:#fee2e2;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35)}
+    .progress{height:8px;background:var(--panel);border:1px solid var(--border);border-radius:999px;overflow:hidden}
+    .bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%}
+    .footer{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:auto;padding:12px 14px;border-top:1px solid var(--border)}
+    button{background:linear-gradient(180deg,var(--accent),#5b21b6);border:none;border-radius:10px;color:white;padding:10px 12px;font-weight:600;cursor:pointer;}
+    .ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+    .legend{display:flex;gap:10px;align-items:center}
+    .legend .key{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+    .dot{width:10px;height:10px;border-radius:999px}
+    .okDot{background:var(--ok)} .warnDot{background:var(--warn)} .badDot{background:var(--bad)}
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .link{color:#93c5fd;text-decoration:none}
+    .tiny{font-size:11px}
+    .kbd{font:12px ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;background:#0b1320;border:1px solid var(--border);padding:2px 6px;border-radius:6px;color:#cbd5e1}
+    .count{font-weight:700}
+    .toast{position:fixed;bottom:16px;right:16px;background:#111827;border:1px solid var(--border);padding:10px 12px;border-radius:10px;display:none}
+    .controls{display:flex;gap:12px;align-items:center;margin:10px 0}
+    label.switch{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+    .code-link{font-size:11px;margin-left:6px;opacity:.9}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="row">
+        <h1>Gramor X • Modules Review</h1>
+        <span class="pill">≤20 curated modules — all pages mapped</span>
+        <div class="toolbar">
+          <div class="legend">
+            <div class="key"><span class="dot okDot"></span> Done</div>
+            <div class="key"><span class="dot warnDot"></span> In Progress</div>
+            <div class="key"><span class="dot badDot"></span> Not Started</div>
+          </div>
+        </div>
+        <div class="search">
+          <input id="q" placeholder="Search modules, pages, routes…" aria-label="Search content"/>
+          <select id="status" class="select" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="done">Done</option>
+            <option value="progress">In Progress</option>
+            <option value="todo">Not Started</option>
+          </select>
+          <select id="area" class="select" aria-label="Filter by area">
+            <option value="">All areas</option>
+          </select>
+        </div>
+        <div class="controls">
+          <label class="switch"><input type="checkbox" id="toggleRaw"/> Show raw (all modules)</label>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <div class="muted tiny">Tip: Press <span class="kbd">/</span> to focus search • Your edits save to <strong>localStorage</strong>.</div>
+      <div class="muted tiny">Items: <span id="counts" class="count">0</span></div>
+    </div>
+    <section id="cards" class="grid" aria-live="polite"></section>
+  </main>
+
+  <div class="container" style="padding-bottom:40px">
+    <div class="row" style="justify-content:flex-end">
+      <button class="ghost" id="export">Export JSON</button>
+      <button id="reset">Reset to Defaults</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Saved</div>
+
+  <!-- Embedded JSON seed -->
+  <script type="application/json" id="seed">
+[
+  {
+    "area": "Platform & Mobile",
+    "module": "403",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "403",
+        "path": "/403",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "404",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "404",
+        "path": "/404",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "500",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "500",
+        "path": "/500",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Accessibility",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Accessibility",
+        "path": "/accessibility",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Monetization",
+    "module": "Account",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Account",
+        "path": "/account",
+        "status": "todo"
+      },
+      {
+        "name": "Billing",
+        "path": "/account/billing",
+        "status": "todo"
+      },
+      {
+        "name": "Redeem",
+        "path": "/account/redeem",
+        "status": "todo"
+      },
+      {
+        "name": "Referrals",
+        "path": "/account/referrals",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Teacher & Admin",
+    "module": "Admin",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Admin",
+        "path": "/admin",
+        "status": "todo"
+      },
+      {
+        "name": "Reading",
+        "path": "/admin/content/reading",
+        "status": "todo"
+      },
+      {
+        "name": "Imp As",
+        "path": "/admin/imp-as",
+        "status": "todo"
+      },
+      {
+        "name": "Listening",
+        "path": "/admin/listening",
+        "status": "todo"
+      },
+      {
+        "name": "Partners",
+        "path": "/admin/partners",
+        "status": "todo"
+      },
+      {
+        "name": "Pin",
+        "path": "/admin/premium/pin",
+        "status": "todo"
+      },
+      {
+        "name": "Reading",
+        "path": "/admin/reading",
+        "status": "todo"
+      },
+      {
+        "name": "Reviews",
+        "path": "/admin/reviews",
+        "status": "todo"
+      },
+      {
+        "name": "Attemptid (param)",
+        "path": "/admin/reviews/:attemptId",
+        "status": "todo"
+      },
+      {
+        "name": "Speaking",
+        "path": "/admin/speaking",
+        "status": "todo"
+      },
+      {
+        "name": "Attempts",
+        "path": "/admin/speaking/attempts",
+        "status": "todo"
+      },
+      {
+        "name": "Stop Impersonation",
+        "path": "/admin/stop-impersonation",
+        "status": "todo"
+      },
+      {
+        "name": "Students",
+        "path": "/admin/students",
+        "status": "todo"
+      },
+      {
+        "name": "Teacher",
+        "path": "/admin/teacher",
+        "status": "todo"
+      },
+      {
+        "name": "Teachers",
+        "path": "/admin/teachers",
+        "status": "todo"
+      },
+      {
+        "name": "Users",
+        "path": "/admin/users",
+        "status": "todo"
+      },
+      {
+        "name": "New Sense",
+        "path": "/admin/vocabulary/new-sense",
+        "status": "todo"
+      },
+      {
+        "name": "Writing",
+        "path": "/admin/writing",
+        "status": "todo"
+      },
+      {
+        "name": "Topics",
+        "path": "/admin/writing/topics",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "AI & Personalization",
+    "module": "Ai",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Ai",
+        "path": "/ai",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/ai/writing/:id",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Analytics",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Writing",
+        "path": "/analytics/writing",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Auth",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Callback",
+        "path": "/auth/callback",
+        "status": "todo"
+      },
+      {
+        "name": "Forgot",
+        "path": "/auth/forgot",
+        "status": "todo"
+      },
+      {
+        "name": "Mfa",
+        "path": "/auth/mfa",
+        "status": "todo"
+      },
+      {
+        "name": "Reset",
+        "path": "/auth/reset",
+        "status": "todo"
+      },
+      {
+        "name": "Verify",
+        "path": "/auth/verify",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Engagement & Comms",
+    "module": "Blog",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Blog",
+        "path": "/blog",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/blog/:slug",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Bookings",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Bookings",
+        "path": "/bookings",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/bookings/:id",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Cert",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Id (param)",
+        "path": "/cert/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Attemptid (param)",
+        "path": "/cert/writing/:attemptId",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Practice & Assessment",
+    "module": "Challenge",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Challenge",
+        "path": "/challenge",
+        "status": "todo"
+      },
+      {
+        "name": "Cohort (param)",
+        "path": "/challenge/:cohort",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Monetization",
+    "module": "Checkout",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Checkout",
+        "path": "/checkout",
+        "status": "todo"
+      },
+      {
+        "name": "Cancel",
+        "path": "/checkout/cancel",
+        "status": "todo"
+      },
+      {
+        "name": "Crypto",
+        "path": "/checkout/crypto",
+        "status": "todo"
+      },
+      {
+        "name": "Success",
+        "path": "/checkout/success",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Classes",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Classes",
+        "path": "/classes",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/classes/:id",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "AI & Personalization",
+    "module": "Coach",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Coach",
+        "path": "/coach",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/coach/:id",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Engagement & Comms",
+    "module": "Community",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Community",
+        "path": "/community",
+        "status": "todo"
+      },
+      {
+        "name": "Chat",
+        "path": "/community/chat",
+        "status": "todo"
+      },
+      {
+        "name": "Questions",
+        "path": "/community/questions",
+        "status": "todo"
+      },
+      {
+        "name": "Review",
+        "path": "/community/review",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Content",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Studio",
+        "path": "/content/studio",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/content/studio/:id",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Dashboard",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Dashboard",
+        "path": "/dashboard",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Data Deletion",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Data Deletion",
+        "path": "/data-deletion",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Exam",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Rehearsal",
+        "path": "/exam/rehearsal",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Exam Day",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Exam Day",
+        "path": "/exam-day",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Faq",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Faq",
+        "path": "/faq",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Forgot Password",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Forgot Password",
+        "path": "/forgot-password",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Teacher & Admin",
+    "module": "Institutions",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Institutions",
+        "path": "/institutions",
+        "status": "todo"
+      },
+      {
+        "name": "Orgid (param)",
+        "path": "/institutions/:orgId",
+        "status": "todo"
+      },
+      {
+        "name": "Reports",
+        "path": "/institutions/:orgId/reports",
+        "status": "todo"
+      },
+      {
+        "name": "Students",
+        "path": "/institutions/:orgId/students",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Internal",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Playground",
+        "path": "/internal/content/playground",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Labs",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Ai Tutor",
+        "path": "/labs/ai-tutor",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Practice & Assessment",
+    "module": "Leaderboard",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Leaderboard",
+        "path": "/leaderboard",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Learning",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Learning",
+        "path": "/learning",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/learning/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Drills",
+        "path": "/learning/drills",
+        "status": "todo"
+      },
+      {
+        "name": "Skills",
+        "path": "/learning/skills",
+        "status": "todo"
+      },
+      {
+        "name": "Skill (param)",
+        "path": "/learning/skills/:skill",
+        "status": "todo"
+      },
+      {
+        "name": "Lessons",
+        "path": "/learning/skills/lessons",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/learning/skills/lessons/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Strategies",
+        "path": "/learning/strategies",
+        "status": "todo"
+      },
+      {
+        "name": "Tipslug (param)",
+        "path": "/learning/strategies/:tipSlug",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Legal",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Privacy",
+        "path": "/legal/privacy",
+        "status": "todo"
+      },
+      {
+        "name": "Terms",
+        "path": "/legal/terms",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Core Learning",
+    "module": "Listening",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Listening",
+        "path": "/listening",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/listening/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Review",
+        "path": "/listening/:slug/review",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Login",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Login",
+        "path": "/login",
+        "status": "todo"
+      },
+      {
+        "name": "Email",
+        "path": "/login/email",
+        "status": "todo"
+      },
+      {
+        "name": "Password",
+        "path": "/login/password",
+        "status": "todo"
+      },
+      {
+        "name": "Phone",
+        "path": "/login/phone",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Marketplace",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Marketplace",
+        "path": "/marketplace",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Practice & Assessment",
+    "module": "Mistakes",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Mistakes",
+        "path": "/mistakes",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Mock",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Id (param)",
+        "path": "/mock/listening/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/mock/reading/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Attemptid (param)",
+        "path": "/mock/reading/review/:attemptId",
+        "status": "todo"
+      },
+      {
+        "name": "Resume",
+        "path": "/mock/resume",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/mock/speaking/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/mock/writing/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Attemptid (param)",
+        "path": "/mock/writing/results/:attemptId",
+        "status": "todo"
+      },
+      {
+        "name": "Attemptid (param)",
+        "path": "/mock/writing/review/:attemptId",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Practice & Assessment",
+    "module": "Mock Tests",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Mock Tests",
+        "path": "/mock-tests",
+        "status": "todo"
+      },
+      {
+        "name": "Section (param)",
+        "path": "/mock-tests/:section",
+        "status": "todo"
+      },
+      {
+        "name": "Analytics",
+        "path": "/mock-tests/analytics",
+        "status": "todo"
+      },
+      {
+        "name": "Full",
+        "path": "/mock-tests/full",
+        "status": "todo"
+      },
+      {
+        "name": "Listening",
+        "path": "/mock-tests/listening",
+        "status": "todo"
+      },
+      {
+        "name": "Reading",
+        "path": "/mock-tests/reading",
+        "status": "todo"
+      },
+      {
+        "name": "Speaking",
+        "path": "/mock-tests/speaking",
+        "status": "todo"
+      },
+      {
+        "name": "Writing",
+        "path": "/mock-tests/writing",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Notifications",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Notifications",
+        "path": "/notifications",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Teacher & Admin",
+    "module": "Onboarding",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Onboarding",
+        "path": "/onboarding",
+        "status": "todo"
+      },
+      {
+        "name": "Date",
+        "path": "/onboarding/date",
+        "status": "todo"
+      },
+      {
+        "name": "Goal",
+        "path": "/onboarding/goal",
+        "status": "todo"
+      },
+      {
+        "name": "Schedule",
+        "path": "/onboarding/schedule",
+        "status": "todo"
+      },
+      {
+        "name": "Skills",
+        "path": "/onboarding/skills",
+        "status": "todo"
+      },
+      {
+        "name": "Teacher",
+        "path": "/onboarding/teacher",
+        "status": "todo"
+      },
+      {
+        "name": "Status",
+        "path": "/onboarding/teacher/status",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Orgs",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Orgs",
+        "path": "/orgs",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Partners",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Partners",
+        "path": "/partners",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Practice & Assessment",
+    "module": "Placement",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Placement",
+        "path": "/placement",
+        "status": "todo"
+      },
+      {
+        "name": "Result",
+        "path": "/placement/result",
+        "status": "todo"
+      },
+      {
+        "name": "Run",
+        "path": "/placement/run",
+        "status": "todo"
+      },
+      {
+        "name": "Start",
+        "path": "/placement/start",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Practice",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Practice",
+        "path": "/practice",
+        "status": "todo"
+      },
+      {
+        "name": "Listening",
+        "path": "/practice/listening",
+        "status": "todo"
+      },
+      {
+        "name": "Reading",
+        "path": "/practice/reading",
+        "status": "todo"
+      },
+      {
+        "name": "Speaking",
+        "path": "/practice/speaking",
+        "status": "todo"
+      },
+      {
+        "name": "Writing",
+        "path": "/practice/writing",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "AI & Personalization",
+    "module": "Predictor",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Predictor",
+        "path": "/predictor",
+        "status": "todo"
+      },
+      {
+        "name": "Result",
+        "path": "/predictor/result",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Monetization",
+    "module": "Premium",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Premium",
+        "path": "/premium",
+        "status": "todo"
+      },
+      {
+        "name": "Premiumexampage",
+        "path": "/premium/PremiumExamPage",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/premium/listening/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Pin",
+        "path": "/premium/pin",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/premium/reading/:slug",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Monetization",
+    "module": "Pricing",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Pricing",
+        "path": "/pricing",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Proctoring",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Check",
+        "path": "/proctoring/check",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/proctoring/exam/:id",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Profile",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Profile",
+        "path": "/profile",
+        "status": "todo"
+      },
+      {
+        "name": "Setup",
+        "path": "/profile/setup",
+        "status": "todo"
+      },
+      {
+        "name": "Streak",
+        "path": "/profile/streak",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Progress",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Progress",
+        "path": "/progress",
+        "status": "todo"
+      },
+      {
+        "name": "Token (param)",
+        "path": "/progress/:token",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Promotions",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Promotions",
+        "path": "/promotions",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Pwa",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "App",
+        "path": "/pwa/app",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Quick",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Quick",
+        "path": "/quick",
+        "status": "todo"
+      },
+      {
+        "name": "Skill (param)",
+        "path": "/quick/:skill",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "R",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Code (param)",
+        "path": "/r/:code",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Core Learning",
+    "module": "Reading",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Reading",
+        "path": "/reading",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/reading/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Review",
+        "path": "/reading/:slug/review",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/reading/passage/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Stats",
+        "path": "/reading/stats",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Reports",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Band Analytics",
+        "path": "/reports/band-analytics",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Restricted",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Restricted",
+        "path": "/restricted",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Review",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Id (param)",
+        "path": "/review/listening/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/review/reading/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Token (param)",
+        "path": "/review/share/:token",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/review/speaking/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/review/writing/:id",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Roadmap",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Roadmap",
+        "path": "/roadmap",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Core Learning",
+    "module": "Home",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Home",
+        "path": "/",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Saved",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Saved",
+        "path": "/saved",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Settings",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Settings",
+        "path": "/settings",
+        "status": "todo"
+      },
+      {
+        "name": "Accessibility",
+        "path": "/settings/accessibility",
+        "status": "todo"
+      },
+      {
+        "name": "Billing",
+        "path": "/settings/billing",
+        "status": "todo"
+      },
+      {
+        "name": "Language",
+        "path": "/settings/language",
+        "status": "todo"
+      },
+      {
+        "name": "Notifications",
+        "path": "/settings/notifications",
+        "status": "todo"
+      },
+      {
+        "name": "Security",
+        "path": "/settings/security",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Signup",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Signup",
+        "path": "/signup",
+        "status": "todo"
+      },
+      {
+        "name": "Email",
+        "path": "/signup/email",
+        "status": "todo"
+      },
+      {
+        "name": "Password",
+        "path": "/signup/password",
+        "status": "todo"
+      },
+      {
+        "name": "Phone",
+        "path": "/signup/phone",
+        "status": "todo"
+      },
+      {
+        "name": "Verify",
+        "path": "/signup/verify",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Core Learning",
+    "module": "Speaking",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Speaking",
+        "path": "/speaking",
+        "status": "todo"
+      },
+      {
+        "name": "Promptid (param)",
+        "path": "/speaking/:promptId",
+        "status": "todo"
+      },
+      {
+        "name": "Attempts",
+        "path": "/speaking/attempts",
+        "status": "todo"
+      },
+      {
+        "name": "Result",
+        "path": "/speaking/attempts/:attemptId/result",
+        "status": "todo"
+      },
+      {
+        "name": "Buddy",
+        "path": "/speaking/buddy",
+        "status": "todo"
+      },
+      {
+        "name": "Coach",
+        "path": "/speaking/coach",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/speaking/coach/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Free",
+        "path": "/speaking/coach/free",
+        "status": "todo"
+      },
+      {
+        "name": "Library",
+        "path": "/speaking/library",
+        "status": "todo"
+      },
+      {
+        "name": "Live",
+        "path": "/speaking/live",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/speaking/live/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/speaking/packs/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Partner",
+        "path": "/speaking/partner",
+        "status": "todo"
+      },
+      {
+        "name": "History",
+        "path": "/speaking/partner/history",
+        "status": "todo"
+      },
+      {
+        "name": "Attemptid (param)",
+        "path": "/speaking/partner/review/:attemptId",
+        "status": "todo"
+      },
+      {
+        "name": "Practice",
+        "path": "/speaking/practice",
+        "status": "todo"
+      },
+      {
+        "name": "Report",
+        "path": "/speaking/report",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/speaking/review/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Roleplay",
+        "path": "/speaking/roleplay",
+        "status": "todo"
+      },
+      {
+        "name": "Scenario (param)",
+        "path": "/speaking/roleplay/:scenario",
+        "status": "todo"
+      },
+      {
+        "name": "Settings",
+        "path": "/speaking/settings",
+        "status": "todo"
+      },
+      {
+        "name": "Simulator",
+        "path": "/speaking/simulator",
+        "status": "todo"
+      },
+      {
+        "name": "Part1",
+        "path": "/speaking/simulator/part1",
+        "status": "todo"
+      },
+      {
+        "name": "Part2",
+        "path": "/speaking/simulator/part2",
+        "status": "todo"
+      },
+      {
+        "name": "Part3",
+        "path": "/speaking/simulator/part3",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Practice & Assessment",
+    "module": "Study Plan",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Study Plan",
+        "path": "/study-plan",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Teacher & Admin",
+    "module": "Teacher",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Teacher",
+        "path": "/teacher",
+        "status": "todo"
+      },
+      {
+        "name": "Welcome",
+        "path": "/teacher/Welcome",
+        "status": "todo"
+      },
+      {
+        "name": "Id (param)",
+        "path": "/teacher/cohorts/:id",
+        "status": "todo"
+      },
+      {
+        "name": "Onboarding",
+        "path": "/teacher/onboarding",
+        "status": "todo"
+      },
+      {
+        "name": "Pending",
+        "path": "/teacher/pending",
+        "status": "todo"
+      },
+      {
+        "name": "Register",
+        "path": "/teacher/register",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Tokens Test",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Tokens Test",
+        "path": "/tokens-test",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Tools",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Slug (param)",
+        "path": "/tools/mark-sections/:slug",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Update Password",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Update Password",
+        "path": "/update-password",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Visa",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Visa",
+        "path": "/visa",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Core Learning",
+    "module": "Vocab",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Vocab",
+        "path": "/vocab",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Core Learning",
+    "module": "Vocabulary",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Vocabulary",
+        "path": "/vocabulary",
+        "status": "todo"
+      },
+      {
+        "name": "Word (param)",
+        "path": "/vocabulary/:word",
+        "status": "todo"
+      },
+      {
+        "name": "Infiniteapplications",
+        "path": "/vocabulary/infiniteapplications",
+        "status": "todo"
+      },
+      {
+        "name": "Learned",
+        "path": "/vocabulary/learned",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Waitlist",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Waitlist",
+        "path": "/waitlist",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Welcome",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Welcome",
+        "path": "/welcome",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Platform & Mobile",
+    "module": "Word Of The Day",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Word Of The Day",
+        "path": "/word-of-the-day",
+        "status": "todo"
+      }
+    ]
+  },
+  {
+    "area": "Core Learning",
+    "module": "Writing",
+    "tags": [],
+    "progress": 0,
+    "pages": [
+      {
+        "name": "Writing",
+        "path": "/writing",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/writing/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Drills",
+        "path": "/writing/drills",
+        "status": "todo"
+      },
+      {
+        "name": "Slug (param)",
+        "path": "/writing/drills/:slug",
+        "status": "todo"
+      },
+      {
+        "name": "Attemptid (param)",
+        "path": "/writing/review/:attemptId",
+        "status": "todo"
+      },
+      {
+        "name": "Calibrate",
+        "path": "/writing/reviews/calibrate",
+        "status": "todo"
+      }
+    ]
+  }
+]
+  </script>
+
+  <script>
+    // === Configure your domains here ===
+    const SITE_BASE = "https://gramorx.com"; // e.g., https://gramorx.com or http://localhost:3000
+    const GITHUB_BASE = "https://github.com/shoaibmiaan/Gramor_X/blob/main"; // repo browser
+
+    const KEY = "gx_review_dashboard_v1_grouped20_linkfixed";
+    const cardsEl = document.getElementById("cards");
+    const qEl = document.getElementById("q");
+    const statusEl = document.getElementById("status");
+    const areaEl = document.getElementById("area");
+    const countsEl = document.getElementById("counts");
+    const toggleRaw = document.getElementById("toggleRaw");
+
+    function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none", 900); }
+    function save(data){ localStorage.setItem(KEY, JSON.stringify(data)); toast("Saved"); }
+    function computeProgress(section){ const total=section.pages.length||1; const done=section.pages.filter(p=>p.status==="done").length; return Math.round((done/total)*100); }
+    function label(v){ return v==="done" ? "Done" : v==="progress" ? "In Progress" : "Not Started"; }
+
+    function loadSeed(){
+      const el = document.getElementById("seed");
+      if(!el) return [];
+      try{ return JSON.parse(el.textContent.trim()); }
+      catch{ return []; }
+    }
+
+    function mergeLocal(seed){
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return seed;
+      const local = JSON.parse(raw);
+      const lm = new Map();
+      local.forEach(s => s.pages.forEach(p => lm.set(`${s.area}|${s.module}|${p.path}`, p.status)));
+      seed.forEach(s => s.pages.forEach(p => {
+        const k = `${s.area}|${s.module}|${p.path}`;
+        if(lm.has(k)) p.status = lm.get(k);
+      }));
+      return seed;
+    }
+
+    // Curated 20-bucket mapping (top-level -> bucket)
+    const BUCKETS = {
+      "reading": "Reading",
+      "listening": "Listening",
+      "writing": "Writing",
+      "speaking": "Speaking",
+      "vocab": "Vocabulary",
+      "vocabulary": "Vocabulary",
+      "mock-tests": "Mock Tests",
+      "study-plan": "Study Plan",
+      "challenge": "Gamification",
+      "leaderboard": "Gamification",
+      "mistakes": "Mistakes Book",
+      "coach": "AI Coach & Writing",
+      "ai": "AI Coach & Writing",
+      "predictor": "Recommender & Predictor",
+      "onboarding": "Teacher & Onboarding",
+      "teacher": "Teacher & Onboarding",
+      "admin": "Admin & Institutions",
+      "institutions": "Admin & Institutions",
+      "checkout": "Monetization",
+      "pricing": "Monetization",
+      "account": "Monetization",
+      "premium": "Platform",
+      "dashboard": "Platform",
+      "auth": "Auth",
+      "community": "Community & Blog",
+      "blog": "Community & Blog",
+      "placement": "Placement",
+      "": "Platform",
+      "root": "Platform"
+    };
+
+    const BUCKET_AREA = {
+      "Reading": "Core Learning",
+      "Listening": "Core Learning",
+      "Writing": "Core Learning",
+      "Speaking": "Core Learning",
+      "Vocabulary": "Core Learning",
+      "Mock Tests": "Practice & Assessment",
+      "Study Plan": "Practice & Assessment",
+      "Gamification": "Practice & Assessment",
+      "Mistakes Book": "Practice & Assessment",
+      "AI Coach & Writing": "AI & Personalization",
+      "Recommender & Predictor": "AI & Personalization",
+      "Teacher & Onboarding": "Teacher & Admin",
+      "Admin & Institutions": "Teacher & Admin",
+      "Monetization": "Monetization",
+      "Platform": "Platform & Mobile",
+      "Auth": "Platform & Mobile",
+      "Community & Blog": "Engagement & Comms",
+      "Placement": "Practice & Assessment",
+      "System & Errors": "Platform & Mobile"
+    };
+
+    function topSegment(path){ const seg = (path.split("/")[1] || "root"); return seg; }
+
+    function toRoute(path){
+      // map /pages/** => /**, remove file extensions, collapse /index.* to /
+      if(!path.startsWith("/")) return path;
+      if(path.startsWith("/pages")){
+        let rest = path.slice(6);
+        rest = rest.replace(/\/index\.(t|j)sx?$/,"/");
+        rest = rest.replace(/\.(t|j)sx?$/,"");
+        if(!rest.startsWith("/")) rest = "/" + rest;
+        return rest || "/";
+      }
+      // leave other paths as-is (these are not routes)
+      return path;
+    }
+
+    function toSiteHref(path){
+      if(path.startsWith("/pages")){
+        const route = toRoute(path);
+        return SITE_BASE.replace(/\/$/,'') + route;
+      }
+      return ""; // not a site route
+    }
+
+    function toRepoHref(path){
+      const p = path.startsWith("/") ? path : ("/" + path);
+      return GITHUB_BASE.replace(/\/$/,'') + p;
+    }
+
+    function condenseTo20(seed){
+      const grouped = new Map();
+      function push(bucket, page, areaHint){
+        if(!grouped.has(bucket)) grouped.set(bucket, { area: BUCKET_AREA[bucket] || areaHint || "Platform & Mobile", module: bucket, tags: [], progress: 0, pages: [] });
+        const g = grouped.get(bucket);
+        if(!g.pages.some(p => p.path === page.path)) g.pages.push(page);
+      }
+      const SYSTEM_RE = /^\/(404|500|403|_error|\+error|maintenance|health|status)(\b|$)/;
+
+      seed.forEach(section => {
+        section.pages.forEach(p => {
+          const seg = topSegment(p.path);
+          const isSystem = SYSTEM_RE.test(p.path);
+          const bucket = isSystem ? "System & Errors" : (BUCKETS[seg] || "Platform");
+          push(bucket, p, section.area);
+        });
+      });
+
+      const arr = Array.from(grouped.values());
+      arr.forEach(s => s.progress = s.pages.length ? Math.round(s.pages.filter(p=>p.status==="done").length / s.pages.length * 100) : 0);
+      return arr.sort((a,b) => a.module.localeCompare(b.module));
+    }
+
+    let RAW = loadSeed();
+    let state = condenseTo20(mergeLocal(RAW));
+
+    function buildAreaOptions(){
+      const areas = ["", ...Array.from(new Set(state.map(s=>s.area)))].sort();
+      areaEl.innerHTML = "";
+      areas.forEach(a=>{
+        const opt=document.createElement("option");
+        opt.value=a; opt.textContent=a||"All areas"; areaEl.appendChild(opt);
+      });
+    }
+
+    function render(){
+      const q = (qEl.value||"").toLowerCase().trim();
+      const s = statusEl.value;
+      const a = areaEl.value;
+      cardsEl.innerHTML="";
+      let shown=0;
+
+      state.forEach((section, idx)=>{
+        section.progress = computeProgress(section);
+
+        let pages = section.pages
+          .filter(p=> !s || (s==="progress" ? p.status==="progress" : p.status===s))
+          .filter(p=> !q || (`${p.name} ${p.path}`.toLowerCase().includes(q)));
+
+        const sectionHit = (!q || section.area.toLowerCase().includes(q) || section.module.toLowerCase().includes(q));
+        const areaHit = (!a || section.area===a);
+
+        if((pages.length>0 || sectionHit) && areaHit){
+          shown++;
+          const card = document.createElement("article");
+          card.className="card";
+
+          const head = document.createElement("header");
+          head.innerHTML = `
+            <h3>${section.module}</h3>
+            <div class="muted tiny">${section.area}</div>
+            <div class="tags">${(section.tags||[]).map(t=>`<span class="tag">${t}</span>`).join("")}</div>
+          `;
+          card.appendChild(head);
+
+          const body = document.createElement("div");
+          body.className="body";
+          const prog = document.createElement("div");
+          prog.innerHTML = `
+            <div class="row" style="justify-content:space-between">
+              <div class="muted tiny">Progress</div>
+              <div class="tiny"><strong>${section.progress}%</strong></div>
+            </div>
+            <div class="progress" aria-label="Progress ${section.progress}%"><div class="bar" style="width:${section.progress}%"></div></div>
+          `;
+          body.appendChild(prog);
+
+          const list = document.createElement("div");
+          list.className="pages";
+          (pages.length ? pages : section.pages).forEach((p, i)=>{
+            const row = document.createElement("div");
+            row.className="page";
+            const badgeCls = p.status==="done" ? "ok" : p.status==="progress" ? "warn" : "bad";
+
+            const siteHref = toSiteHref(p.path);
+            const repoHref = toRepoHref(p.path);
+            const primaryHref = siteHref || repoHref; // always have a working link
+            const primaryLabel = siteHref ? "open" : "code";
+
+            row.innerHTML = `
+              <div>
+                <div><strong>${p.name}</strong></div>
+                <a href="${primaryHref}" class="path muted tiny link" target="_blank" rel="noopener">${p.path}</a>
+                ${siteHref ? `<a class="code-link link" href="${repoHref}" target="_blank" rel="noopener">code ↗</a>` : ""}
+              </div>
+              <div class="status">
+                <span class="badge ${badgeCls}">${label(p.status)}</span>
+                <select data-idx="${idx}" data-page="${i}" class="select tiny" style="min-width:130px">
+                  ${["todo","progress","done"].map(v=>`<option value="${v}" ${p.status===v?"selected":""}>${label(v)}</option>`).join("")}
+                </select>
+              </div>
+            `;
+            list.appendChild(row);
+          });
+
+          body.appendChild(list);
+          card.appendChild(body);
+
+          const foot = document.createElement("div");
+          foot.className="footer";
+          foot.innerHTML = `<span class="muted tiny">${section.pages.length} items</span>`;
+          card.appendChild(foot);
+
+          cardsEl.appendChild(card);
+        }
+      });
+
+      countsEl.textContent = shown;
+    }
+
+    document.addEventListener("change", (e)=>{
+      if(e.target && e.target.matches("select.select.tiny")){
+        const idx = +e.target.getAttribute("data-idx");
+        const p = +e.target.getAttribute("data-page");
+        const val = e.target.value;
+        state[idx].pages[p].status = val;
+        state[idx].progress = computeProgress(state[idx]);
+        save(state);
+        render();
+      }
+    });
+    document.getElementById("q").addEventListener("input", render);
+    document.getElementById("status").addEventListener("change", render);
+    document.getElementById("area").addEventListener("change", render);
+    document.addEventListener("keydown",(e)=>{ if(e.key==="/"){ e.preventDefault(); document.getElementById("q").focus(); } });
+
+    document.getElementById("export").addEventListener("click", ()=>{
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = toggleRaw.checked ? "routes_raw.json" : "routes_grouped20.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("reset").addEventListener("click", ()=>{
+      if(confirm("Reset dashboard to defaults? Your local changes will be lost.")){
+        localStorage.removeItem(KEY);
+        RAW = loadSeed();
+        state = toggleRaw.checked ? mergeLocal(RAW) : condenseTo20(mergeLocal(RAW));
+        buildAreaOptions();
+        render();
+      }
+    });
+
+    toggleRaw.addEventListener("change", ()=>{
+      state = toggleRaw.checked ? mergeLocal(RAW) : condenseTo20(mergeLocal(RAW));
+      buildAreaOptions();
+      render();
+    });
+
+    function buildAreaOptions(){
+      const areas = ["", ...Array.from(new Set(state.map(s=>s.area)))].sort();
+      areaEl.innerHTML = "";
+      areas.forEach(a=>{
+        const opt=document.createElement("option");
+        opt.value=a; opt.textContent=a||"All areas"; areaEl.appendChild(opt);
+      });
+    }
+
+    function init(){
+      buildAreaOptions();
+      render();
+    }
+    init();
+  </script>
+</body>
+</html>

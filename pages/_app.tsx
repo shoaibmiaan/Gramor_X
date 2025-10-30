@@ -252,7 +252,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
     pathname.startsWith('/notifications') ||
     pathname.startsWith('/study-plan') ||
     pathname.startsWith('/progress') ||
-    pathname.startsWith('/leaderboard') ||
     pathname.startsWith('/mistakes') ||
     pathname.startsWith('/pwa');
 
