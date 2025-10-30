@@ -1,11 +1,21 @@
-import { env } from "@/lib/env";
 // lib/supabaseService.ts
-import { createClient } from '@supabase/supabase-js';
+import { env } from '@/lib/env';
+import { supabaseService as createSupabaseService } from '@/lib/supabaseServer';
+import type { Database } from '@/types/supabase';
 
-export const supabaseService = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL as string,
-  env.SUPABASE_SERVICE_ROLE_KEY as string
-);
+/**
+ * Shared singleton Supabase client backed by the service role key.
+ *
+ * Historically this module constructed its own client using only the
+ * `SUPABASE_SERVICE_ROLE_KEY`. That caused issues in environments where the
+ * service credential is exposed under `SUPABASE_SERVICE_KEY` (such as the
+ * background worker deployment) and resulted in silent 500s for checkout
+ * intent creation.
+ *
+ * We now reuse the server helper which already handles key fallbacks and lazy
+ * instantiation, ensuring consistent behaviour across API routes.
+ */
+export const supabaseService = createSupabaseService<Database>();
 
 // Comma-separated admin emails
 export function isAdminEmail(email?: string | null) {
