@@ -111,6 +111,9 @@ export default async function handler(
 
   const { data, error } = await query;
   if (error) {
+    if ((error as { code?: string }).code === '42P01') {
+      return res.status(200).json({ items: [], nextCursor: null, hasMore: false });
+    }
     // RLS/permission safeguard
     if (error.code === '42501' || error.message?.toLowerCase().includes('row-level security')) {
       return res.status(403).json({ error: 'Forbidden' });

@@ -22,6 +22,9 @@
 
   --color-dark: 15 15 27; /* #0f0f1b */
   --color-darker: 7 7 16; /* #070710 */
+  --color-nightStart: 11 18 32; /* #0b1220 */
+  --color-nightMid: 15 23 42; /* #0f172a */
+  --color-nightEnd: 2 6 23; /* #020617 */
   --color-lightBg: 240 242 245; /* #f0f2f5 */
   --color-lightText: 26 26 46; /* #1a1a2e */
   --color-grayish: 106 106 134; /* #6a6a86 */

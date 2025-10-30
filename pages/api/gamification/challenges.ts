@@ -41,6 +41,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       .order('created_at', { ascending: true });
 
     if (challengeErr) {
+      if ((challengeErr as { code?: string }).code === '42P01') {
+        return res.status(200).json({ ok: true, challenges: [] });
+      }
       throw challengeErr;
     }
 
@@ -55,7 +58,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         .from('user_challenge_progress')
         .select('challenge_id, progress_count, total_mastered, target, last_incremented_at, resets_at');
 
-      if (!progressErr && Array.isArray(progressRows)) {
+      if (progressErr && (progressErr as { code?: string }).code === '42P01') {
+        // Table not provisioned yet; safe to ignore in local/dev environments.
+      } else if (!progressErr && Array.isArray(progressRows)) {
         progressMap = new Map(
           progressRows.map((row: any) => [
             row.challenge_id as string,
