@@ -75,7 +75,7 @@ export default function InfiniteApplicationsPage() {
       </Head>
 
       <main className="bg-background">
-        <section className="border-b border-border/50 bg-muted/30 py-24 dark:bg-gradient-to-br dark:from-[#0B1220] dark:via-[#0F172A] dark:to-[#020617]">
+        <section className="border-b border-border/50 bg-muted/30 py-24 dark:bg-gradient-to-br dark:from-nightStart dark:via-nightMid dark:to-nightEnd">
           <Container className="flex flex-col gap-12 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl space-y-6">
               <Badge variant="neutral" size="sm">

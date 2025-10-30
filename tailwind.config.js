@@ -68,6 +68,9 @@ module.exports = {
         goldenYellow:   cv('goldenYellow'),
         dark:           cv('dark'),
         darker:         cv('darker'),
+        nightStart:     cv('nightStart'),
+        nightMid:       cv('nightMid'),
+        nightEnd:       cv('nightEnd'),
         lightBg:        cv('lightBg'),
         lightText:      cv('lightText'),
         grayish:        cv('grayish'),
@@ -147,18 +150,77 @@ module.exports = {
   plugins: [
     ...[maybe('@tailwindcss/forms'), maybe('@tailwindcss/typography')].filter(Boolean),
 
-    function arbitraryHexWarner({ addVariant }) {
+    function arbitraryHexWarner() {
       const isCI = String(process.env.CI || '').toLowerCase() === 'true';
       if (isCI) return;
 
-      const printed = new Set();
-      const warn = (msg) => {
-        if (printed.has(msg)) return;
-        printed.add(msg);
-        console.warn(`[tailwind] ${msg}`);
+      const globalKey = '__tailwindHexWarnings';
+      const globalState = globalThis;
+      if (!globalState[globalKey]) {
+        globalState[globalKey] = new Set();
+      }
+
+      const fs = require('fs');
+      const path = require('path');
+
+      const roots = ['components', 'pages', 'layouts', 'lib', 'styles', 'premium-ui'];
+      const HEX_PATTERN = /(?:bg|text|border)-\[#(?:[0-9a-fA-F]{6})\]/g;
+      const matches = new Set();
+
+      const visit = (target) => {
+        let entries = [];
+        try {
+          entries = fs.readdirSync(target, { withFileTypes: true });
+        } catch {
+          return;
+        }
+
+        for (const entry of entries) {
+          if (entry.name.startsWith('.')) continue;
+          const resolved = path.join(target, entry.name);
+          if (entry.isDirectory()) {
+            if (['node_modules', '.next', 'dist', 'out', 'coverage'].includes(entry.name)) continue;
+            visit(resolved);
+            continue;
+          }
+
+          const ext = path.extname(entry.name);
+          if (!['.ts', '.tsx', '.js', '.jsx', '.css', '.mdx', '.html'].includes(ext)) continue;
+
+          let content = '';
+          try {
+            content = fs.readFileSync(resolved, 'utf8');
+          } catch {
+            continue;
+          }
+
+          const found = content.match(HEX_PATTERN);
+          if (found) {
+            found.forEach((match) => matches.add(`${match} (${path.relative(__dirname, resolved)})`));
+          }
+        }
       };
 
-      warn('Use tokenized colors (bg-primary, text-danger, etc.). Avoid arbitrary hex like bg-[#ef4444]. Enforce in ESLint/Husky.');
+      roots.forEach((root) => {
+        const fullPath = path.join(__dirname, root);
+        if (fs.existsSync(fullPath)) {
+          visit(fullPath);
+        }
+      });
+
+      if (matches.size === 0) return;
+
+      const offenders = Array.from(matches).slice(0, 5).join(', ');
+      const message =
+        'Use tokenized colors (bg-primary, text-danger, etc.). Avoid arbitrary hex like bg-[#ef4444]. ' +
+        (matches.size > 5
+          ? `Found offenders: ${offenders}, …`
+          : `Found offenders: ${offenders}`);
+
+      if (!globalState[globalKey].has(message)) {
+        globalState[globalKey].add(message);
+        console.warn(`[tailwind] ${message}`);
+      }
     },
   ],
 };
