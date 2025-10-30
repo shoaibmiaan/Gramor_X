@@ -11,10 +11,11 @@ export default function AuthCallback() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    const run = async () => {
-      // Wait until query is ready in the router
-      if (!router.isReady) return;
+    if (!router.isReady) return;
 
+    let cancelled = false;
+
+    const run = async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get('code');
       const token_hash = url.searchParams.get('token_hash');
@@ -41,7 +42,7 @@ export default function AuthCallback() {
             });
           } catch { /* ignore */ }
 
-          router.replace(next.startsWith('/') ? next : '/');
+          if (!cancelled) router.replace(next.startsWith('/') ? next : '/');
           return;
         }
 
@@ -66,19 +67,23 @@ export default function AuthCallback() {
             });
           } catch { /* ignore */ }
 
-          router.replace(next.startsWith('/') ? next : '/');
+          if (!cancelled) router.replace(next.startsWith('/') ? next : '/');
           return;
         }
 
         // Nothing to verify — just go home
-        router.replace('/');
+        if (!cancelled) router.replace('/');
       } catch (e: any) {
-        setErr(e?.message || 'Verification failed.');
+        if (!cancelled) setErr(e?.message || 'Verification failed.');
       }
     };
 
-    run();
-  }, [router]);
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, router.isReady]);
 
   return (
     <>
