@@ -46,6 +46,14 @@ type PlanRow = {
 };
 
 const PLAN_KEYS: readonly PlanKey[] = ['starter', 'booster', 'master'];
+const PLAN_ALIAS: Record<string, PlanKey> = {
+  starter: 'starter',
+  booster: 'booster',
+  master: 'master',
+  seedling: 'starter',
+  rocket: 'booster',
+  owl: 'master',
+};
 
 const createPlanRow = (key: PlanKey): PlanRow => {
   const plan = CANONICAL_PLANS[key];
@@ -71,13 +79,24 @@ const fmtUsd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 const CheckoutPage: NextPage = () => {
   const router = useRouter();
-  const planParam = String(router.query.plan ?? '');
+  const planParamRaw = router.query.plan;
+  const planParam = Array.isArray(planParamRaw) ? planParamRaw[0] : planParamRaw;
   const codeParam = router.query.code ? String(router.query.code) : undefined;
   const promoParam = router.query.promo ? String(router.query.promo) : undefined;
-  const cycleParam = (String(router.query.billingCycle ?? 'monthly') as Cycle);
+  const cycleQuery = router.query.billingCycle ?? router.query.cycle ?? 'monthly';
+  const cycleValue = Array.isArray(cycleQuery) ? cycleQuery[0] : cycleQuery;
 
-  const hasPlan = (PLAN_KEYS as PlanKey[]).includes(planParam as PlanKey);
-  const plan = (hasPlan ? (planParam as PlanKey) : undefined);
+  const normalizedPlanParam = planParam ? planParam.toLowerCase() : '';
+  const plan = PLAN_ALIAS[normalizedPlanParam];
+
+  const cycleParam = React.useMemo<Cycle>(() => {
+    const normalized = (cycleValue ?? '').toString().toLowerCase();
+    if (normalized === 'annual' || normalized === 'yearly') {
+      return 'annual';
+    }
+    return 'monthly';
+  }, [cycleValue]);
+
   const selectedPlanData = plan ? PLANS[plan] : undefined;
 
   const [activeCode, setActiveCode] = React.useState<string | undefined>(codeParam);
