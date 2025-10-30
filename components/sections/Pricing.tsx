@@ -8,6 +8,7 @@ import { Ribbon } from '@/components/design-system/Ribbon';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Icon } from '@/components/design-system/Icon';
+import type { PlanKey, Cycle as CheckoutCycle } from '@/types/payments';
 
 type BillingCycle = 'monthly' | 'quarterly';
 
@@ -96,7 +97,13 @@ const billingCopy: Record<BillingCycle, { label: string; helper: string }> = {
   quarterly: { label: 'Quarterly', helper: 'Save 15%' },
 };
 
-const planSlug = (name: Tier['name']) => name.toLowerCase();
+const PLAN_KEY_BY_TIER: Partial<Record<Tier['name'], PlanKey>> = {
+  Seedling: 'starter',
+  Rocket: 'booster',
+};
+
+const toCheckoutCycle = (cycle: BillingCycle): CheckoutCycle =>
+  cycle === 'monthly' ? 'monthly' : 'annual';
 
 export const Pricing: React.FC = () => {
   const [billingCycle, setBillingCycle] = React.useState<BillingCycle>('monthly');
@@ -145,6 +152,15 @@ export const Pricing: React.FC = () => {
         <div className="mt-14 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {tiers.map((tier) => {
             const price = tier.price[billingCycle];
+            const params = new URLSearchParams();
+            const planKey = PLAN_KEY_BY_TIER[tier.name];
+            const checkoutCycle = toCheckoutCycle(billingCycle);
+            params.set('billingCycle', checkoutCycle);
+            if (planKey) {
+              params.set('plan', planKey);
+            }
+            const query = params.toString();
+            const checkoutHref = query.length > 0 ? `/checkout?${query}` : '/checkout';
             return (
               <Card
                 key={tier.name}
@@ -204,7 +220,7 @@ export const Pricing: React.FC = () => {
 
                 <div className="mt-6 grid gap-3">
                   <Button
-                    href={`/checkout?plan=${planSlug(tier.name)}&cycle=${billingCycle}`}
+                    href={checkoutHref}
                     variant={tier.featured ? 'primary' : 'secondary'}
                     className="w-full justify-center"
                   >
