@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8' />
+  <title>Pages Inventory</title>
+  <style>
+    body{font-family:Inter,system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:3rem;}
+
+    h1{color:#facc15;margin-bottom:1rem;}
+
+    h2{color:#38bdf8;}
+
+    details{margin:0.75rem 0;border-left:2px solid rgba(148,163,184,0.3);padding-left:1rem;}
+
+    details[open]>summary{color:#38bdf8;}
+
+    summary{cursor:pointer;font-weight:600;}
+
+    summary .summary-route{font-size:0.75rem;font-weight:400;color:#94a3b8;margin-left:0.5rem;}
+
+    ul{list-style:disc;margin:0.25rem 0 0.5rem 1.25rem;}
+
+    code{background:rgba(15,23,42,0.65);padding:0.1rem 0.35rem;border-radius:999px;border:1px solid rgba(148,163,184,0.2);}
+
+  </style>
+</head>
+<body>
+  <h1>Gramor_X Pages Directory</h1>
+  <p>This inventory enumerates all files inside the <code>pages/</code> directory, covering both site routes and API handlers. Expand the folders below to explore nested routes.</p>
+  <section class='root-files'>
+    <h2>Root files</h2>
+    <ul>
+      <li><code>/403.tsx</code></li>
+      <li><code>/404.tsx</code></li>
+      <li><code>/500.tsx</code></li>
+      <li><code>/_app.tsx</code></li>
+      <li><code>/_document.tsx</code></li>
+      <li><code>/accessibility.tsx</code></li>
+      <li><code>/data-deletion.tsx</code></li>
+      <li><code>/exam-day.tsx</code></li>
+      <li><code>/faq.tsx</code></li>
+      <li><code>/forgot-password.tsx</code></li>
+      <li><code>/index.tsx</code></li>
+      <li><code>/restricted.tsx</code></li>
+      <li><code>/roadmap.tsx</code></li>
+      <li><code>/tokens-test.tsx</code></li>
+      <li><code>/update-password.tsx</code></li>
+      <li><code>/waitlist.tsx</code></li>
+      <li><code>/word-of-the-day.tsx</code></li>
+    </ul>
+  </section>
+  <details open class='depth-1'>
+    <summary>.well-known <span class='summary-route'>/.well-known</span></summary>
+    <ul>
+      <li><code>/.well-known/assetlinks.json</code></li>
+      <li><code>/.well-known/assetlinks.json.ts</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>account <span class='summary-route'>/account</span></summary>
+    <ul>
+      <li><code>/account/billing.tsx</code></li>
+      <li><code>/account/index.tsx</code></li>
+      <li><code>/account/redeem.tsx</code></li>
+      <li><code>/account/referrals.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>admin <span class='summary-route'>/admin</span></summary>
+    <ul>
+      <li><code>/admin/imp-as.tsx</code></li>
+      <li><code>/admin/index.tsx</code></li>
+      <li><code>/admin/listening.tsx</code></li>
+      <li><code>/admin/reading.tsx</code></li>
+      <li><code>/admin/stop-impersonation.tsx</code></li>
+      <li><code>/admin/users.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>content <span class='summary-route'>/admin/content</span></summary>
+      <ul>
+        <li><code>/admin/content/reading.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>partners <span class='summary-route'>/admin/partners</span></summary>
+      <ul>
+        <li><code>/admin/partners/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>premium <span class='summary-route'>/admin/premium</span></summary>
+      <ul>
+        <li><code>/admin/premium/pin.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>reviews <span class='summary-route'>/admin/reviews</span></summary>
+      <ul>
+        <li><code>/admin/reviews/[attemptId].tsx</code></li>
+        <li><code>/admin/reviews/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>speaking <span class='summary-route'>/admin/speaking</span></summary>
+      <ul>
+        <li><code>/admin/speaking/attempts.tsx</code></li>
+        <li><code>/admin/speaking/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>students <span class='summary-route'>/admin/students</span></summary>
+      <ul>
+        <li><code>/admin/students/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>teacher <span class='summary-route'>/admin/teacher</span></summary>
+      <ul>
+        <li><code>/admin/teacher/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>teachers <span class='summary-route'>/admin/teachers</span></summary>
+      <ul>
+        <li><code>/admin/teachers/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>vocabulary <span class='summary-route'>/admin/vocabulary</span></summary>
+      <ul>
+        <li><code>/admin/vocabulary/new-sense.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>writing <span class='summary-route'>/admin/writing</span></summary>
+      <ul>
+        <li><code>/admin/writing/index.tsx</code></li>
+        <li><code>/admin/writing/topics.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>ai <span class='summary-route'>/ai</span></summary>
+    <ul>
+      <li><code>/ai/index.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>writing <span class='summary-route'>/ai/writing</span></summary>
+      <ul>
+        <li><code>/ai/writing/[id].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>analytics <span class='summary-route'>/analytics</span></summary>
+    <ul>
+      <li><code>/analytics/writing.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>api <span class='summary-route'>/api</span></summary>
+    <ul>
+      <li><code>/api/check-otp.ts</code></li>
+      <li><code>/api/healthz.ts</code></li>
+      <li><code>/api/metrics.ts</code></li>
+      <li><code>/api/quick-drill.ts</code></li>
+      <li><code>/api/referrals.ts</code></li>
+      <li><code>/api/send-otp.ts</code></li>
+      <li><code>/api/streak.ts</code></li>
+      <li><code>/api/streak_handler.ts</code></li>
+      <li><code>/api/support.ts</code></li>
+      <li><code>/api/twilio-status.ts</code></li>
+      <li><code>/api/waitlist.ts</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>_middleware <span class='summary-route'>/api/_middleware</span></summary>
+      <ul>
+        <li><code>/api/_middleware/ratelimit.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>account <span class='summary-route'>/api/account</span></summary>
+      <ul>
+        <li><code>/api/account/delete.ts</code></li>
+        <li><code>/api/account/export.ts</code></li>
+        <li><code>/api/account/redeem-pin.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>export <span class='summary-route'>/api/account/export</span></summary>
+        <ul>
+          <li><code>/api/account/export/[token].ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>admin <span class='summary-route'>/api/admin</span></summary>
+      <ul>
+        <li><code>/api/admin/dashboard.ts</code></li>
+        <li><code>/api/admin/health.ts</code></li>
+        <li><code>/api/admin/set-pin.ts</code></li>
+        <li><code>/api/admin/stop-impersonation.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>flags <span class='summary-route'>/api/admin/flags</span></summary>
+        <ul>
+          <li><code>/api/admin/flags/update.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>listening <span class='summary-route'>/api/admin/listening</span></summary>
+        <ul>
+          <li><code>/api/admin/listening/tests.ts</code></li>
+          <li><code>/api/admin/listening/upload.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>premium <span class='summary-route'>/api/admin/premium</span></summary>
+        <ul>
+          <li><code>/api/admin/premium/clear-pin.ts</code></li>
+          <li><code>/api/admin/premium/generate-pin.ts</code></li>
+          <li><code>/api/admin/premium/set-pin.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>reading <span class='summary-route'>/api/admin/reading</span></summary>
+        <ul>
+          <li><code>/api/admin/reading/tests.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>reviews <span class='summary-route'>/api/admin/reviews</span></summary>
+        <ul>
+          <li><code>/api/admin/reviews/index.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>speaking <span class='summary-route'>/api/admin/speaking</span></summary>
+        <ul>
+          <li><code>/api/admin/speaking/prompts.ts</code></li>
+        </ul>
+        <details open class='depth-4'>
+          <summary>attempts <span class='summary-route'>/api/admin/speaking/attempts</span></summary>
+          <ul>
+            <li><code>/api/admin/speaking/attempts/[id].ts</code></li>
+            <li><code>/api/admin/speaking/attempts/index.ts</code></li>
+          </ul>
+        </details>
+      </details>
+      <details open class='depth-3'>
+        <summary>students <span class='summary-route'>/api/admin/students</span></summary>
+        <ul>
+          <li><code>/api/admin/students/actions.ts</code></li>
+          <li><code>/api/admin/students/export.ts</code></li>
+          <li><code>/api/admin/students/list.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>teachers <span class='summary-route'>/api/admin/teachers</span></summary>
+        <ul>
+          <li><code>/api/admin/teachers/approve.ts</code></li>
+          <li><code>/api/admin/teachers/index.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>users <span class='summary-route'>/api/admin/users</span></summary>
+        <ul>
+          <li><code>/api/admin/users/list.ts</code></li>
+          <li><code>/api/admin/users/set-role.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>writing <span class='summary-route'>/api/admin/writing</span></summary>
+        <ul>
+          <li><code>/api/admin/writing/list.ts</code></li>
+          <li><code>/api/admin/writing/prompts.ts</code></li>
+          <li><code>/api/admin/writing/regrade.ts</code></li>
+          <li><code>/api/admin/writing/topics.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>ai <span class='summary-route'>/api/ai</span></summary>
+      <ul>
+        <li><code>/api/ai/chat.ts</code></li>
+        <li><code>/api/ai/explain.ts</code></li>
+        <li><code>/api/ai/health.ts</code></li>
+        <li><code>/api/ai/profile-suggest.ts</code></li>
+        <li><code>/api/ai/re-evaluate.ts</code></li>
+        <li><code>/api/ai/test-drive.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>reading <span class='summary-route'>/api/ai/reading</span></summary>
+        <ul>
+          <li><code>/api/ai/reading/explain.ts</code></li>
+          <li><code>/api/ai/reading/explanations.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>speaking <span class='summary-route'>/api/ai/speaking</span></summary>
+        <ul>
+          <li><code>/api/ai/speaking/evaluate.ts</code></li>
+          <li><code>/api/ai/speaking/grade.ts</code></li>
+          <li><code>/api/ai/speaking/hints.ts</code></li>
+          <li><code>/api/ai/speaking/score-audio-groq.ts</code></li>
+          <li><code>/api/ai/speaking/score-v2.ts</code></li>
+          <li><code>/api/ai/speaking/score.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>writing <span class='summary-route'>/api/ai/writing</span></summary>
+        <ul>
+          <li><code>/api/ai/writing/explain.ts</code></li>
+          <li><code>/api/ai/writing/grade.ts</code></li>
+          <li><code>/api/ai/writing/paraphrase.ts</code></li>
+          <li><code>/api/ai/writing/score-v1.ts</code></li>
+          <li><code>/api/ai/writing/score-v2.ts</code></li>
+          <li><code>/api/ai/writing/score.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>analytics <span class='summary-route'>/api/analytics</span></summary>
+      <ul>
+        <li><code>/api/analytics/success-metrics.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>writing <span class='summary-route'>/api/analytics/writing</span></summary>
+        <ul>
+          <li><code>/api/analytics/writing/overview.ts</code></li>
+          <li><code>/api/analytics/writing/progress.ts</code></li>
+          <li><code>/api/analytics/writing/summary.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>attempts <span class='summary-route'>/api/attempts</span></summary>
+      <details open class='depth-3'>
+        <summary>[id] <span class='summary-route'>/api/attempts/[id]</span></summary>
+        <ul>
+          <li><code>/api/attempts/[id]/progress.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>progress <span class='summary-route'>/api/attempts/progress</span></summary>
+        <ul>
+          <li><code>/api/attempts/progress/index.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>auth <span class='summary-route'>/api/auth</span></summary>
+      <ul>
+        <li><code>/api/auth/forgot-password.ts</code></li>
+        <li><code>/api/auth/login-event.ts</code></li>
+        <li><code>/api/auth/login-events.ts</code></li>
+        <li><code>/api/auth/login.ts</code></li>
+        <li><code>/api/auth/set-session.ts</code></li>
+        <li><code>/api/auth/signout.ts</code></li>
+        <li><code>/api/auth/signup.ts</code></li>
+        <li><code>/api/auth/whoami.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>sessions <span class='summary-route'>/api/auth/sessions</span></summary>
+        <ul>
+          <li><code>/api/auth/sessions/[id].ts</code></li>
+          <li><code>/api/auth/sessions/index.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>billing <span class='summary-route'>/api/billing</span></summary>
+      <ul>
+        <li><code>/api/billing/create-portal-session.ts</code></li>
+        <li><code>/api/billing/portal.ts</code></li>
+        <li><code>/api/billing/summary.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>blog <span class='summary-route'>/api/blog</span></summary>
+      <ul>
+        <li><code>/api/blog/[slug].ts</code></li>
+        <li><code>/api/blog/index.ts</code></li>
+        <li><code>/api/blog/moderate.ts</code></li>
+        <li><code>/api/blog/modqueue.ts</code></li>
+        <li><code>/api/blog/submit.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>bookings <span class='summary-route'>/api/bookings</span></summary>
+      <ul>
+        <li><code>/api/bookings/availability.ts</code></li>
+        <li><code>/api/bookings/cancel.ts</code></li>
+        <li><code>/api/bookings/create.ts</code></li>
+        <li><code>/api/bookings/reschedule.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>buddy <span class='summary-route'>/api/buddy</span></summary>
+      <ul>
+        <li><code>/api/buddy/match.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>certificates <span class='summary-route'>/api/certificates</span></summary>
+      <ul>
+        <li><code>/api/certificates/create.ts</code></li>
+        <li><code>/api/certificates/sign.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>challenge <span class='summary-route'>/api/challenge</span></summary>
+      <ul>
+        <li><code>/api/challenge/enroll.ts</code></li>
+        <li><code>/api/challenge/leaderboard.ts</code></li>
+        <li><code>/api/challenge/progress.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>checkout <span class='summary-route'>/api/checkout</span></summary>
+      <ul>
+        <li><code>/api/checkout/manual.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>classes <span class='summary-route'>/api/classes</span></summary>
+      <ul>
+        <li><code>/api/classes/attendance.ts</code></li>
+        <li><code>/api/classes/cancel.ts</code></li>
+        <li><code>/api/classes/create.ts</code></li>
+        <li><code>/api/classes/join-token.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>coach <span class='summary-route'>/api/coach</span></summary>
+      <ul>
+        <li><code>/api/coach/chat.ts</code></li>
+        <li><code>/api/coach/mood.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>writing <span class='summary-route'>/api/coach/writing</span></summary>
+        <ul>
+          <li><code>/api/coach/writing/reply.ts</code></li>
+          <li><code>/api/coach/writing/session.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>content <span class='summary-route'>/api/content</span></summary>
+      <ul>
+        <li><code>/api/content/delete.ts</code></li>
+        <li><code>/api/content/publish.ts</code></li>
+        <li><code>/api/content/test-insert.ts</code></li>
+        <li><code>/api/content/upload.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>counters <span class='summary-route'>/api/counters</span></summary>
+      <ul>
+        <li><code>/api/counters/increment.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>cron <span class='summary-route'>/api/cron</span></summary>
+      <ul>
+        <li><code>/api/cron/notifications-dispatch.ts</code></li>
+        <li><code>/api/cron/notifications-study-reminder.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>debug <span class='summary-route'>/api/debug</span></summary>
+      <ul>
+        <li><code>/api/debug/feature-flags.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>deeplink <span class='summary-route'>/api/deeplink</span></summary>
+      <ul>
+        <li><code>/api/deeplink/resolve.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>dev <span class='summary-route'>/api/dev</span></summary>
+      <ul>
+        <li><code>/api/dev/grant-role.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>drills <span class='summary-route'>/api/drills</span></summary>
+      <ul>
+        <li><code>/api/drills/generate.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>exam <span class='summary-route'>/api/exam</span></summary>
+      <ul>
+        <li><code>/api/exam/schedule.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>[attemptId] <span class='summary-route'>/api/exam/[attemptId]</span></summary>
+        <ul>
+          <li><code>/api/exam/[attemptId]/event.ts</code></li>
+          <li><code>/api/exam/[attemptId]/score.ts</code></li>
+          <li><code>/api/exam/[attemptId]/submit.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>exp <span class='summary-route'>/api/exp</span></summary>
+      <ul>
+        <li><code>/api/exp/assign.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>exports <span class='summary-route'>/api/exports</span></summary>
+      <ul>
+        <li><code>/api/exports/analytics.parquet.ts</code></li>
+        <li><code>/api/exports/attempts.csv.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>gamification <span class='summary-route'>/api/gamification</span></summary>
+      <ul>
+        <li><code>/api/gamification/award-writing.ts</code></li>
+        <li><code>/api/gamification/challenges.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>challenges <span class='summary-route'>/api/gamification/challenges</span></summary>
+        <ul>
+          <li><code>/api/gamification/challenges/progress.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>institutions <span class='summary-route'>/api/institutions</span></summary>
+      <ul>
+        <li><code>/api/institutions/bulk-enroll.ts</code></li>
+        <li><code>/api/institutions/invite.ts</code></li>
+        <li><code>/api/institutions/orgs.ts</code></li>
+        <li><code>/api/institutions/reports.ts</code></li>
+        <li><code>/api/institutions/students.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>internal <span class='summary-route'>/api/internal</span></summary>
+      <details open class='depth-3'>
+        <summary>auth <span class='summary-route'>/api/internal/auth</span></summary>
+        <ul>
+          <li><code>/api/internal/auth/state.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>leaderboard <span class='summary-route'>/api/leaderboard</span></summary>
+      <ul>
+        <li><code>/api/leaderboard/xp.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>lifecycle <span class='summary-route'>/api/lifecycle</span></summary>
+      <ul>
+        <li><code>/api/lifecycle/trigger.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>listening <span class='summary-route'>/api/listening</span></summary>
+      <ul>
+        <li><code>/api/listening/attempt.ts</code></li>
+        <li><code>/api/listening/submit.ts</code></li>
+        <li><code>/api/listening/tests.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>admin <span class='summary-route'>/api/listening/admin</span></summary>
+        <ul>
+          <li><code>/api/listening/admin/create.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>review <span class='summary-route'>/api/listening/review</span></summary>
+        <ul>
+          <li><code>/api/listening/review/[attemptId].ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>test <span class='summary-route'>/api/listening/test</span></summary>
+        <ul>
+          <li><code>/api/listening/test/[slug].ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>marketplace <span class='summary-route'>/api/marketplace</span></summary>
+      <ul>
+        <li><code>/api/marketplace/apply.ts</code></li>
+        <li><code>/api/marketplace/approve.ts</code></li>
+        <li><code>/api/marketplace/coaches.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>me <span class='summary-route'>/api/me</span></summary>
+      <ul>
+        <li><code>/api/me/plan.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>mistakes <span class='summary-route'>/api/mistakes</span></summary>
+      <ul>
+        <li><code>/api/mistakes/add.ts</code></li>
+        <li><code>/api/mistakes/index.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>mock <span class='summary-route'>/api/mock</span></summary>
+      <ul>
+        <li><code>/api/mock/checkpoint.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>checkpoints <span class='summary-route'>/api/mock/checkpoints</span></summary>
+        <ul>
+          <li><code>/api/mock/checkpoints/index.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>reading <span class='summary-route'>/api/mock/reading</span></summary>
+        <ul>
+          <li><code>/api/mock/reading/notes.ts</code></li>
+          <li><code>/api/mock/reading/result.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>writing <span class='summary-route'>/api/mock/writing</span></summary>
+        <ul>
+          <li><code>/api/mock/writing/save-draft.ts</code></li>
+          <li><code>/api/mock/writing/start.ts</code></li>
+          <li><code>/api/mock/writing/submit.ts</code></li>
+          <li><code>/api/mock/writing/sync-batch.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>notifications <span class='summary-route'>/api/notifications</span></summary>
+      <ul>
+        <li><code>/api/notifications/[id].ts</code></li>
+        <li><code>/api/notifications/enqueue.ts</code></li>
+        <li><code>/api/notifications/index.ts</code></li>
+        <li><code>/api/notifications/list.ts</code></li>
+        <li><code>/api/notifications/nudge.ts</code></li>
+        <li><code>/api/notifications/preferences.ts</code></li>
+        <li><code>/api/notifications/whatsapp-opt-in.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>offline <span class='summary-route'>/api/offline</span></summary>
+      <ul>
+        <li><code>/api/offline/sync.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>onboarding <span class='summary-route'>/api/onboarding</span></summary>
+      <ul>
+        <li><code>/api/onboarding/complete.ts</code></li>
+        <li><code>/api/onboarding/index.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>orgs <span class='summary-route'>/api/orgs</span></summary>
+      <ul>
+        <li><code>/api/orgs/create.ts</code></li>
+        <li><code>/api/orgs/invite.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>partners <span class='summary-route'>/api/partners</span></summary>
+      <ul>
+        <li><code>/api/partners/summary.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>payments <span class='summary-route'>/api/payments</span></summary>
+      <ul>
+        <li><code>/api/payments/create-checkout-session.ts</code></li>
+        <li><code>/api/payments/create-easypaisa-session.ts</code></li>
+        <li><code>/api/payments/create-intent.ts</code></li>
+        <li><code>/api/payments/create-jazzcash-session.ts</code></li>
+        <li><code>/api/payments/initiate.ts</code></li>
+        <li><code>/api/payments/webhook.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>webhooks <span class='summary-route'>/api/payments/webhooks</span></summary>
+        <ul>
+          <li><code>/api/payments/webhooks/local.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>placement <span class='summary-route'>/api/placement</span></summary>
+      <ul>
+        <li><code>/api/placement/score.ts</code></li>
+        <li><code>/api/placement/start.ts</code></li>
+        <li><code>/api/placement/submit.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>plan <span class='summary-route'>/api/plan</span></summary>
+      <ul>
+        <li><code>/api/plan/apply-reco.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>predictor <span class='summary-route'>/api/predictor</span></summary>
+      <ul>
+        <li><code>/api/predictor/score.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>premium <span class='summary-route'>/api/premium</span></summary>
+      <ul>
+        <li><code>/api/premium/eligibility.ts</code></li>
+        <li><code>/api/premium/pin-status.ts</code></li>
+        <li><code>/api/premium/session.ts</code></li>
+        <li><code>/api/premium/set-pin.ts</code></li>
+        <li><code>/api/premium/signout.ts</code></li>
+        <li><code>/api/premium/status.ts</code></li>
+        <li><code>/api/premium/verify-pin.ts</code></li>
+        <li><code>/api/premium/verify.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>proctoring <span class='summary-route'>/api/proctoring</span></summary>
+      <ul>
+        <li><code>/api/proctoring/flags.ts</code></li>
+        <li><code>/api/proctoring/start.ts</code></li>
+        <li><code>/api/proctoring/verify.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>profile <span class='summary-route'>/api/profile</span></summary>
+      <ul>
+        <li><code>/api/profile/avatar-upload-url.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>progress <span class='summary-route'>/api/progress</span></summary>
+      <ul>
+        <li><code>/api/progress/index.ts</code></li>
+        <li><code>/api/progress/share.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>push <span class='summary-route'>/api/push</span></summary>
+      <ul>
+        <li><code>/api/push/register.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>reading <span class='summary-route'>/api/reading</span></summary>
+      <ul>
+        <li><code>/api/reading/attempt.ts</code></li>
+        <li><code>/api/reading/explain.ts</code></li>
+        <li><code>/api/reading/recompute.ts</code></li>
+        <li><code>/api/reading/submit.ts</code></li>
+        <li><code>/api/reading/tests.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>review <span class='summary-route'>/api/reading/review</span></summary>
+        <ul>
+          <li><code>/api/reading/review/[attemptId].ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>test <span class='summary-route'>/api/reading/test</span></summary>
+        <ul>
+          <li><code>/api/reading/test/[slug].ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>reco <span class='summary-route'>/api/reco</span></summary>
+      <ul>
+        <li><code>/api/reco/accept.ts</code></li>
+        <li><code>/api/reco/complete.ts</code></li>
+        <li><code>/api/reco/next-steps.ts</code></li>
+        <li><code>/api/reco/next-task.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>referrals <span class='summary-route'>/api/referrals</span></summary>
+      <ul>
+        <li><code>/api/referrals/claim.ts</code></li>
+        <li><code>/api/referrals/create-code.ts</code></li>
+        <li><code>/api/referrals/create.ts</code></li>
+        <li><code>/api/referrals/generate.ts</code></li>
+        <li><code>/api/referrals/qualify.ts</code></li>
+        <li><code>/api/referrals/redeem.ts</code></li>
+        <li><code>/api/referrals/stats.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>review <span class='summary-route'>/api/review</span></summary>
+      <ul>
+        <li><code>/api/review/comments.ts</code></li>
+        <li><code>/api/review/due.ts</code></li>
+        <li><code>/api/review/grade.ts</code></li>
+        <li><code>/api/review/share-link.ts</code></li>
+        <li><code>/api/review/suspend.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>saved <span class='summary-route'>/api/saved</span></summary>
+      <ul>
+        <li><code>/api/saved/[id].ts</code></li>
+        <li><code>/api/saved/index.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>by-category <span class='summary-route'>/api/saved/by-category</span></summary>
+        <ul>
+          <li><code>/api/saved/by-category/[category].ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>scores <span class='summary-route'>/api/scores</span></summary>
+      <ul>
+        <li><code>/api/scores/challenge.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>speaking <span class='summary-route'>/api/speaking</span></summary>
+      <ul>
+        <li><code>/api/speaking/accent-mirror.ts</code></li>
+        <li><code>/api/speaking/attempt.ts</code></li>
+        <li><code>/api/speaking/evaluate.ts</code></li>
+        <li><code>/api/speaking/feedback.ts</code></li>
+        <li><code>/api/speaking/file.ts</code></li>
+        <li><code>/api/speaking/partner-summary.ts</code></li>
+        <li><code>/api/speaking/partner.ts</code></li>
+        <li><code>/api/speaking/prompts.ts</code></li>
+        <li><code>/api/speaking/score-audio-groq.ts</code></li>
+        <li><code>/api/speaking/score-groq.ts</code></li>
+        <li><code>/api/speaking/score-save.ts</code></li>
+        <li><code>/api/speaking/score.ts</code></li>
+        <li><code>/api/speaking/signed-url.ts</code></li>
+        <li><code>/api/speaking/start-attempt.ts</code></li>
+        <li><code>/api/speaking/start.ts</code></li>
+        <li><code>/api/speaking/upload.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>attempts <span class='summary-route'>/api/speaking/attempts</span></summary>
+        <ul>
+          <li><code>/api/speaking/attempts/[id].ts</code></li>
+          <li><code>/api/speaking/attempts/add-audio.ts</code></li>
+          <li><code>/api/speaking/attempts/index.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>coach <span class='summary-route'>/api/speaking/coach</span></summary>
+        <ul>
+          <li><code>/api/speaking/coach/score.ts</code></li>
+          <li><code>/api/speaking/coach/upload.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>limits <span class='summary-route'>/api/speaking/limits</span></summary>
+        <ul>
+          <li><code>/api/speaking/limits/today.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>partner <span class='summary-route'>/api/speaking/partner</span></summary>
+        <ul>
+          <li><code>/api/speaking/partner/summary.ts</code></li>
+        </ul>
+        <details open class='depth-4'>
+          <summary>review <span class='summary-route'>/api/speaking/partner/review</span></summary>
+          <ul>
+            <li><code>/api/speaking/partner/review/[attemptId].ts</code></li>
+          </ul>
+        </details>
+      </details>
+      <details open class='depth-3'>
+        <summary>prompts <span class='summary-route'>/api/speaking/prompts</span></summary>
+        <ul>
+          <li><code>/api/speaking/prompts/random.ts</code></li>
+          <li><code>/api/speaking/prompts/save.ts</code></li>
+          <li><code>/api/speaking/prompts/search.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>sessions <span class='summary-route'>/api/speaking/sessions</span></summary>
+        <ul>
+          <li><code>/api/speaking/sessions/index.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>strategies <span class='summary-route'>/api/strategies</span></summary>
+      <ul>
+        <li><code>/api/strategies/toggle-save.ts</code></li>
+        <li><code>/api/strategies/vote.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>study-plan <span class='summary-route'>/api/study-plan</span></summary>
+      <ul>
+        <li><code>/api/study-plan/events.ts</code></li>
+        <li><code>/api/study-plan/quick-start.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>subscriptions <span class='summary-route'>/api/subscriptions</span></summary>
+      <ul>
+        <li><code>/api/subscriptions/portal.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>teacher <span class='summary-route'>/api/teacher</span></summary>
+      <ul>
+        <li><code>/api/teacher/apply.ts</code></li>
+        <li><code>/api/teacher/assignments.ts</code></li>
+        <li><code>/api/teacher/cohorts.ts</code></li>
+        <li><code>/api/teacher/me.ts</code></li>
+        <li><code>/api/teacher/register.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>upload <span class='summary-route'>/api/upload</span></summary>
+      <ul>
+        <li><code>/api/upload/audio.ts</code></li>
+        <li><code>/api/upload/index.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>user <span class='summary-route'>/api/user</span></summary>
+      <ul>
+        <li><code>/api/user/dashboard.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>vocab <span class='summary-route'>/api/vocab</span></summary>
+      <ul>
+        <li><code>/api/vocab/leaderboard.ts</code></li>
+        <li><code>/api/vocab/today.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>attempt <span class='summary-route'>/api/vocab/attempt</span></summary>
+        <ul>
+          <li><code>/api/vocab/attempt/meaning.ts</code></li>
+          <li><code>/api/vocab/attempt/sentence.ts</code></li>
+          <li><code>/api/vocab/attempt/synonyms.ts</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>vocabulary <span class='summary-route'>/api/vocabulary</span></summary>
+      <ul>
+        <li><code>/api/vocabulary/[slug].ts</code></li>
+        <li><code>/api/vocabulary/highlights.ts</code></li>
+        <li><code>/api/vocabulary/index.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>waitlist <span class='summary-route'>/api/waitlist</span></summary>
+      <ul>
+        <li><code>/api/waitlist/submit.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>webhooks <span class='summary-route'>/api/webhooks</span></summary>
+      <ul>
+        <li><code>/api/webhooks/payment.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>whatsapp <span class='summary-route'>/api/whatsapp</span></summary>
+      <ul>
+        <li><code>/api/whatsapp/subscribe.ts</code></li>
+        <li><code>/api/whatsapp/webhook.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>words <span class='summary-route'>/api/words</span></summary>
+      <ul>
+        <li><code>/api/words/learn.ts</code></li>
+        <li><code>/api/words/learned.ts</code></li>
+        <li><code>/api/words/today.ts</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>writing <span class='summary-route'>/api/writing</span></summary>
+      <ul>
+        <li><code>/api/writing/draft.ts</code></li>
+        <li><code>/api/writing/eval.ts</code></li>
+        <li><code>/api/writing/reeval-history.ts</code></li>
+        <li><code>/api/writing/reevaluate.ts</code></li>
+        <li><code>/api/writing/restore-reeval.ts</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>attempts <span class='summary-route'>/api/writing/attempts</span></summary>
+        <ul>
+          <li><code>/api/writing/attempts/[id].ts</code></li>
+          <li><code>/api/writing/attempts/redraft.ts</code></li>
+          <li><code>/api/writing/attempts/save-draft.ts</code></li>
+          <li><code>/api/writing/attempts/start.ts</code></li>
+          <li><code>/api/writing/attempts/submit.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>cohesion <span class='summary-route'>/api/writing/cohesion</span></summary>
+        <ul>
+          <li><code>/api/writing/cohesion/heatmap.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>critique <span class='summary-route'>/api/writing/critique</span></summary>
+        <ul>
+          <li><code>/api/writing/critique/live.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>cross <span class='summary-route'>/api/writing/cross</span></summary>
+        <ul>
+          <li><code>/api/writing/cross/evidence.ts</code></li>
+          <li><code>/api/writing/cross/hedging.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>drills <span class='summary-route'>/api/writing/drills</span></summary>
+        <ul>
+          <li><code>/api/writing/drills/complete.ts</code></li>
+          <li><code>/api/writing/drills/recommend.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>export <span class='summary-route'>/api/writing/export</span></summary>
+        <ul>
+          <li><code>/api/writing/export/pdf.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>lexical <span class='summary-route'>/api/writing/lexical</span></summary>
+        <ul>
+          <li><code>/api/writing/lexical/track.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>metrics <span class='summary-route'>/api/writing/metrics</span></summary>
+        <ul>
+          <li><code>/api/writing/metrics/compute.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>notifications <span class='summary-route'>/api/writing/notifications</span></summary>
+        <ul>
+          <li><code>/api/writing/notifications/micro-prompt.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>originals <span class='summary-route'>/api/writing/originals</span></summary>
+        <ul>
+          <li><code>/api/writing/originals/upload.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>paraphrase <span class='summary-route'>/api/writing/paraphrase</span></summary>
+        <ul>
+          <li><code>/api/writing/paraphrase/suggest.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>readiness <span class='summary-route'>/api/writing/readiness</span></summary>
+        <ul>
+          <li><code>/api/writing/readiness/evaluate.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>rehearsals <span class='summary-route'>/api/writing/rehearsals</span></summary>
+        <ul>
+          <li><code>/api/writing/rehearsals/similar.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>reports <span class='summary-route'>/api/writing/reports</span></summary>
+        <ul>
+          <li><code>/api/writing/reports/[token].ts</code></li>
+          <li><code>/api/writing/reports/band.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>reviews <span class='summary-route'>/api/writing/reviews</span></summary>
+        <ul>
+          <li><code>/api/writing/reviews/calibrate.ts</code></li>
+          <li><code>/api/writing/reviews/submit.ts</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>score <span class='summary-route'>/api/writing/score</span></summary>
+        <ul>
+          <li><code>/api/writing/score/run.ts</code></li>
+        </ul>
+      </details>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>auth <span class='summary-route'>/auth</span></summary>
+    <ul>
+      <li><code>/auth/callback.tsx</code></li>
+      <li><code>/auth/forgot.tsx</code></li>
+      <li><code>/auth/mfa.tsx</code></li>
+      <li><code>/auth/reset.tsx</code></li>
+      <li><code>/auth/verify.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>blog <span class='summary-route'>/blog</span></summary>
+    <ul>
+      <li><code>/blog/[slug].tsx</code></li>
+      <li><code>/blog/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>bookings <span class='summary-route'>/bookings</span></summary>
+    <ul>
+      <li><code>/bookings/[id].tsx</code></li>
+      <li><code>/bookings/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>cert <span class='summary-route'>/cert</span></summary>
+    <ul>
+      <li><code>/cert/[id].tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>writing <span class='summary-route'>/cert/writing</span></summary>
+      <ul>
+        <li><code>/cert/writing/[attemptId].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>challenge <span class='summary-route'>/challenge</span></summary>
+    <ul>
+      <li><code>/challenge/[cohort].tsx</code></li>
+      <li><code>/challenge/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>checkout <span class='summary-route'>/checkout</span></summary>
+    <ul>
+      <li><code>/checkout/cancel.tsx</code></li>
+      <li><code>/checkout/crypto.tsx</code></li>
+      <li><code>/checkout/index.tsx</code></li>
+      <li><code>/checkout/success.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>classes <span class='summary-route'>/classes</span></summary>
+    <ul>
+      <li><code>/classes/[id].tsx</code></li>
+      <li><code>/classes/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>coach <span class='summary-route'>/coach</span></summary>
+    <ul>
+      <li><code>/coach/[id].tsx</code></li>
+      <li><code>/coach/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>community <span class='summary-route'>/community</span></summary>
+    <ul>
+      <li><code>/community/chat.tsx</code></li>
+      <li><code>/community/index.tsx</code></li>
+      <li><code>/community/questions.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>review <span class='summary-route'>/community/review</span></summary>
+      <ul>
+        <li><code>/community/review/index.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>content <span class='summary-route'>/content</span></summary>
+    <details open class='depth-2'>
+      <summary>studio <span class='summary-route'>/content/studio</span></summary>
+      <ul>
+        <li><code>/content/studio/[id].tsx</code></li>
+        <li><code>/content/studio/index.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>dashboard <span class='summary-route'>/dashboard</span></summary>
+    <ul>
+      <li><code>/dashboard/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>exam <span class='summary-route'>/exam</span></summary>
+    <ul>
+      <li><code>/exam/rehearsal.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>institutions <span class='summary-route'>/institutions</span></summary>
+    <ul>
+      <li><code>/institutions/index.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>[orgId] <span class='summary-route'>/institutions/[orgId]</span></summary>
+      <ul>
+        <li><code>/institutions/[orgId]/index.tsx</code></li>
+        <li><code>/institutions/[orgId]/reports.tsx</code></li>
+        <li><code>/institutions/[orgId]/students.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>internal <span class='summary-route'>/internal</span></summary>
+    <details open class='depth-2'>
+      <summary>content <span class='summary-route'>/internal/content</span></summary>
+      <ul>
+        <li><code>/internal/content/playground.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>labs <span class='summary-route'>/labs</span></summary>
+    <ul>
+      <li><code>/labs/ai-tutor.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>leaderboard <span class='summary-route'>/leaderboard</span></summary>
+    <ul>
+      <li><code>/leaderboard/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>learning <span class='summary-route'>/learning</span></summary>
+    <ul>
+      <li><code>/learning/[slug].tsx</code></li>
+      <li><code>/learning/drills.tsx</code></li>
+      <li><code>/learning/index.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>skills <span class='summary-route'>/learning/skills</span></summary>
+      <ul>
+        <li><code>/learning/skills/[skill].tsx</code></li>
+        <li><code>/learning/skills/index.tsx</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>lessons <span class='summary-route'>/learning/skills/lessons</span></summary>
+        <ul>
+          <li><code>/learning/skills/lessons/[slug].tsx</code></li>
+          <li><code>/learning/skills/lessons/index.tsx</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>strategies <span class='summary-route'>/learning/strategies</span></summary>
+      <ul>
+        <li><code>/learning/strategies/[tipSlug].tsx</code></li>
+        <li><code>/learning/strategies/index.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>legal <span class='summary-route'>/legal</span></summary>
+    <ul>
+      <li><code>/legal/privacy.tsx</code></li>
+      <li><code>/legal/terms.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>listening <span class='summary-route'>/listening</span></summary>
+    <ul>
+      <li><code>/listening/[slug].tsx</code></li>
+      <li><code>/listening/index.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>[slug] <span class='summary-route'>/listening/[slug]</span></summary>
+      <ul>
+        <li><code>/listening/[slug]/review.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>login <span class='summary-route'>/login</span></summary>
+    <ul>
+      <li><code>/login/email.tsx</code></li>
+      <li><code>/login/index.tsx</code></li>
+      <li><code>/login/password.tsx</code></li>
+      <li><code>/login/phone.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>marketplace <span class='summary-route'>/marketplace</span></summary>
+    <ul>
+      <li><code>/marketplace/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>mistakes <span class='summary-route'>/mistakes</span></summary>
+    <ul>
+      <li><code>/mistakes/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>mock <span class='summary-route'>/mock</span></summary>
+    <ul>
+      <li><code>/mock/resume.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>listening <span class='summary-route'>/mock/listening</span></summary>
+      <ul>
+        <li><code>/mock/listening/[id].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>reading <span class='summary-route'>/mock/reading</span></summary>
+      <ul>
+        <li><code>/mock/reading/[id].tsx</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>review <span class='summary-route'>/mock/reading/review</span></summary>
+        <ul>
+          <li><code>/mock/reading/review/[attemptId].tsx</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>speaking <span class='summary-route'>/mock/speaking</span></summary>
+      <ul>
+        <li><code>/mock/speaking/[id].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>writing <span class='summary-route'>/mock/writing</span></summary>
+      <ul>
+        <li><code>/mock/writing/[id].tsx</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>results <span class='summary-route'>/mock/writing/results</span></summary>
+        <ul>
+          <li><code>/mock/writing/results/[attemptId].tsx</code></li>
+        </ul>
+      </details>
+      <details open class='depth-3'>
+        <summary>review <span class='summary-route'>/mock/writing/review</span></summary>
+        <ul>
+          <li><code>/mock/writing/review/[attemptId].tsx</code></li>
+        </ul>
+      </details>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>mock-tests <span class='summary-route'>/mock-tests</span></summary>
+    <ul>
+      <li><code>/mock-tests/[section].tsx</code></li>
+      <li><code>/mock-tests/analytics.tsx</code></li>
+      <li><code>/mock-tests/full.tsx</code></li>
+      <li><code>/mock-tests/index.tsx</code></li>
+      <li><code>/mock-tests/listening.tsx</code></li>
+      <li><code>/mock-tests/reading.tsx</code></li>
+      <li><code>/mock-tests/speaking.tsx</code></li>
+      <li><code>/mock-tests/writing.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>notifications <span class='summary-route'>/notifications</span></summary>
+    <ul>
+      <li><code>/notifications/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>onboarding <span class='summary-route'>/onboarding</span></summary>
+    <ul>
+      <li><code>/onboarding/date.tsx</code></li>
+      <li><code>/onboarding/goal.tsx</code></li>
+      <li><code>/onboarding/index.tsx</code></li>
+      <li><code>/onboarding/schedule.tsx</code></li>
+      <li><code>/onboarding/skills.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>teacher <span class='summary-route'>/onboarding/teacher</span></summary>
+      <ul>
+        <li><code>/onboarding/teacher/index.tsx</code></li>
+        <li><code>/onboarding/teacher/status.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>orgs <span class='summary-route'>/orgs</span></summary>
+    <ul>
+      <li><code>/orgs/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>partners <span class='summary-route'>/partners</span></summary>
+    <ul>
+      <li><code>/partners/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>placement <span class='summary-route'>/placement</span></summary>
+    <ul>
+      <li><code>/placement/index.tsx</code></li>
+      <li><code>/placement/result.tsx</code></li>
+      <li><code>/placement/run.tsx</code></li>
+      <li><code>/placement/start.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>practice <span class='summary-route'>/practice</span></summary>
+    <ul>
+      <li><code>/practice/index.tsx</code></li>
+      <li><code>/practice/listening.tsx</code></li>
+      <li><code>/practice/reading.tsx</code></li>
+      <li><code>/practice/speaking.tsx</code></li>
+      <li><code>/practice/writing.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>predictor <span class='summary-route'>/predictor</span></summary>
+    <ul>
+      <li><code>/predictor/index.tsx</code></li>
+      <li><code>/predictor/result.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>premium <span class='summary-route'>/premium</span></summary>
+    <ul>
+      <li><code>/premium/PremiumExamPage.tsx</code></li>
+      <li><code>/premium/index.tsx</code></li>
+      <li><code>/premium/pin.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>listening <span class='summary-route'>/premium/listening</span></summary>
+      <ul>
+        <li><code>/premium/listening/[slug].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>reading <span class='summary-route'>/premium/reading</span></summary>
+      <ul>
+        <li><code>/premium/reading/[slug].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>pricing <span class='summary-route'>/pricing</span></summary>
+    <ul>
+      <li><code>/pricing/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>proctoring <span class='summary-route'>/proctoring</span></summary>
+    <ul>
+      <li><code>/proctoring/check.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>exam <span class='summary-route'>/proctoring/exam</span></summary>
+      <ul>
+        <li><code>/proctoring/exam/[id].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>profile <span class='summary-route'>/profile</span></summary>
+    <ul>
+      <li><code>/profile/index.tsx</code></li>
+      <li><code>/profile/streak.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>setup <span class='summary-route'>/profile/setup</span></summary>
+      <ul>
+        <li><code>/profile/setup/index.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>progress <span class='summary-route'>/progress</span></summary>
+    <ul>
+      <li><code>/progress/[token].tsx</code></li>
+      <li><code>/progress/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>promotions <span class='summary-route'>/promotions</span></summary>
+    <ul>
+      <li><code>/promotions/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>pwa <span class='summary-route'>/pwa</span></summary>
+    <ul>
+      <li><code>/pwa/app.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>quick <span class='summary-route'>/quick</span></summary>
+    <ul>
+      <li><code>/quick/[skill].tsx</code></li>
+      <li><code>/quick/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>r <span class='summary-route'>/r</span></summary>
+    <ul>
+      <li><code>/r/[code].tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>reading <span class='summary-route'>/reading</span></summary>
+    <ul>
+      <li><code>/reading/[slug].tsx</code></li>
+      <li><code>/reading/index.tsx</code></li>
+      <li><code>/reading/stats.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>[slug] <span class='summary-route'>/reading/[slug]</span></summary>
+      <ul>
+        <li><code>/reading/[slug]/review.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>passage <span class='summary-route'>/reading/passage</span></summary>
+      <ul>
+        <li><code>/reading/passage/[slug].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>reports <span class='summary-route'>/reports</span></summary>
+    <ul>
+      <li><code>/reports/band-analytics.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>review <span class='summary-route'>/review</span></summary>
+    <details open class='depth-2'>
+      <summary>listening <span class='summary-route'>/review/listening</span></summary>
+      <ul>
+        <li><code>/review/listening/[id].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>reading <span class='summary-route'>/review/reading</span></summary>
+      <ul>
+        <li><code>/review/reading/[id].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>share <span class='summary-route'>/review/share</span></summary>
+      <ul>
+        <li><code>/review/share/[token].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>speaking <span class='summary-route'>/review/speaking</span></summary>
+      <ul>
+        <li><code>/review/speaking/[id].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>writing <span class='summary-route'>/review/writing</span></summary>
+      <ul>
+        <li><code>/review/writing/[id].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>saved <span class='summary-route'>/saved</span></summary>
+    <ul>
+      <li><code>/saved/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>settings <span class='summary-route'>/settings</span></summary>
+    <ul>
+      <li><code>/settings/accessibility.tsx</code></li>
+      <li><code>/settings/billing.tsx</code></li>
+      <li><code>/settings/index.tsx</code></li>
+      <li><code>/settings/language.tsx</code></li>
+      <li><code>/settings/notifications.tsx</code></li>
+      <li><code>/settings/security.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>signup <span class='summary-route'>/signup</span></summary>
+    <ul>
+      <li><code>/signup/email.tsx</code></li>
+      <li><code>/signup/index.tsx</code></li>
+      <li><code>/signup/password.tsx</code></li>
+      <li><code>/signup/phone.tsx</code></li>
+      <li><code>/signup/verify.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>speaking <span class='summary-route'>/speaking</span></summary>
+    <ul>
+      <li><code>/speaking/[promptId].tsx</code></li>
+      <li><code>/speaking/buddy.tsx</code></li>
+      <li><code>/speaking/index.tsx</code></li>
+      <li><code>/speaking/library.tsx</code></li>
+      <li><code>/speaking/partner.tsx</code></li>
+      <li><code>/speaking/practice.tsx</code></li>
+      <li><code>/speaking/report.tsx</code></li>
+      <li><code>/speaking/settings.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>attempts <span class='summary-route'>/speaking/attempts</span></summary>
+      <ul>
+        <li><code>/speaking/attempts/index.tsx</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>[attemptId] <span class='summary-route'>/speaking/attempts/[attemptId]</span></summary>
+        <ul>
+          <li><code>/speaking/attempts/[attemptId]/result.tsx</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>coach <span class='summary-route'>/speaking/coach</span></summary>
+      <ul>
+        <li><code>/speaking/coach/[slug].tsx</code></li>
+        <li><code>/speaking/coach/free.tsx</code></li>
+        <li><code>/speaking/coach/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>live <span class='summary-route'>/speaking/live</span></summary>
+      <ul>
+        <li><code>/speaking/live/[id].tsx</code></li>
+        <li><code>/speaking/live/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>packs <span class='summary-route'>/speaking/packs</span></summary>
+      <ul>
+        <li><code>/speaking/packs/[slug].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>partner <span class='summary-route'>/speaking/partner</span></summary>
+      <ul>
+        <li><code>/speaking/partner/history.tsx</code></li>
+      </ul>
+      <details open class='depth-3'>
+        <summary>review <span class='summary-route'>/speaking/partner/review</span></summary>
+        <ul>
+          <li><code>/speaking/partner/review/[attemptId].tsx</code></li>
+        </ul>
+      </details>
+    </details>
+    <details open class='depth-2'>
+      <summary>review <span class='summary-route'>/speaking/review</span></summary>
+      <ul>
+        <li><code>/speaking/review/[id].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>roleplay <span class='summary-route'>/speaking/roleplay</span></summary>
+      <ul>
+        <li><code>/speaking/roleplay/[scenario].tsx</code></li>
+        <li><code>/speaking/roleplay/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>simulator <span class='summary-route'>/speaking/simulator</span></summary>
+      <ul>
+        <li><code>/speaking/simulator/index.tsx</code></li>
+        <li><code>/speaking/simulator/part1.tsx</code></li>
+        <li><code>/speaking/simulator/part2.tsx</code></li>
+        <li><code>/speaking/simulator/part3.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>study-plan <span class='summary-route'>/study-plan</span></summary>
+    <ul>
+      <li><code>/study-plan/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>teacher <span class='summary-route'>/teacher</span></summary>
+    <ul>
+      <li><code>/teacher/Welcome.tsx</code></li>
+      <li><code>/teacher/index.tsx</code></li>
+      <li><code>/teacher/onboarding.tsx</code></li>
+      <li><code>/teacher/pending.tsx</code></li>
+      <li><code>/teacher/register.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>cohorts <span class='summary-route'>/teacher/cohorts</span></summary>
+      <ul>
+        <li><code>/teacher/cohorts/[id].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>tools <span class='summary-route'>/tools</span></summary>
+    <details open class='depth-2'>
+      <summary>mark-sections <span class='summary-route'>/tools/mark-sections</span></summary>
+      <ul>
+        <li><code>/tools/mark-sections/[slug].tsx</code></li>
+      </ul>
+    </details>
+  </details>
+  <details open class='depth-1'>
+    <summary>visa <span class='summary-route'>/visa</span></summary>
+    <ul>
+      <li><code>/visa/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>vocab <span class='summary-route'>/vocab</span></summary>
+    <ul>
+      <li><code>/vocab/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>vocabulary <span class='summary-route'>/vocabulary</span></summary>
+    <ul>
+      <li><code>/vocabulary/[word].tsx</code></li>
+      <li><code>/vocabulary/index.tsx</code></li>
+      <li><code>/vocabulary/infiniteapplications.tsx</code></li>
+      <li><code>/vocabulary/learned.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>welcome <span class='summary-route'>/welcome</span></summary>
+    <ul>
+      <li><code>/welcome/index.tsx</code></li>
+    </ul>
+  </details>
+  <details open class='depth-1'>
+    <summary>writing <span class='summary-route'>/writing</span></summary>
+    <ul>
+      <li><code>/writing/[slug].tsx</code></li>
+      <li><code>/writing/index.tsx</code></li>
+    </ul>
+    <details open class='depth-2'>
+      <summary>drills <span class='summary-route'>/writing/drills</span></summary>
+      <ul>
+        <li><code>/writing/drills/[slug].tsx</code></li>
+        <li><code>/writing/drills/index.tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>review <span class='summary-route'>/writing/review</span></summary>
+      <ul>
+        <li><code>/writing/review/[attemptId].tsx</code></li>
+      </ul>
+    </details>
+    <details open class='depth-2'>
+      <summary>reviews <span class='summary-route'>/writing/reviews</span></summary>
+      <ul>
+        <li><code>/writing/reviews/calibrate.tsx</code></li>
+      </ul>
+    </details>
+  </details>
+</body>
+</html>
