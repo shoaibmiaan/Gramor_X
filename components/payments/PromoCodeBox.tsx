@@ -8,6 +8,7 @@ import {
   normalizePromoCode,
   type PromoCodeRule,
 } from '@/lib/promotions/codes';
+import { fetchPromoByCode } from '@/lib/promotions/client';
 import type { Cycle, PlanKey } from '@/types/payments';
 
 export type PromoCodeApplyPayload = Readonly<{
@@ -69,9 +70,12 @@ export default function PromoCodeBox({
     setError(null);
     setMessage(null);
 
-    const rule = findPromoByCode(normalized);
+    let rule = findPromoByCode(normalized);
     if (!rule) {
-      setError('Unknown promo code. Double-check the spelling.');
+      rule = await fetchPromoByCode(normalized);
+    }
+    if (!rule) {
+      setError('Unknown promo code. Double-check the spelling or contact support.');
       setBusy(false);
       return;
     }
@@ -143,7 +147,9 @@ export default function PromoCodeBox({
       ) : message ? (
         <p className="mt-2 text-small text-success dark:text-emerald-400">{message}</p>
       ) : (
-        <p className="mt-2 text-small text-muted-foreground">Eligible codes: PROMO10, GRAMOR25, CRYPTO15.</p>
+        <p className="mt-2 text-small text-muted-foreground">
+          Enter a valid promo code shared by GramorX support or listed on the promotions page.
+        </p>
       )}
       {error ? <p className="mt-2 text-small text-destructive">{error}</p> : null}
     </form>
