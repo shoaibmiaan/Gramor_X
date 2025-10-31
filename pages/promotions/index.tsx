@@ -8,10 +8,39 @@ import { Card } from '@/components/design-system/Card';
 import { Container } from '@/components/design-system/Container';
 import PromoCodeBox, { type PromoCodeApplyPayload } from '@/components/payments/PromoCodeBox';
 import { PLAN_LABEL } from '@/lib/payments/index';
-import { PROMO_CODES, explainPromoRule } from '@/lib/promotions/codes';
+import { PROMO_CODES, explainPromoRule, type PromoCodeRule } from '@/lib/promotions/codes';
+import { fetchActivePromos } from '@/lib/promotions/client';
 
 const PromotionsPage: NextPage = () => {
   const [demoPromo, setDemoPromo] = React.useState<PromoCodeApplyPayload['rule'] | null>(null);
+  const [dynamicPromos, setDynamicPromos] = React.useState<PromoCodeRule[]>([]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const promos = await fetchActivePromos();
+      if (!cancelled) {
+        setDynamicPromos(promos);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const promoList = React.useMemo(() => {
+    const map = new Map<string, PromoCodeRule>();
+    for (const promo of dynamicPromos) {
+      map.set(promo.code, promo);
+    }
+    for (const promo of PROMO_CODES) {
+      if (!map.has(promo.code)) {
+        map.set(promo.code, promo);
+      }
+    }
+    return Array.from(map.values());
+  }, [dynamicPromos]);
 
   return (
     <>
@@ -46,20 +75,26 @@ const PromotionsPage: NextPage = () => {
 
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-4">
-                {PROMO_CODES.map((promo) => (
-                  <Card key={promo.code} className="card-surface rounded-ds-2xl p-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <h2 className="text-h3">{promo.label}</h2>
-                        <p className="text-small text-muted-foreground">Code: {promo.code}</p>
-                      </div>
-                      <div className="rounded-full bg-muted px-3 py-1 text-caption text-muted-foreground">
-                        {promo.type === 'percent' ? `${promo.value}% off` : `$${promo.value / 100} off`}
-                      </div>
-                    </div>
-                    <p className="mt-4 text-body text-muted-foreground">{explainPromoRule(promo)}</p>
+                {promoList.length === 0 ? (
+                  <Card className="card-surface rounded-ds-2xl p-6 text-muted-foreground">
+                    No active promo codes right now. Check back soon or contact support for special offers.
                   </Card>
-                ))}
+                ) : (
+                  promoList.map((promo) => (
+                    <Card key={promo.code} className="card-surface rounded-ds-2xl p-6">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h2 className="text-h3">{promo.label}</h2>
+                          <p className="text-small text-muted-foreground">Code: {promo.code}</p>
+                        </div>
+                        <div className="rounded-full bg-muted px-3 py-1 text-caption text-muted-foreground">
+                          {promo.type === 'percent' ? `${promo.value}% off` : `$${promo.value / 100} off`}
+                        </div>
+                      </div>
+                      <p className="mt-4 text-body text-muted-foreground">{explainPromoRule(promo)}</p>
+                    </Card>
+                  ))
+                )}
               </div>
 
               <aside>
