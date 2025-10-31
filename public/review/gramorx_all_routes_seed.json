@@ -340,6 +340,11 @@
         "status": "todo"
       },
       {
+        "name": "save-card",
+        "path": "/checkout/save-card",
+        "status": "todo"
+      },
+      {
         "name": "success",
         "path": "/checkout/success",
         "status": "todo"

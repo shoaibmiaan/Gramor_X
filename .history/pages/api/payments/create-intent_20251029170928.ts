@@ -1,6 +1,5 @@
 // pages/api/payments/create-intent.ts
 import type { NextApiHandler, NextApiRequest } from 'next';
-import { z } from 'zod';
 
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { supabaseService } from '@/lib/supabaseService';
@@ -12,16 +11,9 @@ import { queueNotificationEvent, getNotificationContact, type NotificationContac
 import { getBaseUrl } from '@/lib/url';
 
 const providers: PaymentProvider[] = ['stripe', 'easypaisa', 'jazzcash', 'crypto'];
-
-const Body = z.object({
-  plan: z.enum(['starter', 'booster', 'master']).default('booster'),
-  cycle: z.enum(['monthly', 'annual']).optional(),
-  // Back-compat for old client param name
-  billingCycle: z.enum(['monthly', 'annual']).optional(),
-  provider: z.enum(providers as [PaymentProvider, ...PaymentProvider[]]).optional(),
-  referralCode: z.string().max(64).optional(),
-  promoCode: z.string().max(64).optional(),
-});
+const isPlan = (val: unknown): val is PlanKey => typeof val === 'string' && ['starter', 'booster', 'master'].includes(val);
+const isCycle = (val: unknown): val is Cycle => typeof val === 'string' && ['monthly', 'annual'].includes(val);
+const isProvider = (val: unknown): val is PaymentProvider => typeof val === 'string' && providers.includes(val as PaymentProvider);
 
 const getOrigin = (req: NextApiRequest) => {
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
@@ -29,17 +21,17 @@ const getOrigin = (req: NextApiRequest) => {
   return `${proto}://${host}`;
 };
 
-// Provider → default currency map (expand later if you add multi-currency prices)
-const PROVIDER_DEFAULT_CURRENCY: Record<PaymentProvider, 'USD' | 'PKR'> = {
-  stripe: 'USD',
-  easypaisa: 'PKR',
-  jazzcash: 'PKR',
-  crypto: 'USD',
-};
+type Body = Readonly<{
+  plan: PlanKey;
+  cycle?: Cycle;
+  provider?: PaymentProvider;
+  referralCode?: string;
+  promoCode?: string;
+}>;
 
 type SuccessRedirect = Readonly<{ ok: true; provider: PaymentProvider; url: string; sessionId?: string | null }>;
 type SuccessManual = Readonly<{ ok: true; manual: true; message: string }>;
-type Failure = Readonly<{ ok: false; error: string; details?: unknown }>;
+type Failure = Readonly<{ ok: false; error: string }>;
 type ResBody = SuccessRedirect | SuccessManual | Failure;
 
 const handler: NextApiHandler<ResBody> = async (req, res) => {
@@ -47,18 +39,13 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
     return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
   }
 
-  // Validate input strictly
-  const parsed = Body.safeParse(req.body ?? {});
-  if (!parsed.success) {
-    return res.status(400).json({ ok: false, error: 'Invalid body', details: parsed.error.flatten() });
-  }
-
-  const body = parsed.data;
-  const plan: PlanKey = body.plan;
-  const cycle: Cycle = (body.cycle ?? body.billingCycle ?? 'monthly') as Cycle;
-  const provider: PaymentProvider = (body.provider ?? 'stripe') as PaymentProvider;
-  const referralCode = body.referralCode;
-  const promoCode = body.promoCode;
+  const body = (req.body || {}) as Partial<Body> & { billingCycle?: Cycle };
+  const plan = isPlan(body.plan) ? body.plan : 'booster';
+  const cycleCandidate = isCycle(body.cycle) ? body.cycle : isCycle(body.billingCycle) ? body.billingCycle : undefined;
+  const cycle = cycleCandidate ?? 'monthly';
+  const provider = isProvider(body.provider) ? body.provider : 'stripe';
+  const referralCode = typeof body.referralCode === 'string' ? body.referralCode.slice(0, 64) : undefined;
+  const promoCode = typeof body.promoCode === 'string' ? body.promoCode.slice(0, 64) : undefined;
 
   const supabase = createSupabaseServerClient({ req, res });
   const { data: auth } = await supabase.auth.getUser();
@@ -67,18 +54,18 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   if (!userId) return res.status(401).json({ ok: false, error: 'Unauthorized' });
 
   const origin = getOrigin(req);
+  const amountCents = amountInCents(plan, cycle);
+  const currency = 'USD';
   const baseUrl = getBaseUrl();
 
-  // Choose currency by provider (don’t accept arbitrary currency from client)
-  const currency = PROVIDER_DEFAULT_CURRENCY[provider];
+  let contactPromise: Promise<NotificationContact> | null = null;
+  const ensureContact = () => {
+    if (!contactPromise) {
+      contactPromise = getNotificationContact(userId);
+    }
+    return contactPromise;
+  };
 
-  // Price sanity
-  const amountCents = amountInCents(plan, cycle);
-  if (!Number.isFinite(amountCents) || amountCents <= 0) {
-    return res.status(400).json({ ok: false, error: 'invalid_amount' });
-  }
-
-  // Create DB intent first (traceability & idempotency)
   const { data: intentRow, error: insertErr } = await supabaseService
     .from('payment_intents')
     .insert({
@@ -95,19 +82,15 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
     .single();
 
   if (insertErr || !intentRow) {
-    console.error('[payments] insert payment_intents failed', insertErr);
-    return res.status(500).json({ ok: false, error: 'intent_create_failed', details: insertErr?.message ?? insertErr });
+    return res.status(500).json({ ok: false, error: 'intent_create_failed' });
   }
 
   const intentId = intentRow.id as string;
-  const nowIso = new Date().toISOString();
-
-  let contactPromise: Promise<NotificationContact> | null = null;
-  const ensureContact = () => (contactPromise ??= getNotificationContact(userId));
-
   const notify = async (eventKey: 'payment_success' | 'payment_failed', reason?: string) => {
     const contact = await ensureContact();
-    if (!contact.email) return;
+    if (!contact.email) {
+      return;
+    }
 
     const payload: Record<string, unknown> = {
       plan,
@@ -116,8 +99,13 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       deep_link: `${baseUrl}/settings/billing`,
       user_email: contact.email,
     };
-    if (contact.phone) payload.user_phone = contact.phone;
-    if (reason) payload.reason = reason;
+
+    if (contact.phone) {
+      payload.user_phone = contact.phone;
+    }
+    if (reason) {
+      payload.reason = reason;
+    }
 
     const result = await queueNotificationEvent({
       event_key: eventKey,
@@ -126,25 +114,29 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       channels: ['email'],
       idempotency_key: `${eventKey}:${intentId}`,
     });
+
     if (!result.ok && result.reason !== 'duplicate') {
       console.error('[payments:notify]', eventKey, result.message);
     }
   };
+  const nowIso = new Date().toISOString();
 
   await supabaseService.from('payment_intent_events').insert({
     intent_id: intentId,
     user_id: userId,
     event: 'created',
-    payload: { provider, plan, cycle, referralCode, promoCode, currency, amount_cents: amountCents },
+    payload: { provider, plan, cycle, referralCode, promoCode },
   });
 
-  await trackor.log('payments.intent.create', { userId, intentId, provider, plan, cycle, currency, amountCents });
+  await trackor.log('payments.intent.create', {
+    userId,
+    intentId,
+    provider,
+    plan,
+    cycle,
+  });
 
   try {
-    // Create the gateway intent/session
-    // NOTE: If the gateway type hasn’t been updated to accept `currency`, add it there.
-    // Using @ts-expect-error per your rules, with a TODO.
-    // @ts-expect-error TODO(codex): extend createGatewayIntent options to include `currency`
     const gateway = await createGatewayIntent({
       provider,
       plan,
@@ -154,7 +146,6 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       referralCode,
       promoCode,
       amountCents,
-      currency, // <- important for Stripe (and future multi-currency support)
       intentId,
     });
 
@@ -171,14 +162,13 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       intent_id: intentId,
       user_id: userId,
       event: 'gateway.created',
-      payload: { url: gateway.url, sessionId: gateway.sessionId ?? null, promoCode, currency },
+      payload: { url: gateway.url, sessionId: gateway.sessionId ?? null, promoCode },
     });
 
     return res.status(200).json({ ok: true, provider, url: gateway.url, sessionId: gateway.sessionId ?? null });
   } catch (error) {
     const message = (error as Error)?.message || 'gateway_error';
 
-    // If Stripe is not configured, fall back to manual activation (your existing path)
     if (provider === 'stripe' && message === 'Stripe not configured') {
       try {
         const { amount_cents, currency: manualCurrency } = await createPendingPayment({
@@ -221,7 +211,8 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
         return res.status(200).json({
           ok: true,
           manual: true,
-          message: 'Subscription activated. Your payment will be collected offline and has been marked as due.',
+          message:
+            'Subscription activated. Your payment will be collected offline and has been marked as due.',
         });
       } catch (manualErr) {
         await supabaseService
@@ -241,12 +232,11 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
         });
 
         await notify('payment_failed', (manualErr as Error).message);
+
         return res.status(500).json({ ok: false, error: 'manual_fallback_failed' });
       }
     }
 
-    // Regular gateway failure
-    console.error('[payments] gateway error', { provider, message, plan, cycle, currency });
     await supabaseService
       .from('payment_intents')
       .update({ status: 'failed', failure_message: message, updated_at: new Date().toISOString() })
@@ -256,10 +246,11 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
       intent_id: intentId,
       user_id: userId,
       event: 'gateway.error',
-      payload: { message, provider, currency },
+      payload: { message },
     });
 
     await notify('payment_failed', message);
+
     return res.status(500).json({ ok: false, error: message });
   }
 };
