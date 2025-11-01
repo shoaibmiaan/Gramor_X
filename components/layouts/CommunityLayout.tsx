@@ -6,6 +6,7 @@ import { Container } from '@/components/design-system/Container';
 
 const CommunityLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { pathname } = useRouter();
+  const mainId = React.useId();
   const Item = ({ href, label }: { href: string; label: string }) => {
     const active = pathname === href || pathname.startsWith(href + '/');
     return (
@@ -21,7 +22,14 @@ const CommunityLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <section className="border-b border-border bg-card/30">
+      <a
+        href={`#${mainId}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-ds-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
+      <section className="border-b border-border bg-card/30" role="banner">
         <Container className="flex flex-col gap-4 py-5 pt-safe sm:py-6">
           <div className="space-y-1">
             <h1 className="font-slab text-h3 sm:text-h2">Community</h1>
@@ -43,9 +51,11 @@ const CommunityLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
         </Container>
       </section>
 
-      <Container className="py-6">
-        <div className="card-surface rounded-ds-2xl p-4">{children}</div>
-      </Container>
+      <main id={mainId} tabIndex={-1} className="focus:outline-none">
+        <Container className="py-6">
+          <div className="card-surface rounded-ds-2xl p-4">{children}</div>
+        </Container>
+      </main>
     </div>
   );
 };

@@ -12,6 +12,7 @@ import { Container } from '@/components/design-system/Container';
  */
 const PublicMarketingLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { pathname } = useRouter();
+  const mainId = React.useId();
 
   const Item: React.FC<{ href: string; label: string }> = ({ href, label }) => {
     const active =
@@ -30,6 +31,13 @@ const PublicMarketingLayout: React.FC<React.PropsWithChildren> = ({ children }) 
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
+      <a
+        href={`#${mainId}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-ds-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Context header */}
       <section className="border-b border-border bg-card/30">
         <Container className="flex flex-col gap-4 py-6 pt-safe sm:py-7">
@@ -58,11 +66,11 @@ const PublicMarketingLayout: React.FC<React.PropsWithChildren> = ({ children }) 
       </section>
 
       {/* Page body */}
-      <Container className="py-6">
-        <div className="card-surface rounded-ds-2xl p-4">
-          {children}
-        </div>
-      </Container>
+      <main id={mainId} tabIndex={-1} className="focus:outline-none">
+        <Container className="py-6">
+          <div className="card-surface rounded-ds-2xl p-4">{children}</div>
+        </Container>
+      </main>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { Container } from '@/components/design-system/Container';
 
 const InstitutionsLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { pathname } = useRouter();
+  const mainId = React.useId();
 
   const Item = ({ href, label }: { href: string; label: string }) => {
     const active = pathname === href || pathname.startsWith(href + '/');
@@ -26,8 +27,15 @@ const InstitutionsLayout: React.FC<React.PropsWithChildren> = ({ children }) => 
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
+      <a
+        href={`#${mainId}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-ds-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Sticky sub-header for B2B */}
-      <div className="sticky top-[calc(4rem+env(safe-area-inset-top,0px))] z-30 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <div className="sticky top-[calc(4rem+env(safe-area-inset-top,0px))] z-30 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70" role="banner">
         <Container className="flex flex-col gap-3 py-4 pt-safe">
           <div className="space-y-1">
             <h1 className="font-slab text-h3">Institutions</h1>
@@ -51,9 +59,11 @@ const InstitutionsLayout: React.FC<React.PropsWithChildren> = ({ children }) => 
         </Container>
       </div>
 
-      <Container className="py-6">
-        <div className="card-surface rounded-ds-2xl p-4">{children}</div>
-      </Container>
+      <main id={mainId} tabIndex={-1} className="focus:outline-none">
+        <Container className="py-6">
+          <div className="card-surface rounded-ds-2xl p-4">{children}</div>
+        </Container>
+      </main>
     </div>
   );
 };
