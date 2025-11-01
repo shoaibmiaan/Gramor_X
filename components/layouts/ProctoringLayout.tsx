@@ -1,30 +1,36 @@
 // components/layouts/ProctoringLayout.tsx
 import * as React from 'react';
+import { ShieldAlert } from 'lucide-react';
+
 import { Container } from '@/components/design-system/Container';
+import { LayoutHero } from '@/components/layouts/shared/LayoutHero';
 
 const ProctoringLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      {/* Proctoring banner */}
-      <div className="sticky top-[env(safe-area-inset-top,0px)] z-40 border-b border-border bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <Container className="py-2 pt-safe">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-small">
-              <span className="font-medium">Proctoring Enabled</span>{' '}
-              <span className="text-mutedText">— camera, microphone, and tab focus are being monitored.</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-caption">
-              <span className="badge bg-primary/10 text-primary rounded-full px-2 py-1">Camera ✓</span>
-              <span className="badge bg-primary/10 text-primary rounded-full px-2 py-1">Mic ✓</span>
-              <span className="badge bg-primary/10 text-primary rounded-full px-2 py-1">Tab Focus ✓</span>
-            </div>
+      <div className="sticky top-[env(safe-area-inset-top,0px)] z-40 bg-background/90 pb-2 pt-safe backdrop-blur supports-[backdrop-filter]:bg-background/70">
+        <LayoutHero
+          accent="proctoring"
+          icon={ShieldAlert}
+          eyebrow="Exam mode"
+          title="Proctoring in progress"
+          subtitle="Camera, microphone, and tab focus are actively monitored. Stay within the test window to avoid flags."
+          className="pb-2 sm:pb-4"
+        >
+          <div className="rounded-2xl border border-white/50 bg-white/70 p-4 text-sm font-medium text-amber-900 shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-amber-100/90">
+            Camera ✓ — positioned correctly
           </div>
-        </Container>
+          <div className="rounded-2xl border border-white/50 bg-white/70 p-4 text-sm font-medium text-amber-900 shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-amber-100/90">
+            Microphone ✓ — audio levels healthy
+          </div>
+          <div className="rounded-2xl border border-white/50 bg-white/70 p-4 text-sm font-medium text-amber-900 shadow-sm dark:border-white/10 dark:bg-slate-900/60 dark:text-amber-100/90">
+            Focus ✓ — no tab changes detected
+          </div>
+        </LayoutHero>
       </div>
 
-      {/* Body */}
-      <Container className="py-4 sm:py-6">
-        <div className="card-surface rounded-ds-2xl p-3 sm:p-4">{children}</div>
+      <Container className="pb-10">
+        <div className="card-surface rounded-ds-2xl p-3 shadow-[0_25px_55px_rgba(245,158,11,0.18)] sm:p-4 dark:shadow-none">{children}</div>
       </Container>
     </div>
   );
