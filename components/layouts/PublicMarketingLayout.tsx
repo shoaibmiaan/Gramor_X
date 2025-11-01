@@ -1,68 +1,69 @@
 // components/layouts/PublicMarketingLayout.tsx
 import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { Container } from '@/components/design-system/Container';
+import { Home, BadgeDollarSign, Sparkles, HelpCircle, FileText, ShieldCheck } from 'lucide-react';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { LayoutHero } from '@/components/layouts/shared/LayoutHero';
+import { LayoutSurface } from '@/components/layouts/shared/LayoutSurface';
+import { LayoutQuickNav } from '@/components/layouts/shared/LayoutQuickNav';
 
-/**
- * PublicMarketingLayout
- * - Lightweight section wrapper for public pages (/, /pricing, /predictor, /faq, /legal, /data-deletion)
- * - Uses DS tokens only; header/footer come from global <Layout />
- * - Shows a small quick-nav for common marketing routes
- */
 const PublicMarketingLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
-
-  const Item: React.FC<{ href: string; label: string }> = ({ href, label }) => {
-    const active =
-      pathname === href ||
-      (href !== '/' && pathname.startsWith(href));
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`}
-      >
-        {label}
-      </Link>
-    );
-  };
+  const highlight = (
+    <>
+      <div className="flex items-center gap-2 text-foreground">
+        <Badge variant="primary">IELTS Ready</Badge>
+        <span className="text-sm font-semibold">12k+ learners onboard</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 pt-3">
+        <div className="rounded-xl bg-background/70 p-3 shadow-sm">
+          <p className="text-caption uppercase tracking-wide text-mutedText">Avg. band boost</p>
+          <p className="text-2xl font-bold text-gradient-primary">+1.2</p>
+        </div>
+        <div className="rounded-xl bg-background/70 p-3 shadow-sm">
+          <p className="text-caption uppercase tracking-wide text-mutedText">Satisfaction</p>
+          <p className="text-2xl font-bold text-gradient-primary">96%</p>
+        </div>
+      </div>
+    </>
+  );
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
-      {/* Context header */}
-      <section className="border-b border-border bg-card/30">
-        <Container className="flex flex-col gap-4 py-6 pt-safe sm:py-7">
-          <div className="space-y-1">
-            <h1 className="font-slab text-h3 sm:text-h2">Welcome</h1>
-            <p className="text-small text-mutedText">
-              Explore plans, try the predictor, and learn how GramorX boosts your IELTS score.
-            </p>
-          </div>
+    <div className="min-h-[100dvh] bg-gradient-to-b from-vibrantPurple/5 via-background to-background text-foreground">
+      <LayoutHero
+        accent="marketing"
+        eyebrow="Discover GramorX"
+        title="Your IELTS companion for confident band 8+ journeys"
+        description="Compare plans, explore features, and see how GramorX accelerates language mastery for ambitious learners."
+        actions={(
+          <>
+            <Button href="/pricing" size="lg">
+              View pricing
+            </Button>
+            <Button href="/predictor" variant="soft" tone="accent" size="lg">
+              Try the band predictor
+            </Button>
+          </>
+        )}
+        highlight={highlight}
+      >
+        <LayoutQuickNav
+          ariaLabel="Marketing sections"
+          items={[
+            { href: '/', label: 'Home', icon: <Home className="h-4 w-4" /> },
+            { href: '/pricing', label: 'Pricing', icon: <BadgeDollarSign className="h-4 w-4" /> },
+            { href: '/predictor', label: 'Band Predictor', icon: <Sparkles className="h-4 w-4" /> },
+            { href: '/faq', label: 'FAQ', icon: <HelpCircle className="h-4 w-4" /> },
+            { href: '/legal/terms', label: 'Terms', icon: <FileText className="h-4 w-4" /> },
+            { href: '/legal/privacy', label: 'Privacy', icon: <ShieldCheck className="h-4 w-4" /> },
+          ]}
+        />
+      </LayoutHero>
 
-          {/* Quick marketing nav */}
-          <nav
-            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
-            aria-label="Marketing sections"
-          >
-            <div className="flex gap-2 px-1">
-              <Item href="/" label="Home" />
-              <Item href="/pricing" label="Pricing" />
-              <Item href="/predictor" label="Band Predictor" />
-              <Item href="/faq" label="FAQ" />
-              <Item href="/legal/terms" label="Terms" />
-              <Item href="/legal/privacy" label="Privacy" />
-            </div>
-          </nav>
-        </Container>
-      </section>
-
-      {/* Page body */}
-      <Container className="py-6">
-        <div className="card-surface rounded-ds-2xl p-4">
-          {children}
-        </div>
-      </Container>
+      <main>
+        <LayoutSurface accent="marketing">
+          <div className="space-y-6 text-base leading-relaxed text-foreground">{children}</div>
+        </LayoutSurface>
+      </main>
     </div>
   );
 };
