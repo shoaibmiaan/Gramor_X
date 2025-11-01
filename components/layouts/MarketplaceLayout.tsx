@@ -1,57 +1,75 @@
 // components/layouts/MarketplaceLayout.tsx
 import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { Container } from '@/components/design-system/Container';
+import { Store, UsersRound, CalendarClock, BriefcaseBusiness, Building2 } from 'lucide-react';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
 import { flags } from '@/lib/flags';
+import { LayoutHero } from '@/components/layouts/shared/LayoutHero';
+import { LayoutSurface } from '@/components/layouts/shared/LayoutSurface';
+import { LayoutQuickNav } from '@/components/layouts/shared/LayoutQuickNav';
 
 const coachEnabled = flags.enabled('coach');
 
 const MarketplaceLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
-  const Item = ({ href, label }: { href: string; label: string }) => {
-    const active = pathname === href || pathname.startsWith(href + '/');
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`}
-      >
-        {label}
-      </Link>
-    );
-  };
+  const highlight = (
+    <>
+      <div className="flex items-center gap-2 text-foreground">
+        <Badge variant="warning">Featured</Badge>
+        <span className="text-sm font-medium">Weekend strategy sprint · seats left: 4</span>
+      </div>
+      <div className="space-y-3 pt-3 text-foreground">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-mutedText">Upcoming sessions</span>
+          <span className="text-2xl font-bold text-gradient-primary">12</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-mutedText">Average coach rating</span>
+          <span className="text-sm font-semibold">4.9 / 5</span>
+        </div>
+      </div>
+    </>
+  );
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
-      <section className="border-b border-border bg-card/30">
-        <Container className="flex flex-col gap-4 py-5 pt-safe sm:py-6">
-          <div className="space-y-1">
-            <h1 className="font-slab text-h3 sm:text-h2">Coaches & Classes</h1>
-            <p className="text-small text-mutedText">
-              {coachEnabled
-                ? 'Find a coach, join a class, or manage bookings.'
-                : 'Join a class or manage bookings while coaching launches soon.'}
-            </p>
-          </div>
-          <nav
-            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
-            aria-label="Marketplace sections"
-          >
-            <div className="flex gap-2 px-1">
-              <Item href="/marketplace" label="Marketplace" />
-              {coachEnabled && <Item href="/coach" label="Coaches" />}
-              <Item href="/classes" label="Classes" />
-              <Item href="/bookings" label="Bookings" />
-              <Item href="/partners" label="Partners" />
-            </div>
-          </nav>
-        </Container>
-      </section>
+    <div className="min-h-[100dvh] bg-gradient-to-b from-goldenYellow/10 via-background to-background text-foreground">
+      <LayoutHero
+        accent="marketplace"
+        eyebrow="Coaches & Classes"
+        title="Book expert feedback, join live classes, and grow faster"
+        description={
+          coachEnabled
+            ? 'Find a coach, secure your spot in upcoming cohorts, or manage your existing bookings.'
+            : 'Browse classes, manage bookings, and prepare for personalised coaching as it launches.'
+        }
+        actions={(
+          <>
+            <Button href="/marketplace" size="lg">
+              Explore marketplace
+            </Button>
+            <Button href="/bookings" variant="soft" tone="warning" size="lg">
+              Manage bookings
+            </Button>
+          </>
+        )}
+        highlight={highlight}
+      >
+        <LayoutQuickNav
+          ariaLabel="Marketplace sections"
+          items={[
+            { href: '/marketplace', label: 'Marketplace', icon: <Store className="h-4 w-4" /> },
+            { href: '/coach', label: 'Coaches', icon: <UsersRound className="h-4 w-4" />, hidden: !coachEnabled },
+            { href: '/classes', label: 'Classes', icon: <CalendarClock className="h-4 w-4" /> },
+            { href: '/bookings', label: 'Bookings', icon: <BriefcaseBusiness className="h-4 w-4" /> },
+            { href: '/partners', label: 'Partners', icon: <Building2 className="h-4 w-4" /> },
+          ]}
+        />
+      </LayoutHero>
 
-      <Container className="py-6">
-        <div className="card-surface rounded-ds-2xl p-4">{children}</div>
-      </Container>
+      <main>
+        <LayoutSurface accent="marketplace">
+          <div className="space-y-6 text-base leading-relaxed text-foreground">{children}</div>
+        </LayoutSurface>
+      </main>
     </div>
   );
 };
