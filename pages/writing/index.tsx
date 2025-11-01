@@ -8,6 +8,7 @@ import { Card } from '@/components/design-system/Card';
 import { Container } from '@/components/design-system/Container';
 import { EmptyState } from '@/components/design-system/EmptyState';
 import { Separator } from '@/components/design-system/Separator';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
 import { withPlanPage } from '@/lib/withPlanPage';
 import { getServerClient } from '@/lib/supabaseServer';
 import type { Database } from '@/types/supabase';
@@ -91,6 +92,11 @@ const formatDateTime = (value: string) =>
 const formatDate = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
 
 const RETAKE_PLAN_TARGETS = { redrafts: 6, drills: 8, mocks: 2 } as const;
+
+const progressPercentage = (value: number, target: number) => {
+  if (target <= 0) return value > 0 ? 100 : 0;
+  return Math.max(0, Math.min(100, Math.round((value / target) * 100)));
+};
 
 const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPrompt }: PageProps) => {
   const [startingPromptId, setStartingPromptId] = useState<string | null>(null);
@@ -185,32 +191,102 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
     }
   };
 
-  return (
-    <Container className="py-12">
-      <div className="mx-auto flex max-w-6xl flex-col gap-12">
-        <header className="flex flex-col gap-3">
-          <h1 className="text-3xl font-semibold text-foreground md:text-4xl">Writing studio</h1>
-          <p className="max-w-3xl text-base text-muted-foreground">
-            Draft confidently, unlock targeted drills, and review detailed scoring for Task 1 and Task 2 attempts. Autosave keeps your
-            work safe, while readiness gates help you schedule meaningful redrafts.
-          </p>
-          {error && <p className="text-sm text-danger">{error}</p>}
-        </header>
+  const planProgressItems = [
+    { key: 'redrafts', label: 'Redrafts completed', value: plan.redraftsCompleted, target: planTargets.redrafts },
+    { key: 'drills', label: 'Micro-drills logged', value: plan.drillsCompleted, target: planTargets.drills },
+    { key: 'mocks', label: 'Mock attempts reviewed', value: plan.mocksCompleted, target: planTargets.mocks },
+  ] as const;
 
-        <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-          <Card className="card-surface flex flex-col gap-6 p-6">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">Prompts</h2>
-              <p className="text-sm text-muted-foreground">Choose a prompt to launch a timed editor with autosave.</p>
+  return (
+    <Container className="relative py-12 sm:py-16">
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.12),_transparent_55%)]"
+        aria-hidden
+      />
+      <div className="mx-auto flex max-w-6xl flex-col gap-12">
+        <Card className="relative overflow-hidden border border-border/50 bg-gradient-to-br from-primary/10 via-background/80 to-background/95 p-8 shadow-xl sm:p-10">
+          <div className="absolute inset-y-0 right-0 hidden w-64 translate-x-24 rounded-full bg-primary/20 blur-3xl lg:block" aria-hidden />
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-2xl space-y-4">
+              <Badge variant="soft" tone={passReadiness ? 'success' : 'info'} size="sm">
+                {passReadiness ? 'Redraft unlocked' : 'Stay consistent'}
+              </Badge>
+              <div className="space-y-3">
+                <h1 className="text-3xl font-semibold text-foreground sm:text-4xl">Writing studio</h1>
+                <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+                  Draft confidently, unlock targeted drills, and review detailed scoring for Task 1 and Task 2 attempts. Autosave keeps your work safe while readiness gates make sure every redraft counts.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="primary" href="#prompt-library" size="lg">
+                  Explore prompts
+                </Button>
+                <Button variant="outline" href="/writing/review" size="lg">
+                  Review past attempts
+                </Button>
+                <Button variant="ghost" href="/writing/drills" size="lg">
+                  Jump into drills
+                </Button>
+              </div>
+              {error && <p className="text-sm text-danger">{error}</p>}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex w-full flex-col gap-4 rounded-2xl border border-border/60 bg-background/70 p-5 text-sm text-muted-foreground shadow-inner lg:max-w-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-foreground">Study window</span>
+                <Badge variant="soft" tone="info" size="sm">
+                  {formatDate(plan.windowStart)} – {plan.windowEnd ? formatDate(plan.windowEnd) : 'TBD'}
+                </Badge>
+              </div>
+              <Separator />
+              <ul className="space-y-3">
+                {planProgressItems.map((item) => (
+                  <li key={item.key} className="space-y-2">
+                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      <span>{item.label}</span>
+                      <span className="font-semibold text-foreground">
+                        {item.value}/{item.target}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={progressPercentage(item.value, item.target)}
+                      tone="info"
+                      ariaLabel={`${item.label} progress`}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+          <Card id="prompt-library" className="card-surface flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground">Prompt library</h2>
+                <p className="text-sm text-muted-foreground">
+                  Choose a prompt to launch a focused editor with autosave, timers, and structured scoring.
+                </p>
+              </div>
+              <Badge variant="soft" tone="default" size="sm">
+                {sortedPrompts.length} ready to attempt
+              </Badge>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {sortedPrompts.map((prompt) => (
-                <Card key={prompt.id} className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="soft" tone="info" size="sm" className="capitalize">
-                      {prompt.taskType === 'task1' ? 'Task 1' : 'Task 2'}
+                <Card
+                  key={prompt.id}
+                  className="flex h-full flex-col gap-5 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/50"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    <span className="flex items-center gap-2">
+                      <Badge variant="soft" tone="info" size="sm" className="capitalize">
+                        {prompt.taskType === 'task1' ? 'Task 1' : 'Task 2'}
+                      </Badge>
+                    </span>
+                    <Badge variant="soft" tone="default" size="sm">
+                      {difficultyLabel(prompt.difficulty)}
                     </Badge>
-                    <Badge variant="soft" tone="default" size="sm">{difficultyLabel(prompt.difficulty)}</Badge>
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-foreground">{prompt.topic}</h3>
@@ -225,7 +301,9 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                     >
                       Start writing
                     </Button>
-                    <Button size="sm" variant="outline" href={`/writing/${prompt.slug}`}>View prompt</Button>
+                    <Button size="sm" variant="outline" href={`/writing/${prompt.slug}`}>
+                      View prompt
+                    </Button>
                   </div>
                 </Card>
               ))}
@@ -238,29 +316,35 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
             )}
           </Card>
 
-          <div className="flex flex-col gap-4">
-            <Card id="retake-plan" className="card-surface flex flex-col gap-4 p-6">
-              <h2 className="text-xl font-semibold text-foreground">Readiness gate</h2>
-              {readiness ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-6 lg:sticky lg:top-24">
+            <Card id="retake-plan" className="card-surface flex flex-col gap-5 p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-foreground">Readiness gate</h2>
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="soft" tone={passReadiness ? 'success' : 'warning'} size="sm">
                       {passReadiness ? 'Ready for redraft' : 'Action needed'}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {passReadiness ? 'You can start a redraft attempt.' : 'Complete the steps below to unlock redraft.'}
+                    <span className="text-xs text-muted-foreground">
+                      {passReadiness ? 'You can schedule a redraft attempt.' : 'Complete the actions below to unlock redrafts.'}
                     </span>
                   </div>
-                  {!passReadiness && (
-                    <ul className="list-disc space-y-2 pl-6 text-sm text-muted-foreground">
+                </div>
+              </div>
+              {readiness ? (
+                <div className="space-y-3">
+                  {!passReadiness ? (
+                    <ul className="space-y-2 rounded-xl bg-muted/40 p-3 text-sm text-muted-foreground">
                       {missingSummary.map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item} className="flex items-start gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 flex-none rounded-full bg-primary/70" aria-hidden />
+                          <span>{item}</span>
+                        </li>
                       ))}
                     </ul>
-                  )}
-                  {passReadiness && (
+                  ) : (
                     <p className="text-sm text-muted-foreground">
-                      Keep momentum going by scheduling a redraft within the next two weeks for best gains.
+                      Keep momentum going by scheduling a redraft within the next two weeks for the biggest score gains.
                     </p>
                   )}
                 </div>
@@ -270,34 +354,33 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                 </p>
               )}
               <Separator />
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+              <div className="space-y-2 text-sm text-muted-foreground">
                 <p>New to readiness gates? Complete two targeted drills and submit one scored attempt to unlock redrafts.</p>
-                <Link href="/writing" className="text-primary underline underline-offset-4">Learn more</Link>
+                <Link href="/writing" className="text-primary underline underline-offset-4">
+                  Learn more
+                </Link>
               </div>
             </Card>
 
-            <Card className="card-surface flex flex-col gap-4 p-6">
+            <Card className="card-surface flex flex-col gap-5 p-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <h2 className="text-xl font-semibold text-foreground">Daily micro prompt</h2>
-                  <p className="text-sm text-muted-foreground">
-                    One-sentence nudge to keep today&apos;s writing focused.
-                  </p>
+                  <p className="text-sm text-muted-foreground">A quick nudge to sharpen today&apos;s session.</p>
                 </div>
                 <Badge variant="soft" tone="info" size="sm">
                   Updated daily
                 </Badge>
               </div>
-              <p className="rounded-2xl bg-muted/60 p-3 text-sm text-foreground">{microPromptState.message}</p>
-
+              <p className="rounded-2xl border border-dashed border-border/50 bg-muted/50 p-3 text-sm text-foreground">
+                {microPromptState.message}
+              </p>
               {microPromptState.retakeReminder && (
-                <div className="rounded-2xl border border-dashed border-border/60 bg-card/60 p-3 text-xs text-muted-foreground">
+                <div className="rounded-2xl border border-dashed border-border/40 bg-card/60 p-3 text-xs text-muted-foreground">
                   {microPromptState.retakeReminder.message}
                 </div>
               )}
-
               {microPromptError && <p className="text-sm text-danger">{microPromptError}</p>}
-
               <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span>
                   {microPromptState.lastSentAt
@@ -314,8 +397,7 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                   </span>
                 )}
               </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   size="sm"
                   variant="primary"
@@ -329,7 +411,6 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                   Refresh tip
                 </Button>
               </div>
-
               {microPromptState.alreadySentToday && (
                 <p className="text-xs text-muted-foreground">
                   Tip already delivered today — check back tomorrow for a fresh focus cue.
@@ -337,26 +418,29 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
               )}
             </Card>
 
-            <Card className="card-surface flex flex-col gap-4 p-6">
+            <Card className="card-surface flex flex-col gap-5 p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-foreground">14-day retake plan</h2>
                 <Badge variant="soft" tone="info" size="sm">
                   {formatDate(plan.windowStart)} – {plan.windowEnd ? formatDate(plan.windowEnd) : 'TBD'}
                 </Badge>
               </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center justify-between">
-                  <span>Redrafts completed</span>
-                  <span className="text-foreground font-medium">{plan.redraftsCompleted}/{planTargets.redrafts}</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>Micro-drills logged</span>
-                  <span className="text-foreground font-medium">{plan.drillsCompleted}/{planTargets.drills}</span>
-                </li>
-                <li className="flex items-center justify-between">
-                  <span>Mock attempts reviewed</span>
-                  <span className="text-foreground font-medium">{plan.mocksCompleted}/{planTargets.mocks}</span>
-                </li>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                {planProgressItems.map((item) => (
+                  <li key={`sidebar-${item.key}`} className="space-y-2 rounded-xl border border-border/40 p-3">
+                    <div className="flex items-center justify-between">
+                      <span>{item.label}</span>
+                      <span className="font-medium text-foreground">
+                        {item.value}/{item.target}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      value={progressPercentage(item.value, item.target)}
+                      tone="info"
+                      ariaLabel={`${item.label} progress`}
+                    />
+                  </li>
+                ))}
               </ul>
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" href="/writing/drills">
@@ -371,10 +455,15 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <Card id="continue-drafts" className="card-surface flex flex-col gap-4 p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Continue drafts</h2>
-              <Badge variant="soft" tone="default" size="sm">{drafts.length} active</Badge>
+          <Card id="continue-drafts" className="card-surface flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Continue drafts</h2>
+                <p className="text-sm text-muted-foreground">Pick up where you left off with autosaved work.</p>
+              </div>
+              <Badge variant="soft" tone="default" size="sm">
+                {drafts.length} active
+              </Badge>
             </div>
             {drafts.length === 0 ? (
               <EmptyState
@@ -382,9 +471,12 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                 description="Start a new attempt or revisit a scored attempt to launch a redraft."
               />
             ) : (
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {drafts.map((attempt) => (
-                  <li key={attempt.id} className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                  <li
+                    key={attempt.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition-all hover:-translate-y-0.5"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-medium text-foreground">{attempt.promptTopic}</p>
@@ -409,10 +501,15 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
             )}
           </Card>
 
-          <Card id="recent-attempts" className="card-surface flex flex-col gap-4 p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Recent attempts</h2>
-              <Badge variant="soft" tone="default" size="sm">Last 6</Badge>
+          <Card id="recent-attempts" className="card-surface flex flex-col gap-6 p-6 sm:p-8">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Recent attempts</h2>
+                <p className="text-sm text-muted-foreground">See what you submitted recently and track your scores.</p>
+              </div>
+              <Badge variant="soft" tone="default" size="sm">
+                Last 6
+              </Badge>
             </div>
             {recent.length === 0 ? (
               <EmptyState
@@ -420,9 +517,12 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                 description="Submit an essay to unlock AI feedback and trend tracking."
               />
             ) : (
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {recent.map((attempt) => (
-                  <li key={attempt.id} className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                  <li
+                    key={attempt.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition-all hover:-translate-y-0.5"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-medium text-foreground">{attempt.promptTopic}</p>
@@ -441,13 +541,12 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {attempt.status === 'scored' ? (
-                        <Button size="sm" variant="primary" href={`/writing/review/${attempt.id}`}>
-                          View feedback
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline" href={`/writing/${attempt.promptSlug}?attemptId=${attempt.id}`}>
-                          Check status
+                      <Button size="sm" variant="outline" href={`/writing/${attempt.promptSlug}?attemptId=${attempt.id}`}>
+                        View details
+                      </Button>
+                      {attempt.hasFeedback && (
+                        <Button size="sm" variant="ghost" href={`/writing/review/${attempt.id}`}>
+                          Review feedback
                         </Button>
                       )}
                     </div>
@@ -457,6 +556,52 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
             )}
           </Card>
         </section>
+
+        <Card className="card-surface flex flex-col gap-6 p-6 sm:p-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">Boost your next attempt</h2>
+              <p className="text-sm text-muted-foreground">
+                Layer drills, reviews, and mock feedback to build a sharper writing routine.
+              </p>
+            </div>
+            <Badge variant="soft" tone="info" size="sm">
+              Curated resources
+            </Badge>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link
+              href="/writing/drills"
+              className="group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card"
+            >
+              <span className="text-sm font-semibold text-foreground">Skill drills</span>
+              <span className="text-sm text-muted-foreground">
+                Target coherence, task achievement, and grammar with 10-minute micro drills.
+              </span>
+              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">Visit drills</span>
+            </Link>
+            <Link
+              href="/writing/reviews"
+              className="group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card"
+            >
+              <span className="text-sm font-semibold text-foreground">AI reviews</span>
+              <span className="text-sm text-muted-foreground">
+                Compare attempts, highlight improvements, and plan your next rewrite.
+              </span>
+              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">Open reviews</span>
+            </Link>
+            <Link
+              href="/writing/drills?tab=mocks"
+              className="group flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card"
+            >
+              <span className="text-sm font-semibold text-foreground">Mock library</span>
+              <span className="text-sm text-muted-foreground">
+                Revisit scored mocks, analyse feedback themes, and schedule your next redraft.
+              </span>
+              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">Browse mocks</span>
+            </Link>
+          </div>
+        </Card>
       </div>
     </Container>
   );
