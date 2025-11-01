@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 
@@ -7,8 +8,12 @@ import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Container } from '@/components/design-system/Container';
 import { EmptyState } from '@/components/design-system/EmptyState';
+import { Input } from '@/components/design-system/Input';
+import { Radio } from '@/components/design-system/Radio';
 import { Separator } from '@/components/design-system/Separator';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
+import { Select } from '@/components/design-system/Select';
+import { Textarea } from '@/components/design-system/Textarea';
 import { withPlanPage } from '@/lib/withPlanPage';
 import { getServerClient } from '@/lib/supabaseServer';
 import type { Database } from '@/types/supabase';
@@ -28,6 +33,17 @@ interface PromptCard {
   difficulty: number;
   outlineSummary: string | null;
 }
+
+type TaskFilter = 'all' | WritingTaskType;
+type DifficultyFilter = 'all' | '1' | '2' | '3' | '4' | '5';
+
+type GeneratorFormState = {
+  taskType: WritingTaskType;
+  difficulty: number;
+  count: 1 | 3 | 5;
+  theme: string;
+  style: string;
+};
 
 interface AttemptSummary {
   id: string;
@@ -104,21 +120,51 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
   const [microPromptState, setMicroPromptState] = useState<PageProps['microPrompt']>(microPrompt);
   const [microPromptLoading, setMicroPromptLoading] = useState(false);
   const [microPromptError, setMicroPromptError] = useState<string | null>(null);
+  const [libraryPrompts, setLibraryPrompts] = useState<PromptCard[]>(prompts);
+  const [filters, setFilters] = useState<{ search: string; task: TaskFilter; difficulty: DifficultyFilter }>(
+    { search: '', task: 'all', difficulty: 'all' },
+  );
+  const [libraryError, setLibraryError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [generatorState, setGeneratorState] = useState<GeneratorFormState>({
+    taskType: 'task2',
+    difficulty: 3,
+    count: 3,
+    theme: '',
+    style: '',
+  });
+  const [generatorError, setGeneratorError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const passReadiness = readiness?.pass ?? false;
   const missingSummary = readiness?.missing ?? [];
 
   const planTargets = RETAKE_PLAN_TARGETS;
 
-  const sortedPrompts = useMemo(
-    () =>
-      [...prompts].sort((a, b) => {
+  useEffect(() => {
+    setLibraryPrompts(prompts);
+  }, [prompts]);
+
+  const filteredPrompts = useMemo(() => {
+    const query = filters.search.trim().toLowerCase();
+    return [...libraryPrompts]
+      .sort((a, b) => {
         const diffDelta = a.difficulty - b.difficulty;
         if (diffDelta !== 0) return diffDelta;
         return a.topic.localeCompare(b.topic);
-      }),
-    [prompts],
-  );
+      })
+      .filter((prompt) => {
+        const matchesSearch =
+          query.length === 0 ||
+          prompt.topic.toLowerCase().includes(query) ||
+          (prompt.outlineSummary ?? '').toLowerCase().includes(query);
+        const matchesTask = filters.task === 'all' || prompt.taskType === filters.task;
+        const matchesDifficulty =
+          filters.difficulty === 'all' || prompt.difficulty === Number(filters.difficulty);
+        return matchesSearch && matchesTask && matchesDifficulty;
+      });
+  }, [libraryPrompts, filters]);
 
   const refreshMicroPrompt = useCallback(async () => {
     try {
@@ -197,6 +243,77 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
     { key: 'mocks', label: 'Mock attempts reviewed', value: plan.mocksCompleted, target: planTargets.mocks },
   ] as const;
 
+  const handleClearFilters = useCallback(() => {
+    setFilters({ search: '', task: 'all', difficulty: 'all' });
+    setStatusMessage('Filters cleared. Showing all prompts.');
+  }, []);
+
+  const handleRefreshPrompts = useCallback(async () => {
+    setIsRefreshing(true);
+    setLibraryError(null);
+    setStatusMessage('');
+    try {
+      const response = await fetch('/api/writing/prompts?limit=24');
+      const payload = (await response.json()) as
+        | { ok: true; prompts: PromptCard[] }
+        | { ok: false; error: string };
+      if (!response.ok || !payload || !('ok' in payload) || !payload.ok) {
+        const reason = !payload || !('error' in payload) ? 'Unable to refresh prompts' : payload.error;
+        throw new Error(reason);
+      }
+      setLibraryPrompts(payload.prompts);
+      setStatusMessage(`Prompt library refreshed with ${payload.prompts.length} prompts.`);
+    } catch (err) {
+      setLibraryError(err instanceof Error ? err.message : 'Unable to refresh prompts');
+      setStatusMessage('');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  const handleGeneratePrompts = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (isGenerating) return;
+      setGeneratorError(null);
+      setStatusMessage('');
+      setIsGenerating(true);
+      try {
+        const response = await fetch('/api/writing/prompts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            taskType: generatorState.taskType,
+            difficulty: generatorState.difficulty,
+            count: generatorState.count,
+            theme: generatorState.theme.trim() || undefined,
+            style: generatorState.style.trim() || undefined,
+          }),
+        });
+
+        const payload = (await response.json()) as
+          | { ok: true; prompts: PromptCard[] }
+          | { ok: false; error: string };
+
+        if (!response.ok || !payload || !('ok' in payload) || !payload.ok) {
+          const reason = !payload || !('error' in payload) ? 'Prompt generation failed' : payload.error;
+          throw new Error(reason);
+        }
+
+        setLibraryPrompts((prev) => [...payload.prompts, ...prev]);
+        setStatusMessage(`Added ${payload.prompts.length} AI-generated prompt${
+          payload.prompts.length === 1 ? '' : 's'
+        } to the library.`);
+        setGeneratorState((prev) => ({ ...prev, theme: '', style: '' }));
+      } catch (err) {
+        setGeneratorError(err instanceof Error ? err.message : 'Unable to generate prompts');
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [generatorState, isGenerating],
+  );
+
   return (
     <Container className="relative py-12 sm:py-16">
       <div
@@ -261,19 +378,83 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
           <Card id="prompt-library" className="card-surface flex flex-col gap-6 p-6 sm:p-8">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-1">
                 <h2 className="text-2xl font-semibold text-foreground">Prompt library</h2>
                 <p className="text-sm text-muted-foreground">
                   Choose a prompt to launch a focused editor with autosave, timers, and structured scoring.
                 </p>
               </div>
               <Badge variant="soft" tone="default" size="sm">
-                {sortedPrompts.length} ready to attempt
+                {filteredPrompts.length} ready to attempt
               </Badge>
             </div>
+            <form
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+              aria-label="Filter prompts"
+              onSubmit={(event) => event.preventDefault()}
+            >
+              <Input
+                label="Search"
+                placeholder="Search by topic or outline"
+                value={filters.search}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, search: event.currentTarget.value }))
+                }
+                variant="subtle"
+                size="md"
+              />
+              <Select
+                label="Task type"
+                value={filters.task}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, task: event.currentTarget.value as TaskFilter }))
+                }
+                variant="subtle"
+              >
+                <option value="all">All tasks</option>
+                <option value="task1">Task 1</option>
+                <option value="task2">Task 2</option>
+              </Select>
+              <Select
+                label="Difficulty"
+                value={filters.difficulty}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, difficulty: event.currentTarget.value as DifficultyFilter }))
+                }
+                variant="subtle"
+              >
+                <option value="all">All levels</option>
+                <option value="1">Beginner</option>
+                <option value="2">Intermediate</option>
+                <option value="3">Upper-intermediate</option>
+                <option value="4">Advanced</option>
+                <option value="5">Band 8+</option>
+              </Select>
+              <div className="flex items-end gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={handleClearFilters}>
+                  Clear
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefreshPrompts}
+                  loading={isRefreshing}
+                  loadingText="Refreshing"
+                >
+                  Refresh
+                </Button>
+              </div>
+            </form>
+            {libraryError && <p className="text-sm text-danger">{libraryError}</p>}
+            {statusMessage && (
+              <p className="text-xs text-muted-foreground" role="status" aria-live="polite">
+                {statusMessage}
+              </p>
+            )}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {sortedPrompts.map((prompt) => (
+              {filteredPrompts.map((prompt) => (
                 <Card
                   key={prompt.id}
                   className="flex h-full flex-col gap-5 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/50"
@@ -290,7 +471,9 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-foreground">{prompt.topic}</h3>
-                    {prompt.outlineSummary && <p className="text-sm text-muted-foreground">{prompt.outlineSummary}</p>}
+                    {prompt.outlineSummary && (
+                      <p className="line-clamp-3 text-sm text-muted-foreground">{prompt.outlineSummary}</p>
+                    )}
                   </div>
                   <div className="mt-auto flex flex-wrap gap-2">
                     <Button
@@ -308,10 +491,110 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
                 </Card>
               ))}
             </div>
-            {sortedPrompts.length === 0 && (
+            {libraryPrompts.length === 0 && (
               <EmptyState
                 title="No prompts yet"
                 description="Admins can seed writing prompts from Supabase. Check back soon for new practice sets."
+              />
+            )}
+            <Separator />
+            <section aria-labelledby="ai-generator-heading" className="space-y-4">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 id="ai-generator-heading" className="text-xl font-semibold text-foreground">
+                    AI prompt generator
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Craft fresh prompts tailored to your focus and add them straight to the library.
+                  </p>
+                </div>
+                <Badge variant="soft" tone="info" size="sm">
+                  Instant add
+                </Badge>
+              </div>
+              <form
+                className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3"
+                onSubmit={handleGeneratePrompts}
+                aria-describedby={generatorError ? 'generator-error' : undefined}
+              >
+                <Select
+                  label="Task"
+                  value={generatorState.taskType}
+                  onChange={(event) =>
+                    setGeneratorState((prev) => ({ ...prev, taskType: event.currentTarget.value as WritingTaskType }))
+                  }
+                  required
+                  variant="subtle"
+                >
+                  <option value="task1">Task 1</option>
+                  <option value="task2">Task 2</option>
+                </Select>
+                <Select
+                  label="Difficulty"
+                  value={String(generatorState.difficulty)}
+                  onChange={(event) =>
+                    setGeneratorState((prev) => ({ ...prev, difficulty: Number(event.currentTarget.value) }))
+                  }
+                  required
+                  variant="subtle"
+                >
+                  <option value="1">Beginner</option>
+                  <option value="2">Intermediate</option>
+                  <option value="3">Upper-intermediate</option>
+                  <option value="4">Advanced</option>
+                  <option value="5">Band 8+</option>
+                </Select>
+                <Input
+                  label="Theme (optional)"
+                  placeholder="e.g. climate change, city planning"
+                  value={generatorState.theme}
+                  onChange={(event) =>
+                    setGeneratorState((prev) => ({ ...prev, theme: event.currentTarget.value }))
+                  }
+                  variant="subtle"
+                />
+                <Textarea
+                  label="Style hints (optional)"
+                  placeholder="Any structures, tones, or focus areas to nudge the AI."
+                  value={generatorState.style}
+                  onChange={(event) =>
+                    setGeneratorState((prev) => ({ ...prev, style: event.currentTarget.value }))
+                  }
+                  variant="subtle"
+                  size="sm"
+                  className="xl:col-span-2"
+                />
+                <fieldset className="space-y-2 rounded-2xl border border-border/60 bg-card/70 p-4" role="group">
+                  <legend className="text-sm font-medium text-muted-foreground">Number of prompts</legend>
+                  <div className="flex flex-wrap gap-4">
+                    {[1, 3, 5].map((value) => (
+                      <Radio
+                        key={value}
+                        name="prompt-count"
+                        value={value}
+                        label={`${value} ${value === 1 ? 'prompt' : 'prompts'}`}
+                        checked={generatorState.count === value}
+                        onChange={() => setGeneratorState((prev) => ({ ...prev, count: value as 1 | 3 | 5 }))}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+                <div className="flex items-end gap-3 xl:col-span-3">
+                  <Button type="submit" variant="primary" loading={isGenerating} loadingText="Generating">
+                    Generate prompts
+                  </Button>
+                  {generatorError && (
+                    <p id="generator-error" className="text-sm text-danger" role="alert">
+                      {generatorError}
+                    </p>
+                  )}
+                </div>
+              </form>
+            </section>
+            {filteredPrompts.length === 0 && (
+              <EmptyState
+                title="No prompts match"
+                description="Adjust your filters or generate new prompts to keep practicing."
               />
             )}
           </Card>
