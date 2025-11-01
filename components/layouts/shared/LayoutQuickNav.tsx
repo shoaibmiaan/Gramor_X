@@ -6,6 +6,7 @@ import clsx from 'clsx';
 export type LayoutQuickNavItem = {
   href: string;
   label: string;
+  icon?: React.ReactNode;
   activeClassName?: string;
   isActive?: (pathname: string) => boolean;
   hidden?: boolean;
@@ -20,8 +21,10 @@ export type LayoutQuickNavProps = {
   defaultActiveClassName?: string;
 };
 
-const DEFAULT_ITEM_CLASS = 'nav-pill shrink-0 whitespace-nowrap';
-const DEFAULT_ACTIVE_CLASS = 'bg-primary/10 text-primary';
+const DEFAULT_ITEM_CLASS =
+  'nav-pill group shrink-0 whitespace-nowrap border border-border/40 bg-background/75 px-4 py-2 text-sm font-medium text-mutedText/90 shadow-sm backdrop-blur-sm transition hover:border-border/60 hover:text-foreground';
+const DEFAULT_ACTIVE_CLASS =
+  'is-active border-transparent bg-primary/15 text-primary ring-1 ring-primary/30 shadow-md';
 
 const isHrefActive = (pathname: string, href: string) => {
   if (!href) return false;
@@ -44,20 +47,34 @@ export function LayoutQuickNav({
 
   return (
     <nav
-      className={clsx('-mx-1 flex gap-2 overflow-x-auto pb-1', className)}
+      className={clsx('relative -mx-1 overflow-x-auto pb-1', className)}
       aria-label={ariaLabel}
     >
-      <div className={clsx('flex gap-2 px-1', listClassName)}>
-        {visibleItems.map(({ href, label, activeClassName, isActive }) => {
+      <div className={clsx('flex min-w-max gap-2 px-1 py-1', listClassName)}>
+        {visibleItems.map(({ href, label, icon, activeClassName, isActive }) => {
           const active = isActive ? isActive(pathname) : isHrefActive(pathname, href);
           return (
             <Link
               key={href}
               href={href}
               aria-current={active ? 'page' : undefined}
-              className={clsx(itemClassName, active && (activeClassName ?? defaultActiveClassName))}
+              className={clsx(
+                itemClassName,
+                active && (activeClassName ?? defaultActiveClassName)
+              )}
             >
-              {label}
+              <span className="inline-flex items-center gap-2">
+                {icon ? (
+                  <span className="inline-flex h-4 w-4 items-center justify-center text-current opacity-80">
+                    {React.isValidElement(icon)
+                      ? React.cloneElement(icon, {
+                          className: clsx('h-4 w-4', icon.props?.className),
+                        })
+                      : icon}
+                  </span>
+                ) : null}
+                <span>{label}</span>
+              </span>
             </Link>
           );
         })}

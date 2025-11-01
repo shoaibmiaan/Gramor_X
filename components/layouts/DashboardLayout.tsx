@@ -1,57 +1,73 @@
 // components/layouts/DashboardLayout.tsx
 import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { Container } from '@/components/design-system/Container';
-
-const QUICK_LINKS = [
-  { href: '/study-plan', label: 'Study Plan' },
-  { href: '/progress', label: 'Analytics' },
-  { href: '/listening', label: 'Listening' },
-  { href: '/reading', label: 'Reading' },
-  { href: '/writing', label: 'Writing' },
-  { href: '/speaking/simulator', label: 'Speaking' },
-  { href: '/pricing', label: 'Upgrade' },
-] as const;
+import { Gauge, CalendarCheck2, Headphones, BookOpenCheck, PenLine, MicVocal, Sparkles } from 'lucide-react';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { LayoutHero } from '@/components/layouts/shared/LayoutHero';
+import { LayoutSurface } from '@/components/layouts/shared/LayoutSurface';
+import { LayoutQuickNav } from '@/components/layouts/shared/LayoutQuickNav';
 
 const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
+  const highlight = (
+    <>
+      <div className="flex items-center gap-2 text-foreground">
+        <Badge variant="accent">Weekly focus</Badge>
+        <span className="text-sm font-medium">Writing Task 2 · 3 lessons left</span>
+      </div>
+      <div className="space-y-3 pt-3 text-foreground">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-mutedText">Study streak</span>
+          <span className="text-2xl font-bold text-gradient-accent">7 days</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-mutedText">Next mock test</span>
+          <span className="text-sm font-semibold">Saturday · 10:00 AM</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-mutedText">Band goal</span>
+          <span className="text-sm font-semibold">Target 7.5 · 68% complete</span>
+        </div>
+      </div>
+    </>
+  );
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
-      <header className="border-b border-border bg-card/30">
-        <Container className="space-y-4 py-6 pt-safe">
-          <div className="space-y-1">
-            <h1 className="font-slab text-h3 sm:text-h2">Your Dashboard</h1>
-            <p className="text-small text-mutedText">
-              Track progress, follow your plan, and jump back into modules.
-            </p>
-          </div>
-
-          <nav
-            aria-label="Dashboard quick links"
-            className="flex flex-wrap gap-3 text-sm text-muted-foreground"
-          >
-            {QUICK_LINKS.map(({ href, label }) => {
-              const active = pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`rounded-md px-2 py-1 transition hover:text-foreground ${
-                    active ? 'bg-muted text-foreground' : ''
-                  }`}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-        </Container>
-      </header>
+    <div className="min-h-[100dvh] bg-gradient-to-b from-primary/10 via-background to-background text-foreground">
+      <LayoutHero
+        accent="dashboard"
+        eyebrow="Student HQ"
+        title="Track progress, keep momentum, and own your IELTS plan"
+        description="Jump straight into your next session, review analytics, or fine-tune the personalised schedule we built for you."
+        actions={(
+          <>
+            <Button href="/study-plan" size="lg">
+              Open study plan
+            </Button>
+            <Button href="/pricing" variant="soft" tone="primary" size="lg">
+              Unlock premium drills
+            </Button>
+          </>
+        )}
+        highlight={highlight}
+      >
+        <LayoutQuickNav
+          ariaLabel="Dashboard quick links"
+          items={[
+            { href: '/dashboard', label: 'Overview', icon: <Gauge className="h-4 w-4" /> },
+            { href: '/study-plan', label: 'Study Plan', icon: <CalendarCheck2 className="h-4 w-4" /> },
+            { href: '/progress', label: 'Analytics', icon: <Sparkles className="h-4 w-4" /> },
+            { href: '/listening', label: 'Listening', icon: <Headphones className="h-4 w-4" /> },
+            { href: '/reading', label: 'Reading', icon: <BookOpenCheck className="h-4 w-4" /> },
+            { href: '/writing', label: 'Writing', icon: <PenLine className="h-4 w-4" /> },
+            { href: '/speaking/simulator', label: 'Speaking', icon: <MicVocal className="h-4 w-4" /> },
+          ]}
+        />
+      </LayoutHero>
 
       <main>
-        <Container className="py-8 sm:py-10">{children}</Container>
+        <LayoutSurface accent="dashboard">
+          <div className="space-y-6 text-base leading-relaxed text-foreground">{children}</div>
+        </LayoutSurface>
       </main>
     </div>
   );
