@@ -15,6 +15,12 @@ const ACCENT_THEME = {
     badge: 'bg-background/80 text-vibrantPurple ring-vibrantPurple/30 dark:text-electricBlue',
     highlight: 'border-vibrantPurple/30 bg-background/85',
   },
+  welcome: {
+    gradient: 'from-sunsetOrange/25 via-rose-200/20 to-transparent dark:from-sunsetOrange/30 dark:via-rose-400/20',
+    halo: 'bg-sunsetOrange/30 dark:bg-sunsetOrange/25',
+    badge: 'bg-background/80 text-sunsetOrange ring-sunsetOrange/30',
+    highlight: 'border-sunsetOrange/30 bg-background/85',
+  },
   dashboard: {
     gradient: 'from-primary/20 via-electricBlue/15 to-transparent dark:from-primaryDark/25 dark:via-electricBlue/15',
     halo: 'bg-primary/25 dark:bg-primary/20',
