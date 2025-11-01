@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useId } from 'react';
 import { useRouter } from 'next/router';
 
 // DS components only (no icons to avoid undefined imports)
@@ -35,6 +35,7 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({
   teacherProfile,
 }) => {
   const router = useRouter();
+  const mainId = useId();
 
   // Guard non-teachers (except admins). Avoids first-frame flash.
   useEffect(() => {
@@ -43,6 +44,25 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({
       router.replace('/restricted');
     }
   }, [userRole, router]);
+
+  // Approved teachers → redirect to the Teacher dashboard route (avoid importing the page component)
+  useEffect(() => {
+    if (userRole === 'teacher' && isTeacherApproved) {
+      router.replace('/teacher'); // safe redirect
+    }
+  }, [userRole, isTeacherApproved, router]);
+
+  // Unapproved teacher → DS-compliant welcome & onboarding
+  const progress = useMemo(() => {
+    let done = 0;
+    const total = 5;
+    if (teacherProfile?.fullName) done += 1;
+    if (teacherProfile?.subjectExpertise) done += 1;
+    if (teacherProfile?.experience) done += 1;
+    if (teacherProfile?.docsUploaded) done += 1;
+    if (teacherProfile?.finishedTraining) done += 1;
+    return Math.round((done / total) * 100);
+  }, [teacherProfile]);
 
   // While role is unknown, show neutral skeleton
   if (userRole === undefined || userRole === null) {
@@ -62,13 +82,6 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({
   // Admins: show children (not teacher onboarding)
   if (userRole === 'admin') return <div className="p-6">{children}</div>;
 
-  // Approved teachers → redirect to the Teacher dashboard route (avoid importing the page component)
-  useEffect(() => {
-    if (userRole === 'teacher' && isTeacherApproved) {
-      router.replace('/teacher'); // safe redirect
-    }
-  }, [userRole, isTeacherApproved, router]);
-
   if (userRole === 'teacher' && isTeacherApproved) {
     // Short neutral screen during redirect
     return (
@@ -78,21 +91,16 @@ const TeacherLayout: React.FC<TeacherLayoutProps> = ({
     );
   }
 
-  // Unapproved teacher → DS-compliant welcome & onboarding
-  const progress = useMemo(() => {
-    let done = 0;
-    const total = 5;
-    if (teacherProfile?.fullName) done += 1;
-    if (teacherProfile?.subjectExpertise) done += 1;
-    if (teacherProfile?.experience) done += 1;
-    if (teacherProfile?.docsUploaded) done += 1;
-    if (teacherProfile?.finishedTraining) done += 1;
-    return Math.round((done / total) * 100);
-  }, [teacherProfile]);
-
   return (
     <Container>
-      <Section>
+      <a
+        href={`#${mainId}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-ds-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to teacher onboarding
+      </a>
+
+      <Section id={mainId} tabIndex={-1} className="focus:outline-none">
         <div className="mx-auto mb-6 max-w-2xl text-center">
           <h1 className="text-3xl font-bold text-foreground">Welcome, Teacher 👩‍🏫</h1>
           <p className="mt-2 text-mutedText">

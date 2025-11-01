@@ -16,10 +16,18 @@ const QUICK_LINKS = [
 
 const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
   const { pathname } = useRouter();
+  const mainId = React.useId();
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <header className="border-b border-border bg-card/30">
+      <a
+        href={`#${mainId}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-ds-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
+      <header className="border-b border-border bg-card/30" role="banner">
         <Container className="space-y-4 py-6 pt-safe">
           <div className="space-y-1">
             <h1 className="font-slab text-h3 sm:text-h2">Your Dashboard</h1>
@@ -50,7 +58,7 @@ const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
         </Container>
       </header>
 
-      <main>
+      <main id={mainId} tabIndex={-1} className="focus:outline-none">
         <Container className="py-8 sm:py-10">{children}</Container>
       </main>
     </div>
