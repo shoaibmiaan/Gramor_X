@@ -66,9 +66,9 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
     const endIso = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
     setStart(startIso)
     setEnd(endIso)
-  }, [coach?.id])
+  }, [coach])
 
-  async function loadAvailability() {
+  const loadAvailability = React.useCallback(async () => {
     if (!coach || !start || !end) return
     setLoadingSlots(true)
     const params = new URLSearchParams({ coachId: coach.id, startUtc: start, endUtc: end })
@@ -76,9 +76,11 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
     const json = await res.json()
     setSlots(json?.slots || [])
     setLoadingSlots(false)
-  }
+  }, [coach, end, start])
 
-  React.useEffect(() => { loadAvailability() }, [start, end])
+  React.useEffect(() => {
+    loadAvailability()
+  }, [loadAvailability])
 
   if (!coach) {
     return (
@@ -125,7 +127,7 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
                 </div>
               </div>
               <div className="md:w-56">
-                <Link href="#booking" className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-2 text-primary-foreground shadow-glow">Book a Session</Link>
+                <Link href="#section-booking" className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-2 text-primary-foreground shadow-glow">Book a Session</Link>
                 <Link href="/marketplace" className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-border bg-background px-4 py-2">Back</Link>
               </div>
             </div>
@@ -143,7 +145,7 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
         )}
 
         {/* Availability & Booking */}
-        <section id="booking" className="mx-auto max-w-5xl px-4 py-8">
+        <section id="section-booking" className="mx-auto max-w-5xl px-4 py-8">
           <div className="rounded-2xl border border-lightBorder bg-card p-6">
             <h2 className="font-slab text-h3">Availability</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-3">

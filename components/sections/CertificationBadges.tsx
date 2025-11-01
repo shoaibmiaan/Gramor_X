@@ -11,11 +11,11 @@ type Partner = {
 };
 
 const partners: readonly Partner[] = [
-  { name: 'British Council (Inspiration)', href: '/about/partners#bc' },
-  { name: 'IDP IELTS (Practice Style)', href: '/about/partners#idp' },
-  { name: 'Cambridge Prep (Pedagogy)', href: '/about/partners#cambridge' },
-  { name: 'CEFR-aligned Skills', href: '/about/partners#cefr' },
-  { name: 'AI Evaluation Engine', href: '/about/partners#ai' },
+  { name: 'British Council (Inspiration)', href: '/about/partners#section-bc' },
+  { name: 'IDP IELTS (Practice Style)', href: '/about/partners#section-idp' },
+  { name: 'Cambridge Prep (Pedagogy)', href: '/about/partners#section-cambridge' },
+  { name: 'CEFR-aligned Skills', href: '/about/partners#section-cefr' },
+  { name: 'AI Evaluation Engine', href: '/about/partners#section-ai' },
 ];
 
 export const CertificationBadges: React.FC = () => {

@@ -1,11 +1,12 @@
 module.exports = {
+  extends: [
+    require.resolve('stylelint-config-standard'),
+    require.resolve('stylelint-config-css-modules'),
+  ],
   rules: {
+    'color-named': 'never',
     'color-no-hex': true,
-    'unit-disallowed-list': [
-      'px',
-      {
-        ignoreFunctions: ['url'],
-      },
-    ],
+    'alpha-value-notation': 'number',
+    'selector-class-pattern': null,
   },
 };

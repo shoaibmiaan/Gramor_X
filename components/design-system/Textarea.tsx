@@ -19,27 +19,27 @@ export type TextareaProps = Readonly<
 const cx = (...xs: Array<string | false | null | undefined>) => xs.filter(Boolean).join(' ');
 
 const sizeMap: Record<Size, string> = {
-  sm: 'min-h-[7.5rem] px-3 py-2 text-small rounded-ds-lg',
-  md: 'min-h-[9.5rem] px-4 py-3 text-base rounded-ds-xl',
-  lg: 'min-h-[12rem] px-5 py-4 text-base rounded-ds-2xl',
+  sm: 'min-h-[7.5rem] px-sm py-xs text-small',
+  md: 'min-h-[9.5rem] px-md py-sm text-base',
+  lg: 'min-h-[12rem] px-lg py-md text-base',
 };
 
 const baseField =
-  'w-full border border-border placeholder:text-muted-foreground/70 text-foreground ' +
-  'bg-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ' +
-  'focus-visible:ring-offset-1 ring-offset-background transition-shadow resize-y';
+  'w-full border border-border placeholder:text-muted/80 text-text rounded-ds-xl ' +
+  'bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring ' +
+  'focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow resize-y disabled:opacity-60 disabled:cursor-not-allowed';
 
 const variantMap: Record<Variant, string> = {
   solid: baseField,
   subtle:
-    'w-full border border-transparent bg-card text-foreground placeholder:text-muted-foreground/70 ' +
-    'focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 ring-offset-background resize-y',
+    'w-full border border-transparent bg-card text-text placeholder:text-muted/80 rounded-ds-xl ' +
+    'focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ring-offset-background resize-y',
   ghost:
-    'w-full border border-transparent bg-transparent text-foreground placeholder:text-muted-foreground/70 ' +
-    'focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 ring-offset-background resize-y',
+    'w-full border border-transparent bg-transparent text-text placeholder:text-muted/80 rounded-ds-xl ' +
+    'focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ring-offset-background resize-y',
   underline:
-    'w-full border-0 border-b border-border rounded-none bg-transparent text-foreground ' +
-    'placeholder:text-muted-foreground/70 focus-visible:ring-0 focus-visible:border-primary resize-none',
+    'w-full border-0 border-b border-border rounded-none bg-transparent text-text ' +
+    'placeholder:text-muted/80 focus-visible:ring-0 focus-visible:border-accent resize-none',
 };
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
@@ -86,9 +86,9 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={fieldId} className="mb-1 block text-small font-medium text-muted-foreground">
+          <label htmlFor={fieldId} className="mb-1 block text-small font-medium text-muted">
             {label}
-            {required && <span className="ml-1 text-sunsetOrange" aria-hidden>*</span>}
+            {required && <span className="ml-1 text-warn" aria-hidden>*</span>}
           </label>
         )}
 
@@ -109,13 +109,13 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
               variantMap[variant],
               sizeMap[size],
               disabled && 'opacity-60 cursor-not-allowed',
-              error && 'border-sunsetOrange focus-visible:ring-0 focus-visible:border-sunsetOrange',
+              error && 'border-bad focus-visible:ring-0 focus-visible:border-bad',
               className
             )}
             {...props}
           />
           {showCounter && typeof maxLength === 'number' && (
-            <span className="pointer-events-none absolute bottom-2 right-3 text-caption text-muted-foreground">
+            <span className="pointer-events-none absolute bottom-2 right-3 text-caption text-muted">
               {count} / {maxLength}
             </span>
           )}
@@ -123,11 +123,11 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         <div className="mt-1 min-h-[1.25rem]">
           {error ? (
-            <p id={errorId} className="text-caption text-sunsetOrange">
+            <p id={errorId} className="text-caption text-bad">
               {error}
             </p>
           ) : hint ? (
-            <p id={hintId} className="text-caption text-muted-foreground">
+            <p id={hintId} className="text-caption text-muted">
               {hint}
             </p>
           ) : null}

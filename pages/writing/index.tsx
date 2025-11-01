@@ -371,7 +371,7 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <Card id="continue-drafts" className="card-surface flex flex-col gap-4 p-6">
+          <Card id="section-continue-drafts" className="card-surface flex flex-col gap-4 p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-foreground">Continue drafts</h2>
               <Badge variant="soft" tone="default" size="sm">{drafts.length} active</Badge>
