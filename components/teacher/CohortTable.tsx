@@ -1,7 +1,19 @@
 // components/teacher/CohortTable.tsx
-import * as React from "react";
-import Image from "next/image";
-import type { TeacherCohortMember } from "@/types/teacher";
+import * as React from 'react';
+import Image from 'next/image';
+import {
+  Badge,
+  Button,
+  ProgressBar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/design-system';
+import type { TeacherCohortMember } from '@/types/teacher';
 
 export type CohortRow = TeacherCohortMember & {
   fullName?: string;
@@ -18,15 +30,15 @@ export type CohortTableProps = {
   sortBy?: "name" | "progress" | "joined";
 };
 
-export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: CohortTableProps) {
-  const [order, setOrder] = React.useState<"asc" | "desc">("desc");
+export function CohortTable({ rows, onNudge, onRemove, sortBy = 'progress' }: CohortTableProps) {
+  const [order, setOrder] = React.useState<'asc' | 'desc'>('desc');
 
   const sorted = React.useMemo(() => {
     const list = [...rows];
     const cmp = (a: CohortRow, b: CohortRow) => {
-      if (sortBy === "name") {
-        return (a.fullName || "").localeCompare(b.fullName || "");
-      } else if (sortBy === "joined") {
+      if (sortBy === 'name') {
+        return (a.fullName || '').localeCompare(b.fullName || '');
+      } else if (sortBy === 'joined') {
         return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
       }
       // progress
@@ -35,94 +47,105 @@ export function CohortTable({ rows, onNudge, onRemove, sortBy = "progress" }: Co
       return ap - bp;
     };
     list.sort(cmp);
-    if (order === "desc") list.reverse();
+    if (order === 'desc') list.reverse();
     return list;
   }, [rows, sortBy, order]);
 
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between px-3 py-2">
-        <h4 className="text-small font-medium text-foreground">Cohort Members</h4>
-        <div className="flex items-center gap-2">
-          <SortButton active={sortBy === "progress"} onClick={() => setOrder(prev => (prev === "asc" ? "desc" : "asc"))}>
-            Progress {order === "asc" ? "↑" : "↓"}
-          </SortButton>
+    <TableContainer className="bg-card">
+      <div className="flex items-center justify-between border-b border-border/60 px-md py-sm">
+        <h4 className="text-small font-semibold text-text">Cohort Members</h4>
+        <div className="flex items-center gap-sm">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+            className="text-muted"
+          >
+            Progress {order === 'asc' ? '↑' : '↓'}
+          </Button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-t border-border text-small">
-          <thead className="bg-background/40 text-left text-caption text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2">Student</th>
-              <th className="px-3 py-2">Email</th>
-              <th className="px-3 py-2">Joined</th>
-              <th className="px-3 py-2">Progress</th>
-              <th className="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {sorted.length === 0 ? (
-              <tr>
-                <td className="px-3 py-4 text-muted-foreground" colSpan={5}>
-                  No students yet.
-                </td>
-              </tr>
-            ) : (
-              sorted.map((r) => (
-                <tr key={r.id} className="align-middle">
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <Avatar name={r.fullName || r.studentId} src={r.avatarUrl} />
-                      <div className="min-w-0">
-                        <div className="truncate text-foreground">{r.fullName || "—"}</div>
-                        <div className="text-caption text-muted-foreground">{shortId(r.studentId)}</div>
-                      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Student</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Joined</TableHead>
+            <TableHead>Progress</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {sorted.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center text-muted">
+                No students yet.
+              </TableCell>
+            </TableRow>
+          ) : (
+            sorted.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell>
+                  <div className="flex items-center gap-sm">
+                    <Avatar name={r.fullName || r.studentId} src={r.avatarUrl} />
+                    <div className="min-w-0">
+                      <div className="truncate text-text">{r.fullName || '—'}</div>
+                      <div className="text-caption text-muted">{shortId(r.studentId)}</div>
                     </div>
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">{r.email || "—"}</td>
-                  <td className="px-3 py-2 text-muted-foreground">
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted">{r.email || '—'}</TableCell>
+                <TableCell className="text-muted">
+                  <time dateTime={r.joinedAt} suppressHydrationWarning>
                     {new Date(r.joinedAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-40">
-                        <Progress value={pct(r.completed ?? 0, r.total ?? 0)} />
-                      </div>
-                      <span className="text-caption text-muted-foreground tabular-nums">
-                        {(r.completed ?? 0)}/{(r.total ?? 0)}
-                      </span>
+                  </time>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-sm">
+                    <div className="w-40">
+                      <ProgressBar
+                        value={pct(r.completed ?? 0, r.total ?? 0)}
+                        ariaLabel={`Progress for ${r.fullName || r.studentId}`}
+                      />
                     </div>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      {onNudge && (
-                        <button
-                          type="button"
-                          onClick={() => onNudge(r.studentId)}
-                          className="rounded-md border border-border bg-background px-2 py-1 text-caption text-foreground hover:bg-border/30"
-                        >
-                          Nudge
-                        </button>
-                      )}
-                      {onRemove && (
-                        <button
-                          type="button"
-                          onClick={() => onRemove(r.id)}
-                          className="rounded-md border border-border bg-background px-2 py-1 text-caption text-danger hover:bg-border/30"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                    <Badge variant="neutral" size="xs" className="tabular-nums">
+                      {(r.completed ?? 0)}/{(r.total ?? 0)}
+                    </Badge>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-sm">
+                    {onNudge && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onNudge(r.studentId)}
+                      >
+                        Nudge
+                      </Button>
+                    )}
+                    {onRemove && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        onClick={() => onRemove(r.id)}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
@@ -134,35 +157,11 @@ function shortId(id: string) {
   return id.length > 8 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id;
 }
 
-function SortButton({
-  children,
-  onClick,
-  active,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-md border px-2 py-1 text-caption ${
-        active
-          ? "border-border bg-background text-foreground"
-          : "border-border bg-card text-muted-foreground"
-      } hover:bg-border/30`}
-    >
-      {children}
-    </button>
-  );
-}
-
 function Avatar({ name, src }: { name: string; src?: string }) {
   if (src) {
     return (
-      <div className="relative h-8 w-8 overflow-hidden rounded-full border border-border">
-        <Image src={src} alt={name} fill sizes="32px" />
+      <div className="relative h-9 w-9 overflow-hidden rounded-full border border-border bg-panel">
+        <Image src={src} alt={name} fill sizes="36px" />
       </div>
     );
   }
@@ -173,19 +172,10 @@ function Avatar({ name, src }: { name: string; src?: string }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <div className="grid h-8 w-8 place-items-center rounded-full border border-border bg-background text-caption text-muted-foreground">
+    <div className="grid h-9 w-9 place-items-center rounded-full border border-border bg-panel text-caption text-muted">
       {initials}
     </div>
   );
 }
 
-function Progress({ value }: { value: number }) {
-  return (
-    <div className="relative h-2 w-full overflow-hidden rounded bg-border/50">
-      <div
-        className="absolute left-0 top-0 h-full bg-primary"
-        style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
-      />
-    </div>
-  );
-}
+// ProgressBar handles visualization; pct helper remains for calculations.

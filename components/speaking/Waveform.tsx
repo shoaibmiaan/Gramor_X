@@ -26,7 +26,8 @@ export function Waveform({ samples, height = 96, className, label }: WaveformPro
     if (!ctx) return;
 
     ctx.clearRect(0, 0, width, canvasHeight);
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--colors-primary') || '#2563eb';
+    ctx.fillStyle =
+      getComputedStyle(document.documentElement).getPropertyValue('--colors-primary') || 'hsl(217, 91%, 60%)';
 
     const barWidth = Math.max(2, Math.floor(width / Math.max(samples.length, 1)));
     samples.forEach((value, index) => {

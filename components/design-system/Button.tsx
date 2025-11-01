@@ -36,33 +36,34 @@ type ButtonComponent = <E extends React.ElementType = 'button'>(
   props: PolymorphicProps<E, BaseProps> & { as?: any }
 ) => React.ReactElement | null;
 
-// "solid" style variants from DS tokens
+// Canonical tokenized variants (solid styles default to accent/semantic colors)
 const variantClass: Record<Variant, string> = {
-  primary:   'bg-primary text-white hover:bg-primary/90',
-  secondary: 'bg-secondary text-white hover:bg-secondary/90',
-  outline:   'border border-border bg-transparent hover:bg-white/5',
-  ghost:     'bg-transparent hover:bg-white/10',
-  link:      'underline underline-offset-4 hover:no-underline',
-  accent:    'bg-accent text-black hover:bg-accent/90',
-  warning:   'bg-warning text-black hover:bg-warning/90',
-  danger:    'bg-danger text-white hover:bg-danger/90',
-  error:     'bg-danger text-white hover:bg-danger/90',
-  success:   'bg-success text-white hover:bg-success/90',
-  info:      'bg-electricBlue text-white hover:bg-electricBlue/90',
-  subtle:    'bg-white/5 text-white/90 hover:bg-white/10',
+  primary: 'bg-accent text-bg hover:bg-accent/90 focus-visible:ring-accent/60',
+  secondary: 'bg-accent2 text-bg hover:bg-accent2/90 focus-visible:ring-accent2/60',
+  outline:
+    'border border-border bg-transparent text-text hover:bg-panel/70 focus-visible:ring-border/60',
+  ghost: 'bg-transparent text-muted hover:text-text hover:bg-panel/70 focus-visible:ring-accent/50',
+  link: 'text-accent underline underline-offset-4 hover:no-underline focus-visible:ring-0',
+  accent: 'bg-accent text-bg hover:bg-accent/90 focus-visible:ring-accent/60',
+  warning: 'bg-warn text-bg hover:bg-warn/90 focus-visible:ring-warn/60',
+  danger: 'bg-bad text-bg hover:bg-bad/90 focus-visible:ring-bad/60',
+  error: 'bg-bad text-bg hover:bg-bad/90 focus-visible:ring-bad/60',
+  success: 'bg-ok text-bg hover:bg-ok/90 focus-visible:ring-ok/60',
+  info: 'bg-panel text-text hover:bg-panel/80 focus-visible:ring-accent2/50',
+  subtle: 'bg-panel text-muted hover:text-text hover:bg-panel/80 focus-visible:ring-border/50',
 };
 
 // tonal classes for the "soft" variant
 const softTone: Record<Tone, string> = {
-  default:   'bg-card text-foreground ring-1 ring-border/50 hover:bg-card/90',
-  primary:   'bg-primary/15 text-primary ring-1 ring-primary/30 hover:bg-primary/20',
-  secondary: 'bg-secondary/15 text-secondary ring-1 ring-secondary/30 hover:bg-secondary/20',
-  accent:    'bg-accent/15 text-accent ring-1 ring-accent/30 hover:bg-accent/20',
-  warning:   'bg-warning/15 text-warning ring-1 ring-warning/30 hover:bg-warning/20',
-  danger:    'bg-danger/15 text-danger ring-1 ring-danger/30 hover:bg-danger/20',
-  error:     'bg-danger/15 text-danger ring-1 ring-danger/30 hover:bg-danger/20',
-  success:   'bg-success/15 text-success ring-1 ring-success/30 hover:bg-success/20',
-  info:      'bg-electricBlue/15 text-electricBlue ring-1 ring-electricBlue/30 hover:bg-electricBlue/20',
+  default: 'bg-card text-text ring-1 ring-border/50 hover:bg-card/90',
+  primary: 'bg-accent/15 text-accent ring-1 ring-accent/30 hover:bg-accent/20',
+  secondary: 'bg-accent2/15 text-accent2 ring-1 ring-accent2/30 hover:bg-accent2/20',
+  accent: 'bg-accent/15 text-accent ring-1 ring-accent/30 hover:bg-accent/20',
+  warning: 'bg-warn/15 text-warn ring-1 ring-warn/30 hover:bg-warn/20',
+  danger: 'bg-bad/15 text-bad ring-1 ring-bad/30 hover:bg-bad/20',
+  error: 'bg-bad/15 text-bad ring-1 ring-bad/30 hover:bg-bad/20',
+  success: 'bg-ok/15 text-ok ring-1 ring-ok/30 hover:bg-ok/20',
+  info: 'bg-panel/70 text-text ring-1 ring-border/40 hover:bg-panel/80',
 };
 
 const sizeClass: Record<Size, string> = {
@@ -100,15 +101,14 @@ export const Button: ButtonComponent = (props) => {
 
   const classes = cx(
     // base
-    'inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 ring-primary/40',
-    'gap-2',
+    'inline-flex items-center justify-center gap-2 font-medium transition-colors rounded-ds-xl',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
     sizeClass[size as Size],
     fullWidth && 'w-full',
     variantCls,
     loading && 'cursor-not-allowed opacity-70',
     elevateOnHover && 'shadow-none hover:shadow-md transition-shadow',
-    // default rounded shape; allow explicit shape override
-    shape === 'rounded' ? 'rounded-ds-xl' : 'rounded-2xl'
+    shape === 'rounded' ? 'rounded-ds-xl' : null
   );
 
   const shapeCls =

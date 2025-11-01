@@ -11,7 +11,7 @@ type Props = {
 export const StickyCheckoutBar: React.FC<Props> = ({ label, price, onBuy }) => {
   const handleClick = () => {
     if (onBuy) return onBuy();
-    const el = document.querySelector('#checkout-form') as HTMLElement | null;
+    const el = document.getElementById('checkout-form');
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const firstInput = el.querySelector<HTMLElement>('input, button, select, textarea');
@@ -25,7 +25,7 @@ export const StickyCheckoutBar: React.FC<Props> = ({ label, price, onBuy }) => {
         <div className="rounded-2xl border border-border bg-card/95 backdrop-blur shadow-glow p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-caption text-muted-foreground truncate">{label}</div>
+              <div className="text-caption text-muted truncate">{label}</div>
               <div className="font-slab text-h4 text-gradient-primary">{price}</div>
             </div>
 
