@@ -210,9 +210,9 @@ const CheckoutPage: NextPage = () => {
         <title>Checkout — GramorX</title>
       </Head>
 
-      <main className="min-h-screen bg-background text-foreground antialiased">
+      <main className="min-h-screen bg-lightBg text-foreground antialiased dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <div className="py-16">
-          <Container>
+          <Container className="space-y-10">
             <header className="text-center max-w-3xl mx-auto mb-6">
               <p className="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-caption text-muted-foreground bg-card/60 backdrop-blur supports-[backdrop-filter]:bg-card/40">
                 <i className="fas fa-sync-alt text-caption" aria-hidden="true"></i>
@@ -433,22 +433,33 @@ const CheckoutPage: NextPage = () => {
                   </aside>
                 </div>
 
-                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-muted/30 rounded-ds-lg text-center">
-                    <i className="fas fa-rocket text-primary mb-2" aria-hidden="true"></i>
-                    <h4 className="font-medium text-caption">Instant access</h4>
-                    <p className="text-caption text-muted-foreground">Start immediately after payment</p>
-                  </div>
-                  <div className="p-4 bg-muted/30 rounded-ds-lg text-center">
-                    <i className="fas fa-shield-alt text-accent mb-2" aria-hidden="true"></i>
-                    <h4 className="font-medium text-caption">Secure payment</h4>
-                    <p className="text-caption text-muted-foreground">256-bit SSL encryption</p>
-                  </div>
-                  <div className="p-4 bg-muted/30 rounded-ds-lg text-center">
-                    <i className="fas fa-sync-alt text-primary mb-2" aria-hidden="true"></i>
-                    <h4 className="font-medium text-caption">Cancel anytime</h4>
-                    <p className="text-caption text-muted-foreground">No long-term commitment</p>
-                  </div>
+                <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {[
+                    {
+                      icon: 'fa-rocket',
+                      iconClass: 'text-primary',
+                      title: 'Instant access',
+                      copy: 'Start immediately after payment',
+                    },
+                    {
+                      icon: 'fa-shield-alt',
+                      iconClass: 'text-accent',
+                      title: 'Secure payment',
+                      copy: '256-bit SSL encryption',
+                    },
+                    {
+                      icon: 'fa-sync-alt',
+                      iconClass: 'text-primary',
+                      title: 'Cancel anytime',
+                      copy: 'No long-term commitment',
+                    },
+                  ].map(({ icon, iconClass, title, copy }) => (
+                    <Card key={title} padding="md" insetBorder className="text-center">
+                      <i className={`fas ${icon} mb-2 ${iconClass}`} aria-hidden="true"></i>
+                      <h4 className="font-medium text-caption">{title}</h4>
+                      <p className="text-caption text-muted-foreground">{copy}</p>
+                    </Card>
+                  ))}
                 </div>
 
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-caption text-muted-foreground">

@@ -220,7 +220,7 @@ export default function BillingPage() {
         />
       </Head>
 
-      <div className="py-8">
+      <main className="bg-lightBg py-16 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
         <Container className="max-w-4xl space-y-6">
           <header className="space-y-1">
             <h1 className="text-h2 font-semibold text-foreground">Billing</h1>
@@ -456,7 +456,7 @@ export default function BillingPage() {
             </Alert>
           )}
         </Container>
-      </div>
+      </main>
     </>
   );
 }
