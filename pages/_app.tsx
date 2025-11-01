@@ -1,7 +1,7 @@
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -51,60 +51,6 @@ const slab = Roboto_Slab({
 
 const IS_CI = process.env.NEXT_PUBLIC_CI === 'true';
 
-const ROUTE_GROUPS = {
-  marketing: [
-    '/',
-    '/pricing',
-    '/predictor',
-    '/faq',
-    '/legal',
-    '/data-deletion',
-    '/blog',
-    '/roadmap',
-    '/waitlist',
-    '/challenge',
-    '/accessibility',
-    '/word-of-the-day',
-    '/visa',
-  ],
-  dashboard: [
-    '/dashboard',
-    '/account',
-    '/settings',
-    '/notifications',
-    '/study-plan',
-    '/progress',
-    '/mistakes',
-    '/pwa',
-    '/profile',
-    '/saved',
-  ],
-  welcome: ['/welcome'],
-  learning: [
-    '/learning',
-    '/practice',
-    '/reading',
-    '/listening',
-    '/writing',
-    '/speaking',
-    '/vocabulary',
-    '/vocab',
-    '/labs',
-    '/review',
-    '/quick',
-    '/mock',
-    '/mock-tests',
-    '/ai',
-    '/content/studio',
-  ],
-  community: ['/community', '/leaderboard'],
-  marketplace: ['/marketplace', '/coach', '/classes', '/bookings', '/checkout', '/partners', '/promotions'],
-  institutions: ['/institutions', '/orgs'],
-  reports: ['/reports', '/placement', '/analytics'],
-  admin: ['/admin'],
-  proctoring: ['/proctoring/check', '/proctoring/exam'],
-} as const;
-
 function GuardSkeleton() {
   return (
     <div className="grid min-h-[100dvh] place-items-center">
@@ -117,21 +63,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const pathname = router.pathname;
   const { locale: activeLocale } = useLocale();
-
-  const matchesPrefixes = useCallback(
-    (patterns: readonly string[]) =>
-      patterns.some((pattern) => {
-        if (pattern === '/') {
-          return pathname === '/' || pathname === '';
-        }
-
-        const normalized = pattern.replace(/\/+$/, '');
-        if (!normalized) return pathname === '/';
-
-        return pathname === normalized || pathname.startsWith(`${normalized}/`);
-      }),
-    [pathname]
-  );
 
   // -------- Route Loading (stable on auth + shallow/hash) --------
   const [isRouteLoading, setIsRouteLoading] = useState(false);
@@ -314,16 +245,34 @@ function InnerApp({ Component, pageProps }: AppProps) {
   const showLayout = !needPremium && !isNoChromeRoute;
   const forceLayoutOnAuthPage = isAuthPage && !!user;
 
-  const isAdminRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.admin), [matchesPrefixes]);
-  const isMarketingRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.marketing), [matchesPrefixes]);
-  const isDashboardRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.dashboard), [matchesPrefixes]);
-  const isWelcomeRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.welcome), [matchesPrefixes]);
-  const isLearningRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.learning), [matchesPrefixes]);
-  const isCommunityRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.community), [matchesPrefixes]);
-  const isMarketplaceRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.marketplace), [matchesPrefixes]);
-  const isInstitutionsRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.institutions), [matchesPrefixes]);
-  const isReportsRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.reports), [matchesPrefixes]);
-  const isProctoringRoute = useMemo(() => matchesPrefixes(ROUTE_GROUPS.proctoring), [matchesPrefixes]);
+  const isDashboardRoute =
+    (pathname.startsWith('/dashboard') && pathname !== '/dashboard') ||
+    pathname.startsWith('/account') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/notifications') ||
+    pathname.startsWith('/study-plan') ||
+    pathname.startsWith('/progress') ||
+    pathname.startsWith('/mistakes') ||
+    pathname.startsWith('/pwa');
+
+  const isAdminRoute = pathname.startsWith('/admin');
+  const isMarketingRoute =
+    pathname === '/' ||
+    pathname.startsWith('/pricing') ||
+    pathname.startsWith('/predictor') ||
+    pathname.startsWith('/faq') ||
+    pathname.startsWith('/legal') ||
+    pathname.startsWith('/data-deletion');
+  const isLearningRoute = pathname.startsWith('/learning') || pathname.startsWith('/content/studio');
+  const isCommunityRoute = pathname.startsWith('/community');
+  const isMarketplaceRoute =
+    pathname.startsWith('/marketplace') ||
+    pathname.startsWith('/coach') ||
+    pathname.startsWith('/classes') ||
+    pathname === '/partners';
+  const isInstitutionsRoute = pathname.startsWith('/institutions');
+  const isReportsRoute = pathname.startsWith('/reports') || pathname.startsWith('/placement');
+  const isProctoringRoute = pathname.startsWith('/proctoring/check') || pathname.startsWith('/proctoring/exam');
 
   // ---------- Idle timeout ----------
   const idleMinutes = useMemo(() => Number(env.NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES ?? 30), []);
@@ -479,7 +428,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
             isAdminRoute={isAdminRoute}
             isInstitutionsRoute={isInstitutionsRoute}
             isDashboardRoute={isDashboardRoute}
-            isWelcomeRoute={isWelcomeRoute}
             isMarketplaceRoute={isMarketplaceRoute}
             isLearningRoute={isLearningRoute}
             isCommunityRoute={isCommunityRoute}
