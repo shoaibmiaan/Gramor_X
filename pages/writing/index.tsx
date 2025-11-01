@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 
@@ -7,8 +7,12 @@ import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Container } from '@/components/design-system/Container';
 import { EmptyState } from '@/components/design-system/EmptyState';
+import { Input } from '@/components/design-system/Input';
+import { Select } from '@/components/design-system/Select';
 import { Separator } from '@/components/design-system/Separator';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
+import { Textarea } from '@/components/design-system/Textarea';
+import { Icon } from '@/components/design-system/Icon';
 import { withPlanPage } from '@/lib/withPlanPage';
 import { getServerClient } from '@/lib/supabaseServer';
 import type { Database } from '@/types/supabase';
@@ -27,6 +31,8 @@ interface PromptCard {
   taskType: WritingTaskType;
   difficulty: number;
   outlineSummary: string | null;
+  createdAt?: string | null;
+  source?: 'library' | 'generated';
 }
 
 interface AttemptSummary {
@@ -98,6 +104,20 @@ const progressPercentage = (value: number, target: number) => {
   return Math.max(0, Math.min(100, Math.round((value / target) * 100)));
 };
 
+const sortPromptCards = (items: PromptCard[]) =>
+  [...items].sort((a, b) => {
+    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    if (aTime !== bTime) {
+      return bTime - aTime;
+    }
+    const diffDelta = a.difficulty - b.difficulty;
+    if (diffDelta !== 0) {
+      return diffDelta;
+    }
+    return a.topic.localeCompare(b.topic);
+  });
+
 const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPrompt }: PageProps) => {
   const [startingPromptId, setStartingPromptId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -110,14 +130,143 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
 
   const planTargets = RETAKE_PLAN_TARGETS;
 
-  const sortedPrompts = useMemo(
-    () =>
-      [...prompts].sort((a, b) => {
-        const diffDelta = a.difficulty - b.difficulty;
-        if (diffDelta !== 0) return diffDelta;
-        return a.topic.localeCompare(b.topic);
-      }),
-    [prompts],
+  const [promptLibrary, setPromptLibrary] = useState<PromptCard[]>(() =>
+    sortPromptCards(prompts.map((prompt) => ({ ...prompt, source: prompt.source ?? 'library' }))),
+  );
+  useEffect(() => {
+    setPromptLibrary(sortPromptCards(prompts.map((prompt) => ({ ...prompt, source: prompt.source ?? 'library' }))));
+  }, [prompts]);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [taskFilter, setTaskFilter] = useState<'all' | WritingTaskType>('all');
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | number>('all');
+  const [libraryError, setLibraryError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const [generatorMessage, setGeneratorMessage] = useState<string | null>(null);
+  const [generatorError, setGeneratorError] = useState<string | null>(null);
+  const [generatorLoading, setGeneratorLoading] = useState(false);
+  const [generatorOptions, setGeneratorOptions] = useState({
+    count: 3 as 1 | 3 | 5,
+    task: 'task2' as WritingTaskType,
+    difficulty: 3,
+    theme: '',
+    style: '',
+  });
+
+  const difficultyOptions = [1, 2, 3, 4, 5] as const;
+  const countOptions = [1, 3, 5] as const;
+
+  const filteredPrompts = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    return promptLibrary.filter((prompt) => {
+      if (taskFilter !== 'all' && prompt.taskType !== taskFilter) {
+        return false;
+      }
+      if (difficultyFilter !== 'all' && prompt.difficulty !== difficultyFilter) {
+        return false;
+      }
+      if (query) {
+        const haystack = `${prompt.topic} ${prompt.outlineSummary ?? ''}`.toLowerCase();
+        if (!haystack.includes(query)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [difficultyFilter, promptLibrary, searchTerm, taskFilter]);
+
+  const totalPrompts = promptLibrary.length;
+  const hasFiltersActive =
+    searchTerm.trim().length > 0 || taskFilter !== 'all' || difficultyFilter !== 'all';
+
+  const resetFilters = useCallback(() => {
+    setSearchTerm('');
+    setTaskFilter('all');
+    setDifficultyFilter('all');
+  }, []);
+
+  const handleRefreshPrompts = useCallback(async () => {
+    setIsRefreshing(true);
+    setLibraryError(null);
+    setAnnouncement('Refreshing prompt library…');
+    try {
+      const response = await fetch('/api/writing/prompts');
+      const payload = (await response.json()) as
+        | { ok: true; prompts: PromptCard[] }
+        | { ok: false; error: string };
+
+      if (!response.ok || !('ok' in payload) || !payload.ok) {
+        const reason = 'error' in payload ? payload.error : 'Unable to refresh prompts';
+        throw new Error(reason);
+      }
+
+      const mapped = payload.prompts.map((prompt) => ({
+        ...prompt,
+        source: prompt.source ?? 'library',
+      }));
+      setPromptLibrary(sortPromptCards(mapped));
+      setAnnouncement(`Prompt library refreshed. Showing ${mapped.length} prompt${mapped.length === 1 ? '' : 's'}.`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to refresh prompts';
+      setLibraryError(message);
+      setAnnouncement(message);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  const handleGeneratePrompts = useCallback(
+    async (event?: React.FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
+      setGeneratorError(null);
+      setGeneratorMessage(null);
+      setGeneratorLoading(true);
+      setAnnouncement('Generating new prompts…');
+      try {
+        const response = await fetch('/api/ai/writing/prompts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            count: generatorOptions.count,
+            task: generatorOptions.task,
+            difficulty: generatorOptions.difficulty,
+            theme: generatorOptions.theme.trim() || undefined,
+            style: generatorOptions.style.trim() || undefined,
+          }),
+        });
+        const payload = (await response.json()) as
+          | { ok: true; prompts: PromptCard[] }
+          | { ok: false; error: string };
+        if (!response.ok || !('ok' in payload) || !payload.ok) {
+          const reason = 'error' in payload ? payload.error : 'Unable to generate prompts';
+          throw new Error(reason);
+        }
+
+        const generated = payload.prompts.map((prompt) => ({
+          ...prompt,
+          source: prompt.source ?? 'generated',
+        }));
+
+        setPromptLibrary((prev) => {
+          const existingIds = new Set(prev.map((item) => item.id));
+          const deduped = generated.filter((item) => !existingIds.has(item.id));
+          const merged = [...deduped, ...prev];
+          return sortPromptCards(merged);
+        });
+
+        const addedCount = generated.length;
+        setGeneratorMessage(`Added ${addedCount} new prompt${addedCount === 1 ? '' : 's'} to your library.`);
+        setAnnouncement(`Added ${addedCount} new prompt${addedCount === 1 ? '' : 's'} to your library.`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to generate prompts';
+        setGeneratorError(message);
+        setAnnouncement(message);
+      } finally {
+        setGeneratorLoading(false);
+      }
+    },
+    [generatorOptions],
   );
 
   const refreshMicroPrompt = useCallback(async () => {
@@ -203,7 +352,10 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.12),_transparent_55%)]"
         aria-hidden
       />
-      <div className="mx-auto flex max-w-6xl flex-col gap-12">
+      <div aria-live="polite" role="status" className="sr-only">
+        {announcement}
+      </div>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:px-0">
         <Card className="relative overflow-hidden border border-border/50 bg-gradient-to-br from-primary/10 via-background/80 to-background/95 p-8 shadow-xl sm:p-10">
           <div className="absolute inset-y-0 right-0 hidden w-64 translate-x-24 rounded-full bg-primary/20 blur-3xl lg:block" aria-hidden />
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
@@ -259,62 +411,237 @@ const WritingDashboard = ({ prompts, drafts, recent, readiness, plan, microPromp
           </div>
         </Card>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
-          <Card id="prompt-library" className="card-surface flex flex-col gap-6 p-6 sm:p-8">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground">Prompt library</h2>
-                <p className="text-sm text-muted-foreground">
-                  Choose a prompt to launch a focused editor with autosave, timers, and structured scoring.
-                </p>
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
+          <div className="flex flex-col gap-6">
+            <Card id="prompt-library" className="card-surface flex flex-col gap-6 p-6 sm:p-8">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-semibold text-foreground">Prompt library</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Filter writing prompts by task and difficulty, then jump straight into the studio.
+                  </p>
+                </div>
+                <Badge variant="soft" tone="default" size="sm">
+                  {filteredPrompts.length} of {totalPrompts} ready
+                </Badge>
               </div>
-              <Badge variant="soft" tone="default" size="sm">
-                {sortedPrompts.length} ready to attempt
-              </Badge>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {sortedPrompts.map((prompt) => (
-                <Card
-                  key={prompt.id}
-                  className="flex h-full flex-col gap-5 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/50"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    <span className="flex items-center gap-2">
-                      <Badge variant="soft" tone="info" size="sm" className="capitalize">
-                        {prompt.taskType === 'task1' ? 'Task 1' : 'Task 2'}
-                      </Badge>
-                    </span>
-                    <Badge variant="soft" tone="default" size="sm">
-                      {difficultyLabel(prompt.difficulty)}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-foreground">{prompt.topic}</h3>
-                    {prompt.outlineSummary && <p className="text-sm text-muted-foreground">{prompt.outlineSummary}</p>}
-                  </div>
-                  <div className="mt-auto flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      loading={startingPromptId === prompt.id}
-                      onClick={() => handleStart(prompt)}
+
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <Input
+                    label="Search"
+                    variant="subtle"
+                    size="sm"
+                    placeholder="Find a topic"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    leftSlot={<Icon name="search" size={16} />}
+                  />
+                  <Select
+                    label="Task"
+                    value={taskFilter}
+                    onChange={(event) => setTaskFilter(event.target.value as 'all' | WritingTaskType)}
+                    size="sm"
+                    variant="subtle"
+                  >
+                    <option value="all">All tasks</option>
+                    <option value="task1">Task 1</option>
+                    <option value="task2">Task 2</option>
+                  </Select>
+                  <Select
+                    label="Difficulty"
+                    value={difficultyFilter === 'all' ? 'all' : String(difficultyFilter)}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setDifficultyFilter(value === 'all' ? 'all' : Number(value));
+                    }}
+                    size="sm"
+                    variant="subtle"
+                  >
+                    <option value="all">All levels</option>
+                    {difficultyOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {difficultyLabel(option)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetFilters}
+                    disabled={!hasFiltersActive}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshPrompts}
+                    loading={isRefreshing}
+                    leadingIcon={<Icon name="refresh-ccw" size={16} />}
+                  >
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+
+              {libraryError && <p className="text-sm text-danger">{libraryError}</p>}
+
+              {filteredPrompts.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredPrompts.map((prompt) => (
+                    <Card
+                      key={prompt.id}
+                      className="flex h-full flex-col gap-5 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/50"
                     >
-                      Start writing
-                    </Button>
-                    <Button size="sm" variant="outline" href={`/writing/${prompt.slug}`}>
-                      View prompt
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-            {sortedPrompts.length === 0 && (
-              <EmptyState
-                title="No prompts yet"
-                description="Admins can seed writing prompts from Supabase. Check back soon for new practice sets."
-              />
-            )}
-          </Card>
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="soft" tone="info" size="sm" className="capitalize">
+                            {prompt.taskType === 'task1' ? 'Task 1' : 'Task 2'}
+                          </Badge>
+                          {prompt.source === 'generated' && (
+                            <Badge variant="soft" tone="primary" size="sm">
+                              AI
+                            </Badge>
+                          )}
+                        </div>
+                        <Badge variant="soft" tone="default" size="sm">
+                          {difficultyLabel(prompt.difficulty)}
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-foreground">{prompt.topic}</h3>
+                        {prompt.outlineSummary && (
+                          <p className="line-clamp-4 text-sm text-muted-foreground">{prompt.outlineSummary}</p>
+                        )}
+                      </div>
+                      <div className="mt-auto flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          loading={startingPromptId === prompt.id}
+                          onClick={() => handleStart(prompt)}
+                        >
+                          Start
+                        </Button>
+                        <Button size="sm" variant="outline" href={`/writing/${prompt.slug}`}>
+                          View
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={totalPrompts === 0 ? 'No prompts yet' : 'No prompts match your filters'}
+                  description={
+                    totalPrompts === 0
+                      ? 'Admins can seed writing prompts from Supabase. Check back soon for new practice sets.'
+                      : 'Try adjusting your filters, clearing search, or generating fresh prompts.'
+                  }
+                />
+              )}
+            </Card>
+
+            <Card id="ai-prompt-generator" className="card-surface flex flex-col gap-6 p-6 sm:p-8">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-semibold text-foreground">AI prompt generator</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Create fresh practice prompts tailored to your focus areas. New prompts appear at the top of your library.
+                  </p>
+                </div>
+                <Badge variant="soft" tone="info" size="sm">
+                  Instant
+                </Badge>
+              </div>
+              <form className="flex flex-col gap-6" onSubmit={handleGeneratePrompts}>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <Select
+                    label="Number of prompts"
+                    value={String(generatorOptions.count)}
+                    onChange={(event) => {
+                      const value = Number(event.target.value) as (typeof countOptions)[number];
+                      setGeneratorOptions((prev) => ({ ...prev, count: value }));
+                    }}
+                    size="sm"
+                    variant="subtle"
+                    required
+                  >
+                    {countOptions.map((count) => (
+                      <option key={count} value={count}>
+                        {count}
+                      </option>
+                    ))}
+                  </Select>
+                  <Select
+                    label="Task"
+                    value={generatorOptions.task}
+                    onChange={(event) => {
+                      setGeneratorOptions((prev) => ({ ...prev, task: event.target.value as WritingTaskType }));
+                    }}
+                    size="sm"
+                    variant="subtle"
+                    required
+                  >
+                    <option value="task1">Task 1</option>
+                    <option value="task2">Task 2</option>
+                  </Select>
+                  <Select
+                    label="Difficulty"
+                    value={String(generatorOptions.difficulty)}
+                    onChange={(event) => {
+                      const value = Number(event.target.value) as (typeof difficultyOptions)[number];
+                      setGeneratorOptions((prev) => ({ ...prev, difficulty: value }));
+                    }}
+                    size="sm"
+                    variant="subtle"
+                    required
+                  >
+                    {difficultyOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {difficultyLabel(option)}
+                      </option>
+                    ))}
+                  </Select>
+                  <Input
+                    label="Theme (optional)"
+                    placeholder="e.g. urban transport"
+                    value={generatorOptions.theme}
+                    onChange={(event) => setGeneratorOptions((prev) => ({ ...prev, theme: event.target.value }))}
+                    size="sm"
+                    variant="subtle"
+                  />
+                </div>
+                <Textarea
+                  label="Style hints (optional)"
+                  placeholder="Ask for comparisons, data analysis, or specific perspectives"
+                  value={generatorOptions.style}
+                  onChange={(event) => setGeneratorOptions((prev) => ({ ...prev, style: event.target.value }))}
+                  size="sm"
+                  variant="subtle"
+                  maxLength={240}
+                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button type="submit" variant="primary" size="md" loading={generatorLoading}>
+                    Generate prompts
+                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    Prompts are saved instantly and ready to start without reloading.
+                  </p>
+                </div>
+                {(generatorMessage || generatorError) && (
+                  <p className={`text-sm ${generatorError ? 'text-danger' : 'text-success'}`}>
+                    {generatorError ?? generatorMessage}
+                  </p>
+                )}
+              </form>
+            </Card>
+          </div>
 
           <div className="flex flex-col gap-6 lg:sticky lg:top-24">
             <Card id="retake-plan" className="card-surface flex flex-col gap-5 p-6">
@@ -620,6 +947,8 @@ const mapPromptRow = (
     taskType: row.task_type as WritingTaskType,
     difficulty: row.difficulty ?? 2,
     outlineSummary: summaryValue,
+    createdAt: row.created_at ?? null,
+    source: 'library',
   };
 };
 
@@ -656,7 +985,7 @@ export const getServerSideProps: GetServerSideProps<PageProps> = withPlanPage('f
 
   const { data: promptRows } = await supabase
     .from('writing_prompts')
-    .select('id, slug, topic, task_type, difficulty, outline_json')
+    .select('id, slug, topic, task_type, difficulty, outline_json, created_at')
     .order('difficulty', { ascending: true })
     .order('created_at', { ascending: false })
     .limit(12);
