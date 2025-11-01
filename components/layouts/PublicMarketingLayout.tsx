@@ -1,8 +1,7 @@
 // components/layouts/PublicMarketingLayout.tsx
 import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
+import { LayoutQuickNav } from '@/components/layouts/shared/LayoutQuickNav';
 
 /**
  * PublicMarketingLayout
@@ -11,23 +10,6 @@ import { Container } from '@/components/design-system/Container';
  * - Shows a small quick-nav for common marketing routes
  */
 const PublicMarketingLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
-
-  const Item: React.FC<{ href: string; label: string }> = ({ href, label }) => {
-    const active =
-      pathname === href ||
-      (href !== '/' && pathname.startsWith(href));
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`}
-      >
-        {label}
-      </Link>
-    );
-  };
-
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
       {/* Context header */}
@@ -41,19 +23,17 @@ const PublicMarketingLayout: React.FC<React.PropsWithChildren> = ({ children }) 
           </div>
 
           {/* Quick marketing nav */}
-          <nav
-            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
-            aria-label="Marketing sections"
-          >
-            <div className="flex gap-2 px-1">
-              <Item href="/" label="Home" />
-              <Item href="/pricing" label="Pricing" />
-              <Item href="/predictor" label="Band Predictor" />
-              <Item href="/faq" label="FAQ" />
-              <Item href="/legal/terms" label="Terms" />
-              <Item href="/legal/privacy" label="Privacy" />
-            </div>
-          </nav>
+          <LayoutQuickNav
+            ariaLabel="Marketing sections"
+            items={[
+              { href: '/', label: 'Home', isActive: (path) => path === '/' },
+              { href: '/pricing', label: 'Pricing' },
+              { href: '/predictor', label: 'Band Predictor' },
+              { href: '/faq', label: 'FAQ' },
+              { href: '/legal/terms', label: 'Terms' },
+              { href: '/legal/privacy', label: 'Privacy' },
+            ]}
+          />
         </Container>
       </section>
 

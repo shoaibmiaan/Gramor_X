@@ -1,24 +1,9 @@
 // components/layouts/CommunityLayout.tsx
 import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
+import { LayoutQuickNav } from '@/components/layouts/shared/LayoutQuickNav';
 
 const CommunityLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
-  const Item = ({ href, label }: { href: string; label: string }) => {
-    const active = pathname === href || pathname.startsWith(href + '/');
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-accent/10 text-accent' : ''}`}
-      >
-        {label}
-      </Link>
-    );
-  };
-
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
       <section className="border-b border-border bg-card/30">
@@ -29,17 +14,16 @@ const CommunityLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
               Ask questions, chat, and get feedback from peers.
             </p>
           </div>
-          <nav
-            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
-            aria-label="Community sections"
-          >
-            <div className="flex gap-2 px-1">
-              <Item href="/community" label="Feed" />
-              <Item href="/community/questions" label="Questions" />
-              <Item href="/community/chat" label="Chat" />
-              <Item href="/community/review" label="Peer Reviews" />
-            </div>
-          </nav>
+          <LayoutQuickNav
+            ariaLabel="Community sections"
+            defaultActiveClassName="bg-accent/10 text-accent"
+            items={[
+              { href: '/community', label: 'Feed' },
+              { href: '/community/questions', label: 'Questions' },
+              { href: '/community/chat', label: 'Chat' },
+              { href: '/community/review', label: 'Peer Reviews' },
+            ]}
+          />
         </Container>
       </section>
 
