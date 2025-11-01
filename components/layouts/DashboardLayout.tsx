@@ -1,8 +1,11 @@
 // components/layouts/DashboardLayout.tsx
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { GaugeCircle } from 'lucide-react';
+
 import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
+import { LayoutHero } from '@/components/layouts/shared/LayoutHero';
 
 const QUICK_LINKS = [
   { href: '/study-plan', label: 'Study Plan' },
@@ -15,43 +18,34 @@ const QUICK_LINKS = [
 ] as const;
 
 const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
-
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <header className="border-b border-border bg-card/30">
-        <Container className="space-y-4 py-6 pt-safe">
-          <div className="space-y-1">
-            <h1 className="font-slab text-h3 sm:text-h2">Your Dashboard</h1>
-            <p className="text-small text-mutedText">
-              Track progress, follow your plan, and jump back into modules.
-            </p>
-          </div>
-
-          <nav
-            aria-label="Dashboard quick links"
-            className="flex flex-wrap gap-3 text-sm text-muted-foreground"
-          >
-            {QUICK_LINKS.map(({ href, label }) => {
-              const active = pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`rounded-md px-2 py-1 transition hover:text-foreground ${
-                    active ? 'bg-muted text-foreground' : ''
-                  }`}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-        </Container>
-      </header>
+      <LayoutHero
+        accent="dashboard"
+        icon={GaugeCircle}
+        eyebrow="Dashboard"
+        title="Your control center"
+        subtitle="Track progress, resume the next activity, and jump into any IELTS skill with a single tap."
+        actions={
+          <Button asChild variant="soft" tone="success" elevateOnHover>
+            <Link href="/study-plan">Resume study plan</Link>
+          </Button>
+        }
+        quickNav={{
+          ariaLabel: 'Dashboard quick links',
+          items: QUICK_LINKS.map((item) => ({ ...item })),
+        }}
+      >
+        <div className="rounded-2xl border border-white/50 bg-white/70 p-4 text-sm font-medium text-emerald-900 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-emerald-100/90">
+          Next up: Listening Mock 3 unlocks in your plan—finish by Sunday for a streak bonus.
+        </div>
+        <div className="rounded-2xl border border-white/50 bg-white/70 p-4 text-sm text-emerald-900/80 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-emerald-100/80">
+          Tip: check Analytics to compare this week’s accuracy with your baseline.
+        </div>
+      </LayoutHero>
 
       <main>
-        <Container className="py-8 sm:py-10">{children}</Container>
+        <Container className="pb-10">{children}</Container>
       </main>
     </div>
   );
