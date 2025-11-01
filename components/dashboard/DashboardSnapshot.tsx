@@ -30,7 +30,7 @@ const DashboardSnapshot: React.FC<DashboardSnapshotProps> = ({
 }) => {
   return (
     <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Card className="rounded-ds-2xl border border-border/60 bg-card/95 p-5">
+      <Card padding="md" interactive>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-caption uppercase tracking-[0.18em] text-mutedText">Next focus</p>
@@ -51,7 +51,7 @@ const DashboardSnapshot: React.FC<DashboardSnapshotProps> = ({
         </div>
       </Card>
 
-      <Card className="rounded-ds-2xl border border-border/60 bg-card/95 p-5">
+      <Card padding="md" interactive>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-caption uppercase tracking-[0.18em] text-mutedText">Streak</p>
@@ -61,16 +61,16 @@ const DashboardSnapshot: React.FC<DashboardSnapshotProps> = ({
         </div>
         <p className="mt-3 text-small text-mutedText">Protect the streak to keep AI boosters unlocked.</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Badge variant="soft" tone="primary" size="sm">
+          <Badge variant="primary" size="xs">
             Best {longestStreak} days
           </Badge>
-          <Badge variant="soft" tone="accent" size="sm">
+          <Badge variant="accent" size="xs">
             Shields {shields}
           </Badge>
         </div>
       </Card>
 
-      <Card className="rounded-ds-2xl border border-border/60 bg-card/95 p-5">
+      <Card padding="md" interactive>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-caption uppercase tracking-[0.18em] text-mutedText">Weekly challenge</p>
@@ -96,7 +96,7 @@ const DashboardSnapshot: React.FC<DashboardSnapshotProps> = ({
         </div>
       </Card>
 
-      <Card className="rounded-ds-2xl border border-border/60 bg-card/95 p-5">
+      <Card padding="md" interactive>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-caption uppercase tracking-[0.18em] text-mutedText">Share the win</p>

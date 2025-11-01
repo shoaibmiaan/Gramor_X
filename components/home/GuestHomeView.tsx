@@ -91,12 +91,12 @@ const valuePillars = [
 
 function SectionSkeleton() {
   return (
-    <div className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+    <div className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
       <div className="mx-auto max-w-6xl px-4">
         <div className="h-8 w-40 rounded bg-border/70" />
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-40 rounded-2xl border border-border bg-card animate-pulse" />
+            <div key={i} className="h-40 rounded-ds-2xl border border-border bg-card animate-pulse" />
           ))}
         </div>
       </div>
@@ -124,17 +124,17 @@ export const GuestHomeView: React.FC<GuestHomeViewProps> = ({ home }) => {
       <section>
         <Container>
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Card className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/95 p-8">
+            <Card padding="lg" className="relative overflow-hidden">
+              <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-primary/10 to-transparent lg:block" aria-hidden />
               <div className="space-y-6">
-                <Badge variant="soft" tone="primary" size="sm">
+                <Badge variant="primary" size="sm">
                   Why GramorX works
                 </Badge>
-                <h2 className="font-slab text-3xl md:text-4xl">
+                <h2 className="font-slab text-3xl leading-tight text-foreground md:text-4xl">
                   A guided prep companion for IELTS dreamers
                 </h2>
                 <p className="text-base text-mutedText">
-                  Curated lessons, AI feedback, and live accountability meet in one cohesive journey. Choose a lane below to
-                  see how we keep you on pace.
+                  Curated lessons, AI feedback, and live accountability meet in one cohesive journey. Choose a lane below to see how we keep you on pace.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button href="/signup" size="lg">
@@ -150,12 +150,12 @@ export const GuestHomeView: React.FC<GuestHomeViewProps> = ({ home }) => {
               </div>
             </Card>
 
-            <Card className="rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-background to-background p-8">
+            <Card padding="lg">
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold text-foreground">Momentum metrics</h3>
                 <div className="grid gap-4 sm:grid-cols-3">
                   {statHighlights.map((stat) => (
-                    <div key={stat.label} className="rounded-2xl border border-border/50 bg-background/70 p-4">
+                    <div key={stat.label} className="rounded-ds-xl border border-border/60 p-4">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <Icon name={stat.icon} size={16} className="text-primary" />
                         {stat.label}
@@ -167,7 +167,7 @@ export const GuestHomeView: React.FC<GuestHomeViewProps> = ({ home }) => {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   {valuePillars.map((pillar) => (
-                    <div key={pillar.title} className="rounded-2xl border border-border/40 bg-background/70 p-4">
+                    <div key={pillar.title} className="rounded-ds-xl border border-border/40 p-4">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <Icon name={pillar.icon} size={16} className="text-primary" />
                         {pillar.title}
@@ -189,106 +189,79 @@ export const GuestHomeView: React.FC<GuestHomeViewProps> = ({ home }) => {
       <section>
         <Container>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-            <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/95 p-6">
+            <Card padding="lg" className="overflow-hidden">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-3">
-                  <Badge variant="soft" tone="accent" size="sm">
+                  <Badge variant="accent" size="sm">
                     Speaking labs
                   </Badge>
                   <h3 className="text-2xl font-semibold text-foreground">Build fluency with AI interviews</h3>
                   <p className="text-sm text-mutedText">
                     Rehearse part 1-3 questions, get instant transcripts, and surface filler words before exam day.
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button href="/speaking" size="sm" variant="primary">
-                      Launch a mock interview
-                    </Button>
-                    <Button href="/speaking#library" size="sm" variant="ghost">
-                      Browse prompt library
-                    </Button>
+                </div>
+                <div className="space-y-2 text-sm text-mutedText">
+                  <div className="rounded-ds-xl border border-border/60 p-4">
+                    <p className="text-caption uppercase tracking-[0.18em] text-mutedText">Live prompts</p>
+                    <p className="pt-2 text-lg font-semibold text-foreground">150+ curated IELTS questions</p>
+                  </div>
+                  <div className="rounded-ds-xl border border-border/60 p-4">
+                    <p className="text-caption uppercase tracking-[0.18em] text-mutedText">Instant feedback</p>
+                    <p className="pt-2 text-lg font-semibold text-foreground">AI scoring with teacher escalations</p>
                   </div>
                 </div>
-                <div className="w-full max-w-md">
-                  <SpeakingPracticeHighlight />
+              </div>
+              <div className="flex flex-wrap gap-3 pt-4">
+                <Button href="/speaking/simulator" size="md">
+                  Try a speaking drill
+                </Button>
+                <Button href="/community" variant="ghost" size="md">
+                  Join live practice rooms
+                </Button>
+              </div>
+            </Card>
+
+            <Card padding="lg">
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-foreground">Stay in the loop</h3>
+                <p className="text-sm text-mutedText">
+                  Weekly strategy emails help you plan smarter sessions.
+                </p>
+                <Button href="#waitlist" variant="soft" tone="primary" size="md">
+                  Join the waitlist
+                </Button>
+                <div className="rounded-ds-xl border border-border/60 p-4 text-sm text-mutedText">
+                  <p className="font-semibold text-foreground">What&apos;s inside</p>
+                  <ul className="mt-2 space-y-1">
+                    <li>• Lesson plans matched to your timeline</li>
+                    <li>• Teacher Q&amp;A replays</li>
+                    <li>• Weekly accountability prompts</li>
+                  </ul>
                 </div>
               </div>
             </Card>
-
-            <Card className="overflow-hidden rounded-3xl border border-border/60 bg-card/95 p-6">
-              <div className="space-y-4">
-                <Badge variant="soft" tone="info" size="sm">
-                  Vocabulary spotlight
-                </Badge>
-                <h3 className="text-2xl font-semibold text-foreground">Curated IELTS-ready words every day</h3>
-                <p className="text-sm text-mutedText">
-                  Track streaks, save favourites, and join the leaderboard to build lexical resource across skills.
-                </p>
-                <VocabularyFeature />
-              </div>
-            </Card>
           </div>
         </Container>
       </section>
 
-      <section>
-        <Container>
-          <Testimonials />
-        </Container>
+      <section id="vocabulary-module" aria-label="Vocabulary Module" className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <VocabularyFeature variant="guestSampler" />
       </section>
 
-      <section>
-        <Container>
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <Card className="space-y-6 rounded-3xl border border-border/60 bg-card/95 p-8">
-              <div className="space-y-3">
-                <Badge variant="soft" tone="success" size="sm">
-                  Ready to invest
-                </Badge>
-                <h3 className="font-slab text-3xl text-foreground">Flexible plans for self-paced or guided prep</h3>
-                <p className="text-base text-mutedText">
-                  Start free, then upgrade when you need personalised teacher feedback, extended AI tokens, and live classes.
-                </p>
-              </div>
-              <Pricing />
-            </Card>
-
-            <Card className="space-y-6 rounded-3xl border border-border/60 bg-card/95 p-8">
-              <div className="space-y-3">
-                <Badge variant="soft" tone="warning" size="sm">
-                  Coming soon
-                </Badge>
-                <h3 className="font-slab text-3xl text-foreground">Be first to join the next live cohort</h3>
-                <p className="text-base text-mutedText">
-                  Join the priority waitlist and we&apos;ll notify you when new live batches and pro clinics open up.
-                </p>
-              </div>
-              <Waitlist />
-            </Card>
-          </div>
-        </Container>
+      <section aria-label="Speaking practice" className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <SpeakingPracticeHighlight />
       </section>
 
-      <section>
-        <Container>
-          <div className="flex flex-col items-center gap-6 rounded-3xl border border-border/60 bg-card/95 p-8 text-center">
-            <Badge variant="soft" tone="primary" size="sm">
-              Join the movement
-            </Badge>
-            <h3 className="font-slab text-3xl text-foreground">Study smarter with the GramorX community</h3>
-            <p className="max-w-3xl text-base text-mutedText">
-              Unlock personalised analytics, live support, and the accountability of thousands of IELTS aspirants heading in
-              the same direction.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button href="/signup" size="lg">
-                Create free account
-              </Button>
-              <Button href="/community" variant="ghost" size="lg">
-                Peek into the community
-              </Button>
-            </div>
-          </div>
-        </Container>
+      <section id="testimonials" aria-label="Student Testimonials" className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Testimonials />
+      </section>
+
+      <section id="pricing" aria-label="Pricing Plans" className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Pricing />
+      </section>
+
+      <section id="waitlist" aria-label="Join the Waitlist" className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Waitlist />
       </section>
     </div>
   );

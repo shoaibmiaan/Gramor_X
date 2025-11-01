@@ -6,6 +6,7 @@ import type { GetServerSideProps } from 'next';
 import type { HomeProps } from '@/types/home';
 import { createGuestHomeProps } from '@/lib/home';
 import { useLocale } from '@/lib/locale';
+import { getLaunchMsUTC } from '@/lib/config/launchDate';
 
 import HomeViewSwitcher from '@/components/home/HomeViewSwitcher';
 
@@ -56,9 +57,14 @@ export default function HomePage(home: HomeProps) {
 }
 
 export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
+  const launchMsUTC = Math.floor(getLaunchMsUTC());
+  const serverNowMsUTC = Date.now();
+
   return {
     props: createGuestHomeProps({
       generatedAtISO: new Date().toISOString(),
+      serverNowMsUTC,
+      launchMsUTC,
     }),
   };
 };
