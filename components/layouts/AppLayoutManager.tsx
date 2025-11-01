@@ -23,6 +23,7 @@ import AuthLayout from '@/components/layouts/AuthLayout';
 import ReportsLayout from '@/components/layouts/ReportsLayout';
 import ProctoringLayout from '@/components/layouts/ProctoringLayout';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
+import WelcomeLayout from '@/components/layouts/WelcomeLayout';
 import PublicMarketingLayout from '@/components/layouts/PublicMarketingLayout';
 import TeacherLayout from '@/components/layouts/TeacherLayout';
 import TeacherProfile from '@/components/teacher/TeacherProfile';
@@ -38,6 +39,7 @@ type AppLayoutManagerProps = {
   isAdminRoute: boolean;
   isInstitutionsRoute: boolean;
   isDashboardRoute: boolean;
+  isWelcomeRoute: boolean;
   isMarketplaceRoute: boolean;
   isLearningRoute: boolean;
   isCommunityRoute: boolean;
@@ -115,6 +117,7 @@ export function AppLayoutManager({
   isAdminRoute,
   isInstitutionsRoute,
   isDashboardRoute,
+  isWelcomeRoute,
   isMarketplaceRoute,
   isLearningRoute,
   isCommunityRoute,
@@ -167,6 +170,8 @@ export function AppLayoutManager({
       content = <InstitutionsLayout>{children}</InstitutionsLayout>;
     } else if (isDashboardRoute) {
       content = <DashboardLayout>{children}</DashboardLayout>;
+    } else if (isWelcomeRoute) {
+      content = <WelcomeLayout>{children}</WelcomeLayout>;
     } else if (isMarketplaceRoute) {
       content = <MarketplaceLayout>{children}</MarketplaceLayout>;
     } else if (isLearningRoute) {

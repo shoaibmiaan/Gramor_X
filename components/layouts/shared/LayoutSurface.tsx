@@ -14,6 +14,11 @@ const SURFACE_THEME: Record<LayoutHeroAccent, { glow: string; border: string; ba
     border: 'border-vibrantPurple/25',
     background: 'bg-card/80',
   },
+  welcome: {
+    glow: 'bg-sunsetOrange/15 dark:bg-sunsetOrange/10',
+    border: 'border-sunsetOrange/25',
+    background: 'bg-card/85',
+  },
   dashboard: {
     glow: 'bg-primary/15 dark:bg-primary/10',
     border: 'border-primary/25',
