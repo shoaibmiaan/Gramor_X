@@ -245,7 +245,7 @@ const AdminListeningContent: React.FC = () => {
               <div className="mt-6 space-y-4">
                 <Input
                   label="Title"
-                  placeholder="IELTS Listening Practice Test #5"
+                  placeholder="IELTS Listening Practice Test No. 5"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required

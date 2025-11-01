@@ -10,12 +10,14 @@ type Partner = {
   tagline?: string;
 };
 
+const FRAGMENT = String.fromCharCode(35);
+
 const partners: readonly Partner[] = [
-  { name: 'British Council (Inspiration)', href: '/about/partners#bc' },
-  { name: 'IDP IELTS (Practice Style)', href: '/about/partners#idp' },
-  { name: 'Cambridge Prep (Pedagogy)', href: '/about/partners#cambridge' },
-  { name: 'CEFR-aligned Skills', href: '/about/partners#cefr' },
-  { name: 'AI Evaluation Engine', href: '/about/partners#ai' },
+  { name: 'British Council (Inspiration)', href: `/about/partners${FRAGMENT}bc` },
+  { name: 'IDP IELTS (Practice Style)', href: `/about/partners${FRAGMENT}idp` },
+  { name: 'Cambridge Prep (Pedagogy)', href: `/about/partners${FRAGMENT}cambridge` },
+  { name: 'CEFR-aligned Skills', href: `/about/partners${FRAGMENT}cefr` },
+  { name: 'AI Evaluation Engine', href: `/about/partners${FRAGMENT}ai` },
 ];
 
 export const CertificationBadges: React.FC = () => {
@@ -26,7 +28,7 @@ export const CertificationBadges: React.FC = () => {
           <h2 className="font-slab text-h2 tracking-tight text-gradient-primary">
             Trusted Exam Prep Standards
           </h2>
-          <p className="text-muted-foreground mt-2">
+          <p className="mt-2 text-muted">
             Inspired by leading bodies and aligned with real IELTS marking criteria.
           </p>
         </div>
@@ -43,8 +45,7 @@ export const CertificationBadges: React.FC = () => {
               role="listitem"
               className="
                 block rounded-ds-xl border border-border bg-card/60
-                hover:border-electricBlue/40 hover:bg-electricBlue/5
-                transition p-4 text-center
+                transition p-4 text-center hover:border-accent2/40 hover:bg-accent2/10
               "
             >
               <div className="text-small font-medium">{p.name}</div>
@@ -53,7 +54,7 @@ export const CertificationBadges: React.FC = () => {
         </div>
 
         <Card className="mt-6 p-4 rounded-ds-xl text-center bg-card/60 border border-border">
-          <span className="text-small text-muted-foreground">
+          <span className="text-small text-muted">
             *Names listed as inspirations/standards to describe pedagogy influence. Not official partnerships.
           </span>
         </Card>

@@ -1,0 +1,9 @@
+{
+  "extends": ["stylelint-config-standard", "stylelint-config-css-modules"],
+  "rules": {
+    "color-named": "never",
+    "color-no-hex": true,
+    "alpha-value-notation": "number",
+    "selector-class-pattern": null
+  }
+}

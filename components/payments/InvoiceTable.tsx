@@ -1,4 +1,15 @@
 import * as React from 'react';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/design-system';
+import { Badge } from '@/components/design-system/Badge';
 
 export type Invoice = Readonly<{
   id: string;
@@ -15,53 +26,74 @@ export type InvoiceTableProps = {
 };
 
 export default function InvoiceTable({ invoices, className = '' }: InvoiceTableProps) {
-  if (!invoices || invoices.length === 0) {
-    return (
-      <div className={`rounded-lg border border-border p-4 text-small text-muted-foreground ${className}`}>
-        No invoices yet.
-      </div>
-    );
-  }
-
   return (
-    <div className={`overflow-x-auto ${className}`}>
-      <table className="w-full border-collapse text-small">
-        <thead>
-          <tr className="border-b border-border text-left">
-            <th className="py-2 pr-4">Date</th>
-            <th className="py-2 pr-4">Amount</th>
-            <th className="py-2 pr-4">Status</th>
-            <th className="py-2 pr-4">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {invoices.map((inv) => (
-            <tr key={inv.id} className="border-b border-border/60">
-              <td className="py-2 pr-4">
-                <time dateTime={inv.createdAt}>
+    <TableContainer className={className}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(!invoices || invoices.length === 0) && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center text-muted">
+                No invoices yet.
+              </TableCell>
+            </TableRow>
+          )}
+          {invoices?.map((inv) => (
+            <TableRow key={inv.id}>
+              <TableCell className="text-text">
+                <time dateTime={inv.createdAt} suppressHydrationWarning>
                   {new Date(inv.createdAt).toLocaleDateString()}
                 </time>
-              </td>
-              <td className="py-2 pr-4">
+              </TableCell>
+              <TableCell className="tabular-nums text-text">
                 {(inv.amount / 100).toLocaleString(undefined, {
                   style: 'currency',
                   currency: inv.currency,
                 })}
-              </td>
-              <td className="py-2 pr-4 capitalize">{inv.status}</td>
-              <td className="py-2 pr-4">
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant={
+                    inv.status === 'paid'
+                      ? 'success'
+                      : inv.status === 'open'
+                        ? 'accent'
+                        : 'warning'
+                  }
+                  size="xs"
+                  className="capitalize"
+                >
+                  {inv.status}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
                 {inv.hostedInvoiceUrl ? (
-                  <a href={inv.hostedInvoiceUrl} target="_blank" rel="noreferrer" className="underline underline-offset-4">
+                  <a
+                    href={inv.hostedInvoiceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent underline underline-offset-4 hover:text-accent/80"
+                  >
                     View
                   </a>
                 ) : (
-                  '—'
+                  <span className="text-muted">—</span>
                 )}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+        <TableCaption className="text-left">
+          Billing amounts are displayed in your billing currency.
+        </TableCaption>
+      </Table>
+    </TableContainer>
   );
 }

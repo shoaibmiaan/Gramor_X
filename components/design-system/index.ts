@@ -14,5 +14,15 @@ export { Select } from './Select';
 export { Separator } from './Separator';
 export { Section } from './Section';
 export { Tabs } from './Tabs';
+export {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './Table';
 export { Textarea } from './Textarea';
 export { Toaster, ToastProvider, useToast } from './Toaster';
