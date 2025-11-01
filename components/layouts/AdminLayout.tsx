@@ -1,8 +1,10 @@
 // components/layouts/AdminLayout.tsx
 import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { Container } from '@/components/design-system/Container';
+import {
+  LayoutQuickNav,
+  LayoutQuickNavItem,
+} from '@/components/layouts/shared/LayoutQuickNav';
 
 /**
  * AdminLayout
@@ -11,33 +13,16 @@ import { Container } from '@/components/design-system/Container';
  * - Place main content in a card surface
  */
 const AdminLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
-
-  const AdminItem: React.FC<{ href: string; label: string }> = ({ href, label }) => {
-    const active = pathname === href || pathname.startsWith(href + '/');
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`}
-      >
-        {label}
-      </Link>
-    );
-  };
-
-  const TeacherItem: React.FC<{ href: string; label: string }> = ({ href, label }) => {
-    const active = pathname === href || pathname.startsWith(href + '/');
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-accent/10 text-accent' : ''}`}
-      >
-        {label}
-      </Link>
-    );
-  };
+  const navItems: LayoutQuickNavItem[] = [
+    { href: '/admin', label: 'Admin Overview' },
+    { href: '/admin/partners', label: 'Partners' },
+    { href: '/admin/students', label: 'Students' },
+    { href: '/admin/reviews', label: 'Reviews' },
+    { href: '/admin/reading', label: 'Reading Builder' },
+    { href: '/admin/content/reading', label: 'Content' },
+    { href: '/teacher', label: 'Teacher Home', activeClassName: 'bg-accent/10 text-accent' },
+    { href: '/teacher/cohorts', label: 'Cohorts', activeClassName: 'bg-accent/10 text-accent' },
+  ];
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -49,24 +34,11 @@ const AdminLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
             <p className="text-small text-mutedText">Manage partners, students, reviews, and cohorts.</p>
           </div>
 
-          <nav
-            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
-            aria-label="Admin and teacher sections"
-          >
-            <div className="flex gap-2 px-1">
-              {/* Admin */}
-              <AdminItem href="/admin" label="Admin Overview" />
-              <AdminItem href="/admin/partners" label="Partners" />
-              <AdminItem href="/admin/students" label="Students" />
-              <AdminItem href="/admin/reviews" label="Reviews" />
-              <AdminItem href="/admin/reading" label="Reading Builder" />
-              <AdminItem href="/admin/content/reading" label="Content" />
-
-              {/* Teacher */}
-              <TeacherItem href="/teacher" label="Teacher Home" />
-              <TeacherItem href="/teacher/cohorts" label="Cohorts" />
-            </div>
-          </nav>
+          <LayoutQuickNav
+            ariaLabel="Admin and teacher sections"
+            items={navItems}
+            defaultActiveClassName="bg-primary/10 text-primary"
+          />
         </Container>
       </div>
 
