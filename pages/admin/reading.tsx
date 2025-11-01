@@ -286,7 +286,7 @@ const AdminReadingContent: React.FC = () => {
               <div className="mt-6 space-y-4">
                 <Input
                   label="Title"
-                  placeholder="IELTS Reading Practice Test #1"
+                  placeholder="IELTS Reading Practice Test No. 1"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required

@@ -48,7 +48,7 @@ export function TabsList({ className, ...props }: TabsListProps) {
   return (
     <div
       role="tablist"
-      className={cn('inline-flex items-center gap-2 rounded-ds-xl bg-surface/60 p-1 dark:bg-surface/40', className)}
+      className={cn('inline-flex items-center gap-xs rounded-pill bg-panel/80 p-xs backdrop-blur', className)}
       {...props}
     />
   );
@@ -70,8 +70,8 @@ export function TabsTrigger({ className, value, ...props }: TabsTriggerProps) {
       aria-selected={active}
       data-state={active ? 'active' : 'inactive'}
       className={cn(
-        'rounded-ds-lg px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-        active && 'bg-primary/10 text-primary',
+        'rounded-pill px-md py-xs text-small font-medium text-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        active ? 'bg-accent text-bg-light shadow-sm' : 'hover:text-text',
         className,
       )}
       onClick={(event) => {

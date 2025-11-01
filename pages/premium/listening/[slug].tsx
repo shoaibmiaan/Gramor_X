@@ -33,10 +33,10 @@ export default function ListeningExam() {
     </div>
   );
 
-  // Gate #1: subscription/plan check
+  // Gate step one: subscription/plan check
   if (!ready) return <ExamGate onReady={() => setReady(true)} />;
 
-  // Gate #2: exam PIN check
+  // Gate step two: exam PIN check
   if (!unlocked) return <PinGate onSuccess={() => setUnlocked(true)} />;
 
   return (

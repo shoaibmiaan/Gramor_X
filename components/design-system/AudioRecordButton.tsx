@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from "react";
+import clsx from 'clsx';
 
 export type AudioRecordButtonProps = {
   onStop?: (blob: Blob) => void;
@@ -53,7 +54,7 @@ export const AudioRecordButton: React.FC<AudioRecordButtonProps> = ({
       <button
         type="button"
         disabled
-        className={`px-4 py-2 rounded-ds bg-border dark:bg-border/20 text-small ${className}`}
+        className={clsx('rounded-ds-xl border border-border bg-panel px-md py-xs text-small text-muted', className)}
       >
         Recording not supported
       </button>
@@ -65,15 +66,16 @@ export const AudioRecordButton: React.FC<AudioRecordButtonProps> = ({
       type="button"
       onClick={recording ? stop : start}
       disabled={disabled}
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-ds border border-border dark:border-border/20
-        ${recording ? "bg-sunsetOrange/20 text-sunsetOrange" : "bg-card dark:bg-dark/40 text-foreground dark:text-foreground"}
-        hover:bg-border/20 dark:hover:bg-border/20 ${className}`}
+      className={clsx(
+        'inline-flex items-center gap-sm rounded-ds-xl border border-border px-md py-xs text-small transition-colors',
+        'hover:bg-panel/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        recording ? 'bg-warn/20 text-warn' : 'bg-card text-text',
+        className
+      )}
       aria-pressed={recording}
       aria-label={recording ? "Stop recording" : "Start recording"}
     >
-      <span
-        className={`inline-block h-2.5 w-2.5 rounded-sm ${recording ? "bg-sunsetOrange" : "bg-success"}`}
-      />
+      <span className={clsx('inline-block h-2.5 w-2.5 rounded-sm', recording ? 'bg-warn' : 'bg-ok')} />
       {recording ? "Stop" : "Record"}
     </button>
   );

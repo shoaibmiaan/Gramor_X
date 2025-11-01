@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import clsx from 'clsx';
 
 export type TimerMode = "countdown" | "stopwatch";
 
@@ -75,18 +76,21 @@ export const Timer: React.FC<TimerProps> = ({
 
   const intent =
     mode === "countdown" && seconds <= 60
-      ? "text-sunsetOrange"
-      : "text-foreground dark:text-foreground";
+      ? 'text-warn'
+      : 'text-text';
 
   return (
     <div
       role="timer"
       aria-live="polite"
       aria-label={ariaLabel}
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-ds border border-border dark:border-vibrantPurple/20 ${className}`}
+      className={clsx(
+        'inline-flex items-center gap-sm rounded-ds-xl border border-border bg-panel/80 px-sm py-2xs shadow-sm',
+        className
+      )}
     >
-      <i className={`fas fa-clock ${intent}`} aria-hidden="true" />
-      <span className={`tabular-nums font-semibold ${intent}`}>{label}</span>
+      <i className={clsx('fas fa-clock', intent)} aria-hidden="true" />
+      <span className={clsx('tabular-nums font-semibold', intent)}>{label}</span>
     </div>
   );
 };

@@ -86,7 +86,7 @@ const BandProgressChart: React.FC<Props> = ({ points, deltas }) => {
             <AreaChart data={chartData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
               <defs>
                 {Object.entries(COLORS).map(([key, color]) => (
-                  <linearGradient id={`band-${key}`} key={key} x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={`tone-${key}`} key={key} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={color} stopOpacity={0.8} />
                     <stop offset="95%" stopColor={color} stopOpacity={0.1} />
                   </linearGradient>
@@ -104,33 +104,33 @@ const BandProgressChart: React.FC<Props> = ({ points, deltas }) => {
                 }}
               />
               <Legend />
-              <Area type="monotone" dataKey="overall" stroke={COLORS.overall} fill="url(#band-overall)" strokeWidth={2} />
+              <Area type="monotone" dataKey="overall" stroke={COLORS.overall} fill="url(#tone-overall)" strokeWidth={2} />
               <Area
                 type="monotone"
                 dataKey="task_response"
                 stroke={COLORS.task_response}
-                fill="url(#band-task_response)"
+                fill="url(#tone-task_response)"
                 strokeWidth={2}
               />
               <Area
                 type="monotone"
                 dataKey="coherence_and_cohesion"
                 stroke={COLORS.coherence_and_cohesion}
-                fill="url(#band-coherence_and_cohesion)"
+                fill="url(#tone-coherence_and_cohesion)"
                 strokeWidth={2}
               />
               <Area
                 type="monotone"
                 dataKey="lexical_resource"
                 stroke={COLORS.lexical_resource}
-                fill="url(#band-lexical_resource)"
+                fill="url(#tone-lexical_resource)"
                 strokeWidth={2}
               />
               <Area
                 type="monotone"
                 dataKey="grammatical_range"
                 stroke={COLORS.grammatical_range}
-                fill="url(#band-grammatical_range)"
+                fill="url(#tone-grammatical_range)"
                 strokeWidth={2}
               />
             </AreaChart>
