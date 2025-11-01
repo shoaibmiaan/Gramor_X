@@ -32,6 +32,7 @@ import {
   normalizePromoCode,
   type PromoCodeRule,
 } from '@/lib/promotions/codes';
+import { fetchPromoByCode } from '@/lib/promotions/client';
 
 const toUsdCents = (amount: number) => Math.round(amount * 100);
 
@@ -107,26 +108,42 @@ const CheckoutPage: NextPage = () => {
   }, [codeParam]);
 
   React.useEffect(() => {
+    let aborted = false;
     if (!promoParam) {
       setActivePromo(null);
-      return;
+      return () => {
+        aborted = true;
+      };
     }
     const normalized = normalizePromoCode(promoParam);
     if (!normalized) {
       setActivePromo(null);
-      return;
+      return () => {
+        aborted = true;
+      };
     }
-    const rule = findPromoByCode(normalized);
-    if (!rule) {
-      setActivePromo(null);
-      return;
-    }
-    const eligibility = checkPromoEligibility(rule, { plan, cycle: cycleParam });
-    if (!eligibility.ok) {
-      setActivePromo(null);
-      return;
-    }
-    setActivePromo(rule);
+
+    const resolvePromo = async () => {
+      const localRule = findPromoByCode(normalized);
+      const rule = localRule ?? (await fetchPromoByCode(normalized));
+      if (aborted) return;
+      if (!rule) {
+        setActivePromo(null);
+        return;
+      }
+      const eligibility = checkPromoEligibility(rule, { plan, cycle: cycleParam });
+      if (!eligibility.ok) {
+        setActivePromo(null);
+        return;
+      }
+      setActivePromo(rule);
+    };
+
+    void resolvePromo();
+
+    return () => {
+      aborted = true;
+    };
   }, [promoParam, plan, cycleParam]);
 
   const buildQuery = React.useCallback(
