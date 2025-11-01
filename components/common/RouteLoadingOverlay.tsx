@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 
 import type { SubscriptionTier } from '@/lib/navigation/types';
+import { Button } from '@/components/design-system/Button';
 
 type ThemeMode = 'light' | 'dark';
 type VariantId = 'studyBuddy' | 'aiCoach' | 'owl';
@@ -228,14 +229,27 @@ function Progress({
 // Simple variant renderers (brand-safe, token-only)
 const renderStudyBuddy = (p: VariantRendererProps) => (
   <Card themeMode={p.themeMode}>
-    <Header label={p.label} friendlyMessage={p.friendlyMessage} themeMode={p.themeMode} />
-    <Progress
-      statusMessages={p.statusMessages}
-      currentStatus={p.currentStatus}
-      statusIndex={p.statusIndex}
-      stepDuration={p.stepDuration}
-      themeMode={p.themeMode}
-    />
+    <div className="space-y-6">
+      <Header label={p.label} friendlyMessage={p.friendlyMessage} themeMode={p.themeMode} />
+      <div className="flex flex-col items-center gap-5">
+        <motion.span
+          className="relative inline-flex h-12 w-12 items-center justify-center"
+          aria-hidden
+          animate={{ rotate: 360 }}
+          transition={{ duration: p.shouldReduceMotion ? 0 : 2.8, repeat: Infinity, ease: 'linear' }}
+        >
+          <span className="absolute inset-0 rounded-full border-2 border-dashed border-foreground/30" />
+          <span className="h-3 w-3 rounded-full bg-foreground/80" />
+        </motion.span>
+        <Progress
+          statusMessages={p.statusMessages}
+          currentStatus={p.currentStatus}
+          statusIndex={p.statusIndex}
+          stepDuration={p.stepDuration}
+          themeMode={p.themeMode}
+        />
+      </div>
+    </div>
   </Card>
 );
 const renderAiCoach = renderStudyBuddy;
@@ -302,14 +316,33 @@ export function RouteLoadingOverlay({ active, tier }: RouteLoadingOverlayProps) 
   );
 
   const [render, setRender] = useState(active);
+  const [showSlowNotice, setShowSlowNotice] = useState(false);
+  const [showRecoveryAction, setShowRecoveryAction] = useState(false);
   useEffect(() => {
     if (active) {
       setRender(true);
+      setShowSlowNotice(false);
+      setShowRecoveryAction(false);
       return;
     }
     const t = window.setTimeout(() => setRender(false), shouldReduceMotion ? 0 : 180);
     return () => window.clearTimeout(t);
   }, [active, shouldReduceMotion]);
+
+  useEffect(() => {
+    if (!active) return;
+    const slowTimer = window.setTimeout(() => setShowSlowNotice(true), 2600);
+    const recoveryTimer = window.setTimeout(() => setShowRecoveryAction(true), 7000);
+    return () => {
+      window.clearTimeout(slowTimer);
+      window.clearTimeout(recoveryTimer);
+    };
+  }, [active, variant.id]);
+
+  const handleRecovery = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    window.location.reload();
+  }, []);
 
   return (
     <AnimatePresence>
@@ -317,7 +350,7 @@ export function RouteLoadingOverlay({ active, tier }: RouteLoadingOverlayProps) 
         <motion.div
           className={clsx(
             'fixed inset-0 z-[1000] flex items-center justify-center px-6 py-10 sm:px-10',
-            'backdrop-blur-2xl transition-opacity',
+            'backdrop-blur-2xl transition-opacity before:absolute before:inset-0 before:-z-[1] before:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_60%)]',
             variant.overlayBackground[themeMode]
           )}
           initial={{ opacity: 0 }}
@@ -325,16 +358,50 @@ export function RouteLoadingOverlay({ active, tier }: RouteLoadingOverlayProps) 
           exit={{ opacity: 0 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
         >
-          {variant.render({
-            friendlyMessage,
-            statusMessages: variant.statusMessages,
-            currentStatus,
-            statusIndex,
-            label: variant.label,
-            themeMode,
-            shouldReduceMotion,
-            stepDuration: variant.stepDuration,
-          })}
+          <div className="flex w-full max-w-2xl flex-col items-center gap-6">
+            {variant.render({
+              friendlyMessage,
+              statusMessages: variant.statusMessages,
+              currentStatus,
+              statusIndex,
+              label: variant.label,
+              themeMode,
+              shouldReduceMotion,
+              stepDuration: variant.stepDuration,
+            })}
+
+            <AnimatePresence>
+              {showSlowNotice ? (
+                <motion.div
+                  key="slow-notice"
+                  className="text-center text-xs text-foreground/70 sm:text-sm"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                >
+                  Taking a little longer than usual. Sit tight — your dashboard is still loading.
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showRecoveryAction ? (
+                <motion.div
+                  key="recovery"
+                  className="flex items-center justify-center"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                >
+                  <Button variant="outline" size="sm" onClick={handleRecovery}>
+                    Refresh page
+                  </Button>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
         </motion.div>
       ) : null}
     </AnimatePresence>
