@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { env } from '@/lib/env';
 import type { WritingTaskType } from '@/lib/writing/schemas';
 import type { Database } from '@/types/supabase';
+import type { PromptCard } from '@/types/writing-dashboard';
 
 type GeneratedPrompt = Readonly<{
   title: string;
@@ -16,19 +17,8 @@ type GeneratedPrompt = Readonly<{
   difficulty: number;
 }>;
 
-type PromptPayload = Readonly<{
-  id: string;
-  slug: string;
-  topic: string;
-  taskType: WritingTaskType;
-  difficulty: number;
-  outlineSummary: string | null;
-  createdAt: string | null;
-  source: 'generated';
-}>;
-
 type ResponseBody =
-  | { ok: true; prompts: PromptPayload[] }
+  | { ok: true; prompts: PromptCard[] }
   | { ok: false; error: string };
 
 const GenerateSchema = z.object({
@@ -269,16 +259,24 @@ const buildFallbackPrompts = (
 const mapInsertedRow = (
   row: Database['public']['Tables']['writing_prompts']['Row'],
   summary: string | null,
-): PromptPayload => ({
-  id: row.id,
-  slug: row.slug,
-  topic: row.topic,
-  taskType: row.task_type as WritingTaskType,
-  difficulty: row.difficulty ?? 2,
-  outlineSummary: summary,
-  createdAt: row.created_at ?? null,
-  source: 'generated',
-});
+): PromptCard => {
+  const outline = (row.outline_json ?? null) as { summary?: string | null; items?: unknown } | null;
+  const outlineItems = Array.isArray(outline?.items)
+    ? (outline?.items as unknown[]).filter((entry): entry is string => typeof entry === 'string')
+    : null;
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    topic: row.topic,
+    taskType: row.task_type as WritingTaskType,
+    difficulty: row.difficulty ?? 2,
+    outlineSummary: summary,
+    outlineItems,
+    createdAt: row.created_at ?? null,
+    source: 'generated',
+  };
+};
 
 async function handler(req: NextApiRequest, res: NextApiResponse<ResponseBody>) {
   if (req.method !== 'POST') {
@@ -364,4 +362,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ResponseBody>) 
   return res.status(200).json({ ok: true, prompts });
 }
 
-export default withPlan('free', handler);
+export default withPlan('master', handler);

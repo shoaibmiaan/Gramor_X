@@ -2,39 +2,19 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { withPlan } from '@/lib/apiGuard';
 import { getServerClient } from '@/lib/supabaseServer';
-import type { Database } from '@/types/supabase';
-import type { WritingTaskType } from '@/lib/writing/schemas';
-
-type PromptPayload = Readonly<{
-  id: string;
-  slug: string;
-  topic: string;
-  taskType: WritingTaskType;
-  difficulty: number;
-  outlineSummary: string | null;
-  createdAt: string | null;
-  source: 'library';
-}>;
+import type { PlanId } from '@/types/pricing';
+import type { PromptCard } from '@/types/writing-dashboard';
+import { mapPromptRow } from '@/lib/writing/mappers';
 
 type ResponseBody =
-  | { ok: true; prompts: PromptPayload[] }
+  | { ok: true; prompts: PromptCard[] }
   | { ok: false; error: string };
 
-const mapRow = (
-  row: Database['public']['Tables']['writing_prompts']['Row'],
-): PromptPayload => {
-  const outline = (row.outline_json ?? null) as { summary?: unknown } | null;
-  const summary = typeof outline?.summary === 'string' ? outline.summary : null;
-  return {
-    id: row.id,
-    slug: row.slug,
-    topic: row.topic,
-    taskType: row.task_type as WritingTaskType,
-    difficulty: row.difficulty ?? 2,
-    outlineSummary: summary,
-    createdAt: row.created_at ?? null,
-    source: 'library',
-  };
+const PLAN_LIMIT: Record<PlanId, number> = {
+  free: 12,
+  starter: 100,
+  booster: 500,
+  master: 500,
 };
 
 async function handler(req: NextApiRequest, res: NextApiResponse<ResponseBody>) {
@@ -53,8 +33,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ResponseBody>) 
     return res.status(401).json({ ok: false, error: 'Not authenticated' });
   }
 
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('plan_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const planId = (profileRow?.plan_id as PlanId | undefined) ?? 'free';
+  const planLimit = PLAN_LIMIT[planId] ?? PLAN_LIMIT.starter;
+
   const limitParam = Number.parseInt(String(req.query.limit ?? ''), 10);
-  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 48) : 36;
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, planLimit) : planLimit;
 
   const { data, error } = await supabase
     .from('writing_prompts')
@@ -66,7 +55,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ResponseBody>) 
     return res.status(500).json({ ok: false, error: error.message || 'Unable to load prompts' });
   }
 
-  return res.status(200).json({ ok: true, prompts: (data ?? []).map(mapRow) });
+  return res.status(200).json({ ok: true, prompts: (data ?? []).map(mapPromptRow) });
 }
 
-export default withPlan('free', handler);
+export default withPlan('starter', handler);
