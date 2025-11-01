@@ -37,7 +37,6 @@ import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCar
 import DashboardSidebar from '@/components/navigation/DashboardSidebar';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
-import DashboardSnapshot from '@/components/dashboard/DashboardSnapshot';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -200,20 +199,6 @@ export default function Dashboard() {
     error: nextTaskError,
     refresh: refreshNextTask,
   } = useNextTask();
-
-  const snapshotTask = useMemo(
-    () =>
-      nextTask
-        ? {
-            title: nextTask.title ?? 'Next task',
-            description: nextTask.description ?? null,
-            href: nextTask.href ?? '/study-plan',
-          }
-        : null,
-    [nextTask],
-  );
-
-  const challengeActive = Boolean(challengeEnrollment);
 
   const loadingSkeleton = (
     <section className="bg-lightBg py-24 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
@@ -475,15 +460,6 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
-
-            <DashboardSnapshot
-              nextTask={snapshotTask}
-              streak={streak}
-              longestStreak={longest}
-              shields={shields}
-              hasChallenge={challengeActive}
-              onShare={handleShare}
-            />
 
             <NextTaskCard
               loading={nextTaskLoading}
