@@ -1,0 +1,49 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='960' height='540'>
+  <rect x='0' y='0' width='960' height='540' fill='hsl(0, 0%, 100%)' rx='32'/>
+  <style>
+    .label { font: 20px 'Inter', sans-serif; fill: hsl(222, 47%, 11%); font-weight: 600; }
+    .meta { font: 16px 'Inter', sans-serif; fill: hsl(215, 16%, 65%); }
+    .chip { font: 14px 'Inter', sans-serif; font-weight: 600; fill: hsl(222, 47%, 11%); }
+  </style>
+  <text class='label' x='40' y='60'>Phase 1 Canonical Components — Light Mode</text>
+  <g transform='translate(40,100)'>
+    <rect width='200' height='60' fill='hsl(262, 83%, 58%)' rx='18'/>
+    <text class='meta' x='28' y='36' fill='hsl(0, 0%, 100%)'>Primary Button</text>
+  </g>
+  <g transform='translate(280,100)'>
+    <rect width='200' height='60' fill='none' stroke='hsl(215, 16%, 65%)' stroke-width='2' rx='18'/>
+    <text class='meta' x='20' y='36'>Outline Button</text>
+  </g>
+  <g transform='translate(520,100)'>
+    <rect width='200' height='60' fill='hsl(215, 20%, 98%)' stroke='hsl(215, 16%, 65%)' stroke-width='1' rx='18'/>
+    <text class='meta' x='44' y='36'>Ghost Button</text>
+  </g>
+  <g transform='translate(760,100)'>
+    <rect width='160' height='60' fill='none' rx='18'/>
+    <text class='meta' x='0' y='36' fill='hsl(188, 92%, 54%)'>Link Button</text>
+  </g>
+  <g transform='translate(40,200)'>
+    <rect width='260' height='120' fill='hsl(215, 20%, 98%)' stroke='hsl(215, 28%, 80%)' stroke-width='1' rx='24'/>
+    <text class='meta' x='20' y='50'>Input Field</text>
+  </g>
+  <g transform='translate(340,200)'>
+    <rect width='260' height='120' fill='hsl(215, 20%, 94%)' stroke='hsl(215, 28%, 80%)' stroke-width='1' rx='24'/>
+    <text class='meta' x='20' y='50'>Card Surface</text>
+  </g>
+  <g transform='translate(640,200)'>
+    <rect width='260' height='120' fill='hsl(215, 20%, 98%)' stroke='hsl(262, 83%, 58%)' stroke-width='2' rx='24'/>
+    <text class='meta' x='20' y='50'>Modal Shell</text>
+  </g>
+  <g transform='translate(40,360)'>
+    <rect width='260' height='100' fill='hsl(215, 20%, 98%)' stroke='hsl(215, 28%, 80%)' stroke-width='1' rx='999'/>
+    <text class='meta' x='20' y='60'>Tabs Pill Group</text>
+  </g>
+  <g transform='translate(340,360)'>
+    <rect width='260' height='100' fill='hsl(38, 92%, 50%)' opacity='0.18' stroke='hsl(38, 92%, 50%)' stroke-width='1' rx='24'/>
+    <text class='meta' x='20' y='60' fill='hsl(38, 92%, 50%)'>Alert State</text>
+  </g>
+  <g transform='translate(640,360)'>
+    <rect width='260' height='100' fill='hsl(215, 20%, 94%)' stroke='hsl(215, 28%, 80%)' stroke-width='1' rx='24'/>
+    <text class='meta' x='20' y='60'>Data Table</text>
+  </g>
+</svg>

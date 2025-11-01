@@ -9,7 +9,13 @@ import { track } from '@/lib/analytics/track';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 const CONFETTI_COUNT = 14;
-const CONFETTI_COLORS = ['#f97316', '#3b82f6', '#10b981', '#facc15', '#ec4899'] as const;
+const CONFETTI_COLORS = [
+  'hsl(24.6, 95%, 53.1%)',
+  'hsl(217.2, 91.2%, 59.8%)',
+  'hsl(160.1, 84.1%, 39.4%)',
+  'hsl(47.9, 95.8%, 53.1%)',
+  'hsl(330.4, 81.2%, 60.4%)',
+] as const;
 
 type AttemptSummary = {
   xpAwarded: number;

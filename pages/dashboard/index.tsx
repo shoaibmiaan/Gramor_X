@@ -714,7 +714,7 @@ export default function Dashboard() {
                         New task
                       </Button>
                     </Link>
-                    <Link href="/writing#continue-drafts">
+                    <Link href="/writing#section-continue-drafts">
                       <Button size="sm" variant="secondary" className="rounded-ds-xl">
                         Continue drafts
                       </Button>

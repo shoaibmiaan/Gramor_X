@@ -4,12 +4,12 @@ type Variant = "accent" | "primary" | "success" | "warning" | "info" | "neutral"
 type Position = "top-right" | "top-left";
 
 const variantCls: Record<Variant, string> = {
-  accent: "from-sunsetOrange to-goldenYellow",
-  primary: "from-purpleVibe to-electricBlue",
-  success: "from-neonGreen to-success",
-  warning: "from-goldenYellow to-sunsetOrange",
-  info: "from-skyBlue to-info",       // Added 'info'
-  neutral: "from-gray-500 to-gray-300",  // Added 'neutral'
+  accent: 'from-accent to-warn',
+  primary: 'from-accent to-accent2',
+  success: 'from-ok to-accent2',
+  warning: 'from-warn to-accent2',
+  info: 'from-accent2 to-accent',
+  neutral: 'from-muted to-border',
 };
 
 const posWrap: Record<Position, string> = {
@@ -34,7 +34,7 @@ export const Ribbon: React.FC<{
       aria-hidden="true"
     >
       <span
-        className={`inline-block py-1 px-8 text-caption font-bold tracking-wide text-primary-foreground bg-gradient-to-r ${variantCls[variant]} shadow-glow rounded-ds`}
+        className={`inline-block px-lg py-2xs text-caption font-bold tracking-wide text-bg-light bg-gradient-to-r ${variantCls[variant]} shadow-glow rounded-ds-xl`}
       >
         {label}
       </span>

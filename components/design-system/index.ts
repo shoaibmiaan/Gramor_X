@@ -16,3 +16,4 @@ export { Section } from './Section';
 export { Tabs } from './Tabs';
 export { Textarea } from './Textarea';
 export { Toaster, ToastProvider, useToast } from './Toaster';
+export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './Table';
