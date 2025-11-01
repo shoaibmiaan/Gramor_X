@@ -1,69 +1,52 @@
 // components/layouts/LearningLayout.tsx
 import * as React from 'react';
-import { GraduationCap, Lightbulb, Sparkles, PenSquare, Palette, Library } from 'lucide-react';
-import { Button } from '@/components/design-system/Button';
-import { Badge } from '@/components/design-system/Badge';
-import { LayoutHero } from '@/components/layouts/shared/LayoutHero';
-import { LayoutSurface } from '@/components/layouts/shared/LayoutSurface';
-import { LayoutQuickNav } from '@/components/layouts/shared/LayoutQuickNav';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { Container } from '@/components/design-system/Container';
 
 const LearningLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const highlight = (
-    <>
-      <div className="flex items-center gap-2 text-foreground">
-        <Badge variant="success">Next up</Badge>
-        <span className="text-sm font-medium">Listening drills unlock in 2 lessons</span>
-      </div>
-      <div className="grid gap-3 pt-3 text-foreground">
-        <div className="flex items-baseline justify-between rounded-xl bg-background/70 p-3 shadow-sm">
-          <span className="text-sm text-mutedText">Lessons complete</span>
-          <span className="text-xl font-semibold text-gradient-accent">18 / 24</span>
-        </div>
-        <div className="flex items-baseline justify-between rounded-xl bg-background/70 p-3 shadow-sm">
-          <span className="text-sm text-mutedText">Studio drafts</span>
-          <span className="text-xl font-semibold text-gradient-accent">6</span>
-        </div>
-      </div>
-    </>
-  );
+  const { pathname } = useRouter();
+  const Item = ({ href, label }: { href: string; label: string }) => {
+    const active = pathname === href || pathname.startsWith(href + '/');
+    return (
+      <Link
+        href={href}
+        aria-current={active ? 'page' : undefined}
+        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`}
+      >
+        {label}
+      </Link>
+    );
+  };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-neonGreen/10 via-background to-background text-foreground">
-      <LayoutHero
-        accent="learning"
-        eyebrow="Learning & Studio"
-        title="Move through lessons, drills, and creative IELTS practice"
-        description="Master skills one module at a time and publish polished responses inside your personal studio."
-        actions={(
-          <>
-            <Button href="/learning/skills" size="lg">
-              Browse lessons
-            </Button>
-            <Button href="/content/studio" variant="soft" tone="accent" size="lg">
-              Open studio workspace
-            </Button>
-          </>
-        )}
-        highlight={highlight}
-      >
-        <LayoutQuickNav
-          ariaLabel="Learning sections"
-          items={[
-            { href: '/learning', label: 'Overview', icon: <GraduationCap className="h-4 w-4" /> },
-            { href: '/learning/skills', label: 'Skills', icon: <Lightbulb className="h-4 w-4" /> },
-            { href: '/learning/skills/lessons', label: 'Lessons', icon: <Library className="h-4 w-4" /> },
-            { href: '/learning/strategies', label: 'Strategies', icon: <Sparkles className="h-4 w-4" /> },
-            { href: '/content/studio', label: 'Studio', icon: <PenSquare className="h-4 w-4" /> },
-            { href: '/learning/resources', label: 'Resources', icon: <Palette className="h-4 w-4" /> },
-          ]}
-        />
-      </LayoutHero>
+    <div className="min-h-[100dvh] bg-background text-foreground">
+      <section className="border-b border-border bg-card/30">
+        <Container className="flex flex-col gap-4 py-5 pt-safe sm:py-6">
+          <div className="space-y-1">
+            <h1 className="font-slab text-h3 sm:text-h2">Learning & Studio</h1>
+            <p className="text-small text-mutedText">
+              Lessons, drills, strategies — and your content studio.
+            </p>
+          </div>
+          <nav
+            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
+            aria-label="Learning sections"
+          >
+            <div className="flex gap-2 px-1">
+              <Item href="/learning" label="Overview" />
+              <Item href="/learning/skills" label="Skills" />
+              <Item href="/learning/skills/lessons" label="Lessons" />
+              <Item href="/learning/strategies" label="Strategies" />
+              <Item href="/content/studio" label="Studio" />
+            </div>
+          </nav>
+        </Container>
+      </section>
 
-      <main>
-        <LayoutSurface accent="learning">
-          <div className="space-y-6 text-base leading-relaxed text-foreground">{children}</div>
-        </LayoutSurface>
-      </main>
+      <Container className="py-6">
+        <div className="card-surface rounded-ds-2xl p-4">{children}</div>
+      </Container>
     </div>
   );
 };
