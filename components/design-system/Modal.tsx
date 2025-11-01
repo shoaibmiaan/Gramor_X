@@ -43,7 +43,7 @@ export function Modal({ open, onClose, title, children, size = "md", className }
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-text/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -55,19 +55,19 @@ export function Modal({ open, onClose, title, children, size = "md", className }
         ref={dialogRef}
         className={cn(
           // mobile = full screen sheet-like
-          "absolute inset-x-0 bottom-0 top-auto h-auto max-h-[85vh] rounded-t-ds-2xl",
-          "bg-card text-card-foreground border-t border-border shadow-xl",
+          'absolute inset-x-0 bottom-0 top-auto h-auto max-h-[85vh] rounded-t-ds-2xl',
+          'bg-card text-text border-t border-border shadow-xl backdrop-blur-md',
           // desktop = centered card
-          "sm:inset-0 sm:m-auto sm:h-auto sm:rounded-ds-2xl sm:border sm:shadow-2xl",
+          'sm:inset-0 sm:m-auto sm:h-auto sm:rounded-ds-2xl sm:border sm:shadow-2xl',
           sizes[size],
-          "focus-visible:outline-none",
+          'focus-visible:outline-none',
           className
         )}
       >
-        <div className="p-4 sm:p-6">
+        <div className="p-md sm:p-lg">
           <div className="flex items-start justify-between gap-4">
             {title && (
-              <h2 id="modal-title" className="text-h4 font-semibold">
+              <h2 id="modal-title" className="text-h4 font-semibold text-text">
                 {title}
               </h2>
             )}
@@ -76,13 +76,13 @@ export function Modal({ open, onClose, title, children, size = "md", className }
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="shrink-0"
+              className="shrink-0 text-muted hover:text-text"
             >
               ✕
             </Button>
           </div>
 
-          <div className="mt-4">{children}</div>
+          <div className="mt-md text-text/90">{children}</div>
         </div>
       </div>
     </div>

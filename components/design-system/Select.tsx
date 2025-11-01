@@ -10,27 +10,27 @@ type FieldVariant = 'solid' | 'subtle' | 'ghost' | 'underline';
 
 // Shared size mapping
 const sizeMap: Record<FieldSize, string> = {
-  sm: 'h-9 px-3 text-sm rounded-ds-lg',
-  md: 'h-11 px-4 text-base rounded-ds-xl',
-  lg: 'h-12 px-5 text-base rounded-ds-2xl',
+  sm: 'h-9 px-sm text-small rounded-ds-lg',
+  md: 'h-11 px-md text-base rounded-ds-xl',
+  lg: 'h-12 px-lg text-base rounded-ds-2xl',
 };
 
 // Shared base styles
 const baseStyles = {
   input:
-    'w-full border bg-input text-foreground placeholder:text-muted-foreground/70 ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ' +
-    'focus-visible:ring-offset-1 ring-offset-background transition-shadow',
+    'w-full border border-border bg-panel text-text placeholder:text-muted/80 ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ' +
+    'focus-visible:ring-offset-1 ring-offset-bg transition-shadow',
 };
 
 // Shared variant mapping
 const variantMap: Record<FieldVariant, string> = {
-  solid: cn(baseStyles.input, 'border-border'),
+  solid: baseStyles.input,
   subtle: cn(baseStyles.input, 'border-transparent bg-card'),
   ghost: cn(baseStyles.input, 'border-transparent bg-transparent'),
   underline: cn(
     baseStyles.input,
-    'border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary'
+    'border-0 border-b border-border rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-accent'
   ),
 };
 
@@ -72,17 +72,17 @@ const FieldWrapper: React.FC<{
     {label && (
       <label
         htmlFor={id}
-        className="mb-1 block text-sm font-medium text-muted-foreground"
+        className="mb-1 block text-sm font-medium text-muted"
       >
         {label}
-        {required && <span className="ml-1 text-sunsetOrange" aria-hidden>*</span>}
+        {required && <span className="ml-1 text-warn" aria-hidden>*</span>}
       </label>
     )}
     {children}
     {(hint || error) && (
       <p
         id={error ? errorId : hintId}
-        className={cn('mt-1 text-xs', error ? 'text-sunsetOrange' : 'text-muted-foreground')}
+        className={cn('mt-1 text-xs', error ? 'text-bad' : 'text-muted')}
       >
         {error || hint}
       </p>
@@ -114,7 +114,8 @@ export const Select = React.memo(
       },
       ref
     ) => {
-      const selectId = id ?? React.useId();
+      const generatedId = React.useId();
+      const selectId = id ?? generatedId;
       const hintId = hint ? `${selectId}-hint` : undefined;
       const errorId = error ? `${selectId}-error` : undefined;
 
@@ -151,7 +152,7 @@ export const Select = React.memo(
                 hasLeft && (size === 'sm' ? 'pl-8' : size === 'md' ? 'pl-10' : 'pl-11'),
                 hasRight && (size === 'sm' ? 'pr-8' : size === 'md' ? 'pr-10' : 'pr-11'),
                 disabled && 'opacity-60 cursor-not-allowed',
-                error && 'border-sunsetOrange focus-visible:ring-0 focus-visible:border-sunsetOrange',
+                error && 'border-bad focus-visible:ring-0 focus-visible:border-bad',
                 className
               )}
               {...props}
@@ -173,7 +174,7 @@ export const Select = React.memo(
                 })}
             </select>
             {hasRight && (
-              <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+              <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted">
                 {rightSlot}
               </span>
             )}

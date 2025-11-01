@@ -21,16 +21,16 @@ type Props = {
 };
 
 const variantCls: Record<BadgeVariant, string> = {
-  primary:  'bg-primary/15 text-primary ring-1 ring-primary/30',
-  secondary:'bg-secondary/15 text-secondary ring-1 ring-secondary/30',
-  accent:   'bg-accent/15 text-accent ring-1 ring-accent/30',
-  warning:  'bg-warning/15 text-warning ring-1 ring-warning/30',
-  danger:   'bg-danger/15 text-danger ring-1 ring-danger/30',
-  error:    'bg-danger/15 text-danger ring-1 ring-danger/30',
-  success:  'bg-success/15 text-success ring-1 ring-success/30',
-  info:     'bg-electricBlue/15 text-electricBlue ring-1 ring-electricBlue/30',
-  subtle:   'bg-white/5 text-white/80 ring-1 ring-white/10',
-  neutral:  'bg-grayish/15 text-grayish ring-1 ring-grayish/30',
+  primary: 'bg-accent/15 text-accent ring-1 ring-accent/30',
+  secondary: 'bg-accent2/15 text-accent2 ring-1 ring-accent2/30',
+  accent: 'bg-accent/15 text-accent ring-1 ring-accent/30',
+  warning: 'bg-warn/15 text-warn ring-1 ring-warn/30',
+  danger: 'bg-bad/15 text-bad ring-1 ring-bad/30',
+  error: 'bg-bad/15 text-bad ring-1 ring-bad/30',
+  success: 'bg-ok/15 text-ok ring-1 ring-ok/30',
+  info: 'bg-panel/80 text-text ring-1 ring-border/40',
+  subtle: 'bg-panel text-muted ring-1 ring-border/40',
+  neutral: 'bg-card text-muted ring-1 ring-border/40',
 };
 
 const sizeCls: Record<NonNullable<Props['size']>, string> = {

@@ -48,7 +48,7 @@ export function TabsList({ className, ...props }: TabsListProps) {
   return (
     <div
       role="tablist"
-      className={cn('inline-flex items-center gap-2 rounded-ds-xl bg-surface/60 p-1 dark:bg-surface/40', className)}
+      className={cn('inline-flex items-center gap-xs rounded-pill bg-panel/80 p-xs backdrop-blur-sm', className)}
       {...props}
     />
   );
@@ -70,8 +70,9 @@ export function TabsTrigger({ className, value, ...props }: TabsTriggerProps) {
       aria-selected={active}
       data-state={active ? 'active' : 'inactive'}
       className={cn(
-        'rounded-ds-lg px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus',
-        active && 'bg-primary/10 text-primary',
+        'rounded-pill px-md py-xs text-small text-muted transition-colors',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+        'data-[state=active]:bg-accent data-[state=active]:text-bg',
         className,
       )}
       onClick={(event) => {
@@ -101,7 +102,7 @@ export function TabsContent({ className, value, ...props }: TabsContentProps) {
       id={id}
       role="tabpanel"
       hidden={hidden}
-      className={cn('mt-4', className)}
+      className={cn('mt-md', className)}
       {...props}
     />
   );

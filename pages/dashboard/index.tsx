@@ -699,8 +699,8 @@ export default function Dashboard() {
                 <div className="mt-8 rounded-ds-2xl border border-border/60 bg-muted/40 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground">Writing studio shortcuts</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <h3 className="text-sm font-semibold text-text">Writing studio shortcuts</h3>
+                      <p className="text-xs text-muted">
                         Jump straight to drafts, feedback, drills, or your retake plan.
                       </p>
                     </div>
@@ -714,12 +714,12 @@ export default function Dashboard() {
                         New task
                       </Button>
                     </Link>
-                    <Link href="/writing#continue-drafts">
+                    <Link href={{ pathname: '/writing', hash: 'continue-drafts' }}>
                       <Button size="sm" variant="secondary" className="rounded-ds-xl">
                         Continue drafts
                       </Button>
                     </Link>
-                    <Link href="/writing#recent-attempts">
+                    <Link href={{ pathname: '/writing', hash: 'recent-attempts' }}>
                       <Button size="sm" variant="secondary" className="rounded-ds-xl">
                         Review feedback
                       </Button>
@@ -729,7 +729,7 @@ export default function Dashboard() {
                         Micro-drills
                       </Button>
                     </Link>
-                    <Link href="/writing#retake-plan">
+                    <Link href={{ pathname: '/writing', hash: 'retake-plan' }}>
                       <Button size="sm" variant="ghost" className="rounded-ds-xl">
                         Retake plan
                       </Button>

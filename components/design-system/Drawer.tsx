@@ -1,30 +1,111 @@
-import * as React from 'react'
+import * as React from 'react';
+import { Button } from './Button';
+import { cx } from './_core/types';
 
-export type DrawerProps = { open: boolean; onClose: () => void; side?: 'left'|'right'|'top'|'bottom'; title?: string; children?: React.ReactNode; className?: string; }
+type DrawerSide = 'left' | 'right' | 'top' | 'bottom';
 
-export const Drawer: React.FC<DrawerProps> = ({ open, onClose, side='right', title, children, className='' }) => {
-  const titleId = React.useId(); const [mounted,setMounted]=React.useState(false)
-  React.useEffect(()=>{ if(!open) return; const onKey=(e:KeyboardEvent)=>{ if(e.key==='Escape') onClose() }
-    document.addEventListener('keydown',onKey); const prev=document.body.style.overflow; document.body.style.overflow='hidden'; setMounted(true)
-    return ()=>{ document.removeEventListener('keydown',onKey); document.body.style.overflow=prev; setMounted(false) }},[open,onClose])
-  if(!open) return null
-  const pos = side==='right'?'inset-y-0 right-0':side==='left'?'inset-y-0 left-0':side==='top'?'inset-x-0 top-0':'inset-x-0 bottom-0'
-  const size = (side==='top'||side==='bottom')?'h-[70vh] max-h-[90vh] w-full':'w-[420px] max-w-[90vw] h-full'
-  const start = side==='right'?'translate-x-full':side==='left'?'-translate-x-full':side==='top'?'-translate-y-full':'translate-y-full'
+type DrawerProps = Readonly<{
+  open: boolean;
+  onClose: () => void;
+  title?: string;
+  side?: DrawerSide;
+  children?: React.ReactNode;
+  className?: string;
+}>;
+
+const sidePosition: Record<DrawerSide, string> = {
+  right: 'inset-y-0 right-0',
+  left: 'inset-y-0 left-0',
+  top: 'inset-x-0 top-0',
+  bottom: 'inset-x-0 bottom-0',
+};
+
+const sideSize: Record<DrawerSide, string> = {
+  right: 'h-full w-[min(26rem,100vw)]',
+  left: 'h-full w-[min(26rem,100vw)]',
+  top: 'w-full h-[min(28rem,100vh)]',
+  bottom: 'w-full h-[min(28rem,100vh)]',
+};
+
+const sideEnter: Record<DrawerSide, string> = {
+  right: 'translate-x-full',
+  left: '-translate-x-full',
+  top: '-translate-y-full',
+  bottom: 'translate-y-full',
+};
+
+export const Drawer: React.FC<DrawerProps> = ({
+  open,
+  onClose,
+  title,
+  side = 'right',
+  children,
+  className,
+}) => {
+  const titleId = React.useId();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open) return undefined;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    setMounted(true);
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+      setMounted(false);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true"/>
-      <div role="dialog" aria-modal="true" aria-labelledby={title?titleId:undefined}
-        className={['absolute border border-border bg-card text-card-foreground shadow-xl', pos, size, className, 'transition-transform duration-300', mounted?'translate-x-0 translate-y-0':start].join(' ')}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <div id={titleId} className="font-semibold">{title}</div>
-          <button onClick={onClose} className="rounded-ds p-2 hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background" aria-label="Close">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true"><path fill="currentColor" d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7 4.3 4.3l6.3 6.3 6.3-6z"/></svg>
-          </button>
+      <div
+        className="absolute inset-0 bg-text/60 backdrop-blur-sm"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        className={cx(
+          'absolute border border-border bg-card text-text shadow-xl backdrop-blur-md',
+          'transition-transform duration-300 ease-out',
+          sidePosition[side],
+          sideSize[side],
+          mounted ? 'translate-x-0 translate-y-0' : sideEnter[side],
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between border-b border-border/60 px-md py-sm">
+          <div id={titleId} className="text-small font-semibold text-text">
+            {title}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            aria-label="Close drawer"
+            className="text-muted hover:text-text"
+          >
+            ✕
+          </Button>
         </div>
-        <div className="p-5 overflow-auto h-full">{children}</div>
+
+        <div className="h-full overflow-auto p-md text-text/90">{children}</div>
       </div>
     </div>
-  )
-}
-export default Drawer
+  );
+};
+
+export default Drawer;

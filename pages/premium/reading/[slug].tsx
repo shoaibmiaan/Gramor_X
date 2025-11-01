@@ -290,12 +290,12 @@ export default function ReadingExam() {
                 className={clsx(
                   'pr-flex pr-items-center pr-justify-between pr-rounded-lg pr-border pr-px-3 pr-py-2 pr-text-left pr-transition',
                   answers[question.id] === opt
-                    ? 'pr-border-[var(--pr-primary,#4fb6ff)] pr-bg-[color-mix(in_srgb,var(--pr-primary,#4fb6ff) 12%,transparent)]'
-                    : 'pr-border-[var(--pr-border,#1f2a48)] pr-bg-transparent hover:pr-border-[var(--pr-primary,#4fb6ff)]',
+                    ? 'pr-border-[var(--pr-primary,hsl(205, 100%, 65%))] pr-bg-[color-mix(in_srgb,var(--pr-primary,hsl(205, 100%, 65%)) 12%,transparent)]'
+                    : 'pr-border-[var(--pr-border,hsl(224, 40%, 20%))] pr-bg-transparent hover:pr-border-[var(--pr-primary,hsl(205, 100%, 65%))]',
                 )}
               >
                 <span>{opt}</span>
-                {answers[question.id] === opt && <span className="pr-text-sm pr-text-[var(--pr-primary,#4fb6ff)]">Selected</span>}
+                {answers[question.id] === opt && <span className="pr-text-sm pr-text-[var(--pr-primary,hsl(205, 100%, 65%))]">Selected</span>}
               </button>
             ))}
           </div>
@@ -314,8 +314,8 @@ export default function ReadingExam() {
                 className={clsx(
                   'pr-rounded-full pr-border pr-px-4 pr-py-2 pr-text-sm pr-transition',
                   answers[question.id] === opt
-                    ? 'pr-border-[var(--pr-primary,#4fb6ff)] pr-bg-[color-mix(in_srgb,var(--pr-primary,#4fb6ff) 12%,transparent)]'
-                    : 'pr-border-[var(--pr-border,#1f2a48)] pr-bg-transparent hover:pr-border-[var(--pr-primary,#4fb6ff)]',
+                    ? 'pr-border-[var(--pr-primary,hsl(205, 100%, 65%))] pr-bg-[color-mix(in_srgb,var(--pr-primary,hsl(205, 100%, 65%)) 12%,transparent)]'
+                    : 'pr-border-[var(--pr-border,hsl(224, 40%, 20%))] pr-bg-transparent hover:pr-border-[var(--pr-primary,hsl(205, 100%, 65%))]',
                 )}
               >
                 {opt}
@@ -329,7 +329,7 @@ export default function ReadingExam() {
           value={answers[question.id] || ''}
           onChange={(event) => handleAnswer(question, event.target.value, { skipAuto: true })}
           disabled={review || submitting}
-          className="pr-w-full pr-rounded-lg pr-border pr-border-[var(--pr-border,#1f2a48)] pr-bg-transparent pr-px-3 pr-py-2 focus:pr-border-[var(--pr-primary,#4fb6ff)] focus:pr-outline-none"
+          className="pr-w-full pr-rounded-lg pr-border pr-border-[var(--pr-border,hsl(224, 40%, 20%))] pr-bg-transparent pr-px-3 pr-py-2 focus:pr-border-[var(--pr-primary,hsl(205, 100%, 65%))] focus:pr-outline-none"
           placeholder="Type your answer"
         />
       );
@@ -358,25 +358,25 @@ export default function ReadingExam() {
       seconds={secondsRemaining ?? undefined}
       onTimeUp={() => onSubmit(true)}
     >
-      <div className="pr-relative pr-min-h-[100dvh] pr-bg-[var(--pr-app-bg,#040b1a)] pr-text-[var(--pr-foreground,#f8fafc)] pr-overflow-x-hidden">
-        <header className="pr-sticky pr-top-[env(safe-area-inset-top,0px)] pr-z-30 pr-border-b pr-border-[var(--pr-border,#16213b)] pr-bg-[color-mix(in_srgb,var(--pr-app-bg,#040b1a) 95%,transparent)] pr-backdrop-blur pr-px-4 pr-py-3 sm:pr-px-6">
+      <div className="pr-relative pr-min-h-[100dvh] pr-bg-[var(--pr-app-bg,hsl(221, 73%, 6%))] pr-text-[var(--pr-foreground,hsl(210, 40%, 98%))] pr-overflow-x-hidden">
+        <header className="pr-sticky pr-top-[env(safe-area-inset-top,0px)] pr-z-30 pr-border-b pr-border-[var(--pr-border,hsl(222, 46%, 16%))] pr-bg-[color-mix(in_srgb,var(--pr-app-bg,hsl(221, 73%, 6%)) 95%,transparent)] pr-backdrop-blur pr-px-4 pr-py-3 sm:pr-px-6">
           <div className="pr-flex pr-flex-col pr-gap-3 sm:pr-flex-row sm:pr-items-center sm:pr-justify-between">
             <div>
               <h1 className="pr-text-lg pr-font-semibold">{test?.title || 'Reading Mock'}</h1>
-              <p className="pr-text-sm pr-text-[var(--pr-muted,#94a3b8)]">
+              <p className="pr-text-sm pr-text-[var(--pr-muted,hsl(215, 20%, 65%))]">
                 Attempt ID: {attemptId ? attemptId.slice(0, 8) : '—'}
               </p>
             </div>
             <div className="pr-flex pr-flex-wrap pr-items-center pr-gap-3">
-              <span className="pr-rounded-full pr-border pr-border-[var(--pr-primary,#4fb6ff)] pr-px-4 pr-py-1 pr-text-sm pr-font-medium pr-text-[var(--pr-primary,#4fb6ff)]">
+              <span className="pr-rounded-full pr-border pr-border-[var(--pr-primary,hsl(205, 100%, 65%))] pr-px-4 pr-py-1 pr-text-sm pr-font-medium pr-text-[var(--pr-primary,hsl(205, 100%, 65%))]">
                 {timeDisplay}
               </span>
               <progress
-                className="pr-h-2 pr-w-32 pr-rounded-full pr-bg-[var(--pr-border,#1f2a48)]"
+                className="pr-h-2 pr-w-32 pr-rounded-full pr-bg-[var(--pr-border,hsl(224, 40%, 20%))]"
                 value={answeredCount}
                 max={Math.max(totalQuestions, 1)}
               />
-              <span className="pr-text-sm pr-text-[var(--pr-muted,#94a3b8)]">{progress}% answered</span>
+              <span className="pr-text-sm pr-text-[var(--pr-muted,hsl(215, 20%, 65%))]">{progress}% answered</span>
             </div>
           </div>
         </header>
@@ -401,7 +401,7 @@ export default function ReadingExam() {
                 <div
                   key={passage.orderNo}
                   className={clsx(
-                    'pr-rounded-2xl pr-border pr-border-[var(--pr-border,#16213b)] pr-bg-[color-mix(in_srgb,var(--pr-card,#0b162d) 94%,transparent)] pr-transition-all',
+                    'pr-rounded-2xl pr-border pr-border-[var(--pr-border,hsl(222, 46%, 16%))] pr-bg-[color-mix(in_srgb,var(--pr-card,hsl(221, 61%, 11%)) 94%,transparent)] pr-transition-all',
                     expanded ? 'pr-shadow-[0_10px_40px_rgba(15,23,42,0.45)]' : 'pr-opacity-80 lg:pr-opacity-100',
                   )}
                 >
@@ -413,13 +413,13 @@ export default function ReadingExam() {
                     <span>
                       Passage {idx + 1}: {passage.title || 'Reading Section'}
                     </span>
-                    <span className="pr-text-sm pr-text-[var(--pr-muted,#94a3b8)]">
+                    <span className="pr-text-sm pr-text-[var(--pr-muted,hsl(215, 20%, 65%))]">
                       {expanded ? 'Hide' : 'Show'}
                     </span>
                   </button>
                   <div className={clsx('pr-grid pr-gap-4 pr-px-4 pr-pb-6', expanded ? 'pr-block' : 'pr-hidden lg:pr-block')}>
                     <article
-                      className="pr-prose pr-prose-invert pr-max-w-none pr-bg-[color-mix(in_srgb,var(--pr-card,#0b162d) 50%,transparent)] pr-rounded-xl pr-border pr-border-[var(--pr-border,#16213b)] pr-px-4 pr-py-4"
+                      className="pr-prose pr-prose-invert pr-max-w-none pr-bg-[color-mix(in_srgb,var(--pr-card,hsl(221, 61%, 11%)) 50%,transparent)] pr-rounded-xl pr-border pr-border-[var(--pr-border,hsl(222, 46%, 16%))] pr-px-4 pr-py-4"
                       dangerouslySetInnerHTML={{ __html: passage.content }}
                     />
                     <div className="pr-space-y-4">
@@ -433,17 +433,17 @@ export default function ReadingExam() {
                               questionRefs.current[question.id] = el;
                             }}
                             data-q={question.qNo}
-                            className="pr-rounded-xl pr-border pr-border-[var(--pr-border,#16213b)] pr-bg-[color-mix(in_srgb,var(--pr-card,#0b162d) 70%,transparent)] pr-px-4 pr-py-4 pr-shadow-sm"
+                            className="pr-rounded-xl pr-border pr-border-[var(--pr-border,hsl(222, 46%, 16%))] pr-bg-[color-mix(in_srgb,var(--pr-card,hsl(221, 61%, 11%)) 70%,transparent)] pr-px-4 pr-py-4 pr-shadow-sm"
                           >
                             <div className="pr-mb-2 pr-flex pr-items-start pr-justify-between pr-gap-2">
                               <p className="pr-font-medium">
                                 {question.qNo}. {question.prompt}
                               </p>
-                              <span className="pr-text-xs pr-uppercase pr-text-[var(--pr-muted,#94a3b8)]">{question.type.toUpperCase()}</span>
+                              <span className="pr-text-xs pr-uppercase pr-text-[var(--pr-muted,hsl(215, 20%, 65%))]">{question.type.toUpperCase()}</span>
                             </div>
                             {renderQuestionInput(flat, answers[question.id] || '')}
                             {review && question.answer && (
-                              <p className="pr-mt-2 pr-text-sm pr-text-[var(--pr-success,#4ade80)]">Correct: {question.answer}</p>
+                              <p className="pr-mt-2 pr-text-sm pr-text-[var(--pr-success,hsl(142, 69%, 58%))]">Correct: {question.answer}</p>
                             )}
                           </div>
                         );
@@ -459,8 +459,8 @@ export default function ReadingExam() {
 
           <aside className="pr-hidden lg:pr-block lg:pr-w-72">
             <div className="pr-sticky pr-top-[calc(6.5rem+env(safe-area-inset-top,0px))] pr-space-y-4">
-              <div className="pr-rounded-2xl pr-border pr-border-[var(--pr-border,#16213b)] pr-bg-[color-mix(in_srgb,var(--pr-card,#0b162d) 80%,transparent)] pr-px-4 pr-py-4">
-                <h2 className="pr-mb-3 pr-text-sm pr-font-semibold pr-uppercase pr-tracking-wide pr-text-[var(--pr-muted,#94a3b8)]">
+              <div className="pr-rounded-2xl pr-border pr-border-[var(--pr-border,hsl(222, 46%, 16%))] pr-bg-[color-mix(in_srgb,var(--pr-card,hsl(221, 61%, 11%)) 80%,transparent)] pr-px-4 pr-py-4">
+                <h2 className="pr-mb-3 pr-text-sm pr-font-semibold pr-uppercase pr-tracking-wide pr-text-[var(--pr-muted,hsl(215, 20%, 65%))]">
                   Question palette
                 </h2>
                 <div className="pr-grid pr-grid-cols-5 pr-gap-2">
@@ -475,10 +475,10 @@ export default function ReadingExam() {
                         className={clsx(
                           'pr-flex pr-h-9 pr-w-9 pr-items-center pr-justify-center pr-rounded-lg pr-border pr-text-sm',
                           isActive
-                            ? 'pr-border-[var(--pr-primary,#4fb6ff)] pr-bg-[color-mix(in_srgb,var(--pr-primary,#4fb6ff) 18%,transparent)]'
+                            ? 'pr-border-[var(--pr-primary,hsl(205, 100%, 65%))] pr-bg-[color-mix(in_srgb,var(--pr-primary,hsl(205, 100%, 65%)) 18%,transparent)]'
                             : isAnswered
-                            ? 'pr-border-[var(--pr-success,#4ade80)] pr-bg-[color-mix(in_srgb,var(--pr-success,#4ade80) 12%,transparent)]'
-                            : 'pr-border-[var(--pr-border,#1f2a48)] pr-bg-transparent hover:pr-border-[var(--pr-primary,#4fb6ff)]',
+                            ? 'pr-border-[var(--pr-success,hsl(142, 69%, 58%))] pr-bg-[color-mix(in_srgb,var(--pr-success,hsl(142, 69%, 58%)) 12%,transparent)]'
+                            : 'pr-border-[var(--pr-border,hsl(224, 40%, 20%))] pr-bg-transparent hover:pr-border-[var(--pr-primary,hsl(205, 100%, 65%))]',
                         )}
                       >
                         {q.qNo}
@@ -491,7 +491,7 @@ export default function ReadingExam() {
           </aside>
         </div>
 
-        <div className="pr-fixed pr-bottom-0 pr-left-0 pr-right-0 pr-z-40 pr-border-t pr-border-[var(--pr-border,#16213b)] pr-bg-[color-mix(in_srgb,var(--pr-app-bg,#040b1a) 95%,transparent)] pr-backdrop-blur pr-px-4 pr-pt-4 pr-pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] sm:pr-hidden">
+        <div className="pr-fixed pr-bottom-0 pr-left-0 pr-right-0 pr-z-40 pr-border-t pr-border-[var(--pr-border,hsl(222, 46%, 16%))] pr-bg-[color-mix(in_srgb,var(--pr-app-bg,hsl(221, 73%, 6%)) 95%,transparent)] pr-backdrop-blur pr-px-4 pr-pt-4 pr-pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] sm:pr-hidden">
           <div className="pr-flex pr-items-center pr-gap-3">
             <PrButton variant="outline" className="pr-flex-1" onClick={() => goRelative(-1)} disabled={submitting || totalQuestions === 0}>
               Prev
@@ -505,7 +505,7 @@ export default function ReadingExam() {
           </div>
         </div>
 
-        <div className="pr-hidden pr-border-t pr-border-[var(--pr-border,#16213b)] pr-bg-[color-mix(in_srgb,var(--pr-app-bg,#040b1a) 95%,transparent)] pr-px-6 pr-py-4 sm:pr-flex sm:pr-justify-end sm:pr-gap-3">
+        <div className="pr-hidden pr-border-t pr-border-[var(--pr-border,hsl(222, 46%, 16%))] pr-bg-[color-mix(in_srgb,var(--pr-app-bg,hsl(221, 73%, 6%)) 95%,transparent)] pr-px-6 pr-py-4 sm:pr-flex sm:pr-justify-end sm:pr-gap-3">
           <PrButton variant="outline" onClick={() => goRelative(-1)} disabled={submitting || totalQuestions === 0}>
             Previous
           </PrButton>

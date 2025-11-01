@@ -125,7 +125,12 @@ export default function CoachDetailPage({ coach }: CoachPageProps) {
                 </div>
               </div>
               <div className="md:w-56">
-                <Link href="#booking" className="inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-2 text-primary-foreground shadow-glow">Book a Session</Link>
+                <Link
+                  href={{ hash: 'booking' }}
+                  className="inline-flex w-full items-center justify-center rounded-ds-xl bg-accent px-md py-sm text-bg shadow-glow"
+                >
+                  Book a Session
+                </Link>
                 <Link href="/marketplace" className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-border bg-background px-4 py-2">Back</Link>
               </div>
             </div>
