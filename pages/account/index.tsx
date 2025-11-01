@@ -202,8 +202,8 @@ export default function SettingsHubPage() {
         />
       </Head>
 
-      <div className="py-6">
-        <Container>
+      <main className="bg-lightBg py-16 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <Container className="space-y-6">
           <header className="mb-4">
             <h1 className="text-h2 font-bold text-foreground">Settings</h1>
             <p className="text-small text-muted-foreground">
@@ -406,7 +406,7 @@ export default function SettingsHubPage() {
             </Card>
           )}
         </Container>
-      </div>
+      </main>
     </>
   );
 }
