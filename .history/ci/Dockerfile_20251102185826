@@ -1,0 +1,31 @@
+# Use official Node.js image
+FROM node:20-bullseye
+
+# Set Supabase CLI version
+ARG SUPABASE_CLI_VERSION=2.15.3
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y curl ca-certificates git build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download and install Supabase CLI
+RUN curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.tar.gz" \
+    -o supabase.tar.gz && \
+    tar -xzf supabase.tar.gz -C /usr/local/bin && \
+    rm supabase.tar.gz
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json & package-lock.json first (for faster rebuilds)
+COPY package*.json ./
+
+# Install Node dependencies
+RUN npm install --frozen-lockfile
+
+# Copy the rest of your app
+COPY . .
+
+# Entrypoint to run your migrations/functions
+CMD ["sh", "-c", "echo 'Ready to run Supabase migrations and functions'"]

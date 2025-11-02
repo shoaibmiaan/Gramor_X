@@ -387,6 +387,10 @@ html[data-pr-theme] {
   z-index: -1;
 }
 
+.pr-col-span-2 {
+  grid-column: span 2 / span 2;
+}
+
 .pr-mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -434,6 +438,10 @@ html[data-pr-theme] {
 
 .pr-mt-2 {
   margin-top: 0.5rem;
+}
+
+.pr-mt-3 {
+  margin-top: 0.75rem;
 }
 
 .pr-mt-4 {
@@ -521,6 +529,14 @@ html[data-pr-theme] {
   min-height: 240px;
 }
 
+.pr-min-h-\[60px\] {
+  min-height: 60px;
+}
+
+.pr-min-h-\[80px\] {
+  min-height: 80px;
+}
+
 .pr-min-h-screen {
   min-height: 100vh;
 }
@@ -551,6 +567,14 @@ html[data-pr-theme] {
 
 .pr-w-full {
   width: 100%;
+}
+
+.pr-min-w-full {
+  min-width: 100%;
+}
+
+.pr-max-w-4xl {
+  max-width: 56rem;
 }
 
 .pr-max-w-6xl {
@@ -643,12 +667,20 @@ html[data-pr-theme] {
   align-items: center;
 }
 
+.pr-justify-end {
+  justify-content: flex-end;
+}
+
 .pr-justify-center {
   justify-content: center;
 }
 
 .pr-justify-between {
   justify-content: space-between;
+}
+
+.pr-gap-1 {
+  gap: 0.25rem;
 }
 
 .pr-gap-2 {
@@ -685,6 +717,12 @@ html[data-pr-theme] {
   margin-bottom: calc(1rem * var(--tw-space-y-reverse));
 }
 
+.pr-space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+
 .pr-space-y-8 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(2rem * calc(1 - var(--tw-space-y-reverse)));
@@ -695,12 +733,20 @@ html[data-pr-theme] {
   overflow: hidden;
 }
 
+.pr-overflow-x-auto {
+  overflow-x: auto;
+}
+
 .pr-overflow-x-hidden {
   overflow-x: hidden;
 }
 
 .pr-whitespace-pre-line {
   white-space: pre-line;
+}
+
+.pr-rounded {
+  border-radius: 0.25rem;
 }
 
 .pr-rounded-2xl {
@@ -783,6 +829,10 @@ html[data-pr-theme] {
   border-color: rgb(255 255 255 / 0.2);
 }
 
+.pr-border-white\/5 {
+  border-color: rgb(255 255 255 / 0.05);
+}
+
 .pr-bg-\[color-mix\(in_oklab\,var\(--pr-card\)\,white_4\%\)\] {
   background-color: color-mix(in oklab, var(--pr-card), white 4%);
 }
@@ -824,12 +874,21 @@ html[data-pr-theme] {
   background-color: rgb(244 63 94 / var(--tw-bg-opacity, 1));
 }
 
+.pr-bg-slate-950 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(2 6 23 / var(--tw-bg-opacity, 1));
+}
+
 .pr-bg-transparent {
   background-color: transparent;
 }
 
 .pr-bg-white\/10 {
   background-color: rgb(255 255 255 / 0.1);
+}
+
+.pr-bg-white\/20 {
+  background-color: rgb(255 255 255 / 0.2);
 }
 
 .pr-bg-white\/5 {
@@ -923,6 +982,11 @@ html[data-pr-theme] {
   padding-right: 1.5rem;
 }
 
+.pr-py-0\.5 {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+
 .pr-py-1 {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
@@ -958,6 +1022,10 @@ html[data-pr-theme] {
 
 .pr-pb-\[calc\(env\(safe-area-inset-bottom\,0px\)\+1rem\)\] {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+}
+
+.pr-pr-4 {
+  padding-right: 1rem;
 }
 
 .pr-pt-1 {
@@ -1102,6 +1170,16 @@ html[data-pr-theme] {
   color: rgb(0 0 0 / var(--tw-text-opacity, 1));
 }
 
+.pr-text-emerald-300 {
+  --tw-text-opacity: 1;
+  color: rgb(110 231 183 / var(--tw-text-opacity, 1));
+}
+
+.pr-text-red-300 {
+  --tw-text-opacity: 1;
+  color: rgb(252 165 165 / var(--tw-text-opacity, 1));
+}
+
 .pr-text-red-500 {
   --tw-text-opacity: 1;
   color: rgb(239 68 68 / var(--tw-text-opacity, 1));
@@ -1116,12 +1194,20 @@ html[data-pr-theme] {
   color: rgb(255 255 255 / 0.6);
 }
 
+.pr-text-white\/70 {
+  color: rgb(255 255 255 / 0.7);
+}
+
 .pr-text-white\/80 {
   color: rgb(255 255 255 / 0.8);
 }
 
 .pr-text-white\/90 {
   color: rgb(255 255 255 / 0.9);
+}
+
+.pr-underline {
+  text-decoration-line: underline;
 }
 
 .pr-opacity-70 {
@@ -1543,6 +1629,10 @@ html[data-pr-theme] {
   border-color: var(--pr-primary);
 }
 
+.last\:pr-border-none:last-child {
+  border-style: none;
+}
+
 .hover\:pr-border-\[var\(--pr-primary\2c \#4fb6ff\)\]:hover {
   border-color: var(--pr-primary, #4fb6ff);
 }
@@ -1627,6 +1717,10 @@ html[data-pr-theme] {
     display: none;
   }
 
+  .sm\:pr-grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .sm\:pr-flex-row {
     flex-direction: row;
   }
@@ -1678,6 +1772,14 @@ html[data-pr-theme] {
 
   .lg\:pr-flex-row {
     flex-direction: row;
+  }
+
+  .lg\:pr-items-end {
+    align-items: flex-end;
+  }
+
+  .lg\:pr-justify-between {
+    justify-content: space-between;
   }
 
   .lg\:pr-opacity-100 {

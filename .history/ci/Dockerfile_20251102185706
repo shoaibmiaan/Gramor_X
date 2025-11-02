@@ -1,0 +1,5 @@
+ARG SUPABASE_CLI_VERSION=2.15.3   # replace with latest version
+RUN curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.tar.gz" \
+    -o supabase.tar.gz && \
+    tar -xzf supabase.tar.gz -C /usr/local/bin && \
+    rm supabase.tar.gz

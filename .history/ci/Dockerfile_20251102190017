@@ -1,0 +1,22 @@
+# Use official Node.js image
+FROM node:20-bullseye
+
+ARG SUPABASE_CLI_VERSION=2.54.11
+
+RUN apt-get update && \
+    apt-get install -y curl ca-certificates git build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.tar.gz" \
+    -o supabase.tar.gz && \
+    tar -xzf supabase.tar.gz -C /usr/local/bin && \
+    rm supabase.tar.gz
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --frozen-lockfile
+
+COPY . .
+
+CMD ["sh", "-c", "echo 'Ready to run migrations + functions'"]
