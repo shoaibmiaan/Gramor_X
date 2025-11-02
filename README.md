@@ -79,3 +79,5 @@ Copy `.env.example` to `.env` and set the required values. The following variabl
 | `SKIP_ENV_VALIDATION`           | Optional                       | `false`                              |
 
 These defaults mirror the placeholders in `.env.example` and can prevent startup failures during development. For a step-by-step walkthrough of each field (including optional services like Supabase, AI providers, Stripe, and Twilio) see [docs/setup/environment.md](docs/setup/environment.md).
+
+# test trigger Sun Nov 2 18:24:02 PKT 2025
