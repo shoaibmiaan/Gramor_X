@@ -1,4 +1,5 @@
--- 20251026_enable_uuid_extensions.sql
+-- 20251026171917_enable_uuid_extensions_safe.sql
 -- Enables UUID generation functions used in legacy migrations
-create extension if not exists "uuid-ossp";
-create extension if not exists "pgcrypto";
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";

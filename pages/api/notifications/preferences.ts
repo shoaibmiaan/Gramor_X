@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-
-import { getServerClient } from '@/lib/supabaseServer';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import type { NotificationChannel, NotificationsOptIn, Profiles } from '@/types/supabase';
 import { Channel, PreferencesBody, type PreferencesBodyInput } from '@/types/notifications';
 
@@ -54,7 +53,7 @@ function buildResponse(row: PreferencesRow | null, profile: ProfileContact | nul
     },
     quietHoursStart: (row?.quiet_hours_start as string | null) ?? null,
     quietHoursEnd: (row?.quiet_hours_end as string | null) ?? null,
-    timezone: row?.timezone ?? profile?.timezone ?? undefined,
+    timezone: row?.timezone ?? profile?.timezone ?? 'UTC',
   });
 
   const email = profile?.email ? profile.email.trim() : null;
@@ -73,7 +72,7 @@ function buildResponse(row: PreferencesRow | null, profile: ProfileContact | nul
 }
 
 async function loadPreferences(
-  supabase: ReturnType<typeof getServerClient>,
+  supabase: ReturnType<typeof createSupabaseServerClient>,
   userId: string,
 ): Promise<PreferencesResponse> {
   const [prefRes, profileRes] = await Promise.all([
@@ -108,10 +107,10 @@ function normaliseTime(value: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function buildChannelsArray(channels: Record<NotificationChannel, boolean>): NotificationChannel[] {
-  const next: NotificationChannel[] = [];
-  (Object.entries(channels) as [NotificationChannel, boolean][]).forEach(([key, enabled]) => {
-    if (enabled && Channel.options.includes(key)) {
+function buildChannelsArray(channels: Record<string, boolean>): string[] {
+  const next: string[] = [];
+  Object.entries(channels).forEach(([key, enabled]) => {
+    if (enabled) {
       next.push(key);
     }
   });
@@ -119,7 +118,7 @@ function buildChannelsArray(channels: Record<NotificationChannel, boolean>): Not
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = getServerClient(req, res);
+  const supabase = createSupabaseServerClient({ req, res });
   const {
     data: { user },
     error: authError,
@@ -129,56 +128,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (req.method === 'GET') {
-    try {
+  try {
+    if (req.method === 'GET') {
       const preferences = await loadPreferences(supabase, user.id);
       return res.status(200).json({ preferences });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to load preferences';
-      return res.status(500).json({ error: message });
-    }
-  }
-
-  if (req.method === 'POST') {
-    const parsed = PreferencesBody.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
     }
 
-    const body = parsed.data;
+    if (req.method === 'POST') {
+      const parsed = PreferencesBody.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ 
+          error: 'Invalid payload', 
+          details: parsed.error.flatten() 
+        });
+      }
 
-    const recordChannels: Record<NotificationChannel, boolean> = {
-      email: body.channels.email ?? false,
-      whatsapp: body.channels.whatsapp ?? false,
-    };
+      const body = parsed.data;
 
-    const upsertPayload = {
-      user_id: user.id,
-      channels: buildChannelsArray(recordChannels),
-      email_opt_in: recordChannels.email,
-      wa_opt_in: recordChannels.whatsapp,
-      quiet_hours_start: normaliseTime(body.quietHoursStart ?? null),
-      quiet_hours_end: normaliseTime(body.quietHoursEnd ?? null),
-      timezone: body.timezone ?? 'UTC',
-    } satisfies Partial<PreferencesRow> & { user_id: string };
+      const upsertPayload = {
+        user_id: user.id,
+        channels: buildChannelsArray(body.channels),
+        email_opt_in: body.channels.email ?? false,
+        wa_opt_in: body.channels.whatsapp ?? false,
+        quiet_hours_start: normaliseTime(body.quietHoursStart ?? null),
+        quiet_hours_end: normaliseTime(body.quietHoursEnd ?? null),
+        timezone: body.timezone ?? 'UTC',
+      };
 
-    const { error: upsertError } = await supabase
-      .from('notifications_opt_in')
-      .upsert(upsertPayload, { onConflict: 'user_id' });
+      const { error: upsertError } = await supabase
+        .from('notifications_opt_in')
+        .upsert(upsertPayload, { onConflict: 'user_id' });
 
-    if (upsertError) {
-      return res.status(500).json({ error: upsertError.message });
-    }
+      if (upsertError) {
+        return res.status(500).json({ error: upsertError.message });
+      }
 
-    try {
       const preferences = await loadPreferences(supabase, user.id);
       return res.status(200).json({ preferences });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to load preferences';
-      return res.status(500).json({ error: message });
     }
-  }
 
-  res.setHeader('Allow', 'GET,POST');
-  return res.status(405).end('Method Not Allowed');
+    res.setHeader('Allow', ['GET', 'POST']);
+    return res.status(405).end('Method Not Allowed');
+  } catch (error) {
+    console.error('Error in preferences API:', error);
+    const message = error instanceof Error ? error.message : 'Operation failed';
+    return res.status(500).json({ error: message });
+  }
 }

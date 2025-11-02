@@ -4,6 +4,7 @@ import {
   NotificationListQuerySchema,
   NotificationListResponseSchema,
 } from '@/lib/schemas/notifications';
+import { NotificationService } from '@/lib/notificationService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -26,62 +27,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { cursor, limit } = parseResult.data;
+  const service = new NotificationService(supabase);
 
-  const limitPlusOne = limit + 1;
-  let query = supabase
-    .from('notifications')
-    .select('id, message, url, read, created_at')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(limitPlusOne);
-
-  if (cursor) {
-    query = query.lt('created_at', cursor);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
-
-  const notifications = (data ?? []).map((row) => ({
-    id: row.id,
-    message: row.message ?? '',
-    url: row.url ?? null,
-    read: Boolean(row.read),
-    createdAt: row.created_at,
-  }));
-
-  const items = notifications.slice(0, limit);
-  const unreadIds = items.filter((item) => !item.read).map((item) => item.id);
-
-  if (unreadIds.length > 0) {
-    const { error: markError } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('user_id', user.id)
-      .in('id', unreadIds);
-
-    if (markError) {
-      return res.status(500).json({ error: markError.message });
-    }
-
-    for (const item of items) {
-      if (unreadIds.includes(item.id)) {
-        item.read = true;
+  try {
+    // Validate cursor format
+    if (cursor) {
+      const cursorDate = new Date(cursor);
+      if (isNaN(cursorDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid cursor format' });
       }
     }
+
+    const result = await service.listNotifications(user.id, { cursor, limit });
+    const payload = NotificationListResponseSchema.parse(result);
+
+    return res.status(200).json(payload);
+  } catch (error) {
+    console.error('Error in notifications list API:', error);
+    const message = error instanceof Error ? error.message : 'Failed to load notifications';
+    return res.status(500).json({ error: message });
   }
-
-  const hasMore = notifications.length > limit;
-  const nextCursor = hasMore ? items[items.length - 1]?.createdAt ?? null : null;
-
-  const payload = NotificationListResponseSchema.parse({
-    items,
-    nextCursor,
-    unreadCount: unreadIds.length,
-  });
-
-  return res.status(200).json(payload);
 }

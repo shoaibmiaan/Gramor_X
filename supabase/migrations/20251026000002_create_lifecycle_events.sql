@@ -1,44 +1,75 @@
--- 20251026_create_lifecycle_events.sql
--- Queue table for lifecycle notification worker.
+-- 20251026000002_create_lifecycle_events_safe.sql
+-- Safe, idempotent queue table for lifecycle notification worker
 
-create table if not exists public.lifecycle_events (
-  id bigserial primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  event text not null check (event in ('first_mock_done','band_up','streak_broken')),
-  status text not null default 'pending' check (status in ('pending','sent','skipped','failed')),
-  channels text[] not null default '{}'::text[],
-  context jsonb not null default '{}'::jsonb,
+-- Create table if not exists
+CREATE TABLE IF NOT EXISTS public.lifecycle_events (
+  id bigserial PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  event text NOT NULL CHECK (event IN ('first_mock_done','band_up','streak_broken')),
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','sent','skipped','failed')),
+  channels text[] NOT NULL DEFAULT '{}'::text[],
+  context jsonb NOT NULL DEFAULT '{}'::jsonb,
   dedupe_key text,
   error text,
-  attempts integer not null default 0,
-  created_at timestamptz not null default timezone('utc', now()),
+  attempts integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
   processed_at timestamptz,
   last_attempt_at timestamptz
 );
 
-create index if not exists lifecycle_events_status_idx
-  on public.lifecycle_events (status, created_at asc);
+-- Indexes
+CREATE INDEX IF NOT EXISTS lifecycle_events_status_idx
+  ON public.lifecycle_events (status, created_at ASC);
 
-create index if not exists lifecycle_events_user_idx
-  on public.lifecycle_events (user_id, event);
+CREATE INDEX IF NOT EXISTS lifecycle_events_user_idx
+  ON public.lifecycle_events (user_id, event);
 
-create unique index if not exists lifecycle_events_dedupe_idx
-  on public.lifecycle_events (user_id, event, coalesce(dedupe_key, ''));
+CREATE UNIQUE INDEX IF NOT EXISTS lifecycle_events_dedupe_idx
+  ON public.lifecycle_events (user_id, event, COALESCE(dedupe_key, ''));
 
-alter table public.lifecycle_events enable row level security;
+-- Enable RLS
+ALTER TABLE IF EXISTS public.lifecycle_events ENABLE ROW LEVEL SECURITY;
 
-create policy if not exists "lifecycle_events_owner_read"
-  on public.lifecycle_events
-  for select
-  using (auth.uid() = user_id);
+-- Policies (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'lifecycle_events' AND policyname = 'lifecycle_events_owner_read'
+  ) THEN
+    CREATE POLICY "lifecycle_events_owner_read"
+      ON public.lifecycle_events
+      FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "lifecycle_events_owner_write"
-  on public.lifecycle_events
-  for insert
-  with check (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'lifecycle_events' AND policyname = 'lifecycle_events_owner_write'
+  ) THEN
+    CREATE POLICY "lifecycle_events_owner_write"
+      ON public.lifecycle_events
+      FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "lifecycle_events_owner_update"
-  on public.lifecycle_events
-  for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'lifecycle_events' AND policyname = 'lifecycle_events_owner_update'
+  ) THEN
+    CREATE POLICY "lifecycle_events_owner_update"
+      ON public.lifecycle_events
+      FOR UPDATE
+      USING (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;

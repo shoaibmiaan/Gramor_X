@@ -1,49 +1,83 @@
--- Align the public.profiles table with the fields used by the revamped profile setup flow.
--- Ensure every column referenced in the UI exists with sensible defaults and constraints.
+-- 20251030000001_align_profiles_for_setup_safe.sql
+-- Safe alignment of public.profiles with setup flow fields
 
-alter table public.profiles
-  add column if not exists country text,
-  add column if not exists english_level text check (english_level in (
-    'Beginner',
-    'Elementary',
-    'Pre-Intermediate',
-    'Intermediate',
-    'Upper-Intermediate',
-    'Advanced'
-  )),
-  add column if not exists goal_band numeric(2,1),
-  add column if not exists exam_date date,
-  add column if not exists study_prefs text[] default '{}'::text[],
-  add column if not exists time_commitment text check (time_commitment in ('1h/day','2h/day','Flexible')),
-  add column if not exists time_commitment_min integer,
-  add column if not exists days_per_week smallint check (days_per_week between 1 and 7),
-  add column if not exists preferred_language text default 'en',
-  add column if not exists language_preference text default 'en',
-  add column if not exists avatar_url text,
-  add column if not exists goal_reason text[] default '{}'::text[],
-  add column if not exists learning_style text,
-  add column if not exists ai_recommendation jsonb default '{}'::jsonb,
-  add column if not exists setup_complete boolean default false,
-  add column if not exists status text default 'inactive',
-  add column if not exists role text default 'student',
-  add column if not exists timezone text,
-  add column if not exists weaknesses text[] default '{}'::text[],
-  add column if not exists focus_topics text[] default '{}'::text[],
-  add column if not exists daily_quota_goal integer,
-  add column if not exists study_days text[] default '{}'::text[],
-  add column if not exists study_minutes_per_day integer,
-  add column if not exists phone text;
+-- Ensure table exists minimally
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'profiles'
+  ) THEN
+    CREATE TABLE public.profiles (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      created_at timestamptz DEFAULT now()
+    );
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
--- Ensure boolean/array defaults are applied to any existing rows so the UI can rely on them.
-update public.profiles
-  set
-    study_prefs = coalesce(study_prefs, '{}'::text[]),
-    goal_reason = coalesce(goal_reason, '{}'::text[]),
-    weaknesses = coalesce(weaknesses, '{}'::text[]),
-    focus_topics = coalesce(focus_topics, '{}'::text[]),
-    preferred_language = coalesce(preferred_language, 'en'),
-    language_preference = coalesce(language_preference, preferred_language, 'en'),
-    ai_recommendation = coalesce(ai_recommendation, '{}'::jsonb),
-    setup_complete = coalesce(setup_complete, false),
-    status = coalesce(status, 'inactive'),
-    role = coalesce(role, 'student');
+-- Add columns
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'profiles'
+  ) THEN
+    ALTER TABLE public.profiles
+      ADD COLUMN IF NOT EXISTS country text,
+      ADD COLUMN IF NOT EXISTS english_level text CHECK (english_level IN (
+        'Beginner',
+        'Elementary',
+        'Pre-Intermediate',
+        'Intermediate',
+        'Upper-Intermediate',
+        'Advanced'
+      )),
+      ADD COLUMN IF NOT EXISTS goal_band numeric(2,1),
+      ADD COLUMN IF NOT EXISTS exam_date date,
+      ADD COLUMN IF NOT EXISTS study_prefs text[] DEFAULT '{}'::text[],
+      ADD COLUMN IF NOT EXISTS time_commitment text CHECK (time_commitment IN ('1h/day','2h/day','Flexible')),
+      ADD COLUMN IF NOT EXISTS time_commitment_min integer,
+      ADD COLUMN IF NOT EXISTS days_per_week smallint CHECK (days_per_week BETWEEN 1 AND 7),
+      ADD COLUMN IF NOT EXISTS preferred_language text DEFAULT 'en',
+      ADD COLUMN IF NOT EXISTS language_preference text DEFAULT 'en',
+      ADD COLUMN IF NOT EXISTS avatar_url text,
+      ADD COLUMN IF NOT EXISTS goal_reason text[] DEFAULT '{}'::text[],
+      ADD COLUMN IF NOT EXISTS learning_style text,
+      ADD COLUMN IF NOT EXISTS ai_recommendation jsonb DEFAULT '{}'::jsonb,
+      ADD COLUMN IF NOT EXISTS setup_complete boolean DEFAULT false,
+      ADD COLUMN IF NOT EXISTS status text DEFAULT 'inactive',
+      ADD COLUMN IF NOT EXISTS role text DEFAULT 'student',
+      ADD COLUMN IF NOT EXISTS timezone text,
+      ADD COLUMN IF NOT EXISTS weaknesses text[] DEFAULT '{}'::text[],
+      ADD COLUMN IF NOT EXISTS focus_topics text[] DEFAULT '{}'::text[],
+      ADD COLUMN IF NOT EXISTS daily_quota_goal integer,
+      ADD COLUMN IF NOT EXISTS study_days text[] DEFAULT '{}'::text[],
+      ADD COLUMN IF NOT EXISTS study_minutes_per_day integer,
+      ADD COLUMN IF NOT EXISTS phone text;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update defaults for existing rows
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'profiles'
+  ) THEN
+    UPDATE public.profiles
+    SET
+      study_prefs = COALESCE(study_prefs, '{}'::text[]),
+      goal_reason = COALESCE(goal_reason, '{}'::text[]),
+      weaknesses = COALESCE(weaknesses, '{}'::text[]),
+      focus_topics = COALESCE(focus_topics, '{}'::text[]),
+      preferred_language = COALESCE(preferred_language, 'en'),
+      language_preference = COALESCE(language_preference, preferred_language, 'en'),
+      ai_recommendation = COALESCE(ai_recommendation, '{}'::jsonb),
+      setup_complete = COALESCE(setup_complete, false),
+      status = COALESCE(status, 'inactive'),
+      role = COALESCE(role, 'student');
+  END IF;
+END;
+$$ LANGUAGE plpgsql;

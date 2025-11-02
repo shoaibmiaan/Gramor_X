@@ -1,100 +1,144 @@
--- Auto-fix RLS for listening_responses. Idempotent.
+-- 20251026195702_fix_listening_responses_rls_safe.sql
+-- Safe, idempotent auto-fix RLS for listening_responses
 
-create or replace function public.is_admin()
-returns boolean language sql stable as $$
-  select coalesce(auth.jwt() -> 'app_metadata' ->> 'role','') = 'admin'
+-- Ensure functions
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT COALESCE(auth.jwt() -> 'app_metadata' ->> 'role','') = 'admin';
 $$;
 
-create or replace function public.is_teacher()
-returns boolean language sql stable as $$
-  select coalesce(auth.jwt() -> 'app_metadata' ->> 'role','') = 'teacher'
+CREATE OR REPLACE FUNCTION public.is_teacher()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT COALESCE(auth.jwt() -> 'app_metadata' ->> 'role','') = 'teacher';
 $$;
 
-alter table public.listening_responses enable row level security;
+-- Enable RLS if table exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'listening_responses'
+  ) THEN
+    ALTER TABLE public.listening_responses ENABLE ROW LEVEL SECURITY;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
-do $$
-declare
-  has_user_id     boolean;
-  has_profile_id  boolean;
-  has_attempt_id  boolean;
-begin
-  -- drop the broken policy if present
-  begin
-    drop policy if exists "Students manage own listening_responses" on public.listening_responses;
-  exception when undefined_object then null; end;
+-- Fix policies (idempotent)
+DO $$
+DECLARE
+  has_user_id boolean;
+  has_profile_id boolean;
+  has_attempt_id boolean;
+BEGIN
+  -- Drop broken policy if exists and table exists
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'listening_responses'
+  ) THEN
+    DROP POLICY IF EXISTS "Students manage own listening_responses" ON public.listening_responses;
+  END IF;
 
-  select exists (
-    select 1 from information_schema.columns
-    where table_schema='public' and table_name='listening_responses' and column_name='user_id'
-  ) into has_user_id;
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='listening_responses' AND column_name='user_id'
+  ) INTO has_user_id;
 
-  select exists (
-    select 1 from information_schema.columns
-    where table_schema='public' and table_name='listening_responses' and column_name='profile_id'
-  ) into has_profile_id;
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='listening_responses' AND column_name='profile_id'
+  ) INTO has_profile_id;
 
-  select exists (
-    select 1 from information_schema.columns
-    where table_schema='public' and table_name='listening_responses' and column_name='attempt_id'
-  ) into has_attempt_id;
+  SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='listening_responses' AND column_name='attempt_id'
+  ) INTO has_attempt_id;
 
-  -- Admins: full access
-  begin
-    create policy "listening_responses_admin_all"
-    on public.listening_responses
-    for all to authenticated
-    using (is_admin())
-    with check (is_admin());
-  exception when duplicate_object then null; end;
+  -- Admin policy
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'listening_responses'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'listening_responses' AND policyname = 'listening_responses_admin_all'
+  ) THEN
+    CREATE POLICY "listening_responses_admin_all"
+      ON public.listening_responses
+      FOR ALL TO authenticated
+      USING (is_admin())
+      WITH CHECK (is_admin());
+  END IF;
 
-  if has_user_id then
-    begin
-      create policy "listening_responses_self_user_id"
-      on public.listening_responses
-      for all to authenticated
-      using (user_id = auth.uid())
-      with check (user_id = auth.uid());
-    exception when duplicate_object then null; end;
+  IF has_user_id THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'listening_responses' AND policyname = 'listening_responses_self_user_id'
+    ) THEN
+      CREATE POLICY "listening_responses_self_user_id"
+        ON public.listening_responses
+        FOR ALL TO authenticated
+        USING (user_id = auth.uid())
+        WITH CHECK (user_id = auth.uid());
+    END IF;
 
-  elsif has_profile_id then
-    begin
-      create policy "listening_responses_self_profile_id"
-      on public.listening_responses
-      for all to authenticated
-      using (profile_id = auth.uid())
-      with check (profile_id = auth.uid());
-    exception when duplicate_object then null; end;
+  ELSIF has_profile_id THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'listening_responses' AND policyname = 'listening_responses_self_profile_id'
+    ) THEN
+      CREATE POLICY "listening_responses_self_profile_id"
+        ON public.listening_responses
+        FOR ALL TO authenticated
+        USING (profile_id = auth.uid())
+        WITH CHECK (profile_id = auth.uid());
+    END IF;
 
-  elsif has_attempt_id then
-    begin
-      create policy "listening_responses_own_via_attempt"
-      on public.listening_responses
-      for all to authenticated
-      using (
-        exists (
-          select 1 from public.exam_attempts ea
-          where ea.id = listening_responses.attempt_id
-            and ea.user_id = auth.uid()
+  ELSIF has_attempt_id THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'listening_responses' AND policyname = 'listening_responses_own_via_attempt'
+    ) THEN
+      CREATE POLICY "listening_responses_own_via_attempt"
+        ON public.listening_responses
+        FOR ALL TO authenticated
+        USING (
+          EXISTS (
+            SELECT 1 FROM public.exam_attempts ea
+            WHERE ea.id = listening_responses.attempt_id
+              AND ea.user_id = auth.uid()
+          )
         )
-      )
-      with check (
-        exists (
-          select 1 from public.exam_attempts ea
-          where ea.id = listening_responses.attempt_id
-            and ea.user_id = auth.uid()
-        )
-      );
-    exception when duplicate_object then null; end;
+        WITH CHECK (
+          EXISTS (
+            SELECT 1 FROM public.exam_attempts ea
+            WHERE ea.id = listening_responses.attempt_id
+              AND ea.user_id = auth.uid()
+          )
+        );
+    END IF;
 
-  else
-    raise notice 'No user_id/profile_id/attempt_id on listening_responses; manual review needed.';
-  end if;
+  ELSE
+    RAISE NOTICE 'No user_id/profile_id/attempt_id on listening_responses; manual review needed.';
+  END IF;
 
-  -- Teachers: read-only
-  begin
-    create policy "listening_responses_teacher_read"
-    on public.listening_responses
-    for select to authenticated
-    using (is_teacher() or is_admin());
-  exception when duplicate_object then null; end;
-end$$;
+  -- Teacher read policy
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'listening_responses'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'listening_responses' AND policyname = 'listening_responses_teacher_read'
+  ) THEN
+    CREATE POLICY "listening_responses_teacher_read"
+      ON public.listening_responses
+      FOR SELECT TO authenticated
+      USING (is_teacher() OR is_admin());
+  END IF;
+END;
+$$ LANGUAGE plpgsql;

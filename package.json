@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"npm:dev:premium\"",
+    "seed:notifications": "tsx scripts/seed-notifications.ts",
+    "db:seed:all": "npm run db:setup && npm run seed:notifications",
     "dev:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --watch",
     "build": "npm run routes:gen && npm run build:premium && node ./scripts/next-build.mjs",
     "build:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --minify",

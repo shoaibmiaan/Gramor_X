@@ -1,25 +1,37 @@
--- Add missing user_id column (with backfill if data exists)
-alter table public.listening_responses
-add column if not exists user_id uuid
-references auth.users(id) on delete cascade;
+-- 20251026202621_add_user_id_to_listening_responses_safe.sql
+-- Safe addition of user_id to listening_responses
 
--- Backfill existing rows (adjust if user_id source differs; assumes linking via another table like responses)
-update public.listening_responses
-set user_id = (select user_id from some_related_table where id = listening_responses.some_id)
-where user_id is null;  -- Replace with actual backfill logic if needed
+-- Ensure UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Make non-nullable if appropriate
-alter table public.listening_responses
-alter column user_id set not null;
+-- Add column if table exists (nullable, no default as auth.uid() not allowed in column default)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'listening_responses'
+  ) THEN
+    ALTER TABLE public.listening_responses
+      ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
--- Re-apply the policy safely
-do $$  
-begin
-  drop policy if exists "Students manage own listening_responses" on public.listening_responses;
-  create policy "Students manage own listening_responses"
-    on public.listening_responses
-    for all to authenticated
-    using (auth.uid() = user_id and (auth.jwt()->>'role')::text in ('student','teacher'))
-    with check (auth.uid() = user_id and (auth.jwt()->>'role')::text in ('student','teacher'));
-exception when others then null;
-end   $$;
+-- Re-apply policy (idempotent)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'listening_responses'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'listening_responses' AND policyname = 'Students manage own listening_responses'
+  ) THEN
+    CREATE POLICY "Students manage own listening_responses"
+      ON public.listening_responses
+      FOR ALL TO authenticated
+      USING (auth.uid() = user_id AND (auth.jwt()->>'role')::text IN ('student','teacher'))
+      WITH CHECK (auth.uid() = user_id AND (auth.jwt()->>'role')::text IN ('student','teacher'));
+  END IF;
+END;
+$$ LANGUAGE plpgsql;

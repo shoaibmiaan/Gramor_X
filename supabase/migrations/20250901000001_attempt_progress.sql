@@ -23,18 +23,25 @@ create index if not exists attempt_progress_user_module_idx
 
 alter table public.attempt_progress enable row level security;
 
-create policy if not exists "Users can read own attempt progress"
-  on public.attempt_progress for select
-  using (auth.uid() = user_id);
+-- make policy creation idempotent by dropping first, then creating
+DROP POLICY IF EXISTS "Users can read own attempt progress" ON public.attempt_progress;
+CREATE POLICY "Users can read own attempt progress"
+  ON public.attempt_progress
+  FOR SELECT
+  USING (auth.uid() = user_id);
 
-create policy if not exists "Users can upsert own attempt progress"
-  on public.attempt_progress for insert
-  with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can upsert own attempt progress" ON public.attempt_progress;
+CREATE POLICY "Users can upsert own attempt progress"
+  ON public.attempt_progress
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
 
-create policy if not exists "Users can update own attempt progress"
-  on public.attempt_progress for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own attempt progress" ON public.attempt_progress;
+CREATE POLICY "Users can update own attempt progress"
+  ON public.attempt_progress
+  FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 create or replace function public.set_attempt_progress_updated_at()
 returns trigger language plpgsql as $$

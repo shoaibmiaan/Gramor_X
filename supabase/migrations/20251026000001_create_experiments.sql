@@ -1,103 +1,208 @@
--- 20251026_create_experiments.sql
--- Core experiment tables for assignment, variants, and lifecycle tracking.
+-- 20251026000001_create_experiments_safe.sql
+-- Safe, idempotent core experiment tables
 
-create table if not exists public.experiments (
-  key text primary key,
-  name text not null,
-  status text not null default 'draft' check (status in ('draft','running','paused','completed','disabled')),
-  default_variant text not null default 'control',
-  traffic_percentage integer not null default 100 check (traffic_percentage >= 0 and traffic_percentage <= 100),
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
+-- Ensure UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Ensure set_updated_at function
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create experiments table
+CREATE TABLE IF NOT EXISTS public.experiments (
+  key text PRIMARY KEY,
+  name text NOT NULL,
+  status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','running','paused','completed','disabled')),
+  default_variant text NOT NULL DEFAULT 'control',
+  traffic_percentage integer NOT NULL DEFAULT 100 CHECK (traffic_percentage >= 0 AND traffic_percentage <= 100),
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
+  updated_at timestamptz NOT NULL DEFAULT timezone('utc', now())
 );
 
-create table if not exists public.experiment_variants (
-  id bigserial primary key,
-  experiment_key text not null references public.experiments(key) on delete cascade,
-  variant text not null,
-  weight integer not null default 0 check (weight >= 0),
-  is_default boolean not null default false,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now()),
-  constraint experiment_variants_unique unique (experiment_key, variant)
+-- Trigger for experiments
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'experiments_set_updated' AND tgrelid = 'public.experiments'::regclass
+  ) THEN
+    CREATE TRIGGER experiments_set_updated
+      BEFORE UPDATE ON public.experiments
+      FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+  END IF;
+END;
+$$;
+
+-- Create experiment_variants table
+CREATE TABLE IF NOT EXISTS public.experiment_variants (
+  id bigserial PRIMARY KEY,
+  experiment_key text NOT NULL REFERENCES public.experiments(key) ON DELETE CASCADE,
+  variant text NOT NULL,
+  weight integer NOT NULL DEFAULT 0 CHECK (weight >= 0),
+  is_default boolean NOT NULL DEFAULT false,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
+  updated_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
+  CONSTRAINT experiment_variants_unique UNIQUE (experiment_key, variant)
 );
 
-create index if not exists experiment_variants_experiment_idx
-  on public.experiment_variants (experiment_key);
+-- Trigger for experiment_variants
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'experiment_variants_set_updated' AND tgrelid = 'public.experiment_variants'::regclass
+  ) THEN
+    CREATE TRIGGER experiment_variants_set_updated
+      BEFORE UPDATE ON public.experiment_variants
+      FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+  END IF;
+END;
+$$;
 
-create table if not exists public.experiment_assignments (
-  id bigserial primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  experiment_key text not null references public.experiments(key) on delete cascade,
-  variant text not null,
-  assigned_at timestamptz not null default timezone('utc', now()),
-  guardrail_state text not null default 'active' check (guardrail_state in ('active','disabled')),
-  exposures integer not null default 0,
-  conversions integer not null default 0,
+-- Index for experiment_variants
+CREATE INDEX IF NOT EXISTS experiment_variants_experiment_idx
+  ON public.experiment_variants (experiment_key);
+
+-- Create experiment_assignments table
+CREATE TABLE IF NOT EXISTS public.experiment_assignments (
+  id bigserial PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  experiment_key text NOT NULL REFERENCES public.experiments(key) ON DELETE CASCADE,
+  variant text NOT NULL,
+  assigned_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
+  guardrail_state text NOT NULL DEFAULT 'active' CHECK (guardrail_state IN ('active','disabled')),
+  exposures integer NOT NULL DEFAULT 0,
+  conversions integer NOT NULL DEFAULT 0,
   last_exposed_at timestamptz,
   last_converted_at timestamptz,
-  metadata jsonb not null default '{}'::jsonb,
-  constraint experiment_assignments_unique unique (user_id, experiment_key)
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT experiment_assignments_unique UNIQUE (user_id, experiment_key)
 );
 
-create index if not exists experiment_assignments_experiment_idx
-  on public.experiment_assignments (experiment_key, assigned_at desc);
+-- Trigger for experiment_assignments
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'experiment_assignments_set_updated' AND tgrelid = 'public.experiment_assignments'::regclass
+  ) THEN
+    CREATE TRIGGER experiment_assignments_set_updated
+      BEFORE UPDATE ON public.experiment_assignments
+      FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+  END IF;
+END;
+$$;
 
-create table if not exists public.experiment_events (
-  id bigserial primary key,
-  experiment_key text not null references public.experiments(key) on delete cascade,
-  user_id uuid references auth.users(id) on delete cascade,
-  variant text not null,
-  event text not null check (event in ('assign','expose','convert')),
-  context jsonb not null default '{}'::jsonb,
-  recorded_at timestamptz not null default timezone('utc', now())
+-- Index for experiment_assignments
+CREATE INDEX IF NOT EXISTS experiment_assignments_experiment_idx
+  ON public.experiment_assignments (experiment_key, assigned_at DESC);
+
+-- Create experiment_events table
+CREATE TABLE IF NOT EXISTS public.experiment_events (
+  id bigserial PRIMARY KEY,
+  experiment_key text NOT NULL REFERENCES public.experiments(key) ON DELETE CASCADE,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  variant text NOT NULL,
+  event text NOT NULL CHECK (event IN ('assign','expose','convert')),
+  context jsonb NOT NULL DEFAULT '{}'::jsonb,
+  recorded_at timestamptz NOT NULL DEFAULT timezone('utc', now())
 );
 
-create index if not exists experiment_events_experiment_idx
-  on public.experiment_events (experiment_key, recorded_at desc);
+-- Index for experiment_events
+CREATE INDEX IF NOT EXISTS experiment_events_experiment_idx
+  ON public.experiment_events (experiment_key, recorded_at DESC);
 
-create index if not exists experiment_events_user_idx
-  on public.experiment_events (user_id, experiment_key, recorded_at desc);
+CREATE INDEX IF NOT EXISTS experiment_events_user_idx
+  ON public.experiment_events (user_id, experiment_key, recorded_at DESC);
 
-alter table public.experiments enable row level security;
-alter table public.experiment_variants enable row level security;
-alter table public.experiment_assignments enable row level security;
-alter table public.experiment_events enable row level security;
+-- Enable RLS
+ALTER TABLE IF EXISTS public.experiments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.experiment_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.experiment_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.experiment_events ENABLE ROW LEVEL SECURITY;
 
-create policy if not exists "experiments_read"
-  on public.experiments
-  for select
-  using (true);
+-- Policies (idempotent)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='experiments') AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='experiments' AND policyname='experiments_read') THEN
+    CREATE POLICY "experiments_read"
+      ON public.experiments
+      FOR SELECT
+      USING (true);
+  END IF;
+END;
+$$;
 
-create policy if not exists "experiment_variants_read"
-  on public.experiment_variants
-  for select
-  using (true);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='experiment_variants') AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='experiment_variants' AND policyname='experiment_variants_read') THEN
+    CREATE POLICY "experiment_variants_read"
+      ON public.experiment_variants
+      FOR SELECT
+      USING (true);
+  END IF;
+END;
+$$;
 
-create policy if not exists "experiment_assignments_self"
-  on public.experiment_assignments
-  for select
-  using (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='experiment_assignments') AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='experiment_assignments' AND policyname='experiment_assignments_self') THEN
+    CREATE POLICY "experiment_assignments_self"
+      ON public.experiment_assignments
+      FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "experiment_assignments_self_insert"
-  on public.experiment_assignments
-  for insert
-  with check (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='experiment_assignments') AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='experiment_assignments' AND policyname='experiment_assignments_self_insert') THEN
+    CREATE POLICY "experiment_assignments_self_insert"
+      ON public.experiment_assignments
+      FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "experiment_assignments_self_update"
-  on public.experiment_assignments
-  for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='experiment_assignments') AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='experiment_assignments' AND policyname='experiment_assignments_self_update') THEN
+    CREATE POLICY "experiment_assignments_self_update"
+      ON public.experiment_assignments
+      FOR UPDATE
+      USING (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "experiment_events_self_read"
-  on public.experiment_events
-  for select
-  using (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='experiment_events') AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='experiment_events' AND policyname='experiment_events_self_read') THEN
+    CREATE POLICY "experiment_events_self_read"
+      ON public.experiment_events
+      FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "experiment_events_self_insert"
-  on public.experiment_events
-  for insert
-  with check (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='experiment_events') AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='experiment_events' AND policyname='experiment_events_self_insert') THEN
+    CREATE POLICY "experiment_events_self_insert"
+      ON public.experiment_events
+      FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;

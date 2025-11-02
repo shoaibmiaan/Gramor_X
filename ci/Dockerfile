@@ -1,19 +1,27 @@
+# Use lightweight Node.js image
 FROM node:20-bullseye
 
+# Install dependencies
 RUN apt-get update && \
     apt-get install -y curl ca-certificates git build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-ARG SUPABASE_CLI_VERSION=1.56.0
-RUN curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_${SUPABASE_CLI_VERSION}_linux_amd64.tar.gz" \
-  | tar -xz -C /usr/local/bin
+# Install Supabase CLI (replace version if needed)
+ARG SUPABASE_CLI_VERSION=2.54.11
+RUN curl -L "https://github.com/supabase/cli/releases/download/v${SUPABASE_CLI_VERSION}/supabase_linux_amd64.tar.gz" \
+    -o supabase.tar.gz && \
+    tar -xzf supabase.tar.gz -C /usr/local/bin && \
+    rm supabase.tar.gz
 
-WORKDIR /workspace
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+# Set working directory
+WORKDIR /app
+
+# Copy package files & install dependencies
+COPY package*.json ./
+RUN npm install --frozen-lockfile
+
+# Copy all source files
 COPY . .
-COPY ci/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENV PATH="/workspace/node_modules/.bin:${PATH}"
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Default command
+CMD ["sh", "-c", "echo 'Container ready. Run migrations & functions here.'"]

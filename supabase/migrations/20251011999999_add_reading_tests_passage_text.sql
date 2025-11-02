@@ -1,3 +1,6 @@
+-- 20251011999999_add_reading_tests_passage_text_safe.sql
+-- Safe, idempotent migration to add and backfill reading_tests.passage_text
+
 -- Ensure reading_tests.passage_text exists and is backfilled from content/title/id if available.
 DO $$
 DECLARE
@@ -29,10 +32,11 @@ BEGIN
 
   -- 2) Backfill nulls
   IF has_content THEN
-    EXECUTE $$UPDATE public.reading_tests SET passage_text = COALESCE(passage_text, content) WHERE passage_text IS NULL$$;
+    EXECUTE $update$UPDATE public.reading_tests SET passage_text = COALESCE(passage_text, content) WHERE passage_text IS NULL$update$;
   ELSIF has_title THEN
-    EXECUTE $$UPDATE public.reading_tests SET passage_text = COALESCE(passage_text, title) WHERE passage_text IS NULL$$;
+    EXECUTE $update$UPDATE public.reading_tests SET passage_text = COALESCE(passage_text, title) WHERE passage_text IS NULL$update$;
   ELSE
-    EXECUTE $$UPDATE public.reading_tests SET passage_text = COALESCE(passage_text, 'Reading passage') WHERE passage_text IS NULL$$;
+    EXECUTE $update$UPDATE public.reading_tests SET passage_text = COALESCE(passage_text, 'Reading passage') WHERE passage_text IS NULL$update$;
   END IF;
-END$$;
+END;
+$$ LANGUAGE plpgsql;

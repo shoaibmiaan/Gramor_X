@@ -1,63 +1,95 @@
--- 20251007000002_create_content_table_and_rls.sql
--- Content table (uses pgcrypto gen_random_uuid instead of uuid_generate_v4)
+-- supabase/migrations/20251007000002_create_content_table_and_rls.sql
+-- create content table (idempotent) and add RLS policies (guarded if profiles missing)
 
-create extension if not exists pgcrypto with schema public;
-
-create table if not exists public.content (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade,
-  title text not null,
-  type text not null default 'article',
-  content jsonb,
-  is_premium boolean default false,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+-- NOTE: keep the table definition minimal but include the columns referenced by policies.
+CREATE TABLE IF NOT EXISTS public.content (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  title text,
+  body jsonb,
+  is_premium boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
-alter table if exists public.content enable row level security;
+-- enable row level security idempotently
+ALTER TABLE IF EXISTS public.content ENABLE ROW LEVEL SECURITY;
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='content'
-      and policyname='Own content access'
-  ) then
-    create policy "Own content access"
-      on public.content
-      for all
-      using (auth.uid() = user_id);
-  end if;
+-- Create policies that do NOT depend on profiles (safe to create anytime)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'content' AND policyname = 'Own content access'
+  ) THEN
+    CREATE POLICY "Own content access"
+      ON public.content
+      FOR ALL
+      USING (auth.uid() = user_id);
+  END IF;
 
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='content'
-      and policyname='Owl full access'
-  ) then
-    create policy "Owl full access"
-      on public.content
-      for select
-      using (
-        exists (
-          select 1 from public.profiles
-          where id = auth.uid() and tier = 'owl'
+  -- other simple policies (no profiles reference) could go here
+END
+$$;
+
+-- Policies that reference public.profiles: only create them if public.profiles exists.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relname = 'profiles' AND n.nspname = 'public'
+  ) THEN
+
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'content' AND policyname = 'Owl full access'
+    ) THEN
+      CREATE POLICY "Owl full access" ON public.content
+        FOR SELECT
+        USING (
+          EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE id = auth.uid() AND tier = 'owl'
+          )
+        );
+    END IF;
+
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'content' AND policyname = 'Rocket premium insert'
+    ) THEN
+      CREATE POLICY "Rocket premium insert" ON public.content
+        FOR INSERT
+        WITH CHECK (
+          NOT (
+            is_premium = true
+            AND NOT EXISTS (
+              SELECT 1 FROM public.profiles
+              WHERE id = auth.uid() AND tier IN ('rocket','owl')
+            )
+          )
+        );
+    END IF;
+
+    -- Tiered content access policy (if you still want it here)
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'content' AND policyname = 'Tiered content access'
+    ) THEN
+      CREATE POLICY "Tiered content access" ON public.content
+        FOR ALL
+        USING (
+          auth.uid() = user_id
+          OR (SELECT tier FROM public.profiles WHERE id = auth.uid()) = 'owl'
         )
-      );
-  end if;
+        WITH CHECK (
+          auth.uid() = user_id
+          OR (SELECT tier FROM public.profiles WHERE id = auth.uid()) IN ('rocket','owl')
+        );
+    END IF;
 
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='content'
-      and policyname='Rocket premium insert'
-  ) then
-    create policy "Rocket premium insert"
-      on public.content
-      for insert
-      with check (
-        not (is_premium = true and not exists (
-          select 1 from public.profiles
-          where id = auth.uid() and tier in ('rocket','owl')
-        ))
-      );
-  end if;
-end$$;
+  END IF;
+END
+$$;

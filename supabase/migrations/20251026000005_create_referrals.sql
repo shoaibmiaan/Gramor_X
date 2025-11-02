@@ -1,114 +1,203 @@
--- 20251026_create_referrals.sql
--- Normalised referral + credit ledger schema.
+-- 20251026000005_create_referrals_safe.sql
+-- Safe, idempotent normalised referral + credit ledger schema
 
-create table if not exists public.referral_codes (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  code text not null unique,
-  created_at timestamptz not null default timezone('utc', now()),
+-- Create referral_codes table if not exists
+CREATE TABLE IF NOT EXISTS public.referral_codes (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  code text NOT NULL UNIQUE,
+  created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
   deactivated_at timestamptz,
-  metadata jsonb not null default '{}'::jsonb
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 
-create index if not exists referral_codes_code_idx on public.referral_codes (code);
+-- Index for referral_codes
+CREATE INDEX IF NOT EXISTS referral_codes_code_idx ON public.referral_codes (code);
 
-alter table public.referral_codes enable row level security;
+-- Enable RLS
+ALTER TABLE IF EXISTS public.referral_codes ENABLE ROW LEVEL SECURITY;
 
-create policy if not exists "referral_codes_self_select"
-  on public.referral_codes
-  for select
-  using (auth.uid() = user_id);
+-- Policies for referral_codes (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_codes' AND policyname = 'referral_codes_self_select'
+  ) THEN
+    CREATE POLICY "referral_codes_self_select"
+      ON public.referral_codes
+      FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "referral_codes_self_insert"
-  on public.referral_codes
-  for insert
-  with check (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_codes' AND policyname = 'referral_codes_self_insert'
+  ) THEN
+    CREATE POLICY "referral_codes_self_insert"
+      ON public.referral_codes
+      FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "referral_codes_self_update"
-  on public.referral_codes
-  for update
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_codes' AND policyname = 'referral_codes_self_update'
+  ) THEN
+    CREATE POLICY "referral_codes_self_update"
+      ON public.referral_codes
+      FOR UPDATE
+      USING (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create table if not exists public.referral_redemptions (
-  id bigserial primary key,
-  code text not null references public.referral_codes(code) on delete cascade,
-  referrer_id uuid not null references auth.users(id) on delete cascade,
-  referred_id uuid not null references auth.users(id) on delete cascade,
+-- Create referral_redemptions table if not exists
+CREATE TABLE IF NOT EXISTS public.referral_redemptions (
+  id bigserial PRIMARY KEY,
+  code text NOT NULL REFERENCES public.referral_codes(code) ON DELETE CASCADE,
+  referrer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  referred_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   device_hash text,
-  referrer_credit integer not null default 0,
-  referred_credit integer not null default 0,
-  status text not null default 'completed',
+  referrer_credit integer NOT NULL DEFAULT 0,
+  referred_credit integer NOT NULL DEFAULT 0,
+  status text NOT NULL DEFAULT 'completed',
   context text,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now()),
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT timezone('utc', now()),
   confirmed_at timestamptz
 );
 
-create index if not exists referral_redemptions_code_idx on public.referral_redemptions (code);
-create index if not exists referral_redemptions_referrer_idx on public.referral_redemptions (referrer_id, created_at desc);
-create index if not exists referral_redemptions_referred_idx on public.referral_redemptions (referred_id, created_at desc);
-create unique index if not exists referral_redemptions_device_hash_key
-  on public.referral_redemptions (device_hash)
-  where device_hash is not null;
+-- Indexes for referral_redemptions
+CREATE INDEX IF NOT EXISTS referral_redemptions_code_idx ON public.referral_redemptions (code);
+CREATE INDEX IF NOT EXISTS referral_redemptions_referrer_idx ON public.referral_redemptions (referrer_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS referral_redemptions_referred_idx ON public.referral_redemptions (referred_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS referral_redemptions_device_hash_key
+  ON public.referral_redemptions (device_hash)
+  WHERE device_hash IS NOT NULL;
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_constraint
-    where conname = 'referral_redemptions_referred_unique'
-  ) then
-    alter table public.referral_redemptions
-      add constraint referral_redemptions_referred_unique unique (referred_id);
-  end if;
-end $$;
+-- Unique constraint for referred_id (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'referral_redemptions_referred_unique'
+  ) THEN
+    ALTER TABLE public.referral_redemptions
+      ADD CONSTRAINT referral_redemptions_referred_unique UNIQUE (referred_id);
+  END IF;
+END;
+$$;
 
-alter table public.referral_redemptions enable row level security;
+-- Enable RLS
+ALTER TABLE IF EXISTS public.referral_redemptions ENABLE ROW LEVEL SECURITY;
 
-create policy if not exists "referral_redemptions_party_select"
-  on public.referral_redemptions
-  for select
-  using (auth.uid() = referrer_id or auth.uid() = referred_id);
+-- Policies for referral_redemptions (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_redemptions' AND policyname = 'referral_redemptions_party_select'
+  ) THEN
+    CREATE POLICY "referral_redemptions_party_select"
+      ON public.referral_redemptions
+      FOR SELECT
+      USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "referral_redemptions_self_insert"
-  on public.referral_redemptions
-  for insert
-  with check (auth.uid() = referred_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_redemptions' AND policyname = 'referral_redemptions_self_insert'
+  ) THEN
+    CREATE POLICY "referral_redemptions_self_insert"
+      ON public.referral_redemptions
+      FOR INSERT
+      WITH CHECK (auth.uid() = referred_id);
+  END IF;
+END;
+$$;
 
-create policy if not exists "referral_redemptions_self_update"
-  on public.referral_redemptions
-  for update
-  using (auth.uid() = referrer_id or auth.uid() = referred_id)
-  with check (auth.uid() = referrer_id or auth.uid() = referred_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_redemptions' AND policyname = 'referral_redemptions_self_update'
+  ) THEN
+    CREATE POLICY "referral_redemptions_self_update"
+      ON public.referral_redemptions
+      FOR UPDATE
+      USING (auth.uid() = referrer_id OR auth.uid() = referred_id)
+      WITH CHECK (auth.uid() = referrer_id OR auth.uid() = referred_id);
+  END IF;
+END;
+$$;
 
-create table if not exists public.referral_credit_balances (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  balance integer not null default 0,
-  lifetime_earned integer not null default 0,
-  updated_at timestamptz not null default timezone('utc', now())
+-- Create referral_credit_balances table if not exists
+CREATE TABLE IF NOT EXISTS public.referral_credit_balances (
+  user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  balance integer NOT NULL DEFAULT 0,
+  lifetime_earned integer NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT timezone('utc', now())
 );
 
-alter table public.referral_credit_balances enable row level security;
+-- Enable RLS
+ALTER TABLE IF EXISTS public.referral_credit_balances ENABLE ROW LEVEL SECURITY;
 
-create policy if not exists "referral_credit_balances_self"
-  on public.referral_credit_balances
-  for select
-  using (auth.uid() = user_id);
+-- Policy for referral_credit_balances (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_credit_balances' AND policyname = 'referral_credit_balances_self'
+  ) THEN
+    CREATE POLICY "referral_credit_balances_self"
+      ON public.referral_credit_balances
+      FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;
 
-create table if not exists public.referral_credit_events (
-  id bigserial primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
-  delta integer not null,
-  balance_after integer not null,
-  reason text not null,
-  metadata jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default timezone('utc', now())
+-- Create referral_credit_events table if not exists
+CREATE TABLE IF NOT EXISTS public.referral_credit_events (
+  id bigserial PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  delta integer NOT NULL,
+  balance_after integer NOT NULL,
+  reason text NOT NULL,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT timezone('utc', now())
 );
 
-create index if not exists referral_credit_events_user_idx on public.referral_credit_events (user_id, created_at desc);
+-- Index for referral_credit_events
+CREATE INDEX IF NOT EXISTS referral_credit_events_user_idx ON public.referral_credit_events (user_id, created_at DESC);
 
-alter table public.referral_credit_events enable row level security;
+-- Enable RLS
+ALTER TABLE IF EXISTS public.referral_credit_events ENABLE ROW LEVEL SECURITY;
 
-create policy if not exists "referral_credit_events_self"
-  on public.referral_credit_events
-  for select
-  using (auth.uid() = user_id);
+-- Policy for referral_credit_events (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'referral_credit_events' AND policyname = 'referral_credit_events_self'
+  ) THEN
+    CREATE POLICY "referral_credit_events_self"
+      ON public.referral_credit_events
+      FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END;
+$$;

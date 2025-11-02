@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
-
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { buildWhatsAppTaskMessage, dispatchWhatsAppTask } from '@/lib/tasks/whatsapp';
 
@@ -45,74 +44,80 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
 
-  const { error: optInError } = await supabase
-    .from('notifications_opt_in')
-    .upsert({ user_id: user.id, wa_opt_in: consent }, { onConflict: 'user_id' });
+  try {
+    const { error: optInError } = await supabase
+      .from('notifications_opt_in')
+      .upsert({ user_id: user.id, wa_opt_in: consent }, { onConflict: 'user_id' });
 
-  if (optInError) {
-    return res.status(500).json({ ok: false, error: optInError.message });
-  }
+    if (optInError) {
+      return res.status(500).json({ ok: false, error: optInError.message });
+    }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('notification_channels, full_name')
-    .eq('user_id', user.id)
-    .maybeSingle();
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('notification_channels, full_name')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-  if (profileError) {
-    return res.status(500).json({ ok: false, error: profileError.message });
-  }
+    if (profileError) {
+      return res.status(500).json({ ok: false, error: profileError.message });
+    }
 
-  const channels = new Set<string>((profile?.notification_channels ?? []) as string[]);
-  if (consent) channels.add('whatsapp');
-  else channels.delete('whatsapp');
+    const channels = new Set<string>((profile?.notification_channels ?? []) as string[]);
+    if (consent) channels.add('whatsapp');
+    else channels.delete('whatsapp');
 
-  const { error: profileUpdateError } = await supabase.from('profiles').upsert({
-    user_id: user.id,
-    whatsapp_opt_in: consent,
-    notification_channels: Array.from(channels),
-  });
+    const { error: profileUpdateError } = await supabase.from('profiles').upsert({
+      user_id: user.id,
+      whatsapp_opt_in: consent,
+      notification_channels: Array.from(channels),
+    });
 
-  if (profileUpdateError) {
-    return res.status(500).json({ ok: false, error: profileUpdateError.message });
-  }
+    if (profileUpdateError) {
+      return res.status(500).json({ ok: false, error: profileUpdateError.message });
+    }
 
-  const { error: eventError } = await supabase.from('notification_consent_events').insert({
-    user_id: user.id,
-    actor_id: user.id,
-    channel: 'whatsapp',
-    action: consent ? 'opt_in' : 'opt_out',
-    metadata: {
-      source: 'api/notifications/whatsapp-opt-in',
-      sendTest,
-    },
-  });
-
-  if (eventError) {
-    return res.status(500).json({ ok: false, error: eventError.message });
-  }
-
-  if (consent && sendTest) {
-    const confirmationMessage =
-      message?.trim() ||
-      buildWhatsAppTaskMessage('optInConfirmation', {
-        userName: profile?.full_name ?? undefined,
-      });
-
-    const response = await dispatchWhatsAppTask(supabase, {
-      userId: user.id,
-      type: 'test',
-      message: confirmationMessage,
+    const { error: eventError } = await supabase.from('notification_consent_events').insert({
+      user_id: user.id,
+      actor_id: user.id,
+      channel: 'whatsapp',
+      action: consent ? 'opt_in' : 'opt_out',
       metadata: {
         source: 'api/notifications/whatsapp-opt-in',
-        trigger: 'sendTest',
+        sendTest,
       },
     });
 
-    if (response.error) {
-      return res.status(502).json({ ok: false, error: parseFunctionsError(response.error) });
+    if (eventError) {
+      return res.status(500).json({ ok: false, error: eventError.message });
     }
-  }
 
-  return res.status(200).json({ ok: true });
+    if (consent && sendTest) {
+      const confirmationMessage =
+        message?.trim() ||
+        buildWhatsAppTaskMessage('optInConfirmation', {
+          userName: profile?.full_name ?? undefined,
+        });
+
+      const response = await dispatchWhatsAppTask(supabase, {
+        userId: user.id,
+        type: 'test',
+        message: confirmationMessage,
+        metadata: {
+          source: 'api/notifications/whatsapp-opt-in',
+          trigger: 'sendTest',
+        },
+      });
+
+      if (response.error) {
+        return res.status(502).json({ ok: false, error: parseFunctionsError(response.error) });
+      }
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error('Error in WhatsApp opt-in API:', error);
+    const message = error instanceof Error ? error.message : 'Operation failed';
+    return res.status(500).json({ ok: false, error: message });
+  }
 }

@@ -1,31 +1,45 @@
--- Allow users to insert/update ONLY their own profile (guarded + RLS ensure)
-alter table if exists public.profiles enable row level security;
+-- 20251026120000_profiles_policies_safe.sql
+-- Safe, idempotent RLS policies for profiles (self-only access)
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='profiles'
-      and policyname = 'Allow users to insert their own profile'
-  ) then
-    create policy "Allow users to insert their own profile"
-      on public.profiles
-      for insert
-      with check (auth.uid() = id);
-  end if;
-end$$;
+-- Enable RLS if table exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'profiles'
+  ) THEN
+    ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='profiles'
-      and policyname = 'Allow users to update their own profile'
-  ) then
-    create policy "Allow users to update their own profile"
-      on public.profiles
-      for update
-      using (auth.uid() = id)
-      with check (auth.uid() = id);
-  end if;
-end$$;
+-- Insert policy (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'Allow users to insert their own profile'
+  ) THEN
+    CREATE POLICY "Allow users to insert their own profile"
+      ON public.profiles
+      FOR INSERT
+      WITH CHECK (auth.uid() = id);
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update policy (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'profiles' AND policyname = 'Allow users to update their own profile'
+  ) THEN
+    CREATE POLICY "Allow users to update their own profile"
+      ON public.profiles
+      FOR UPDATE
+      USING (auth.uid() = id)
+      WITH CHECK (auth.uid() = id);
+  END IF;
+END;
+$$ LANGUAGE plpgsql;

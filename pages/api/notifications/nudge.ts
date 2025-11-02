@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-
 import { withPlan, type PlanGuardContext } from '@/lib/api/withPlan';
 import { enqueueEvent } from '@/lib/notify';
 import { EnqueueBody } from '@/types/notifications';
@@ -33,13 +32,19 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx?: PlanGuar
 
   const parsed = NudgeBody.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+    return res.status(400).json({ 
+      error: 'Invalid payload', 
+      details: parsed.error.flatten() 
+    });
   }
 
   const body = parsed.data;
   const idempotencyKey = buildIdempotencyKey(body.user_id, body.event_key);
 
-  return enqueueEvent(req, res, { ...body, idempotency_key: idempotencyKey });
+  return enqueueEvent(req, res, { 
+    ...body, 
+    idempotency_key: idempotencyKey 
+  });
 }
 
 export default withPlan('starter', handler, { allowRoles: ['admin', 'teacher'] });

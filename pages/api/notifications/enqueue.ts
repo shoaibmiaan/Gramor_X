@@ -1,8 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { DateTime } from 'luxon';
-
 import { supabaseService } from '@/lib/supabaseServer';
-import type { Database } from '@/types/supabase';
 import { EnqueueBody } from '@/types/notifications';
 import { enqueueEvent } from '@/lib/notify';
 
@@ -21,37 +19,9 @@ function resolveLimit(): number {
   return DEFAULT_RATE_LIMIT;
 }
 
-async function withinRateLimit(payload: { user_id: string; event_key: string }): Promise<boolean> {
-  const limit = resolveLimit();
-  if (limit <= 0) {
-    return true;
-  }
-
-  const service = supabaseService<Database>();
-  const windowStart = DateTime.utc().startOf('day');
-
-  const { count, error } = await service
-    .from('notification_events')
-    .select('id', { head: true, count: 'exact' })
-    .eq('user_id', payload.user_id)
-    .eq('event_key', payload.event_key)
-    .gte('created_at', windowStart.toISO());
-
-  if (error) {
-    throw error;
-  }
-
-  if (typeof count === 'number' && count >= limit) {
-    return false;
-  }
-
-  return true;
-}
-
 function authorised(req: NextApiRequest): boolean {
   const secret = resolveSecret();
   if (!secret) {
-    // Require explicit configuration in production to avoid exposing the endpoint.
     return process.env.NODE_ENV !== 'production';
   }
 
@@ -75,17 +45,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const parsed = EnqueueBody.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
-  }
-
-  try {
-    const allowed = await withinRateLimit(parsed.data);
-    if (!allowed) {
-      return res.status(429).json({ error: 'Rate limit exceeded' });
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to evaluate rate limit';
-    return res.status(500).json({ error: message });
+    return res.status(400).json({ 
+      error: 'Invalid payload', 
+      details: parsed.error.flatten() 
+    });
   }
 
   return enqueueEvent(req, res, parsed.data);

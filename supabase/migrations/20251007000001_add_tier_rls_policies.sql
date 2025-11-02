@@ -1,24 +1,32 @@
--- 20251007000001_add_tier_rls_policies.sql
--- Tiered content RLS with guards
+-- Add RLS policies for tiered access (idempotent & safe if content table not present)
 
-alter table if exists public.content enable row level security;
+DO $$
+BEGIN
+  -- only proceed if the "content" table exists
+  IF EXISTS (
+    SELECT 1
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relname = 'content' AND n.nspname = 'public'
+  ) THEN
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='content'
-      and policyname='Tiered content access'
-  ) then
-    create policy "Tiered content access" on public.content
-      for all
-      using (
-        auth.uid() = user_id
-        or (select tier from public.profiles where id = auth.uid()) = 'owl'
-      )
-      with check (
-        auth.uid() = user_id
-        or (select tier from public.profiles where id = auth.uid()) in ('rocket','owl')
-      );
-  end if;
-end$$;
+    -- create the policy only if it doesn't already exist for the table
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = 'content' AND policyname = 'Tiered content access'
+    ) THEN
+      CREATE POLICY "Tiered content access" ON public.content
+        FOR ALL
+        USING (
+          auth.uid() = user_id
+          OR (SELECT tier FROM public.profiles WHERE id = auth.uid()) = 'owl'
+        )
+        WITH CHECK (
+          auth.uid() = user_id
+          OR (SELECT tier FROM public.profiles WHERE id = auth.uid()) IN ('rocket','owl')
+        );
+    END IF;
+
+  END IF;
+END
+$$;
