@@ -73,6 +73,13 @@ export default function AuthLayout({
 
   return (
     <div className="relative min-h-[100dvh] bg-background text-foreground">
+      <a
+        href={`#${leftPanelId}`}
+        className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:rounded-ds-lg focus:bg-background focus:px-4 focus:py-2 focus:shadow-lg"
+      >
+        Skip to authentication form
+      </a>
+
       {/* Theme toggle */}
       <div className="absolute right-4 top-[calc(env(safe-area-inset-top,0px)+1rem)] z-40">
         <ThemeToggle />
@@ -129,6 +136,7 @@ export default function AuthLayout({
             id={leftPanelId}
             aria-labelledby={leftTabId}
             aria-hidden={leftPanelHidden}
+            tabIndex={-1}
             className={leftPanelClassName}
           >
             <div className="w-full max-w-md space-y-6">
