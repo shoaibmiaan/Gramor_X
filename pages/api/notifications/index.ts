@@ -1,91 +1,56 @@
+// pages/api/notifications/index.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import {
-  CreateNotificationSchema,
-  NotificationNudgeSchema,
-} from '@/lib/schemas/notifications';
-import { NotificationService } from '@/lib/notificationService';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://gramorx.com';
+type RawRow = Record<string, any>;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = createSupabaseServerClient({ req });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  
-  if (!user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET');
+    return res.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const service = new NotificationService(supabase);
-
   try {
-    if (req.method === 'GET') {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('id, message, url, read, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
+    const supabase = createSupabaseServerClient({ req, res });
+    // select all columns to be defensive against schema differences
+    const { data, error } = await supabase
+      .from<RawRow>('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
 
-      if (error) throw error;
-
-      const list = (data ?? []).map((row) =>
-        NotificationNudgeSchema.parse({
-          id: row.id,
-          message: row.message ?? '',
-          url: row.url ? (row.url.startsWith('/') ? `${BASE_URL}${row.url}` : row.url) : null,
-          read: Boolean(row.read),
-          createdAt: row.created_at.toISOString(),
-        }),
-      );
-
-      return res.status(200).json({
-        notifications: list.map(({ createdAt, ...rest }) => ({ 
-          ...rest, 
-          created_at: createdAt, 
-          url: rest.url 
-        })),
-        unread: list.filter((notification) => !notification.read).length,
-      });
+    if (error) {
+      console.error('[notifications] supabase error', error);
+      return res.status(500).json({ error: error.message ?? 'db_error' });
     }
 
-    if (req.method === 'POST') {
-      const bodyResult = CreateNotificationSchema.safeParse(req.body);
-      if (!bodyResult.success) {
-        return res.status(400).json({ error: 'Invalid notification data' });
+    const rows = (data ?? []).map((row) => {
+      // Pick title/body from common column names
+      const title = row.title ?? row.subject ?? row.message ?? row.body ?? null;
+      const bodyText = row.body ?? row.message ?? row.details ?? null;
+
+      // Defensive timestamp -> ISO
+      let createdAtIso: string | null = null;
+      try {
+        const d = new Date(row.created_at as any);
+        createdAtIso = isNaN(d.getTime()) ? null : d.toISOString();
+      } catch {
+        createdAtIso = null;
       }
 
-      const notification = await service.createNotification(user.id, bodyResult.data);
-      
-      // Format URL for response
-      const formattedNotification = {
-        ...notification,
-        url: notification.url ? 
-          (notification.url.startsWith('/') ? `${BASE_URL}${notification.url}` : notification.url) 
-          : null,
+      return {
+        id: row.id ?? null,
+        user_id: row.user_id ?? null,
+        title,
+        body: bodyText,
+        created_at: createdAtIso,
+        raw: row, // keep raw row for debugging (optional)
       };
+    });
 
-      return res.status(201).json({
-        notification: {
-          ...formattedNotification,
-          created_at: formattedNotification.createdAt,
-        },
-      });
-    }
-
-    if (req.method === 'PATCH') {
-      // Mark all as read
-      await service.markAllAsRead(user.id);
-      return res.status(200).json({ success: true });
-    }
-
-    res.setHeader('Allow', ['GET', 'POST', 'PATCH']);
-    return res.status(405).end('Method Not Allowed');
-  } catch (error) {
-    console.error('Error in notifications API:', error);
-    const message = error instanceof Error ? error.message : 'Operation failed';
-    return res.status(500).json({ error: message });
+    return res.status(200).json({ ok: true, notifications: rows });
+  } catch (err: any) {
+    console.error('[notifications] unhandled error', err);
+    return res.status(500).json({ error: err?.message ?? 'unexpected' });
   }
 }

@@ -7,6 +7,7 @@ import { navigationSchema } from '@/config/navigation';
 import { filterNavSections } from '@/lib/navigation/utils';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { Icon } from '@/components/design-system/Icon';
+import { Badge } from '@/components/design-system/Badge'; // ✅ Added for subscription tier badge
 
 interface DashboardSidebarProps {
   subscriptionTier: SubscriptionTier;
@@ -41,6 +42,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ subscription
             Jump into the tools that accelerate your IELTS prep.
           </p>
         </div>
+
+        {/* Existing navigation sections */}
         <nav aria-label="Dashboard sections" className="space-y-6">
           {sections.map((section) => (
             <div key={section.id}>
@@ -77,6 +80,68 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ subscription
               </ul>
             </div>
           ))}
+
+          {/* ✅ Added: Innovation section */}
+          <div className="border-t my-4" />
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+            Innovation
+          </div>
+          <ul className="space-y-1.5">
+            <li>
+              <Link
+                href="/ai/coach"
+                className={`block rounded-xl px-3 py-2 text-sm transition ${
+                  isActive('/ai/coach')
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                AI Coach
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/study-buddy"
+                className={`block rounded-xl px-3 py-2 text-sm transition ${
+                  isActive('/study-buddy')
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                Study Buddy
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/mistakes-book"
+                className={`block rounded-xl px-3 py-2 text-sm transition ${
+                  isActive('/mistakes-book')
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                Mistakes Book
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/whatsapp-tasks"
+                className={`block rounded-xl px-3 py-2 text-sm transition ${
+                  isActive('/whatsapp-tasks')
+                    ? 'bg-primary/10 text-primary font-semibold'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                WhatsApp Tasks
+              </Link>
+            </li>
+          </ul>
+
+          {/* ✅ Subscription Tier Badge */}
+          <div className="border-t my-4" />
+          <div className="px-3">
+            <Badge size="sm">{subscriptionTier}</Badge>
+          </div>
         </nav>
       </div>
     </aside>

@@ -30,7 +30,7 @@ const BodySchema = z.object({
 type TagInput = z.infer<typeof TagSchema>;
 
 type ResponseBody =
-  | { ok: true; inserted: number; skipped: number }
+  | { ok: true; inserted: number; skipped: number; insertedIds?: string[] }
   | { ok: false; error: string };
 
 export default async function handler(
@@ -46,12 +46,15 @@ export default async function handler(
   try {
     parsed = BodySchema.parse(req.body ?? {});
   } catch (error) {
-    const message = error instanceof z.ZodError ? error.issues[0]?.message ?? 'invalid_payload' : 'invalid_payload';
+    const message =
+      error instanceof z.ZodError
+        ? error.issues[0]?.message ?? 'invalid_payload'
+        : 'invalid_payload';
     return res.status(400).json({ ok: false, error: message });
   }
 
-  if (parsed.mistakes.length === 0) {
-    return res.status(200).json({ ok: true, inserted: 0, skipped: 0 });
+  if (!parsed.mistakes.length) {
+    return res.status(200).json({ ok: true, inserted: 0, skipped: 0, insertedIds: [] });
   }
 
   const supabase = createSupabaseServerClient({ req, res });
@@ -62,10 +65,19 @@ export default async function handler(
     return res.status(401).json({ ok: false, error: 'unauthorized' });
   }
 
+  // Prepare items: dedupe tags, normalise retryPath (and attach tags to retryPath query)
   const prepared = parsed.mistakes.map((item) => {
     const tags = dedupeTags(item.tags ?? []);
-    const basePath = normaliseBasePath(item.retryPath, parsed.module, parsed.paperId, item.questionId);
+    const basePath = normaliseBasePath(
+      item.retryPath,
+      parsed.module,
+      parsed.paperId,
+      item.questionId,
+    );
     const retryPath = attachTags(basePath, tags);
+
+    // tagsForInsert: array of 'key:value' strings (Postgres text[])
+    const tagsForInsert = tags.map((t) => `${t.key}:${t.value}`);
 
     return {
       questionId: item.questionId,
@@ -73,65 +85,104 @@ export default async function handler(
       correction: item.correctAnswer?.trim() ?? null,
       skill: item.skill?.trim() || parsed.module,
       retryPath,
-      tags,
+      tags: tagsForInsert,
     };
   });
 
+  // Find unique retry paths to detect existing rows
   const uniquePaths = Array.from(
-    new Set(prepared.map((item) => item.retryPath).filter((path): path is string => Boolean(path))),
+    new Set(
+      prepared
+        .map((p) => p.retryPath)
+        .filter((path): path is string => Boolean(path)),
+    ),
   );
 
+  // Find existing rows by retry_path for this user
   const existingPaths = new Set<string>();
   if (uniquePaths.length > 0) {
-    const { data: existing } = await supabase
+    const { data: existing, error: fetchErr } = await supabase
       .from('mistakes_book')
       .select('retry_path')
       .eq('user_id', user.id)
       .in('retry_path', uniquePaths);
-    (existing ?? []).forEach((row: { retry_path: string | null }) => {
-      if (row.retry_path) existingPaths.add(row.retry_path);
-    });
+
+    if (fetchErr) {
+      // Non-fatal: log and continue — we'll treat as no existing rows (but surface an error if insert fails)
+      // eslint-disable-next-line no-console
+      console.error('failed to fetch existing retry paths', fetchErr);
+    } else {
+      (existing ?? []).forEach((row: { retry_path: string | null }) => {
+        if (row.retry_path) existingPaths.add(row.retry_path);
+      });
+    }
   }
 
-  const freshItems = prepared.filter((item) => !item.retryPath || !existingPaths.has(item.retryPath));
+  // Fresh items are those without retryPath OR whose retryPath not in existingPaths
+  const freshItems = prepared.filter(
+    (item) => !item.retryPath || !existingPaths.has(item.retryPath),
+  );
 
   const now = new Date().toISOString();
 
+  // Update last_seen_at for matches (if any)
   if (existingPaths.size > 0) {
-    await supabase
+    const { error: updateErr } = await supabase
       .from('mistakes_book')
       .update({ last_seen_at: now })
       .eq('user_id', user.id)
       .in('retry_path', Array.from(existingPaths));
+
+    if (updateErr) {
+      // Non-fatal but log it
+      // eslint-disable-next-line no-console
+      console.error('failed to update last_seen_at for existing mistakes', updateErr);
+    }
   }
 
+  // Insert fresh items, persist tags into tags column (text[])
   let inserted = 0;
+  const insertedIds: string[] = [];
+
   if (freshItems.length > 0) {
     const insertPayload = freshItems.map((item) => ({
       user_id: user.id,
+      // keep field names similar to your system: 'mistake' stores prompt text
       mistake: item.prompt,
       correction: item.correction,
       type: item.skill,
-      retry_path: item.retryPath,
+      retry_path: item.retryPath ?? null,
+      tags: item.tags && item.tags.length ? item.tags : null, // Postgres text[] or null
       last_seen_at: now,
+      created_at: now,
     }));
 
-    const { error, data } = await supabase
+    const { error: insertError, data } = await supabase
       .from('mistakes_book')
       .insert(insertPayload)
       .select('id');
 
-    if (error) {
-      return res.status(500).json({ ok: false, error: error.message });
+    if (insertError) {
+      // Surface error — this is a real failure
+      // eslint-disable-next-line no-console
+      console.error('insert mistakes failed', insertError);
+      return res.status(500).json({ ok: false, error: insertError.message });
     }
 
-    inserted = data?.length ?? 0;
+    inserted = (data?.length ?? 0);
+    if (Array.isArray(data)) {
+      // data items are { id: ... } shape
+      data.forEach((row: any) => {
+        if (row?.id) insertedIds.push(row.id);
+      });
+    }
   }
 
-  return res
-    .status(200)
-    .json({ ok: true, inserted, skipped: parsed.mistakes.length - inserted });
+  const skipped = parsed.mistakes.length - inserted;
+  return res.status(200).json({ ok: true, inserted, skipped, insertedIds });
 }
+
+/* ---------- helpers (kept from your original with small tweaks) ---------- */
 
 function dedupeTags(tags: TagInput[]): TagInput[] {
   const seen = new Set<string>();
