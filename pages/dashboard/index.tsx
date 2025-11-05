@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
@@ -45,6 +45,8 @@ export default function Dashboard() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [shareStatus, setShareStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   const {
     current: streak,
@@ -58,15 +60,49 @@ export default function Dashboard() {
     useShield,
   } = useStreak();
 
-  const handleShare = () => {
+  const handleShare = useCallback(async () => {
     const text = `I'm studying for IELTS on GramorX with a ${streak}-day streak!`;
     const url = typeof window !== 'undefined' ? window.location.href : '';
-    if (typeof navigator !== 'undefined' && (navigator as any).share) {
-      (navigator as any).share({ title: 'My IELTS progress', text, url }).catch(() => {});
-    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(`${text} ${url}`).catch(() => {});
+    const shareText = `${text} ${url}`.trim();
+
+    try {
+      if (typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function') {
+        await navigator.share({ title: 'My IELTS progress', text, url });
+        setShareStatus('success');
+        setShareMessage('Shared! Let your accountability circle cheer you on.');
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        setShareStatus('success');
+        setShareMessage('Link copied to clipboard—share it anywhere.');
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.prompt('Copy this link to share your progress', shareText);
+        setShareStatus('success');
+        setShareMessage('Copy the link shown above if the prompt did not appear.');
+        return;
+      }
+
+      throw new Error('Sharing is not supported');
+    } catch (error) {
+      setShareStatus('error');
+      setShareMessage('Unable to share automatically. Copy and send the link manually.');
     }
-  };
+  }, [streak]);
+
+  useEffect(() => {
+    if (!shareMessage) return;
+    const timer = setTimeout(() => {
+      setShareMessage(null);
+      setShareStatus('idle');
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [shareMessage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -455,9 +491,20 @@ export default function Dashboard() {
                   </div>
                 ) : null}
 
-                <Button onClick={handleShare} variant="ghost" size="sm" className="rounded-ds-xl">
-                  Share progress
-                </Button>
+                <div className="flex flex-col items-start gap-1">
+                  <Button onClick={handleShare} variant="ghost" size="sm" className="rounded-ds-xl">
+                    Share progress
+                  </Button>
+                  {shareMessage ? (
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className={`text-xs ${shareStatus === 'error' ? 'text-danger' : 'text-muted-foreground'}`}
+                    >
+                      {shareMessage}
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
 
