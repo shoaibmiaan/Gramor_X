@@ -1,51 +1,47 @@
 // components/layouts/LearningLayout.tsx
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
+import { GraduationCap } from 'lucide-react';
+
 import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
+import { LayoutHero } from '@/components/layouts/shared/LayoutHero';
 
 const LearningLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
-  const Item = ({ href, label }: { href: string; label: string }) => {
-    const active = pathname === href || pathname.startsWith(href + '/');
-    return (
-      <Link
-        href={href}
-        aria-current={active ? 'page' : undefined}
-        className={`nav-pill shrink-0 whitespace-nowrap ${active ? 'bg-primary/10 text-primary' : ''}`}
-      >
-        {label}
-      </Link>
-    );
-  };
-
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <section className="border-b border-border bg-card/30">
-        <Container className="flex flex-col gap-4 py-5 pt-safe sm:py-6">
-          <div className="space-y-1">
-            <h1 className="font-slab text-h3 sm:text-h2">Learning & Studio</h1>
-            <p className="text-small text-mutedText">
-              Lessons, drills, strategies — and your content studio.
-            </p>
-          </div>
-          <nav
-            className="-mx-1 flex gap-2 overflow-x-auto pb-1"
-            aria-label="Learning sections"
-          >
-            <div className="flex gap-2 px-1">
-              <Item href="/learning" label="Overview" />
-              <Item href="/learning/skills" label="Skills" />
-              <Item href="/learning/skills/lessons" label="Lessons" />
-              <Item href="/learning/strategies" label="Strategies" />
-              <Item href="/content/studio" label="Studio" />
-            </div>
-          </nav>
-        </Container>
-      </section>
+      <LayoutHero
+        accent="learning"
+        icon={GraduationCap}
+        eyebrow="Learning Studio"
+        title="Lessons & Strategies"
+        subtitle="Move through guided lessons, unlock drills, and create your own study content with the studio."
+        actions={
+          <Button asChild variant="soft" tone="warning" elevateOnHover>
+            <Link href="/study-plan">View study plan</Link>
+          </Button>
+        }
+        quickNav={{
+          ariaLabel: 'Learning sections',
+          items: [
+            { href: '/learning', label: 'Overview' },
+            { href: '/learning/skills', label: 'Skills' },
+            { href: '/learning/skills/lessons', label: 'Lessons' },
+            { href: '/learning/strategies', label: 'Strategies' },
+            { href: '/content/studio', label: 'Studio' },
+          ],
+        }}
+      >
+        <div className="rounded-2xl border border-white/50 bg-white/70 p-4 text-sm font-medium text-orange-900 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-amber-100/90">
+          Continue where you left off in Speaking Fluency Drill set 4.
+        </div>
+        <div className="rounded-2xl border border-white/50 bg-white/70 p-4 text-sm text-orange-900/80 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-amber-100/80">
+          Studio tip: drop your prompts to auto-generate vocabulary lists and outlines.
+        </div>
+      </LayoutHero>
 
-      <Container className="py-6">
-        <div className="card-surface rounded-ds-2xl p-4">{children}</div>
+      <Container className="pb-10">
+        <div className="card-surface rounded-ds-2xl p-4 shadow-[0_25px_55px_rgba(251,191,36,0.18)] dark:shadow-none">{children}</div>
       </Container>
     </div>
   );
