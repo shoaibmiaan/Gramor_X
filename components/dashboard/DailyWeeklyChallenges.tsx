@@ -46,12 +46,33 @@ export function DailyWeeklyChallenges() {
     challenges: [],
     busyId: null,
   });
+  const isMounted = React.useRef(true);
+  const challengesController = React.useRef<AbortController | null>(null);
+  const progressController = React.useRef<AbortController | null>(null);
+  const xpTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      challengesController.current?.abort();
+      progressController.current?.abort();
+      if (xpTimeoutRef.current) {
+        clearTimeout(xpTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const load = React.useCallback(async () => {
+    challengesController.current?.abort();
+    const controller = new AbortController();
+    challengesController.current = controller;
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
+      const headers = await authHeaders();
+      if (controller.signal.aborted) return;
       const res = await fetch('/api/gamification/challenges', {
-        headers: await authHeaders(),
+        headers,
+        signal: controller.signal,
       });
       if (!res.ok) {
         throw new Error('Unable to load challenges');
@@ -60,9 +81,15 @@ export function DailyWeeklyChallenges() {
       if (!json.ok || !json.challenges) {
         throw new Error(json.error || 'Unable to load challenges');
       }
+      if (!isMounted.current || controller.signal.aborted) return;
       setState((s) => ({ ...s, loading: false, challenges: json.challenges }));
     } catch (error: any) {
+      if (controller.signal.aborted || !isMounted.current) return;
       setState((s) => ({ ...s, loading: false, error: error?.message || 'Failed to load challenges' }));
+    } finally {
+      if (challengesController.current === controller) {
+        challengesController.current = null;
+      }
     }
   }, []);
 
@@ -72,12 +99,18 @@ export function DailyWeeklyChallenges() {
 
   const increment = React.useCallback(
     async (challengeId: string) => {
+      progressController.current?.abort();
+      const controller = new AbortController();
+      progressController.current = controller;
       setState((s) => ({ ...s, busyId: challengeId, error: null }));
       try {
+        const headers = await authHeaders({ 'Content-Type': 'application/json' });
+        if (controller.signal.aborted) return;
         const res = await fetch('/api/gamification/challenges/progress', {
           method: 'POST',
-          headers: await authHeaders({ 'Content-Type': 'application/json' }),
+          headers,
           body: JSON.stringify({ challengeId }),
+          signal: controller.signal,
         });
         const json = (await res.json().catch(() => null)) as
           | {
@@ -97,6 +130,7 @@ export function DailyWeeklyChallenges() {
         if (!res.ok || !json || !json.ok || !json.progress) {
           throw new Error(json?.error || 'Failed to update progress');
         }
+        if (!isMounted.current || controller.signal.aborted) return;
         setState((s) => ({
           ...s,
           busyId: null,
@@ -118,7 +152,12 @@ export function DailyWeeklyChallenges() {
           ),
         }));
       } catch (error: any) {
+        if (controller.signal.aborted || !isMounted.current) return;
         setState((s) => ({ ...s, busyId: null, error: error?.message || 'Failed to update challenge' }));
+      } finally {
+        if (progressController.current === controller) {
+          progressController.current = null;
+        }
       }
     },
     [],
@@ -126,10 +165,17 @@ export function DailyWeeklyChallenges() {
 
   React.useEffect(() => {
     if (!state.xpFlash) return;
-    const timer = setTimeout(() => {
+    if (xpTimeoutRef.current) clearTimeout(xpTimeoutRef.current);
+    xpTimeoutRef.current = setTimeout(() => {
+      if (!isMounted.current) return;
       setState((s) => ({ ...s, xpFlash: null }));
     }, 2000);
-    return () => clearTimeout(timer);
+    return () => {
+      if (xpTimeoutRef.current) {
+        clearTimeout(xpTimeoutRef.current);
+        xpTimeoutRef.current = null;
+      }
+    };
   }, [state.xpFlash]);
 
   if (state.loading) {
@@ -174,7 +220,11 @@ export function DailyWeeklyChallenges() {
         const busy = state.busyId === challenge.id;
         const xpFlash = state.xpFlash?.id === challenge.id ? state.xpFlash.value : null;
         return (
-          <Card key={challenge.id} className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+          <Card
+            key={challenge.id}
+            className="rounded-ds-2xl border border-border/60 bg-card/70 p-6"
+            aria-busy={busy}
+          >
             <div className="flex items-center justify-between">
               <Badge variant="secondary" size="sm">
                 {SCOPE_LABEL[challenge.type]}
@@ -193,7 +243,11 @@ export function DailyWeeklyChallenges() {
               <span className="hidden md:inline">•</span>
               <span>XP +{challenge.xpReward}</span>
               {xpFlash ? (
-                <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+                <span
+                  className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-primary"
+                  role="status"
+                  aria-live="polite"
+                >
                   +{xpFlash} XP!
                 </span>
               ) : null}
@@ -217,7 +271,7 @@ export function DailyWeeklyChallenges() {
                 onClick={() => void increment(challenge.id)}
                 disabled={busy || completed >= target}
               >
-                {busy ? 'Saving…' : completed >= target ? 'Completed' : 'Log collocation'}
+                {busy ? 'Saving…' : completed >= target ? 'Completed' : 'Log progress'}
               </Button>
               <Button variant="secondary" className="rounded-ds-xl" onClick={() => void load()} disabled={busy}>
                 Refresh
