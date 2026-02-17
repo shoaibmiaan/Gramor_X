@@ -1,0 +1,140 @@
+{
+  "updatedAt": "2024-09-01T00:00:00.000Z",
+  "exams": [
+    {
+      "id": "ielts-writing-exam-01",
+      "title": "Academic Set 1 — Energy & Remote Work",
+      "durationSec": 3600,
+      "task1": {
+        "title": "Renewable energy consumption",
+        "type": "academic",
+        "prompt": "The line graph shows the proportion of electricity generated from renewable sources in four countries (Canada, Germany, Japan and Brazil) between 2000 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+        "minimumWords": 150,
+        "hints": [
+          "Group countries with similar movement before comparing specific years.",
+          "Highlight any dramatic increases or reversals in trend.",
+          "Close with a one-sentence overview summarising the biggest changes."
+        ]
+      },
+      "task2": {
+        "title": "Opinion essay — Remote work",
+        "prompt": "Many people now work remotely and communicate with colleagues online. Some people think this allows for a better work–life balance, while others believe it makes teamwork more difficult. Discuss both views and give your own opinion.",
+        "minimumWords": 250,
+        "outline": [
+          "Introduction: paraphrase the question and state your opinion.",
+          "Body 1: benefits of remote work for individuals and companies.",
+          "Body 2: collaboration and culture challenges remote teams face.",
+          "Conclusion: summarise both sides and restate your stance."
+        ]
+      }
+    },
+    {
+      "id": "ielts-writing-exam-05",
+      "title": "Academic Set 5 — Town Development & Online Shopping",
+      "durationSec": 3600,
+      "task1": {
+        "title": "Town redevelopment maps",
+        "type": "academic",
+        "prompt": "The maps show changes to the town of Westley between 1990 and today. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+        "minimumWords": 150,
+        "hints": [
+          "Describe the town layout in 1990 before explaining upgrades.",
+          "Group related changes (e.g. new housing, transport, leisure).",
+          "Finish with a high-level comparison highlighting the town's new focus."
+        ]
+      },
+      "task2": {
+        "title": "Discussion essay — Online shopping",
+        "prompt": "Online shopping is replacing visits to local shops. Do the advantages of this trend outweigh the disadvantages?",
+        "minimumWords": 250,
+        "outline": [
+          "Introduction: paraphrase the topic and state whether advantages outweigh disadvantages.",
+          "Body 1: explain key benefits such as convenience and variety.",
+          "Body 2: examine drawbacks like reduced social interaction and delivery emissions.",
+          "Conclusion: summarise arguments and reaffirm your opinion."
+        ]
+      }
+    },
+    {
+      "id": "ielts-writing-exam-08",
+      "title": "General Training Set 2 — Noisy Neighbours & Libraries",
+      "durationSec": 3600,
+      "task1": {
+        "title": "Semi-formal complaint letter",
+        "type": "general_training",
+        "prompt": "You live in an apartment building and your neighbour has been playing loud music late at night. Write a letter to your neighbour explaining the problem and suggesting a solution.",
+        "minimumWords": 150,
+        "hints": [
+          "Open with a polite greeting and explain who you are.",
+          "Describe the issue and how it affects you or your family.",
+          "Suggest a reasonable solution and thank them for their cooperation."
+        ]
+      },
+      "task2": {
+        "title": "Opinion essay — Public libraries",
+        "prompt": "Some people say that public libraries are no longer necessary because of the internet. To what extent do you agree or disagree?",
+        "minimumWords": 250,
+        "outline": [
+          "Introduction: paraphrase the statement and outline your view.",
+          "Body 1: argue why libraries still matter for equal access and community.",
+          "Body 2: acknowledge digital resources while highlighting libraries' unique roles.",
+          "Conclusion: restate your position and suggest how libraries can adapt."
+        ]
+      }
+    },
+    {
+      "id": "ielts-writing-exam-12",
+      "title": "General Training Set 12 — Community Centre & Flexible Hours",
+      "durationSec": 3600,
+      "task1": {
+        "title": "Facilities request letter",
+        "type": "general_training",
+        "prompt": "Your local community centre has asked for ideas to improve its services. Write a letter describing a class or activity that should be added.",
+        "minimumWords": 150,
+        "hints": [
+          "Introduce yourself and explain how you use the centre currently.",
+          "Describe the new class, including who it helps and why it matters.",
+          "Offer to help or give feedback once the activity is introduced."
+        ]
+      },
+      "task2": {
+        "title": "Advantages/disadvantages essay — Flexible schedules",
+        "prompt": "More companies are introducing flexible working hours. Discuss the advantages and disadvantages of this change.",
+        "minimumWords": 250,
+        "outline": [
+          "Introduction: paraphrase the topic and preview both sides.",
+          "Body 1: outline advantages for productivity and employee wellbeing.",
+          "Body 2: describe potential issues such as coordination and fairness.",
+          "Conclusion: summarise key points and provide a balanced view."
+        ]
+      }
+    },
+    {
+      "id": "ielts-writing-exam-14",
+      "title": "Academic Set 14 — Smart Homes & Youth Engagement",
+      "durationSec": 3600,
+      "task1": {
+        "title": "Smart home energy system",
+        "type": "academic",
+        "prompt": "The diagram shows how a smart home energy management system stores and distributes electricity. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+        "minimumWords": 150,
+        "hints": [
+          "Begin with an overview describing the main stages of the system.",
+          "Explain how energy flows between the grid, solar panels, battery and appliances.",
+          "Highlight any feedback loops or automation described in the diagram."
+        ]
+      },
+      "task2": {
+        "title": "Opinion essay — Youth councils",
+        "prompt": "Some cities are creating youth councils that advise local governments. Do you think this is a positive or negative development?",
+        "minimumWords": 250,
+        "outline": [
+          "Introduction: rephrase the statement and state your opinion.",
+          "Body 1: present reasons why youth councils can improve policy and engagement.",
+          "Body 2: consider potential drawbacks such as tokenism or lack of expertise.",
+          "Conclusion: reinforce your view and suggest how to make councils effective."
+        ]
+      }
+    }
+  ]
+}

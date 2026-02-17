@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-9",
+  "title": "Reading Practice Test 14 — Film Heritage",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Inside the Aurora Film Archive",
+      "text": "The Aurora Film Archive stores reels dating back to the 1920s, many of which exist in only a single copy. When an HVAC failure in 2016 caused humidity to spike, archivists realised their magnetic tape backups were degrading faster than expected. They built a new preservation vault with dual climate zones: one for nitrate film kept at minus five degrees Celsius, and another for acetate film at slightly warmer temperatures. Sensors feed data to a dashboard that alerts staff if humidity fluctuates by more than two percent.\n\nTo digitise fragile reels, the archive commissioned a custom scanner with sprocketless transport so brittle perforations would not tear. Volunteers catalogue metadata from production notes, cross-referencing scripts with surviving footage. The archive hosts screening nights where restored films are accompanied by historians discussing cultural context. Revenue from these events funds shipments of endangered reels from private collectors. A partnership with the national library ensures that digital masters are stored in geographically separate data centres for redundancy.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The archive has multiple copies of each reel from the 1920s.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. A humidity incident in 2016 revealed issues with backup tapes.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Nitrate film is stored at colder temperatures than acetate film.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. Sensors notify staff when humidity varies significantly.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. The custom scanner uses sprockets to grip brittle film tightly.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Volunteers help document metadata associated with the films.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Screening events feature discussions about historical context.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. Funds from screenings support acquiring endangered reels.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. Digital masters are backed up in the same building as the original films.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. The archive no longer collaborates with national institutions.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. Humidity sensors trigger alerts when changes exceed two percent.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Magnetic tape backups were unaffected by environmental conditions.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. The archive refuses reels from private collectors.",
+          "answer": "False"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Science Festivals with Neighbours",
+      "text": "Science communicator Laleh Iqbal argues that festivals dedicated to science can transform public engagement when designed with community partners. She praises events that take place in neighbourhood plazas rather than conference halls, making it easier for families to attend. Iqbal insists that hands-on exhibits co-created with local schools resonate more than imported demonstrations. She criticises festivals that showcase celebrity scientists but fail to include grassroots organisations tackling environmental issues.\n\nIqbal supports paying citizen presenters stipends, saying compensation recognises lived expertise. She is wary of corporate sponsorships that demand control over messaging, preferring transparent agreements that disclose funder influence. While she values digital livestreams, she notes that reliable internet cannot be assumed, so organisers must provide offline activities too. Iqbal believes evaluation should measure long-term partnerships, not just attendee numbers. She concludes that science festivals succeed when they invite residents to become collaborators rather than spectators.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Iqbal believes science festivals should be co-designed with communities.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. She prefers events held in conference centres.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Iqbal values exhibits built with local schools.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. She is satisfied with festivals featuring celebrity scientists without local voices.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Iqbal supports paying stipends to citizen presenters.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. She is comfortable with corporate sponsors dictating messaging.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Iqbal notes that livestreams must be complemented by offline options.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. She argues that evaluation should look beyond attendance figures.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Iqbal thinks residents should act mainly as spectators.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. She welcomes transparent agreements that show funder influence.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Iqbal claims reliable internet access can always be assumed.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. She dismisses grassroots environmental groups as irrelevant.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Iqbal wants festivals located where families can easily participate.",
+          "answer": "Yes"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Floating Wetlands on the Lumen",
+      "text": "Urban ecologist Deon Clarke leads a project installing floating wetlands along the River Lumen to filter runoff before it reaches the estuary. The wetlands consist of modular rafts planted with native reeds whose roots dangle into the water, absorbing nutrients and heavy metals. Clarke's team anchors the rafts with adjustable cables that rise and fall with the tide, preventing damage during floods. Water quality sensors attached beneath each platform relay nitrate levels to a control room every hour.\n\nTo study wildlife benefits, students record fish and bird species that use the structures for shelter. Maintenance crews harvest excess plant growth and compost it for community gardens, ensuring contaminants are not returned to the river. The project partners with a wastewater utility that analyses whether the wetlands reduce treatment costs downstream. Artists collaborated to design interpretive signage explaining how the floating habitats function. After a year, the team observed a 35 percent drop in algal blooms along monitored stretches.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What is the primary function of the floating wetlands?",
+          "options": [
+            "A. Generating electricity for riverside homes.",
+            "B. Filtering pollutants from urban runoff.",
+            "C. Creating new mooring spaces for boats.",
+            "D. Providing recreational swimming areas."
+          ],
+          "answer": "B. Filtering pollutants from urban runoff."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. How are the wetland rafts anchored?",
+          "options": [
+            "A. With concrete pylons fixed to the riverbed.",
+            "B. With adjustable cables that move with the tide.",
+            "C. With floating buoys connected to wind turbines.",
+            "D. With nets held by volunteers."
+          ],
+          "answer": "B. With adjustable cables that move with the tide."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. What do the roots of the reeds do?",
+          "options": [
+            "A. Generate oxygen for passing boats.",
+            "B. Absorb nutrients and heavy metals.",
+            "C. Anchor the rafts to the riverbank.",
+            "D. Produce seeds for agricultural use."
+          ],
+          "answer": "B. Absorb nutrients and heavy metals."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. How frequently are nitrate levels reported?",
+          "options": [
+            "A. Every five minutes.",
+            "B. Hourly.",
+            "C. Twice per day.",
+            "D. Once a week."
+          ],
+          "answer": "B. Hourly."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. Who monitors wildlife interactions with the wetlands?",
+          "options": [
+            "A. Commercial fishing crews.",
+            "B. University students.",
+            "C. Tourist guides.",
+            "D. City councillors."
+          ],
+          "answer": "B. University students."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. What happens to harvested plant material?",
+          "options": [
+            "A. It is burned for energy.",
+            "B. It is composted for community gardens.",
+            "C. It is dried and sold as animal feed.",
+            "D. It is dumped back into the river downstream."
+          ],
+          "answer": "B. It is composted for community gardens."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. Which organisation analyses cost savings from the project?",
+          "options": [
+            "A. A local tourism board.",
+            "B. The wastewater utility partner.",
+            "C. A national shipping company.",
+            "D. The department of education."
+          ],
+          "answer": "B. The wastewater utility partner."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. Why were artists involved?",
+          "options": [
+            "A. To paint the rafts bright colours.",
+            "B. To create interpretive signage explaining the wetlands.",
+            "C. To design uniforms for maintenance crews.",
+            "D. To compose music for launch events."
+          ],
+          "answer": "B. To create interpretive signage explaining the wetlands."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. How much did algal blooms decline along monitored sections?",
+          "options": [
+            "A. By about ten percent.",
+            "B. By around thirty-five percent.",
+            "C. They doubled in frequency.",
+            "D. They were unaffected."
+          ],
+          "answer": "B. By around thirty-five percent."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. What kind of data is sent to the control room?",
+          "options": [
+            "A. Shipping manifests.",
+            "B. Hourly nitrate readings.",
+            "C. Weather forecasts from upstream stations.",
+            "D. Advertising metrics for signage."
+          ],
+          "answer": "B. Hourly nitrate readings."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. What ensures contaminants are not returned to the river?",
+          "options": [
+            "A. Burning harvested plants on site.",
+            "B. Composting the biomass away from the water.",
+            "C. Leaving the plants to decay naturally.",
+            "D. Shipping plants to landfill."
+          ],
+          "answer": "B. Composting the biomass away from the water."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. What is a secondary benefit observed by the project?",
+          "options": [
+            "A. Increased boat traffic.",
+            "B. Greater use of the river for swimming.",
+            "C. More fish and birds using the structures for habitat.",
+            "D. Construction of new highways nearby."
+          ],
+          "answer": "C. More fish and birds using the structures for habitat."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each project component with its function.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Floating rafts",
+                "right": ["Supporting reed plantings"]
+              },
+              {
+                "left": "Water sensors",
+                "right": ["Reporting nitrate levels"]
+              },
+              {
+                "left": "Maintenance crews",
+                "right": ["Harvesting and composting biomass"]
+              },
+              {
+                "left": "Artists",
+                "right": ["Designing educational signage"]
+              }
+            ]
+          },
+          "answer": "Floating rafts -> Supporting reed plantings"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What overall impact do the floating wetlands aim to achieve?",
+          "options": [
+            "A. Diverting ships to other ports.",
+            "B. Improving river health before water reaches the estuary.",
+            "C. Eliminating the need for wastewater treatment.",
+            "D. Expanding residential development along the river."
+          ],
+          "answer": "B. Improving river health before water reaches the estuary."
+        }
+      ]
+    }
+  ]
+}

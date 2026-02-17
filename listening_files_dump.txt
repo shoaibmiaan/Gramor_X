@@ -1,0 +1,51 @@
+===== components/listening/ReviewScreen.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/ReviewScreen.tsx
+
+===== components/listening/AnswerReview.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/AnswerReview.tsx
+
+===== components/listening/.DS_Store =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/.DS_Store
+
+===== components/listening/AudioSectionsPlayer.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/AudioSectionsPlayer.tsx
+
+===== components/listening/Transcript.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/Transcript.tsx
+
+===== components/listening/players/AccentSwitcher.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/players/AccentSwitcher.tsx
+
+===== components/listening/cards/ResourceCard.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/cards/ResourceCard.tsx
+
+===== components/listening/ListeningExamShell.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/ListeningExamShell.tsx
+
+===== components/listening/accent/AccentClip.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/accent/AccentClip.tsx
+
+===== components/listening/ListeningHero.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/ListeningHero.tsx
+
+===== components/listening/NoiseLadderPlayer.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/NoiseLadderPlayer.tsx
+
+===== components/listening/dictation/DictationEditor.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/dictation/DictationEditor.tsx
+
+===== components/listening/SaveButton.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/SaveButton.tsx
+
+===== components/listening/ListeningFilterBar.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/ListeningFilterBar.tsx
+
+===== components/listening/TranscriptReview.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/TranscriptReview.tsx
+
+===== components/listening/quizzes/TimedMiniTest.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/quizzes/TimedMiniTest.tsx
+
+===== components/listening/analytics/DrillBreakdown.tsx =====
+/Users/solvioadvisors/Portal/GramorX_Clean/components/listening/analytics/DrillBreakdown.tsx
+

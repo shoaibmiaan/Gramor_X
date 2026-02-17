@@ -1,0 +1,3247 @@
+1. ./types/streak.ts
+export type StreakSummary = {
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;
+  next_restart_date: string | null;
+  shields: number;
+};
+
+export type StreakMutationAction = 'claim' | 'schedule' | 'use';
+
+
+-----
+
+
+2. ./tests/lib/streaks.test.ts
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { computeStreakUpdate, dayKey, syncStreak } from '@/lib/streaks';
+
+test('dayKey respects timezone behind UTC across calendar boundary', () => {
+  const date = new Date('2024-01-01T03:30:00Z');
+  const key = dayKey(date, 'America/Los_Angeles');
+  assert.equal(key, '2023-12-31');
+});
+
+test('dayKey handles DST forward shift without skipping day', () => {
+  const date = new Date('2024-03-10T06:30:00Z');
+  const key = dayKey(date, 'America/New_York');
+  assert.equal(key, '2024-03-10');
+});
+
+test('computeStreakUpdate increments over DST transition', () => {
+  const now = new Date('2024-03-11T05:00:00Z');
+  const result = computeStreakUpdate({
+    now,
+    tz: 'America/New_York',
+    row: { current_streak: 5, last_activity_date: '2024-03-10' },
+  });
+  assert.equal(result.current, 6);
+  assert.equal(result.reason, 'incremented');
+  assert.equal(result.todayKey, '2024-03-11');
+});
+
+test('syncStreak only updates requesting user row and logs correction', async () => {
+  const logs: string[] = [];
+  const originalInfo = console.info;
+  console.info = (...args: unknown[]) => {
+    logs.push(args.join(' '));
+  };
+
+  try {
+    const stub = createSupabaseStub({
+      user_id: 'user-1',
+      current_streak: 2,
+      last_activity_date: '2024-03-09',
+    });
+
+    const fixedNow = new Date('2024-03-10T23:30:00-04:00');
+    const next = await syncStreak(stub as any, 'user-1', 'America/New_York', fixedNow);
+    assert.equal(next, 3);
+
+    assert.deepEqual(stub.selectCalls, [{ table: 'user_streaks', column: 'user_id', value: 'user-1' }]);
+    assert.equal(stub.upsertCalls.length, 1);
+    const upsert = stub.upsertCalls[0];
+    assert.equal(upsert.table, 'user_streaks');
+    assert.deepEqual(upsert.payload, {
+      user_id: 'user-1',
+      current_streak: 3,
+      last_activity_date: '2024-03-10',
+    });
+    assert.equal(logs.length, 1);
+    assert.match(logs[0], /"userId":"user-1"/);
+    assert.match(logs[0], /"reason":"incremented"/);
+  } finally {
+    console.info = originalInfo;
+  }
+});
+
+type StubRow = {
+  user_id: string;
+  current_streak: number;
+  last_activity_date: string | null;
+};
+
+type SelectCall = { table: string; column: string; value: string };
+
+type UpsertCall = { table: string; payload: any };
+
+function createSupabaseStub(row: StubRow | null) {
+  return {
+    selectCalls: [] as SelectCall[],
+    upsertCalls: [] as UpsertCall[],
+    from(table: string) {
+      const parent = this;
+      return {
+        _filter: null as null | { column: string; value: string },
+        select() {
+          return this;
+        },
+        eq(column: string, value: string) {
+          parent.selectCalls.push({ table, column, value });
+          this._filter = { column, value };
+          return this;
+        },
+        async maybeSingle() {
+          if (!this._filter || !row || row.user_id !== this._filter.value) {
+            return { data: null, error: null };
+          }
+          return { data: { current_streak: row.current_streak, last_activity_date: row.last_activity_date }, error: null };
+        },
+        async upsert(payload: any) {
+          parent.upsertCalls.push({ table, payload });
+          return { data: null, error: null };
+        },
+      };
+    },
+  };
+}
+
+
+-----
+
+
+3. ./tests/api/streak.test.ts
+// tests/api/streak.test.ts
+import { strict as assert } from 'node:assert';
+
+type QueueKey = 'select' | 'upsert' | 'update' | 'insert';
+
+type TableQueues = Record<
+  string,
+  {
+    [key in QueueKey]?: Array<Record<string, any>>;
+  }
+>;
+
+type SupabaseStubConfig = {
+  user?: { id: string } | null;
+  authError?: Error | null;
+  responses?: TableQueues;
+  captured?: Array<Record<string, any>>;
+};
+
+function cloneQueues(responses: TableQueues | undefined): TableQueues {
+  if (!responses) return {};
+  return Object.fromEntries(
+    Object.entries(responses).map(([table, queues]) => [
+      table,
+      {
+        select: queues.select ? [...queues.select] : [],
+        upsert: queues.upsert ? [...queues.upsert] : [],
+        update: queues.update ? [...queues.update] : [],
+        insert: queues.insert ? [...queues.insert] : [],
+      },
+    ]),
+  );
+}
+
+function createSupabaseStub(config: SupabaseStubConfig) {
+  const queues = cloneQueues(config.responses);
+  const captured = config.captured;
+
+  const shift = (table: string, key: QueueKey) => {
+    const tableQueues = queues[table] ?? (queues[table] = {} as any);
+    const arr = (tableQueues[key] ??= []);
+    if (arr.length === 0) return {} as Record<string, any>;
+    return arr.shift() ?? ({} as Record<string, any>);
+  };
+
+  const buildSelectChain = (table: string) => {
+    const result = shift(table, 'select');
+    const chain: any = {
+      eq() {
+        return chain;
+      },
+      gte() {
+        return Promise.resolve(result);
+      },
+      maybeSingle() {
+        return Promise.resolve(result);
+      },
+      single() {
+        return Promise.resolve(result);
+      },
+    };
+    return chain;
+  };
+
+  const buildUpsertChain = (table: string, value: Record<string, any>, options: Record<string, any> | undefined) => {
+    captured?.push({ table, op: 'upsert', value, options });
+    const result = shift(table, 'upsert');
+    return {
+      select() {
+        return {
+          maybeSingle() {
+            return Promise.resolve(result);
+          },
+          single() {
+            return Promise.resolve(result);
+          },
+        };
+      },
+    };
+  };
+
+  const buildUpdateChain = (table: string, value: Record<string, any>) => {
+    captured?.push({ table, op: 'update', value });
+    const result = shift(table, 'update');
+    return {
+      eq() {
+        return {
+          select() {
+            return {
+              single() {
+                return Promise.resolve(result);
+              },
+            };
+          },
+        };
+      },
+    };
+  };
+
+  return {
+    auth: {
+      async getUser() {
+        if (config.authError) {
+          return { data: { user: null }, error: config.authError };
+        }
+        if (!config.user) {
+          return { data: { user: null }, error: null };
+        }
+        return { data: { user: config.user }, error: null };
+      },
+    },
+    from(table: string) {
+      return {
+        select() {
+          return buildSelectChain(table);
+        },
+        upsert(value: Record<string, any>, options?: Record<string, any>) {
+          return buildUpsertChain(table, value, options);
+        },
+        update(value: Record<string, any>) {
+          return buildUpdateChain(table, value);
+        },
+        insert(value: Record<string, any>) {
+          captured?.push({ table, op: 'insert', value });
+          const result = shift(table, 'insert');
+          return Promise.resolve(result);
+        },
+      };
+    },
+  };
+}
+
+function createRes() {
+  return {
+    statusCode: 0,
+    body: undefined as any,
+    headers: new Map<string, any>(),
+    status(code: number) {
+      this.statusCode = code;
+      return this;
+    },
+    json(payload: any) {
+      this.body = payload;
+      return this;
+    },
+    setHeader(name: string, value: any) {
+      this.headers.set(name, value);
+    },
+    getHeader(name: string) {
+      return this.headers.get(name);
+    },
+  };
+}
+
+function loadHandler(config: SupabaseStubConfig) {
+  const helperPath = require.resolve('../../lib/supabaseServer');
+  const handlerPath = require.resolve('../../pages/api/streak');
+
+  delete require.cache[helperPath];
+  delete require.cache[handlerPath];
+
+  require.cache[helperPath] = {
+    exports: {
+      getServerClient: () => createSupabaseStub(config),
+    },
+  } as any;
+
+  const handler = require(handlerPath).default;
+
+  return {
+    handler,
+    cleanup: () => {
+      delete require.cache[helperPath];
+      delete require.cache[handlerPath];
+    },
+  };
+}
+
+(async () => {
+  {
+    const { handler, cleanup } = loadHandler({ user: null });
+    const res = createRes();
+    await handler({ method: 'GET' } as any, res as any);
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.body.error, 'not_authenticated');
+    cleanup();
+  }
+
+  {
+    const todayRow = {
+      user_id: 'user-1',
+      current_streak: 3,
+      longest_streak: 5,
+      last_activity_date: '2024-03-10',
+      updated_at: '2024-03-10T12:00:00Z',
+    };
+    const { handler, cleanup } = loadHandler({
+      user: { id: 'user-1' },
+      responses: {
+        streaks: {
+          select: [{ data: todayRow, error: null }],
+        },
+        streak_shields: {
+          select: [{ data: { tokens: 2 }, error: null }],
+        },
+      },
+    });
+    const res = createRes();
+    await handler({ method: 'GET' } as any, res as any);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, {
+      current_streak: 3,
+      longest_streak: 5,
+      last_activity_date: '2024-03-10',
+      next_restart_date: null,
+      shields: 2,
+    });
+    cleanup();
+  }
+
+  {
+    const { handler, cleanup } = loadHandler({
+      user: { id: 'user-claim' },
+      responses: {
+        streaks: {
+          select: [
+            {
+              data: {
+                user_id: 'user-claim',
+                current_streak: 5,
+                longest_streak: 5,
+                last_activity_date: '2024-03-10',
+                updated_at: '2024-03-10T12:00:00Z',
+              },
+              error: null,
+            },
+          ],
+        },
+        streak_shields: {
+          select: [{ data: { tokens: 0 }, error: null }],
+        },
+      },
+    });
+    const res = createRes();
+    await handler({ method: 'POST', body: { action: 'claim' } } as any, res as any);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.error, 'Shield claim unavailable for current streak');
+    cleanup();
+  }
+
+  {
+    const captured: Array<Record<string, any>> = [];
+    const now = new Date();
+    const todayKey = now.toISOString().split('T')[0];
+    const { handler, cleanup } = loadHandler({
+      user: { id: 'user-update' },
+      responses: {
+        streaks: {
+          select: [
+            {
+              data: {
+                user_id: 'user-update',
+                current_streak: 0,
+                longest_streak: 0,
+                last_activity_date: null,
+                updated_at: '1970-01-01T00:00:00Z',
+              },
+              error: null,
+            },
+          ],
+          update: [
+            {
+              data: {
+                user_id: 'user-update',
+                current_streak: 1,
+                longest_streak: 1,
+                last_activity_date: todayKey,
+                updated_at: now.toISOString(),
+              },
+              error: null,
+            },
+          ],
+        },
+        streak_shields: {
+          select: [{ data: { tokens: 0 }, error: null }],
+        },
+      },
+      captured,
+    });
+
+    const res = createRes();
+    await handler({ method: 'POST', body: {} } as any, res as any);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, {
+      current_streak: 1,
+      longest_streak: 1,
+      last_activity_date: todayKey,
+      next_restart_date: null,
+      shields: 0,
+    });
+
+    const updateCall = captured.find((entry) => entry.op === 'update');
+    assert.ok(updateCall, 'Expected streak update call');
+    assert.equal(updateCall.value.current, 1);
+    assert.equal(updateCall.value.longest, 1);
+    assert.equal(updateCall.value.last_active_date, todayKey);
+    cleanup();
+  }
+
+  console.log('streak api scenarios covered');
+})();
+
+
+
+-----
+
+
+4. ./utils/streak.ts
+// utils/streak.ts
+
+export type CompletionHistoryEntry = {
+  date: string;      // 'YYYY-MM-DD'
+  completed: number; // how many units done that day
+  total: number;     // 0 or 1 (study day or not), but could be >1 later
+};
+
+export function buildCompletionHistory(
+  raw: unknown,
+  daysBack = 84
+): CompletionHistoryEntry[] {
+  if (!Array.isArray(raw)) return [];
+
+  type RawRow = {
+    date?: string;
+    activity_date?: string;
+    completed?: number | null;
+    completed_units?: number | null;
+    total?: number | null;
+    total_planned?: number | null;
+  };
+
+  const map = new Map<string, { completed: number; total: number }>();
+
+  (raw as RawRow[]).forEach((row) => {
+    const date =
+      (row.date ?? row.activity_date ?? '').toString().slice(0, 10);
+    if (!date) return;
+
+    const completed = Number(
+      row.completed ?? row.completed_units ?? 0
+    );
+    const total = Number(
+      row.total ?? row.total_planned ?? (completed > 0 ? 1 : 0)
+    );
+
+    map.set(date, {
+      completed: Number.isFinite(completed) ? completed : 0,
+      total: Number.isFinite(total) ? total : 0,
+    });
+  });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const history: CompletionHistoryEntry[] = [];
+
+  for (let offset = daysBack - 1; offset >= 0; offset--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - offset);
+    const dateStr = d.toISOString().slice(0, 10);
+
+    const row = map.get(dateStr) ?? { completed: 0, total: 0 };
+
+    history.push({
+      date: dateStr,
+      completed: row.completed,
+      total: row.total,
+    });
+  }
+
+  return history;
+}
+
+
+-----
+
+
+5. ./supabase/migrations/20250901000006_streak_shield.sql
+create table if not exists public.streak_shields (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  tokens int not null default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.streak_shields enable row level security;
+
+create policy "read own shields" on public.streak_shields
+for select using (auth.uid() = user_id);
+
+create policy "insert own shields" on public.streak_shields
+for insert with check (auth.uid() = user_id);
+
+create policy "update own shields" on public.streak_shields
+for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists public.streak_shield_logs (
+  id bigserial primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  action text not null check (action in ('claim','use')),
+  created_at timestamptz default now()
+);
+
+alter table public.streak_shield_logs enable row level security;
+
+create policy "read own shield logs" on public.streak_shield_logs
+for select using (auth.uid() = user_id);
+
+create policy "insert own shield logs" on public.streak_shield_logs
+for insert with check (auth.uid() = user_id);
+
+-- trigger for updated_at
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+drop trigger if exists trg_streak_shields_updated on public.streak_shields;
+create trigger trg_streak_shields_updated
+before update on public.streak_shields
+for each row execute procedure public.set_updated_at();
+
+
+-----
+
+
+6. ./supabase/migrations/202511150004_get_streak_history.sql
+-- File: supabase/migrations/202511150004_get_streak_history.sql
+-- Purpose: RPC for streak history / heatmap (Phase 1 - File 4)
+
+drop function if exists public.get_streak_history(integer);
+
+create or replace function public.get_streak_history(
+  p_days_back integer default 365
+)
+returns table (
+  activity_date  date,
+  activity_count integer
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    (l.created_at at time zone 'UTC')::date as activity_date,
+    count(*)::integer                        as activity_count
+  from public.study_activity_log l
+  where l.user_id = auth.uid()
+    and l.created_at >= now() - (p_days_back || ' days')::interval
+  group by activity_date
+  order by activity_date desc;
+$$;
+
+comment on function public.get_streak_history(integer) is
+  'Return per-day activity counts for the current user over the last N days (default 365), for streak heatmaps.';
+
+grant execute on function public.get_streak_history(integer) to authenticated;
+grant execute on function public.get_streak_history(integer) to anon; -- if you expose via client; remove if not needed
+
+
+-----
+
+
+7. ./supabase/migrations/20250901000005_streak_recovery.sql
+create table if not exists public.streak_recovery (
+  user_id uuid references auth.users(id) on delete cascade,
+  slip_date date not null,
+  restart_date date not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  primary key (user_id, slip_date)
+);
+
+alter table public.streak_recovery enable row level security;
+
+create policy "read own recovery" on public.streak_recovery
+for select to authenticated
+using (auth.uid() = user_id);
+
+create policy "upsert own recovery" on public.streak_recovery
+for insert with check (auth.uid() = user_id);
+
+create policy "update own recovery" on public.streak_recovery
+for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- trigger for updated_at (reuse function if already created)
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+drop trigger if exists trg_streak_recovery_updated on public.streak_recovery;
+create trigger trg_streak_recovery_updated
+before update on public.streak_recovery
+for each row execute procedure public.set_updated_at();
+
+
+-----
+
+
+8. ./supabase/migrations/20250811000004_user_streaks.sql
+create table if not exists public.user_streaks (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  current_streak int not null default 0,
+  last_activity_date date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.user_streaks enable row level security;
+
+create policy "read own streak" on public.user_streaks
+for select to authenticated
+using (auth.uid() = user_id);
+
+create policy "upsert own streak" on public.user_streaks
+for insert with check (auth.uid() = user_id);
+
+create policy "update own streak" on public.user_streaks
+for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- trigger for updated_at (reuse function if already created)
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+drop trigger if exists trg_user_streaks_updated on public.user_streaks;
+create trigger trg_user_streaks_updated
+before update on public.user_streaks
+for each row execute procedure public.set_updated_at();
+
+
+-----
+
+
+9. ./supabase/migrations/20251115_streak_recovery_tokens
+
+
+-----
+
+
+10. ./supabase/migrations/20251115_streak_recovery_tokens.sql
+-- Create the streak_recovery_tokens table
+CREATE TABLE public.streak_recovery_tokens (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    consumed_at timestamptz NULL,
+    source text DEFAULT 'system' CHECK (source IN ('system', 'milestone', 'admin', 'promo')),
+    streak_at_grant integer NOT NULL
+);
+
+-- Create a partial unique index to ensure only one open token per user
+CREATE UNIQUE INDEX one_open_token_per_user ON public.streak_recovery_tokens (user_id)
+WHERE consumed_at IS NULL;
+
+-- Function to grant a streak recovery token
+CREATE OR REPLACE FUNCTION public.grant_streak_recovery_token(p_user_id uuid, p_source text DEFAULT 'system')
+RETURNS void AS $$
+BEGIN
+    INSERT INTO public.streak_recovery_tokens (user_id, source, streak_at_grant)
+    SELECT p_user_id, p_source, s.current
+    FROM public.streaks s
+    WHERE s.user_id = p_user_id
+    AND NOT EXISTS (SELECT 1 FROM public.streak_recovery_tokens WHERE user_id = p_user_id AND consumed_at IS NULL);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to recover a streak using the token
+CREATE OR REPLACE FUNCTION public.recover_streak_with_token(p_user_id uuid)
+RETURNS void AS $$
+DECLARE
+    token_record RECORD;
+BEGIN
+    -- Ensure the user has an open token
+    SELECT * INTO token_record FROM public.streak_recovery_tokens WHERE user_id = p_user_id AND consumed_at IS NULL LIMIT 1;
+
+    IF token_record IS NULL THEN
+        RAISE EXCEPTION 'No open recovery token for this user';
+    END IF;
+
+    -- Ensure streak was broken in the last 2 days
+    IF (SELECT now() - last_activity_at FROM public.streaks WHERE user_id = p_user_id) > interval '2 days' THEN
+        RAISE EXCEPTION 'Cannot recover streak more than 2 days after break';
+    END IF;
+
+    -- Recover streak
+    UPDATE public.streaks
+    SET current = GREATEST(current, token_record.streak_at_grant),
+        longest = GREATEST(longest, current),
+        last_activity_at = now()
+    WHERE user_id = p_user_id;
+
+    -- Mark token as consumed
+    UPDATE public.streak_recovery_tokens
+    SET consumed_at = now()
+    WHERE user_id = p_user_id AND consumed_at IS NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to check if user is eligible for a milestone token
+CREATE OR REPLACE FUNCTION public.maybe_grant_streak_milestone_token(p_user_id uuid, p_current_streak integer)
+RETURNS void AS $$
+BEGIN
+    IF p_current_streak IN (7, 30, 60, 90) THEN
+        PERFORM public.grant_streak_recovery_token(p_user_id, 'milestone');
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-----
+
+
+11. ./supabase/migrations/202511150002_streaks_core_and_functions.sql
+-- File: supabase/migrations/202511150002_streaks_core_and_functions.sql
+-- Purpose: streaks table + last_activity_at + core functions (Phase 1 - File 2)
+
+-- 1. Ensure streaks table exists
+create table if not exists public.streaks (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  current integer not null default 0,
+  longest integer not null default 0,
+  last_activity_at timestamptz null
+);
+
+comment on table public.streaks is
+  'Per-user snapshot of streak state (current / longest / last_activity_at).';
+
+-- 2. Make sure required columns exist (safe if table already existed)
+do $$
+begin
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name   = 'streaks'
+      and column_name  = 'current'
+  ) then
+    alter table public.streaks
+      add column current integer not null default 0;
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name   = 'streaks'
+      and column_name  = 'longest'
+  ) then
+    alter table public.streaks
+      add column longest integer not null default 0;
+  end if;
+
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name   = 'streaks'
+      and column_name  = 'last_activity_at'
+  ) then
+    alter table public.streaks
+      add column last_activity_at timestamptz null;
+  end if;
+end$$;
+
+-- 3. RLS on streaks (user sees only their row)
+alter table public.streaks enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'streaks'
+      and policyname = 'Users can view own streak'
+  ) then
+    create policy "Users can view own streak"
+      on public.streaks
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end$$;
+
+-- 4. Function: update_streak_for_user
+--   - Pure calendar-day logic in UTC
+--   - NO 24h kill logic here (that happens in /api/streak)
+drop function if exists public.update_streak_for_user(uuid, timestamptz);
+
+create or replace function public.update_streak_for_user(
+  p_user_id uuid,
+  p_ts      timestamptz
+)
+returns void
+language plpgsql
+as $$
+declare
+  v_effective_ts        timestamptz := coalesce(p_ts, now());
+  v_date                date        := (v_effective_ts at time zone 'UTC')::date;
+
+  v_prev_current        integer;
+  v_prev_longest        integer;
+  v_prev_last_activity  timestamptz;
+  v_prev_date           date;
+
+  v_new_current         integer;
+  v_new_longest         integer;
+begin
+  -- Lock the row if it exists to avoid race conditions from concurrent inserts
+  select s.current, s.longest, s.last_activity_at
+  into v_prev_current, v_prev_longest, v_prev_last_activity
+  from public.streaks s
+  where s.user_id = p_user_id
+  for update;
+
+  if not found then
+    -- First ever activity for this user
+    v_new_current := 1;
+    v_new_longest := 1;
+  else
+    if v_prev_last_activity is not null then
+      v_prev_date := (v_prev_last_activity at time zone 'UTC')::date;
+    else
+      v_prev_date := null;
+    end if;
+
+    if v_prev_date is null then
+      -- We had a row but no last_activity_at for some reason
+      v_new_current := 1;
+
+    elsif v_date = v_prev_date then
+      -- Same UTC calendar day -> streak count unchanged
+      v_new_current := v_prev_current;
+
+    elsif v_date = v_prev_date + interval '1 day' then
+      -- Next UTC calendar day -> streak continues
+      v_new_current := coalesce(v_prev_current, 0) + 1;
+
+    elsif v_date > v_prev_date + interval '1 day' then
+      -- Gap of 2+ days -> streak resets to 1
+      v_new_current := 1;
+
+    else
+      -- v_date < v_prev_date (out-of-order/old event) -> ignore for streak progression
+      v_new_current := v_prev_current;
+    end if;
+
+    v_new_longest := greatest(coalesce(v_prev_longest, 0), v_new_current);
+  end if;
+
+  -- For the first-row case we might not have set v_new_longest yet
+  if v_new_longest is null then
+    v_new_longest := v_new_current;
+  end if;
+
+  insert into public.streaks as s (user_id, current, longest, last_activity_at)
+  values (p_user_id, v_new_current, v_new_longest, v_effective_ts)
+  on conflict (user_id) do update
+    set current         = excluded.current,
+        longest         = excluded.longest,
+        last_activity_at = excluded.last_activity_at;
+end;
+$$;
+
+comment on function public.update_streak_for_user(uuid, timestamptz) is
+  'Update per-user streak snapshot based on new study activity timestamp; calendar-day based, no 24h kill logic.';
+
+-- 5. Function: log_study_activity
+--   - Single entry point for all triggers
+--   - Inserts into study_activity_log, then calls update_streak_for_user
+drop function if exists public.log_study_activity(uuid, timestamptz, text, uuid);
+
+create or replace function public.log_study_activity(
+  p_user_id uuid,
+  p_ts      timestamptz,
+  p_source  text,
+  p_ref_id  uuid
+)
+returns void
+language plpgsql
+as $$
+declare
+  v_effective_ts timestamptz := coalesce(p_ts, now());
+begin
+  insert into public.study_activity_log (user_id, created_at, source, ref_id)
+  values (p_user_id, v_effective_ts, p_source, p_ref_id);
+
+  perform public.update_streak_for_user(p_user_id, v_effective_ts);
+end;
+$$;
+
+comment on function public.log_study_activity(uuid, timestamptz, text, uuid) is
+  'Shared helper to record a study activity event and update streak snapshot.';
+
+
+-----
+
+
+12. ./supabase/migrations/20251115_streak_recovery.sql
+-- 1) Tokens table
+
+create table if not exists public.streak_recovery_tokens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  consumed_at timestamptz,
+  -- optional: why granted?
+  source text default 'system', -- 'system', 'admin', 'promo'
+  -- snapshot of streak at time granted (not required but useful)
+  streak_at_grant integer,
+  constraint streak_recovery_tokens_one_open_per_user
+    exclude using gist (user_id with =)
+    where (consumed_at is null)
+);
+
+alter table public.streak_recovery_tokens enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'streak_recovery_tokens'
+      and policyname = 'Users can see their own streak recovery tokens'
+  ) then
+    create policy "Users can see their own streak recovery tokens"
+      on public.streak_recovery_tokens
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end;
+$$;
+
+-- 2) Function: grant a token if user qualifies
+
+create or replace function public.grant_streak_recovery_token(
+  p_user_id uuid,
+  p_reason text default 'system'
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_streak public.streaks%rowtype;
+  v_open_token_exists boolean;
+begin
+  if p_user_id is null then
+    return;
+  end if;
+
+  -- Don't stack multiple open tokens
+  select exists (
+    select 1 from public.streak_recovery_tokens
+    where user_id = p_user_id and consumed_at is null
+  )
+  into v_open_token_exists;
+
+  if v_open_token_exists then
+    return;
+  end if;
+
+  select * into v_streak
+  from public.streaks
+  where user_id = p_user_id;
+
+  -- Require a meaningful streak before giving token, e.g. >= 5
+  if not found or coalesce(v_streak.current, 0) < 5 then
+    return;
+  end if;
+
+  insert into public.streak_recovery_tokens (user_id, source, streak_at_grant)
+  values (p_user_id, p_reason, v_streak.current);
+end;
+$$;
+
+-- 3) Optional: auto-grant token when user hits a milestone (e.g., 7, 30, 60 days)
+
+create or replace function public.maybe_grant_streak_milestone_token(
+  p_user_id uuid
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_streak public.streaks%rowtype;
+begin
+  if p_user_id is null then return; end if;
+
+  select * into v_streak
+  from public.streaks
+  where user_id = p_user_id;
+
+  if not found then return; end if;
+
+  if v_streak.current in (7, 30, 60, 90) then
+    perform public.grant_streak_recovery_token(p_user_id, 'milestone');
+  end if;
+end;
+$$;
+
+
+-----
+
+
+13. ./supabase/20251115_streak_engine.sql
+-- 1) Study activity log (idempotent)
+create table if not exists public.study_activity_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  activity_date date not null,
+  weight integer not null default 1,
+  source text not null,
+  ref_id uuid,
+  created_at timestamptz not null default now()
+);
+
+alter table public.study_activity_log
+  enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'study_activity_log'
+      and policyname = 'Users can see their own study activity'
+  ) then
+    create policy "Users can see their own study activity"
+      on public.study_activity_log
+      for select
+      using (auth.uid() = user_id);
+  end if;
+end;
+$$;
+
+-- 2) Streaks: ONLY ensure these columns exist. DO NOT touch FKs.
+alter table public.streaks
+  add column if not exists current integer default 0,
+  add column if not exists longest integer default 0,
+  add column if not exists last_active_date date;
+
+-- 3) Functions (safe: create or replace)
+create or replace function public.update_streak_for_user(
+  p_user_id uuid,
+  p_activity_date date
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_row public.streaks%rowtype;
+  v_today date := p_activity_date;
+  v_yesterday date := p_activity_date - 1;
+begin
+  if p_user_id is null or p_activity_date is null then
+    return;
+  end if;
+
+  select *
+  into v_row
+  from public.streaks
+  where user_id = p_user_id;
+
+  if not found then
+    insert into public.streaks (user_id, current, longest, last_active_date)
+    values (p_user_id, 1, 1, v_today)
+    on conflict (user_id) do nothing;
+    return;
+  end if;
+
+  if v_row.last_active_date is not null
+     and p_activity_date <= v_row.last_active_date then
+    return;
+  end if;
+
+  if v_row.last_active_date = v_yesterday then
+    v_row.current := coalesce(v_row.current, 0) + 1;
+  else
+    v_row.current := 1;
+  end if;
+
+  v_row.longest := greatest(coalesce(v_row.longest, 0), v_row.current);
+  v_row.last_active_date := v_today;
+
+  update public.streaks
+  set current = v_row.current,
+      longest = v_row.longest,
+      last_active_date = v_row.last_active_date
+  where user_id = p_user_id;
+end;
+$$;
+
+create or replace function public.log_study_activity(
+  p_user_id uuid,
+  p_ts timestamptz,
+  p_source text,
+  p_ref_id uuid default null,
+  p_weight integer default 1
+)
+returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_activity_date date;
+begin
+  if p_user_id is null or p_ts is null then
+    return;
+  end if;
+
+  v_activity_date := (p_ts at time zone 'Asia/Karachi')::date;
+
+  insert into public.study_activity_log (user_id, activity_date, source, ref_id, weight)
+  values (p_user_id, v_activity_date, p_source, p_ref_id, greatest(p_weight, 1));
+
+  perform public.update_streak_for_user(p_user_id, v_activity_date);
+end;
+$$;
+
+create or replace function public.get_streak_history(
+  p_user_id uuid,
+  p_days_back integer
+)
+returns table (
+  date date,
+  completed integer,
+  total integer
+)
+language plpgsql
+security definer
+as $$
+begin
+  return query
+  with days as (
+    select (current_date - offs) as d
+    from generate_series(0, greatest(p_days_back, 1) - 1) as offs
+  ),
+  activity as (
+    select
+      activity_date,
+      sum(weight) as completed_units
+    from public.study_activity_log
+    where user_id = p_user_id
+      and activity_date >= current_date - (p_days_back - 1)
+      and activity_date <= current_date
+    group by activity_date
+  )
+  select
+    days.d as date,
+    coalesce(activity.completed_units, 0) as completed,
+    case when coalesce(activity.completed_units, 0) > 0 then 1 else 0 end as total
+  from days
+  left join activity on activity.activity_date = days.d
+  order by date;
+end;
+$$;
+
+
+-----
+
+
+14. ./supabase/migrations_backup/20250901_streak_shield.sql
+create table if not exists public.streak_shields (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  tokens int not null default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.streak_shields enable row level security;
+
+create policy "read own shields" on public.streak_shields
+for select using (auth.uid() = user_id);
+
+create policy "insert own shields" on public.streak_shields
+for insert with check (auth.uid() = user_id);
+
+create policy "update own shields" on public.streak_shields
+for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists public.streak_shield_logs (
+  id bigserial primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  action text not null check (action in ('claim','use')),
+  created_at timestamptz default now()
+);
+
+alter table public.streak_shield_logs enable row level security;
+
+create policy "read own shield logs" on public.streak_shield_logs
+for select using (auth.uid() = user_id);
+
+create policy "insert own shield logs" on public.streak_shield_logs
+for insert with check (auth.uid() = user_id);
+
+-- trigger for updated_at
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+drop trigger if exists trg_streak_shields_updated on public.streak_shields;
+create trigger trg_streak_shields_updated
+before update on public.streak_shields
+for each row execute procedure public.set_updated_at();
+
+
+-----
+
+
+15. ./supabase/migrations_backup/20250811_user_streaks.sql
+create table if not exists public.user_streaks (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  current_streak int not null default 0,
+  last_activity_date date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.user_streaks enable row level security;
+
+create policy "read own streak" on public.user_streaks
+for select to authenticated
+using (auth.uid() = user_id);
+
+create policy "upsert own streak" on public.user_streaks
+for insert with check (auth.uid() = user_id);
+
+create policy "update own streak" on public.user_streaks
+for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- trigger for updated_at (reuse function if already created)
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+drop trigger if exists trg_user_streaks_updated on public.user_streaks;
+create trigger trg_user_streaks_updated
+before update on public.user_streaks
+for each row execute procedure public.set_updated_at();
+
+
+-----
+
+
+16. ./supabase/migrations_backup/20250901_streak_recovery.sql
+create table if not exists public.streak_recovery (
+  user_id uuid references auth.users(id) on delete cascade,
+  slip_date date not null,
+  restart_date date not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  primary key (user_id, slip_date)
+);
+
+alter table public.streak_recovery enable row level security;
+
+create policy "read own recovery" on public.streak_recovery
+for select to authenticated
+using (auth.uid() = user_id);
+
+create policy "upsert own recovery" on public.streak_recovery
+for insert with check (auth.uid() = user_id);
+
+create policy "update own recovery" on public.streak_recovery
+for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- trigger for updated_at (reuse function if already created)
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end $$;
+
+drop trigger if exists trg_streak_recovery_updated on public.streak_recovery;
+create trigger trg_streak_recovery_updated
+before update on public.streak_recovery
+for each row execute procedure public.set_updated_at();
+
+
+-----
+
+
+17. ./components/streak/StreakRecoveryPanel.tsx
+import React, { useEffect, useState } from 'react';
+import { useStreak } from '@/hooks/useStreak';
+import { useStreakTokens } from '@/hooks/useStreakTokens'; // A hook to check token info
+
+export const StreakRecoveryPanel: React.FC = () => {
+    const { data, loading } = useStreak();
+    const { data: tokenInfo } = useStreakTokens();
+    const [isRecoverySuccessful, setIsRecoverySuccessful] = useState(false);
+
+    useEffect(() => {
+        if (data?.current === 0 && tokenInfo?.hasOpenToken) {
+            // Optionally show success message
+            setIsRecoverySuccessful(false);
+        }
+    }, [data, tokenInfo]);
+
+    const handleRecoverStreak = async () => {
+        try {
+            const response = await fetch('/api/streak/recover', { method: 'POST' });
+            const result = await response.json();
+            if (result.ok) {
+                setIsRecoverySuccessful(true);
+            } else {
+                alert('Recovery failed');
+            }
+        } catch (error) {
+            alert('An error occurred while recovering your streak');
+        }
+    };
+
+    if (loading) return <div>Loading...</div>;
+
+    return (
+        <div>
+            {data?.current === 0 && tokenInfo?.hasOpenToken ? (
+                <>
+                    <h2>Recover Your Streak</h2>
+                    <button onClick={handleRecoverStreak}>Use Recovery Token</button>
+                    {isRecoverySuccessful && <p>Your streak has been successfully recovered!</p>}
+                </>
+            ) : (
+                <p>Your streak is active!</p>
+            )}
+        </div>
+    );
+};
+
+
+-----
+
+
+18. ./components/streak/StreakCounter.tsx
+import * as React from 'react';
+import { Card } from '@/components/design-system/Card';
+
+let tooltipIdSeed = 0;
+
+function cn(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(' ');
+}
+
+type StreakCounterProps = {
+  className?: string;
+  current: number;
+  longest: number;
+  loading?: boolean;
+  shields?: number;
+};
+
+type StatProps = {
+  label: string;
+  value: number;
+  tone: 'primary' | 'neutral';
+  loading?: boolean;
+};
+
+const InfoIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className, ...rest }) => (
+  <svg viewBox="0 0 20 20" fill="currentColor" className={cn('h-4 w-4', className)} aria-hidden="true" {...rest}>
+    <path d="M10 1.667A8.333 8.333 0 1 0 18.333 10 8.344 8.344 0 0 0 10 1.667Zm0 12.5a.833.833 0 0 1-1.667 0v-4.167a.833.833 0 0 1 1.667 0Zm0-6.25A1.042 1.042 0 1 1 11.042 6.875 1.042 1.042 0 0 1 10 7.917Z" />
+  </svg>
+);
+
+const Stat: React.FC<StatProps> = ({ label, value, tone, loading = false }) => {
+  const toneClass =
+    tone === 'primary'
+      ? 'bg-electricBlue/10 text-electricBlue dark:bg-electricBlue/15'
+      : 'bg-muted/80 text-foreground dark:bg-muted/50';
+
+  return (
+    <div className={cn('rounded-xl px-4 py-3 text-center sm:text-left', toneClass)}>
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/80">{label}</span>
+      {loading ? (
+        <div className="mt-2 h-7 w-16 animate-pulse rounded-full bg-muted/60" aria-hidden="true" />
+      ) : (
+        <div className="mt-1 flex items-baseline justify-center gap-1 sm:justify-start">
+          <span className="font-semibold tabular-nums text-h4">{value}</span>
+          <span className="text-xs font-medium uppercase tracking-wide">days</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const StreakCounter: React.FC<StreakCounterProps> = ({
+  className,
+  current,
+  longest,
+  loading = false,
+  shields = 0,
+}) => {
+  const tooltipIdRef = React.useRef<string>();
+  if (!tooltipIdRef.current) {
+    const nextId = ++tooltipIdSeed;
+    tooltipIdRef.current = `streak-tooltip-${nextId}`;
+  }
+  const tooltipId = tooltipIdRef.current;
+  const [open, setOpen] = React.useState(false);
+
+  const safeCurrent = Number.isFinite(current) ? Math.max(0, Math.trunc(current)) : 0;
+  const safeLongest = Number.isFinite(longest) ? Math.max(safeCurrent, Math.trunc(longest)) : safeCurrent;
+  const safeShields = Number.isFinite(shields) ? Math.max(0, Math.trunc(shields)) : 0;
+
+  const showTooltip = () => setOpen(true);
+  const hideTooltip = () => setOpen(false);
+
+  return (
+    <Card className={cn('flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between', className)}>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <h2 className="font-slab text-h4 text-foreground">Daily streak</h2>
+          <div className="relative">
+            <button
+              type="button"
+              aria-describedby={tooltipId}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electricBlue focus-visible:ring-offset-2"
+              onFocus={showTooltip}
+              onBlur={hideTooltip}
+              onMouseEnter={showTooltip}
+              onMouseLeave={hideTooltip}
+            >
+              <InfoIcon />
+              <span className="sr-only">Learn how streaks work</span>
+            </button>
+            <div
+              id={tooltipId}
+              role="tooltip"
+              aria-hidden={!open}
+              className={cn(
+                'absolute left-0 top-full z-10 mt-2 w-64 rounded-xl border border-border bg-card p-3 text-left text-xs text-muted-foreground shadow-lg transition-opacity duration-150',
+                open ? 'opacity-100' : 'pointer-events-none opacity-0'
+              )}
+            >
+              Complete at least one learning task before midnight Pakistan time to extend your streak.
+            </div>
+          </div>
+        </div>
+        <p className="text-small text-muted-foreground">
+          Keep your streak alive to unlock streak shields and weekly reward drops.
+        </p>
+      </div>
+      <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-3">
+        <Stat label="Current streak" value={safeCurrent} tone="primary" loading={loading} />
+        <Stat label="Longest streak" value={safeLongest} tone="neutral" loading={loading} />
+        <Stat label="Forgiveness tokens" value={safeShields} tone="neutral" loading={loading} />
+      </div>
+    </Card>
+  );
+};
+
+export default StreakCounter;
+
+
+-----
+
+
+19. ./components/streak/StreakWarning.tsx
+'use client';
+
+import { useStreak } from '@/hooks/useStreak';
+import { Icon } from '@/components/design-system/Icon';
+
+export function StreakWarning() {
+  const { data, loading } = useStreak();
+
+  if (loading || !data) return null;
+
+  if (!data.isHourglass) return null;
+
+  const hours = Math.floor((data.secondsUntilReset ?? 0) / 3600);
+  const minutes = Math.floor(((data.secondsUntilReset ?? 0) % 3600) / 60);
+
+  return (
+    <div className="rounded-ds-xl bg-red-600/10 border border-red-400/40 p-4 flex items-start gap-3">
+      <Icon name="hourglass" className="text-red-500 h-6 w-6" />
+      <div>
+        <p className="font-semibold text-red-600">You're about to lose your streak</p>
+        <p className="text-sm text-red-500">
+          Study something within the next <strong>{hours}h {minutes}m</strong> to keep your streak alive.
+        </p>
+      </div>
+    </div>
+  );
+}
+'use client';
+
+import { useStreak } from '@/hooks/useStreak';
+import { Icon } from '@/components/design-system/Icon';
+
+export function StreakWarning() {
+  const { data, loading } = useStreak();
+
+  if (loading || !data) return null;
+
+  if (!data.isHourglass) return null;
+
+  const hours = Math.floor((data.secondsUntilReset ?? 0) / 3600);
+  const minutes = Math.floor(((data.secondsUntilReset ?? 0) % 3600) / 60);
+
+  return (
+    <div className="rounded-ds-xl bg-red-600/10 border border-red-400/40 p-4 flex items-start gap-3">
+      <Icon name="hourglass" className="text-red-500 h-6 w-6" />
+      <div>
+        <p className="font-semibold text-red-600">You're about to lose your streak</p>
+        <p className="text-sm text-red-500">
+          Study something within the next <strong>{hours}h {minutes}m</strong> to keep your streak alive.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+-----
+
+
+20. ./components/streak/StreakHeatmap.tsx
+// components/streak/StreakHeatmap.tsx
+import React from 'react';
+
+type StreakHeatmapProps = {
+  data: { activity_date: string; activity_count: number }[] | null;  // Explicitly typing data as an array or null
+};
+
+const StreakHeatmap: React.FC<StreakHeatmapProps> = ({ data }) => {
+  // Add a check to ensure `data` is an array before calling .map
+  if (!Array.isArray(data)) {
+    return <div>No data available for heatmap.</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-7 gap-2">
+      {data.map((day) => (
+        <div
+          key={day.activity_date}
+          className={`h-6 w-6 rounded-full ${day.activity_count > 0 ? 'bg-green-500' : 'bg-gray-200'}`}
+          title={`Date: ${day.activity_date}, Activity: ${day.activity_count} task(s)`}
+        />
+      ))}
+    </div>
+  );
+};
+
+export default StreakHeatmap;
+
+
+-----
+
+
+21. ./components/streak/StreakSummaryCard.tsx
+// components/streak/StreakSummaryCard.tsx
+import React from 'react';
+import { StreakResponse } from '@/lib/streak/types';
+
+type StreakSummaryCardProps = {
+  data: StreakResponse;
+};
+
+const StreakSummaryCard: React.FC<StreakSummaryCardProps> = ({ data }) => {
+  return (
+    <div className="rounded-lg border p-4 shadow-md">
+      <h2 className="text-lg font-semibold">Streak Summary</h2>
+      <div className="mt-2">
+        <p>
+          <strong>Current Streak: </strong> {data.current} day(s)
+        </p>
+        <p>
+          <strong>Longest Streak: </strong> {data.longest} day(s)
+        </p>
+        <p>
+          <strong>Last Active: </strong> {data.lastActivityAt || 'N/A'}
+        </p>
+        <p className="mt-2">
+          {data.isHourglass ? (
+            <span className="text-red-500">Your streak is about to expire!</span>
+          ) : (
+            <span className="text-green-500">Your streak is safe.</span>
+          )}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default StreakSummaryCard;
+
+
+-----
+
+
+22. ./components/streak/StreakChip.tsx
+// components/streak/StreakChip.tsx
+
+import React from 'react';
+import Link from 'next/link';
+import { Icon } from '@/components/design-system/Icon';
+
+type Props = {
+  value: number;
+  href?: string;
+  loading?: boolean;
+  className?: string;
+};
+
+function ChipContent({ value, loading }: { value: number; loading?: boolean }) {
+  const label = loading ? '—' : value;
+  const description = loading ? 'Loading streak' : `${value} day${value === 1 ? '' : 's'} streak`;
+  return (
+    <span
+      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-small font-semibold text-foreground shadow-sm"
+      aria-live="polite"
+    >
+      <Icon name="fire" size={16} aria-hidden />
+      <span className="tabular-nums text-body">{label}</span>
+      <span className="text-xs uppercase tracking-wide text-muted-foreground">days</span>
+      <span className="sr-only">{description}</span>
+    </span>
+  );
+}
+
+export const StreakChip: React.FC<Props> = ({ value, href, loading, className }) => {
+  const chip = <ChipContent value={value} loading={loading} />;
+  if (!href) {
+    return <span className={className}>{chip}</span>;
+  }
+  return (
+    <Link
+      href={href}
+      className={[
+        'inline-flex items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label={loading ? 'Loading streak' : `${value}-day streak`}
+    >
+      {chip}
+    </Link>
+  );
+};
+
+export default StreakChip;
+
+
+-----
+
+
+23. ./components/user/StreakHeatmap.tsx
+'use client';
+
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+
+type Datum = {
+  date: string;
+  completed: number;
+  total: number;
+};
+
+type Props = {
+  data: Datum[];
+};
+
+type HeatmapCell = Datum & {
+  column: number;
+  weekRow: number;
+  ariaLabel: string;
+  description: string;
+  displayDate: string;
+  globalIndex: number;
+  parsedDate: Date;
+};
+
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const LEGEND_STEPS = [
+  { label: 'No tasks', className: 'bg-muted border border-border/40' },
+  { label: 'Started', className: 'bg-primary/20 border border-primary/20' },
+  { label: 'In progress', className: 'bg-primary/40 border border-primary/40' },
+  { label: 'On track', className: 'bg-primary/70 border border-primary/70' },
+  { label: 'Complete', className: 'bg-primary border border-primary' },
+];
+
+type MonthGroup = {
+  key: string;
+  label: string;
+  leading: number;
+  order: number;
+  cells: HeatmapCell[];
+};
+
+const parseISODate = (iso: string): Date | null => {
+  if (typeof iso !== 'string') return null;
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month, day));
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+function getColorClass(entry: Datum) {
+  if (entry.total === 0) {
+    return LEGEND_STEPS[0].className;
+  }
+
+  const ratio = entry.total === 0 ? 0 : entry.completed / entry.total;
+
+  if (ratio === 0) return LEGEND_STEPS[0].className;
+  if (ratio < 0.33) return LEGEND_STEPS[1].className;
+  if (ratio < 0.66) return LEGEND_STEPS[2].className;
+  if (ratio < 1) return LEGEND_STEPS[3].className;
+  return LEGEND_STEPS[4].className;
+}
+
+export const StreakHeatmap: React.FC<Props> = ({ data }) => {
+  const monthFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: 'long',
+        year: 'numeric',
+      }),
+    [],
+  );
+  const dayFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: 'long',
+        day: 'numeric',
+      }),
+    [],
+  );
+  const shortFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+      }),
+    [],
+  );
+
+  const months = useMemo<MonthGroup[]>(() => {
+    if (!data.length) return [];
+
+    const sorted = [...data]
+      .map((entry) => {
+        const parsedDate = parseISODate(entry.date);
+        return parsedDate ? { entry, parsedDate } : null;
+      })
+      .filter((item): item is { entry: Datum; parsedDate: Date } => item !== null)
+      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+    const map = new Map<string, MonthGroup>();
+
+    for (const { entry, parsedDate } of sorted) {
+      const monthKey = `${parsedDate.getUTCFullYear()}-${parsedDate.getUTCMonth()}`;
+      let bucket = map.get(monthKey);
+
+      if (!bucket) {
+        const firstOfMonth = new Date(
+          Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), 1),
+        );
+        const leading = (firstOfMonth.getUTCDay() + 6) % 7;
+        bucket = {
+          key: monthKey,
+          label: monthFormatter.format(firstOfMonth),
+          leading,
+          order: firstOfMonth.getTime(),
+          cells: [],
+        };
+        map.set(monthKey, bucket);
+      }
+
+      bucket.cells.push({
+        ...entry,
+        column: 0,
+        weekRow: 0,
+        ariaLabel: '',
+        description: '',
+        displayDate: '',
+        globalIndex: -1,
+        parsedDate,
+      });
+    }
+
+    const result: MonthGroup[] = [];
+    const groups = Array.from(map.values()).sort((a, b) => a.order - b.order);
+
+    let runningIndex = 0;
+
+    for (const group of groups) {
+      group.cells.sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+
+      group.cells = group.cells.map((cell, index) => {
+        const offset = group.leading + index;
+        const column = offset % 7;
+        const weekRow = Math.floor(offset / 7);
+        const description = cell.total === 0 ? 'No tasks scheduled' : `${cell.completed} of ${cell.total} completed`;
+        return {
+          ...cell,
+          column,
+          weekRow,
+          displayDate: shortFormatter.format(cell.parsedDate),
+          description,
+          ariaLabel: `${dayFormatter.format(cell.parsedDate)} — ${description}`,
+          globalIndex: runningIndex++,
+        };
+      });
+
+      result.push(group);
+    }
+
+    return result;
+  }, [data, dayFormatter, monthFormatter, shortFormatter]);
+
+  const allCells = useMemo(() => months.flatMap((month) => month.cells), [months]);
+  const totalCells = allCells.length;
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const cellRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const ensureFocus = useCallback(
+    (index: number) => {
+      const next = Math.max(0, Math.min(index, totalCells - 1));
+      setFocusedIndex(next);
+      cellRefs.current[next]?.focus();
+    },
+    [totalCells],
+  );
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>, cell: HeatmapCell) => {
+      if (!totalCells) return;
+      let nextIndex: number | null = null;
+
+      switch (event.key) {
+        case 'ArrowRight':
+          nextIndex = Math.min(totalCells - 1, cell.globalIndex + 1);
+          break;
+        case 'ArrowLeft':
+          nextIndex = Math.max(0, cell.globalIndex - 1);
+          break;
+        case 'ArrowUp':
+          nextIndex = cell.globalIndex - 7;
+          if (nextIndex < 0) nextIndex = null;
+          break;
+        case 'ArrowDown':
+          nextIndex = cell.globalIndex + 7;
+          if (nextIndex >= totalCells) nextIndex = null;
+          break;
+        case 'Home':
+          nextIndex = 0;
+          break;
+        case 'End':
+          nextIndex = totalCells - 1;
+          break;
+        default:
+          break;
+      }
+
+      if (nextIndex !== null && nextIndex !== cell.globalIndex) {
+        event.preventDefault();
+        ensureFocus(nextIndex);
+      }
+    },
+    [ensureFocus, totalCells],
+  );
+
+  if (!totalCells) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-ds-2xl border border-dashed border-border text-small text-muted-foreground">
+        Complete a task to start your streak calendar.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <span className="font-medium uppercase tracking-wide text-[10px] text-muted-foreground">Legend</span>
+          {LEGEND_STEPS.map((step) => (
+            <span key={step.label} className="flex items-center gap-1">
+              <span className={`h-3 w-3 rounded-sm ${step.className}`} aria-hidden />
+              {step.label}
+            </span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          {WEEKDAYS.map((weekday) => (
+            <span key={weekday} className="text-center">
+              {weekday}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        {months.map((month) => (
+          <div key={month.key} className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <h3 className="font-semibold text-small text-foreground">{month.label}</h3>
+              <span className="text-xs text-muted-foreground">
+                {month.cells.filter((cell) => cell.completed > 0).length} productive days
+              </span>
+            </div>
+
+            <div
+              role="grid"
+              aria-label={`${month.label} study activity`}
+              className="grid grid-cols-7 gap-1 sm:gap-2"
+            >
+              {Array.from({ length: month.leading }).map((_, index) => (
+                <div
+                  key={`${month.key}-spacer-${index}`}
+                  aria-hidden
+                  className="h-8 w-8 rounded-md sm:h-9 sm:w-9"
+                />
+              ))}
+
+              {month.cells.map((cell) => {
+                const colorClass = getColorClass(cell);
+                const isFocused = focusedIndex === cell.globalIndex;
+                return (
+                  <button
+                    key={cell.date}
+                    type="button"
+                    ref={(ref) => {
+                      cellRefs.current[cell.globalIndex] = ref;
+                    }}
+                    role="gridcell"
+                    aria-label={cell.ariaLabel}
+                    tabIndex={isFocused ? 0 : -1}
+                    onFocus={() => setFocusedIndex(cell.globalIndex)}
+                    onKeyDown={(event) => handleKeyDown(event, cell)}
+                    className={`h-8 w-8 rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:h-9 sm:w-9 ${colorClass}`}
+                  >
+                    <span className="sr-only">{cell.displayDate}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default StreakHeatmap;
+
+
+-----
+
+
+24. ./components/user/StreakChip.tsx
+import React from 'react';
+import Link from 'next/link';
+import { Icon } from '@/components/design-system/Icon';
+
+type Props = {
+  value: number;
+  href?: string;
+  loading?: boolean;
+  className?: string;
+};
+
+function ChipContent({ value, loading }: { value: number; loading?: boolean }) {
+  const label = loading ? '—' : value;
+  const description = loading ? 'Loading streak' : `${value} day${value === 1 ? '' : 's'} streak`;
+  return (
+    <span
+      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-small font-semibold text-foreground shadow-sm"
+      aria-live="polite"
+    >
+      <Icon name="fire" size={16} aria-hidden />
+      <span className="tabular-nums text-body">{label}</span>
+      <span className="text-xs uppercase tracking-wide text-muted-foreground">days</span>
+      <span className="sr-only">{description}</span>
+    </span>
+  );
+}
+
+export const StreakChip: React.FC<Props> = ({ value, href, loading, className }) => {
+  const chip = <ChipContent value={value} loading={loading} />;
+  if (!href) {
+    return <span className={className}>{chip}</span>;
+  }
+  return (
+    <Link
+      href={href}
+      className={[
+        'inline-flex items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label={loading ? 'Loading streak' : `${value}-day streak`}
+    >
+      {chip}
+    </Link>
+  );
+};
+
+export default StreakChip;
+
+
+-----
+
+
+25. ./components/feature/HeaderStreakChip.tsx
+import * as React from 'react';
+import { useStreak } from '@/hooks/useStreak';
+
+export function HeaderStreakChip() {
+  const { current, loading, error } = useStreak();
+
+  const value = React.useMemo(() => {
+    if (loading) return '…';
+    if (error) return '—';
+    return Math.max(0, current);
+  }, [current, error, loading]);
+
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-small bg-background/70 backdrop-blur">
+      <span aria-hidden="true">🔥</span>
+      <span className="font-medium">{value}</span>
+      <span className="text-muted-foreground">day streak</span>
+    </div>
+  );
+}
+
+
+-----
+
+
+26. ./components/design-system/StreakIndicator.tsx
+import * as React from 'react';
+import { useStreak } from '@/hooks/useStreak';
+import { getDayKeyInTZ } from '@/lib/streak';
+
+const cx = (...xs: Array<string | false | null | undefined>) => xs.filter(Boolean).join(' ');
+
+type Tone = 'electric' | 'primary' | 'accent';
+type Props = {
+  className?: string;
+  value?: number; // external streak value; disables autoClaim
+  compact?: boolean;
+  autoClaim?: boolean; // default: true (ignored if value is provided)
+  tone?: Tone;
+};
+
+const FireIcon = (p: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" {...p}>
+    <path fill="currentColor" d="M12 2c1 3 4 4 4 8a4 4 0 0 1-8 0c0-1 .2-1.9.6-2.8C6 8 4 10.3 4 13.5A7.5 7.5 0 0 0 11.5 21h1A7.5 7.5 0 0 0 20 13.5C20 7.5 14 6 12 2z"/>
+  </svg>
+);
+const ShieldIcon = (p: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" {...p}>
+    <path fill="currentColor" d="M12 2l8 4v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4z"/>
+  </svg>
+);
+
+export const StreakIndicator: React.FC<Props> = ({
+  className = '',
+  value,
+  compact = false,
+  autoClaim = true,
+  tone = 'electric',
+}) => {
+  const { current, lastDayKey, completeToday, loading, shields = 0, error } = useStreak();
+  const todayKey = React.useMemo(() => getDayKeyInTZ(), []);
+  const autoTriedRef = React.useRef(false);
+
+  const streakValue = value ?? current;
+
+  // Auto-claim once (only when using internal hook value)
+  React.useEffect(() => {
+    if (value !== undefined) return; // external control → don't auto-claim
+    if (autoTriedRef.current || loading) return;
+    autoTriedRef.current = true;
+    if (autoClaim && lastDayKey !== todayKey) {
+      completeToday().catch((err) => {
+        console.error('Auto-claim failed:', err);
+      });
+    }
+  }, [value, autoClaim, loading, lastDayKey, todayKey, completeToday]);
+
+  // subtle glow on change
+  const [pulse, setPulse] = React.useState(false);
+  React.useEffect(() => {
+    if (!loading && streakValue >= 0) {
+      setPulse(true);
+      const t = setTimeout(() => setPulse(false), 900);
+      return () => clearTimeout(t);
+    }
+  }, [streakValue, loading]);
+
+  const toneCls =
+    tone === 'primary'
+      ? 'border-primary/30 bg-primary/10 text-primary'
+      : tone === 'accent'
+      ? 'border-accent/30 bg-accent/10 text-accent'
+      : 'border-electricBlue/30 bg-electricBlue/10 text-electricBlue'; // electric (default)
+
+  const density = compact ? 'px-2.5 py-1.5 text-small' : 'px-3.5 py-2';
+  const pulseShadow = pulse ? 'shadow-[0_0_0_6px_rgba(0,187,249,0.25)] transition-shadow' : '';
+
+  if (error) {
+    return (
+      <div className={cx('text-small text-danger', className)} role="status" aria-live="polite">
+        Failed to load streak
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cx(
+        'inline-flex items-center gap-2 rounded-ds border',
+        toneCls,
+        'dark:border-current/40',
+        density,
+        pulseShadow,
+        className
+      )}
+      role="status"
+      aria-live="polite"
+      aria-label={`Current streak ${Math.max(streakValue ?? 0, 0)} days, ${shields} shields left`}
+      title={`Streak: ${streakValue ?? 0}`}
+    >
+      <FireIcon />
+      <span className="font-semibold tabular-nums">{Math.max(streakValue ?? 0, 0)}</span>
+      <span className="mx-1 opacity-40">•</span>
+      <ShieldIcon />
+      <span className="font-semibold tabular-nums">{shields}</span>
+    </div>
+  );
+};
+
+export default StreakIndicator; 
+
+-----
+
+
+27. ./hooks/useStreakTokens.ts
+import { useEffect, useState } from 'react';
+
+export function useStreakTokens() {
+    const [data, setData] = useState<{ hasOpenToken: boolean, streakAtGrant: number | null, grantedAt: string | null } | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTokenInfo = async () => {
+            const res = await fetch('/api/streak/tokens');
+            const result = await res.json();
+            setData(result);
+            setLoading(false);
+        };
+
+        fetchTokenInfo();
+    }, []);
+
+    return { data, loading };
+}
+
+
+-----
+
+
+28. ./hooks/useStreak.ts
+// hooks/useStreak.ts
+import { useState, useEffect } from 'react';
+
+export function useStreak() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStreakData = async () => {
+      try {
+        const res = await fetch('/api/streak'); // Adjust the URL if needed
+        const result = await res.json();
+        setData(result);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStreakData();
+  }, []);
+
+  return { data, loading, error };
+}
+
+
+-----
+
+
+29. ./lib/streak.ts
+import { supabase } from '@/lib/supabaseClient';
+import type { StreakSummary, StreakMutationAction } from '@/types/streak';
+
+const STREAK_TIMEOUT_MS = 10_000;
+
+export const getDayKeyInTZ = (date: Date = new Date(), timeZone = 'Asia/Karachi'): string => {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(date);
+  } catch {
+    return date.toISOString().split('T')[0];
+  }
+};
+
+const emptyStreak = (): StreakSummary => ({
+  current_streak: 0,
+  longest_streak: 0,
+  last_activity_date: null,
+  next_restart_date: null,
+  shields: 0,
+});
+
+const normalizeStreak = (payload: Partial<StreakSummary> | null | undefined): StreakSummary => {
+  const fallback = emptyStreak();
+  const current = typeof payload?.current_streak === 'number' ? payload.current_streak : fallback.current_streak;
+  const longest =
+    typeof payload?.longest_streak === 'number'
+      ? payload.longest_streak
+      : typeof payload?.current_streak === 'number'
+        ? payload.current_streak
+        : fallback.longest_streak;
+
+  return {
+    current_streak: current,
+    longest_streak: Math.max(longest, current),
+    last_activity_date: typeof payload?.last_activity_date === 'string' ? payload.last_activity_date : fallback.last_activity_date,
+    next_restart_date: typeof payload?.next_restart_date === 'string' ? payload.next_restart_date : fallback.next_restart_date,
+    shields: typeof payload?.shields === 'number' ? payload.shields : fallback.shields,
+  };
+};
+
+const withTimeout = async <T>(task: (signal: AbortSignal) => Promise<T>, timeoutMs = STREAK_TIMEOUT_MS): Promise<T> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const result = await task(controller.signal);
+    clearTimeout(timer);
+    return result;
+  } catch (error) {
+    clearTimeout(timer);
+    throw error;
+  }
+};
+
+const handleMutation = async (payload: { action?: StreakMutationAction; date?: string }): Promise<StreakSummary> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    console.error('[streak] Session error:', sessionError?.message || 'No session');
+    throw new Error('Unauthorized');
+  }
+
+  const body: Record<string, unknown> = {};
+  if (payload.action) body.action = payload.action;
+  if (payload.date) body.date = payload.date;
+
+  let res: Response;
+  try {
+    res = await withTimeout((signal) =>
+      fetch('/api/streak', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+        signal,
+      })
+    );
+  } catch (error) {
+    if ((error as Error)?.name === 'AbortError') {
+      throw new Error('Streak request timed out');
+    }
+    throw error;
+  }
+
+  if (!res.ok) {
+    console.error('[streak] Mutation failed:', res.status, res.statusText);
+    throw new Error(`Failed to update streak: ${res.status}`);
+  }
+
+  const raw = (await res.json().catch(() => null)) as Partial<StreakSummary> | null;
+  return normalizeStreak(raw);
+};
+
+export const fetchStreak = async (): Promise<StreakSummary> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    if (sessionError) {
+      console.warn('[fetchStreak] Session error (treating as guest):', sessionError.message);
+    }
+    return emptyStreak();
+  }
+
+  try {
+    const res = await withTimeout((signal) =>
+      fetch('/api/streak', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        signal,
+      })
+    );
+
+    if (res.status === 401) {
+      console.info('[fetchStreak] Received 401 from streak API, defaulting to empty streak');
+      return emptyStreak();
+    }
+
+    if (!res.ok) {
+      console.error('[fetchStreak] API error:', res.status, res.statusText);
+      throw new Error(`Failed to fetch streak: ${res.status}`);
+    }
+
+    const raw = (await res.json().catch(() => null)) as Partial<StreakSummary> | null;
+    return normalizeStreak(raw);
+  } catch (error) {
+    if ((error as Error)?.name === 'AbortError') {
+      console.warn('[fetchStreak] Timed out after %dms', STREAK_TIMEOUT_MS);
+      throw new Error('Streak request timed out');
+    }
+    console.error('[fetchStreak] Unexpected error:', error);
+    throw error instanceof Error ? error : new Error('Failed to fetch streak');
+  }
+};
+
+export const incrementStreak = async ({ useShield = false }: { useShield?: boolean }) =>
+  handleMutation({ action: useShield ? 'use' : undefined });
+
+export const claimShield = async () => handleMutation({ action: 'claim' });
+
+export const scheduleRecovery = async (date: string) => handleMutation({ action: 'schedule', date });
+
+
+-----
+
+
+30. ./lib/streaks.ts
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+const getFormatter = (tz: string) => {
+  if (formatterCache.has(tz)) return formatterCache.get(tz)!;
+  try {
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    formatterCache.set(tz, fmt);
+    return fmt;
+  } catch {
+    const fallback = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    formatterCache.set(tz, fallback);
+    return fallback;
+  }
+};
+
+const formatDay = (date: Date, tz: string): string => {
+  try {
+    return getFormatter(tz).format(date);
+  } catch {
+    return date.toISOString().split('T')[0];
+  }
+};
+
+export const dayKey = (date: Date, tz: string): string => formatDay(date, tz);
+
+const prevDayKey = (date: Date, tz: string): string => {
+  const todayKey = formatDay(date, tz);
+  let probe = new Date(date.getTime() - 3600000);
+  let guard = 0;
+  while (formatDay(probe, tz) === todayKey && guard < 48) {
+    probe = new Date(probe.getTime() - 3600000);
+    guard += 1;
+  }
+  return formatDay(probe, tz);
+};
+
+type StreakRow = {
+  current_streak?: number | null;
+  last_activity_date?: string | null;
+};
+
+type ComputeParams = {
+  now?: Date;
+  tz: string;
+  row: StreakRow | null;
+};
+
+export type ComputeResult = {
+  current: number;
+  todayKey: string;
+  changed: boolean;
+  reason: 'first' | 'same-day' | 'incremented' | 'reset';
+};
+
+export const computeStreakUpdate = ({ now = new Date(), tz, row }: ComputeParams): ComputeResult => {
+  const todayKey = dayKey(now, tz);
+  const yesterdayKey = prevDayKey(now, tz);
+
+  const lastKey = row?.last_activity_date ?? null;
+  const currentStreak = row?.current_streak ?? 0;
+
+  if (!lastKey) {
+    return { current: 1, todayKey, changed: true, reason: 'first' };
+  }
+
+  if (lastKey === todayKey) {
+    return { current: currentStreak || 1, todayKey, changed: false, reason: 'same-day' };
+  }
+
+  if (lastKey === yesterdayKey) {
+    const next = (currentStreak || 0) + 1;
+    return { current: next, todayKey, changed: true, reason: 'incremented' };
+  }
+
+  return { current: 1, todayKey, changed: true, reason: 'reset' };
+};
+
+/**
+ * Sync a user's streak on the server using their timezone.
+ * Returns the updated streak count.
+ */
+export async function syncStreak(
+  supabase: SupabaseClient,
+  userId: string,
+  tz: string,
+  now: Date = new Date(),
+): Promise<number> {
+  const compute = ({ data }: { data: StreakRow | null }) => computeStreakUpdate({ now, tz, row: data });
+
+  const { data, error } = await supabase
+    .from('user_streaks')
+    .select('current_streak, last_activity_date')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const result = compute({ data });
+
+  if (!result.changed) {
+    return result.current;
+  }
+
+  console.info(
+    '[syncStreak] correction',
+    JSON.stringify({ userId, tz, reason: result.reason, from: data?.current_streak ?? 0, to: result.current }),
+  );
+
+  const { error: upsertErr } = await supabase
+    .from('user_streaks')
+    .upsert({ user_id: userId, current_streak: result.current, last_activity_date: result.todayKey });
+  if (upsertErr) throw upsertErr;
+  return result.current;
+}
+
+
+-----
+
+
+31. ./pages/profile/streak.tsx
+import { useEffect, useState } from 'react';  // Make sure to import useState and useEffect
+import type { GetServerSideProps, NextPage } from 'next';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { StreakChip } from '@/components/user/StreakChip';
+import { getServerClient } from '@/lib/supabaseServer';
+import { buildCompletionHistory } from '@/utils/streak';
+import { useStreak } from '@/hooks/useStreak';  // Import the useStreak hook
+import { useStreakTokens } from '@/hooks/useStreakTokens'; // Import the useStreakTokens hook
+
+const Heatmap = dynamic(
+  () => import('@/components/user/StreakHeatmap').then((mod) => mod.StreakHeatmap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 w-full animate-pulse rounded-ds-2xl border border-dashed border-border bg-muted" />
+    ),
+  }
+);
+
+type HistoryEntry = { date: string; completed: number; total: number };
+
+type Props = {
+  streak: {
+    current: number;
+    longest: number;
+    lastActive: string | null;
+  };
+  history: HistoryEntry[];
+};
+
+const formatDisplayDate = (iso: string | null) => {
+  if (!iso) return '—';
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date(`${iso}T00:00:00Z`));
+  } catch {
+    return iso;
+  }
+};
+
+const StreakPage: NextPage<Props> = ({ streak, history }) => {
+  const { data, loading, error } = useStreak();  // Hook for streak data
+  const { data: tokenInfo, loading: tokenLoading } = useStreakTokens(); // Hook for token data
+  const [isRecoverySuccessful, setIsRecoverySuccessful] = useState(false);
+
+  // Handle loading states
+  if (loading || tokenLoading) return <div>Loading streak...</div>;
+  if (error) return <div>Error loading streak data: {error.message}</div>;
+
+  // Handle recovery token logic
+  const handleRecoverStreak = async () => {
+    try {
+      const response = await fetch('/api/streak/recover', { method: 'POST' });
+      const result = await response.json();
+      if (result.ok) {
+        setIsRecoverySuccessful(true);
+      } else {
+        alert('Recovery failed');
+      }
+    } catch (error) {
+      alert('An error occurred while recovering your streak');
+    }
+  };
+
+  return (
+    <section className="bg-lightBg py-16 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+      <Container>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="font-slab text-display">Your streak</h1>
+            <p className="text-body text-muted-foreground">
+              Keep learning every day—complete a study task before midnight Pakistan time to maintain the streak.
+            </p>
+          </div>
+          <StreakChip value={streak.current} href="/profile/streak" />
+        </div>
+
+        <div className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <Card className="rounded-ds-2xl p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-slab text-h3">Calendar heatmap</h2>
+                <p className="text-small text-muted-foreground">
+                  Each square represents a day. Darker shades mean more tasks completed.
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground">PKT timezone</span>
+            </div>
+            <div className="mt-6">
+              <Heatmap data={history} />
+            </div>
+          </Card>
+
+          <Card className="space-y-4 rounded-ds-2xl p-6">
+            <h2 className="font-slab text-h4">Summary</h2>
+            <dl className="space-y-3 text-small">
+              <div className="flex items-center justify-between rounded-xl bg-muted/60 px-4 py-3">
+                <dt className="text-muted-foreground">Current streak</dt>
+                <dd className="font-semibold">{streak.current} days</dd>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
+                <dt className="text-muted-foreground">Longest streak</dt>
+                <dd className="font-semibold">{streak.longest} days</dd>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-muted/40 px-4 py-3">
+                <dt className="text-muted-foreground">Last activity</dt>
+                <dd className="font-semibold">{formatDisplayDate(streak.lastActive)}</dd>
+              </div>
+            </dl>
+            <div className="rounded-xl bg-muted/30 px-4 py-3 text-small text-muted-foreground">
+              <h3 className="font-semibold text-foreground">How your streak works</h3>
+              <ul className="mt-2 list-disc space-y-2 pl-4">
+                <li>Complete at least one scheduled study task before midnight Pakistan time (PKT) each day.</li>
+                <li>Every productive day extends your streak and fills the heatmap for that date.</li>
+                <li>Missing a day resets your current streak, but your longest streak stays recorded for motivation.</li>
+              </ul>
+            </div>
+
+            {/* Streak Recovery Section */}
+            {streak.current === 0 && tokenInfo?.hasOpenToken && (
+              <div className="mt-6">
+                <h2 className="text-lg font-semibold text-red-500">Streak Broken!</h2>
+                <button
+                  onClick={handleRecoverStreak}
+                  className="btn btn-primary mt-4">
+                  Use Recovery Token
+                </button>
+                {isRecoverySuccessful && (
+                  <p className="text-green-500 mt-2">Your streak has been successfully recovered!</p>
+                )}
+              </div>
+            )}
+
+            <div className="pt-4">
+              <Button variant="primary" fullWidth asChild>
+                <Link href="/study-plan">Go to study plan</Link>
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </Container>
+    </section>
+  );
+};
+
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  const supabase = getServerClient(ctx.req, ctx.res);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  const DAYS_BACK = 84;
+
+  const [streakRes, historyRes] = await Promise.all([
+    supabase
+      .from('streaks')
+      .select('current,longest,last_active_date')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    // 🚨 replace 'get_streak_history' with your actual RPC name if different
+    supabase.rpc('get_streak_history', {
+      p_user_id: user.id,
+      p_days_back: DAYS_BACK,
+    }),
+  ]);
+
+  const streakRow = streakRes.data ?? null;
+  const rawHistory = historyRes.data ?? [];
+
+  const history = buildCompletionHistory(rawHistory, DAYS_BACK);
+
+  return {
+    props: {
+      streak: {
+        current: streakRow?.current ?? 0,
+        longest: streakRow?.longest ?? streakRow?.current ?? 0,
+        lastActive: streakRow?.last_active_date ?? null,
+      },
+      history,
+    },
+  };
+};
+
+export default StreakPage;
+
+
+-----
+
+
+32. ./pages/api/streak.ts
+// pages/api/streak.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { supabaseService, supabaseServer } from '@/lib/supabaseServer';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export type StreakData = {
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;   // YYYY-MM-DD
+  next_restart_date: string | null;    // 24h deadline from last streak update (or scheduled)
+  shields: number;
+
+  // 24-hour window meta (not persisted)
+  has_activity_in_last_24h: boolean;
+  seconds_until_restart: number | null;
+  is_hourglass: boolean;
+};
+
+const getDayKey = (d = new Date()) => d.toISOString().split('T')[0];
+const ms = (h: number) => h * 60 * 60 * 1000;
+const HOURGLASS_THRESHOLD_HOURS = 6; // show warning when < 6h left
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  let token = req.headers.authorization?.split(' ')[1] ?? null;
+  let refreshToken: string | null = null;
+
+  if (!token) {
+    try {
+      const cookieClient = supabaseServer(req);
+      const { data, error } = await cookieClient.auth.getSession();
+      if (error) {
+        console.error('[API/streak] Cookie session lookup failed:', error);
+      }
+      token = data?.session?.access_token ?? null;
+      refreshToken = data?.session?.refresh_token ?? null;
+    } catch (error) {
+      console.error('[API/streak] Cookie session client unavailable:', error);
+    }
+  }
+
+  if (!token) return res.status(401).json({ error: 'No authorization token' });
+
+  // RLS client (acts as the user)
+  let supabaseUser: SupabaseClient;
+  try {
+    supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  } catch (error) {
+    console.error('[API/streak] User client creation failed:', error);
+    return res.status(503).json({ error: 'service_unavailable' });
+  }
+
+  try {
+    await supabaseUser.auth.setSession({
+      access_token: token,
+      refresh_token: refreshToken ?? '',
+    });
+  } catch (error) {
+    console.error('[API/streak] User session setup failed:', error);
+    return res.status(503).json({ error: 'service_unavailable' });
+  }
+
+  let user = null;
+  try {
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabaseUser.auth.getUser();
+    if (authError || !authUser) return res.status(401).json({ error: 'Invalid token' });
+    user = authUser;
+  } catch (error) {
+    console.error('[API/streak] Auth verification failed:', error);
+    return res.status(503).json({ error: 'auth_unavailable' });
+  }
+
+  try {
+    // Read current row (aliases to expected keys)
+    let { data: row, error: fetchError } = await supabaseUser
+      .from('streaks')
+      .select(
+        'user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at',
+      )
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+    // If no row, create one
+    const baseInsert = {
+      user_id: user.id,
+      current: 0,
+      longest: 0,
+      last_active_date: null,
+      updated_at: null as string | null,
+    };
+
+    if (!row) {
+      const { data: inserted, error: insertError } = await supabaseUser
+        .from('streaks')
+        .insert(baseInsert)
+        .select(
+          'user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at',
+        )
+        .single();
+      if (insertError) {
+        console.error('[API/streak] Insert failed:', insertError);
+
+        const shouldRetryWithService =
+          insertError?.code === '42501' || insertError?.message?.includes('row-level security');
+
+        if (shouldRetryWithService) {
+          try {
+            const svc = supabaseService();
+            const { data: serviceInserted, error: serviceErr } = await svc
+              .from('streaks')
+              .insert(baseInsert)
+              .select(
+                'user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at',
+              )
+              .single();
+
+            if (serviceErr) {
+              console.error('[API/streak] Service insert failed:', serviceErr);
+            } else {
+              row = serviceInserted ?? row;
+            }
+          } catch (serviceClientError) {
+            console.error('[API/streak] Service client unavailable for insert:', serviceClientError);
+          }
+        }
+
+        // Fallback: treat as new streak of 0 when all attempts fail
+        if (!row) {
+          row = {
+            user_id: user.id,
+            current_streak: 0,
+            longest_streak: 0,
+            last_activity_date: null,
+            updated_at: null,
+          } as typeof row;
+        }
+      } else {
+        row = inserted;
+      }
+    }
+
+    let shieldTokens = 0;
+    try {
+      const { data: shieldRow } = await supabaseUser
+        .from('streak_shields')
+        .select('tokens')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      shieldTokens = shieldRow?.tokens ?? 0;
+    } catch (shieldErr) {
+      console.warn('[API/streak] Unable to load shields', shieldErr);
+      shieldTokens = 0;
+    }
+
+    const now = new Date();
+
+    // Build response object with 24h-from-last-update logic
+    const asResponse = (r: typeof row, shields = shieldTokens): StreakData => {
+      const current = r?.current_streak ?? 0;
+      const longestBase = r?.longest_streak ?? r?.current_streak ?? 0;
+      const lastDate = r?.last_activity_date ?? null;
+      const updatedAtStr = (r as any)?.updated_at as string | null | undefined;
+
+      let nextRestartDate: string | null = null;
+      let hasActivityInLast24h = false;
+      let secondsUntilRestart: number | null = null;
+      let isHourglass = false;
+
+      if (updatedAtStr) {
+        const lastUpdate = new Date(updatedAtStr);
+        if (!Number.isNaN(lastUpdate.getTime())) {
+          const deadline = new Date(lastUpdate.getTime() + ms(24));
+
+          const nowMs = now.getTime();
+          const lastMs = lastUpdate.getTime();
+
+          const diffMs = nowMs - lastMs; // >0 if now is after lastUpdate
+          if (diffMs >= 0 && diffMs <= ms(24)) {
+            hasActivityInLast24h = true;
+          }
+
+          const secondsRaw = Math.floor((deadline.getTime() - nowMs) / 1000);
+          const secs = secondsRaw > 0 ? secondsRaw : 0;
+          secondsUntilRestart = secs;
+          nextRestartDate = deadline.toISOString();
+
+          const hoursLeft = secs / 3600;
+          if (current > 0 && !hasActivityInLast24h && secs > 0 && hoursLeft <= HOURGLASS_THRESHOLD_HOURS) {
+            isHourglass = true;
+          }
+        }
+      }
+
+      return {
+        current_streak: current,
+        longest_streak: longestBase,
+        last_activity_date: lastDate,
+        next_restart_date: nextRestartDate,
+        shields,
+        has_activity_in_last_24h: hasActivityInLast24h,
+        seconds_until_restart: secondsUntilRestart,
+        is_hourglass: isHourglass,
+      };
+    };
+
+    // GET → just return current streak + 24h meta
+    if (req.method === 'GET') {
+      return res.status(200).json(asResponse(row));
+    }
+
+    // POST → handle shields + streak updates
+    if (req.method === 'POST') {
+      const { action, date } = req.body as { action?: 'use' | 'claim' | 'schedule'; date?: string };
+
+      const today = getDayKey(now);
+      const previousCurrent = row.current_streak ?? 0;
+
+      if (action === 'claim') {
+        const nextTokens = shieldTokens + 1;
+        try {
+          const { data: updatedShield, error: shieldErr } = await supabaseUser
+            .from('streak_shields')
+            .upsert({ user_id: user.id, tokens: nextTokens }, { onConflict: 'user_id' })
+            .select('tokens')
+            .single();
+          if (shieldErr) throw shieldErr;
+          shieldTokens = updatedShield?.tokens ?? nextTokens;
+          await supabaseUser.from('streak_shield_logs').insert({ user_id: user.id, action: 'claim' });
+        } catch (err) {
+          console.error('[API/streak] Claim shield failed', err);
+          return res.status(500).json({ error: 'Failed to claim shield' });
+        }
+        return res.status(200).json(asResponse(row, shieldTokens));
+      }
+
+      if (action === 'schedule') {
+        if (!date) return res.status(400).json({ error: 'Date required for scheduling' });
+        // override next_restart_date with scheduled date
+        return res.status(200).json({ ...asResponse(row, shieldTokens), next_restart_date: date });
+      }
+
+      const spentShield = action === 'use';
+      if (spentShield && shieldTokens <= 0) {
+        return res.status(400).json({ error: 'No shields available' });
+      }
+
+      // If not using shield and already counted today, don't bump streak again
+      if (!spentShield && row.last_activity_date === today) {
+        return res.status(200).json(asResponse(row, shieldTokens));
+      }
+
+      const lastTs = row.updated_at ? new Date(row.updated_at) : null;
+      const within24h = lastTs ? now.getTime() - lastTs.getTime() <= ms(24) : false;
+
+      let newCurrent = 1;
+      if (spentShield) {
+        // Shield = protect streak and push forward one day
+        newCurrent = previousCurrent + 1;
+      } else if (within24h) {
+        // Still within 24h window → streak continues
+        newCurrent = previousCurrent + 1;
+      } else {
+        // Missed 24h window → reset to 1
+        newCurrent = 1;
+      }
+
+      const previousLongest = row.longest_streak ?? row.current_streak ?? 0;
+      const newLongest = Math.max(previousLongest, newCurrent);
+
+      const { data: updatedRow, error: upErr } = await supabaseUser
+        .from('streaks')
+        .update({
+          current: newCurrent,
+          longest: newLongest,
+          last_active_date: today,
+          updated_at: now.toISOString(),
+        })
+        .eq('user_id', user.id)
+        .select(
+          'user_id,current_streak:current,longest_streak:longest,last_activity_date:last_active_date,updated_at',
+        )
+        .single();
+
+      if (upErr) {
+        console.error('[API/streak] Update failed:', upErr);
+        // fall back to previous row (don’t blow up UI)
+        return res.status(200).json(asResponse(row, shieldTokens));
+      }
+
+      let tokensDelta = 0;
+      if (spentShield) tokensDelta -= 1;
+      if (newCurrent > previousCurrent && newCurrent % 7 === 0) tokensDelta += 1;
+
+      let nextTokens = shieldTokens;
+      if (tokensDelta !== 0) {
+        nextTokens = Math.max(0, shieldTokens + tokensDelta);
+        try {
+          const { data: shieldRow, error: shieldUpdateErr } = await supabaseUser
+            .from('streak_shields')
+            .upsert({ user_id: user.id, tokens: nextTokens }, { onConflict: 'user_id' })
+            .select('tokens')
+            .single();
+          if (shieldUpdateErr) {
+            console.error('[API/streak] Failed to update shields', shieldUpdateErr);
+          } else {
+            nextTokens = shieldRow?.tokens ?? nextTokens;
+          }
+        } catch (shieldUpdateError) {
+          console.error('[API/streak] Shield upsert failed', shieldUpdateError);
+        }
+      }
+
+      if (spentShield) {
+        await supabaseUser.from('streak_shield_logs').insert({ user_id: user.id, action: 'use' });
+      }
+      if (tokensDelta > 0) {
+        await supabaseUser.from('streak_shield_logs').insert({ user_id: user.id, action: 'claim' });
+      }
+
+      return res.status(200).json(asResponse(updatedRow, nextTokens));
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (err: any) {
+    console.error('[API/streak] Error:', err);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+}
+
+
+-----
+
+
+33. ./pages/api/streak_handler.ts
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
+
+type StreakResponse = {
+  current_streak: number;
+  last_activity_date: string | null;
+  next_restart_date: string | null;
+  shields: number;
+};
+type ErrorResponse = { error: string };
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse<StreakResponse | ErrorResponse>) {
+  const supabase = createSupabaseServerClient({ req });
+
+  const { data: { user }, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (req.method === 'GET') {
+    const { data: streakData, error: streakErr } = await supabase
+      .from('user_streaks')
+      .select('current_streak, last_activity_date, next_restart_date')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const { data: shieldData, error: shieldErr } = await supabase
+      .from('streak_shields')
+      .select('tokens')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (streakErr || shieldErr) {
+      return res.status(500).json({ error: streakErr?.message || shieldErr?.message || 'Failed to fetch' });
+    }
+
+    return res.status(200).json({
+      current_streak: streakData?.current_streak ?? 0,
+      last_activity_date: streakData?.last_activity_date ?? null,
+      next_restart_date: streakData?.next_restart_date ?? null,
+      shields: shieldData?.tokens ?? 0,
+    });
+  }
+
+  if (req.method === 'POST') {
+    const { action } = (req.body as { action?: string }) || {};
+    const today = new Date().toISOString().split('T')[0];
+    const { data: existing, error: fetchErr } = await supabase
+      .from('user_streaks')
+      .select('current_streak, last_activity_date, next_restart_date')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const { data: shieldRow, error: shieldErr } = await supabase
+      .from('streak_shields')
+      .select('tokens')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (fetchErr || shieldErr) {
+      return res.status(500).json({ error: fetchErr?.message || shieldErr?.message || 'Fetch failed' });
+    }
+
+    const currentTokens = shieldRow?.tokens ?? 0;
+
+    if (action === 'claim') {
+      const tokens = currentTokens + 1;
+      const { error: upsertErr } = await supabase
+        .from('streak_shields')
+        .upsert({ user_id: user.id, tokens });
+      if (upsertErr) {
+        return res.status(500).json({ error: upsertErr.message });
+      }
+      await supabase.from('streak_shield_logs').insert({ user_id: user.id, action: 'claim' });
+      return res.status(200).json({
+        current_streak: existing?.current_streak ?? 0,
+        last_activity_date: existing?.last_activity_date ?? null,
+        next_restart_date: existing?.next_restart_date ?? null,
+        shields: tokens,
+      });
+    }
+
+    let newStreak = 1;
+    let shields = currentTokens;
+
+    if (action === 'use' && currentTokens > 0) {
+      newStreak = (existing?.current_streak ?? 0) + 1;
+      shields = currentTokens - 1;
+    } else if (existing) {
+      if (existing.last_activity_date === today) {
+        newStreak = existing.current_streak;
+      } else {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const y = yesterday.toISOString().split('T')[0];
+        if (existing.last_activity_date === y) {
+          newStreak = existing.current_streak + 1;
+        }
+      }
+    }
+
+    const { error } = await supabase
+      .from('user_streaks')
+      .upsert({
+        user_id: user.id,
+        current_streak: newStreak,
+        last_activity_date: today,
+        next_restart_date: existing?.next_restart_date ?? null,
+      });
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (action === 'use' && currentTokens > 0) {
+      const { error: shieldUpdateErr } = await supabase
+        .from('streak_shields')
+        .upsert({ user_id: user.id, tokens: shields });
+      if (shieldUpdateErr) {
+        return res.status(500).json({ error: shieldUpdateErr.message });
+      }
+      await supabase.from('streak_shield_logs').insert({ user_id: user.id, action: 'use' });
+    }
+
+    return res.status(200).json({
+      current_streak: newStreak,
+      last_activity_date: today,
+      next_restart_date: existing?.next_restart_date ?? null,
+      shields,
+    });
+  }
+
+  res.setHeader('Allow', 'GET,POST');
+  return res.status(405).json({ error: 'Method Not Allowed' });
+}
+
+
+-----
+
+

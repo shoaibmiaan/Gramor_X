@@ -1,0 +1,155 @@
+name: Mobile Android (TWA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 'Semver version matching the web release'
+        required: true
+        default: '0.1.2'
+      version_code:
+        description: 'Android versionCode override (defaults to derived value)'
+        required: false
+        default: ''
+      release_notes:
+        description: 'Optional changelog notes for this build'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_ENV: production
+
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: anon_dummy
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_SERVICE_KEY: service_dummy
+      SUPABASE_SERVICE_ROLE_KEY: role_dummy
+      TWILIO_ACCOUNT_SID: ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      TWILIO_AUTH_TOKEN: dummytoken
+      TWILIO_VERIFY_SERVICE_SID: VAXxxxxxxxxxxxxxxxxxxxxxxxx
+      TWILIO_WHATSAPP_FROM: whatsapp:+10000000000
+      NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: '60'
+      STRIPE_PRICE_STARTER_MONTHLY: price_dummy
+      STRIPE_PRICE_STARTER_ANNUAL: price_dummy
+      STRIPE_PRICE_BOOSTER_MONTHLY: price_dummy
+      STRIPE_PRICE_BOOSTER_ANNUAL: price_dummy
+      STRIPE_PRICE_MASTER_MONTHLY: price_dummy
+      STRIPE_PRICE_MASTER_ANNUAL: price_dummy
+      NEXT_PUBLIC_DEV_PAYMENTS: '1'
+      EASYPASA_MERCHANT_ID: dummy_merchant
+      EASYPASA_SECRET: dummy_secret
+      JAZZCASH_MERCHANT_ID: dummy_merchant
+      JAZZCASH_INTEGRITY_SALT: dummy_salt
+      SPEAKING_DAILY_LIMIT: '5'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance guardrails (tests/perf)
+        run: npm test -- tests/perf
+
+      - name: Build web bundle
+        run: npm run build
+
+      - name: Sync versions & changelog
+        env:
+          VERSION_CODE: ${{ inputs.version_code }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+        run: |
+          set -euo pipefail
+          ARGS=(--platform android --version "${{ inputs.app_version }}")
+          if [ -n "${VERSION_CODE}" ]; then
+            ARGS+=(--android-code "${VERSION_CODE}")
+          fi
+          if [ -n "${RELEASE_NOTES}" ]; then
+            ARGS+=(--notes "${RELEASE_NOTES}")
+          fi
+          npx tsx tools/mobile/versioning.ts "${ARGS[@]}"
+
+      - name: Prepare signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_TWA_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_B64}" ]; then
+            echo "ANDROID_TWA_KEYSTORE_BASE64 secret missing; cannot sign build." >&2
+            exit 1
+          fi
+          mkdir -p mobile/android
+          echo "${KEYSTORE_B64}" | base64 --decode > mobile/android/upload-key.jks
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Build & sign Android bundle
+        working-directory: mobile/android
+        env:
+          BUBBLEWRAP_KEYSTORE: ${{ github.workspace }}/mobile/android/upload-key.jks
+          BUBBLEWRAP_KEY_ALIAS: ${{ secrets.ANDROID_TWA_KEY_ALIAS }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_TWA_KEY_PASSWORD }}
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_TWA_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ ! -f twa-manifest.json ]; then
+            echo "twa-manifest.json not found; ensure the TWA project is checked in." >&2
+            exit 1
+          fi
+          bubblewrap build \
+            --overwrite \
+            --signingKeyPath "${BUBBLEWRAP_KEYSTORE}" \
+            --signingKeyAlias "${BUBBLEWRAP_KEY_ALIAS}" \
+            --signingKeyStorePassword "${BUBBLEWRAP_KEYSTORE_PASSWORD}" \
+            --signingKeyPassword "${BUBBLEWRAP_KEY_PASSWORD}"
+          if [ -f ./gradlew ]; then
+            chmod +x ./gradlew
+            ./gradlew bundleRelease
+          fi
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-twa-${{ inputs.app_version }}
+          path: |
+            mobile/android/app/build/outputs/**/*.aab
+            mobile/android/app/build/outputs/**/*.apk
+            mobile/android/build/**/*.zip
+          if-no-files-found: warn
+
+      - name: Upload release metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-release-${{ inputs.app_version }}
+          path: |
+            docs/mobile/CHANGELOG.md
+            mobile/android/version.json
+          if-no-files-found: error
+
+      - name: Upload performance budgets snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-guardrails
+          path: tools/perf/budgets.json
+          if-no-files-found: error

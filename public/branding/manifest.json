@@ -1,0 +1,29 @@
+{
+  "name": "GramorX AI",
+  "short_name": "GramorX",
+  "icons": [
+    {
+      "src": "/branding/gramorx-ai-appicon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    },
+    {
+      "src": "/branding/gramorx-ai-appicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/branding/gramorx-ai-appicon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/branding/gramorx-ai-appicon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0F0F1B",
+  "background_color": "#0F0F1B",
+  "display": "standalone"
+}

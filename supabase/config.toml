@@ -1,0 +1,15 @@
+# supabase/config.toml — functions schedules
+
+[functions.whatsapp-broadcast]
+verify_jwt = false
+
+[functions.reminders]
+verify_jwt = false
+
+# Kept from branch: codex/add-whatsapp-opt-in-preferences-panel
+[functions.whatsapp-tasks]
+verify_jwt = true                # invoked by app/webhook; no schedule
+
+# Kept from main branch
+[functions.daily-plan-reminders]
+verify_jwt = false

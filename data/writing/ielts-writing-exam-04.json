@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-04",
+  "title": "Academic Set 4 — International Students & Public Funding",
+  "description": "Bar chart of overseas student numbers and an essay about funding the arts versus science.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "International student enrolment",
+    "type": "academic",
+    "prompt": "The bar chart compares the number of international students enrolling in universities in five countries (Australia, Canada, China, the UK and the USA) in 2005 and 2015. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Describe overall differences between the two years before mentioning individual countries.",
+      "Highlight which countries experienced the greatest growth or decline.",
+      "Use comparative language to link countries with similar patterns."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Funding priorities",
+    "prompt": "Some people think governments should invest more in science education and scientific research, while others believe that the arts deserve more funding. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: outline the debate and present your stance.",
+      "Body paragraph 1: reasons to prioritise science and technology.",
+      "Body paragraph 2: arguments for supporting the arts and culture.",
+      "Conclusion: balance the viewpoints and state your final opinion."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The bar chart compares the number of international students enrolling in universities in five countries (Australia, Canada, China, the UK and the USA) in 2005 and 2015. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some people think governments should invest more in science education and scientific research, while others believe that the arts deserve more funding. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

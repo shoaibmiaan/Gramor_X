@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-6",
+  "title": "Reading Practice Test 11 — Canal Conservation",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Restoring the Meridian Canal",
+      "text": "The Meridian Canal once linked farming villages to the capital's markets, but a drought in the 1990s left several locks warped and unusable. Barges switched to road transport, and the waterway became clogged with reeds. In 2017 an alliance of historians and freight companies proposed restoring the canal for low-carbon logistics. Surveyors discovered that sections built over peat soils had subsided by nearly half a metre, forcing engineers to design adjustable lock gates mounted on floating hinges. Volunteers cleared debris and catalogued original stone blocks, while archaeologists recorded graffiti carved by nineteenth-century boat crews.\n\nTo finance the work, the alliance issued community bonds and secured carbon-credit funding from companies seeking greener shipping options. A new control centre now coordinates lock operations using solar-powered sensors that relay water levels every fifteen minutes. Farmers contributed dredging equipment during off-season months, and canoe clubs helped test navigation when the first renovated stretch reopened. Rather than paving towpaths for cyclists, planners opted for permeable surfaces planted with native wildflowers to support pollinators. The revived canal now moves grain and construction materials, cutting truck journeys by 18 percent.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The canal was originally abandoned because it froze every winter.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. Road transport replaced barges after the locks became unusable.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Plans to restore the canal emerged in 2017.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. Engineers found that peatland sections had remained level over time.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Adjustable gates were designed to accommodate shifting ground.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Volunteers ignored the historic stonework when clearing debris.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Archaeologists documented carvings left by past boat crews.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. The project relied solely on government subsidies.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. Solar-powered sensors now track water levels.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. Local farmers loaned equipment to assist with dredging.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. Canoe clubs helped evaluate the restored stretches.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Towpaths were covered with impermeable asphalt to aid cyclists.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. The revived canal has reduced the number of truck journeys.",
+          "answer": "True"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Who Guards Our Data?",
+      "text": "Journalist Amina Patel contends that digital privacy laws fail when oversight bodies lack technical expertise. She recounts attending a regulatory hearing where commissioners relied on company slide decks rather than independent audits to understand how data was processed. Patel praises watchdogs that hire engineers capable of inspecting code and encryption practices directly. She is sceptical of industry self-certification, calling it an invitation for companies to grade their own homework.\n\nPatel endorses transparency reports that detail the algorithms used to personalise advertising, arguing that citizens cannot consent to invisible profiling. However, she cautions against publishing raw datasets that could expose sensitive information. Instead she advocates for privacy sandboxes where vetted researchers can test claims under strict controls. Patel also wants oversight boards to include community representatives who understand how surveillance disproportionately affects marginalised groups. She concludes that digital rights will remain theoretical without independent technical scrutiny and public participation.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Patel believes regulators need more technical knowledge.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. She trusts company slide decks as a sufficient source of information.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Patel approves of hiring engineers to examine systems directly.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. She views industry self-certification with suspicion.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Patel argues that transparency reports about algorithms are valuable.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. She supports releasing raw datasets to the public without restriction.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Patel promotes controlled research environments for testing privacy claims.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. She opposes involving community representatives in oversight.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Patel warns that surveillance harms marginalised groups.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. She believes digital rights are secure without further scrutiny.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Patel thinks independent audits are unnecessary.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. She contends that commissioners should rely solely on legal experts.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Patel links meaningful privacy protections to public participation.",
+          "answer": "Yes"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "The Polar Passage Initiative",
+      "text": "The Polar Passage Initiative coordinates research vessels studying Arctic shipping routes as sea ice retreats. Oceanographer Erik Holm oversees a fleet of autonomous buoys that log salinity, temperature, and ice thickness, relaying the data to ships through satellite links. The programme partners with Indigenous hunters who report seasonal changes in wildlife migration, ensuring shipping models factor in ecological impacts. A joint control centre in Tromsø issues advisories when wind forecasts indicate pressure ridges that could trap vessels.\n\nTo reduce emissions, participating ships trial hybrid propulsion systems combining low-sulphur fuel with battery packs charged during favourable winds. Engineers also test hull coatings that shed ice more easily, decreasing the need for escort icebreakers. Because insurance companies require reliable risk assessments, the initiative publishes an open database of near-miss incidents and response times. Universities run onboard labs analysing black carbon deposits from ship exhaust, while port authorities evaluate how increased traffic affects local fisheries. After each season, crews simulate emergency evacuations in virtual reality to refine safety protocols.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What do the autonomous buoys measure?",
+          "options": [
+            "A. Tourist numbers on cruise ships.",
+            "B. Salinity, temperature, and ice thickness.",
+            "C. The speed of underwater currents only.",
+            "D. The profitability of shipping companies."
+          ],
+          "answer": "B. Salinity, temperature, and ice thickness."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. Why does the initiative partner with Indigenous hunters?",
+          "options": [
+            "A. To license new fishing grounds.",
+            "B. To incorporate knowledge about wildlife migration.",
+            "C. To hire crew for icebreakers.",
+            "D. To enforce shipping regulations."
+          ],
+          "answer": "B. To incorporate knowledge about wildlife migration."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. What triggers advisories from the control centre?",
+          "options": [
+            "A. Reports of tourist ships entering the area.",
+            "B. Forecasts of wind conditions that create pressure ridges.",
+            "C. Battery failures on hybrid vessels.",
+            "D. Requests from insurance companies."
+          ],
+          "answer": "B. Forecasts of wind conditions that create pressure ridges."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. How do participating ships lower emissions?",
+          "options": [
+            "A. By sailing only during daylight.",
+            "B. By using hybrid propulsion with batteries and low-sulphur fuel.",
+            "C. By anchoring near ports for longer periods.",
+            "D. By burning higher sulphur fuel for efficiency."
+          ],
+          "answer": "B. By using hybrid propulsion with batteries and low-sulphur fuel."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. What is being tested to reduce reliance on icebreakers?",
+          "options": [
+            "A. New radio frequencies for communications.",
+            "B. Hull coatings that shed ice more easily.",
+            "C. Inflatable barriers placed in front of ships.",
+            "D. Heated anchors for breaking ice manually."
+          ],
+          "answer": "B. Hull coatings that shed ice more easily."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. Why is an open database of near-miss incidents published?",
+          "options": [
+            "A. To market Arctic cruises.",
+            "B. To satisfy insurance demands for risk information.",
+            "C. To discourage competitors from entering the region.",
+            "D. To comply with fishing quotas."
+          ],
+          "answer": "B. To satisfy insurance demands for risk information."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. What do universities study aboard the vessels?",
+          "options": [
+            "A. Passenger entertainment preferences.",
+            "B. Black carbon residues from exhaust.",
+            "C. The efficiency of cargo loading systems.",
+            "D. The nutritional intake of crews."
+          ],
+          "answer": "B. Black carbon residues from exhaust."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. How do port authorities participate?",
+          "options": [
+            "A. By recruiting sailors for long voyages.",
+            "B. By monitoring effects of traffic on local fisheries.",
+            "C. By building new tourist terminals.",
+            "D. By funding virtual reality simulators."
+          ],
+          "answer": "B. By monitoring effects of traffic on local fisheries."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. What training occurs after each season?",
+          "options": [
+            "A. Crews attend language classes.",
+            "B. Teams run virtual reality evacuation drills.",
+            "C. Managers study financial derivatives.",
+            "D. Engineers dismantle all hybrid systems."
+          ],
+          "answer": "B. Teams run virtual reality evacuation drills."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. What role do satellite links play?",
+          "options": [
+            "A. They broadcast tourism advertisements.",
+            "B. They transmit buoy data to research vessels.",
+            "C. They enforce fishing regulations.",
+            "D. They charge the ships' batteries."
+          ],
+          "answer": "B. They transmit buoy data to research vessels."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. Why are hybrid propulsion systems used?",
+          "options": [
+            "A. To allow ships to travel faster.",
+            "B. To lower emissions along Arctic routes.",
+            "C. To enable vessels to operate without crews.",
+            "D. To convert ships into floating laboratories."
+          ],
+          "answer": "B. To lower emissions along Arctic routes."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. What aspect of the initiative relates to safety protocols?",
+          "options": [
+            "A. Selling insurance packages to tourists.",
+            "B. Simulating emergency evacuations in virtual reality.",
+            "C. Installing permanent research bases on the ice.",
+            "D. Replacing life jackets with drones."
+          ],
+          "answer": "B. Simulating emergency evacuations in virtual reality."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each partner with its contribution to the initiative.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Indigenous hunters",
+                "right": ["Providing observations of wildlife patterns"]
+              },
+              {
+                "left": "Insurance companies",
+                "right": ["Requiring detailed risk data"]
+              },
+              {
+                "left": "Universities",
+                "right": ["Analysing black carbon samples"]
+              },
+              {
+                "left": "Engineers",
+                "right": ["Testing ice-shedding hull coatings"]
+              }
+            ]
+          },
+          "answer": "Indigenous hunters -> Providing observations of wildlife patterns"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What overarching goal guides the Polar Passage Initiative?",
+          "options": [
+            "A. Promoting luxury tourism in the Arctic.",
+            "B. Coordinating research to make Arctic shipping safer and cleaner.",
+            "C. Building permanent settlements along the route.",
+            "D. Replacing satellites with buoys."
+          ],
+          "answer": "B. Coordinating research to make Arctic shipping safer and cleaner."
+        }
+      ]
+    }
+  ]
+}

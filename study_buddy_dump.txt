@@ -1,0 +1,220 @@
+===== File #1: pages/api/study-buddy/sessions/[id].ts =====
+// pages/api/study-buddy/sessions/[id].ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { z } from 'zod';
+import { getServerClient } from '@/lib/supabaseServer';
+
+const Params = z.object({
+  id: z.string().uuid(),
+});
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Parse and validate route param
+  const parse = Params.safeParse({ id: req.query.id });
+  if (!parse.success) {
+    return res.status(400).json({ error: 'Invalid id', details: parse.error.flatten() });
+  }
+  const sessionId = parse.data.id;
+
+  // Server-side Supabase client (per-request)
+  const supabase = getServerClient(req, res);
+
+  // Enforce auth
+  const { data: { user }, error: userErr } = await supabase.auth.getUser();
+  if (userErr) return res.status(500).json({ error: 'Auth error', details: userErr.message });
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  // Fetch session
+  const { data: session, error: fetchErr } = await supabase
+    .from('study_buddy_sessions')
+    .select('*')
+    .eq('id', sessionId)
+    .single();
+
+  if (fetchErr) return res.status(404).json({ error: 'Session not found' });
+
+  // Re-check ownership (don’t trust client IDs)
+  if (session.user_id !== user.id) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  return res.status(200).json({ ok: true, session });
+}
+
+
+===== File #2: pages/api/study-buddy/sessions/[id]/start.ts =====
+// pages/api/study-buddy/sessions/[id]/start.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { supabaseAdmin } from '@/lib/supabaseAdmin'; // full server admin client
+
+export default async function startSessionHandler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const { id } = req.query as { id?: string };
+
+  if (!id || typeof id !== 'string') {
+    return res.status(400).json({ error: 'missing_id' });
+  }
+
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'method_not_allowed' });
+  }
+
+  try {
+    const now = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
+      .from('study_sessions')
+      .update({ state: 'started', updated_at: now })
+      .eq('id', id)
+      .order('id', { ascending: true }) // 🧠 add explicit order
+      .select('*')
+      .maybeSingle(); // ✅ no implicit limit
+
+    if (error) {
+      console.error('[study-sessions/start] supabase error', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'session_not_found' });
+    }
+
+    return res.status(200).json({ ok: true, session: data });
+  } catch (err: any) {
+    console.error('[study-sessions/start] exception', err);
+    return res.status(500).json({ error: err?.message ?? 'unexpected_error' });
+  }
+}
+
+
+===== File #3: pages/api/study-buddy/[id].ts =====
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function sessionIdHandler(req: NextApiRequest, res: NextApiResponse) {
+  const { id } = req.query as { id?: string };
+  if (!id) return res.status(400).json({ error: 'Missing id' });
+
+  if (req.method === 'GET') {
+    const { data, error } = await SUPABASE.from('study_sessions').select('*').eq('id', id).maybeSingle();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json(data);
+  }
+
+  if (req.method === 'POST') {
+    // support /start via POST to this route with /start in path
+    const path = req.url ?? '';
+    if (path.endsWith('/start')) {
+      try {
+        const { error } = await SUPABASE.from('study_sessions').update({ state: 'started', updated_at: new Date().toISOString() }).eq('id', id);
+        if (error) throw error;
+        const { data } = await SUPABASE.from('study_sessions').select('*').eq('id', id).maybeSingle();
+        return res.status(200).json(data);
+      } catch (e: any) {
+        return res.status(500).json({ error: e?.message ?? 'Failed to start session' });
+      }
+    }
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
+}
+
+
+===== File #4: pages/api/study-buddy/sessions.ts =====
+// pages/api/study-buddy/sessions.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
+
+type StudySessionItem = { skill: string; minutes: number };
+type StudySessionRecord = {
+  id: string;
+  user_id: string | null;
+  items: StudySessionItem[];
+  state: 'pending' | 'started' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+};
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function getAdminClient() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in environment.');
+  }
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+}
+
+function normalizeUserId(raw?: any): string | null {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  // Accept explicit "null" string
+  if (trimmed.toLowerCase() === 'null') return null;
+  // If valid UUID, return it, otherwise null
+  return uuidValidate(trimmed) ? trimmed : null;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'method_not_allowed' });
+  }
+
+  const body = req.body ?? {};
+  const items = Array.isArray(body.items) ? body.items : [];
+
+  if (!items.length) {
+    return res.status(400).json({ error: 'items_required' });
+  }
+  if (items.length > 200) {
+    return res.status(400).json({ error: 'too_many_items' });
+  }
+
+  let supabaseAdmin;
+  try {
+    supabaseAdmin = getAdminClient();
+  } catch (err: any) {
+    console.error('[study-sessions] admin client error', err);
+    return res.status(500).json({ error: 'supabase_not_configured' });
+  }
+
+  const id = uuidv4();
+  const now = new Date().toISOString();
+  const user_id = normalizeUserId(body.userId);
+
+  const payload = {
+    id,
+    user_id,
+    items,
+    state: 'pending' as const,
+    created_at: now,
+    updated_at: now,
+  };
+
+  try {
+    const { data, error, status, statusText } = await supabaseAdmin
+      .from<StudySessionRecord>('study_sessions')
+      .insert(payload)
+      .select('*');
+
+    if (error) {
+      console.error('[study-sessions] insert error:', { error, status, statusText });
+      const message = (error && (error.message || JSON.stringify(error))) ?? 'db_insert_failed';
+      return res.status(500).json({ error: message });
+    }
+
+    const inserted = Array.isArray(data) && data.length > 0 ? data[0] : payload;
+    return res.status(201).json(inserted);
+  } catch (err: any) {
+    console.error('[study-sessions] unexpected exception', err);
+    const info = (err && err.message) ? String(err.message) : 'unknown_error';
+    return res.status(500).json({ error: info });
+  }
+}
+
+

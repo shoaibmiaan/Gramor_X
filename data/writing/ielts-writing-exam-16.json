@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-16",
+  "title": "Academic Set 16 — Remote Collaboration & Coworking",
+  "description": "Bar chart on telecommuting frequency paired with an essay about company support for coworking memberships.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Telecommuting patterns by department",
+    "type": "academic",
+    "prompt": "The bar chart below shows the percentage of employees in four departments at a multinational company who worked remotely three or more days per week in 2015, 2018, and 2022. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Group the departments that follow similar trends across the years.",
+      "Highlight the most significant increases or decreases in remote working.",
+      "Avoid speculating about reasons that are not evident from the chart."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Funding coworking allowances",
+    "prompt": "Some companies are considering paying for coworking space memberships so that remote employees have a dedicated workplace outside their homes. To what extent do you agree or disagree with this idea?",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the topic and present your position.",
+      "Body paragraph 1: explain advantages such as collaboration, productivity, or employee wellbeing.",
+      "Body paragraph 2: discuss drawbacks like cost, equity concerns, or logistical challenges.",
+      "Conclusion: restate your opinion and recommend how companies should approach coworking support."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "The bar chart below shows the percentage of employees in four departments at a multinational company who worked remotely three or more days per week in 2015, 2018, and 2022. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some companies are considering paying for coworking space memberships so that remote employees have a dedicated workplace outside their homes. To what extent do you agree or disagree with this idea?",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

@@ -1,0 +1,1702 @@
+===============================
+📄 FILE: components/sections/Pricing.tsx
+===============================
+import React from 'react';
+import Link from 'next/link';
+
+import { Container } from '@/components/design-system/Container';
+import { Section } from '@/components/design-system/Section';
+import { Card } from '@/components/design-system/Card';
+import { Ribbon } from '@/components/design-system/Ribbon';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { Icon } from '@/components/design-system/Icon';
+import type { PlanKey, Cycle as CheckoutCycle } from '@/types/payments';
+
+type BillingCycle = 'monthly' | 'quarterly';
+
+type Tier = {
+  name: 'Compass' | 'Seedling' | 'Rocket';
+  headline: string;
+  description: string;
+  price: Record<BillingCycle, string>;
+  savings?: string;
+  featured: boolean;
+  features: string[];
+  guarantee: string;
+};
+
+const tiers: readonly Tier[] = [
+  {
+    name: 'Compass',
+    headline: 'Kickstart your prep',
+    description: 'Core lessons plus focused nudges to build a steady study rhythm.',
+    price: { monthly: 'Free', quarterly: 'Free' },
+    featured: false,
+    features: [
+      'Foundations across all four skills',
+      'Daily vocab streak challenge',
+      'Weekly grammar micro drills',
+      '2 AI essay reviews monthly',
+    ],
+    guarantee: 'Preview the adaptive system before upgrading.',
+  },
+  {
+    name: 'Seedling',
+    headline: 'Guided growth',
+    description: 'Adaptive plans, twice-monthly mocks, and fast AI feedback for steady gains.',
+    price: { monthly: '$9.99', quarterly: '$25.50' },
+    savings: 'Save 15% with quarterly billing',
+    featured: false,
+    features: [
+      'Adaptive daily lessons with diagnostics',
+      '2 full mock tests monthly',
+      '5 AI writing reviews monthly',
+      '3 speaking partner sessions + transcripts',
+      'Skill analytics dashboard',
+      'Email + community support',
+    ],
+    guarantee: 'Switch or cancel anytime—no lock-in.',
+  },
+  {
+    name: 'Rocket',
+    headline: 'Exam sprint',
+    description: 'Unlimited mocks, richer analytics, and human coaching when it counts.',
+    price: { monthly: '$14.99', quarterly: '$38.25' },
+    savings: 'Includes priority teacher reviews',
+    featured: true,
+    features: [
+      'Unlimited full-length mock exams',
+      'Unlimited AI writing & speaking transcripts',
+      'Weekly teacher review for writing & speaking',
+      'Advanced performance intel sprints',
+      'Premium rooms and live workshops',
+      'Band predictor with personal reports',
+    ],
+    guarantee: 'Improve your score or the next month is on us.',
+  },
+];
+
+const valueProps = [
+  {
+    icon: 'ShieldCheck',
+    title: '14-day satisfaction',
+    description: 'Not a fit within 14 days? We refund your latest charge—no friction.',
+  },
+  {
+    icon: 'Sparkles',
+    title: 'All plans include',
+    description: 'AI feedback, speaking transcripts, and an exam-day inspired interface.',
+  },
+  {
+    icon: 'Headphones',
+    title: 'Human help when stuck',
+    description: 'Mentors reply with rubric notes inside 24 hours on paid tiers.',
+  },
+] as const;
+
+const billingCopy: Record<BillingCycle, { label: string; helper: string }> = {
+  monthly: { label: 'Monthly', helper: 'Pause anytime' },
+  quarterly: { label: 'Quarterly', helper: 'Save 15%' },
+};
+
+const PLAN_KEY_BY_TIER: Partial<Record<Tier['name'], PlanKey>> = {
+  Seedling: 'starter',
+  Rocket: 'booster',
+};
+
+const toCheckoutCycle = (cycle: BillingCycle): CheckoutCycle =>
+  cycle === 'monthly' ? 'monthly' : 'annual';
+
+export const Pricing: React.FC = () => {
+  const [billingCycle, setBillingCycle] = React.useState<BillingCycle>('monthly');
+
+  return (
+    <Section id="pricing">
+      <Container>
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <Badge variant="info" size="sm" className="mb-4 inline-flex items-center gap-2">
+            <Icon name="Layers" className="text-electricBlue" />
+            Flexible access for every mission
+          </Badge>
+          <h2 className="font-slab text-display mb-3 text-gradient-primary">Choose your launch velocity</h2>
+          <p className="text-muted-foreground text-lg sm:text-xl">
+            Start free, upgrade when you need unlimited mocks and coaching.
+          </p>
+        </div>
+
+        <div className="mt-10 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
+          {(Object.keys(billingCopy) as BillingCycle[]).map((cycle) => {
+            const active = billingCycle === cycle;
+            return (
+              <button
+                key={cycle}
+                type="button"
+                onClick={() => setBillingCycle(cycle)}
+                className={
+                  'group relative overflow-hidden rounded-full border px-6 py-3 text-sm font-semibold transition-all duration-200 min-w-[140px] ' +
+                  (active
+                    ? 'border-electricBlue/80 bg-electricBlue/10 text-electricBlue shadow-md shadow-electricBlue/20'
+                    : 'border-border/60 bg-background/80 text-muted-foreground hover:border-electricBlue/40 hover:bg-electricBlue/5 hover:text-electricBlue')
+                }
+                aria-pressed={active}
+              >
+                <span className="block">{billingCopy[cycle].label}</span>
+                <span className="mt-1 block text-xs font-medium text-muted-foreground/70 group-hover:text-electricBlue/70">
+                  {billingCopy[cycle].helper}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {tiers.map((tier) => {
+            const price = tier.price[billingCycle];
+            const params = new URLSearchParams();
+            const planKey = PLAN_KEY_BY_TIER[tier.name];
+            const checkoutCycle = toCheckoutCycle(billingCycle);
+            params.set('billingCycle', checkoutCycle);
+            if (planKey) {
+              params.set('plan', planKey);
+            }
+            const query = params.toString();
+            const checkoutHref = query.length > 0 ? `/checkout?${query}` : '/checkout';
+            return (
+              <Card
+                key={tier.name}
+                className="relative h-full border-border/60 bg-white/70 shadow-md backdrop-blur transition hover:-translate-y-1 hover:shadow-glow dark:bg-dark/70"
+                interactive
+                padding="lg"
+              >
+                {tier.featured ? (
+                  <Ribbon label="Most popular" variant="accent" position="top-right" className="flex items-center gap-2 px-3 py-1" />
+                ) : null}
+
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-electricBlue to-purpleVibe text-white">
+                  <Icon name={tier.featured ? 'Rocket' : tier.name === 'Seedling' ? 'Sprout' : 'Compass'} size={28} />
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="text-2xl font-semibold text-foreground sm:pr-4">{tier.name}</h3>
+                  <Badge
+                    variant={tier.featured ? 'accent' : 'secondary'}
+                    size="sm"
+                    className="self-start sm:self-auto whitespace-nowrap"
+                  >
+                    {tier.featured ? 'Full access' : 'Core access'}
+                  </Badge>
+                </div>
+
+                <p className="mt-2 text-sm text-muted-foreground uppercase tracking-wider font-medium">
+                  {tier.headline}
+                </p>
+                <p className="mt-4 text-base text-muted-foreground leading-relaxed text-pretty text-balance">
+                  {tier.description}
+                </p>
+
+                <div className="mt-6 flex items-baseline gap-2">
+                  <span className="font-slab text-5xl font-bold text-gradient-primary">{price}</span>
+                  <span className="text-sm text-muted-foreground font-medium">
+                    {billingCycle === 'monthly' ? 'per month' : 'per 3 months'}
+                  </span>
+                </div>
+                {tier.savings ? (
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-electricBlue/20 bg-electricBlue/5 px-4 py-2 text-xs font-semibold text-electricBlue">
+                    <Icon name="Sparkles" size={14} aria-hidden="true" />
+                    {tier.savings}
+                  </div>
+                ) : null}
+
+                <ul className="mt-5 space-y-3 text-sm text-muted-foreground">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2">
+                      <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-electricBlue/15 text-electricBlue">
+                        <Icon name="Check" size={14} />
+                      </span>
+                      <span className="flex-1 text-pretty text-balance leading-relaxed">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6 rounded-xl border border-electricBlue/20 bg-electricBlue/5 px-5 py-4 text-sm text-electricBlue/80 text-pretty text-balance">
+                  <Icon name="ShieldCheck" size={16} className="mr-2 inline-block align-middle" />
+                  {tier.guarantee}
+                </div>
+
+                <div className="mt-6">
+                  <Button
+                    href={checkoutHref}
+                    variant={tier.featured ? 'primary' : 'secondary'}
+                    className="w-full justify-center"
+                    size="lg"
+                  >
+                    Choose {tier.name}
+                  </Button>
+                  <Link
+                    href="/waitlist"
+                    className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-electricBlue hover:text-electricBlue/80"
+                  >
+                    Not ready? Join the pre-launch list <Icon name="ArrowRight" size={18} />
+                  </Link>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="mt-16 grid gap-6 md:grid-cols-3">
+          {valueProps.map((value) => (
+            <Card
+              key={value.title}
+              className="relative h-full border-border/60 bg-white/70 shadow-md backdrop-blur transition hover:-translate-y-1 hover:shadow-glow dark:bg-dark/70"
+              interactive
+              padding="lg"
+            >
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-electricBlue to-purpleVibe text-white">
+                <Icon name={value.icon} size={28} />
+              </div>
+              <h3 className="text-2xl font-semibold text-foreground text-center">{value.title}</h3>
+              <p className="mt-4 text-sm text-muted-foreground leading-relaxed text-pretty text-center">
+                {value.description}
+              </p>
+            </Card>
+          ))}
+        </div>
+      </Container>
+    </Section>
+  );
+};
+
+export default Pricing;
+
+
+===============================
+📄 FILE: pages/checkout/index.tsx
+===============================
+// pages/checkout/index.tsx
+import * as React from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import type { NextPage } from 'next';
+
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+
+import PlanPicker, { type PlanPickerProps } from '@/components/payments/PlanPicker';
+import CheckoutForm from '@/components/payments/CheckoutForm';
+import RedeemBox, { type RedeemSuccessPayload } from '@/components/referrals/RedeemBox';
+import PromoCodeBox, { type PromoCodeApplyPayload } from '@/components/payments/PromoCodeBox';
+import SocialProofStrip from '@/components/marketing/SocialProofStrip';
+
+import {
+  PLAN_LABEL,
+  PLANS as CANONICAL_PLANS,
+  getPlanBillingAmount,
+  getPlanDisplayPrice,
+  type Cycle,
+  type PlanKey,
+} from '@/lib/pricing';
+
+import {
+  checkPromoEligibility,
+  computePromoDiscount,
+  findPromoByCode,
+  normalizePromoCode,
+  type PromoCodeRule,
+} from '@/lib/promotions/codes';
+import { fetchPromoByCode } from '@/lib/promotions/client';
+
+const toUsdCents = (amount: number) => Math.round(amount * 100);
+
+type PlanRow = {
+  key: PlanKey;
+  title: string;
+  priceMonthly: number; // cents
+  priceAnnual: number;  // cents (per-month display, not upfront)
+  icon: string;
+  mostPopular?: boolean;
+  badge?: string;
+};
+
+const PLAN_KEYS: readonly PlanKey[] = ['starter', 'booster', 'master'] as const;
+const PLAN_ALIAS: Record<string, PlanKey> = {
+  starter: 'starter',
+  booster: 'booster',
+  master: 'master',
+  seedling: 'starter',
+  rocket: 'booster',
+  owl: 'master',
+};
+
+const createPlanRow = (key: PlanKey): PlanRow => {
+  const plan = CANONICAL_PLANS[key];
+  return {
+    key,
+    title: plan.title,
+    priceMonthly: toUsdCents(getPlanDisplayPrice(key, 'monthly')),
+    priceAnnual: toUsdCents(getPlanDisplayPrice(key, 'annual')),
+    icon: plan.icon,
+    mostPopular: plan.mostPopular,
+    badge: plan.badge,
+  };
+};
+
+const PLANS: Record<PlanKey, PlanRow> = {
+  starter: createPlanRow('starter'),
+  booster: createPlanRow('booster'),
+  master: createPlanRow('master'),
+};
+
+const fmtUsd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+const CheckoutPage: NextPage = () => {
+  const router = useRouter();
+
+  // ---- Query parsing (plan / cycle / codes / currency) ----
+  const planParamRaw = router.query.plan;
+  const planParam = Array.isArray(planParamRaw) ? planParamRaw[0] : planParamRaw;
+  const codeParam = router.query.code ? String(router.query.code) : undefined;
+  const promoParam = router.query.promo ? String(router.query.promo) : undefined;
+
+  const cycleQuery = router.query.billingCycle ?? router.query.cycle ?? 'monthly';
+  const cycleValue = Array.isArray(cycleQuery) ? cycleQuery[0] : cycleQuery;
+
+  const currencyQuery = router.query.currency ?? 'PKR';
+  const currency = (Array.isArray(currencyQuery) ? currencyQuery[0] : currencyQuery).toString().toUpperCase();
+
+  const normalizedPlanParam = planParam ? planParam.toString().toLowerCase() : '';
+  const plan = PLAN_ALIAS[normalizedPlanParam];
+
+  const cycleParam = React.useMemo<Cycle>(() => {
+    const normalized = (cycleValue ?? '').toString().toLowerCase();
+    return normalized === 'annual' || normalized === 'yearly' ? 'annual' : 'monthly';
+  }, [cycleValue]);
+
+  const selectedPlanData = plan ? PLANS[plan] : undefined;
+
+  // ---- Promo / referral state ----
+  const [activeCode, setActiveCode] = React.useState<string | undefined>(codeParam);
+  const [activePromo, setActivePromo] = React.useState<PromoCodeRule | null>(null);
+
+  React.useEffect(() => {
+    setActiveCode(codeParam);
+  }, [codeParam]);
+
+  React.useEffect(() => {
+    let aborted = false;
+
+    if (!promoParam) {
+      setActivePromo(null);
+      return () => { aborted = true; };
+    }
+
+    const normalized = normalizePromoCode(promoParam);
+    if (!normalized) {
+      setActivePromo(null);
+      return () => { aborted = true; };
+    }
+
+    const resolvePromo = async () => {
+      const localRule = findPromoByCode(normalized);
+      const rule = localRule ?? (await fetchPromoByCode(normalized));
+      if (aborted) return;
+
+      if (!rule) {
+        setActivePromo(null);
+        return;
+      }
+
+      const eligibility = checkPromoEligibility(rule, { plan, cycle: cycleParam });
+      if (!eligibility.ok) {
+        setActivePromo(null);
+        return;
+      }
+
+      setActivePromo(rule);
+    };
+
+    void resolvePromo();
+    return () => { aborted = true; };
+  }, [promoParam, plan, cycleParam]);
+
+  // ---- Query builder (keeps/refines state) ----
+  const buildQuery = React.useCallback(
+    (overrides: Partial<{ plan: PlanKey | null; cycle: Cycle; referral: string | null; promo: string | null; currency: string }> = {}) => {
+      const nextQuery: Record<string, string | string[]> = { ...router.query };
+
+      const nextPlan = overrides.plan === undefined ? plan : overrides.plan;
+      const nextCycle = overrides.cycle ?? cycleParam;
+      const nextCurrency = overrides.currency ?? currency;
+
+      if (nextPlan) {
+        nextQuery.plan = nextPlan;
+        nextQuery.billingCycle = nextCycle;
+      } else {
+        delete nextQuery.plan;
+        delete nextQuery.billingCycle;
+      }
+
+      const nextReferral = overrides.referral === undefined ? activeCode : overrides.referral;
+      if (nextReferral) nextQuery.code = nextReferral;
+      else delete nextQuery.code;
+
+      const nextPromo = overrides.promo === undefined ? activePromo?.code : overrides.promo;
+      if (nextPromo) nextQuery.promo = nextPromo;
+      else delete nextQuery.promo;
+
+      if (nextCurrency) nextQuery.currency = nextCurrency;
+
+      return nextQuery;
+    },
+    [router.query, plan, cycleParam, activeCode, activePromo?.code, currency],
+  );
+
+  // ---- Handlers ----
+  const handleSelect: NonNullable<PlanPickerProps['onSelect']> = (p, c) => {
+    const nextQuery = buildQuery({ plan: p, cycle: c });
+    void router.push({ pathname: '/checkout', query: nextQuery });
+  };
+
+  const handleRedeemSuccess = React.useCallback(
+    ({ code }: RedeemSuccessPayload) => {
+      setActiveCode(code);
+      void router.replace({ pathname: '/checkout', query: buildQuery({ referral: code }) }, undefined, { shallow: true });
+    },
+    [buildQuery, router],
+  );
+
+  const handlePromoApply = React.useCallback(
+    ({ rule }: PromoCodeApplyPayload) => {
+      const normalized = normalizePromoCode(rule.code);
+      setActivePromo(rule);
+      void router.replace({ pathname: '/checkout', query: buildQuery({ promo: normalized }) }, undefined, { shallow: true });
+    },
+    [buildQuery, router],
+  );
+
+  const handlePromoClear = React.useCallback(() => {
+    setActivePromo(null);
+    void router.replace({ pathname: '/checkout', query: buildQuery({ promo: null }) }, undefined, { shallow: true });
+  }, [buildQuery, router]);
+
+  // ---- Safepay start (server-built checkoutUrl) ----
+  const startSafepayCheckout = React.useCallback(async () => {
+    if (!plan) return;
+
+    const res = await fetch('/api/safepay/create-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plan,
+        cycle: cycleParam,
+        currency, // 'PKR' by default; override via ?currency=USD if needed
+      }),
+    });
+
+    const json = await res.json();
+    if (!json?.ok || !json?.checkoutUrl) {
+      // Surface a minimal error; you can replace with a toast
+      console.error('Safepay create-intent failed', json);
+      return;
+    }
+    window.location.href = json.checkoutUrl as string;
+  }, [plan, cycleParam, currency]);
+
+  // ---- Pricing math ----
+  const monthlyCents = selectedPlanData
+    ? cycleParam === 'monthly'
+      ? selectedPlanData.priceMonthly
+      : selectedPlanData.priceAnnual
+    : 0;
+
+  const billedAnnualTotalCents =
+    selectedPlanData && cycleParam === 'annual'
+      ? toUsdCents(getPlanBillingAmount(selectedPlanData.key, 'annual'))
+      : 0;
+
+  const subtotalCents = selectedPlanData
+    ? cycleParam === 'annual'
+      ? billedAnnualTotalCents
+      : monthlyCents
+    : 0;
+
+  const promoDiscountCents = activePromo ? computePromoDiscount(activePromo, subtotalCents) : 0;
+  const finalTotalCents = Math.max(subtotalCents - promoDiscountCents, 0);
+
+  return (
+    <>
+      <Head>
+        <title>Checkout — GramorX</title>
+      </Head>
+
+      <main className="min-h-screen bg-lightBg text-foreground antialiased dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
+        <div className="py-16">
+          <Container className="space-y-10">
+            <header className="text-center max-w-3xl mx-auto mb-6">
+              <p className="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-caption text-muted-foreground bg-card/60 backdrop-blur supports-[backdrop-filter]:bg-card/40">
+                <i className="fas fa-sync-alt text-caption" aria-hidden="true"></i>
+                Flexible plans • Cancel anytime
+              </p>
+
+              <h1 className="mt-3 text-balance text-h1">
+                <span className="text-gradient-primary">{plan ? 'Complete your purchase' : 'Choose your plan'}</span>
+              </h1>
+
+              <p className="mt-2 text-body text-muted-foreground">
+                {plan
+                  ? 'Pay securely to unlock full IELTS modules, AI feedback, and analytics.'
+                  : 'Pick a plan below — switch billing cycle and proceed to checkout.'}
+              </p>
+            </header>
+
+            <div className="mx-auto mb-6">
+              <SocialProofStrip />
+            </div>
+
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div />
+              <Link
+                href="/pricing"
+                className="rounded-ds border border-border px-3 py-2 text-body hover:bg-muted transition flex items-center gap-2"
+              >
+                <i className="fas fa-arrow-left text-caption" aria-hidden="true"></i>
+                Back to pricing
+              </Link>
+            </div>
+
+            {!plan ? (
+              <>
+                <Card className="card-surface rounded-ds-2xl p-8">
+                  <PlanPicker
+                    onSelect={handleSelect}
+                    defaultCycle={cycleParam}
+                    className="mt-0"
+                    promoCode={activePromo?.code}
+                  />
+                </Card>
+
+                <div className="mt-8 text-center">
+                  <div className="inline-flex flex-col sm:flex-row items-center justify-center gap-4 p-4 bg-muted/50 rounded-ds-xl">
+                    <div className="flex items-center gap-2">
+                      <i className="fas fa-shield-alt text-accent" aria-hidden="true"></i>
+                      <span className="text-caption">Secure payment</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <i className="fas fa-lock text-accent" aria-hidden="true"></i>
+                      <span className="text-caption">SSL encryption</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <i className="fas fa-sync-alt text-accent" aria-hidden="true"></i>
+                      <span className="text-caption">Cancel anytime</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <SocialProofStrip />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                    <Card className="card-surface rounded-ds-2xl p-8">
+                      <div className="flex items-start gap-6">
+                        <div className="flex-none">
+                          <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-h2 bg-gradient-to-br from-primary to-electricBlue">
+                            <i className={`fas ${selectedPlanData?.icon ?? 'fa-star'}`} aria-hidden="true" />
+                          </div>
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <h2 className="text-h3 mb-1">
+                              {selectedPlanData?.title ?? PLAN_LABEL[plan]}
+                            </h2>
+                            {selectedPlanData?.mostPopular && (
+                              <Badge variant="info" size="md" className="inline-flex">
+                                {selectedPlanData.badge ?? 'MOST POPULAR'}
+                              </Badge>
+                            )}
+                          </div>
+
+                          <p className="text-body text-muted-foreground mb-4">
+                            {selectedPlanData
+                              ? `${PLAN_LABEL[plan]} — ${cycleParam === 'monthly' ? 'Monthly billing' : 'Annual billing (discounted)'}`
+                              : ''}
+                          </p>
+
+                          {/* Your checkout form drives card/other methods.
+                             We expose a Safepay trigger for the "Pay with Safepay" option. */}
+                          {/* @ts-expect-error TODO: add `onSafepay` prop in CheckoutForm's type if not present */}
+                          <CheckoutForm
+                            plan={plan}
+                            billingCycle={cycleParam}
+                            referralCode={activeCode}
+                            promoCode={activePromo?.code}
+                            currency={currency}
+                            onSafepay={startSafepayCheckout}
+                            className=""
+                          />
+                        </div>
+                      </div>
+                    </Card>
+
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                      <RedeemBox onSuccess={handleRedeemSuccess} initialCode={activeCode} />
+                      <PromoCodeBox
+                        plan={plan}
+                        cycle={cycleParam}
+                        amountCents={subtotalCents}
+                        onApply={handlePromoApply}
+                        onClear={handlePromoClear}
+                        applied={activePromo}
+                        initialCode={promoParam}
+                      />
+                    </div>
+                  </div>
+
+                  <aside className="w-full">
+                    <Card className="card-surface rounded-ds-2xl p-8 sticky top-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-h4">Order summary</h3>
+                        <span className="text-caption text-muted-foreground">Review</span>
+                      </div>
+
+                      <div className="space-y-4 text-body text-muted-foreground">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white bg-gradient-to-br from-primary to-electricBlue">
+                              <i className={`fas ${selectedPlanData?.icon ?? 'fa-star'}`} aria-hidden="true" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-foreground">{selectedPlanData?.title ?? (plan ? PLAN_LABEL[plan] : 'Select a plan')}</div>
+                              <div className="text-caption text-muted-foreground">{cycleParam === 'monthly' ? 'Billed monthly' : 'Billed annually'}</div>
+                            </div>
+                          </div>
+
+                          {selectedPlanData?.mostPopular && (
+                            <div>
+                              <Badge variant="info" size="sm" className="inline-flex">
+                                {selectedPlanData.badge ?? 'MOST POPULAR'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span>Price ({cycleParam === 'monthly' ? 'per month' : 'per month, billed annually'})</span>
+                          <span className="font-medium text-foreground">{fmtUsd(monthlyCents)}</span>
+                        </div>
+
+                        {cycleParam === 'annual' && (
+                          <>
+                            <div className="flex justify-between">
+                              <span>Annual total (12 months)</span>
+                              <span className="font-medium text-foreground">{fmtUsd(billedAnnualTotalCents)}</span>
+                            </div>
+                            <div className="p-3 bg-accent/10 rounded-ds border border-accent/20">
+                              <div className="flex items-center gap-2 text-accent">
+                                <i className="fas fa-piggy-bank" aria-hidden="true"></i>
+                                <span className="text-caption font-medium">
+                                  You save {fmtUsd((selectedPlanData.priceMonthly * 12) - billedAnnualTotalCents)} compared to monthly billing
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {activeCode && (
+                          <div className="flex justify-between items-center py-2 border-y border-border/30">
+                            <span>Referral code applied</span>
+                            <span className="font-mono text-caption bg-muted px-2 py-1 rounded-ds">{activeCode}</span>
+                          </div>
+                        )}
+
+                        {promoDiscountCents > 0 && activePromo && (
+                          <div className="flex justify-between items-center py-2 border-b border-border/30 text-success">
+                            <span>Promo discount ({activePromo.code})</span>
+                            <span className="font-medium">-{fmtUsd(promoDiscountCents)}</span>
+                          </div>
+                        )}
+
+                        <div className="pt-3 border-t border-border/50">
+                          <div className="flex justify-between text-body mb-1">
+                            <span className="text-muted-foreground">Subtotal</span>
+                            <span className="font-medium text-foreground">{fmtUsd(subtotalCents)}</span>
+                          </div>
+                          <div className="flex justify-between text-body">
+                            <span className="text-muted-foreground">Taxes (calculated at checkout)</span>
+                            <span className="font-medium text-foreground">—</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-border/50">
+                          <div className="flex justify-between items-center">
+                            <span className="text-body font-semibold">Total</span>
+                            <span className="text-h4 text-gradient-primary">{fmtUsd(finalTotalCents)}</span>
+                          </div>
+                          <p className="mt-2 text-caption text-muted-foreground">Final price shown at checkout.</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            const nextQuery = buildQuery({ plan: null });
+                            void router.push({ pathname: '/checkout', query: nextQuery });
+                          }}
+                          className="w-full"
+                        >
+                          <i className="fas fa-arrow-left text-caption mr-2" aria-hidden="true"></i>
+                          Change plan
+                        </Button>
+                      </div>
+                    </Card>
+                  </aside>
+                </div>
+
+                <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {[
+                    { icon: 'fa-rocket',    iconClass: 'text-primary', title: 'Instant access',  copy: 'Start immediately after payment' },
+                    { icon: 'fa-shield-alt', iconClass: 'text-accent',  title: 'Secure payment', copy: '256-bit SSL encryption' },
+                    { icon: 'fa-sync-alt',   iconClass: 'text-primary', title: 'Cancel anytime', copy: 'No long-term commitment' },
+                  ].map(({ icon, iconClass, title, copy }) => (
+                    <Card key={title} padding="md" insetBorder className="text-center">
+                      <i className={`fas ${icon} mb-2 ${iconClass}`} aria-hidden="true"></i>
+                      <h4 className="font-medium text-caption">{title}</h4>
+                      <p className="text-caption text-muted-foreground">{copy}</p>
+                    </Card>
+                  ))}
+                </div>
+
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-caption text-muted-foreground">
+                  <Link href="/account/referrals" className="underline-offset-4 hover:underline flex items-center gap-1">
+                    <i className="fas fa-ticket-alt text-caption" aria-hidden="true"></i>
+                    Don&apos;t have a code? Generate yours
+                  </Link>
+                  <span>•</span>
+                  <Link href="/promotions" className="underline-offset-4 hover:underline flex items-center gap-1">
+                    <i className="fas fa-gift text-caption" aria-hidden="true"></i>
+                    View active promo codes
+                  </Link>
+                  <span>•</span>
+                  <Link href="/partners" className="underline-offset-4 hover:underline flex items-center gap-1">
+                    <i className="fas a fa-handshake text-caption" aria-hidden="true"></i>
+                    Become a partner
+                  </Link>
+                  <span>•</span>
+                  <Link href="/help" className="underline-offset-4 hover:underline flex items-center gap-1">
+                    <i className="fas fa-question-circle text-caption" aria-hidden="true"></i>
+                    Need help?
+                  </Link>
+                </div>
+              </>
+            )}
+          </Container>
+        </div>
+      </main>
+    </>
+  );
+};
+
+export default CheckoutPage;
+
+
+
+===============================
+📄 FILE: lib/pricing.ts
+===============================
+// lib/pricing.ts
+// Three paid plans + "free". USD-first (or any currency via env) with clean formatting.
+
+export type PlanKey = 'starter' | 'booster' | 'master';
+export type PlanId = 'free' | PlanKey;
+export type Cycle = 'monthly' | 'annual';
+
+type PlanPrice = {
+  /** Amount billed each month for the monthly cycle (in major units). */
+  monthly: number;
+  /** Total amount billed upfront for the annual cycle (in major units). */
+  annual: number;
+};
+
+/**
+ * Canonical USD pricing for all paid plans.
+ *  - `monthly` is the amount a customer pays for one month.
+ *  - `annual` is the full upfront charge for one year (should be 12 × the per-month display value).
+ */
+export const USD_PLAN_PRICES: Record<PlanKey, PlanPrice> = {
+  starter: { monthly: 9, annual: 96 },
+  booster: { monthly: 19, annual: 192 },
+  master: { monthly: 39, annual: 420 },
+};
+
+export const getPlanDisplayPrice = (plan: PlanKey, cycle: Cycle): number =>
+  cycle === 'monthly'
+    ? USD_PLAN_PRICES[plan].monthly
+    : USD_PLAN_PRICES[plan].annual / 12;
+
+export const getPlanBillingAmount = (plan: PlanKey, cycle: Cycle): number =>
+  cycle === 'monthly' ? USD_PLAN_PRICES[plan].monthly : USD_PLAN_PRICES[plan].annual;
+
+export const PLAN_LABEL: Record<PlanKey, string> = {
+  starter: 'Seedling 🌱',
+  booster: 'Rocket 🚀',
+  master:  'Owl 👑',
+};
+
+const CURRENCY = (process.env.NEXT_PUBLIC_CURRENCY ?? 'USD').toUpperCase();
+const CURRENCY_LOCALE = process.env.NEXT_PUBLIC_CURRENCY_LOCALE ?? (CURRENCY === 'USD' ? 'en-US' : 'en');
+
+// UI card data + Stripe price mapping (IDs from env; amounts are **major units** for display)
+export type PlanCard = {
+  key: PlanKey;
+  title: string;
+  icon: string;
+  badge?: string;
+  mostPopular?: boolean;
+
+  currency: string;                // e.g., 'USD'
+  displayPriceMonthly: number;     // e.g., 9 (→ $9)
+  displayPriceAnnual: number;      // e.g., 8 (show per-month equivalent for annual plan)
+
+  stripe: {
+    priceIdMonthly?: string;       // Stripe Price ID (USD/monthly)
+    priceIdAnnual?: string;        // Stripe Price ID (USD/annual)
+  };
+};
+
+// Set your USD price points here (examples)
+export const PLANS: Record<PlanKey, PlanCard> = {
+  starter: {
+    key: 'starter',
+    title: 'Seedling',
+    icon: 'fa-seedling',
+    currency: CURRENCY,
+    displayPriceMonthly: getPlanDisplayPrice('starter', 'monthly'),
+    displayPriceAnnual: getPlanDisplayPrice('starter', 'annual'),
+    stripe: {
+      priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_M,
+      priceIdAnnual:  process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER_Y,
+    },
+  },
+  booster: {
+    key: 'booster',
+    title: 'Rocket',
+    icon: 'fa-rocket',
+    badge: 'MOST POPULAR',
+    mostPopular: true,
+    currency: CURRENCY,
+    displayPriceMonthly: getPlanDisplayPrice('booster', 'monthly'),
+    displayPriceAnnual: getPlanDisplayPrice('booster', 'annual'),
+    stripe: {
+      priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_BOOSTER_M,
+      priceIdAnnual:  process.env.NEXT_PUBLIC_STRIPE_PRICE_BOOSTER_Y,
+    },
+  },
+  master: {
+    key: 'master',
+    title: 'Owl',
+    icon: 'fa-feather',
+    currency: CURRENCY,
+    displayPriceMonthly: getPlanDisplayPrice('master', 'monthly'),
+    displayPriceAnnual: getPlanDisplayPrice('master', 'annual'),
+    stripe: {
+      priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_MASTER_M,
+      priceIdAnnual:  process.env.NEXT_PUBLIC_STRIPE_PRICE_MASTER_Y,
+    },
+  },
+};
+
+// Entitlements
+export type Entitlements = {
+  libraryFull: boolean;
+  aiFeedback: 'none' | 'basic' | 'full';
+  mockTestsPerMonth: number | 'unlimited';
+  analytics: 'none' | 'basic' | 'advanced';
+  proctoring: boolean;
+  placement: boolean;
+  prioritySupport: boolean;
+};
+
+export const PLAN_ENTITLEMENTS: Record<PlanId, Entitlements> = {
+  free:    { libraryFull: false, aiFeedback: 'basic', mockTestsPerMonth: 0,            analytics: 'basic',    proctoring: false, placement: false, prioritySupport: false },
+  starter: { libraryFull: true,  aiFeedback: 'full',  mockTestsPerMonth: 2,            analytics: 'advanced', proctoring: false, placement: true,  prioritySupport: false },
+  booster: { libraryFull: true,  aiFeedback: 'full',  mockTestsPerMonth: 4,            analytics: 'advanced', proctoring: false, placement: true,  prioritySupport: false },
+  master:  { libraryFull: true,  aiFeedback: 'full',  mockTestsPerMonth: 'unlimited',  analytics: 'advanced', proctoring: true,  placement: true,  prioritySupport: true },
+};
+
+const PLAN_RANK: Record<PlanId, number> = { free: 0, starter: 1, booster: 2, master: 3 };
+export const isAtLeast = (userPlan: PlanId, min: PlanId) => PLAN_RANK[userPlan] >= PLAN_RANK[min];
+
+// Stripe priceId → plan
+export function planFromPriceId(priceId?: string | null): PlanKey | null {
+  if (!priceId) return null;
+  const hit = Object.values(PLANS).find(p => p.stripe.priceIdMonthly === priceId || p.stripe.priceIdAnnual === priceId);
+  return hit?.key ?? null;
+}
+
+// USD-first formatter (works for any currency via env)
+export function formatMoney(amountMajorUnits: number, currency = CURRENCY, locale = CURRENCY_LOCALE) {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: currency === 'JPY' ? 0 : 0, // keep clean whole numbers in UI
+    }).format(amountMajorUnits);
+  } catch {
+    return `${currency} ${amountMajorUnits}`;
+  }
+}
+
+
+
+===============================
+📄 FILE: types/payments.ts
+===============================
+// types/payments.ts
+export type PlanKey = 'starter' | 'booster' | 'master';
+export type Cycle = 'monthly' | 'annual';
+export type PaymentMethod = 'stripe' | 'easypaisa' | 'jazzcash' | 'safepay' | 'crypto';
+
+export type CreateCheckoutBody = Readonly<{
+  plan: PlanKey;
+  referralCode?: string;
+  billingCycle?: Cycle;
+  promoCode?: string;
+}>;
+
+export type CreateCheckoutResponse =
+  | Readonly<{ ok: true; provider: PaymentMethod; url: string; sessionId?: string | null }>
+  | Readonly<{ ok: true; manual: true; message: string }>
+  | Readonly<{ ok: false; error: string }>;
+
+export type Invoice = Readonly<{
+  id: string;
+  amount: number; // minor units
+  currency: string;
+  createdAt: string; // ISO
+  hostedInvoiceUrl?: string;
+  status: 'paid' | 'open' | 'void' | 'uncollectible';
+}>;
+
+export type SubscriptionSummary = Readonly<{
+  plan: 'starter' | 'booster' | 'master' | 'free';
+  status: 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
+  renewsAt?: string;
+  trialEndsAt?: string;
+}>;
+
+
+
+===============================
+📄 FILE: pages/pricing/index.tsx
+===============================
+// pages/pricing/index.tsx
+import * as React from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import type { NextPage } from 'next';
+
+import { Container } from '@/components/design-system/Container';
+import { Section } from '@/components/design-system/Section';
+import { Card } from '@/components/design-system/Card';
+import { Ribbon } from '@/components/design-system/Ribbon';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import SocialProofStrip from '@/components/marketing/SocialProofStrip';
+import {
+  getPlanDisplayPrice,
+  type Cycle,
+  type PlanKey,
+} from '@/lib/pricing';
+
+// ------------------ Types ------------------
+type PlanRow = {
+  key: PlanKey;
+  title: 'Seedling' | 'Rocket' | 'Owl';
+  subtitle: string;
+  // NOTE: Both monthly and annual are expressed as *per-month* USD cents.
+  priceMonthly: number; // cents (USD)
+  priceAnnual: number;  // cents (USD, per month when billed annually)
+  features: string[];
+  badge?: string;
+  mostPopular?: boolean;
+  icon: string; // fontawesome key
+};
+
+type Currency =
+  | 'USD' | 'EUR' | 'GBP' | 'INR' | 'PKR' | 'AED' | 'SAR' | 'AUD' | 'CAD' | 'NGN' | 'BRL' | 'PHP';
+
+type ReasonKey = 'writing_quota' | undefined;
+
+// ------------------ Data ------------------
+const PLAN_PRESENTATION: Record<PlanKey, Omit<PlanRow, 'key' | 'priceMonthly' | 'priceAnnual'>> = {
+  starter: {
+    title: 'Seedling',
+    subtitle: 'Essentials to get started',
+    features: ['Daily vocab', '1 grammar drill/week', 'Community access'],
+    icon: 'fa-seedling',
+  },
+  booster: {
+    title: 'Rocket',
+    subtitle: 'Best for fast progress',
+    features: ['All IELTS modules', 'AI feedback', 'Mock tests', 'Progress analytics'],
+    badge: 'MOST POPULAR',
+    mostPopular: true,
+    icon: 'fa-rocket',
+  },
+  master: {
+    title: 'Owl',
+    subtitle: 'Advanced & coaching',
+    features: ['Priority support', '1:1 reviews', 'Advanced drills'],
+    icon: 'fa-feather',
+  },
+};
+
+const toUsdCents = (major: number) => Math.round(major * 100);
+
+const PLAN_KEYS: readonly PlanKey[] = ['starter', 'booster', 'master'];
+
+const PLANS: readonly PlanRow[] = PLAN_KEYS.map((key) => ({
+  key,
+  ...PLAN_PRESENTATION[key],
+  priceMonthly: toUsdCents(getPlanDisplayPrice(key, 'monthly')),
+  priceAnnual: toUsdCents(getPlanDisplayPrice(key, 'annual')),
+})) as const;
+
+// Simple demo FX rates relative to USD. Replace with live rates from your backend/payments provider.
+const FX: Record<Currency, number> = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.78,
+  INR: 84,
+  PKR: 280,
+  AED: 3.67,
+  SAR: 3.75,
+  AUD: 1.5,
+  CAD: 1.35,
+  NGN: 1600,
+  BRL: 5.5,
+  PHP: 57,
+};
+
+const ZERO_DECIMAL: Currency[] = ['PKR', 'INR', 'NGN'];
+
+// ------------------ Helpers ------------------
+const guessCurrency = (): Currency => {
+  if (typeof window === 'undefined') return 'USD';
+  try {
+    const loc = Intl.DateTimeFormat().resolvedOptions().locale || 'en-US';
+    const cc = (loc.split('-')[1] || '').toUpperCase();
+    const map: Partial<Record<string, Currency>> = {
+      GB: 'GBP', IN: 'INR', PK: 'PKR', AE: 'AED', SA: 'SAR', AU: 'AUD', CA: 'CAD', NG: 'NGN', BR: 'BRL', PH: 'PHP',
+      IE: 'EUR', DE: 'EUR', FR: 'EUR', ES: 'EUR', IT: 'EUR', NL: 'EUR', PT: 'EUR'
+    };
+    return (map[cc] as Currency) || 'USD';
+  } catch {
+    return 'USD';
+  }
+};
+
+const formatMoneyFromUsdCents = (usdCents: number, currency: Currency) => {
+  const fx = FX[currency] || 1;
+  const raw = (usdCents / 100) * fx; // base is USD per-month
+  const maximumFractionDigits = ZERO_DECIMAL.includes(currency) ? 0 : 2;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits,
+    }).format(raw);
+  } catch {
+    const sym: Record<string, string> = {
+      USD: '$', EUR: '€', GBP: '£', INR: '₹', PKR: '₨', AED: 'د.إ', SAR: '﷼', AUD: 'A$', CAD: 'C$', NGN: '₦', BRL: 'R$', PHP: '₱',
+    };
+    const s = sym[currency] ?? '$';
+    return `${s}${ZERO_DECIMAL.includes(currency) ? Math.round(raw) : raw.toFixed(2)}`;
+  }
+};
+
+// ------------------ Page ------------------
+const PricingPage: NextPage = () => {
+  const router = useRouter();
+  const referralCode = React.useMemo(
+    () => (router.query.code ? String(router.query.code) : undefined),
+    [router.query]
+  );
+
+  const [cycle, setCycle] = React.useState<Cycle>('monthly');
+  const [currency, setCurrency] = React.useState<Currency>('USD');
+  const [timezone, setTimezone] = React.useState<string>('—');
+
+  // --- Reason banner (e.g., writing quota reached) ---
+  const reason: ReasonKey = typeof router.query.reason === 'string' ? (router.query.reason as ReasonKey) : undefined;
+  const used = React.useMemo(() => {
+    const v = router.query.used;
+    const n = typeof v === 'string' ? Number(v) : NaN;
+    return Number.isFinite(n) && n >= 0 ? n : undefined;
+  }, [router.query.used]);
+  const limit = React.useMemo(() => {
+    const v = router.query.limit;
+    const n = typeof v === 'string' ? Number(v) : NaN;
+    return Number.isFinite(n) && n >= 0 ? n : undefined;
+  }, [router.query.limit]);
+
+  React.useEffect(() => {
+    setCurrency(guessCurrency());
+    try { setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || '—'); } catch { /* noop */ }
+  }, []);
+
+  const handleSelect = React.useCallback(
+    (planKey: PlanKey) => {
+      const qs = new URLSearchParams();
+      qs.set('plan', planKey);
+      qs.set('billingCycle', cycle);
+      if (referralCode) qs.set('code', referralCode);
+      qs.set('currency', currency);
+      void router.push(`/checkout?${qs.toString()}`);
+    },
+    [cycle, referralCode, router, currency]
+  );
+
+  return (
+    <>
+      <Head>
+        <title>Pricing — GramorX</title>
+        <meta
+          name="description"
+          content="Premium global pricing for GramorX IELTS — multi-currency, timezone-aware, and conversion-optimized."
+        />
+      </Head>
+
+      {/* MAIN landmark */}
+      <main role="main" className="min-h-screen bg-marketing-aurora text-foreground antialiased">
+        <Section id="pricing">
+          <Container className="pt-6 md:pt-8 pb-12 md:pb-16" aria-labelledby="pricing-title">
+
+            {/* Context banner (from redirects with query params) */}
+            {reason === 'writing_quota' && (
+              <div
+                className="mx-auto mb-4 max-w-4xl rounded-2xl border border-amber-400/50 bg-amber-100/70 px-4 py-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div>
+                    <strong>Daily writing mock limit reached.</strong>{' '}
+                    {typeof used === 'number' && typeof limit === 'number'
+                      ? <>You used <span className="font-semibold">{used}</span> of <span className="font-semibold">{limit}</span> today.</>
+                      : <>You’ve hit today’s quota.</>
+                    } Try again tomorrow or upgrade to increase your daily limit.
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Link
+                      href="/writing"
+                      className="inline-flex items-center justify-center rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-sm underline-offset-4 hover:underline"
+                    >
+                      Back to Writing
+                    </Link>
+                    <Link
+                      href="#plans"
+                      className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-95"
+                    >
+                      See plans
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Top utility bar */}
+            <div className="mx-auto max-w-7xl mb-4 flex items-center justify-between gap-3 text-small">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full bg-indigo-600/10 text-indigo-700 px-2.5 py-1 font-medium dark:text-indigo-300">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.896l-7.336 3.869 1.402-8.168L.132 9.21l8.2-1.192L12 .587z"/>
+                  </svg>
+                  4.8★ • 12k reviews
+                </span>
+                <span className="hidden md:inline text-muted-foreground">Trusted by learners in 90+ countries</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="currency" className="sr-only">Currency</label>
+                <div className="inline-flex items-center gap-2 border rounded-lg px-2 py-1 bg-card/60 backdrop-blur supports-[backdrop-filter]:bg-card/40">
+                  <span className="text-muted-foreground">Currency</span>
+                  <select
+                    id="currency"
+                    className="bg-transparent outline-none"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value as Currency)}
+                  >
+                    {(Object.keys(FX) as Currency[]).map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Hero */}
+            <header className="text-center max-w-3xl mx-auto">
+              <p className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-[11px] md:text-caption text-muted-foreground bg-card/60 backdrop-blur supports-[backdrop-filter]:bg-card/40">
+                Flexible plans • Cancel anytime
+              </p>
+
+              <h1 id="pricing-title" className="mt-3 md:mt-3 text-balance text-display md:text-displayLg font-semibold leading-tight">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-cyan-500">Choose your plan</span>
+              </h1>
+
+              <p className="mt-2 text-small md:text-body text-muted-foreground text-pretty">
+                Upgrade for full IELTS modules, AI evaluation, and performance analytics.
+              </p>
+              <div className="mt-2 text-caption text-muted-foreground">Local timezone: <strong>{timezone}</strong></div>
+            </header>
+
+            <div className="mx-auto mt-6">
+              <SocialProofStrip className="mx-auto" />
+            </div>
+
+            {/* Billing cycle + copy */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <div className="rounded-full border border-border bg-card p-1 flex" role="tablist" aria-label="Billing cycle">
+                <button
+                  type="button"
+                  className={`px-4 py-1.5 text-small rounded-full transition ${cycle === 'monthly' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                  onClick={() => setCycle('monthly')}
+                  aria-pressed={cycle === 'monthly'}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  className={`px-4 py-1.5 text-small rounded-full transition ${cycle === 'annual' ? 'bg-primary text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                  onClick={() => setCycle('annual')}
+                  aria-pressed={cycle === 'annual'}
+                >
+                  Annual <span className="ml-1 opacity-80">(save ~2 months)</span>
+                </button>
+              </div>
+              <span className="text-caption text-muted-foreground">Prices shown in {currency} before tax</span>
+            </div>
+
+            {/* Plans grid */}
+            <section id="plans" aria-labelledby="plans-heading" className="mt-6 md:mt-8">
+              <h2 id="plans-heading" className="sr-only">Plans and pricing options</h2>
+
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+                {PLANS.map((p) => {
+                  const priceCentsUSD = cycle === 'monthly' ? p.priceMonthly : p.priceAnnual;
+                  const priceLabel = formatMoneyFromUsdCents(priceCentsUSD, currency);
+                  const periodLabel = cycle === 'monthly' ? 'per month' : 'per month (billed annually)';
+
+                  const CardShell: React.FC<{children: React.ReactNode; className?: string}> = ({ children, className }) => (
+                    <Card className={`p-7 rounded-2xl relative hover:-translate-y-2 transition hover:shadow-xl ${p.mostPopular ? 'ring-1 ring-fuchsia-400/40' : ''} ${className || ''}`}>
+                      {children}
+                    </Card>
+                  );
+
+                  const Inner = (
+                    <>
+                      <Badge variant={p.mostPopular ? 'accent' : 'info'} size="sm" className="absolute top-4 right-4">
+                        {p.mostPopular ? 'FEATURED' : 'STANDARD'}
+                      </Badge>
+
+                      {p.badge && <Ribbon label={p.badge} variant="accent" position="top-right" />}
+
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6 text-white text-h2 bg-gradient-to-br from-purple-500 to-cyan-500">
+                        <i className={`fas ${p.icon}`} aria-hidden="true" />
+                        <span className="sr-only">{p.title} icon</span>
+                      </div>
+
+                      <h3 className="text-h3 font-semibold mb-1 flex items-center gap-2">
+                        <i className="fas fa-circle-check text-success" aria-hidden="true" />
+                        {p.title}
+                      </h3>
+                      <p className="text-small text-muted-foreground mb-3">{p.subtitle}</p>
+
+                      <div className="mb-4">
+                        <div className="font-slab text-displayLg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-cyan-500 leading-none">{priceLabel}</div>
+                        <div className="text-muted-foreground mt-1">{periodLabel}</div>
+                      </div>
+
+                      <ul className="mt-2">
+                        {p.features.map((f) => (
+                          <li key={f} className="py-2 pl-6 border-b border-dashed border-purple-400/20 relative text-muted-foreground">
+                            <span className="absolute left-0 top-2 text-success font-bold" aria-hidden="true">✓</span>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-4 grid gap-3">
+                        <Button
+                          variant={p.mostPopular ? 'primary' : 'secondary'}
+                          className="w-full justify-center"
+                          onClick={() => handleSelect(p.key)}
+                          aria-label={`Choose ${p.title} plan (${cycle})`}
+                        >
+                          Choose {p.title}
+                        </Button>
+                        <Link href="/waitlist" className="underline decoration-2 underline-offset-4 text-cyan-700 hover:opacity-90 text-small text-center">
+                          Not ready? Join the pre-launch list
+                        </Link>
+                      </div>
+                    </>
+                  );
+
+                  if (p.mostPopular) {
+                    return (
+                      <div key={p.key} className="p-[1px] rounded-2xl bg-gradient-to-br from-indigo-600 via-fuchsia-500 to-cyan-500">
+                        <CardShell className="bg-background">{Inner}</CardShell>
+                      </div>
+                    );
+                  }
+                  return <CardShell key={p.key}>{Inner}</CardShell>;
+                })}
+              </div>
+            </section>
+
+            {/* Extras / Support */}
+            <section aria-labelledby="extras-heading" className="mt-10 grid gap-6 md:grid-cols-3">
+              <h2 id="extras-heading" className="sr-only">Included features and helpful links</h2>
+
+              <Card className="p-6 md:p-7 rounded-2xl">
+                <h3 className="text-h4 font-medium">All plans include</h3>
+                <ul className="mt-3 list-none space-y-2 text-small text-muted-foreground">
+                  <li>Dark/Light UI • Fully responsive</li>
+                  <li>Study calendar & streaks</li>
+                  <li>Core IELTS practice sets</li>
+                </ul>
+              </Card>
+
+              <Card className="p-6 md:p-7 rounded-2xl">
+                <h3 className="text-h4 font-medium">Need a discount?</h3>
+                <p className="mt-2 text-small text-muted-foreground">Have a referral code? You can apply it at checkout.</p>
+
+                <Button
+                  variant="primary"
+                  className="mt-3 w-full justify-center"
+                  onClick={() => {
+                    const qs = new URLSearchParams();
+                    qs.set('plan', 'booster');
+                    qs.set('billingCycle', cycle);
+                    qs.set('currency', currency);
+                    if (referralCode) qs.set('code', referralCode);
+                    void router.push(`/checkout?${qs.toString()}`);
+                  }}
+                  aria-label={`Continue to checkout with Rocket (${cycle})`}
+                >
+                  Continue to checkout
+                </Button>
+
+                <p className="mt-2 text-caption text-muted-foreground">
+                  Or{' '}
+                  <Link href="/account/referrals" className="underline decoration-2 underline-offset-4 hover:opacity-90">
+                    generate your own code
+                  </Link>
+                  .
+                </p>
+              </Card>
+
+              <Card className="p-6 md:p-7 rounded-2xl">
+                <h3 className="text-h4 font-medium">Questions?</h3>
+                <ul className="mt-3 list-none space-y-2 text-small text-muted-foreground">
+                  <li>
+                    <Link href="/legal/terms" className="underline decoration-2 underline-offset-4 hover:opacity-90">Billing & refunds</Link>
+                  </li>
+                  <li>
+                    <Link href="/privacy" className="underline decoration-2 underline-offset-4 hover:opacity-90">Privacy & data</Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="underline decoration-2 underline-offset-4 hover:opacity-90">Contact support</Link>
+                  </li>
+                </ul>
+              </Card>
+            </section>
+
+            <footer className="mt-8 md:mt-10 text-center text-small text-muted-foreground">
+              Prices shown are indicative; taxes may apply at checkout.
+            </footer>
+          </Container>
+        </Section>
+      </main>
+    </>
+  );
+};
+
+export default PricingPage;
+
+
+
+===============================
+📄 FILE: components/design-system/Card.tsx
+===============================
+import * as React from "react";
+
+function cn(...a: Array<string | false | undefined | null>) {
+  return a.filter(Boolean).join(" ");
+}
+
+export type CardProps = Readonly<{
+  className?: string;
+  as?: keyof JSX.IntrinsicElements;
+  children: React.ReactNode;
+  interactive?: boolean; // adds hover/transition
+  padding?: "none" | "sm" | "md" | "lg";
+  insetBorder?: boolean; // subtle inner border
+}>;
+
+const padMap = {
+  none: "",
+  sm: "p-3 sm:p-4",
+  md: "p-4 sm:p-6",
+  lg: "p-6 sm:p-8",
+} as const;
+
+export function Card({
+  as = "div",
+  className,
+  children,
+  interactive,
+  padding = "md",
+  insetBorder,
+}: CardProps) {
+  const Comp = as as any;
+  return (
+    <Comp
+      className={cn(
+        // DS helpers / tokens
+        "bg-card text-card-foreground border border-border rounded-ds-2xl",
+        "shadow-sm overflow-hidden",
+        insetBorder && "ring-1 ring-inset ring-border/50",
+        interactive && "transition-transform hover:translate-y-[-1px] active:translate-y-[0px]",
+        padMap[padding],
+        className
+      )}
+    >
+      {children}
+    </Comp>
+  );
+}
+
+export type CardHeaderProps = Readonly<{
+  className?: string;
+  children: React.ReactNode;
+}>;
+
+export function CardHeader({ className, children }: CardHeaderProps) {
+  return (
+    <div className={cn("px-4 py-3 sm:px-6 border-b border-border/60", className)}>
+      {children}
+    </div>
+  );
+}
+
+export type CardContentProps = Readonly<{
+  className?: string;
+  children: React.ReactNode;
+}>;
+
+export function CardContent({ className, children }: CardContentProps) {
+  return <div className={cn("p-4 sm:p-6", className)}>{children}</div>;
+}
+
+export type CardFooterProps = Readonly<{
+  className?: string;
+  children: React.ReactNode;
+}>;
+
+export function CardFooter({ className, children }: CardFooterProps) {
+  return (
+    <div className={cn("px-4 py-3 sm:px-6 border-t border-border/60", className)}>
+      {children}
+    </div>
+  );
+}
+
+
+
+===============================
+📄 FILE: components/design-system/Button.tsx
+===============================
+import * as React from 'react';
+import Link from 'next/link';
+import { cx, Variant, Size, PolymorphicProps } from './_core/types';
+
+type Tone =
+  | 'default'
+  | 'primary'
+  | 'secondary'
+  | 'accent'
+  | 'warning'
+  | 'danger'
+  | 'error'
+  | 'success'
+  | 'info';
+
+type BaseProps = {
+  // Extend Variant to allow "soft" without touching the shared type file
+  variant?: Variant | 'soft';
+  tone?: Tone;
+  size?: Size;
+  iconOnly?: boolean;
+  shape?: 'square' | 'circle' | 'rounded';
+  fullWidth?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+  href?: string;       // convenience for links
+  asChild?: boolean;   // Radix-style: render child as the actual element
+  leadingIcon?: React.ReactNode;
+  trailingIcon?: React.ReactNode;
+  loading?: boolean;
+  loadingText?: string;
+  elevateOnHover?: boolean;
+};
+
+type ButtonComponent = <E extends React.ElementType = 'button'>(
+  props: PolymorphicProps<E, BaseProps> & { as?: any }
+) => React.ReactElement | null;
+
+// "solid" style variants from DS tokens
+const variantClass: Record<Variant, string> = {
+  primary:   'bg-primary text-white hover:bg-primary/90',
+  secondary: 'bg-secondary text-white hover:bg-secondary/90',
+  outline:   'border border-border bg-transparent hover:bg-white/5',
+  ghost:     'bg-transparent hover:bg-white/10',
+  link:      'underline underline-offset-4 hover:no-underline',
+  accent:    'bg-accent text-black hover:bg-accent/90',
+  warning:   'bg-warning text-black hover:bg-warning/90',
+  danger:    'bg-danger text-white hover:bg-danger/90',
+  error:     'bg-danger text-white hover:bg-danger/90',
+  success:   'bg-success text-white hover:bg-success/90',
+  info:      'bg-electricBlue text-white hover:bg-electricBlue/90',
+  subtle:    'bg-white/5 text-white/90 hover:bg-white/10',
+};
+
+// tonal classes for the "soft" variant
+const softTone: Record<Tone, string> = {
+  default:   'bg-card text-foreground ring-1 ring-border/50 hover:bg-card/90',
+  primary:   'bg-primary/15 text-primary ring-1 ring-primary/30 hover:bg-primary/20',
+  secondary: 'bg-secondary/15 text-secondary ring-1 ring-secondary/30 hover:bg-secondary/20',
+  accent:    'bg-accent/15 text-accent ring-1 ring-accent/30 hover:bg-accent/20',
+  warning:   'bg-warning/15 text-warning ring-1 ring-warning/30 hover:bg-warning/20',
+  danger:    'bg-danger/15 text-danger ring-1 ring-danger/30 hover:bg-danger/20',
+  error:     'bg-danger/15 text-danger ring-1 ring-danger/30 hover:bg-danger/20',
+  success:   'bg-success/15 text-success ring-1 ring-success/30 hover:bg-success/20',
+  info:      'bg-electricBlue/15 text-electricBlue ring-1 ring-electricBlue/30 hover:bg-electricBlue/20',
+};
+
+const sizeClass: Record<Size, string> = {
+  xs: 'h-7 px-2 text-caption',
+  sm: 'h-8 px-3 text-small',
+  md: 'h-10 px-4 text-small',
+  lg: 'h-11 px-5 text-body',
+  xl: 'h-12 px-6 text-h4',
+};
+
+export const Button: ButtonComponent = (props) => {
+  const {
+    as, asChild, href,
+    variant = 'primary',
+    tone = 'default',
+    size = 'md',
+    iconOnly,
+    shape,
+    fullWidth,
+    className,
+    children,
+    leadingIcon,
+    trailingIcon,
+    loading,
+    loadingText,
+    elevateOnHover,
+    ...rest
+  } = props as BaseProps & any;
+
+  // computed variant class (support "soft")
+  const variantCls =
+    variant === 'soft'
+      ? softTone[tone]
+      : variantClass[variant as Variant];
+
+  const classes = cx(
+    // base
+    'inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 ring-primary/40',
+    'gap-2',
+    sizeClass[size as Size],
+    fullWidth && 'w-full',
+    variantCls,
+    loading && 'cursor-not-allowed opacity-70',
+    elevateOnHover && 'shadow-none hover:shadow-md transition-shadow',
+    // default rounded shape; allow explicit shape override
+    shape === 'rounded' ? 'rounded-ds-xl' : 'rounded-2xl'
+  );
+
+  const shapeCls =
+    iconOnly && shape === 'square' ? 'aspect-square p-0' :
+    iconOnly && shape === 'circle' ? 'aspect-square p-0 rounded-full' : '';
+
+  // asChild pattern
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement, {
+      className: cx((children as any).props?.className, classes, shapeCls, className),
+      ...rest,
+    });
+  }
+
+  const Comp: any = as ?? (href ? (href.startsWith('/') ? Link : 'a') : 'button');
+
+  return (
+    <Comp
+      href={href}
+      className={cx(classes, shapeCls, className)}
+      aria-busy={loading ? 'true' : undefined}
+      data-loading={loading ? 'true' : undefined}
+      {...rest}
+      // only disables native <button>; anchors/Link ignore 'disabled' but we still provide aria-busy
+      disabled={Comp === 'button' ? !!loading : undefined}
+    >
+      {loading && (
+        <span className="inline-flex items-center gap-2">
+          <span className="inline-block h-4 w-4 animate-spin border-2 border-current border-r-transparent rounded-full" />
+          {loadingText && <span>{loadingText}</span>}
+        </span>
+      )}
+      {!loading && leadingIcon && <span className="inline-flex shrink-0 items-center">{leadingIcon}</span>}
+      {!loading && children}
+      {!loading && trailingIcon && <span className="inline-flex shrink-0 items-center">{trailingIcon}</span>}
+    </Comp>
+  );
+};
+
+export default Button;
+
+
+
+===============================
+📄 FILE: lib/i18n/config.ts
+===============================
+// lib/i18n/config.ts
+
+export type SupportedLocale = "en" | "ur";
+
+export const defaultLocale: SupportedLocale = "en";
+
+export const supportedLocales: SupportedLocale[] = ["en", "ur"];
+
+export const i18nConfig = {
+  defaultLocale,
+  locales: supportedLocales,
+};
+
+
+

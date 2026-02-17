@@ -1,0 +1,108 @@
+{
+  "studyPlan": {
+    "hero": {
+      "title": "Your study plan",
+      "subtitle": "Keep a daily rhythm to build momentum for your IELTS goal.",
+      "viewProgress": "View progress"
+    },
+    "presets": {
+      "balanced": {
+        "title": "Balanced focus",
+        "description": "Four weeks of daily IELTS tasks evenly split across all skills.",
+        "highlight": "Recommended"
+      },
+      "speaking": {
+        "title": "Speaking boost",
+        "description": "Two-week plan focused on speaking drills and writing prompts."
+      },
+      "listening": {
+        "title": "Listening sprint",
+        "description": "One-week reset with intensive listening practice.",
+        "highlight": "Great for jump-starts"
+      }
+    },
+    "toasts": {
+      "authRequired": "Please sign in to create a study plan.",
+      "planReady": {
+        "title": "Plan ready",
+        "description": "Your new study plan is live. Start with today’s tasks!"
+      },
+      "createFailure": "Could not create plan.",
+      "progressSaved": "Progress saved",
+      "updateFailure": "Could not update task."
+    },
+    "sidebar": {
+      "title": "Need a change?",
+      "description": "Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets below.",
+      "weeksShort": "{count} wk"
+    },
+    "empty": {
+      "title": "Create your study plan",
+      "description": "Pick a quick preset to fill your calendar instantly. You can customise tasks later.",
+      "iconTitle": "Streak",
+      "actions": {
+        "onboarding": "Build with onboarding",
+        "autoAdjust": "Plans auto-adjust after you complete a day.",
+        "creating": "Creating…",
+        "start": "Start this plan"
+      },
+      "labels": {
+        "duration": "Duration",
+        "weeks": "{count} weeks",
+        "dailyTime": "Daily time",
+        "varies": "Varies"
+      },
+      "footer": "Your daily streak starts counting after you complete the first task in your plan.",
+      "presets": {
+        "lite": {
+          "title": "Lite reset (2 weeks)",
+          "description": "Ease back in with short daily sessions and vocabulary refreshers.",
+          "daily": "30 min/day",
+          "highlight": "Rebuild momentum quickly."
+        },
+        "focus": {
+          "title": "Balanced focus (4 weeks)",
+          "description": "Structured mix of all four modules with weekly review checkpoints.",
+          "daily": "45–60 min/day",
+          "highlight": "Weekly mocks + targeted drills."
+        },
+        "intensive": {
+          "title": "Intensive push (6 weeks)",
+          "description": "Longer study blocks and extra mocks for a final exam sprint.",
+          "daily": "75 min/day",
+          "highlight": "Two mock exams per week."
+        }
+      }
+    },
+    "planCard": {
+      "today": "Today",
+      "scheduled": "Scheduled",
+      "totalMinutes": "{minutes} min",
+      "empty": "No tasks scheduled for this day.",
+      "toggleLabel": "Mark {title} as {state}",
+      "state": {
+        "complete": "complete",
+        "incomplete": "incomplete"
+      },
+      "estimate": "Estimated {minutes} min • {detail}",
+      "detail": {
+        "rest": "Take a break",
+        "focus": "Stay focused and complete the task"
+      }
+    },
+    "weekGrid": {
+      "empty": "Upcoming study days will appear here once your plan starts.",
+      "title": "Next 7 days",
+      "progress": "{completed}/{total} tasks complete",
+      "minutesPlanned": "{minutes} min planned"
+    },
+    "tasks": {
+      "types": {
+        "mock": "Mock",
+        "review": "Review",
+        "rest": "Rest",
+        "practice": "Practice"
+      }
+    }
+  }
+}

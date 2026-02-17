@@ -1,0 +1,284 @@
+{
+  "id": "ielts-listening-full-001",
+  "title": "IELTS Listening Full Mock Exam 001",
+  "durationSec": 2400,
+  "transcript": "This full-length mock listening paper follows the standard IELTS four-section structure. The audio covers a range of accents and situations, including a social conversation, a training monologue, an academic discussion, and an academic lecture.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Booking a Community Hall",
+      "audioUrl": "https://xypbinamxunmwkhlvefd.supabase.co/storage/v1/object/public/listening-audio/Test06_Audio.mp3",
+      "questions": [
+        {
+          "id": "s1-q1",
+          "type": "mcq",
+          "prompt": "Where does Emma want to hold the party?",
+          "options": [
+            "The Riverside Hall",
+            "The Lakeside Pavilion",
+            "The Mountain View Centre",
+            "The High Street Cafe"
+          ],
+          "answer": "The Riverside Hall"
+        },
+        { "id": "s1-q2", "type": "gap", "prompt": "Date requested", "answer": "12th September" },
+        { "id": "s1-q3", "type": "gap", "prompt": "Start time", "answer": "6:30 pm" },
+        { "id": "s1-q4", "type": "gap", "prompt": "Number of guests expected", "answer": "85" },
+        {
+          "id": "s1-q5",
+          "type": "mcq",
+          "prompt": "What catering option do they choose?",
+          "options": ["Cold buffet", "Formal dinner", "Afternoon tea", "Food trucks"],
+          "answer": "Cold buffet"
+        },
+        { "id": "s1-q6", "type": "gap", "prompt": "Deposit amount", "answer": "200 pounds" },
+        { "id": "s1-q7", "type": "gap", "prompt": "Required equipment", "answer": "projector" },
+        {
+          "id": "s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys on the day?",
+          "answer": "Mark"
+        },
+        {
+          "id": "s1-q9",
+          "type": "mcq",
+          "prompt": "How will Emma pay the balance?",
+          "options": ["Credit card", "Bank transfer", "Cheque", "Cash"],
+          "answer": "Bank transfer"
+        },
+        {
+          "id": "s1-q10",
+          "type": "gap",
+          "prompt": "Contact email",
+          "answer": "events@rivertown.org"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Volunteer Training Briefing",
+      "audioUrl": "https://xypbinamxunmwkhlvefd.supabase.co/storage/v1/object/public/listening-audio/Test06_Audio.mp3",
+      "questions": [
+        {
+          "id": "s2-q11",
+          "type": "mcq",
+          "prompt": "What is the main goal of the project?",
+          "options": [
+            "Improve public transport",
+            "Create a community garden",
+            "Renovate the library",
+            "Organise a charity concert"
+          ],
+          "answer": "Create a community garden"
+        },
+        { "id": "s2-q12", "type": "gap", "prompt": "Number of volunteer teams", "answer": "4" },
+        {
+          "id": "s2-q13",
+          "type": "gap",
+          "prompt": "Safety briefing location",
+          "answer": "Greenfield Hall"
+        },
+        {
+          "id": "s2-q14",
+          "type": "mcq",
+          "prompt": "Which tool must volunteers bring themselves?",
+          "options": ["Gloves", "Watering cans", "Rakes", "Sun hats"],
+          "answer": "Gloves"
+        },
+        {
+          "id": "s2-q15",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "01952 884 201"
+        },
+        {
+          "id": "s2-q16",
+          "type": "short",
+          "prompt": "Who is the site supervisor?",
+          "answer": "Priya Sharma"
+        },
+        {
+          "id": "s2-q17",
+          "type": "gap",
+          "prompt": "Meeting time on Saturday",
+          "answer": "8:45 am"
+        },
+        {
+          "id": "s2-q18",
+          "type": "mcq",
+          "prompt": "What will happen if it rains heavily?",
+          "options": [
+            "The event will be cancelled",
+            "Activities move to the sports hall",
+            "Volunteers will work under tents",
+            "The event is postponed to Sunday"
+          ],
+          "answer": "Activities move to the sports hall"
+        },
+        {
+          "id": "s2-q19",
+          "type": "gap",
+          "prompt": "Refreshments provided",
+          "answer": "packed lunch"
+        },
+        {
+          "id": "s2-q20",
+          "type": "short",
+          "prompt": "Which charity is partnering with the council?",
+          "answer": "Green Horizons"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — University Seminar Discussion",
+      "audioUrl": "https://xypbinamxunmwkhlvefd.supabase.co/storage/v1/object/public/listening-audio/Test06_Audio.mp3",
+      "questions": [
+        {
+          "id": "s3-q21",
+          "type": "mcq",
+          "prompt": "What is the focus of the students' research project?",
+          "options": [
+            "Renewable energy adoption",
+            "Remote work productivity",
+            "Urban green spaces",
+            "Sustainable transport"
+          ],
+          "answer": "Urban green spaces"
+        },
+        {
+          "id": "s3-q22",
+          "type": "mcq",
+          "prompt": "Which research method do they decide to prioritise?",
+          "options": ["Surveys", "Field observations", "Interviews", "Data modelling"],
+          "answer": "Field observations"
+        },
+        { "id": "s3-q23", "type": "gap", "prompt": "Number of parks selected", "answer": "5" },
+        {
+          "id": "s3-q24",
+          "type": "gap",
+          "prompt": "Duration of each observation session",
+          "answer": "45 minutes"
+        },
+        {
+          "id": "s3-q25",
+          "type": "mcq",
+          "prompt": "Which challenge do they anticipate?",
+          "options": [
+            "Lack of funding",
+            "Unreliable weather",
+            "Shortage of volunteers",
+            "Limited access to data"
+          ],
+          "answer": "Unreliable weather"
+        },
+        {
+          "id": "s3-q26",
+          "type": "gap",
+          "prompt": "Statistical software to be used",
+          "answer": "ArcGIS"
+        },
+        {
+          "id": "s3-q27",
+          "type": "mcq",
+          "prompt": "Who will lead the presentation?",
+          "options": ["Nina", "Hassan", "Laura", "Miguel"],
+          "answer": "Laura"
+        },
+        {
+          "id": "s3-q28",
+          "type": "short",
+          "prompt": "Which department is funding the project?",
+          "answer": "School of Environmental Sciences"
+        },
+        {
+          "id": "s3-q29",
+          "type": "gap",
+          "prompt": "Deadline for the draft report",
+          "answer": "3 November"
+        },
+        {
+          "id": "s3-q30",
+          "type": "gap",
+          "prompt": "Percentage of grade allocated to field notes",
+          "answer": "25%"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Climate-Resilient Cities",
+      "audioUrl": "https://xypbinamxunmwkhlvefd.supabase.co/storage/v1/object/public/listening-audio/Test06_Audio.mp3",
+      "questions": [
+        {
+          "id": "s4-q31",
+          "type": "gap",
+          "prompt": "Key concept introduced",
+          "answer": "climate adaptation"
+        },
+        {
+          "id": "s4-q32",
+          "type": "mcq",
+          "prompt": "Which city is cited as a successful case study?",
+          "options": ["Rotterdam", "Sydney", "Toronto", "Cape Town"],
+          "answer": "Rotterdam"
+        },
+        {
+          "id": "s4-q33",
+          "type": "gap",
+          "prompt": "Main infrastructure upgrade discussed",
+          "answer": "floating neighbourhoods"
+        },
+        {
+          "id": "s4-q34",
+          "type": "mcq",
+          "prompt": "What percentage of urban areas will face flood risk by 2050 according to the lecture?",
+          "options": ["10%", "22%", "40%", "58%"],
+          "answer": "40%"
+        },
+        {
+          "id": "s4-q35",
+          "type": "gap",
+          "prompt": "Type of data used to model rainfall patterns",
+          "answer": "satellite imagery"
+        },
+        {
+          "id": "s4-q36",
+          "type": "gap",
+          "prompt": "Cost of the pilot project in millions",
+          "answer": "18"
+        },
+        {
+          "id": "s4-q37",
+          "type": "mcq",
+          "prompt": "Which group benefited most from the new green corridors?",
+          "options": [
+            "Cyclists",
+            "Primary school students",
+            "Local businesses",
+            "Retired residents"
+          ],
+          "answer": "Primary school students"
+        },
+        {
+          "id": "s4-q38",
+          "type": "gap",
+          "prompt": "Percentage reduction in summer temperatures",
+          "answer": "3 degrees"
+        },
+        {
+          "id": "s4-q39",
+          "type": "short",
+          "prompt": "Which agency funded the research?",
+          "answer": "European Climate Innovation Fund"
+        },
+        {
+          "id": "s4-q40",
+          "type": "gap",
+          "prompt": "Recommended policy priority",
+          "answer": "integrated water management"
+        }
+      ]
+    }
+  ]
+}

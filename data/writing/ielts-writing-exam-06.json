@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-06",
+  "title": "General Training Set 1 — Lost Luggage & Athlete Salaries",
+  "description": "Formal complaint letter about lost luggage and an opinion essay on professional athletes' salaries.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter about lost luggage",
+    "type": "general training",
+    "prompt": "You recently flew with an international airline and your suitcase was lost. Write a letter to the airline. In your letter: explain what happened, describe the contents of your suitcase, and say what you would like the airline to do.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Use a formal tone because you are writing to a company.",
+      "Include specific details about your flight and the missing items.",
+      "Clearly state what action you expect from the airline."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Athlete salaries",
+    "prompt": "Some people believe professional athletes are paid far too much money. Others think their income is justified. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the statement and state your position.",
+      "Body paragraph 1: reasons why athlete salaries may be considered excessive.",
+      "Body paragraph 2: arguments supporting high earnings for athletes.",
+      "Conclusion: give your opinion and suggest a balanced perspective."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "You recently flew with an international airline and your suitcase was lost. Write a letter to the airline. In your letter: explain what happened, describe the contents of your suitcase, and say what you would like the airline to do.",
+  "task2Prompt": "Some people believe professional athletes are paid far too much money. Others think their income is justified. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

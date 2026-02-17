@@ -1,0 +1,29 @@
+:root {
+  /* Core colors */
+  --bg: #0b1220;
+  --text: #e6edf7;
+  --border: #1f2a3d;
+
+  --primary: #4361ee;
+  --secondary: #f72585;
+  --accent: #4cc9f0;
+
+  --success: #2ea043;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Radii */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+}

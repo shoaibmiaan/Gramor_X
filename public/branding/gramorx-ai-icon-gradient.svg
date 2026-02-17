@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9D4EDD"/>
+      <stop offset="1" stop-color="#00BBF9"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#80FFDB" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#80FFDB" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="1024" height="1024" rx="220" fill="url(#bgGrad)"/>
+  <g opacity="0.85">
+    <path d="M240 280 L360 180 L512 344 L664 180 L784 280 L592 472 L784 664 L664 764 L512 600 L360 764 L240 664 L432 472 Z" fill="white"/>
+  </g>
+  <circle cx="512" cy="512" r="180" fill="url(#glow)"/>
+  <circle cx="512" cy="512" r="16" fill="#80FFDB"/>
+</svg>

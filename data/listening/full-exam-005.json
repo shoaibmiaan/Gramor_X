@@ -1,0 +1,338 @@
+{
+  "id": "ielts-listening-full-005",
+  "title": "IELTS Listening Full Mock Exam 005",
+  "durationSec": 2400,
+  "transcript": "This set includes a theatre ticket hotline booking, a volunteer orientation briefing, a panel on digital literacy, and a lecture on coastal resilience engineering.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Theatre Ticket Hotline",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-005-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-005-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Grand Arcade Theatre foyer",
+            "Seaside Pavilion",
+            "Hillcrest Manor",
+            "Old Brewery Loft"
+          ],
+          "answer": "Grand Arcade Theatre foyer"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "9th August"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "5:30 pm"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "60"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Canapé reception",
+            "Street food court",
+            "Formal plated dinner",
+            "Coffee cart only"
+          ],
+          "answer": "Canapé reception"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "150 pounds"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "lighting rig"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Priya"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Weston Street car park",
+            "Harbor level 2",
+            "Station square",
+            "Meadow overflow"
+          ],
+          "answer": "Weston Street car park"
+        },
+        {
+          "id": "ielts-listening-full-005-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "reception stations"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Volunteer Orientation Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-005-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-005-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "community outreach coordinator",
+            "finance officer",
+            "media liaison",
+            "transport planner"
+          ],
+          "answer": "community outreach coordinator"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "neighbourhood mentoring launch"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "20 minutes"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Civic Centre atrium"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": ["Resource hub", "Training studio", "Roof terrace", "Podcast booth"],
+          "answer": "Resource hub"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Desk 7"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "MentorLink-5G"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Tuesday"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": ["photo ID badge", "formal ties", "handwritten notes", "waterproof boots"],
+          "answer": "photo ID badge"
+        },
+        {
+          "id": "ielts-listening-full-005-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0161 432 1184"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Panel on Digital Literacy",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-005-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-005-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "digital literacy outreach project",
+            "cafeteria menu redesign",
+            "campus sculpture map",
+            "fitness tracking study"
+          ],
+          "answer": "digital literacy outreach project"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Olivia"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "30 April"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "weekly on Thursdays"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "community workshops",
+            "postal surveys",
+            "lab experiments",
+            "silent observations"
+          ],
+          "answer": "community workshops"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "SkillBridge"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£275"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Dr. Ahmed"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "finding bilingual volunteers",
+            "booking the sports hall",
+            "managing costume rentals",
+            "storing lab chemicals"
+          ],
+          "answer": "finding bilingual volunteers"
+        },
+        {
+          "id": "ielts-listening-full-005-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "14 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Coastal Resilience",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-005-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-005-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "coastal resilience engineering",
+            "renaissance art history",
+            "culinary fermentation",
+            "space medicine"
+          ],
+          "answer": "coastal resilience engineering"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "12 kilometers"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "modular breakwater units"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Lisbon"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "federal adaptation grants",
+            "festival ticket sales",
+            "alumni donations",
+            "artisan food markets"
+          ],
+          "answer": "federal adaptation grants"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Harbor Dynamics Lab"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Resilient Shores Manual"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2022"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "maintaining supply chains for materials",
+            "hiring docents",
+            "preserving manuscripts",
+            "training sommeliers"
+          ],
+          "answer": "maintaining supply chains for materials"
+        },
+        {
+          "id": "ielts-listening-full-005-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "engineer flexibility first"
+        }
+      ]
+    }
+  ]
+}

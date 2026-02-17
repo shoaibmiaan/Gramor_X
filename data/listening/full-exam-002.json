@@ -1,0 +1,338 @@
+{
+  "id": "ielts-listening-full-002",
+  "title": "IELTS Listening Full Mock Exam 002",
+  "durationSec": 2400,
+  "transcript": "This paper mirrors the IELTS format with a student housing enquiry, an innovation tour briefing, a group mobility project meeting, and a lecture on smart transit grids.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Student Housing Inquiry",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-002-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-002-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Brookside Residence Lounge",
+            "Harbor View Hall",
+            "Library Seminar Suite",
+            "Crescent Pavilion"
+          ],
+          "answer": "Brookside Residence Lounge"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "14th October"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "7:00 pm"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "120"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Mediterranean buffet",
+            "Vegan canapés",
+            "Street food vans",
+            "Formal three-course dinner"
+          ],
+          "answer": "Mediterranean buffet"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "250 pounds"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "wireless microphones"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Sophie"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Underground car park B",
+            "East surface lot",
+            "Visitor bays on King Street",
+            "Overflow field"
+          ],
+          "answer": "Underground car park B"
+        },
+        {
+          "id": "ielts-listening-full-002-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "banquet style"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Campus Innovation Tour Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-002-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-002-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "innovation tour coordinator",
+            "student ambassador",
+            "operations supervisor",
+            "guest lecturer"
+          ],
+          "answer": "innovation tour coordinator"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "orientation briefing for the new makerspace"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "25 minutes"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Old Clock Tower plaza"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": ["Prototyping Lab", "Media Studio", "Roof Garden", "Fabrication Wing"],
+          "answer": "Prototyping Lab"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Room F"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "Makers-2025"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Friday"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": ["closed-toe shoes", "formal suits", "printed tickets", "sports equipment"],
+          "answer": "closed-toe shoes"
+        },
+        {
+          "id": "ielts-listening-full-002-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0207 555 1940"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Group Discussion on Mobility Study",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-002-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-002-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "urban micro-mobility study",
+            "campus dining review",
+            "library refurbishment",
+            "sports participation survey"
+          ],
+          "answer": "urban micro-mobility study"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Amelia"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "18 November"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "twice a week"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "mixed-method interviews",
+            "online polls only",
+            "archival research",
+            "laboratory experiments"
+          ],
+          "answer": "mixed-method interviews"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "InsightLab"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£450"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Dr. Chen"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "recruiting enough night-shift workers",
+            "booking the conference hall",
+            "editing the audio guides",
+            "transporting lab samples"
+          ],
+          "answer": "recruiting enough night-shift workers"
+        },
+        {
+          "id": "ielts-listening-full-002-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "12 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Smart Transit Grids",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-002-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-002-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "integrated smart transit grids",
+            "heritage tourism marketing",
+            "marine biology fieldwork",
+            "culinary entrepreneurship"
+          ],
+          "answer": "integrated smart transit grids"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "42 percent"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "adaptive routing corridors"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Rotterdam"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "citywide sensor data sharing",
+            "private sponsorship deals",
+            "seasonal tourism demand",
+            "student volunteer hours"
+          ],
+          "answer": "citywide sensor data sharing"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Atlas Institute"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Smart Mobility 2035 report"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2021"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "aligning legacy ticketing systems",
+            "training volunteer docents",
+            "maintaining coral nurseries",
+            "protecting recipe IP"
+          ],
+          "answer": "aligning legacy ticketing systems"
+        },
+        {
+          "id": "ielts-listening-full-002-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "design for adaptability"
+        }
+      ]
+    }
+  ]
+}

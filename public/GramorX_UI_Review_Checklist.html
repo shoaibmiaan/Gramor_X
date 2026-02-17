@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gramor_X — UI Review Checklist</title>
+<style>
+  :root{--bg:#0b0b10;--panel:#11121a;--muted:#9aa3af;--text:#e5e7eb;--accent:#7c3aed;--ok:#22c55e;--border:#222733}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Inter,Roboto,Arial}
+  header{position:sticky;top:0;background:linear-gradient(180deg,rgba(17,18,26,.95),rgba(17,18,26,.75));backdrop-filter:blur(6px);border-bottom:1px solid var(--border);padding:14px 18px}
+  h1{margin:0;font-size:20px;letter-spacing:.2px}
+  main{padding:20px}
+  .cat{border:1px solid var(--border);border-radius:14px;background:var(--panel);margin:18px 0;overflow:hidden}
+  .cat h2{margin:0;padding:14px 16px;font-size:16px;background:rgba(124,58,237,.12);border-bottom:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top;font-size:14px}
+  th{font-weight:600;color:#cfd6df;text-align:left;background:rgba(255,255,255,.02)}
+  tr:hover{background:rgba(255,255,255,.03)}
+  .links a{color:#a5b4fc;text-decoration:none}
+  .links a:hover{text-decoration:underline}
+  .wrap{word-break:break-word;max-width:680px}
+  .file{color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px}
+  .sticky-bar{display:flex;gap:12px;align-items:center;margin-top:8px}
+  .btn{border:1px solid var(--border);background:#151728;color:#cfd6df;border-radius:10px;padding:8px 10px;font-size:13px;cursor:pointer}
+  .btn:hover{background:#1b1e30}
+  .search{flex:1;border:1px solid var(--border);border-radius:10px;background:#0d0f18;color:#dbe4ee;padding:8px 10px;font-size:14px}
+  .count{font-size:12px;color:var(--muted)}
+  .module{font-size:12px;color:#b7c0cc;padding:2px 6px;border:1px solid var(--border);border-radius:8px;background:#0d0f18;display:inline-block}
+</style>
+<script>
+  function toggleCategory(id, checked){
+    const tbody = document.getElementById(id);
+    if (!tbody) return;
+    tbody.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = checked);
+    updateCounts();
+  }
+  function toggleAll(checked){
+    document.querySelectorAll('tbody').forEach(tb => {
+      tb.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = checked);
+    });
+    updateCounts();
+  }
+  function updateCounts(){
+    let total = 0, done = 0;
+    document.querySelectorAll('tbody').forEach(tb => {
+      const boxes = tb.querySelectorAll('input[type=checkbox]');
+      const doneBoxes = tb.querySelectorAll('input[type=checkbox]:checked');
+      total += boxes.length;
+      done += doneBoxes.length;
+      const head = tb.previousElementSibling;
+      if (head && head.classList.contains('head-row')){
+        const label = head.querySelector('.cat-count');
+        if (label){ label.textContent = doneBoxes.length + ' / ' + boxes.length; }
+      }
+    });
+    const g = document.getElementById('global-count');
+    if (g) g.textContent = done + ' / ' + total + ' done';
+  }
+  function filterRows(){
+    const q = document.getElementById('q').value.toLowerCase().trim();
+    document.querySelectorAll('tbody tr').forEach(tr => {
+      const text = tr.textContent.toLowerCase();
+      tr.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+  window.addEventListener('DOMContentLoaded', updateCounts);
+</script>
+</head>
+<body>
+<header>
+  <h1>Gramor_X — UI Review Checklist</h1>
+  <div class="sticky-bar">
+    <input id="q" class="search" placeholder="Filter by route, file, module…" oninput="filterRows()" />
+    <button class="btn" onclick="toggleAll(true)">Mark All Done</button>
+    <button class="btn" onclick="toggleAll(false)">Clear All</button>
+    <span id="global-count" class="count"></span>
+  </div>
+</header>
+<main>
+
+<section class="cat">
+<h2>AI &amp; Insights <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_48990680">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/coach</strong></td>
+<td><div class="links"><a href="https://gramorx.com/coach" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/coach" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">AI Coach</span></td>
+<td class="file">pages/coach/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/coach/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/coach/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/coach/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">AI Coach</span></td>
+<td class="file">pages/coach/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/ai</strong></td>
+<td><div class="links"><a href="https://gramorx.com/ai" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/ai" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">AI Tools</span></td>
+<td class="file">pages/ai/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/labs/ai-tutor</strong></td>
+<td><div class="links"><a href="https://gramorx.com/labs/ai-tutor" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/labs/ai-tutor" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">AI Tools</span></td>
+<td class="file">pages/labs/ai-tutor.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/predictor</strong></td>
+<td><div class="links"><a href="https://gramorx.com/predictor" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/predictor" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Predictor</span></td>
+<td class="file">pages/predictor/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/predictor/result</strong></td>
+<td><div class="links"><a href="https://gramorx.com/predictor/result" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/predictor/result" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Predictor</span></td>
+<td class="file">pages/predictor/result.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>Admin &amp; Teacher <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_48575801">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/imp-as</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/imp-as" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/imp-as" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/imp-as.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/partners</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/partners" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/partners" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/partners/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/premium/pin</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/premium/pin" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/premium/pin" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/premium/pin.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/reviews</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/reviews" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/reviews" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/reviews/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/reviews/[attemptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/reviews/[attemptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/reviews/[attemptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/reviews/[attemptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/stop-impersonation</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/stop-impersonation" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/stop-impersonation" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/stop-impersonation.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/students</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/students" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/students" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/students/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/users</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/users" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/users" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Admin</span></td>
+<td class="file">pages/admin/users.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/teacher</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/teacher" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/teacher" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/admin/teacher/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/teachers</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/teachers" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/teachers" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/admin/teachers/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/onboarding/teacher</strong></td>
+<td><div class="links"><a href="https://gramorx.com/onboarding/teacher" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/onboarding/teacher" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/onboarding/teacher/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/onboarding/teacher/status</strong></td>
+<td><div class="links"><a href="https://gramorx.com/onboarding/teacher/status" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/onboarding/teacher/status" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/onboarding/teacher/status.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/teacher</strong></td>
+<td><div class="links"><a href="https://gramorx.com/teacher" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/teacher" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/teacher/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/teacher/Welcome</strong></td>
+<td><div class="links"><a href="https://gramorx.com/teacher/Welcome" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/teacher/Welcome" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/teacher/Welcome.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/teacher/cohorts/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/teacher/cohorts/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/teacher/cohorts/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/teacher/cohorts/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/teacher/onboarding</strong></td>
+<td><div class="links"><a href="https://gramorx.com/teacher/onboarding" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/teacher/onboarding" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/teacher/onboarding.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/teacher/pending</strong></td>
+<td><div class="links"><a href="https://gramorx.com/teacher/pending" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/teacher/pending" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/teacher/pending.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/teacher/register</strong></td>
+<td><div class="links"><a href="https://gramorx.com/teacher/register" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/teacher/register" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Teacher</span></td>
+<td class="file">pages/teacher/register.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>Community <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_16160462">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/community</strong></td>
+<td><div class="links"><a href="https://gramorx.com/community" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/community" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Community</span></td>
+<td class="file">pages/community/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/community/chat</strong></td>
+<td><div class="links"><a href="https://gramorx.com/community/chat" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/community/chat" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Community</span></td>
+<td class="file">pages/community/chat.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/community/questions</strong></td>
+<td><div class="links"><a href="https://gramorx.com/community/questions" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/community/questions" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Community</span></td>
+<td class="file">pages/community/questions.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/community/review</strong></td>
+<td><div class="links"><a href="https://gramorx.com/community/review" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/community/review" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Community</span></td>
+<td class="file">pages/community/review/index.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>Gamification <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_33821973">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/leaderboard</strong></td>
+<td><div class="links"><a href="https://gramorx.com/leaderboard" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/leaderboard" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Gamification</span></td>
+<td class="file">pages/leaderboard/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/profile/streak</strong></td>
+<td><div class="links"><a href="https://gramorx.com/profile/streak" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/profile/streak" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/profile/streak.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>IELTS Core <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_85346940">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/dashboard</strong></td>
+<td><div class="links"><a href="https://gramorx.com/dashboard" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/dashboard" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Dashboard</span></td>
+<td class="file">pages/dashboard/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/</strong></td>
+<td><div class="links"><a href="https://gramorx.com/" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Home</span></td>
+<td class="file">pages/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/listening</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/listening" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/listening" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/admin/listening.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/listening</strong></td>
+<td><div class="links"><a href="https://gramorx.com/listening" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/listening" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/listening/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/listening/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/listening/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/listening/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/listening/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/listening/[slug]/review</strong></td>
+<td><div class="links"><a href="https://gramorx.com/listening/[slug]/review" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/listening/[slug]/review" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/listening/[slug]/review.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/listening</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/listening" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/listening" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/mock/listening.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/listening/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/listening/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/listening/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/mock/listening/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/practice/listening</strong></td>
+<td><div class="links"><a href="https://gramorx.com/practice/listening" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/practice/listening" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/practice/listening.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/premium/listening/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/premium/listening/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/premium/listening/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/premium/listening/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/review/listening/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/review/listening/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/review/listening/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Listening</span></td>
+<td class="file">pages/review/listening/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/content/reading</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/content/reading" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/content/reading" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/admin/content/reading.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/reading</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/reading" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/reading" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/admin/reading.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/reading</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/reading" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/reading" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/mock/reading.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/reading/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/reading/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/reading/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/mock/reading/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/reading/review/[attemptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/reading/review/[attemptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/reading/review/[attemptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/mock/reading/review/[attemptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/practice/reading</strong></td>
+<td><div class="links"><a href="https://gramorx.com/practice/reading" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/practice/reading" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/practice/reading.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/premium/reading/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/premium/reading/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/premium/reading/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/premium/reading/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/reading</strong></td>
+<td><div class="links"><a href="https://gramorx.com/reading" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/reading" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/reading/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/reading/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/reading/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/reading/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/reading/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/reading/[slug]/review</strong></td>
+<td><div class="links"><a href="https://gramorx.com/reading/[slug]/review" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/reading/[slug]/review" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/reading/[slug]/review.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/reading/passage/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/reading/passage/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/reading/passage/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/reading/passage/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/reading/stats</strong></td>
+<td><div class="links"><a href="https://gramorx.com/reading/stats" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/reading/stats" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/reading/stats.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/review/reading/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/review/reading/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/review/reading/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reading</span></td>
+<td class="file">pages/review/reading/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/speaking</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/speaking" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/speaking" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/admin/speaking/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/speaking/attempts</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/speaking/attempts" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/speaking/attempts" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/admin/speaking/attempts.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/speaking</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/speaking" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/speaking" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/mock/speaking.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/speaking/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/speaking/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/speaking/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/mock/speaking/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/practice/speaking</strong></td>
+<td><div class="links"><a href="https://gramorx.com/practice/speaking" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/practice/speaking" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/practice/speaking.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/review/speaking/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/review/speaking/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/review/speaking/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/review/speaking/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/[promptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/[promptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/[promptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/[promptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/attempts</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/attempts" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/attempts" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/attempts/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/attempts/[attemptId]/result</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/attempts/[attemptId]/result" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/attempts/[attemptId]/result" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/attempts/[attemptId]/result.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/buddy</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/buddy" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/buddy" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/buddy.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/coach</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/coach" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/coach" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/coach/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/coach/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/coach/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/coach/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/coach/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/coach/free</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/coach/free" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/coach/free" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/coach/free.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/library</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/library" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/library" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/library.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/live</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/live" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/live" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/live/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/live/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/live/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/live/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/live/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/packs/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/packs/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/packs/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/packs/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/partner</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/partner" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/partner" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/partner.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/partner/history</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/partner/history" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/partner/history" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/partner/history.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/partner/review/[attemptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/partner/review/[attemptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/partner/review/[attemptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/partner/review/[attemptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/practice</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/practice" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/practice" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/practice.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/report</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/report" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/report" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/report.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/review/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/review/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/review/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/review/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/roleplay</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/roleplay" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/roleplay" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/roleplay/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/roleplay/[scenario]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/roleplay/[scenario]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/roleplay/[scenario]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/roleplay/[scenario].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/settings</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/settings" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/settings" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/settings.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/simulator</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/simulator" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/simulator" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/simulator/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/simulator/part1</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/simulator/part1" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/simulator/part1" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/simulator/part1.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/simulator/part2</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/simulator/part2" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/simulator/part2" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/simulator/part2.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/speaking/simulator/part3</strong></td>
+<td><div class="links"><a href="https://gramorx.com/speaking/simulator/part3" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/speaking/simulator/part3" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Speaking</span></td>
+<td class="file">pages/speaking/simulator/part3.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/writing</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/writing" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/writing" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/admin/writing/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/writing/topics</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/writing/topics" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/writing/topics" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/admin/writing/topics.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/ai/writing/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/ai/writing/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/ai/writing/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/ai/writing/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/cert/writing/[attemptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/cert/writing/[attemptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/cert/writing/[attemptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/cert/writing/[attemptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/mock</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/mock" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/mock" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/mock.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/mock/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/mock/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/mock/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/mock/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/mock/results/[attemptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/mock/results/[attemptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/mock/results/[attemptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/mock/results/[attemptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/mock/review/[attemptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/mock/review/[attemptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/mock/review/[attemptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/mock/review/[attemptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/practice/writing</strong></td>
+<td><div class="links"><a href="https://gramorx.com/practice/writing" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/practice/writing" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/practice/writing.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/review/writing/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/review/writing/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/review/writing/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/review/writing/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/drills</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/drills" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/drills" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/drills/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/drills/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/drills/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/drills/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/drills/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/review/[attemptId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/review/[attemptId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/review/[attemptId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/review/[attemptId].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/writing/reviews/calibrate</strong></td>
+<td><div class="links"><a href="https://gramorx.com/writing/reviews/calibrate" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/writing/reviews/calibrate" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/writing/reviews/calibrate.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>Marketing &amp; Landing <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_18041903">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/bookings</strong></td>
+<td><div class="links"><a href="https://gramorx.com/bookings" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/bookings" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Bookings</span></td>
+<td class="file">pages/bookings/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/bookings/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/bookings/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/bookings/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Bookings</span></td>
+<td class="file">pages/bookings/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/.well-known/assetlinks.json</strong></td>
+<td><div class="links"><a href="https://gramorx.com/.well-known/assetlinks.json" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/.well-known/assetlinks.json" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/.well-known/assetlinks.json.ts</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/403</strong></td>
+<td><div class="links"><a href="https://gramorx.com/403" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/403" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/403.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/404</strong></td>
+<td><div class="links"><a href="https://gramorx.com/404" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/404" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/404.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/500</strong></td>
+<td><div class="links"><a href="https://gramorx.com/500" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/500" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/500.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/accessibility</strong></td>
+<td><div class="links"><a href="https://gramorx.com/accessibility" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/accessibility" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/accessibility.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/blog</strong></td>
+<td><div class="links"><a href="https://gramorx.com/blog" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/blog" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/blog/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/blog/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/blog/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/blog/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/blog/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/cert/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/cert/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/cert/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/cert/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/checkout</strong></td>
+<td><div class="links"><a href="https://gramorx.com/checkout" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/checkout" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/checkout/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/checkout/cancel</strong></td>
+<td><div class="links"><a href="https://gramorx.com/checkout/cancel" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/checkout/cancel" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/checkout/cancel.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/checkout/crypto</strong></td>
+<td><div class="links"><a href="https://gramorx.com/checkout/crypto" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/checkout/crypto" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/checkout/crypto.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/checkout/success</strong></td>
+<td><div class="links"><a href="https://gramorx.com/checkout/success" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/checkout/success" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/checkout/success.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/classes</strong></td>
+<td><div class="links"><a href="https://gramorx.com/classes" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/classes" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/classes/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/classes/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/classes/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/classes/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/classes/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/content/studio</strong></td>
+<td><div class="links"><a href="https://gramorx.com/content/studio" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/content/studio" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/content/studio/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/content/studio/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/content/studio/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/content/studio/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/content/studio/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/data-deletion</strong></td>
+<td><div class="links"><a href="https://gramorx.com/data-deletion" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/data-deletion" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/data-deletion.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/institutions</strong></td>
+<td><div class="links"><a href="https://gramorx.com/institutions" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/institutions" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/institutions/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/institutions/[orgId]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/institutions/[orgId]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/institutions/[orgId]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/institutions/[orgId]/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/institutions/[orgId]/students</strong></td>
+<td><div class="links"><a href="https://gramorx.com/institutions/[orgId]/students" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/institutions/[orgId]/students" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/institutions/[orgId]/students.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/internal/content/playground</strong></td>
+<td><div class="links"><a href="https://gramorx.com/internal/content/playground" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/internal/content/playground" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/internal/content/playground.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/drills</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/drills" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/drills" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/drills.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/skills</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/skills" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/skills" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/skills/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/skills/[skill]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/skills/[skill]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/skills/[skill]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/skills/[skill].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/skills/lessons</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/skills/lessons" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/skills/lessons" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/skills/lessons/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/skills/lessons/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/skills/lessons/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/skills/lessons/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/skills/lessons/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/strategies</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/strategies" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/strategies" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/strategies/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/learning/strategies/[tipSlug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/learning/strategies/[tipSlug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/learning/strategies/[tipSlug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/learning/strategies/[tipSlug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/marketplace</strong></td>
+<td><div class="links"><a href="https://gramorx.com/marketplace" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/marketplace" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/marketplace/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/orgs</strong></td>
+<td><div class="links"><a href="https://gramorx.com/orgs" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/orgs" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/orgs/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/partners</strong></td>
+<td><div class="links"><a href="https://gramorx.com/partners" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/partners" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/partners/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/proctoring/check</strong></td>
+<td><div class="links"><a href="https://gramorx.com/proctoring/check" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/proctoring/check" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/proctoring/check.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/promotions</strong></td>
+<td><div class="links"><a href="https://gramorx.com/promotions" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/promotions" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/promotions/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/quick</strong></td>
+<td><div class="links"><a href="https://gramorx.com/quick" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/quick" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/quick/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/quick/[skill]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/quick/[skill]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/quick/[skill]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/quick/[skill].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/r/[code]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/r/[code]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/r/[code]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/r/[code].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/restricted</strong></td>
+<td><div class="links"><a href="https://gramorx.com/restricted" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/restricted" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/restricted.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/roadmap</strong></td>
+<td><div class="links"><a href="https://gramorx.com/roadmap" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/roadmap" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/roadmap.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/saved</strong></td>
+<td><div class="links"><a href="https://gramorx.com/saved" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/saved" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/saved/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/visa</strong></td>
+<td><div class="links"><a href="https://gramorx.com/visa" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/visa" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/visa/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/waitlist</strong></td>
+<td><div class="links"><a href="https://gramorx.com/waitlist" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/waitlist" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/waitlist.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/welcome</strong></td>
+<td><div class="links"><a href="https://gramorx.com/welcome" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/welcome" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/welcome/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/faq</strong></td>
+<td><div class="links"><a href="https://gramorx.com/faq" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/faq" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Help / FAQ</span></td>
+<td class="file">pages/faq.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mistakes</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mistakes" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mistakes" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Mistakes Book</span></td>
+<td class="file">pages/mistakes/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/tokens-test</strong></td>
+<td><div class="links"><a href="https://gramorx.com/tokens-test" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/tokens-test" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Mock Tests</span></td>
+<td class="file">pages/tokens-test.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/onboarding</strong></td>
+<td><div class="links"><a href="https://gramorx.com/onboarding" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/onboarding" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Onboarding</span></td>
+<td class="file">pages/onboarding/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/onboarding/date</strong></td>
+<td><div class="links"><a href="https://gramorx.com/onboarding/date" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/onboarding/date" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Onboarding</span></td>
+<td class="file">pages/onboarding/date.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/onboarding/goal</strong></td>
+<td><div class="links"><a href="https://gramorx.com/onboarding/goal" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/onboarding/goal" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Onboarding</span></td>
+<td class="file">pages/onboarding/goal.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/onboarding/schedule</strong></td>
+<td><div class="links"><a href="https://gramorx.com/onboarding/schedule" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/onboarding/schedule" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Onboarding</span></td>
+<td class="file">pages/onboarding/schedule.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/onboarding/skills</strong></td>
+<td><div class="links"><a href="https://gramorx.com/onboarding/skills" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/onboarding/skills" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Onboarding</span></td>
+<td class="file">pages/onboarding/skills.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/pwa/app</strong></td>
+<td><div class="links"><a href="https://gramorx.com/pwa/app" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/pwa/app" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">PWA</span></td>
+<td class="file">pages/pwa/app.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/premium</strong></td>
+<td><div class="links"><a href="https://gramorx.com/premium" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/premium" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Premium</span></td>
+<td class="file">pages/premium/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/premium/PremiumExamPage</strong></td>
+<td><div class="links"><a href="https://gramorx.com/premium/PremiumExamPage" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/premium/PremiumExamPage" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Premium</span></td>
+<td class="file">pages/premium/PremiumExamPage.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/premium/pin</strong></td>
+<td><div class="links"><a href="https://gramorx.com/premium/pin" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/premium/pin" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Premium</span></td>
+<td class="file">pages/premium/pin.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/pricing</strong></td>
+<td><div class="links"><a href="https://gramorx.com/pricing" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/pricing" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Pricing</span></td>
+<td class="file">pages/pricing/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/review/share/[token]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/review/share/[token]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/review/share/[token]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Review &amp; Feedback</span></td>
+<td class="file">pages/review/share/[token].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/tools/mark-sections/[slug]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/tools/mark-sections/[slug]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/tools/mark-sections/[slug]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Tools</span></td>
+<td class="file">pages/tools/mark-sections/[slug].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/update-password</strong></td>
+<td><div class="links"><a href="https://gramorx.com/update-password" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/update-password" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/update-password.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>Practice Hub <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_37908372">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/challenge</strong></td>
+<td><div class="links"><a href="https://gramorx.com/challenge" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/challenge" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Challenges</span></td>
+<td class="file">pages/challenge/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/challenge/[cohort]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/challenge/[cohort]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/challenge/[cohort]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Challenges</span></td>
+<td class="file">pages/challenge/[cohort].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/exam-day</strong></td>
+<td><div class="links"><a href="https://gramorx.com/exam-day" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/exam-day" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Exam</span></td>
+<td class="file">pages/exam-day.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/exam/rehearsal</strong></td>
+<td><div class="links"><a href="https://gramorx.com/exam/rehearsal" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/exam/rehearsal" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Exam</span></td>
+<td class="file">pages/exam/rehearsal.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/proctoring/exam/[id]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/proctoring/exam/[id]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/proctoring/exam/[id]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Exam</span></td>
+<td class="file">pages/proctoring/exam/[id].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Mock Tests</span></td>
+<td class="file">pages/mock/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/[section]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/[section]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/[section]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Mock Tests</span></td>
+<td class="file">pages/mock/[section].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/full</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/full" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/full" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Mock Tests</span></td>
+<td class="file">pages/mock/full.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/resume</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/resume" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/resume" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Mock Tests</span></td>
+<td class="file">pages/mock/resume.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/placement</strong></td>
+<td><div class="links"><a href="https://gramorx.com/placement" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/placement" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Placement</span></td>
+<td class="file">pages/placement/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/placement/result</strong></td>
+<td><div class="links"><a href="https://gramorx.com/placement/result" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/placement/result" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Placement</span></td>
+<td class="file">pages/placement/result.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/placement/run</strong></td>
+<td><div class="links"><a href="https://gramorx.com/placement/run" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/placement/run" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Placement</span></td>
+<td class="file">pages/placement/run.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/placement/start</strong></td>
+<td><div class="links"><a href="https://gramorx.com/placement/start" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/placement/start" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Placement</span></td>
+<td class="file">pages/placement/start.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/practice</strong></td>
+<td><div class="links"><a href="https://gramorx.com/practice" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/practice" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Practice</span></td>
+<td class="file">pages/practice/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/study-plan</strong></td>
+<td><div class="links"><a href="https://gramorx.com/study-plan" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/study-plan" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Study Plan</span></td>
+<td class="file">pages/study-plan/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/admin/vocabulary/new-sense</strong></td>
+<td><div class="links"><a href="https://gramorx.com/admin/vocabulary/new-sense" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/admin/vocabulary/new-sense" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/admin/vocabulary/new-sense.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/vocab</strong></td>
+<td><div class="links"><a href="https://gramorx.com/vocab" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/vocab" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/vocab/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/vocabulary</strong></td>
+<td><div class="links"><a href="https://gramorx.com/vocabulary" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/vocabulary" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/vocabulary/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/vocabulary/[word]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/vocabulary/[word]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/vocabulary/[word]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/vocabulary/[word].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/vocabulary/infiniteapplications</strong></td>
+<td><div class="links"><a href="https://gramorx.com/vocabulary/infiniteapplications" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/vocabulary/infiniteapplications" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/vocabulary/infiniteapplications.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/vocabulary/learned</strong></td>
+<td><div class="links"><a href="https://gramorx.com/vocabulary/learned" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/vocabulary/learned" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/vocabulary/learned.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/word-of-the-day</strong></td>
+<td><div class="links"><a href="https://gramorx.com/word-of-the-day" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/word-of-the-day" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/word-of-the-day.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>Reports &amp; Analytics <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_76087032">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/mock/analytics</strong></td>
+<td><div class="links"><a href="https://gramorx.com/mock/analytics" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/mock/analytics" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Mock Tests</span></td>
+<td class="file">pages/mock/analytics.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/progress</strong></td>
+<td><div class="links"><a href="https://gramorx.com/progress" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/progress" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Progress Tracker</span></td>
+<td class="file">pages/progress/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/progress/[token]</strong></td>
+<td><div class="links"><a href="https://gramorx.com/progress/[token]" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/progress/[token]" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Progress Tracker</span></td>
+<td class="file">pages/progress/[token].tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/institutions/[orgId]/reports</strong></td>
+<td><div class="links"><a href="https://gramorx.com/institutions/[orgId]/reports" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/institutions/[orgId]/reports" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reports</span></td>
+<td class="file">pages/institutions/[orgId]/reports.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/reports/band-analytics</strong></td>
+<td><div class="links"><a href="https://gramorx.com/reports/band-analytics" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/reports/band-analytics" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Reports</span></td>
+<td class="file">pages/reports/band-analytics.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/analytics/writing</strong></td>
+<td><div class="links"><a href="https://gramorx.com/analytics/writing" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/analytics/writing" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Writing</span></td>
+<td class="file">pages/analytics/writing.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>System <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_84866679">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/legal/privacy</strong></td>
+<td><div class="links"><a href="https://gramorx.com/legal/privacy" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/legal/privacy" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Legal / Policy</span></td>
+<td class="file">pages/legal/privacy.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/legal/terms</strong></td>
+<td><div class="links"><a href="https://gramorx.com/legal/terms" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/legal/terms" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Legal / Policy</span></td>
+<td class="file">pages/legal/terms.tsx</td>
+</tr>
+</tbody></table></section>
+<section class="cat">
+<h2>User &amp; Auth <span class="count cat-count" style="float:right"></span></h2>
+<table>
+<thead><tr class="head-row"><th style="width:44px">Done</th><th>Route</th><th>Open</th><th>Module</th><th>File</th></tr></thead>
+<tbody id="cat_31959083">
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/account</strong></td>
+<td><div class="links"><a href="https://gramorx.com/account" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/account" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Account</span></td>
+<td class="file">pages/account/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/account/billing</strong></td>
+<td><div class="links"><a href="https://gramorx.com/account/billing" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/account/billing" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Account</span></td>
+<td class="file">pages/account/billing.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/account/redeem</strong></td>
+<td><div class="links"><a href="https://gramorx.com/account/redeem" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/account/redeem" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Account</span></td>
+<td class="file">pages/account/redeem.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/account/referrals</strong></td>
+<td><div class="links"><a href="https://gramorx.com/account/referrals" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/account/referrals" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Account</span></td>
+<td class="file">pages/account/referrals.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/auth/callback</strong></td>
+<td><div class="links"><a href="https://gramorx.com/auth/callback" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/auth/callback" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/auth/callback.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/auth/forgot</strong></td>
+<td><div class="links"><a href="https://gramorx.com/auth/forgot" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/auth/forgot" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/auth/forgot.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/auth/mfa</strong></td>
+<td><div class="links"><a href="https://gramorx.com/auth/mfa" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/auth/mfa" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/auth/mfa.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/auth/reset</strong></td>
+<td><div class="links"><a href="https://gramorx.com/auth/reset" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/auth/reset" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/auth/reset.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/auth/verify</strong></td>
+<td><div class="links"><a href="https://gramorx.com/auth/verify" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/auth/verify" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/auth/verify.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/login</strong></td>
+<td><div class="links"><a href="https://gramorx.com/login" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/login" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/login/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/login/email</strong></td>
+<td><div class="links"><a href="https://gramorx.com/login/email" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/login/email" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/login/email.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/login/password</strong></td>
+<td><div class="links"><a href="https://gramorx.com/login/password" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/login/password" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/login/password.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/login/phone</strong></td>
+<td><div class="links"><a href="https://gramorx.com/login/phone" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/login/phone" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Login</span></td>
+<td class="file">pages/login/phone.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/signup</strong></td>
+<td><div class="links"><a href="https://gramorx.com/signup" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/signup" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Signup</span></td>
+<td class="file">pages/signup/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/signup/email</strong></td>
+<td><div class="links"><a href="https://gramorx.com/signup/email" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/signup/email" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Signup</span></td>
+<td class="file">pages/signup/email.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/signup/password</strong></td>
+<td><div class="links"><a href="https://gramorx.com/signup/password" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/signup/password" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Signup</span></td>
+<td class="file">pages/signup/password.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/signup/phone</strong></td>
+<td><div class="links"><a href="https://gramorx.com/signup/phone" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/signup/phone" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Signup</span></td>
+<td class="file">pages/signup/phone.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/signup/verify</strong></td>
+<td><div class="links"><a href="https://gramorx.com/signup/verify" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/signup/verify" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Auth / Signup</span></td>
+<td class="file">pages/signup/verify.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/profile</strong></td>
+<td><div class="links"><a href="https://gramorx.com/profile" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/profile" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/profile/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/profile/setup</strong></td>
+<td><div class="links"><a href="https://gramorx.com/profile/setup" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/profile/setup" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">General</span></td>
+<td class="file">pages/profile/setup/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/notifications</strong></td>
+<td><div class="links"><a href="https://gramorx.com/notifications" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/notifications" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Notifications</span></td>
+<td class="file">pages/notifications/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/settings</strong></td>
+<td><div class="links"><a href="https://gramorx.com/settings" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/settings" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Settings</span></td>
+<td class="file">pages/settings/index.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/settings/accessibility</strong></td>
+<td><div class="links"><a href="https://gramorx.com/settings/accessibility" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/settings/accessibility" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Settings</span></td>
+<td class="file">pages/settings/accessibility.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/settings/billing</strong></td>
+<td><div class="links"><a href="https://gramorx.com/settings/billing" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/settings/billing" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Settings</span></td>
+<td class="file">pages/settings/billing.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/settings/language</strong></td>
+<td><div class="links"><a href="https://gramorx.com/settings/language" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/settings/language" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Settings</span></td>
+<td class="file">pages/settings/language.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/settings/notifications</strong></td>
+<td><div class="links"><a href="https://gramorx.com/settings/notifications" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/settings/notifications" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Settings</span></td>
+<td class="file">pages/settings/notifications.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/settings/security</strong></td>
+<td><div class="links"><a href="https://gramorx.com/settings/security" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/settings/security" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Settings</span></td>
+<td class="file">pages/settings/security.tsx</td>
+</tr>
+<tr>
+<td><input type="checkbox" onchange="updateCounts()" /></td>
+<td class="wrap"><strong>/forgot-password</strong></td>
+<td><div class="links"><a href="https://gramorx.com/forgot-password" target="_blank" rel="noopener">gramorx.com</a> &nbsp;|&nbsp; <a href="http://localhost:3000/forgot-password" target="_blank" rel="noopener">localhost</a></div></td>
+<td><span class="module">Vocabulary</span></td>
+<td class="file">pages/forgot-password.tsx</td>
+</tr>
+</tbody></table></section>
+</main></body></html>
