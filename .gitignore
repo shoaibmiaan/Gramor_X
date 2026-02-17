@@ -84,3 +84,5 @@ public/review/index.html
 # local helpers
 collect.sh
 gate-fix-bundle.txt
+
+.vercel
