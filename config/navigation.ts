@@ -69,10 +69,7 @@ export const navigationSchema: AppNavigationSchema = {
     main: headerMain,
     aiTools,
     profile: profileMenu,
-    cta: {
-      guest: { label: 'Start Practicing', href: '/signup' },
-      authed: null,
-    },
+    // Removed CTA button completely
     optional: {
       themeToggle: true,
       localeSwitch: false,
