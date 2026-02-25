@@ -103,8 +103,6 @@ const OnboardingStudyRhythmPage: NextPage = () => {
         query: { next: nextPath },
       });
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
       setError('Could not save your rhythm. Try again.');
     } finally {
       setSubmitting(false);
@@ -114,7 +112,6 @@ const OnboardingStudyRhythmPage: NextPage = () => {
   return (
     <main className="min-h-screen bg-background">
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-        {/* Progress */}
         <div className="mb-6 w-full max-w-3xl">
           <OnboardingProgress
             steps={ONBOARDING_STEPS}
@@ -122,30 +119,34 @@ const OnboardingStudyRhythmPage: NextPage = () => {
           />
         </div>
 
-        {/* Card */}
         <section className="w-full max-w-3xl rounded-3xl border border-border bg-card/80 p-6 shadow-xl backdrop-blur-md sm:p-8">
-          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Step {currentIndex + 1} of {ONBOARDING_STEPS.length}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                How do you prefer to study?
+              <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
+                What’s your study rhythm?
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Your rhythm helps us shape daily tasks, reminders, rest days,
-                and mock-test scheduling. You can update it anytime.
+              <p className="mt-2 text-muted-foreground">
+                We’ll schedule your lessons to match.
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Icon name="alarm-clock" className="h-3.5 w-3.5" />
-              Consistency beats intensity.
+            <div className="flex items-center gap-4 sm:ml-auto">
+              <Button variant="ghost" disabled={submitting} onClick={handleBack}>
+                <Icon name="arrow-left" className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                disabled={submitting}
+                isLoading={submitting}
+                onClick={handleContinue}
+              >
+                Continue
+                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </header>
 
-          {/* Option grid */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {OPTIONS.map((option) => (
               <RhythmCard
                 key={option.id}
@@ -157,51 +158,23 @@ const OnboardingStudyRhythmPage: NextPage = () => {
           </div>
 
           {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
+            <p className="mt-4 text-center text-sm text-destructive">{error}</p>
           )}
-
-          <p className="mt-4 text-xs text-muted-foreground">
-            Don’t worry — your study plan adapts automatically as your exam date
-            gets closer.
-          </p>
-
-          {/* Footer actions */}
-          <footer className="mt-6 flex flex-col-reverse items-center justify-between gap-3 border-t border-border pt-4 sm:flex-row">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="text-muted-foreground"
-            >
-              <Icon name="arrow-left" className="mr-1.5 h-4 w-4" />
-              Back
-            </Button>
-
-            <div className="flex items-center gap-3">
-              <p className="hidden text-xs text-muted-foreground sm:inline">
-                Next: <span className="font-medium">Notifications</span>
-              </p>
-              <Button
-                size="lg"
-                onClick={handleContinue}
-                disabled={submitting || !selected}
-              >
-                {submitting ? 'Saving…' : 'Continue'}
-                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </footer>
         </section>
       </Container>
     </main>
   );
 };
 
-/* --- Progress Component --- */
-const OnboardingProgress: React.FC<{
+interface OnboardingProgressProps {
   steps: { id: OnboardingStepId; label: string }[];
   currentIndex: number;
-}> = ({ steps, currentIndex }) => {
+}
+
+const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
+  steps,
+  currentIndex,
+}) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -263,7 +236,6 @@ const OnboardingProgress: React.FC<{
   );
 };
 
-/* --- Rhythm Card --- */
 const RhythmCard: React.FC<{
   option: RhythmChoice;
   selected: boolean;
@@ -279,6 +251,7 @@ const RhythmCard: React.FC<{
           ? 'border-primary bg-primary/10 shadow-md'
           : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
       )}
+      aria-label={`Select ${option.label}`}
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="text-base font-semibold sm:text-lg">

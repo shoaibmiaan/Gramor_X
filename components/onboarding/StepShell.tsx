@@ -1,271 +1,131 @@
-import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { motion, AnimatePresence } from 'framer-motion';
+// components/onboarding/StepShell.tsx
+import { ReactNode } from 'react';
 import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
-import { Icon } from '@/components/design-system/Icon';
+import { Progress } from '@/components/design-system/Progress';
 import { cn } from '@/lib/utils';
 
-export type StepMeta = { label: string; href?: string; done?: boolean };
-
-export type StepShellProps = {
-  step: number;        // 1-based
+interface StepShellProps {
+  step: number;
   total: number;
   title: string;
   subtitle?: string;
-  children: React.ReactNode;
-
-  // Navigation
+  hint?: string;
+  children: ReactNode;
   onNext?: () => void;
   onBack?: () => void;
-  onSkip?: () => void;
-
-  // Labels
+  nextDisabled?: boolean;
   nextLabel?: string;
   backLabel?: string;
-  skipLabel?: string;
+  isLoading?: boolean;
+}
 
-  // UI states
-  nextDisabled?: boolean;
-  className?: string;
-
-  // Optional fancy bits
-  steps?: StepMeta[];  // step pills at top (labels + optional links)
-  hint?: string;       // small tip ribbon below header
-  hideProgress?: boolean; // hide the progress bar (default false)
-  compact?: boolean;   // smaller padding on mobile
-};
-
-const StepShell: React.FC<StepShellProps> = ({
+export function StepShell({
   step,
   total,
   title,
   subtitle,
+  hint,
   children,
   onNext,
   onBack,
-  onSkip,
+  nextDisabled = false,
   nextLabel = 'Continue',
   backLabel = 'Back',
-  skipLabel = 'Skip',
-  nextDisabled,
-  className,
-  steps,
-  hint,
-  hideProgress = false,
-  compact = false,
-}) => {
-  const router = useRouter();
-  const pct = Math.max(0, Math.min(100, Math.round((step / Math.max(1, total)) * 100)));
-  const isLast = step >= total;
-  const isFirst = step <= 1;
-
-  // Keyboard shortcuts
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // Prevent shortcuts when typing in inputs
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      if (e.key === 'Enter' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        onNext?.();
-      }
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        onBack?.();
-      }
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onSkip?.();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onNext, onBack, onSkip]);
-
-  // Animation variants
-  const pageVariants = {
-    initial: { opacity: 0, y: 8 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.2 } },
-    exit: { opacity: 0, y: -6, transition: { duration: 0.15 } },
-  };
+  isLoading = false,
+}: StepShellProps) {
+  const progress = (step / total) * 100;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Container className={cn('py-4 sm:py-8', compact ? 'max-w-2xl' : 'max-w-3xl', className)}>
-        {/* Header with progress and step pills */}
-        <div className="mb-4 sm:mb-6">
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+      {/* Header with progress */}
+      <header className="border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+        <Container className="py-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
-              {subtitle && (
-                <p className="text-sm text-muted-foreground sm:text-base">{subtitle}</p>
+            <div className="flex items-center space-x-4">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  aria-label="Go back"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
               )}
+              <h1 className="text-xl font-semibold">Onboarding</h1>
             </div>
-            <div className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-              Step {step}/{total}
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Step {step} of {total}
             </div>
           </div>
+          <div className="mt-2">
+            <Progress value={progress} className="h-2" />
+          </div>
+        </Container>
+      </header>
 
-          {/* Optional step pills */}
-          {Array.isArray(steps) && steps.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {steps.map((s, i) => {
-                const idx = i + 1;
-                const active = idx === step;
-                const done = s.done ?? idx < step;
-                return s.href ? (
-                  <Link
-                    key={s.label + i}
-                    href={s.href}
-                    className={cn(
-                      'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                      active
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : done
-                        ? 'border-success/30 bg-success/10 text-success-foreground'
-                        : 'border-border bg-card text-muted-foreground hover:border-primary/50'
-                    )}
-                  >
-                    <span className="opacity-70">Step {idx} ·</span>
-                    <span className="ml-1">{s.label}</span>
-                    {done && !active && <Icon name="check" className="ml-1 h-3 w-3" />}
-                  </Link>
-                ) : (
-                  <span
-                    key={s.label + i}
-                    className={cn(
-                      'inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium',
-                      active
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : done
-                        ? 'border-success/30 bg-success/10 text-success-foreground'
-                        : 'border-border bg-card text-muted-foreground'
-                    )}
-                  >
-                    <span className="opacity-70">Step {idx} ·</span>
-                    <span className="ml-1">{s.label}</span>
-                    {done && !active && <Icon name="check" className="ml-1 h-3 w-3" />}
-                  </span>
-                );
-              })}
-            </div>
-          )}
+      {/* Main content */}
+      <main className="py-8">
+        <Container className="max-w-3xl">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              {title}
+            </h2>
+            {subtitle && (
+              <p className="text-lg text-gray-600 dark:text-gray-300">
+                {subtitle}
+              </p>
+            )}
+          </div>
 
-          {/* Hint ribbon */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+            {children}
+          </div>
+
           {hint && (
-            <div className="mt-4 rounded-lg border border-border bg-card/50 p-3 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>{hint}</span>
-              </div>
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                <span className="font-semibold">💡 Hint:</span> {hint}
+              </p>
             </div>
           )}
 
-          {/* Progress bar */}
-          {!hideProgress && (
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Your progress</span>
-                <span>{pct}%</span>
-              </div>
-              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-muted">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Main content card with animation */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`step-${step}`}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <Card className={cn('border-border p-4 shadow-lg sm:p-6', compact ? 'rounded-xl' : 'rounded-2xl')}>
-              {children}
-            </Card>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Footer with navigation */}
-        <div className="sticky bottom-0 mt-4 border-t border-border bg-background/80 py-3 backdrop-blur-sm">
-          <div className="flex flex-col-reverse items-center gap-3 sm:flex-row sm:justify-between">
-            {/* Keyboard hints */}
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs">←</kbd>
-              <span>Back</span>
-              <span className="opacity-50">·</span>
-              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs">→</kbd>
-              <span>Next</span>
-              <span className="opacity-50">·</span>
-              <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd>
-              <span>Continue</span>
-              {onSkip && (
-                <>
-                  <span className="opacity-50">·</span>
-                  <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs">Esc</kbd>
-                  <span>Skip</span>
-                </>
-              )}
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex w-full gap-2 sm:w-auto">
+          <div className="flex justify-between">
+            {onBack && (
               <Button
                 variant="outline"
                 onClick={onBack}
-                disabled={isFirst || !onBack}
-                className="flex-1 sm:flex-initial"
+                disabled={isLoading}
               >
-                <Icon name="arrow-left" className="mr-1 h-4 w-4" />
                 {backLabel}
               </Button>
-
-              {onSkip && (
-                <Button
-                  variant="ghost"
-                  onClick={onSkip}
-                  className="flex-1 sm:flex-initial"
-                >
-                  {skipLabel}
-                </Button>
-              )}
-
+            )}
+            {onNext && (
               <Button
                 onClick={onNext}
-                disabled={nextDisabled}
-                className={cn('flex-1 sm:flex-initial', isLast && 'animate-pulse')}
+                disabled={nextDisabled || isLoading}
+                isLoading={isLoading}
+                className="ml-auto"
               >
-                {isLast ? (
-                  <>
-                    <Icon name="check" className="mr-1 h-4 w-4" />
-                    Finish
-                  </>
-                ) : (
-                  <>
-                    {nextLabel}
-                    <Icon name="arrow-right" className="ml-1 h-4 w-4" />
-                  </>
-                )}
+                {nextLabel}
               </Button>
-            </div>
+            )}
           </div>
-        </div>
-      </Container>
+        </Container>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <Container className="py-4">
+          <p className="text-center text-sm text-gray-500">
+            © 2024 GramorX. All rights reserved.
+          </p>
+        </Container>
+      </footer>
     </div>
   );
-};
+}
 
 export default StepShell;

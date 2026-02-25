@@ -24,7 +24,7 @@ const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
 ];
 
 const STEP_ROUTES: Record<OnboardingStepId, string> = {
-  language: '/onboarding',
+  language: '/onboarding/welcome',
   'target-band': '/onboarding/target-band',
   'exam-date': '/onboarding/exam-date',
   'study-rhythm': '/onboarding/study-rhythm',
@@ -68,12 +68,10 @@ const OnboardingNotificationsPage: NextPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Final destination after onboarding
   const nextPath = useMemo(() => {
     const { next } = router.query;
     const raw = typeof next === 'string' ? next : '/dashboard';
 
-    // never loop back into onboarding from final step
     if (!raw || raw.startsWith('/onboarding')) {
       return '/dashboard';
     }
@@ -131,26 +129,12 @@ const OnboardingNotificationsPage: NextPage = () => {
       });
 
       if (!res.ok) {
-        // don’t block navigation forever if server is grumpy;
-        // but still show error text
-        let msg = 'Failed to save onboarding.';
-        try {
-          const body = await res.json();
-          if (body?.error) msg = body.error;
-        } catch {
-          // ignore JSON parse issues
-        }
-        setError(msg);
-        return;
+        throw new Error('Failed to complete onboarding');
       }
 
-      await router.push(nextPath || '/dashboard');
-    } catch (e: any) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      setError(
-        e?.message || 'Could not save your notification settings. Try again.'
-      );
+      await router.push(nextPath);
+    } catch (e) {
+      setError('Something went wrong. Try again.');
     } finally {
       setSubmitting(false);
     }
@@ -159,7 +143,6 @@ const OnboardingNotificationsPage: NextPage = () => {
   return (
     <main className="min-h-screen bg-background">
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-        {/* Progress (clickable) */}
         <div className="mb-6 w-full max-w-3xl">
           <OnboardingProgress
             steps={ONBOARDING_STEPS}
@@ -168,31 +151,34 @@ const OnboardingNotificationsPage: NextPage = () => {
           />
         </div>
 
-        {/* Card */}
         <section className="w-full max-w-3xl rounded-3xl border border-border bg-card/80 p-6 shadow-xl backdrop-blur-md sm:p-8">
-          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Step {currentIndex + 1} of {ONBOARDING_STEPS.length}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                How should we keep you on track?
+              <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
+                Stay on track with reminders
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Choose where you want to receive study nudges, streak alerts,
-                and mock test reminders. No spam — only what helps your band
-                score.
+              <p className="mt-2 text-muted-foreground">
+                How should we send your daily nudges?
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Icon name="bell" className="h-3.5 w-3.5" />
-              Smart reminders, not noise.
+            <div className="flex items-center gap-4 sm:ml-auto">
+              <Button variant="ghost" disabled={submitting} onClick={handleBack}>
+                <Icon name="arrow-left" className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                disabled={submitting || !hasChannel}
+                isLoading={submitting}
+                onClick={handleFinish}
+              >
+                Finish
+                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </header>
 
-          {/* Channels */}
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CHANNEL_OPTIONS.map((option) => (
               <ChannelCard
                 key={option.id}
@@ -204,43 +190,8 @@ const OnboardingNotificationsPage: NextPage = () => {
           </div>
 
           {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
+            <p className="mt-4 text-center text-sm text-destructive">{error}</p>
           )}
-
-          <p className="mt-4 text-xs text-muted-foreground sm:text-sm">
-            You can fine-tune these later from{' '}
-            <span className="font-medium">Settings → Notifications</span>.
-          </p>
-
-          {/* Footer */}
-          <footer className="mt-6 flex flex-col-reverse items-center justify-between gap-3 border-t border-border pt-4 sm:flex-row">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="text-muted-foreground"
-            >
-              <Icon name="arrow-left" className="mr-1.5 h-4 w-4" />
-              Back
-            </Button>
-
-            <div className="flex items-center gap-3">
-              <p className="hidden text-xs text-muted-foreground sm:inline">
-                Finish and go to{' '}
-                <span className="font-medium">
-                  {nextPath === '/dashboard' ? 'dashboard' : nextPath}
-                </span>
-              </p>
-              <Button
-                size="lg"
-                onClick={handleFinish}
-                disabled={submitting || !hasChannel}
-              >
-                {submitting ? 'Finishing…' : 'Finish & continue'}
-                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </footer>
         </section>
       </Container>
     </main>
@@ -250,7 +201,7 @@ const OnboardingNotificationsPage: NextPage = () => {
 interface OnboardingProgressProps {
   steps: { id: OnboardingStepId; label: string }[];
   currentIndex: number;
-  onStepClick?: (id: OnboardingStepId) => void;
+  onStepClick?: (stepId: OnboardingStepId) => void;
 }
 
 const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
@@ -260,7 +211,6 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
 }) => {
   return (
     <div className="flex flex-col gap-2">
-      {/* Rail */}
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
           const active = index === currentIndex;
@@ -275,9 +225,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                 active &&
                   !completed &&
                   'border-primary/80 bg-primary/10 text-primary',
-                !active &&
-                  !completed &&
-                  'border-border bg-muted text-muted-foreground'
+                !active && !completed && 'border-border bg-muted text-muted-foreground'
               )}
             >
               {completed ? (
@@ -298,6 +246,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                   type="button"
                   onClick={() => onStepClick(step.id)}
                   className="flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label={`Go to ${step.label}`}
                 >
                   {circle}
                 </button>
@@ -319,7 +268,6 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
         })}
       </div>
 
-      {/* Labels */}
       <div className="flex justify-between text-xs text-muted-foreground">
         {steps.map((step, index) => {
           const active = index === currentIndex;
@@ -330,6 +278,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
               type="button"
               onClick={onStepClick ? () => onStepClick(step.id) : undefined}
               className="flex-1 focus-visible:outline-none"
+              aria-label={`Go to ${step.label}`}
             >
               <span
                 className={cn(
@@ -370,6 +319,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({
           ? 'border-primary bg-primary/10 shadow-md'
           : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
       )}
+      aria-label={`Toggle ${label}`}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div>

@@ -24,7 +24,7 @@ const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
 ];
 
 const STEP_ROUTES: Record<OnboardingStepId, string> = {
-  language: '/onboarding',
+  language: '/onboarding/welcome',
   'target-band': '/onboarding/target-band',
   'exam-date': '/onboarding/exam-date',
   'study-rhythm': '/onboarding/study-rhythm',
@@ -101,7 +101,6 @@ const OnboardingTargetBandPage: NextPage = () => {
     const pathname = STEP_ROUTES[stepId];
     if (!pathname) return;
 
-    // keep ?next= consistent
     router.push({
       pathname,
       query: { next: nextPath },
@@ -126,15 +125,12 @@ const OnboardingTargetBandPage: NextPage = () => {
       //   body: JSON.stringify({ targetBand }),
       // });
 
-      // ✅ go to next step
       await router.push({
         pathname: STEP_ROUTES['exam-date'],
         query: { next: nextPath },
       });
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      setError('Something went wrong. Please try again.');
+      setError('Something went wrong. Try again.');
     } finally {
       setSubmitting(false);
     }
@@ -143,7 +139,6 @@ const OnboardingTargetBandPage: NextPage = () => {
   return (
     <main className="min-h-screen bg-background">
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-        {/* Progress rail (clickable) */}
         <div className="mb-6 w-full max-w-3xl">
           <OnboardingProgress
             steps={ONBOARDING_STEPS}
@@ -152,30 +147,34 @@ const OnboardingTargetBandPage: NextPage = () => {
           />
         </div>
 
-        {/* Main card */}
         <section className="w-full max-w-3xl rounded-3xl border border-border bg-card/80 p-6 shadow-xl backdrop-blur-md sm:p-8">
-          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Step {currentIndex + 1} of {ONBOARDING_STEPS.length}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                What&apos;s your target band score?
+              <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
+                What band score are you aiming for?
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Your goal band helps us set difficulty, pick question types, and
-                plan how aggressive your schedule should be.
+              <p className="mt-2 text-muted-foreground">
+                We’ll tailor your plan to hit this target.
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Icon name="target" className="h-3.5 w-3.5" />
-              Clear goal, clearer path.
+            <div className="flex items-center gap-4 sm:ml-auto">
+              <Button variant="ghost" disabled={submitting} onClick={handleBack}>
+                <Icon name="arrow-left" className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                disabled={submitting || !targetBand}
+                isLoading={submitting}
+                onClick={handleContinue}
+              >
+                Continue
+                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </header>
 
-          {/* Options */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {TARGET_OPTIONS.map((option) => (
               <TargetBandCard
                 key={option.id}
@@ -187,42 +186,8 @@ const OnboardingTargetBandPage: NextPage = () => {
           </div>
 
           {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
+            <p className="mt-4 text-center text-sm text-destructive">{error}</p>
           )}
-
-          {/* Hint */}
-          <p className="mt-4 text-xs text-muted-foreground">
-            Not 100% sure? Pick the band you’d be happy with. You can always
-            adjust it later from{' '}
-            <span className="font-medium">Profile → Goals</span>.
-          </p>
-
-          {/* Footer */}
-          <footer className="mt-6 flex flex-col-reverse items-center justify-between gap-3 border-t border-border pt-4 sm:flex-row">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="text-muted-foreground"
-            >
-              <Icon name="arrow-left" className="mr-1.5 h-4 w-4" />
-              Back
-            </Button>
-
-            <div className="flex items-center gap-3">
-              <p className="hidden text-xs text-muted-foreground sm:inline">
-                Next: <span className="font-medium">Exam date</span>
-              </p>
-              <Button
-                size="lg"
-                onClick={handleContinue}
-                disabled={submitting || !targetBand}
-              >
-                {submitting ? 'Saving…' : 'Continue'}
-                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </footer>
         </section>
       </Container>
     </main>
@@ -232,7 +197,7 @@ const OnboardingTargetBandPage: NextPage = () => {
 interface OnboardingProgressProps {
   steps: { id: OnboardingStepId; label: string }[];
   currentIndex: number;
-  onStepClick?: (id: OnboardingStepId) => void;
+  onStepClick?: (stepId: OnboardingStepId) => void;
 }
 
 const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
@@ -242,7 +207,6 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
 }) => {
   return (
     <div className="flex flex-col gap-2">
-      {/* Dots / rail */}
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
           const active = index === currentIndex;
@@ -257,9 +221,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                 active &&
                   !completed &&
                   'border-primary/80 bg-primary/10 text-primary',
-                !active &&
-                  !completed &&
-                  'border-border bg-muted text-muted-foreground'
+                !active && !completed && 'border-border bg-muted text-muted-foreground'
               )}
             >
               {completed ? (
@@ -301,7 +263,6 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
         })}
       </div>
 
-      {/* Labels */}
       <div className="flex justify-between text-xs text-muted-foreground">
         {steps.map((step, index) => {
           const active = index === currentIndex;
@@ -322,6 +283,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
               type="button"
               onClick={onStepClick ? () => onStepClick(step.id) : undefined}
               className="flex-1 focus-visible:outline-none"
+              aria-label={`Go to ${step.label}`}
             >
               {label}
             </button>
@@ -353,6 +315,7 @@ const TargetBandCard: React.FC<TargetBandCardProps> = ({
           ? 'border-primary bg-primary/10 shadow-md'
           : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
       )}
+      aria-label={`Select ${option.label}`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">

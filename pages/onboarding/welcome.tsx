@@ -34,7 +34,6 @@ const WelcomePage: NextPage = () => {
   const [showLoading, setShowLoading] = useState(false);
   const [messageIndex, setMessageIndex] = useState(0);
 
-  // Rotate messages every 2 seconds after loading starts
   useEffect(() => {
     if (!showLoading) return;
     const interval = setInterval(() => {
@@ -43,7 +42,6 @@ const WelcomePage: NextPage = () => {
     return () => clearInterval(interval);
   }, [showLoading]);
 
-  // Fetch profile to get user's name
   useEffect(() => {
     if (!user) return;
     const fetchProfile = async () => {
@@ -57,11 +55,10 @@ const WelcomePage: NextPage = () => {
     fetchProfile();
   }, [user]);
 
-  // After saving language, show loading and then redirect
   useEffect(() => {
     if (!showLoading) return;
     const timer = setTimeout(() => {
-      router.push('/onboarding/goal');
+      router.push('/onboarding/target-band');
     }, 4000);
     return () => clearTimeout(timer);
   }, [showLoading, router]);
@@ -78,8 +75,7 @@ const WelcomePage: NextPage = () => {
       setLanguage(selected);
       setShowLoading(true);
     } catch (err) {
-      console.error(err);
-      // Show error but still proceed? For simplicity, just log.
+      // Log error but proceed for UX
     } finally {
       setSaving(false);
     }
@@ -95,7 +91,6 @@ const WelcomePage: NextPage = () => {
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Learner';
 
-  // Language selection screen
   if (!showLoading) {
     return (
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
@@ -115,6 +110,7 @@ const WelcomePage: NextPage = () => {
                   ? 'border-primary bg-primary/10'
                   : 'border-border hover:border-primary/50'
               )}
+              aria-label="Select English"
             >
               <span className="text-2xl">🇬🇧</span>
               <div>
@@ -134,6 +130,7 @@ const WelcomePage: NextPage = () => {
                   ? 'border-primary bg-primary/10'
                   : 'border-border hover:border-primary/50'
               )}
+              aria-label="Select Urdu + English mix"
             >
               <span className="text-2xl">🇵🇰</span>
               <div>
@@ -156,7 +153,6 @@ const WelcomePage: NextPage = () => {
     );
   }
 
-  // AI loading screen (after language selected)
   const messages = language === 'en' ? WELCOME_MESSAGES.en : WELCOME_MESSAGES.ur;
   const currentMessage = messages[messageIndex].replace('{name}', displayName);
 

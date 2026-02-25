@@ -33,7 +33,6 @@ export default function ReviewPage({ profile }: ReviewPageProps) {
         throw new Error(data.error || 'Failed to confirm');
       }
 
-      // Redirect to thinking page
       router.push(data.nextStep || '/onboarding/thinking');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -46,7 +45,6 @@ export default function ReviewPage({ profile }: ReviewPageProps) {
     router.push(step);
   };
 
-  // Calculate weeks until exam
   const weeksUntilExam = Math.ceil(
     (new Date(profile.exam_date).getTime() - new Date().getTime()) /
     (1000 * 60 * 60 * 24 * 7)
@@ -60,7 +58,6 @@ export default function ReviewPage({ profile }: ReviewPageProps) {
       totalSteps={5}
     >
       <div className="max-w-2xl mx-auto">
-        {/* Progress Overview */}
         <Card className="p-6 mb-6">
           <h3 className="font-semibold mb-4">Your Journey Overview</h3>
           <div className="space-y-4">
@@ -81,9 +78,7 @@ export default function ReviewPage({ profile }: ReviewPageProps) {
           </div>
         </Card>
 
-        {/* Review Sections */}
         <div className="space-y-4">
-          {/* Target & Date */}
           <ReviewSection
             title="Target & Timeline"
             onEdit={() => handleEdit('/onboarding/target-band')}
@@ -104,61 +99,51 @@ export default function ReviewPage({ profile }: ReviewPageProps) {
             />
           </ReviewSection>
 
-          {/* Baseline Scores */}
           <ReviewSection
-            title="Current Level"
+            title="Baseline Scores"
             onEdit={() => handleEdit('/onboarding/baseline')}
           >
-            <div className="grid grid-cols-2 gap-4">
-              <ReviewItem
-                label="Reading"
-                value={profile.baseline_scores?.reading}
-                icon="📖"
-              />
-              <ReviewItem
-                label="Writing"
-                value={profile.baseline_scores?.writing}
-                icon="✍️"
-              />
-              <ReviewItem
-                label="Listening"
-                value={profile.baseline_scores?.listening}
-                icon="🎧"
-              />
-              <ReviewItem
-                label="Speaking"
-                value={profile.baseline_scores?.speaking}
-                icon="🎤"
-              />
-            </div>
+            <ReviewItem
+              label="Reading"
+              value={profile.baseline_scores.reading}
+              icon="📖"
+            />
+            <ReviewItem
+              label="Writing"
+              value={profile.baseline_scores.writing}
+              icon="✍️"
+            />
+            <ReviewItem
+              label="Listening"
+              value={profile.baseline_scores.listening}
+              icon="👂"
+            />
+            <ReviewItem
+              label="Speaking"
+              value={profile.baseline_scores.speaking}
+              icon="🗣️"
+            />
           </ReviewSection>
 
-          {/* Learning Preferences */}
           <ReviewSection
-            title="Learning Preferences"
-            onEdit={() => handleEdit('/onboarding/vibe')}
+            title="Study Preferences"
+            onEdit={() => handleEdit('/onboarding/study-rhythm')}
           >
             <ReviewItem
-              label="Learning Style"
-              value={profile.learning_style}
-              icon={
-                profile.learning_style === 'video' ? '🎥' :
-                profile.learning_style === 'tips' ? '💡' :
-                profile.learning_style === 'practice' ? '✍️' : '🃏'
-              }
+              label="Rhythm"
+              value={profile.study_rhythm}
+              icon="⏰"
             />
             <ReviewItem
-              label="Weekly Availability"
-              value={`${profile.weekly_availability} hours`}
-              icon="⏰"
+              label="Notifications"
+              value={profile.notifications.join(', ')}
+              icon="🔔"
             />
           </ReviewSection>
 
-          {/* Gap Analysis */}
-          <Card className="p-4 bg-blue-50 border-blue-200">
-            <h3 className="font-semibold mb-2 text-blue-800">📊 Gap Analysis</h3>
-            <p className="text-blue-700 text-sm">
-              Based on your current scores and target, you need to improve by:
+          <Card className="p-6 bg-blue-50">
+            <p className="font-medium mb-2">Improvement Needed</p>
+            <p className="text-sm text-blue-600 mb-2"> Based on your current scores and target, you need to improve by:
             </p>
             <div className="mt-2 space-y-1">
               {calculateGaps(profile.baseline_scores, profile.target_band).map((gap, i) => (
@@ -176,11 +161,10 @@ export default function ReviewPage({ profile }: ReviewPageProps) {
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="mt-8 flex justify-end space-x-4">
           <Button
             variant="outline"
-            onClick={() => router.push('/onboarding/vibe')}
+            onClick={() => router.push('/onboarding/notifications')}
           >
             Back
           </Button>
@@ -197,8 +181,8 @@ export default function ReviewPage({ profile }: ReviewPageProps) {
   );
 }
 
-// Helper Components
-function ReviewSection({ title, children, onEdit }: any) {
+// Helper Components (completed from truncated)
+function ReviewSection({ title, children, onEdit }: { title: string; children: React.ReactNode; onEdit: () => void }) {
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center mb-4">
@@ -214,7 +198,7 @@ function ReviewSection({ title, children, onEdit }: any) {
   );
 }
 
-function ReviewItem({ label, value, icon }: any) {
+function ReviewItem({ label, value, icon }: { label: string; value: string | number; icon: string }) {
   return (
     <div className="flex items-center">
       <span className="text-2xl mr-3">{icon}</span>
@@ -250,7 +234,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  // Get user profile
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
@@ -266,7 +249,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  // Redirect if not at correct step
   if (profile.onboarding_step < 4) {
     return {
       redirect: {
@@ -288,7 +270,8 @@ function getRedirectStep(step: number): string {
     '/onboarding/target-band',
     '/onboarding/exam-date',
     '/onboarding/baseline',
-    '/onboarding/vibe',
+    '/onboarding/study-rhythm',
+    '/onboarding/notifications',
   ];
   return steps[Math.min(step - 1, steps.length - 1)];
 }

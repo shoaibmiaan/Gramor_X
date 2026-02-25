@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getServerClient } from '@/lib/supabaseServer';
 
 const GoalSchema = z.object({
-  targetBand: z.number().min(4).max(9),
+  targetBand: z.number().min(1).max(9),
 });
 
 export default async function handler(
@@ -31,15 +31,24 @@ export default async function handler(
 
   const { targetBand } = parse.data;
 
+  // Update profile with target band and move to step 2
   const { error: updateError } = await supabase
     .from('profiles')
-    .update({ target_band: targetBand, onboarding_step: 1 })
+    .update({
+      target_band: targetBand,
+      onboarding_step: 2,
+      updated_at: new Date().toISOString()
+    })
     .eq('user_id', user.id);
 
   if (updateError) {
     console.error('Error saving target band:', updateError);
-    return res.status(500).json({ error: 'Failed to save' });
+    return res.status(500).json({ error: 'Failed to save target band' });
   }
 
-  return res.status(200).json({ success: true });
+  return res.status(200).json({
+    success: true,
+    message: 'Target band saved',
+    nextStep: '/onboarding/timeline'
+  });
 }

@@ -33,7 +33,6 @@ export default function ThinkingPage({ userId }: ThinkingPageProps) {
           setMessage(data.message);
 
           if (data.status === 'completed') {
-            // Redirect to dashboard after a short delay
             timeout = setTimeout(() => {
               router.push('/dashboard');
             }, 2000);
@@ -42,14 +41,11 @@ export default function ThinkingPage({ userId }: ThinkingPageProps) {
           }
         }
       } catch (err) {
-        console.error('Error checking status:', err);
+        // Silent
       }
     };
 
-    // Check immediately
     checkStatus();
-
-    // Then poll every 3 seconds
     interval = setInterval(checkStatus, 3000);
 
     return () => {
@@ -87,75 +83,57 @@ export default function ThinkingPage({ userId }: ThinkingPageProps) {
     >
       <div className="max-w-md mx-auto text-center">
         <Card className="p-8">
-          {/* Animated Icon */}
-          <div className="mb-6">
-            {status === 'generating' && (
-              <div className="relative">
-                <div className="w-24 h-24 mx-auto">
-                  <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
-                  <div
-                    className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"
-                    style={{ animationDuration: '1.5s' }}
-                  ></div>
-                </div>
-                <div className="mt-4 text-5xl">🤔</div>
-              </div>
-            )}
-            {status === 'completed' && (
-              <div className="text-6xl text-green-500">🎉</div>
-            )}
-            {status === 'failed' && (
-              <div className="text-6xl text-red-500">😕</div>
-            )}
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mb-4">
-            <Progress value={progress} className="h-2" />
-          </div>
-
-          {/* Status Message */}
-          <p className="text-lg mb-2">{message}</p>
-
-          {/* Progress Percentage */}
-          <p className="text-sm text-gray-600 mb-6">
-            {progress}% complete
-          </p>
-
-          {/* Generation Steps */}
           {status === 'generating' && (
-            <div className="space-y-2 text-left">
-              <StepIndicator
-                label="Analyzing your profile"
-                completed={progress >= 30}
-                active={progress >= 20 && progress < 30}
-              />
-              <StepIndicator
-                label="Calculating skill gaps"
-                completed={progress >= 60}
-                active={progress >= 40 && progress < 60}
-              />
-              <StepIndicator
-                label="Creating weekly schedule"
-                completed={progress >= 90}
-                active={progress >= 70 && progress < 90}
-              />
-              <StepIndicator
-                label="Finalizing your plan"
-                completed={progress >= 100}
-                active={progress >= 95 && progress < 100}
-              />
+            <div className="relative">
+              <div className="w-24 h-24 mx-auto">
+                <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+                <div
+                  className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"
+                  style={{ animationDuration: '1.5s' }}
+                ></div>
+              </div>
+              <div className="mt-4 text-5xl">🤔</div>
             </div>
           )}
+          {status === 'completed' && (
+            <div className="text-5xl mb-4">✅</div>
+          )}
+          {status === 'failed' && (
+            <div className="text-5xl mb-4">❌</div>
+          )}
 
-          {/* Error State */}
+          <h2 className="text-xl font-bold mb-2">{message}</h2>
+          <Progress value={progress} className="mt-4" />
+
+          <div className="mt-6 space-y-4">
+            <StepIndicator
+              label="Gathering your info"
+              completed={progress >= 25}
+              active={progress < 25}
+            />
+            <StepIndicator
+              label="Analyzing skills"
+              completed={progress >= 50}
+              active={progress >= 25 && progress < 50}
+            />
+            <StepIndicator
+              label="Building plan"
+              completed={progress >= 75}
+              active={progress >= 50 && progress < 75}
+            />
+            <StepIndicator
+              label="Finalizing your plan"
+              completed={progress >= 100}
+              active={progress >= 75 && progress < 100}
+            />
+          </div>
+
           {status === 'failed' && error && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="mt-6 space-x-3">
             {status === 'failed' && (
               <Button onClick={handleRetry}>
@@ -175,7 +153,6 @@ export default function ThinkingPage({ userId }: ThinkingPageProps) {
           </div>
         </Card>
 
-        {/* Fun Facts */}
         {status === 'generating' && (
           <div className="mt-6 text-sm text-gray-600 animate-pulse">
             <FunFact />
@@ -186,8 +163,8 @@ export default function ThinkingPage({ userId }: ThinkingPageProps) {
   );
 }
 
-// Helper Components
-function StepIndicator({ label, completed, active }: any) {
+// Helper Components (completed from truncated)
+function StepIndicator({ label, completed, active }: { label: string; completed: boolean; active: boolean }) {
   return (
     <div className="flex items-center">
       <div className={`w-5 h-5 rounded-full mr-2 flex items-center justify-center ${
@@ -241,18 +218,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  // Get user profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('onboarding_step')
     .eq('user_id', user.id)
     .single();
 
-  // Redirect if not at correct step
   if (!profile || profile.onboarding_step < 5) {
     return {
       redirect: {
-        destination: '/onboarding',
+        destination: '/onboarding/review',
         permanent: false,
       },
     };
