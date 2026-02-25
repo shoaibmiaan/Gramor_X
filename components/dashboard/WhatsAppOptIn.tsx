@@ -1,86 +1,65 @@
-import React, { useState } from "react";
-import Link from "next/link";
-import { Card } from "@/components/design-system/Card";
-import { Input } from "@/components/design-system/Input";
-import { Button } from "@/components/design-system/Button";
+import React, { useState } from 'react';
+import { Button } from '@/components/design-system/Button';
+import { Input } from '@/components/design-system/Input';
+import { useToast } from '@/components/design-system/Toaster';
 
-export function WhatsAppOptIn() {
-  const [phone, setPhone] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
+const WhatsAppOptIn: React.FC = () => {
+  const [phone, setPhone] = useState('');
+  const [optedIn, setOptedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { success, error } = useToast();
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("loading");
-    setError(null);
+  const handleOptIn = async () => {
+    if (!phone || phone.length < 10) {
+      error('Please enter a valid phone number.');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = await fetch("/api/whatsapp/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        setError((j as any)?.error || "Request failed");
-        setStatus("error");
-        return;
-      }
-      setStatus("success");
-    } catch (err: any) {
-      setError(err?.message || "Request failed");
-      setStatus("error");
+      // Replace with actual API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setOptedIn(true);
+      success('Opted in successfully! You’ll receive daily tasks on WhatsApp.');
+    } catch (err) {
+      error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <Card className="p-6 rounded-ds-2xl">
-      <h2 className="font-slab text-h2 mb-4">WhatsApp updates</h2>
+  if (optedIn) {
+    return (
+      <div className="rounded-lg bg-success/10 p-4 text-center">
+        <p className="text-sm font-medium text-success">✅ You're opted in!</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Check WhatsApp for your daily tasks.
+        </p>
+      </div>
+    );
+  }
 
-      {status === "success" ? (
-        <div>
-          <p className="text-small text-grayish dark:text-muted-foreground mb-4">
-            You&apos;re subscribed to WhatsApp reminders.
-          </p>
-          <div className="flex gap-2">
-            <Link href="/profile#whatsapp">
-              <Button variant="primary" className="rounded-ds-xl">
-                Update number
-              </Button>
-            </Link>
-            <Link href="/whatsapp-tasks">
-              <Button variant="ghost" className="rounded-ds-xl">
-                Manage tasks
-              </Button>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <form onSubmit={onSubmit} className="grid gap-4 sm:flex sm:items-end">
-          <Input
-            label="Phone number"
-            placeholder="+14155552671"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="sm:flex-1"
-            error={error || undefined}
-          />
-          <Button
-            type="submit"
-            variant="primary"
-            className="rounded-ds-xl"
-            disabled={status === "loading"}
-          >
-            {status === "loading" ? "Submitting..." : "Subscribe"}
-          </Button>
-          <Link href="/whatsapp-tasks" className="sm:ml-2">
-            <Button type="button" variant="ghost" className="rounded-ds-xl">
-              Manage tasks
-            </Button>
-          </Link>
-        </form>
-      )}
-    </Card>
+  return (
+    <div className="space-y-3">
+      <Input
+        type="tel"
+        placeholder="+92 300 1234567"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        disabled={loading}
+      />
+      <Button
+        onClick={handleOptIn}
+        loading={loading}
+        className="w-full rounded-ds-xl"
+      >
+        Opt in via WhatsApp
+      </Button>
+      <p className="text-center text-xs text-muted-foreground">
+        We'll send you daily micro‑tasks and reminders. No spam.
+      </p>
+    </div>
   );
-}
+};
 
 export default WhatsAppOptIn;

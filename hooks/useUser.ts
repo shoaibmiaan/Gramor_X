@@ -12,7 +12,7 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser; // ✅ fixed: no parentheses
     let cancelled = false;
 
     supabase.auth.getUser().then(({ data: { user } }) => {

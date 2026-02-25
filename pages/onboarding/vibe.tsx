@@ -53,7 +53,7 @@ const VibePage: NextPage = () => {
       }
 
       // Go to thinking page
-      await router.push('/onboarding/thinking');
+      await router.push('/onboarding/review');
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Something went wrong. Please try again.');

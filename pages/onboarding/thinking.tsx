@@ -1,141 +1,266 @@
-import type { NextPage } from 'next';
+import { useState, useEffect } from 'react';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
+import { getServerClient } from '@/lib/supabaseServer';
+import { StepShell } from '@/components/onboarding/StepShell';
+import { Card } from '@/components/design-system/Card';
+import { Progress } from '@/components/design-system/Progress';
+import { Button } from '@/components/design-system/Button';
 
-import { Container } from '@/components/design-system/Container';
-import { Icon } from '@/components/design-system/Icon';
-import { motion, AnimatePresence } from 'framer-motion';
+interface ThinkingPageProps {
+  userId: string;
+}
 
-const LOADING_MESSAGES = [
-  'Analyzing your baseline scores...',
-  'Identifying your strengths and weaknesses...',
-  'Structuring your personalized study schedule...',
-  'Selecting the best practice materials...',
-  'Calibrating task difficulty...',
-  'Almost there...',
-];
-
-const ThinkingPage: NextPage = () => {
+export default function ThinkingPage({ userId }: ThinkingPageProps) {
   const router = useRouter();
-  const [messageIndex, setMessageIndex] = useState(0);
+  const [status, setStatus] = useState<'generating' | 'completed' | 'failed'>('generating');
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState('Analyzing your profile...');
   const [error, setError] = useState<string | null>(null);
-  const [polling, setPolling] = useState(true);
 
-  // Rotate messages every 3 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Poll for plan generation status
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    let isMounted = true;
+    let interval: NodeJS.Timeout;
+    let timeout: NodeJS.Timeout;
 
     const checkStatus = async () => {
       try {
-        const res = await fetch('/api/study-plan/status');
-        if (!res.ok) throw new Error('Failed to check status');
-        const data = await res.json();
+        const response = await fetch('/api/onboarding/thinking-status');
+        const data = await response.json();
 
-        if (data.status === 'ready') {
-          if (isMounted) {
-            router.push('/study-plan');
-          }
-        } else if (data.status === 'error') {
-          if (isMounted) {
-            setError(data.error || 'Plan generation failed. Please try again.');
-            setPolling(false);
-          }
-        } else {
-          // Still generating, poll again after delay
-          if (isMounted && polling) {
-            timeoutId = setTimeout(checkStatus, 2000);
+        if (response.ok) {
+          setStatus(data.status);
+          setProgress(data.progress);
+          setMessage(data.message);
+
+          if (data.status === 'completed') {
+            // Redirect to dashboard after a short delay
+            timeout = setTimeout(() => {
+              router.push('/dashboard');
+            }, 2000);
+          } else if (data.status === 'failed') {
+            setError('Failed to generate study plan. Please try again.');
           }
         }
       } catch (err) {
-        if (isMounted) {
-          console.error(err);
-          setError('Something went wrong. Please try again.');
-          setPolling(false);
-        }
+        console.error('Error checking status:', err);
       }
     };
 
-    if (polling) {
-      timeoutId = setTimeout(checkStatus, 1000); // start after 1 sec
-    }
+    // Check immediately
+    checkStatus();
+
+    // Then poll every 3 seconds
+    interval = setInterval(checkStatus, 3000);
 
     return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
+      clearInterval(interval);
+      if (timeout) clearTimeout(timeout);
     };
-  }, [router, polling]);
+  }, [router]);
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     setError(null);
-    setPolling(true);
+    setStatus('generating');
+    setProgress(0);
+    setMessage('Restarting generation...');
+
+    try {
+      const response = await fetch('/api/onboarding/complete', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to restart generation');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restart');
+      setStatus('failed');
+    }
   };
 
-  const handleBack = () => router.back();
-
   return (
-    <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-      <div className="w-full max-w-md rounded-3xl border border-border bg-card/80 p-8 text-center shadow-xl backdrop-blur-md">
-        {error ? (
-          <>
-            <div className="mb-4 text-destructive">
-              <Icon name="alert-circle" className="mx-auto h-12 w-12" />
-            </div>
-            <h2 className="mb-2 text-xl font-semibold">Oops!</h2>
-            <p className="mb-6 text-sm text-muted-foreground">{error}</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleBack}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                Go back
-              </button>
-              <button
-                onClick={handleRetry}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                Retry
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mb-6 flex justify-center">
-              <div className="relative h-16 w-16">
-                <div className="absolute inset-0 rounded-full border-4 border-primary/30" />
-                <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin" />
+    <StepShell
+      title="Creating Your Study Plan"
+      description="Our AI is analyzing your profile and creating a personalized study plan"
+      currentStep={5}
+      totalSteps={5}
+    >
+      <div className="max-w-md mx-auto text-center">
+        <Card className="p-8">
+          {/* Animated Icon */}
+          <div className="mb-6">
+            {status === 'generating' && (
+              <div className="relative">
+                <div className="w-24 h-24 mx-auto">
+                  <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+                  <div
+                    className="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"
+                    style={{ animationDuration: '1.5s' }}
+                  ></div>
+                </div>
+                <div className="mt-4 text-5xl">🤔</div>
               </div>
+            )}
+            {status === 'completed' && (
+              <div className="text-6xl text-green-500">🎉</div>
+            )}
+            {status === 'failed' && (
+              <div className="text-6xl text-red-500">😕</div>
+            )}
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <Progress value={progress} className="h-2" />
+          </div>
+
+          {/* Status Message */}
+          <p className="text-lg mb-2">{message}</p>
+
+          {/* Progress Percentage */}
+          <p className="text-sm text-gray-600 mb-6">
+            {progress}% complete
+          </p>
+
+          {/* Generation Steps */}
+          {status === 'generating' && (
+            <div className="space-y-2 text-left">
+              <StepIndicator
+                label="Analyzing your profile"
+                completed={progress >= 30}
+                active={progress >= 20 && progress < 30}
+              />
+              <StepIndicator
+                label="Calculating skill gaps"
+                completed={progress >= 60}
+                active={progress >= 40 && progress < 60}
+              />
+              <StepIndicator
+                label="Creating weekly schedule"
+                completed={progress >= 90}
+                active={progress >= 70 && progress < 90}
+              />
+              <StepIndicator
+                label="Finalizing your plan"
+                completed={progress >= 100}
+                active={progress >= 95 && progress < 100}
+              />
             </div>
+          )}
 
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={messageIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="text-lg font-medium"
-              >
-                {LOADING_MESSAGES[messageIndex]}
-              </motion.p>
-            </AnimatePresence>
+          {/* Error State */}
+          {status === 'failed' && error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
 
-            <p className="mt-4 text-xs text-muted-foreground">
-              This usually takes about 10–20 seconds.
-            </p>
-          </>
+          {/* Action Buttons */}
+          <div className="mt-6 space-x-3">
+            {status === 'failed' && (
+              <Button onClick={handleRetry}>
+                Try Again
+              </Button>
+            )}
+            {status === 'completed' && (
+              <Button onClick={() => router.push('/dashboard')}>
+                Go to Dashboard
+              </Button>
+            )}
+            {status === 'generating' && (
+              <Button variant="outline" disabled>
+                Generating...
+              </Button>
+            )}
+          </div>
+        </Card>
+
+        {/* Fun Facts */}
+        {status === 'generating' && (
+          <div className="mt-6 text-sm text-gray-600 animate-pulse">
+            <FunFact />
+          </div>
         )}
       </div>
-    </Container>
+    </StepShell>
   );
-};
+}
 
-export default ThinkingPage;
+// Helper Components
+function StepIndicator({ label, completed, active }: any) {
+  return (
+    <div className="flex items-center">
+      <div className={`w-5 h-5 rounded-full mr-2 flex items-center justify-center ${
+        completed ? 'bg-green-500' :
+        active ? 'bg-blue-500 animate-pulse' :
+        'bg-gray-200'
+      }`}>
+        {completed && (
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </div>
+      <span className={active ? 'font-medium' : ''}>{label}</span>
+    </div>
+  );
+}
+
+function FunFact() {
+  const facts = [
+    "Did you know? Consistent daily practice improves retention by 50%!",
+    "Students who follow a structured plan improve 2x faster.",
+    "The best time to study is when you're most alert - morning or evening?",
+    "Regular breaks actually help your brain consolidate learning.",
+    "You're joining 10,000+ students who improved their scores!",
+  ];
+
+  const [fact, setFact] = useState(facts[0]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFact(facts[Math.floor(Math.random() * facts.length)]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <p>💡 {fact}</p>;
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const supabase = getServerClient(context);
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  // Get user profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('onboarding_step')
+    .eq('user_id', user.id)
+    .single();
+
+  // Redirect if not at correct step
+  if (!profile || profile.onboarding_step < 5) {
+    return {
+      redirect: {
+        destination: '/onboarding',
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: {
+      userId: user.id,
+    },
+  };
+};

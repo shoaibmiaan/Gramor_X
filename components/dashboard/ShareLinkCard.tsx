@@ -1,66 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
+import Icon from '@/components/design-system/Icon';
+import { useToast } from '@/components/design-system/Toaster';
 
-export function ShareLinkCard() {
-  const [token, setToken] = React.useState<string | null>(null);
-  const [link, setLink] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+const ShareLinkCard: React.FC = () => {
+  const [copied, setCopied] = useState(false);
+  const { success } = useToast();
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
-  const generate = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/progress/share', { method: 'POST' });
-      if (res.ok) {
-        const data = await res.json();
-        setToken(data.token);
-        const base =
-          process.env.NEXT_PUBLIC_BASE_URL ||
-          (typeof window !== 'undefined' ? window.location.origin : '');
-        setLink(`${base}/progress/${data.token}`);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
+  const handleCopy = () => {
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setCopied(true);
+        success('Link copied to clipboard!');
+        setTimeout(() => setCopied(false), 2000);
+      });
     }
   };
 
-  const copy = async () => {
-    if (!link) return;
-    try {
-      await navigator.clipboard.writeText(link);
-    } catch {
-      // ignore
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Gramor_X Dashboard',
+        url: shareUrl,
+      }).catch(() => {});
+    } else {
+      handleCopy();
     }
   };
 
   return (
-    <Card className="p-6 rounded-ds-2xl">
-      <h2 className="font-slab text-h2 mb-4">Share progress</h2>
-      {token ? (
-        <div className="flex items-center gap-2">
-          <input
-            readOnly
-            value={link}
-            className="flex-1 rounded border p-2 bg-transparent text-small"
-          />
-          <Button onClick={copy} variant="secondary" className="rounded-ds-xl">
-            Copy
-          </Button>
+    <Card className="flex flex-col gap-4 rounded-ds-2xl border border-border/60 bg-card/60 p-5">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
+          <Icon name="Share2" size={18} />
+        </span>
+        <div className="space-y-1">
+          <h4 className="font-semibold text-foreground">Share your progress</h4>
+          <p className="text-sm text-muted-foreground">
+            Let friends and mentors see how you're doing.
+          </p>
         </div>
-      ) : (
-        <Button
-          onClick={generate}
-          variant="primary"
-          className="rounded-ds-xl"
-          disabled={loading}
-        >
-          {loading ? 'Generating...' : 'Generate link'}
-        </Button>
-      )}
+      </div>
+      <Button
+        onClick={handleShare}
+        variant="outline"
+        className="w-full rounded-ds-xl"
+      >
+        {copied ? 'Copied!' : 'Copy link / Share'}
+      </Button>
     </Card>
   );
-}
+};
 
 export default ShareLinkCard;

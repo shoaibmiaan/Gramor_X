@@ -31,9 +31,13 @@ export default async function handler(
 
   const { learningStyle } = parse.data;
 
+  // Update learning style and set step to 4 (vibe completed, ready for review)
   const { error: updateError } = await supabase
     .from('profiles')
-    .update({ learning_style: learningStyle, onboarding_step: 4 })
+    .update({
+      learning_style: learningStyle,
+      onboarding_step: 4 // Step 4 = Vibe completed, ready for review
+    })
     .eq('user_id', user.id);
 
   if (updateError) {
@@ -41,5 +45,5 @@ export default async function handler(
     return res.status(500).json({ error: 'Failed to save' });
   }
 
-  return res.status(200).json({ success: true });
+  return res.status(200).json({ success: true, nextStep: '/onboarding/review' });
 }
