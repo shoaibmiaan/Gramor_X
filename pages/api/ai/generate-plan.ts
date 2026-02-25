@@ -3,31 +3,41 @@ import OpenAI from 'openai';
 import { getServerClient } from '@/lib/supabaseServer';
 import {
   buildFallbackPlan,
+  calculateDailyHours,
+  normalizeStudyPlan,
   onboardingPayloadSchema,
-  studyPlanSchema,
   weakestSkill,
   type OnboardingPayload,
   type StudyPlan,
 } from '@/lib/onboarding/aiStudyPlan';
 
-type ResponseBody =
-  | { plan: StudyPlan }
-  | { error: string };
+type ResponseBody = { plan: StudyPlan } | { error: string };
 
 function buildPrompt(payload: OnboardingPayload): string {
   const priority = weakestSkill(payload);
+  const dailyHours = calculateDailyHours(payload.examDate);
+
   return [
     'You are an IELTS strategist. Return ONLY valid JSON.',
-    'Generate a personalized study plan with this exact schema:',
-    '{ duration_weeks:number, daily_hours:number, weekly_plan:[{week:number, focus:string, tasks:string[]}], priority_skill:"Reading"|"Writing"|"Listening"|"Speaking" }',
-    'Planning logic requirements:',
-    '- If target band is high and deadline is short, make strategy/timed-practice heavy.',
-    '- If target band is low and timeline is long, make foundation/concept heavy.',
-    '- Prioritize weakest skill first.',
-    '- Keep tasks practical and IELTS specific.',
-    `Student profile: ${JSON.stringify(payload)}`,
-    `Weakest skill inferred: ${priority}`,
+    'Output schema must be exactly:',
+    '{"duration_weeks":number,"daily_hours":number,"weekly_plan":[{"week":number,"focus":string,"tasks":[string]}],"priority_skill":"Reading"|"Writing"|"Listening"|"Speaking"}',
+    'Hard constraints:',
+    `- daily_hours MUST be ${dailyHours}`,
+    `- priority_skill MUST be "${priority}"`,
+    `- first 2 weeks MUST prioritize ${priority}`,
+    '- If target band high + short deadline: strategy heavy.',
+    '- If lower band + longer timeline: foundation heavy.',
+    '- Use practical IELTS-focused tasks only.',
+    `Student profile JSON: ${JSON.stringify(payload)}`,
   ].join('\n');
+}
+
+function safeJsonParse(text: string): unknown | null {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
 }
 
 async function generateWithOpenAI(payload: OnboardingPayload): Promise<StudyPlan> {
@@ -36,29 +46,33 @@ async function generateWithOpenAI(payload: OnboardingPayload): Promise<StudyPlan
     return buildFallbackPlan(payload);
   }
 
-  const client = new OpenAI({ apiKey });
-  const completion = await client.chat.completions.create({
-    model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
-    temperature: 0.3,
-    response_format: { type: 'json_object' },
-    messages: [
-      { role: 'system', content: 'You create concise, realistic IELTS study plans in JSON.' },
-      { role: 'user', content: buildPrompt(payload) },
-    ],
-  });
+  try {
+    const client = new OpenAI({ apiKey });
+    const completion = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+      temperature: 0.2,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You create realistic IELTS plans and must return strict JSON with no extra prose.',
+        },
+        { role: 'user', content: buildPrompt(payload) },
+      ],
+    });
 
-  const text = completion.choices[0]?.message?.content;
-  if (!text) {
+    const text = completion.choices[0]?.message?.content ?? '';
+    const parsed = safeJsonParse(text);
+    if (!parsed) {
+      return buildFallbackPlan(payload);
+    }
+
+    return normalizeStudyPlan(payload, parsed);
+  } catch (error) {
+    console.error('[generate-plan] openai error', error);
     return buildFallbackPlan(payload);
   }
-
-  const parsed = JSON.parse(text) as unknown;
-  const validated = studyPlanSchema.safeParse(parsed);
-  if (!validated.success) {
-    return buildFallbackPlan(payload);
-  }
-
-  return validated.data;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseBody>) {
@@ -102,6 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     );
 
     if (upsertError) {
+      console.error('[generate-plan] supabase upsert failed', upsertError);
       return res.status(500).json({ error: 'Failed to save onboarding data' });
     }
 
