@@ -1,0 +1,16 @@
+docs/**
+public/**
+*.css
+*.scss
+package.json
+package-lock.json
+tsconfig.json
+.lighthouserc.json
+components/design-system/Checkbox.tsx
+components/design-system/Input.tsx
+components/design-system/Radio.tsx
+components/design-system/Select.tsx
+components/design-system/Checkbox.tsx
+components/design-system/Input.tsx
+components/design-system/Radio.tsx
+components/design-system/Select.tsx

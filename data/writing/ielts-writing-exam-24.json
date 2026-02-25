@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-24",
+  "title": "Academic Set 24 — Apprenticeships & Innovation Funding",
+  "description": "Bar chart on apprenticeship completion rates with an essay about investing in research versus start-ups.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Apprenticeship completion rates",
+    "type": "academic",
+    "prompt": "The bar chart compares the percentage of apprentices who completed their programmes in four industries in 2016, 2019, and 2022. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Identify overall trends for each industry over time.",
+      "Group industries that follow similar patterns or diverge significantly.",
+      "Mention notable peaks or declines with approximate figures."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Funding innovation",
+    "prompt": "Some people think governments should prioritise funding scientific research at universities, while others believe supporting small start-up companies will lead to more innovation. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the topic and state that you will consider both perspectives.",
+      "Body paragraph 1: explain benefits of investing in university research.",
+      "Body paragraph 2: explore arguments for supporting start-ups and entrepreneurs.",
+      "Conclusion: give your opinion and suggest a balanced funding approach if appropriate."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "The bar chart compares the percentage of apprentices who completed their programmes in four industries in 2016, 2019, and 2022. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some people think governments should prioritise funding scientific research at universities, while others believe supporting small start-up companies will lead to more innovation. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

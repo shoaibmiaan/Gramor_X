@@ -1,0 +1,46 @@
+{
+  "id": "reading-practice-03",
+  "title": "Reading Practice Test 3 — Technology & Work",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "passage-a",
+      "title": "The Four-Day Week Experiment",
+      "text": "Companies piloting four-day weeks often report higher productivity, but the gains depend on redesigning workflows. Iceland’s large-scale trials saw staff reorganise meetings, automate routine reports, and adopt shared inboxes to reduce duplication. Critics feared service levels would drop, yet customer satisfaction held steady. Advocates say the approach works best when employees co-create schedules and managers focus on outcomes rather than hours spent at desks.",
+      "questions": [
+        { "id": "A1", "type": "tfng", "prompt": "The passage claims four-day weeks automatically reduce customer satisfaction.", "answer": "False" },
+        { "id": "A2", "type": "mcq", "prompt": "Which country conducted large-scale four-day week trials?", "options": ["Iceland", "Canada", "India"], "answer": "Iceland" },
+        { "id": "A3", "type": "gap", "prompt": "What tool did teams introduce to cut duplicated messages?", "answer": "shared inboxes" },
+        { "id": "A4", "type": "mcq", "prompt": "According to the passage, when does the four-day approach work best?", "options": ["When managers monitor desk time", "When schedules are co-created", "When overtime is banned"], "answer": "When schedules are co-created" },
+        { "id": "A5", "type": "tfng", "prompt": "Automation played a role in the productivity gains.", "answer": "True" },
+        { "id": "A6", "type": "gap", "prompt": "Which aspect did managers focus on instead of hours?", "answer": "outcomes" }
+      ]
+    },
+    {
+      "id": "passage-b",
+      "title": "Rise of Remote-first Startups",
+      "text": "Remote-first companies hire talent regardless of location and provide digital stipends for home offices. Rather than leasing headquarters, they invest in annual retreats and local coworking passes. Analysts note that such firms can scale quickly, yet leadership must ensure equitable progression for staff who never meet in person. Emerging practices include transparent salary bands and virtual mentorship programmes that pair junior and senior employees across time zones.",
+      "questions": [
+        { "id": "B1", "type": "gap", "prompt": "What do remote-first companies fund instead of large headquarters?", "answer": "annual retreats" },
+        { "id": "B2", "type": "tfng", "prompt": "Remote-first startups avoid hiring outside major cities.", "answer": "False" },
+        { "id": "B3", "type": "mcq", "prompt": "Why must leadership pay special attention to progression?", "options": ["Staff rarely meet physically", "Budgets are unlimited", "Visas are difficult"], "answer": "Staff rarely meet physically" },
+        { "id": "B4", "type": "gap", "prompt": "Name one tool used to support fair pay decisions.", "answer": "transparent salary bands" },
+        { "id": "B5", "type": "mcq", "prompt": "What programme connects junior and senior employees?", "options": ["On-site rotations", "Virtual mentorship", "Bonus incentives"], "answer": "Virtual mentorship" },
+        { "id": "B6", "type": "tfng", "prompt": "The passage states that coworking passes are being reduced.", "answer": "False" }
+      ]
+    },
+    {
+      "id": "passage-c",
+      "title": "Automation in Skilled Trades",
+      "text": "Robotic tools are entering skilled trades such as welding and bricklaying. Rather than replacing craft workers, the machines handle repetitive tasks while humans focus on inspection and bespoke details. Apprenticeships now include coding basics so trainees can adjust machine settings on site. Industry bodies argue that this hybrid model can attract younger recruits if schools emphasise the blend of digital and manual expertise required.",
+      "questions": [
+        { "id": "C1", "type": "mcq", "prompt": "Which role do robots play in skilled trades according to the passage?", "options": ["Replacing human workers entirely", "Handling repetitive tasks", "Managing payroll"], "answer": "Handling repetitive tasks" },
+        { "id": "C2", "type": "gap", "prompt": "What new subject is included in apprenticeships?", "answer": "coding basics" },
+        { "id": "C3", "type": "tfng", "prompt": "Automation discourages young people from joining skilled trades.", "answer": "False" },
+        { "id": "C4", "type": "gap", "prompt": "What do humans focus on when robots take over repetitive work?", "answer": "inspection" },
+        { "id": "C5", "type": "mcq", "prompt": "How do industry bodies hope to attract recruits?", "options": ["By lowering training standards", "By highlighting combined digital and manual skills", "By outsourcing apprenticeship programmes"], "answer": "By highlighting combined digital and manual skills" },
+        { "id": "C6", "type": "tfng", "prompt": "Machines now manage payroll for apprentices.", "answer": "False" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-007",
+  "title": "IELTS Speaking Full Mock Exam 007",
+  "part1": [
+    "What was your favourite subject at school?",
+    "Do you enjoy learning new things now?",
+    "How do you usually study or revise?",
+    "Have you taken any online courses?",
+    "Do you prefer studying alone or in a group?",
+    "What skills would you like to learn in the future?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a teacher who had a significant impact on you.",
+      "You should say:",
+      "• who the teacher is",
+      "• what subject they taught",
+      "• what made their teaching special",
+      "and explain how they influenced you."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "How important is a teacher's personality in the classroom?",
+    "What changes have occurred in education in recent years?",
+    "Do you think traditional classrooms will disappear?",
+    "How can adults continue learning effectively throughout life?"
+  ]
+}

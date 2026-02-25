@@ -1,0 +1,48 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { requireRole } from '@/lib/requireRole';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { captureException } from '@/lib/monitoring/sentry';
+
+const supabase = createSupabaseServerClient({ serviceRole: true });
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  try {
+    await requireRole(req, ['teacher', 'admin']);
+  } catch {
+    return res.status(403).json({ ok: false, error: 'Forbidden' });
+  }
+
+  const attemptId = typeof req.query.attemptId === 'string' ? req.query.attemptId : null;
+
+  try {
+    if (attemptId) {
+      // Detail view
+      const { data, error } = await supabase
+        .from('attempts_view_admin') // create a VIEW with joined fields you need
+        .select('*')
+        .eq('id', attemptId)
+        .single();
+
+      if (error) throw error;
+      return res.json({ ok: true, data });
+    }
+
+    // List view
+    const { data, error } = await supabase
+      .from('attempts_list_admin') // smaller VIEW for table performance
+      .select('*')
+      .order('last_activity', { ascending: false })
+      .limit(200);
+
+    if (error) throw error;
+    return res.json({ ok: true, data });
+  } catch (e: any) {
+    captureException(e, {
+      route: '/api/admin/reviews',
+      attemptId: attemptId ?? undefined,
+      method: req.method,
+    });
+    return res.status(500).json({ ok: false, error: e.message ?? 'Server error' });
+  }
+}

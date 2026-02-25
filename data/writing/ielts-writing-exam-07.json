@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-07",
+  "title": "Academic Set 6 — Energy Mix & Ageing Societies",
+  "description": "Pie charts of national energy sources and an essay on the challenges of an ageing population.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "National energy mix",
+    "type": "academic",
+    "prompt": "The pie charts show the percentage of electricity generated from five energy sources (coal, natural gas, nuclear, hydroelectric and renewables) in Country A in 1995 and 2015. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Identify which sources dominated in each year.",
+      "Explain the most notable increases and decreases between 1995 and 2015.",
+      "Group smaller categories together when appropriate to avoid long lists."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Problem/solution essay — Ageing population",
+    "prompt": "In many countries the proportion of older people is steadily increasing. What problems does this cause for individuals and society? Suggest some possible solutions.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: describe the trend and preview problems/solutions.",
+      "Body paragraph 1: problems arising from an ageing population.",
+      "Body paragraph 2: practical solutions governments and families can take.",
+      "Conclusion: summarise key ideas and emphasise a proactive approach."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The pie charts show the percentage of electricity generated from five energy sources (coal, natural gas, nuclear, hydroelectric and renewables) in Country A in 1995 and 2015. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "In many countries the proportion of older people is steadily increasing. What problems does this cause for individuals and society? Suggest some possible solutions.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

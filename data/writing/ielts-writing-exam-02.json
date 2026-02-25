@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-02",
+  "title": "Academic Set 2 — Urban Transport & Higher Education",
+  "description": "Table comparing transport use in a city and a discussion about university versus work after school.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Urban transport usage",
+    "type": "academic",
+    "prompt": "The table below shows the percentage of commuters in a major city using five types of transport (car, bus, metro, bicycle and walking) in 2010, 2015 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Compare the overall popularity of each mode across the three years.",
+      "Note significant increases or decreases for individual transport types.",
+      "Group together modes that follow similar trends to avoid repetition."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Discussion essay — Post-school choices",
+    "prompt": "Some people believe that students should start working immediately after finishing secondary school, while others think they should continue to university. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: outline both options and state your view.",
+      "Body paragraph 1: benefits of entering the workforce early.",
+      "Body paragraph 2: advantages of attending university straight away.",
+      "Conclusion: summarise arguments and give a clear recommendation."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The table below shows the percentage of commuters in a major city using five types of transport (car, bus, metro, bicycle and walking) in 2010, 2015 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some people believe that students should start working immediately after finishing secondary school, while others think they should continue to university. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

@@ -1,0 +1,5274 @@
+===== File #1: pages/mock/writing/run.tsx =====
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import clsx from 'clsx';
+import { Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { Badge } from '@/components/design-system/Badge';
+import { Alert } from '@/components/design-system/Alert';
+import TextareaAutosize from '@/components/design-system/TextareaAutosize';
+import { Tabs, TabsList, TabsTrigger } from '@/components/design-system/Tabs';
+import { useExamTimer } from '@/lib/hooks/useExamTimer';
+import { useAutoSaveDraft } from '@/lib/mock/useAutoSaveDraft';
+import { api } from '@/lib/http';
+import { writingExamSummaries } from '@/data/writing/exam-index';
+import { useUserContext } from '@/context/UserContext';
+import type {
+  WritingExamPrompts,
+  WritingScorePayload,
+  WritingTaskType,
+} from '@/types/writing';
+
+const DEFAULT_DURATION = 60 * 60;
+const MIN_WORDS: Record<WritingTaskType, number> = { task1: 150, task2: 250 };
+const TASK_META: Record<WritingTaskType, { label: string; minutes: number }> = {
+  task1: { label: 'Task 1', minutes: 20 },
+  task2: { label: 'Task 2', minutes: 40 },
+};
+const TASK_ORDER: WritingTaskType[] = ['task1', 'task2'];
+
+const formatClock = (seconds: number) => {
+  const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+  const mins = Math.floor(safe / 60);
+  const secs = safe % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
+
+const countWords = (value: string) => {
+  if (!value) return 0;
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+};
+
+const formatSavedAt = (iso: string | null) => {
+  if (!iso) return 'Autosave idle';
+  try {
+    return `Saved ${new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(iso))}`;
+  } catch {
+    return 'Saved';
+  }
+};
+
+type StartResponse = {
+  attempt: {
+    id: string;
+    startedAt?: string | null;
+    durationSeconds?: number | null;
+  };
+  prompts: WritingExamPrompts;
+};
+
+type SubmitResult = {
+  attemptId: string;
+  results: Partial<Record<WritingTaskType, WritingScorePayload>>;
+};
+
+type Stage = 'intro' | 'preparing' | 'active' | 'submitting' | 'finished';
+
+const WritingMockCBERunPage: React.FC = () => {
+  const router = useRouter();
+  const { user } = useUserContext();
+  const mockIdParam = typeof router.query.mockId === 'string' ? router.query.mockId : undefined;
+  const summary = useMemo(() => {
+    if (!writingExamSummaries || writingExamSummaries.length === 0) return null;
+    return writingExamSummaries.find((paper) => paper.id === mockIdParam) ?? writingExamSummaries[0];
+  }, [mockIdParam]);
+
+  const [stage, setStage] = useState<Stage>('intro');
+  const [prompts, setPrompts] = useState<WritingExamPrompts | null>(null);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [attemptStartedAt, setAttemptStartedAt] = useState<string | null>(null);
+  const [durationSeconds, setDurationSeconds] = useState<number>(DEFAULT_DURATION);
+  const [task1Essay, setTask1Essay] = useState('');
+  const [task2Essay, setTask2Essay] = useState('');
+  const [activeTask, setActiveTask] = useState<WritingTaskType>('task1');
+  const [fontScale, setFontScale] = useState(1);
+  const [warningNotice, setWarningNotice] = useState<string | null>(null);
+  const [clipboardWarning, setClipboardWarning] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionResult, setSubmissionResult] = useState<SubmitResult | null>(null);
+  const [keyboardLocale, setKeyboardLocale] = useState('EN');
+
+  const editorRefs = useRef<Record<WritingTaskType, HTMLTextAreaElement | null>>({
+    task1: null,
+    task2: null,
+  });
+  const warningTimeoutRef = useRef<number | null>(null);
+  const clipboardTimeoutRef = useRef<number | null>(null);
+  const warningFlags = useRef({ ten: false, five: false });
+  const submittingRef = useRef(false);
+  const timerStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.language) {
+      setKeyboardLocale(navigator.language.split('-')[0]?.toUpperCase() ?? 'EN');
+    }
+  }, []);
+
+  const counts = useMemo(
+    () => ({
+      task1: countWords(task1Essay),
+      task2: countWords(task2Essay),
+    }),
+    [task1Essay, task2Essay],
+  );
+
+  const submitExam = useCallback(
+    async () => {
+      if (!attemptId || submittingRef.current) return;
+      submittingRef.current = true;
+      setStage('submitting');
+      setSubmissionError(null);
+      try {
+        const payload: {
+          task1?: { essay: string; promptId: string };
+          task2?: { essay: string; promptId: string };
+        } = {};
+        if (prompts?.task1 && task1Essay.trim().length > 0) {
+          payload.task1 = { essay: task1Essay, promptId: prompts.task1.id };
+        }
+        if (prompts?.task2 && task2Essay.trim().length > 0) {
+          payload.task2 = { essay: task2Essay, promptId: prompts.task2.id };
+        }
+
+        const res = await fetch('/api/mock/writing/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attemptId, durationSeconds, tasks: payload }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.error || 'Submission failed');
+        }
+        const data = (await res.json()) as SubmitResult;
+        setSubmissionResult(data);
+        setStage('finished');
+      } catch (error: any) {
+        setSubmissionError(error?.message ?? 'Unable to submit responses. A proctor will help.');
+      } finally {
+        submittingRef.current = false;
+      }
+    },
+    [attemptId, durationSeconds, prompts, task1Essay, task2Essay],
+  );
+
+  const timerOptions = useMemo(() => ({ autoStart: false, onFinish: submitExam }), [submitExam]);
+  const { timeLeft, start, reset, percentComplete } = useExamTimer(durationSeconds, timerOptions);
+
+  const elapsedSeconds = useMemo(() => {
+    if (!attemptId) return 0;
+    if (stage === 'active' || stage === 'submitting') {
+      return Math.max(0, durationSeconds - timeLeft);
+    }
+    return 0;
+  }, [attemptId, durationSeconds, stage, timeLeft]);
+
+  useEffect(() => {
+    if (stage === 'active' && attemptId && !timerStartedRef.current) {
+      timerStartedRef.current = true;
+      start();
+    }
+    if (stage === 'intro') {
+      timerStartedRef.current = false;
+      reset(durationSeconds);
+    }
+  }, [attemptId, durationSeconds, reset, stage, start]);
+
+  useEffect(() => () => {
+    if (warningTimeoutRef.current) window.clearTimeout(warningTimeoutRef.current);
+    if (clipboardTimeoutRef.current) window.clearTimeout(clipboardTimeoutRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (stage !== 'active') return;
+    if (timeLeft <= 600 && !warningFlags.current.ten) {
+      warningFlags.current.ten = true;
+      setWarningNotice('10 minutes remaining');
+    } else if (timeLeft <= 300 && !warningFlags.current.five) {
+      warningFlags.current.five = true;
+      setWarningNotice('5 minutes remaining');
+    }
+  }, [stage, timeLeft]);
+
+  useEffect(() => {
+    if (!warningNotice) return;
+    if (warningTimeoutRef.current) window.clearTimeout(warningTimeoutRef.current);
+    warningTimeoutRef.current = window.setTimeout(() => setWarningNotice(null), 3000);
+  }, [warningNotice]);
+
+  useEffect(() => {
+    if (!clipboardWarning) return;
+    if (clipboardTimeoutRef.current) window.clearTimeout(clipboardTimeoutRef.current);
+    clipboardTimeoutRef.current = window.setTimeout(() => setClipboardWarning(null), 3500);
+  }, [clipboardWarning]);
+
+  useEffect(() => {
+    if (stage !== 'active') return;
+    const editor = editorRefs.current[activeTask];
+    if (editor) {
+      editor.focus();
+    }
+  }, [activeTask, stage]);
+
+  const autosavePayload = useMemo(() => {
+    const payload: Partial<Record<WritingTaskType, { content: string; wordCount: number }>> = {};
+    if (task1Essay.trim().length > 0) {
+      payload.task1 = { content: task1Essay, wordCount: counts.task1 };
+    }
+    if (task2Essay.trim().length > 0) {
+      payload.task2 = { content: task2Essay, wordCount: counts.task2 };
+    }
+    return payload;
+  }, [counts.task1, counts.task2, task1Essay, task2Essay]);
+
+  const { state: autosaveState, lastSavedAt } = useAutoSaveDraft({
+    attemptId: attemptId ?? 'pending',
+    activeTask,
+    tasks: autosavePayload,
+    elapsedSeconds,
+    throttleMs: 2000,
+    enabled: stage === 'active' && Boolean(attemptId),
+  });
+
+  const handleClipboardBlock = useCallback((event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    event.preventDefault();
+    setClipboardWarning('Copy, cut, and paste are disabled in IELTS exam mode.');
+  }, []);
+
+  const handleContextBlock = useCallback((event: React.MouseEvent<HTMLTextAreaElement>) => {
+    event.preventDefault();
+    setClipboardWarning('Right-click is disabled during the test.');
+  }, []);
+
+  const handleStart = useCallback(async () => {
+    if (!summary) return;
+    if (stage === 'preparing') return;
+    setStartError(null);
+    setStage('preparing');
+    setSubmissionResult(null);
+    warningFlags.current = { ten: false, five: false };
+    try {
+      const payload = await api<StartResponse>('/api/mock/writing/start', {
+        method: 'POST',
+        body: JSON.stringify({ promptId: summary.id, mockId: summary.id }),
+      });
+      setPrompts(payload.prompts);
+      setAttemptId(payload.attempt.id);
+      setAttemptStartedAt(payload.attempt.startedAt ?? new Date().toISOString());
+      setDurationSeconds(payload.attempt.durationSeconds ?? DEFAULT_DURATION);
+      setTask1Essay('');
+      setTask2Essay('');
+      setActiveTask('task2');
+      setStage('active');
+    } catch (error: any) {
+      setStage('intro');
+      setStartError(error?.error ?? error?.message ?? 'Unable to start the writing test.');
+    }
+  }, [stage, summary]);
+
+  const decreaseFont = () => setFontScale((prev) => Math.max(0.85, Number((prev - 0.1).toFixed(2))));
+  const increaseFont = () => setFontScale((prev) => Math.min(1.3, Number((prev + 0.1).toFixed(2))));
+
+  const applyFormatting = useCallback(
+    (style: 'bold' | 'italic') => {
+      const editor = editorRefs.current[activeTask];
+      if (!editor || stage !== 'active') return;
+      const startSel = editor.selectionStart ?? 0;
+      const endSel = editor.selectionEnd ?? 0;
+      const value = activeTask === 'task1' ? task1Essay : task2Essay;
+      const wrapper = style === 'bold' ? '**' : '_';
+      const before = value.slice(0, startSel);
+      const selected = value.slice(startSel, endSel);
+      const after = value.slice(endSel);
+      const nextValue = `${before}${wrapper}${selected}${wrapper}${after}`;
+      if (activeTask === 'task1') {
+        setTask1Essay(nextValue);
+      } else {
+        setTask2Essay(nextValue);
+      }
+      requestAnimationFrame(() => {
+        const cursor = selected.length > 0 ? before.length + wrapper.length + selected.length : before.length + wrapper.length;
+        editor.focus();
+        editor.setSelectionRange(cursor, cursor);
+      });
+    },
+    [activeTask, stage, task1Essay, task2Essay],
+  );
+
+  const candidateName = user?.user_metadata?.full_name || user?.email || 'Candidate';
+  const candidateId = user?.id ? user.id.slice(0, 8).toUpperCase() : '—';
+
+  const autosaveLabel = (() => {
+    if (!attemptId || stage === 'intro') return 'Autosave ready';
+    if (autosaveState === 'saving') return 'Saving…';
+    if (autosaveState === 'error') return 'Autosave issue — reconnecting';
+    if (autosaveState === 'saved') return formatSavedAt(lastSavedAt ?? null);
+    return 'Autosave ready';
+  })();
+
+  const promptLocked = !prompts || (stage !== 'active' && stage !== 'submitting');
+  const editingDisabled = stage !== 'active';
+
+  return (
+    <>
+      <Head>
+        <title>IELTS Writing Mock • Computer-Delivered Exam Mode</title>
+      </Head>
+
+      <main className="min-h-screen bg-slate-50 pb-16">
+        <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+          {(stage === 'intro' || stage === 'preparing') && summary ? (
+            <Card className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">IELTS Writing — Computer Delivered</p>
+                <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{summary.title}</h1>
+                <p className="text-base text-slate-600">{summary.description}</p>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                <Card className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Candidate</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">{candidateName}</p>
+                  <p className="text-sm text-slate-500">No. {candidateId}</p>
+                </Card>
+                <Card className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Module</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">Writing</p>
+                  <p className="text-sm text-slate-500">60 minutes total</p>
+                </Card>
+                <Card className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Autosave</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">Every 2 seconds</p>
+                  <p className="text-sm text-slate-500">Timer starts when you click Start Writing</p>
+                </Card>
+              </div>
+
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                <Card className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-semibold text-slate-800">Task rules</p>
+                  <ul className="mt-3 list-disc pl-5 text-sm text-slate-600">
+                    <li>Task 1 — minimum 150 words (recommended 20 minutes).</li>
+                    <li>Task 2 — minimum 250 words (recommended 40 minutes).</li>
+                    <li>You may answer in any order. Prompts stay on screen.</li>
+                    <li>No spell check, grammar check, or copy/paste between tasks.</li>
+                  </ul>
+                </Card>
+                <Card className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-semibold text-slate-800">What to expect</p>
+                  <ul className="mt-3 list-disc pl-5 text-sm text-slate-600">
+                    <li>Split screen with prompts on the left and editor on the right.</li>
+                    <li>Tabs for Task 1 / Task 2 with live word counts.</li>
+                    <li>10-minute and 5-minute warnings before auto-submit at 0:00.</li>
+                    <li>Responses lock automatically when the timer ends.</li>
+                  </ul>
+                </Card>
+              </div>
+
+              {startError ? (
+                <Alert variant="error" className="mt-6" title="Unable to start">
+                  {startError}
+                </Alert>
+              ) : null}
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Button
+                  size="lg"
+                  className="rounded-2xl"
+                  onClick={handleStart}
+                  disabled={stage === 'preparing'}
+                >
+                  {stage === 'preparing' ? 'Preparing workspace…' : 'Start Writing'}
+                </Button>
+                <Button variant="ghost" href="/writing/mock" className="rounded-2xl">
+                  Back to mock library
+                </Button>
+              </div>
+            </Card>
+          ) : null}
+
+          {(stage === 'active' || stage === 'submitting') && !promptLocked ? (
+            <div className="mt-6 space-y-4">
+              <Card className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.25em] text-slate-500">IELTS Writing</p>
+                    <h2 className="text-2xl font-semibold text-slate-900">Official-style exam workspace</h2>
+                    <p className="text-sm text-slate-600">Timer runs once and the system submits for you. Keep typing — autosave is live.</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-slate-100 px-4 py-2 font-mono text-2xl text-slate-900">
+                        {formatClock(timeLeft)}
+                      </span>
+                      <Badge variant="neutral">{keyboardLocale} keyboard</Badge>
+                    </div>
+                    <div className="h-2 w-48 rounded-full bg-slate-100">
+                      <div
+                        className="h-2 rounded-full bg-primary transition-all"
+                        style={{ width: `${percentComplete * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {warningNotice ? (
+                <Alert variant="warning" appearance="solid" className="rounded-2xl text-center text-base font-semibold">
+                  {warningNotice}
+                </Alert>
+              ) : null}
+              {clipboardWarning ? (
+                <Alert variant="warning" className="rounded-2xl">
+                  {clipboardWarning}
+                </Alert>
+              ) : null}
+
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <section className="flex max-h-[80vh] flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <header className="pb-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Task prompts</p>
+                    <p className="text-sm text-slate-600">Scroll to review both tasks. Use the tabs to switch writing focus.</p>
+                  </header>
+                  <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto pr-1">
+                    {TASK_ORDER.map((taskKey) => {
+                      const prompt = prompts?.[taskKey];
+                      if (!prompt) return null;
+                      return (
+                        <Card key={taskKey} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                                {TASK_META[taskKey].label}
+                              </p>
+                              <p className="text-sm text-slate-500">{prompt.module === 'general_training' ? 'General Training' : 'Academic'} · {TASK_META[taskKey].minutes} min recommended</p>
+                            </div>
+                            <Badge variant={activeTask === taskKey ? 'primary' : 'neutral'}>
+                              {activeTask === taskKey ? 'Active' : 'View'}
+                            </Badge>
+                          </div>
+                          <h3 className="mt-3 text-lg font-semibold text-slate-900">{prompt.title}</h3>
+                          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                            {prompt.promptText || 'Prompt unavailable'}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="mt-4 rounded-xl"
+                            onClick={() => setActiveTask(taskKey)}
+                          >
+                            Switch to {TASK_META[taskKey].label}
+                          </Button>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <Tabs value={activeTask} onValueChange={(val) => setActiveTask(val as WritingTaskType)}>
+                      <TabsList className="flex flex-wrap">
+                        {TASK_ORDER.map((taskKey) => (
+                          <TabsTrigger key={taskKey} value={taskKey} className="flex items-center gap-2 rounded-full px-4 py-2">
+                            <span>{TASK_META[taskKey].label}</span>
+                            <span className="text-xs text-slate-500">{counts[taskKey]} words</span>
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <span>{autosaveLabel}</span>
+                      <span aria-hidden="true" className="text-slate-400">•</span>
+                      <span>Zoom</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="rounded-full border border-slate-200 px-2 py-1 text-sm"
+                          onClick={decreaseFont}
+                          aria-label="Decrease font size"
+                        >
+                          A-
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-full border border-slate-200 px-2 py-1 text-sm"
+                          onClick={increaseFont}
+                          aria-label="Increase font size"
+                        >
+                          A+
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {TASK_ORDER.map((taskKey) => (
+                      <Card key={taskKey} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <p className="font-medium text-slate-800">{TASK_META[taskKey].label}</p>
+                          <Badge variant={counts[taskKey] >= MIN_WORDS[taskKey] ? 'success' : 'neutral'}>
+                            {counts[taskKey]} / {MIN_WORDS[taskKey]} words
+                          </Badge>
+                        </div>
+                        <p className="mt-2 text-sm text-slate-600">
+                          {counts[taskKey] >= MIN_WORDS[taskKey]
+                            ? 'Minimum met'
+                            : `Need ${MIN_WORDS[taskKey] - counts[taskKey]} more words`}
+                        </p>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+                    No submit button: when the timer reaches 00:00 the editor locks and your responses are submitted automatically.
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700" htmlFor={`task-${activeTask}-response`}>
+                        {TASK_META[activeTask].label} response
+                      </label>
+                      <span className="text-xs text-slate-500">Minimum {MIN_WORDS[activeTask]} words</span>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white">
+                      {TASK_ORDER.map((taskKey) => (
+                        <TextareaAutosize
+                          key={taskKey}
+                          id={`task-${taskKey}-response`}
+                          minRows={18}
+                          value={taskKey === 'task1' ? task1Essay : task2Essay}
+                          onChange={(event) => {
+                            if (editingDisabled) return;
+                            if (taskKey === 'task1') {
+                              setTask1Essay(event.target.value);
+                            } else {
+                              setTask2Essay(event.target.value);
+                            }
+                          }}
+                          readOnly={editingDisabled}
+                          spellCheck={false}
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          inputMode="text"
+                          onPaste={handleClipboardBlock}
+                          onCopy={handleClipboardBlock}
+                          onCut={handleClipboardBlock}
+                          onContextMenu={handleContextBlock}
+                          ref={(node) => {
+                            editorRefs.current[taskKey] = node;
+                          }}
+                          className={clsx(
+                            'w-full resize-none rounded-2xl bg-transparent px-5 py-4 text-base text-slate-900 focus:outline-none',
+                            activeTask !== taskKey && 'hidden',
+                          )}
+                          style={{ fontSize: `${fontScale}rem`, lineHeight: 1.6 }}
+                        />
+                      ))}
+                    </div>
+                    {counts[activeTask] < MIN_WORDS[activeTask] ? (
+                      <p className="text-sm text-amber-600">
+                        {MIN_WORDS[activeTask] - counts[activeTask]} more words needed to meet the requirement.
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-sm"
+                        onClick={() => applyFormatting('bold')}
+                        disabled={editingDisabled}
+                      >
+                        Bold
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-sm"
+                        onClick={() => applyFormatting('italic')}
+                        disabled={editingDisabled}
+                      >
+                        Italic
+                      </button>
+                    </div>
+                    <span aria-hidden="true" className="text-slate-400">
+                      •
+                    </span>
+                    <span>Word count updates automatically for the active task.</span>
+                  </div>
+                </section>
+              </div>
+            </div>
+          ) : null}
+
+          {stage === 'finished' ? (
+            <Card className="mt-8 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+              <h2 className="text-2xl font-semibold text-slate-900">Responses saved</h2>
+              <p className="mt-3 text-sm text-slate-600">
+                The writing module has been submitted. Head to evaluation to see when your AI feedback is ready.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                {submissionResult ? (
+                  <Button
+                    size="lg"
+                    className="rounded-2xl"
+                    href={`/writing/mock/${submissionResult.attemptId}/evaluating`}
+                  >
+                    View evaluation screen
+                  </Button>
+                ) : null}
+                <Button variant="ghost" size="lg" className="rounded-2xl" href="/writing/mock">
+                  Back to writing mocks
+                </Button>
+              </div>
+            </Card>
+          ) : null}
+        </div>
+
+        {stage === 'submitting' ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+            <Card className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
+              <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" aria-hidden="true" />
+              <h3 className="mt-4 text-xl font-semibold text-slate-900">Time is up</h3>
+              <p className="mt-2 text-sm text-slate-600">Your editor is locked while we save and submit your responses.</p>
+              {submissionError ? (
+                <Alert variant="error" className="mt-4" title="Submission issue">
+                  {submissionError}
+                </Alert>
+              ) : null}
+            </Card>
+          </div>
+        ) : null}
+      </main>
+    </>
+  );
+};
+
+export default WritingMockCBERunPage;
+
+===== File #2: components/writing/AccessibilityHints.tsx =====
+import React, { useId, useMemo } from 'react';
+import clsx from 'clsx';
+
+import { useLocale } from '@/lib/locale';
+
+const HINT_KEYS = ['headings', 'bandBreakdown', 'textAlternatives'] as const;
+type HintKey = (typeof HINT_KEYS)[number];
+
+type Hint = {
+  key: HintKey;
+  title: string;
+  body: string;
+};
+
+export const AccessibilityHints: React.FC = () => {
+  const { t, isRTL } = useLocale();
+  const headingId = useId();
+  const descriptionId = useId();
+
+  const hints = useMemo<Hint[]>(
+    () =>
+      HINT_KEYS.map((key) => ({
+        key,
+        title: t(`writing.accessibilityHints.items.${key}.title`),
+        body: t(`writing.accessibilityHints.items.${key}.body`),
+      })),
+    [t]
+  );
+
+  return (
+    <aside
+      role="complementary"
+      aria-labelledby={headingId}
+      aria-describedby={descriptionId}
+      className={clsx(
+        'rounded-ds-xl border border-border/60 bg-muted/30 p-5 shadow-sm',
+        'focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary/80',
+        isRTL ? 'text-right' : 'text-left'
+      )}
+    >
+      <div className="flex flex-col gap-1">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {t('writing.accessibilityHints.badge')}
+        </span>
+        <h2 id={headingId} className="text-lg font-semibold text-foreground">
+          {t('writing.accessibilityHints.title')}
+        </h2>
+      </div>
+      <p id={descriptionId} className="mt-2 text-sm text-muted-foreground">
+        {t('writing.accessibilityHints.description')}
+      </p>
+      <ul className="mt-4 space-y-3" role="list">
+        {hints.map((hint) => (
+          <li
+            key={hint.key}
+            className={clsx(
+              'flex items-start gap-3 rounded-lg border border-transparent px-3 py-2 transition-colors',
+              'hover:border-border/80 hover:bg-background/60',
+              isRTL && 'flex-row-reverse'
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className="mt-1.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
+            />
+            <div className={clsx('space-y-1', isRTL ? 'text-right' : 'text-left')}>
+              <p className="text-sm font-medium text-foreground">{hint.title}</p>
+              <p className="text-sm text-muted-foreground">{hint.body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-xs text-muted-foreground">
+        {t('writing.accessibilityHints.footer')}
+      </p>
+    </aside>
+  );
+};
+
+export default AccessibilityHints;
+
+===== File #3: components/writing/AIReview.tsx =====
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Card } from '@/components/design-system/Card';
+import { Alert } from '@/components/design-system/Alert';
+import { ScoreCard } from '@/components/design-system/ScoreCard';
+import { Button } from '@/components/design-system/Button';
+import { Loader } from '@/components/common/Loader';
+import { AISkeleton } from '@/components/common/Skeleton';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
+
+/**
+ * Highlight grammar and vocabulary issues by parsing custom markers
+ * produced by the AI. Grammar problems are wrapped in `[g]...[/g]` and
+ * vocabulary issues in `[v]...[/v]`. The returned React nodes preserve
+ * original spacing and new lines.
+ */
+function renderAnnotated(text: string): React.ReactNode {
+  const pieces: React.ReactNode[] = [];
+  const regex = /\[(g|v)\](.*?)\[\/\1\]/gs;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      pieces.push(text.slice(lastIndex, match.index));
+    }
+    const type = match[1];
+    const content = match[2];
+    const cls =
+      type === 'g'
+        ? 'bg-sunsetRed/20 text-sunsetRed dark:text-sunsetRed'
+        : 'bg-goldenYellow/20 text-sunsetOrange dark:text-sunsetOrange';
+    pieces.push(
+      <span key={key++} className={`rounded px-0.5 ${cls}`}>
+        {content}
+      </span>
+    );
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    pieces.push(text.slice(lastIndex));
+  }
+  return <>{pieces}</>;
+}
+
+// Read server-sent events from /api/ai/chat and accumulate the delta text.
+async function annotateText(original: string, signal?: AbortSignal): Promise<string> {
+  try {
+    const res = await fetch('/api/ai/chat?p=openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Surround grammar mistakes with [g][/g] and vocabulary issues with [v][/v]. Return only the annotated text.'
+          },
+          { role: 'user', content: original }
+        ]
+      }),
+      signal,
+    });
+    if (!res.body) return original;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let result = '';
+    let finished = false;
+
+    const processBuffer = () => {
+      if (finished) return;
+      let newlineIndex = buffer.indexOf('\n');
+      while (newlineIndex !== -1) {
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+        if (line.startsWith('data: ')) {
+          const payload = line.slice(6).trim();
+          if (!payload) {
+            // continue processing remaining lines
+          } else if (payload === '[DONE]') {
+            finished = true;
+            return;
+          } else {
+            try {
+              const json = JSON.parse(payload);
+              const delta = json?.choices?.[0]?.delta?.content;
+              if (typeof delta === 'string') {
+                result += delta;
+              }
+            } catch {
+              // ignore malformed lines and continue reading
+            }
+          }
+        }
+        newlineIndex = buffer.indexOf('\n');
+      }
+    };
+
+    while (!finished) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+      processBuffer();
+      if (finished || done) break;
+    }
+
+    buffer += decoder.decode();
+    processBuffer();
+    const leftover = buffer.trim();
+    if (!finished && leftover.startsWith('data: ')) {
+      const payload = leftover.slice(6).trim();
+      if (payload && payload !== '[DONE]') {
+        try {
+          const json = JSON.parse(payload);
+          const delta = json?.choices?.[0]?.delta?.content;
+          if (typeof delta === 'string') {
+            result += delta;
+          }
+        } catch {
+          // ignore malformed final payload
+        }
+      }
+    }
+
+    return result || original;
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      throw error;
+    }
+    return original;
+  }
+}
+
+export interface WritingAIReviewProps {
+  /** ID of the writing attempt already saved in Supabase */
+  attemptId: string;
+}
+
+type AttemptRow = {
+  essay_text: string;
+  band_overall: number;
+  band_breakdown: { task: number; coherence: number; lexical: number; grammar: number };
+  feedback: string | null;
+};
+
+/**
+ * Displays an AI generated review for a writing attempt. The component
+ * fetches the attempt details from Supabase, asks the AI to annotate the
+ * essay with grammar and vocabulary highlights, then renders the band
+ * score, annotated essay and a suggestions panel.
+ */
+export const AIReview: React.FC<WritingAIReviewProps> = ({ attemptId }) => {
+  const [attempt, setAttempt] = useState<AttemptRow | null>(null);
+  const [annotated, setAnnotated] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [longWait, setLongWait] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const handleRetry = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setAttempt(null);
+    setAnnotated('');
+    setError(null);
+    setLoading(true);
+    setLongWait(false);
+    setRetryKey((value) => value + 1);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    let jitterTimer: ReturnType<typeof setTimeout> | null = null;
+    let longWaitTimer: ReturnType<typeof setTimeout> | null = null;
+    const abort = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    abortRef.current = abort;
+
+    const clearTimers = () => {
+      if (jitterTimer) {
+        window.clearTimeout(jitterTimer);
+        jitterTimer = null;
+      }
+      if (longWaitTimer) {
+        window.clearTimeout(longWaitTimer);
+        longWaitTimer = null;
+      }
+    };
+
+    const load = async () => {
+      let aborted = false;
+      try {
+        setError(null);
+        const { data, error } = await supabaseBrowser
+          .from('writing_attempts')
+          .select('essay_text, band_overall, band_breakdown, feedback')
+          .eq('id', attemptId)
+          .single();
+        if (error) throw error;
+        if (!mounted) return;
+        setAttempt(data as AttemptRow);
+        const a = await annotateText(data.essay_text, abort?.signal);
+        if (!mounted) return;
+        setAnnotated(a);
+      } catch (e: any) {
+        if (e?.name === 'AbortError') {
+          aborted = true;
+          return;
+        }
+        if (mounted) setError(e.message || 'Failed to load review');
+      } finally {
+        clearTimers();
+        if (abortRef.current === abort) {
+          abortRef.current = null;
+        }
+        if (mounted && !aborted) {
+          setLoading(false);
+          setLongWait(false);
+        }
+      }
+    };
+
+    setAttempt(null);
+    setAnnotated('');
+    setLoading(true);
+    setLongWait(false);
+
+    const start = () => {
+      if (!mounted) return;
+      longWaitTimer = window.setTimeout(() => {
+        if (mounted) setLongWait(true);
+      }, 10000);
+      void load();
+    };
+
+    const jitter = 200 + Math.floor(Math.random() * 400);
+    jitterTimer = window.setTimeout(start, jitter);
+
+    return () => {
+      mounted = false;
+      clearTimers();
+      if (abortRef.current === abort) {
+        abortRef.current = null;
+      }
+      abort?.abort();
+    };
+  }, [attemptId, retryKey]);
+
+  if (loading) {
+    return (
+      <AISkeleton rows={6} showHeader={false}>
+        <Loader label="Generating AI review…" />
+        {longWait ? (
+          <Alert variant="info" title="This is taking longer than usual" className="mt-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-body text-muted-foreground">
+                Our AI is still working. You can wait a little longer or retry now.
+              </p>
+              <Button size="sm" variant="secondary" onClick={handleRetry}>
+                Retry
+              </Button>
+            </div>
+          </Alert>
+        ) : null}
+      </AISkeleton>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="warning" title="AI review failed">
+        <div className="flex flex-wrap items-center gap-3">
+          <span>{error}</span>
+          <Button size="sm" variant="secondary" onClick={handleRetry} disabled={loading}>
+            Retry
+          </Button>
+        </div>
+      </Alert>
+    );
+  }
+
+  if (!attempt) return null;
+
+  return (
+    <Card className="card-surface p-6 rounded-ds-2xl">
+      <ScoreCard
+        title="Writing Band"
+        overall={attempt.band_overall}
+        subscores={{
+          taskResponse: attempt.band_breakdown.task,
+          coherence: attempt.band_breakdown.coherence,
+          vocabulary: attempt.band_breakdown.lexical,
+          grammar: attempt.band_breakdown.grammar,
+        }}
+      />
+
+      <h3 className="text-h3 mt-6">Your Essay</h3>
+      <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10 whitespace-pre-wrap">
+        {renderAnnotated(annotated || attempt.essay_text)}
+      </div>
+
+      {attempt.feedback && (
+        <Alert variant="info" title="Suggestions" className="mt-6">
+          {attempt.feedback}
+        </Alert>
+      )}
+    </Card>
+  );
+};
+
+export default AIReview;
+
+
+===== File #4: components/writing/studio/WritingEditor.tsx =====
+import { useCallback } from 'react';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { TextareaAutosize } from '@/components/design-system/TextareaAutosize';
+import type { WritingTaskType } from '@/lib/writing/schemas';
+import { WordCountBar } from './WordCountBar';
+import { TimerBar } from './TimerBar';
+
+export type WritingEditorProps = {
+  value: string;
+  onChange: (value: string) => void;
+  wordCount: number;
+  elapsedMs: number;
+  taskType: WritingTaskType;
+  saveState: 'idle' | 'saving' | 'saved' | 'error';
+  status: 'draft' | 'submitted' | 'scored';
+  submitting: boolean;
+  disableSubmit: boolean;
+  onSubmit: () => void;
+  helper?: string;
+  onBulkPaste?: (text: string) => void;
+};
+
+const statusCopy: Record<WritingEditorProps['status'], string> = {
+  draft: 'Draft',
+  submitted: 'Submitted for scoring',
+  scored: 'Scored',
+};
+
+export const WritingEditor = ({
+  value,
+  onChange,
+  wordCount,
+  elapsedMs,
+  taskType,
+  saveState,
+  status,
+  submitting,
+  disableSubmit,
+  onSubmit,
+  helper,
+  onBulkPaste,
+}: WritingEditorProps) => {
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && !disableSubmit) {
+        event.preventDefault();
+        onSubmit();
+      }
+    },
+    [disableSubmit, onSubmit],
+  );
+
+  return (
+    <Card className="space-y-6" padding="lg">
+      <div className="grid gap-4 md:grid-cols-2">
+        <WordCountBar taskType={taskType} wordCount={wordCount} />
+        <TimerBar taskType={taskType} elapsedMs={elapsedMs} />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+        <span>
+          Status: <span className="font-semibold text-foreground">{statusCopy[status]}</span>
+        </span>
+        <span>
+          {saveState === 'saving' && 'Saving…'}
+          {saveState === 'saved' && 'Saved'}
+          {saveState === 'error' && 'Save failed'}
+          {saveState === 'idle' && 'Ready'}
+        </span>
+      </div>
+      <label className="space-y-2">
+        <span className="sr-only">Writing response</span>
+        <TextareaAutosize
+          minRows={16}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={(event) => {
+            const pasted = event.clipboardData?.getData('text') ?? '';
+            if (pasted && pasted.split(/\s+/).filter(Boolean).length > 80) {
+              onBulkPaste?.(pasted);
+            }
+          }}
+          disabled={status !== 'draft'}
+          className="w-full rounded-2xl border border-border/60 bg-card px-4 py-3 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="Begin your response here…"
+        />
+      </label>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <Button
+          variant="primary"
+          size="md"
+          onClick={onSubmit}
+          disabled={disableSubmit}
+          loading={submitting}
+        >
+          Submit for scoring
+        </Button>
+        <div className="space-y-1 text-right md:text-left">
+          <p>Press ⌘⏎ / Ctrl+Enter to submit instantly.</p>
+          {helper && <p>{helper}</p>}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+===== File #5: components/writing/studio/LiveCritiquePanel.tsx =====
+import { useCallback, useState } from 'react';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import type { LiveSuggestion } from '@/lib/writing/languageTools';
+
+export type LiveCritiquePanelProps = {
+  text: string;
+  disabled?: boolean;
+  onApply: (suggestion: LiveSuggestion) => void;
+};
+
+export const LiveCritiquePanel = ({ text, disabled, onApply }: LiveCritiquePanelProps) => {
+  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<LiveSuggestion[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const runCritique = useCallback(async () => {
+    if (!text.trim()) {
+      setSuggestions([]);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/writing/critique/live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error ?? 'Unable to fetch critique');
+      }
+      const payload = (await response.json()) as { suggestions: LiveSuggestion[] };
+      setSuggestions(payload.suggestions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to fetch critique');
+    } finally {
+      setLoading(false);
+    }
+  }, [text]);
+
+  return (
+    <Card className="space-y-4" padding="lg">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Live critique</h2>
+          <p className="text-sm text-muted-foreground">Paragraph-level nudges to keep tone and cohesion sharp.</p>
+        </div>
+        <Button size="sm" variant="outline" onClick={runCritique} disabled={disabled || loading}>
+          {loading ? (
+            <span className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" aria-hidden />
+              Analyzing…
+            </span>
+          ) : (
+            'Refresh critique'
+          )}
+        </Button>
+      </div>
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {suggestions.length === 0 && !loading ? (
+        <p className="text-sm text-muted-foreground">Run a critique to surface cohesion and clarity suggestions.</p>
+      ) : (
+        <ul className="space-y-3">
+          {suggestions.map((item, index) => (
+            <li key={`${item.paragraphIndex}-${index}`} className="rounded-2xl border border-border/60 bg-card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Badge variant="soft" tone="info" size="sm">
+                  Paragraph {item.paragraphIndex + 1}
+                </Badge>
+                <span className="text-sm font-medium text-foreground">{item.issue}</span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{item.suggestion}</p>
+              {item.reasoning && <p className="mt-2 text-xs text-muted-foreground">Why: {item.reasoning}</p>}
+              {item.example && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Example: <span className="text-foreground">{item.example}</span>
+                </p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button size="xs" onClick={() => onApply(item)} disabled={disabled}>
+                  Apply suggestion
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+};
+
+===== File #6: components/writing/studio/LexicalTrackerPanel.tsx =====
+import { useCallback, useEffect, useState } from 'react';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Card } from '@/components/design-system/Card';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+import type { LexicalReport } from '@/lib/writing/languageTools';
+
+export type LexicalTrackerPanelProps = {
+  text: string;
+  timeSpentMs: number;
+};
+
+const ttrTargets = [
+  { label: 'Band 7', value: 0.45 },
+  { label: 'Band 8', value: 0.5 },
+];
+
+export const LexicalTrackerPanel = ({ text, timeSpentMs }: LexicalTrackerPanelProps) => {
+  const [report, setReport] = useState<LexicalReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const runReport = useCallback(async () => {
+    if (!text.trim()) {
+      setReport({ wordCount: 0, typeTokenRatio: 0, rareWordDensity: 0, fillerCount: 0, wordsPerMinute: 0 });
+      return;
+    }
+    try {
+      const response = await fetch('/api/writing/lexical/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, timeSpentMs }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error ?? 'Unable to compute lexical report');
+      }
+      const payload = (await response.json()) as { report: LexicalReport };
+      setReport(payload.report);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to compute lexical report');
+    }
+  }, [text, timeSpentMs]);
+
+  useEffect(() => {
+    const debounce = window.setTimeout(() => {
+      void runReport();
+    }, 1500);
+    return () => window.clearTimeout(debounce);
+  }, [runReport]);
+
+  return (
+    <Card className="space-y-4" padding="lg">
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-foreground">Lexical variety tracker</h2>
+        <p className="text-sm text-muted-foreground">Monitor vocabulary range, rare word usage, and pacing.</p>
+      </div>
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {report && (
+        <div className="grid gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">Type-token ratio</span>
+            <Badge variant="soft" tone={report.typeTokenRatio >= 0.5 ? 'success' : 'warning'} size="sm">
+              {report.typeTokenRatio.toFixed(2)}
+            </Badge>
+          </div>
+          <ProgressBar value={report.typeTokenRatio * 100} ariaLabel="Type-token ratio" />
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            {ttrTargets.map((target) => (
+              <span key={target.label}>{target.label}: {target.value.toFixed(2)}</span>
+            ))}
+          </div>
+          <div className="grid gap-2 text-sm text-muted-foreground">
+            <div className="flex justify-between">
+              <span>Words per minute</span>
+              <span className="text-foreground">{report.wordsPerMinute.toFixed(1)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Rare word density</span>
+              <span className="text-foreground">{(report.rareWordDensity * 100).toFixed(0)}%</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Filler words spotted</span>
+              <span className="text-foreground">{report.fillerCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Word count</span>
+              <span className="text-foreground">{report.wordCount}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+===== File #7: components/writing/studio/ParaphraseStudio.tsx =====
+import { useCallback, useState } from 'react';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { Input } from '@/components/design-system/Input';
+import type { ParaphraseOption } from '@/lib/writing/languageTools';
+
+export type ParaphraseStudioProps = {
+  onInsert?: (sentence: string) => void;
+};
+
+export const ParaphraseStudio = ({ onInsert }: ParaphraseStudioProps) => {
+  const [sentence, setSentence] = useState('');
+  const [options, setOptions] = useState<ParaphraseOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const runParaphrase = useCallback(async () => {
+    if (!sentence.trim()) {
+      setOptions([]);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/writing/paraphrase/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sentence }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error ?? 'Unable to generate paraphrases');
+      }
+      const payload = (await response.json()) as { options: ParaphraseOption[] };
+      setOptions(payload.options);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to generate paraphrases');
+    } finally {
+      setLoading(false);
+    }
+  }, [sentence]);
+
+  const handleInsert = (value: string) => {
+    if (!onInsert) return;
+    onInsert(value);
+  };
+
+  return (
+    <Card className="space-y-4" padding="lg">
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-foreground">Paraphrase studio</h2>
+        <p className="text-sm text-muted-foreground">Drop in a sentence to explore confident, exam-ready rewrites.</p>
+      </div>
+      <div className="flex flex-col gap-3">
+        <Input
+          value={sentence}
+          onChange={(event) => setSentence(event.target.value)}
+          placeholder="Paste the sentence you want to paraphrase"
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={runParaphrase} disabled={loading}>
+            {loading ? (
+              <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" aria-hidden />
+                Generating…
+              </span>
+            ) : (
+              'Generate paraphrases'
+            )}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSentence('')} disabled={loading}>
+            Clear
+          </Button>
+        </div>
+      </div>
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {options.length > 0 && (
+        <ul className="space-y-3">
+          {options.map((option) => (
+            <li key={`${option.tone}-${option.sentence}`} className="rounded-2xl border border-border/60 bg-card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Badge variant="soft" tone="info" size="sm" className="capitalize">
+                  {option.tone}
+                </Badge>
+                {onInsert && (
+                  <Button size="xs" variant="ghost" onClick={() => handleInsert(option.sentence)}>
+                    Insert
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-sm text-foreground">{option.sentence}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+};
+
+===== File #8: components/writing/studio/FeedbackPanel.tsx =====
+import { Card } from '@/components/design-system/Card';
+import { Badge } from '@/components/design-system/Badge';
+import type { FeedbackJson } from '@/lib/writing/schemas';
+
+export type FeedbackPanelProps = {
+  feedback: FeedbackJson | null | undefined;
+};
+
+export const FeedbackPanel = ({ feedback }: FeedbackPanelProps) => {
+  if (!feedback) {
+    return (
+      <Card className="space-y-2" padding="lg">
+        <h2 className="text-lg font-semibold text-foreground">Feedback</h2>
+        <p className="text-sm text-muted-foreground">Detailed feedback will appear once scoring completes.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="space-y-4" padding="lg">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">Feedback</h2>
+        {feedback.highlights && feedback.highlights.length > 0 && (
+          <Badge variant="soft" tone="success" size="sm">
+            {feedback.highlights.length} highlight{feedback.highlights.length > 1 ? 's' : ''}
+          </Badge>
+        )}
+      </div>
+
+      {feedback.highlights && feedback.highlights.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Highlights</h3>
+          <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
+            {feedback.highlights.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {feedback.fixes && feedback.fixes.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Fix this next</h3>
+          <ul className="space-y-3">
+            {feedback.fixes.map((fix) => (
+              <li key={fix.title} className="rounded-2xl border border-border/60 bg-card/70 p-4">
+                <p className="text-sm font-semibold text-foreground">{fix.title}</p>
+                <p className="text-sm text-muted-foreground">{fix.why}</p>
+                {fix.example && (
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">Example:</span> {fix.example}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!feedback.highlights && (!feedback.fixes || feedback.fixes.length === 0) && (
+        <p className="text-sm text-muted-foreground">Keep practising—actionable feedback will appear soon.</p>
+      )}
+    </Card>
+  );
+};
+
+===== File #9: components/writing/studio/RetakeGuard.tsx =====
+import { useCallback, useEffect, useState } from 'react';
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+
+export type ReadinessState = {
+  pass: boolean;
+  missing: string[];
+};
+
+export type RetakeGuardRenderProps = {
+  canRedraft: boolean;
+  loading: boolean;
+  missing: string[];
+  refresh: () => Promise<void>;
+};
+
+export type RetakeGuardProps = {
+  initial?: ReadinessState | null;
+  onRefreshError?: (error: Error) => void;
+  children: (props: RetakeGuardRenderProps) => JSX.Element;
+};
+
+export const RetakeGuard = ({ initial = null, onRefreshError, children }: RetakeGuardProps) => {
+  const [state, setState] = useState<ReadinessState | null>(initial);
+  const [loading, setLoading] = useState(false);
+
+  const fetchStatus = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/writing/readiness/evaluate', { method: 'POST' });
+      if (!response.ok) {
+        throw new Error('Failed to refresh readiness');
+      }
+      const payload = (await response.json()) as ReadinessState;
+      setState(payload);
+    } catch (error) {
+      if (onRefreshError && error instanceof Error) {
+        onRefreshError(error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [onRefreshError]);
+
+  useEffect(() => {
+    if (!initial) {
+      void fetchStatus();
+    }
+  }, [initial, fetchStatus]);
+
+  const missing = state?.missing ?? [];
+  const pass = state?.pass ?? false;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="soft" tone={pass ? 'success' : 'warning'} size="sm">
+          {pass ? 'Ready for redraft' : 'Action needed'}
+        </Badge>
+        <Button size="xs" variant="ghost" onClick={() => fetchStatus()} loading={loading}>
+          Refresh
+        </Button>
+      </div>
+      {!pass && missing.length > 0 && (
+        <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+          {missing.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
+      {children({ canRedraft: pass, loading, missing, refresh: fetchStatus })}
+    </div>
+  );
+};
+
+===== File #10: components/writing/studio/WordCountBar.tsx =====
+import clsx from 'clsx';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+import type { WritingTaskType } from '@/lib/writing/schemas';
+
+const TASK_TARGETS: Record<WritingTaskType, { minimum: number; idealMin: number; idealMax: number; ceiling: number }> = {
+  task1: { minimum: 150, idealMin: 150, idealMax: 170, ceiling: 220 },
+  task2: { minimum: 250, idealMin: 250, idealMax: 290, ceiling: 360 },
+};
+
+export type WordCountBarProps = {
+  taskType: WritingTaskType;
+  wordCount: number;
+};
+
+const statusLabel = (taskType: WritingTaskType, wordCount: number) => {
+  const { minimum, idealMin, idealMax } = TASK_TARGETS[taskType];
+  if (wordCount === 0) return 'Start drafting';
+  if (wordCount < minimum) return `Below minimum (${minimum})`;
+  if (wordCount >= idealMin && wordCount <= idealMax) return 'Within ideal band';
+  if (wordCount > idealMax) return 'Consider tightening';
+  return 'Keep developing ideas';
+};
+
+const toneForCount = (taskType: WritingTaskType, wordCount: number): 'default' | 'success' | 'warning' | 'danger' => {
+  const { minimum, idealMin, idealMax, ceiling } = TASK_TARGETS[taskType];
+  if (wordCount === 0) return 'default';
+  if (wordCount < minimum) return 'warning';
+  if (wordCount >= idealMin && wordCount <= idealMax) return 'success';
+  if (wordCount > ceiling) return 'danger';
+  return 'warning';
+};
+
+export const WordCountBar = ({ taskType, wordCount }: WordCountBarProps) => {
+  const { ceiling, idealMin, idealMax } = TASK_TARGETS[taskType];
+  const progress = Math.min(100, Math.round((wordCount / ceiling) * 100));
+  const withinIdeal = wordCount >= idealMin && wordCount <= idealMax;
+
+  return (
+    <div className="space-y-2 rounded-2xl border border-border/60 bg-card p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-foreground">Word count</p>
+        <span className={clsx('text-xs font-medium', withinIdeal ? 'text-success' : 'text-muted-foreground')}>
+          {wordCount} words
+        </span>
+      </div>
+      <ProgressBar value={progress} tone={toneForCount(taskType, wordCount)} ariaLabel="Word count progress" />
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          Target range{' '}
+          <span className="font-semibold text-foreground">
+            {TASK_TARGETS[taskType].idealMin}–{TASK_TARGETS[taskType].idealMax}
+          </span>
+        </span>
+        <span>{statusLabel(taskType, wordCount)}</span>
+      </div>
+    </div>
+  );
+};
+
+===== File #11: components/writing/studio/LanguageToolsDock.tsx =====
+import type { EvidenceSuggestion, HedgingSuggestion } from '@/lib/writing/crossModule';
+import type { LiveSuggestion } from '@/lib/writing/languageTools';
+import { CohesionHeatmapPanel } from './CohesionHeatmapPanel';
+import { EvidenceSuggestionsPanel } from './EvidenceSuggestionsPanel';
+import { HedgingAlertsPanel } from './HedgingAlertsPanel';
+import { LexicalTrackerPanel } from './LexicalTrackerPanel';
+import { LiveCritiquePanel } from './LiveCritiquePanel';
+import { PaperUploadPanel } from './PaperUploadPanel';
+import { ParaphraseStudio } from './ParaphraseStudio';
+
+export type LanguageToolsDockProps = {
+  text: string;
+  timeSpentMs: number;
+  onApplySuggestion: (suggestion: LiveSuggestion) => void;
+  onInsertParaphrase: (sentence: string) => void;
+  evidence?: EvidenceSuggestion[];
+  onInsertEvidence?: (text: string) => void;
+  onRefreshEvidence?: () => void;
+  evidenceLoading?: boolean;
+  hedging?: HedgingSuggestion[];
+  attemptId: string | null;
+  onInsertHandwriting: (payload: { text: string; legibility: number }) => void;
+  disabled?: boolean;
+};
+
+export const LanguageToolsDock = ({
+  text,
+  timeSpentMs,
+  onApplySuggestion,
+  onInsertParaphrase,
+  evidence,
+  onInsertEvidence,
+  onRefreshEvidence,
+  evidenceLoading,
+  hedging,
+  attemptId,
+  onInsertHandwriting,
+  disabled,
+}: LanguageToolsDockProps) => {
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <LiveCritiquePanel text={text} onApply={onApplySuggestion} disabled={disabled} />
+      <LexicalTrackerPanel text={text} timeSpentMs={timeSpentMs} />
+      <ParaphraseStudio onInsert={onInsertParaphrase} />
+      <CohesionHeatmapPanel text={text} />
+      {evidence && onInsertEvidence && (
+        <EvidenceSuggestionsPanel
+          suggestions={evidence}
+          loading={evidenceLoading}
+          onInsert={onInsertEvidence}
+          onRefresh={onRefreshEvidence}
+        />
+      )}
+      {hedging && hedging.length > 0 && <HedgingAlertsPanel suggestions={hedging} />}
+      <PaperUploadPanel attemptId={attemptId} onInsert={onInsertHandwriting} />
+    </div>
+  );
+};
+
+===== File #12: components/writing/studio/HedgingAlertsPanel.tsx =====
+import { Card } from '@/components/design-system/Card';
+import type { HedgingSuggestion } from '@/lib/writing/crossModule';
+
+interface HedgingAlertsPanelProps {
+  suggestions: HedgingSuggestion[];
+}
+
+export function HedgingAlertsPanel({ suggestions }: HedgingAlertsPanelProps) {
+  const hasSuggestions = suggestions.length > 0;
+  return (
+    <Card className="card-surface space-y-4 p-4">
+      <div>
+        <h3 className="text-base font-semibold text-foreground">Speaking fillers to tighten</h3>
+        <p className="text-xs text-muted-foreground">Trim hedging phrases you frequently use when speaking to sound more decisive in writing.</p>
+      </div>
+      {hasSuggestions ? (
+        <ul className="space-y-3">
+          {suggestions.map((suggestion) => (
+            <li key={suggestion.phrase} className="rounded-2xl border border-border/60 bg-card p-3 shadow-sm">
+              <div className="flex items-center justify-between gap-2 text-sm text-foreground">
+                <span className="font-medium capitalize">{suggestion.phrase}</span>
+                <span className="text-xs text-muted-foreground">{suggestion.count}× last week</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{suggestion.tip}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">Nice! Recent speaking attempts didn’t overuse hedging phrases.</p>
+      )}
+    </Card>
+  );
+}
+
+===== File #13: components/writing/studio/PaperUploadPanel.tsx =====
+import { useRef, useState } from 'react';
+
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+
+interface PaperUploadPanelProps {
+  attemptId: string | null;
+  onInsert: (payload: { text: string; legibility: number }) => void;
+}
+
+export function PaperUploadPanel({ attemptId, onInsert }: PaperUploadPanelProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [legibility, setLegibility] = useState<number | null>(null);
+
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !attemptId) return;
+
+    const formData = new FormData();
+    formData.append('attemptId', attemptId);
+    formData.append('file', file);
+    setLoading(true);
+    setMessage(null);
+    setLegibility(null);
+
+    try {
+      const response = await fetch('/api/writing/originals/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? 'Upload failed');
+      }
+      const payload = (await response.json()) as { text: string; legibility: number };
+      if (payload.text) {
+        onInsert({ text: payload.text, legibility: payload.legibility ?? 0 });
+        setMessage('OCR complete — text inserted into your draft.');
+      } else {
+        setMessage('We saved your image. Try again if text recognition was empty.');
+      }
+      setLegibility(payload.legibility ?? null);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Failed to process image');
+    } finally {
+      setLoading(false);
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+    }
+  };
+
+  return (
+    <Card className="card-surface space-y-4 p-4">
+      <div>
+        <h3 className="text-base font-semibold text-foreground">Upload handwritten essay</h3>
+        <p className="text-xs text-muted-foreground">Snap a clear photo of your paper response. We’ll OCR it and keep the original image for review.</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <input ref={inputRef} type="file" accept="image/*" onChange={handleUpload} disabled={!attemptId || loading} className="hidden" />
+        <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={!attemptId || loading}>
+          {loading ? 'Processing…' : 'Upload photo'}
+        </Button>
+        {!attemptId && <p className="text-xs text-muted-foreground">Start the attempt to enable uploads.</p>}
+      </div>
+      {typeof legibility === 'number' && (
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">Legibility score</p>
+          <ProgressBar value={legibility * 100} ariaLabel="Legibility score" />
+        </div>
+      )}
+      {message && <p className="text-xs text-muted-foreground">{message}</p>}
+    </Card>
+  );
+}
+
+===== File #14: components/writing/studio/DiffViewer.tsx =====
+import { useMemo } from 'react';
+import { Card } from '@/components/design-system/Card';
+
+const splitSentences = (text: string) =>
+  text
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0);
+
+type DiffChunk = {
+  type: 'same' | 'added' | 'removed';
+  value: string;
+};
+
+const buildDiff = (previous: string, current: string): DiffChunk[] => {
+  const prev = splitSentences(previous);
+  const next = splitSentences(current);
+  const dp: number[][] = Array.from({ length: prev.length + 1 }, () => Array(next.length + 1).fill(0));
+
+  for (let i = prev.length - 1; i >= 0; i -= 1) {
+    for (let j = next.length - 1; j >= 0; j -= 1) {
+      if (prev[i].toLowerCase() === next[j].toLowerCase()) {
+        dp[i][j] = dp[i + 1][j + 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+      }
+    }
+  }
+
+  const result: DiffChunk[] = [];
+  let i = 0;
+  let j = 0;
+
+  while (i < prev.length && j < next.length) {
+    if (prev[i].toLowerCase() === next[j].toLowerCase()) {
+      result.push({ type: 'same', value: next[j] });
+      i += 1;
+      j += 1;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      result.push({ type: 'removed', value: prev[i] });
+      i += 1;
+    } else {
+      result.push({ type: 'added', value: next[j] });
+      j += 1;
+    }
+  }
+
+  while (i < prev.length) {
+    result.push({ type: 'removed', value: prev[i] });
+    i += 1;
+  }
+
+  while (j < next.length) {
+    result.push({ type: 'added', value: next[j] });
+    j += 1;
+  }
+
+  return result;
+};
+
+export type DiffViewerProps = {
+  previous?: string | null;
+  current: string;
+};
+
+export const DiffViewer = ({ previous, current }: DiffViewerProps) => {
+  const diff = useMemo(() => (previous ? buildDiff(previous, current) : null), [previous, current]);
+
+  if (!previous || !diff) {
+    return (
+      <Card className="space-y-2" padding="lg">
+        <h2 className="text-lg font-semibold text-foreground">Draft comparison</h2>
+        <p className="text-sm text-muted-foreground">Write a redraft to compare paragraph-by-paragraph improvements.</p>
+      </Card>
+    );
+  }
+
+  const removals = diff.filter((chunk) => chunk.type === 'removed');
+
+  return (
+    <Card className="space-y-4" padding="lg">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold text-foreground">Diff vs. previous attempt</h2>
+        <p className="text-sm text-muted-foreground">New or revised sentences are highlighted to show progress.</p>
+      </div>
+      <div className="space-y-2 rounded-2xl border border-border/60 bg-card/70 p-4 text-sm leading-relaxed text-foreground">
+        {diff
+          .filter((chunk) => chunk.type !== 'removed')
+          .map((chunk, index) =>
+            chunk.type === 'added' ? (
+              <mark key={`${chunk.value}-${index}`} className="rounded bg-success/20 px-1 py-0.5">
+                {chunk.value}{' '}
+              </mark>
+            ) : (
+              <span key={`${chunk.value}-${index}`}>{chunk.value} </span>
+            ),
+          )}
+      </div>
+      {removals.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-border/60 bg-card/50 p-4 text-xs text-muted-foreground">
+          <p className="font-semibold text-foreground">Removed sentences</p>
+          <ul className="list-disc space-y-1 pl-5">
+            {removals.map((chunk, index) => (
+              <li key={`${chunk.value}-${index}`}>{chunk.value}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+===== File #15: components/writing/studio/DrillChecklist.tsx =====
+import { Checkbox } from '@/components/design-system/Checkbox';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+
+export type DrillChecklistItem = {
+  id: string;
+  label: string;
+  hint?: string;
+  completed: boolean;
+  href?: string;
+};
+
+export type DrillChecklistProps = {
+  title?: string;
+  items: DrillChecklistItem[];
+};
+
+export const DrillChecklist = ({ title = 'Targeted drills', items }: DrillChecklistProps) => {
+  return (
+    <Card className="space-y-3" padding="lg">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <p className="text-sm text-muted-foreground">Complete these focused reps to unlock your next redraft.</p>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No drills assigned yet—review feedback to discover priorities.</p>
+      ) : (
+        <ul className="space-y-3">
+          {items.map((item) => (
+            <li key={item.id} className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-card/70 p-3">
+              <label className="flex items-start gap-3">
+                <Checkbox checked={item.completed} readOnly tone={item.completed ? 'success' : 'default'} />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">{item.label}</p>
+                  {item.hint && <p className="text-xs text-muted-foreground">{item.hint}</p>}
+                </div>
+              </label>
+              {item.href && (
+                <div className="flex">
+                  <Button size="xs" variant="outline" href={item.href}>
+                    Open drill
+                  </Button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+};
+
+===== File #16: components/writing/studio/TimerBar.tsx =====
+import { useMemo } from 'react';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+import type { WritingTaskType } from '@/lib/writing/schemas';
+
+const TARGET_MINUTES: Record<WritingTaskType, number> = {
+  task1: 20,
+  task2: 40,
+};
+
+export type TimerBarProps = {
+  elapsedMs: number;
+  taskType: WritingTaskType;
+  paused?: boolean;
+};
+
+const formatElapsed = (elapsedMs: number) => {
+  const minutes = Math.floor(elapsedMs / 60000);
+  const seconds = Math.floor((elapsedMs % 60000) / 1000);
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
+export const TimerBar = ({ elapsedMs, taskType, paused = false }: TimerBarProps) => {
+  const targetMinutes = TARGET_MINUTES[taskType];
+  const targetMs = targetMinutes * 60000;
+  const progress = Math.min(100, Math.round((elapsedMs / targetMs) * 100));
+  const status = useMemo(() => {
+    if (paused) return 'Paused';
+    if (elapsedMs < targetMs * 0.5) return 'On track';
+    if (elapsedMs < targetMs * 0.9) return 'Maintain pace';
+    if (elapsedMs <= targetMs) return 'Finalise response';
+    return 'Time exceeded';
+  }, [elapsedMs, paused, targetMs]);
+
+  const tone = paused ? 'default' : elapsedMs <= targetMs ? 'info' : 'warning';
+
+  return (
+    <div className="space-y-2 rounded-2xl border border-border/60 bg-card p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-foreground">Timer</p>
+        <span className="text-xs font-medium text-muted-foreground">Target {targetMinutes} min</span>
+      </div>
+      <ProgressBar value={progress} tone={tone} ariaLabel="Elapsed time" />
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span className="font-semibold text-foreground">{formatElapsed(elapsedMs)}</span>
+        <span>{status}</span>
+      </div>
+    </div>
+  );
+};
+
+===== File #17: components/writing/studio/index.ts =====
+export * from './WritingEditor';
+export * from './WordCountBar';
+export * from './TimerBar';
+export * from './CriteriaMeters';
+export * from './FeedbackPanel';
+export * from './DiffViewer';
+export * from './DrillChecklist';
+export * from './RetakeGuard';
+export * from './LiveCritiquePanel';
+export * from './ParaphraseStudio';
+export * from './LexicalTrackerPanel';
+export * from './CohesionHeatmapPanel';
+export * from './LanguageToolsDock';
+export * from './EvidenceSuggestionsPanel';
+export * from './HedgingAlertsPanel';
+export * from './PaperUploadPanel';
+
+===== File #18: components/writing/studio/EvidenceSuggestionsPanel.tsx =====
+import { useMemo } from 'react';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import type { EvidenceSuggestion } from '@/lib/writing/crossModule';
+
+interface EvidenceSuggestionsPanelProps {
+  suggestions: EvidenceSuggestion[];
+  loading?: boolean;
+  onInsert: (text: string) => void;
+  onRefresh?: () => void;
+}
+
+export function EvidenceSuggestionsPanel({ suggestions, loading, onInsert, onRefresh }: EvidenceSuggestionsPanelProps) {
+  const hasSuggestions = suggestions.length > 0;
+  const topSuggestions = useMemo(() => suggestions.slice(0, 4), [suggestions]);
+
+  return (
+    <Card className="card-surface space-y-4 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h3 className="text-base font-semibold text-foreground">Evidence suggestions</h3>
+          <p className="text-xs text-muted-foreground">Reuse facts from recent reading passages to strengthen your Task 2 arguments.</p>
+        </div>
+        {onRefresh && (
+          <Button size="xs" variant="ghost" onClick={() => onRefresh()} loading={loading}>
+            Refresh
+          </Button>
+        )}
+      </div>
+      {hasSuggestions ? (
+        <ul className="space-y-3">
+          {topSuggestions.map((item) => (
+            <li key={`${item.sourceSlug}-${item.statement}`} className="rounded-2xl border border-border/60 bg-card p-3 shadow-sm">
+              <p className="text-sm text-foreground">{item.statement}</p>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <Badge size="xs" variant="soft" tone="info">
+                  {item.sourceTitle}
+                </Badge>
+                <Button size="xs" variant="outline" onClick={() => onInsert(item.statement)}>
+                  Insert into draft
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">Complete a reading passage to unlock tailored evidence suggestions.</p>
+      )}
+    </Card>
+  );
+}
+
+===== File #19: components/writing/studio/CohesionHeatmapPanel.tsx =====
+import { useCallback, useEffect, useState } from 'react';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Card } from '@/components/design-system/Card';
+import type { CohesionHeatmapEntry } from '@/lib/writing/languageTools';
+
+export type CohesionHeatmapPanelProps = {
+  text: string;
+};
+
+export const CohesionHeatmapPanel = ({ text }: CohesionHeatmapPanelProps) => {
+  const [heatmap, setHeatmap] = useState<CohesionHeatmapEntry[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const runHeatmap = useCallback(async () => {
+    if (!text.trim()) {
+      setHeatmap([]);
+      return;
+    }
+    try {
+      const response = await fetch('/api/writing/cohesion/heatmap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error ?? 'Unable to compute cohesion heatmap');
+      }
+      const payload = (await response.json()) as { heatmap: CohesionHeatmapEntry[] };
+      setHeatmap(payload.heatmap);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to compute cohesion heatmap');
+    }
+  }, [text]);
+
+  useEffect(() => {
+    const debounce = window.setTimeout(() => {
+      void runHeatmap();
+    }, 2000);
+    return () => window.clearTimeout(debounce);
+  }, [runHeatmap]);
+
+  return (
+    <Card className="space-y-4" padding="lg">
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-foreground">Cohesion heatmap</h2>
+        <p className="text-sm text-muted-foreground">See which linkers dominate your essay and where to diversify them.</p>
+      </div>
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {heatmap.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Write a paragraph or two, then refresh to reveal cohesion patterns.</p>
+      ) : (
+        <ul className="space-y-3">
+          {heatmap.map((entry) => (
+            <li key={entry.marker} className="rounded-2xl border border-border/60 bg-card p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Badge variant="soft" tone="info" size="sm">
+                  {entry.marker}
+                </Badge>
+                <span className="text-sm text-muted-foreground">{entry.count} use{entry.count === 1 ? '' : 's'}</span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Appears in sentence{entry.sentences.length === 1 ? '' : 's'} {entry.sentences.map((index) => index + 1).join(', ')}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+};
+
+===== File #20: components/writing/studio/CriteriaMeters.tsx =====
+import { Card } from '@/components/design-system/Card';
+import { ProgressBar } from '@/components/design-system/ProgressBar';
+import type { ScoresJson } from '@/lib/writing/schemas';
+
+const CRITERIA_LABELS: Array<keyof ScoresJson> = ['TR', 'CC', 'LR', 'GRA'];
+
+export type CriteriaMetersProps = {
+  scores: ScoresJson | null | undefined;
+};
+
+export const CriteriaMeters = ({ scores }: CriteriaMetersProps) => {
+  return (
+    <Card className="space-y-4" padding="lg">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold text-foreground">Band breakdown</h2>
+        <p className="text-sm text-muted-foreground">Task response, cohesion, lexical range, and grammar accuracy.</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {CRITERIA_LABELS.map((criterion) => {
+          const value = scores?.[criterion] ?? null;
+          return (
+            <div key={criterion} className="space-y-2 rounded-2xl border border-border/60 bg-card p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-foreground">{criterion}</p>
+                <span className="text-sm font-medium text-foreground">{value != null ? value.toFixed(1) : '—'}</span>
+              </div>
+              <ProgressBar value={value ? Math.min(100, Math.round((value / 9) * 100)) : 0} tone={value ? 'success' : 'default'} ariaLabel={`${criterion} meter`} />
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+};
+
+===== File #21: components/writing/BandDiffView.tsx =====
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Card } from '@/components/design-system/Card';
+import { Tabs } from '@/components/design-system/Tabs';
+import { track } from '@/lib/analytics/track';
+import type { WritingFeedback, WritingError } from '@/types/writing';
+
+const SEVERITY_BADGE: Record<NonNullable<WritingError['severity']>, { label: string; variant: 'danger' | 'warning' | 'secondary' }> = {
+  high: { label: 'High', variant: 'danger' },
+  medium: { label: 'Medium', variant: 'warning' },
+  low: { label: 'Low', variant: 'secondary' },
+};
+
+type Props = {
+  essay: string;
+  feedback: WritingFeedback;
+};
+
+type HighlightSegment = {
+  text: string;
+  error?: WritingError;
+};
+
+const buildSegments = (essay: string, errors: WritingError[] = []): HighlightSegment[] => {
+  if (!essay) return [{ text: '' }];
+  if (!errors || errors.length === 0) return [{ text: essay }];
+  const segments: HighlightSegment[] = [];
+  const sorted = [...errors].sort((a, b) => (a.startOffset ?? 0) - (b.startOffset ?? 0));
+  let cursor = 0;
+
+  sorted.forEach((error) => {
+    const start = Math.max(0, error.startOffset ?? 0);
+    const end = Math.max(start, error.endOffset ?? start);
+    if (start > cursor) {
+      segments.push({ text: essay.slice(cursor, start) });
+    }
+    segments.push({ text: essay.slice(start, end), error });
+    cursor = end;
+  });
+
+  if (cursor < essay.length) {
+    segments.push({ text: essay.slice(cursor) });
+  }
+
+  return segments;
+};
+
+const renderStrengths = (values: string[]) => {
+  if (!values || values.length === 0) return <p className="text-sm text-muted-foreground">No strengths recorded yet.</p>;
+  return (
+    <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
+      {values.map((item, index) => (
+        <li key={`${item}-${index}`}>{item}</li>
+      ))}
+    </ul>
+  );
+};
+
+const renderImprovements = (values: string[]) => {
+  if (!values || values.length === 0) return <p className="text-sm text-muted-foreground">Feedback still processing.</p>;
+  return (
+    <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
+      {values.map((item, index) => (
+        <li key={`${item}-${index}`}>{item}</li>
+      ))}
+    </ul>
+  );
+};
+
+const severityBadge = (error: WritingError) => {
+  const info = error.severity ? SEVERITY_BADGE[error.severity] : null;
+  if (!info) return null;
+  return (
+    <Badge size="sm" variant={info.variant} className="uppercase tracking-wide">
+      {info.label}
+    </Badge>
+  );
+};
+
+const HighlightsView: React.FC<{ essay: string; errors: WritingError[] | undefined }> = ({ essay, errors }) => {
+  const segments = useMemo(() => buildSegments(essay, errors ?? []), [essay, errors]);
+
+  if (!errors || errors.length === 0) {
+    return <p className="text-sm text-muted-foreground">No highlight-worthy issues detected in this draft.</p>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card padding="md" className="bg-background">
+        <p className="text-sm leading-relaxed text-foreground">
+          {segments.map((segment, index) =>
+            segment.error ? (
+              <mark
+                key={`${segment.text}-${index}`}
+                className="rounded bg-warning/30 px-1 py-0.5 text-foreground"
+              >
+                {segment.text}
+              </mark>
+            ) : (
+              <React.Fragment key={`${segment.text}-${index}`}>{segment.text}</React.Fragment>
+            ),
+          )}
+        </p>
+      </Card>
+
+      <div className="space-y-4">
+        {errors.map((error, index) => (
+          <div key={`${error.excerpt}-${index}`} className="rounded-ds-xl border border-border/60 bg-card p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-foreground">{error.message ?? 'Issue'}</p>
+              {severityBadge(error)}
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{error.excerpt}</p>
+            {error.suggestion ? (
+              <p className="mt-3 text-sm text-foreground">
+                <span className="font-medium text-primary">Suggestion:</span> {error.suggestion}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const RewriteView: React.FC<{ rewrite?: string }> = ({ rewrite }) => {
+  if (!rewrite) {
+    return <p className="text-sm text-muted-foreground">Band 9 rewrite will appear here once scoring is complete.</p>;
+  }
+  return (
+    <article className="prose prose-sm max-w-none text-foreground">
+      {rewrite.split('\n').map((paragraph, index) => (
+        <p key={`${paragraph}-${index}`} className="leading-relaxed">
+          {paragraph}
+        </p>
+      ))}
+    </article>
+  );
+};
+
+const FeedbackView: React.FC<{ feedback: WritingFeedback }> = ({ feedback }) => {
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Summary</h3>
+        <p className="text-sm leading-relaxed text-foreground">{feedback.summary}</p>
+        <div>
+          <h4 className="text-sm font-semibold text-foreground">Strengths</h4>
+          {renderStrengths(feedback.strengths)}
+        </div>
+      </div>
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold text-foreground">Improvements</h4>
+        {renderImprovements(feedback.improvements)}
+        <div className="rounded-ds-lg border border-border/70 bg-muted/30 p-3 text-xs text-muted-foreground">
+          Click the Highlights tab to see exact excerpts and suggestions.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BandDiffView: React.FC<Props> = ({ essay, feedback }) => {
+  const [tab, setTab] = useState('feedback');
+  const errorCount = feedback.errors?.length ?? 0;
+  const blockCount = feedback.blocks?.length ?? 0;
+  const tabs = [
+    { key: 'feedback', label: 'Feedback' },
+    { key: 'highlights', label: 'Highlights' },
+    { key: 'rewrite', label: 'Band 9 Rewrite' },
+  ];
+
+  useEffect(() => {
+    if (tab === 'rewrite') {
+      track('writing.view.band9', { errors: errorCount, blocks: blockCount });
+    } else if (tab === 'highlights') {
+      track('writing.view.highlights', { errors: errorCount });
+    }
+  }, [blockCount, errorCount, tab]);
+
+  return (
+    <Card className="space-y-6" padding="lg" insetBorder>
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-foreground">AI Deep Dive</h2>
+        <p className="text-sm text-muted-foreground">
+          Explore detailed insights from the upgraded scorer. Switch tabs to review highlights and the polished rewrite.
+        </p>
+      </div>
+
+      <Tabs tabs={tabs} value={tab} onChange={setTab} />
+
+      <div className="min-h-[160px]">
+        {tab === 'feedback' && <FeedbackView feedback={feedback} />}
+        {tab === 'highlights' && <HighlightsView essay={essay} errors={feedback.errors} />}
+        {tab === 'rewrite' && <RewriteView rewrite={feedback.band9Rewrite} />}
+      </div>
+    </Card>
+  );
+};
+
+export default BandDiffView;
+
+const highlightTask = (feedback: WritingFeedback) => {
+  return feedback?.perCriterion ? Object.keys(feedback.perCriterion)[0] : 'unknown';
+};
+
+===== File #22: components/writing/WritingResultCard.tsx =====
+// components/writing/WritingResultCard.tsx
+// Displays AI scoring summary for a task.
+
+import React from 'react';
+import { Card } from '@/components/design-system/Card';
+import type { WritingScorePayload, WritingTaskType } from '@/types/writing';
+
+type Props = {
+  task: WritingTaskType;
+  result: WritingScorePayload;
+  essay?: string;
+};
+
+const CRITERION_LABELS: Record<string, string> = {
+  task_response: 'Task Response',
+  coherence_and_cohesion: 'Coherence & Cohesion',
+  lexical_resource: 'Lexical Resource',
+  grammatical_range: 'Grammatical Range',
+};
+
+export const WritingResultCard: React.FC<Props> = ({ task, result, essay }) => {
+  return (
+    <Card className="flex flex-col gap-4 p-5">
+      <header className="flex items-baseline justify-between">
+        <h3 className="text-lg font-semibold text-foreground">{task.toUpperCase()} result</h3>
+        <span className="text-2xl font-bold text-primary">{result.overallBand.toFixed(1)}</span>
+      </header>
+      <p className="text-sm text-muted-foreground">{result.feedback.summary}</p>
+      <dl className="grid gap-3 sm:grid-cols-2">
+        {Object.entries(result.bandScores).map(([criterion, band]) =>
+          criterion === 'overall' ? null : (
+            <div key={criterion} className="rounded-lg border border-border/60 bg-muted/30 p-3">
+              <dt className="text-xs font-medium uppercase text-muted-foreground">
+                {CRITERION_LABELS[criterion] ?? criterion}
+              </dt>
+              <dd className="mt-1 flex items-center justify-between text-sm text-foreground">
+                <span className="font-semibold">{band.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {result.feedback.perCriterion[criterion as keyof typeof result.feedback.perCriterion]?.feedback}
+                </span>
+              </dd>
+            </div>
+          ),
+        )}
+      </dl>
+      {essay && (
+        <section className="rounded-lg border border-border/60 bg-background/70 p-4">
+          <h4 className="text-sm font-semibold text-muted-foreground">Essay</h4>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">{essay}</p>
+        </section>
+      )}
+      <footer className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        <span>Words: {result.wordCount}</span>
+        {typeof result.durationSeconds === 'number' && <span>Time: {Math.round(result.durationSeconds / 60)} min</span>}
+      </footer>
+    </Card>
+  );
+};
+
+export default WritingResultCard;
+
+===== File #23: components/writing/ReevalPanel.tsx =====
+import React, { useState } from 'react';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { Alert } from '@/components/design-system/Alert';
+
+type Criteria = { task:number; coherence:number; lexical:number; grammar:number };
+
+export const ReevalPanel: React.FC<{
+  attemptId: string;
+  original: { bandOverall:number; criteria: Criteria };
+  onSaved?: (row: {
+    id: string;
+    created_at: string;
+    band_overall: number;
+    band_breakdown: Criteria;
+    feedback: string;
+    mode: string;
+    focus: string[];
+  }) => void;
+}> = ({ attemptId, original, onSaved }) => {
+  const [mode, setMode] = useState<'balanced'|'strict'|'coaching'>('balanced');
+  const [focus, setFocus] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ bandOverall:number; criteria:Criteria; feedback:string; model:string }|null>(null);
+  const [error, setError] = useState<string|null>(null);
+
+  const toggleFocus = (k: string) =>
+    setFocus(prev => prev.includes(k) ? prev.filter(x=>x!==k) : [...prev, k]);
+
+  const delta = (a:number, b:number) => Math.round((a - b) * 10)/10;
+
+  const run = async () => {
+    setLoading(true); setError(null); setResult(null);
+    try {
+      const res = await fetch('/api/writing/reevaluate', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ attemptId, mode, focus })
+      });
+      if (!res.ok) throw new Error('Request failed');
+      const data = await res.json();
+      setResult({ bandOverall: data.bandOverall, criteria: data.criteria, feedback: data.feedback, model: data.model });
+      onSaved?.({
+        id: data.id,
+        created_at: data.created_at,
+        band_overall: data.bandOverall,
+        band_breakdown: data.criteria,
+        feedback: data.feedback,
+        mode,
+        focus,
+      });
+    } catch (e:any) {
+      setError(e.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="card-surface p-6 rounded-ds-2xl">
+      <h3 className="text-h3">AI Re-evaluation</h3>
+      <p className="text-muted-foreground mt-1">Run a second pass with different strictness or focus.</p>
+
+      <div className="mt-4">
+        <label className="block">
+          <span className="mb-1.5 inline-block text-small text-grayish dark:text-muted-foreground">Mode</span>
+          <select
+            className="w-full p-3.5 rounded-ds border border-lightBorder dark:border-white/10 bg-white dark:bg-dark"
+            value={mode}
+            onChange={(e)=>setMode(e.target.value as any)}
+          >
+            <option value="balanced">Balanced (default)</option>
+            <option value="strict">Strict (tough marking)</option>
+            <option value="coaching">Coaching (encouraging)</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {['task','coherence','lexical','grammar','tone'].map(k => (
+          <button
+            key={k}
+            type="button"
+            onClick={()=>toggleFocus(k)}
+            className={`p-3.5 rounded-ds border border-lightBorder dark:border-white/10 ${focus.includes(k)?'bg-electricBlue/10 text-electricBlue border-electricBlue/30':''}`}
+          >
+            {k}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        <Button onClick={run} disabled={loading} variant="primary" className="rounded-ds-xl">
+          {loading ? 'Re-evaluating…' : 'Run Re-evaluation'}
+        </Button>
+      </div>
+
+      {error && <Alert variant="warning" title="Failed" className="mt-4">{error}</Alert>}
+
+      {result && (
+        <div className="mt-6 grid gap-4">
+          <div className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
+            <div className="flex items-center gap-3">
+              <Badge variant="neutral" size="sm">Original: {original.bandOverall}</Badge>
+              <Badge
+                variant={result.bandOverall>original.bandOverall?'success':result.bandOverall<original.bandOverall?'danger':'neutral'}
+                size="sm"
+              >
+                New: {result.bandOverall} ({delta(result.bandOverall, original.bandOverall)>0?'+':''}{delta(result.bandOverall, original.bandOverall)})
+              </Badge>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            {(['task','coherence','lexical','grammar'] as const).map(k => (
+              <div key={k} className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10">
+                <div className="flex items-center justify-between">
+                  <span className="capitalize">{k}</span>
+                  <Badge
+                    variant={result.criteria[k]>original.criteria[k]?'success':result.criteria[k]<original.criteria[k]?'danger':'neutral'}
+                    size="sm"
+                  >
+                    {original.criteria[k]} → {result.criteria[k]} ({delta(result.criteria[k], original.criteria[k])>0?'+':''}{delta(result.criteria[k], original.criteria[k])})
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Alert variant="info" title="Feedback">{result.feedback}</Alert>
+        </div>
+      )}
+    </Card>
+  );
+};
+
+===== File #24: components/writing/ExportButton.tsx =====
+import { useState } from 'react';
+
+import { Button } from '@/components/design-system/Button';
+import { useToast } from '@/components/design-system/Toaster';
+import { track } from '@/lib/analytics/track';
+
+export type ExportButtonProps = {
+  attemptId: string;
+  disabled?: boolean;
+  className?: string;
+};
+
+export function ExportButton({ attemptId, disabled = false, className }: ExportButtonProps) {
+  const [loading, setLoading] = useState(false);
+  const { error, success } = useToast();
+
+  const handleClick = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/writing/export/pdf?attemptId=${attemptId}`);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? 'Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `writing-${attemptId}.pdf`;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      track('export.pdf', { attemptId });
+      success('Export ready — check your downloads.');
+    } catch (err) {
+      error(err instanceof Error ? err.message : 'Could not generate export');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button className={className} onClick={handleClick} disabled={disabled || loading} variant="secondary">
+      {loading ? 'Preparing…' : 'Export PDF'}
+    </Button>
+  );
+}
+
+export default ExportButton;
+
+
+===== File #25: components/writing/CoachDock.tsx =====
+'use client';
+
+import React from 'react';
+import clsx from 'clsx';
+
+import Loader from '@/components/common/Loader';
+import { Alert } from '@/components/design-system/Alert';
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { Textarea } from '@/components/design-system/Textarea';
+import { track } from '@/lib/analytics/track';
+import type { CoachSessionSnapshot } from '@/lib/writing/coach';
+import { consumeSSE } from '@/utils/sse';
+
+type CoachMessage = { id: string; role: 'user' | 'assistant'; content: string };
+
+type DockStatus = 'idle' | 'loading' | 'streaming' | 'error';
+
+type CoachDockState = {
+  status: DockStatus;
+  session: CoachSessionSnapshot | null;
+  messages: CoachMessage[];
+  error: string | null;
+  streamingId: string | null;
+};
+
+type Action =
+  | { type: 'RESET' }
+  | { type: 'FETCH_START' }
+  | { type: 'FETCH_SUCCESS'; session: CoachSessionSnapshot; seedMessages: CoachMessage[] }
+  | { type: 'FETCH_ERROR'; error: string }
+  | { type: 'START_STREAM'; assistantId: string; userMessage: CoachMessage; assistantMessage: CoachMessage }
+  | { type: 'APPEND_DELTA'; assistantId: string; delta: string }
+  | { type: 'STREAM_DONE' }
+  | { type: 'STREAM_ERROR'; assistantId?: string; error: string }
+  | { type: 'CLEAR_ERROR' };
+
+type CoachDockContextValue = {
+  state: CoachDockState;
+  draft: string;
+  setDraft: React.Dispatch<React.SetStateAction<string>>;
+  send: (input: string) => Promise<void>;
+  retry: () => void;
+};
+
+const CoachDockContext = React.createContext<CoachDockContextValue | undefined>(undefined);
+
+const initialState: CoachDockState = {
+  status: 'idle',
+  session: null,
+  messages: [],
+  error: null,
+  streamingId: null,
+};
+
+function reducer(state: CoachDockState, action: Action): CoachDockState {
+  switch (action.type) {
+    case 'RESET':
+      return initialState;
+    case 'FETCH_START':
+      return { ...initialState, status: 'loading' };
+    case 'FETCH_SUCCESS':
+      return {
+        status: 'idle',
+        session: action.session,
+        messages: action.seedMessages,
+        error: null,
+        streamingId: null,
+      };
+    case 'FETCH_ERROR':
+      return { ...initialState, status: 'error', error: action.error };
+    case 'START_STREAM':
+      return {
+        ...state,
+        status: 'streaming',
+        streamingId: action.assistantId,
+        error: null,
+        messages: [...state.messages, action.userMessage, action.assistantMessage],
+      };
+    case 'APPEND_DELTA':
+      return {
+        ...state,
+        messages: state.messages.map((message) =>
+          message.id === action.assistantId
+            ? { ...message, content: message.content + action.delta }
+            : message,
+        ),
+      };
+    case 'STREAM_DONE':
+      return { ...state, status: state.error ? 'error' : 'idle', streamingId: null };
+    case 'STREAM_ERROR': {
+      const nextMessages = action.assistantId
+        ? state.messages.map((message) => {
+            if (message.id !== action.assistantId) return message;
+            const note = message.content ? `${message.content}\n\n⚠️ ${action.error}` : `⚠️ ${action.error}`;
+            return { ...message, content: note };
+          })
+        : state.messages;
+      return {
+        ...state,
+        status: 'error',
+        streamingId: null,
+        error: action.error,
+        messages: nextMessages,
+      };
+    }
+    case 'CLEAR_ERROR':
+      return { ...state, status: 'idle', error: null };
+    default:
+      return state;
+  }
+}
+
+function useCoachDockInternal() {
+  const ctx = React.useContext(CoachDockContext);
+  if (!ctx) throw new Error('useCoachDock must be used within CoachDock');
+  return ctx;
+}
+
+function buildIntroMessages(session: CoachSessionSnapshot): CoachMessage[] {
+  const focus = session.highlight ?? session.tasks[0];
+  if (!focus) return [];
+  const improvements = focus.score.feedback.improvements?.filter(Boolean).slice(0, 3) ?? [];
+  const lines = improvements.length
+    ? improvements.map((item) => `• ${item}`).join('\n')
+    : '• Ask about structure, lexical range, or ideas you want to improve.';
+  const intro =
+    `Hi! I reviewed your ${focus.task.toUpperCase()} (band ${focus.score.overallBand.toFixed(1)}). ` +
+    `Your latest attempt averaged ${session.averageBand.toFixed(1)}.\n\n` +
+    `Focus next on:\n${lines}\n\nLet me know which paragraph or sentence to workshop.`;
+  return [{ id: `intro-${focus.task}`, role: 'assistant', content: intro }];
+}
+
+type Props = {
+  attemptId: string;
+  className?: string;
+};
+
+type SessionResponse =
+  | { ok: true; session: CoachSessionSnapshot }
+  | { ok: false; error: string; code: string };
+
+export function CoachDock({ attemptId, className }: Props) {
+  const [state, dispatch] = React.useReducer(reducer, initialState);
+  const [draft, setDraft] = React.useState('');
+  const loadControllerRef = React.useRef<AbortController | null>(null);
+  const streamControllerRef = React.useRef<AbortController | null>(null);
+  const viewTracked = React.useRef(false);
+
+  const fetchSession = React.useCallback(async () => {
+    loadControllerRef.current?.abort();
+    const controller = new AbortController();
+    loadControllerRef.current = controller;
+
+    dispatch({ type: 'FETCH_START' });
+
+    try {
+      const res = await fetch(`/api/coach/writing/session?attemptId=${encodeURIComponent(attemptId)}`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || 'Failed to load coach session.');
+      }
+      const json = (await res.json()) as SessionResponse;
+      if (!json.ok) {
+        throw new Error(json.error || 'Writing coach unavailable right now.');
+      }
+      dispatch({ type: 'FETCH_SUCCESS', session: json.session, seedMessages: buildIntroMessages(json.session) });
+    } catch (error: any) {
+      if (controller.signal.aborted) return;
+      dispatch({
+        type: 'FETCH_ERROR',
+        error: error?.message || 'Could not load the writing coach for this attempt.',
+      });
+    }
+  }, [attemptId]);
+
+  React.useEffect(() => {
+    viewTracked.current = false;
+    dispatch({ type: 'RESET' });
+    fetchSession();
+    return () => {
+      loadControllerRef.current?.abort();
+      streamControllerRef.current?.abort();
+    };
+  }, [fetchSession]);
+
+  React.useEffect(() => {
+    if (state.session && !viewTracked.current) {
+      track('writing.coach.view', {
+        attemptId: state.session.attemptId,
+        tasks: state.session.tasks.length,
+        averageBand: state.session.averageBand,
+      });
+      viewTracked.current = true;
+    }
+  }, [state.session]);
+
+  const send = React.useCallback(
+    async (input: string) => {
+      const trimmed = input.trim();
+      if (!trimmed) return;
+      if (!state.session) {
+        throw new Error('Session not ready yet.');
+      }
+      if (state.status === 'loading' || state.status === 'streaming') {
+        throw new Error('Coach is busy. Please wait for the current response.');
+      }
+
+      const userMessage: CoachMessage = { id: crypto.randomUUID(), role: 'user', content: trimmed };
+      const assistantId = crypto.randomUUID();
+      const assistantMessage: CoachMessage = { id: assistantId, role: 'assistant', content: '' };
+
+      const payloadHistory = [...state.messages, userMessage]
+        .slice(-12)
+        .map((message) => ({ role: message.role, content: message.content }));
+
+      dispatch({ type: 'START_STREAM', assistantId, userMessage, assistantMessage });
+      track('writing.coach.ask', { attemptId: state.session.attemptId });
+
+      const controller = new AbortController();
+      streamControllerRef.current = controller;
+
+      try {
+        const response = await fetch('/api/coach/writing/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attemptId, messages: payloadHistory }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `Request failed (${response.status})`);
+        }
+
+        let streamError: string | null = null;
+
+        await consumeSSE(response, (event) => {
+          if (streamError) return;
+          if (event.data === '[DONE]') {
+            return;
+          }
+
+          try {
+            const payload = JSON.parse(event.data) as { delta?: string; error?: string };
+            if (payload.error) {
+              streamError = payload.error;
+              return;
+            }
+            if (payload.delta) {
+              dispatch({ type: 'APPEND_DELTA', assistantId, delta: payload.delta });
+            }
+          } catch (err: any) {
+            streamError = err?.message || 'Stream parse error';
+          }
+        });
+
+        if (streamError) {
+          throw new Error(streamError);
+        }
+
+        dispatch({ type: 'STREAM_DONE' });
+        track('writing.coach.reply', { attemptId: state.session.attemptId });
+      } catch (error: any) {
+        if (controller.signal.aborted) return;
+        const message = error?.message || 'Unable to fetch a coach reply right now.';
+        dispatch({ type: 'STREAM_ERROR', assistantId, error: message });
+        track('writing.coach.error', { attemptId: state.session.attemptId, reason: message });
+      } finally {
+        streamControllerRef.current = null;
+      }
+    },
+    [attemptId, state.session, state.messages, state.status],
+  );
+
+  const retry = React.useCallback(() => {
+    if (!state.session) {
+      fetchSession();
+    } else {
+      dispatch({ type: 'CLEAR_ERROR' });
+    }
+  }, [fetchSession, state.session]);
+
+  const contextValue = React.useMemo<CoachDockContextValue>(
+    () => ({ state, draft, setDraft, send, retry }),
+    [state, draft, send, retry],
+  );
+
+  return (
+    <CoachDockContext.Provider value={contextValue}>
+      <Card className={clsx('flex h-full flex-col gap-5 p-5', className)}>
+        <CoachHeader />
+        <CoachSummary />
+        <CoachConversation />
+        <CoachComposer />
+      </Card>
+    </CoachDockContext.Provider>
+  );
+}
+
+function CoachHeader() {
+  const {
+    state: { session, status },
+  } = useCoachDockInternal();
+
+  const submitted = React.useMemo(() => {
+    if (!session?.submittedAt) return null;
+    try {
+      return new Date(session.submittedAt).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return session.submittedAt;
+    }
+  }, [session?.submittedAt]);
+
+  return (
+    <header className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-foreground">Writing Coach</h2>
+        {session ? (
+          <span className="rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+            Avg band {session.averageBand.toFixed(1)}
+          </span>
+        ) : null}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {session
+          ? `Latest mock submitted ${submitted ? `on ${submitted}` : 'recently'}.`
+          : status === 'loading'
+          ? 'Loading your attempt insights…'
+          : 'Connect to the AI coach for tailored writing drills.'}
+      </p>
+    </header>
+  );
+}
+
+function CoachSummary() {
+  const {
+    state: { session },
+  } = useCoachDockInternal();
+
+  if (!session) return null;
+  const focus = session.highlight ?? session.tasks[0];
+  if (!focus) return null;
+
+  const improvements = focus.score.feedback.improvements?.filter(Boolean).slice(0, 3) ?? [];
+  const strengths = focus.score.feedback.strengths?.filter(Boolean).slice(0, 2) ?? [];
+
+  return (
+    <section className="rounded-ds-xl border border-border/60 bg-muted/30 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground">Latest AI notes</h3>
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Focus: Task {focus.task === 'task1' ? '1' : '2'}
+        </span>
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Band {focus.score.overallBand.toFixed(1)} · Average {session.averageBand.toFixed(1)}
+      </p>
+      {strengths.length ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {strengths.map((item) => (
+            <span
+              key={`strength-${item}`}
+              className="rounded-full bg-success/15 px-2 py-1 text-xs font-medium text-success"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-foreground">
+        {improvements.length ? (
+          improvements.map((item) => <li key={`improve-${item}`}>{item}</li>)
+        ) : (
+          <li>Ask for help polishing paragraph flow or boosting lexical range.</li>
+        )}
+      </ul>
+    </section>
+  );
+}
+
+function CoachConversation() {
+  const {
+    state: { session, status, messages, streamingId, error },
+    retry,
+  } = useCoachDockInternal();
+
+  if (!session) {
+    if (status === 'loading') {
+      return (
+        <div className="flex flex-1 items-center justify-center rounded-ds-xl border border-dashed border-border/60 p-6">
+          <Loader label="Loading coach session…" />
+        </div>
+      );
+    }
+    if (status === 'error') {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-ds-xl border border-dashed border-border/60 p-6 text-center">
+          <Alert variant="error" appearance="soft" className="w-full text-left">
+            We couldn’t load the writing coach for this attempt. Try refreshing the dock.
+          </Alert>
+          <Button onClick={retry} variant="secondary">
+            Retry loading
+          </Button>
+        </div>
+      );
+    }
+  }
+
+  return (
+    <section className="flex min-h-[220px] flex-1 flex-col gap-3">
+      <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+        {messages.length === 0 ? (
+          <p className="rounded-ds-xl border border-dashed border-border/60 bg-muted/20 p-4 text-sm text-muted-foreground">
+            Ask a question about planning, paragraph structure, or vocabulary to get tailored drills.
+          </p>
+        ) : (
+          messages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isStreaming={status === 'streaming' && streamingId === message.id}
+            />
+          ))
+        )}
+      </div>
+      {status === 'error' && session && error ? (
+        <Alert variant="warning" appearance="soft">
+          {error}
+        </Alert>
+      ) : null}
+    </section>
+  );
+}
+
+function MessageBubble({
+  message,
+  isStreaming,
+}: {
+  message: CoachMessage;
+  isStreaming: boolean;
+}) {
+  const isAssistant = message.role === 'assistant';
+  return (
+    <div className={clsx('flex', isAssistant ? 'justify-start' : 'justify-end')}>
+      <div
+        className={clsx(
+          'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm',
+          isAssistant
+            ? 'bg-card text-foreground ring-1 ring-border/50'
+            : 'bg-primary text-primary-foreground',
+        )}
+      >
+        {message.content ? (
+          <p className="whitespace-pre-wrap">{message.content}</p>
+        ) : (
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-flex h-3 w-3 animate-spin rounded-full border-2 border-border border-t-transparent" />
+            Drafting…
+          </span>
+        )}
+        {isStreaming && message.content && (
+          <span className="ml-2 inline-block align-middle text-xs text-muted-foreground">⏳</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CoachComposer() {
+  const {
+    state,
+    draft,
+    setDraft,
+    send,
+    retry,
+  } = useCoachDockInternal();
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const disabled =
+    !state.session || state.status === 'loading' || state.status === 'streaming' || submitting;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (disabled) return;
+    const text = draft.trim();
+    if (!text) return;
+    setSubmitting(true);
+    try {
+      setDraft('');
+      await send(text);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <Textarea
+        placeholder={
+          state.session
+            ? 'Ask for a rewrite, paragraph plan, or vocabulary drills.'
+            : 'Loading attempt context…'
+        }
+        value={draft}
+        onChange={(event) => {
+          if (state.status === 'error') {
+            retry();
+          }
+          setDraft(event.target.value);
+        }}
+        disabled={!state.session || state.status === 'loading'}
+        rows={3}
+        variant="subtle"
+      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-xs text-muted-foreground">
+          {state.status === 'streaming'
+            ? 'Coach is drafting a reply…'
+            : 'Powered by GramorX guardrailed AI. Keep chats on IELTS prep.'}
+        </span>
+        <Button type="submit" disabled={disabled} loading={state.status === 'streaming' || submitting}>
+          Send to coach
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function useCoachDock() {
+  return useCoachDockInternal();
+}
+
+export default CoachDock;
+
+
+===== File #26: components/writing/Editor.tsx =====
+import React from 'react';
+import { useDebouncedCallback } from 'use-debounce';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+import { Card, CardContent, CardHeader } from '@/components/design-system/Card';
+import { Modal } from '@/components/design-system/Modal';
+import { EditorStatusBar } from '@/components/writing/EditorStatusBar';
+import {
+  clearDraft,
+  countWords,
+  loadDraft,
+  markDraftSynced,
+  saveDraft,
+  shouldSyncServer,
+  type WritingDraftRecord,
+} from '@/lib/storage/drafts';
+
+export interface WritingTask {
+  title: string;
+  prompt: string;
+  minWords: number;
+  maxTimeMinutes?: number;
+  hints?: string[];
+  outline?: string[];
+  assessment?: {
+    criteria: string[];
+  };
+  type?: string;
+}
+
+export interface WritingPaper {
+  id: string;
+  task1: WritingTask;
+  task2: WritingTask;
+}
+
+type Status = 'idle' | 'saving' | 'saved';
+
+const STORAGE_PREFIX = 'writing:';
+
+const createAttemptId = () =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const formatSavedText = (timestamp: number | null) => {
+  if (!timestamp) return 'Not saved yet';
+  const delta = Date.now() - timestamp;
+  if (delta < 15_000) return 'Saved just now';
+  if (delta < 60_000) return `Saved ${Math.round(delta / 1000)}s ago`;
+  if (delta < 3_600_000) return `Saved ${Math.round(delta / 60000)}m ago`;
+  return `Saved at ${new Date(timestamp).toLocaleTimeString()}`;
+};
+
+const isBrowser = typeof window !== 'undefined';
+
+export interface WritingEditorProps {
+  paper: WritingPaper;
+}
+
+export const WritingEditor: React.FC<WritingEditorProps> = ({ paper }) => {
+  const storageKey = React.useMemo(() => `${STORAGE_PREFIX}${paper.id}`, [paper.id]);
+  const pendingDraftRef = React.useRef<WritingDraftRecord | null>(null);
+  const latestStorageKeyRef = React.useRef(storageKey);
+
+  const [task1, setTask1] = React.useState('');
+  const [task2, setTask2] = React.useState('');
+  const [status, setStatus] = React.useState<Status>('idle');
+  const [lastSavedAt, setLastSavedAt] = React.useState<number | null>(null);
+  const [restoreOpen, setRestoreOpen] = React.useState(false);
+  const [initialized, setInitialized] = React.useState(false);
+
+  const attemptIdRef = React.useRef<string>(createAttemptId());
+  const startedAtRef = React.useRef<number>(Date.now());
+  const syncedAtRef = React.useRef<number | undefined>(undefined);
+
+  const wordCount1 = React.useMemo(() => countWords(task1), [task1]);
+  const wordCount2 = React.useMemo(() => countWords(task2), [task2]);
+
+  const persistDraft = React.useCallback(
+    (timestamp: number) => {
+      const draft: WritingDraftRecord = {
+        attemptId: attemptIdRef.current,
+        startedAt: startedAtRef.current,
+        updatedAt: timestamp,
+        syncedAt: syncedAtRef.current,
+        content: {
+          task1,
+          task2,
+          task1WordCount: wordCount1,
+          task2WordCount: wordCount2,
+        },
+      };
+      const key = latestStorageKeyRef.current;
+      if (key) {
+        saveDraft(key, draft);
+      }
+      setLastSavedAt(timestamp);
+      return draft;
+    },
+    [task1, task2, wordCount1, wordCount2],
+  );
+
+  const syncToServer = React.useCallback(
+    async (draft: WritingDraftRecord) => {
+      if (!shouldSyncServer(draft, Date.now())) return;
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+      try {
+        const res = await fetch('/api/writing/draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paperId: paper.id,
+            attemptId: draft.attemptId,
+            updatedAt: draft.updatedAt,
+            startedAt: draft.startedAt,
+            content: draft.content,
+          }),
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as { ok?: boolean };
+        if (json?.ok) {
+          syncedAtRef.current = draft.updatedAt;
+          const next = markDraftSynced(draft, draft.updatedAt);
+          saveDraft(storageKey, next);
+        }
+      } catch {
+        // Ignore server sync failures
+      }
+    },
+    [paper.id, storageKey],
+  );
+
+  const debouncedSave = useDebouncedCallback(() => {
+    const now = Date.now();
+    const draft = persistDraft(now);
+    setStatus('saved');
+    void syncToServer(draft);
+  }, 8000);
+
+  const debouncedSaveRef = React.useRef(debouncedSave);
+
+  React.useEffect(() => {
+    debouncedSaveRef.current = debouncedSave;
+  }, [debouncedSave]);
+
+  React.useEffect(() => {
+    if (!isBrowser) return;
+
+    debouncedSaveRef.current.cancel();
+    pendingDraftRef.current = null;
+    setRestoreOpen(false);
+    setInitialized(false);
+    setStatus('idle');
+    setTask1('');
+    setTask2('');
+    setLastSavedAt(null);
+    attemptIdRef.current = createAttemptId();
+    startedAtRef.current = Date.now();
+    syncedAtRef.current = undefined;
+    latestStorageKeyRef.current = storageKey;
+
+    const existing = loadDraft(storageKey);
+    if (existing && (existing.content.task1 || existing.content.task2)) {
+      pendingDraftRef.current = existing;
+      setLastSavedAt(existing.updatedAt);
+      setStatus('saved');
+      setRestoreOpen(true);
+    } else {
+      setInitialized(true);
+    }
+
+    return () => {
+      debouncedSaveRef.current.cancel();
+    };
+  }, [paper.id, storageKey]);
+
+  React.useEffect(() => {
+    if (!initialized) return;
+    setStatus('saving');
+    debouncedSave();
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [task1, task2, debouncedSave, initialized]);
+
+  React.useEffect(() => () => {
+    debouncedSave.flush();
+  }, [debouncedSave]);
+
+  const persistNow = React.useCallback(() => {
+    if (!initialized) return;
+    debouncedSave.cancel();
+    const now = Date.now();
+    const draft = persistDraft(now);
+    setStatus('saved');
+    void syncToServer(draft);
+  }, [debouncedSave, initialized, persistDraft, syncToServer]);
+
+  React.useEffect(() => {
+    if (!isBrowser || !initialized) return;
+    const handleBeforeUnload = () => {
+      persistNow();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [initialized, persistNow]);
+
+  const handleRestore = React.useCallback(() => {
+    const draft = pendingDraftRef.current;
+    if (draft) {
+      setTask1(draft.content.task1);
+      setTask2(draft.content.task2);
+      setLastSavedAt(draft.updatedAt);
+      attemptIdRef.current = draft.attemptId;
+      startedAtRef.current = draft.startedAt;
+      syncedAtRef.current = draft.syncedAt;
+    }
+    pendingDraftRef.current = null;
+    setRestoreOpen(false);
+    setInitialized(true);
+    setStatus(draft ? 'saved' : 'idle');
+  }, []);
+
+  const handleDiscard = React.useCallback(() => {
+    pendingDraftRef.current = null;
+    clearDraft(storageKey);
+    setTask1('');
+    setTask2('');
+    setLastSavedAt(null);
+    attemptIdRef.current = createAttemptId();
+    startedAtRef.current = Date.now();
+    syncedAtRef.current = undefined;
+    setRestoreOpen(false);
+    setInitialized(true);
+    setStatus('idle');
+  }, [storageKey]);
+
+  const handleClearAll = React.useCallback(() => {
+    if (!isBrowser) return;
+    const confirmClear = window.confirm('Clear this draft? Your unsaved writing will be lost.');
+    if (!confirmClear) return;
+    clearDraft(storageKey);
+    setTask1('');
+    setTask2('');
+    setLastSavedAt(null);
+    attemptIdRef.current = createAttemptId();
+    startedAtRef.current = Date.now();
+    syncedAtRef.current = undefined;
+    setStatus('idle');
+  }, [storageKey]);
+
+  return (
+    <div className="grid gap-6">
+      <Modal open={restoreOpen} onClose={handleRestore} title="Resume draft?" size="sm">
+        <p className="text-body text-muted-foreground">
+          We found a saved draft from your last session. Would you like to continue where you left off?
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="secondary" onClick={handleDiscard}>
+            Start fresh
+          </Button>
+          <Button variant="primary" onClick={handleRestore}>
+            Restore
+          </Button>
+        </div>
+      </Modal>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-h3 font-semibold">Task 1</h2>
+          <p className="text-small text-muted-foreground">{paper.task1.title}</p>
+        </div>
+        <Badge variant={status === 'saving' ? 'info' : 'success'} size="sm">
+          {status === 'saving' ? 'Saving…' : formatSavedText(lastSavedAt)}
+        </Badge>
+      </div>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-small font-medium text-muted-foreground">Prompt</span>
+            <p className="text-body leading-relaxed">{paper.task1.prompt}</p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-caption text-muted-foreground">
+            <span>Minimum {paper.task1.minWords} words</span>
+            {paper.task1.maxTimeMinutes ? <span>Suggested time: {paper.task1.maxTimeMinutes} minutes</span> : null}
+            {paper.task1.type ? <span>Type: {paper.task1.type}</span> : null}
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {paper.task1.hints && paper.task1.hints.length > 0 ? (
+            <div className="rounded-ds-xl border border-border/70 bg-muted/30 p-4">
+              <p className="text-small font-medium text-muted-foreground">Hints</p>
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-small text-muted-foreground/90">
+                {paper.task1.hints.map((hint) => (
+                  <li key={hint}>{hint}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <label className="grid gap-2">
+            <span className="text-small font-medium text-muted-foreground">Your response</span>
+            <textarea
+              className="min-h-[180px] w-full rounded-ds-xl border border-border bg-background p-4 text-body leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Summarise the key trends…"
+              value={task1}
+              onChange={(event) => setTask1(event.target.value)}
+              onBlur={persistNow}
+            />
+          </label>
+        </CardContent>
+      </Card>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-h3 font-semibold">Task 2</h2>
+          <p className="text-small text-muted-foreground">{paper.task2.title}</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-small font-medium text-muted-foreground">Prompt</span>
+            <p className="text-body leading-relaxed">{paper.task2.prompt}</p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-caption text-muted-foreground">
+            <span>Minimum {paper.task2.minWords} words</span>
+            {paper.task2.maxTimeMinutes ? <span>Suggested time: {paper.task2.maxTimeMinutes} minutes</span> : null}
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          {paper.task2.outline && paper.task2.outline.length > 0 ? (
+            <div className="rounded-ds-xl border border-border/70 bg-muted/30 p-4">
+              <p className="text-small font-medium text-muted-foreground">Suggested outline</p>
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-small text-muted-foreground/90">
+                {paper.task2.outline.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <label className="grid gap-2">
+            <span className="text-small font-medium text-muted-foreground">Your essay</span>
+            <textarea
+              className="min-h-[280px] w-full rounded-ds-xl border border-border bg-background p-4 text-body leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Plan, write, and review your essay…"
+              value={task2}
+              onChange={(event) => setTask2(event.target.value)}
+              onBlur={persistNow}
+            />
+          </label>
+        </CardContent>
+      </Card>
+
+      <EditorStatusBar
+        task1Count={wordCount1}
+        task2Count={wordCount2}
+        minTask1={paper.task1.minWords}
+        minTask2={paper.task2.minWords}
+        defaultTimerMinutes={paper.task2.maxTimeMinutes ?? 40}
+      />
+
+      <div className="flex justify-end">
+        <Button variant="secondary" onClick={handleClearAll}>
+          Clear draft
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default WritingEditor;
+
+===== File #27: components/writing/WritingExamLayout.tsx =====
+// components/writing/WritingExamLayout.tsx
+import * as React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+
+type TopBarProps = {
+  title: string;
+  attemptId?: string;
+  timer?: React.ReactNode;              // e.g., <Countdown seconds={...} />
+  status?: 'saving' | 'saved' | 'error' | null;
+  planBadge?: React.ReactNode;          // e.g., <Badge>Booster</Badge>
+  onExit?: () => void;
+};
+
+type WritingExamLayoutProps = {
+  topbar: TopBarProps;
+  left: React.ReactNode;                // Task prompt / diagram / notes
+  right: React.ReactNode;               // Editor / WritingExamRoom
+  footer?: React.ReactNode;             // Optional: feedback dock after submit
+};
+
+export default function WritingExamLayout({
+  topbar,
+  left,
+  right,
+  footer,
+}: WritingExamLayoutProps) {
+  return (
+    <div className="min-h-screen bg-neutral-50 text-neutral-900">
+      {/* Sticky, quiet topbar */}
+      <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto max-w-7xl px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center rounded-md px-2 py-1 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+            >
+              ← Exit
+            </Link>
+
+            <h1 className="flex-1 truncate text-base font-semibold tracking-tight">
+              {topbar.title}
+              {topbar.attemptId ? (
+                <span className="ml-2 align-middle text-xs font-normal text-neutral-500">
+                  #{topbar.attemptId.slice(0, 8)}
+                </span>
+              ) : null}
+            </h1>
+
+            {topbar.planBadge ? (
+              <div className="hidden sm:flex">{topbar.planBadge}</div>
+            ) : null}
+
+            {topbar.timer ? (
+              <div className="rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm font-medium text-neutral-800">
+                {topbar.timer}
+              </div>
+            ) : null}
+
+            {topbar.status ? (
+              <span
+                className={
+                  topbar.status === 'saving'
+                    ? 'text-xs text-amber-600'
+                    : topbar.status === 'saved'
+                    ? 'text-xs text-emerald-600'
+                    : 'text-xs text-rose-600'
+                }
+              >
+                {topbar.status === 'saving'
+                  ? 'Saving…'
+                  : topbar.status === 'saved'
+                  ? 'Saved'
+                  : 'Save failed'}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </header>
+
+      {/* Two-pane calm workspace */}
+      <main className="mx-auto grid min-h-[calc(100vh-52px)] max-w-7xl grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[minmax(380px,520px)_1fr]">
+        {/* LEFT: Task / prompt */}
+        <section className="flex min-h-[40vh] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-2">
+            <div className="text-sm font-semibold tracking-tight text-neutral-800">
+              Task & Materials
+            </div>
+            <div className="text-xs text-neutral-500">Scroll to view all</div>
+          </div>
+          <div className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-300/70 flex-1 overflow-auto px-4 py-3">
+            {left}
+          </div>
+        </section>
+
+        {/* RIGHT: Editor */}
+        <section className="flex min-h-[60vh] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-2">
+            <div className="text-sm font-semibold tracking-tight text-neutral-800">
+              Answer Editor
+            </div>
+            {/* Space for live word count if the editor exposes it */}
+            <div id="gx-wordcount-slot" className="text-xs text-neutral-500" />
+          </div>
+          <div className="flex-1 overflow-auto px-2 py-2">{right}</div>
+        </section>
+
+        {/* FEEDBACK (optional) */}
+        {footer ? (
+          <section className="lg:col-span-2">
+            <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+              {footer}
+            </div>
+          </section>
+        ) : null}
+      </main>
+    </div>
+  );
+}
+
+/** Lightweight media block for diagrams/tables if you need it quickly */
+export function TaskFigure(props: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+}) {
+  const { src, alt, width, height } = props;
+  return (
+    <figure className="my-3 overflow-hidden rounded-lg border border-neutral-200">
+      <Image
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        className="h-auto w-full object-contain"
+        priority
+      />
+      <figcaption className="border-t border-neutral-200 px-3 py-2 text-xs text-neutral-500">
+        {alt}
+      </figcaption>
+    </figure>
+  );
+}
+
+===== File #28: components/writing/BandProgressChart.tsx =====
+import React, { useEffect, useMemo } from 'react';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+
+import { Card } from '@/components/design-system/Card';
+import { logWritingProgressChartViewed } from '@/lib/analytics/writing-events';
+import type { CriterionDelta, WritingProgressPoint } from '@/types/analytics';
+import type { WritingCriterion } from '@/types/writing';
+
+const CRITERION_LABEL: Record<WritingCriterion, string> = {
+  task_response: 'Task Response',
+  coherence_and_cohesion: 'Coherence',
+  lexical_resource: 'Lexical',
+  grammatical_range: 'Grammar',
+};
+
+const COLORS = {
+  overall: 'var(--chart-writing)',
+  task_response: 'rgb(var(--color-primary) / 1)',
+  coherence_and_cohesion: 'rgb(var(--color-secondary) / 1)',
+  lexical_resource: 'rgb(var(--color-accent) / 1)',
+  grammatical_range: 'rgb(var(--color-success) / 1)',
+};
+
+type Props = {
+  points: WritingProgressPoint[];
+  deltas: CriterionDelta[];
+};
+
+const formatAttemptLabel = (index: number, total: number) => {
+  if (total === 1) return 'Latest';
+  if (index === total - 1) return 'Latest';
+  if (index === total - 2) return 'Previous';
+  return `Attempt ${total - index}`;
+};
+
+const BandProgressChart: React.FC<Props> = ({ points, deltas }) => {
+  const chartData = useMemo(() => {
+    if (!points || points.length === 0) return [];
+    return points.map((point, index) => ({
+      name: formatAttemptLabel(index, points.length),
+      overall: point.overallBand,
+      task_response: point.bandScores.task_response,
+      coherence_and_cohesion: point.bandScores.coherence_and_cohesion,
+      lexical_resource: point.bandScores.lexical_resource,
+      grammatical_range: point.bandScores.grammatical_range,
+    }));
+  }, [points]);
+
+  const deltaByCriterion = useMemo(() => {
+    const map = new Map<string, CriterionDelta>();
+    deltas.forEach((delta) => {
+      map.set(delta.criterion, delta);
+    });
+    return map;
+  }, [deltas]);
+
+  useEffect(() => {
+    if (chartData.length > 0) {
+      logWritingProgressChartViewed({ attempts: chartData.length });
+    }
+  }, [chartData.length]);
+
+  return (
+    <Card padding="lg" insetBorder className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-foreground">Your Improvement Journey</h2>
+        <p className="text-sm text-muted-foreground">
+          Track how each criterion has evolved across your last {points.length} attempts.
+        </p>
+      </div>
+
+      {chartData.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Not enough data yet. Complete another attempt to unlock trends.</p>
+      ) : (
+        <div className="h-64 w-full">
+          <ResponsiveContainer>
+            <AreaChart data={chartData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
+              <defs>
+                {Object.entries(COLORS).map(([key, color]) => (
+                  <linearGradient id={`band-${key}`} key={key} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={color} stopOpacity={0.8} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0.1} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+              <XAxis dataKey="name" stroke="var(--chart-axis)" tickLine={false} />
+              <YAxis domain={[0, 9]} stroke="var(--chart-axis)" tickLine={false} />
+              <Tooltip
+                contentStyle={{
+                  background: 'var(--chart-tooltip-bg)',
+                  borderRadius: 12,
+                  border: '1px solid var(--chart-tooltip-border)',
+                  color: 'var(--chart-tooltip-fg)',
+                }}
+              />
+              <Legend />
+              <Area type="monotone" dataKey="overall" stroke={COLORS.overall} fill="url(#band-overall)" strokeWidth={2} />
+              <Area
+                type="monotone"
+                dataKey="task_response"
+                stroke={COLORS.task_response}
+                fill="url(#band-task_response)"
+                strokeWidth={2}
+              />
+              <Area
+                type="monotone"
+                dataKey="coherence_and_cohesion"
+                stroke={COLORS.coherence_and_cohesion}
+                fill="url(#band-coherence_and_cohesion)"
+                strokeWidth={2}
+              />
+              <Area
+                type="monotone"
+                dataKey="lexical_resource"
+                stroke={COLORS.lexical_resource}
+                fill="url(#band-lexical_resource)"
+                strokeWidth={2}
+              />
+              <Area
+                type="monotone"
+                dataKey="grammatical_range"
+                stroke={COLORS.grammatical_range}
+                fill="url(#band-grammatical_range)"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {['overall', 'task_response', 'coherence_and_cohesion', 'lexical_resource', 'grammatical_range'].map((key) => {
+          const delta = deltaByCriterion.get(key) ?? null;
+          if (!delta) return null;
+          const isPositive = delta.delta > 0;
+          const formattedKey = key === 'overall' ? 'Overall' : CRITERION_LABEL[key as WritingCriterion];
+          return (
+            <div key={key} className="rounded-ds-xl border border-border/60 bg-card/80 p-4">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-sm font-medium text-foreground">{formattedKey}</p>
+                <span
+                  className={`text-sm font-semibold ${
+                    delta.delta === 0 ? 'text-muted-foreground' : isPositive ? 'text-success' : 'text-danger'
+                  }`}
+                >
+                  {delta.delta > 0 ? '+' : ''}
+                  {delta.delta.toFixed(1)}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Current band {delta.current.toFixed(1)}
+                {typeof delta.previous === 'number' ? ` · Previous ${delta.previous.toFixed(1)}` : ''}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+};
+
+export default BandProgressChart;
+
+===== File #29: components/writing/WritingTimer.tsx =====
+// components/writing/WritingTimer.tsx
+// Countdown indicator for the writing exam room.
+
+import React from 'react';
+import clsx from 'clsx';
+
+export type WritingTimerProps = {
+  seconds: number;
+  totalSeconds: number;
+};
+
+const formatTime = (total: number) => {
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
+export const WritingTimer: React.FC<WritingTimerProps> = ({ seconds, totalSeconds }) => {
+  const percent = Math.max(0, Math.min(1, seconds / totalSeconds));
+  const variant = percent <= 0.1 ? 'critical' : percent <= 0.25 ? 'warning' : 'default';
+  return (
+    <div
+      className={clsx(
+        'inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-sm transition-colors',
+        variant === 'default' && 'border-border text-muted-foreground',
+        variant === 'warning' && 'border-amber-500 bg-amber-500/10 text-amber-600',
+        variant === 'critical' && 'border-red-500 bg-red-500/10 text-red-600',
+      )}
+      aria-live="polite"
+    >
+      <span className="font-semibold tracking-wider">{formatTime(seconds)}</span>
+      <span className="hidden text-xs uppercase sm:inline">remaining</span>
+    </div>
+  );
+};
+
+export default WritingTimer;
+
+===== File #30: components/writing/EditorStatusBar.tsx =====
+import React from 'react';
+import clsx from 'clsx';
+
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { Countdown } from '@/components/timers/Countdown';
+
+interface EditorStatusBarProps {
+  task1Count: number;
+  task2Count: number;
+  minTask1: number;
+  minTask2: number;
+  defaultTimerMinutes?: number;
+}
+
+const formatTime = (remainingMs: number) => {
+  const totalSeconds = Math.ceil(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+const statusVariant = (count: number, minimum: number) => {
+  if (count === 0) return 'neutral';
+  return count >= minimum ? 'success' : 'warning';
+};
+
+export const EditorStatusBar: React.FC<EditorStatusBarProps> = ({
+  task1Count,
+  task2Count,
+  minTask1,
+  minTask2,
+  defaultTimerMinutes = 40,
+}) => {
+  const [timerVisible, setTimerVisible] = React.useState(false);
+  const [timerExpired, setTimerExpired] = React.useState(false);
+  const [announcement, setAnnouncement] = React.useState('');
+  const warningRef = React.useRef<number | null>(null);
+  const total = task1Count + task2Count;
+  const safeMinutes = Math.max(1, defaultTimerMinutes);
+  const durationMs = safeMinutes * 60 * 1000;
+
+  const handleTick = React.useCallback((remainingMs: number) => {
+    if (remainingMs <= 0) return;
+    const minutes = Math.ceil(remainingMs / 60000);
+    if ([10, 5, 1].includes(minutes) && warningRef.current !== minutes) {
+      warningRef.current = minutes;
+      setAnnouncement(`Only ${minutes} minute${minutes === 1 ? '' : 's'} remaining.`);
+    }
+  }, []);
+
+  const handleExpire = React.useCallback(() => {
+    setTimerExpired(true);
+    setAnnouncement('Time is up.');
+  }, []);
+
+  const resetTimer = React.useCallback(
+    (reset: (nextDurationMs?: number) => void) => {
+      warningRef.current = null;
+      setTimerExpired(false);
+      reset(durationMs);
+      setAnnouncement(`Timer reset to ${safeMinutes} minutes.`);
+    },
+    [durationMs, safeMinutes],
+  );
+
+  return (
+    <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-ds-xl border border-border/80 bg-muted/40 p-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Badge size="sm" variant={statusVariant(task1Count, minTask1)}>
+          Task 1: {task1Count} words
+        </Badge>
+        <Badge size="sm" variant={statusVariant(task2Count, minTask2)}>
+          Task 2: {task2Count} words
+        </Badge>
+        <Badge size="sm" variant="neutral">
+          Total: {total} words
+        </Badge>
+      </div>
+
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+        {timerVisible ? (
+          <Countdown
+            key={defaultTimerMinutes}
+            durationMs={durationMs}
+            autoStart
+            onTick={handleTick}
+            onExpire={handleExpire}
+          >
+            {({ remainingMs, isRunning, start, pause, reset }) => (
+              <div className="flex items-center gap-3">
+                <span
+                  className={clsx('font-mono text-small', timerExpired ? 'text-warning' : 'text-muted-foreground')}
+                  aria-live="polite"
+                >
+                  {timerExpired ? '00:00' : formatTime(remainingMs)}
+                </span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    if (timerExpired) {
+                      resetTimer(reset);
+                      start();
+                      setAnnouncement('Timer restarted.');
+                      return;
+                    }
+                    if (isRunning) {
+                      pause();
+                      setAnnouncement('Timer paused.');
+                    } else {
+                      start();
+                      setAnnouncement('Timer resumed.');
+                    }
+                  }}
+                >
+                  {timerExpired ? 'Restart' : isRunning ? 'Pause' : 'Resume'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    resetTimer(reset);
+                    setAnnouncement('Timer cleared.');
+                    setTimerVisible(false);
+                  }}
+                >
+                  Cancel timer
+                </Button>
+              </div>
+            )}
+          </Countdown>
+        ) : (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              warningRef.current = null;
+              setTimerExpired(false);
+              setTimerVisible(true);
+              setAnnouncement(`Timer started for ${safeMinutes} minutes.`);
+            }}
+          >
+            Start {safeMinutes}-minute timer
+          </Button>
+        )}
+      </div>
+
+      <span className="sr-only" aria-live="assertive">
+        {announcement}
+      </span>
+    </div>
+  );
+};
+
+export default EditorStatusBar;
+
+===== File #31: components/writing/WritingPromptCard.tsx =====
+// components/writing/WritingPromptCard.tsx
+// Displays prompt metadata alongside quick stats.
+
+import React from 'react';
+import { Badge } from '@/components/design-system/Badge';
+import { Card } from '@/components/design-system/Card';
+import type { WritingPrompt } from '@/types/writing';
+
+type Props = {
+  prompt: WritingPrompt;
+  actions?: React.ReactNode;
+};
+
+export const WritingPromptCard: React.FC<Props> = ({ prompt, actions }) => {
+  return (
+    <Card className="flex flex-col gap-4 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">{prompt.title}</h3>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="subtle">{prompt.taskType.toUpperCase()}</Badge>
+            <Badge variant="outline">{prompt.module === 'academic' ? 'Academic' : 'General Training'}</Badge>
+            <Badge variant="ghost">{prompt.difficulty}</Badge>
+            {prompt.wordTarget && <span>{prompt.wordTarget} words</span>}
+            {prompt.estimatedMinutes && <span>{prompt.estimatedMinutes} min</span>}
+          </div>
+        </div>
+        {actions && <div className="flex-shrink-0">{actions}</div>}
+      </div>
+      <p className="text-sm leading-6 text-muted-foreground">{prompt.promptText}</p>
+      {prompt.tags && prompt.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {prompt.tags.map((tag) => (
+            <Badge key={tag} variant="outline" className="bg-muted/30">
+              #{tag}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+};
+
+export default WritingPromptCard;
+
+===== File #32: components/writing/WritingAutosaveIndicator.tsx =====
+// components/writing/WritingAutosaveIndicator.tsx
+// Small status indicator rendered in the exam room footer.
+
+import React from 'react';
+import clsx from 'clsx';
+
+export type AutosaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+type Props = {
+  state: AutosaveState;
+  updatedAt?: string | null;
+};
+
+const LABELS: Record<AutosaveState, string> = {
+  idle: 'All changes saved',
+  saving: 'Saving…',
+  saved: 'Saved',
+  error: 'Save failed',
+};
+
+export const WritingAutosaveIndicator: React.FC<Props> = ({ state, updatedAt }) => {
+  return (
+    <div
+      className={clsx(
+        'inline-flex items-center gap-2 text-xs',
+        state === 'error' ? 'text-red-600' : 'text-muted-foreground',
+      )}
+      aria-live="polite"
+    >
+      <span
+        className={clsx('h-2 w-2 rounded-full', {
+          'bg-primary animate-pulse': state === 'saving',
+          'bg-emerald-500': state === 'saved',
+          'bg-red-500': state === 'error',
+          'bg-muted': state === 'idle',
+        })}
+      />
+      <span>
+        {LABELS[state]}
+        {updatedAt ? ` • ${new Date(updatedAt).toLocaleTimeString()}` : ''}
+      </span>
+    </div>
+  );
+};
+
+export default WritingAutosaveIndicator;
+
+===== File #33: components/writing/RightRailCoach.tsx =====
+// components/writing/RightRailCoach.tsx
+import React from 'react';
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+
+type Props = {
+  bandTarget?: string;
+  wordCount?: number;
+  voiceDraftEnabled?: boolean;
+  onToggleVoice?: () => void;
+  onOpenHelp?: () => void;
+};
+
+function progressClass(percent: number) {
+  // Quantize to avoid inline styles; 0/25/50/75/100%
+  if (percent <= 0) return 'w-0';
+  if (percent <= 0.25) return 'w-1/4';
+  if (percent <= 0.5) return 'w-2/4';
+  if (percent <= 0.75) return 'w-3/4';
+  return 'w-full';
+}
+
+export default function RightRailCoach({
+  bandTarget = '7+',
+  wordCount = 0,
+  voiceDraftEnabled = false,
+  onToggleVoice,
+  onOpenHelp,
+}: Props) {
+  const percent = Math.min(wordCount / 400, 1);
+  const widthClass = progressClass(percent);
+
+  return (
+    <div className="space-y-3">
+      <section className="rounded-2xl border border-border/40 bg-elevated p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">AI Coach</h3>
+          <Badge tone="green">Target {bandTarget}</Badge>
+        </div>
+        <ul className="list-inside list-disc text-sm text-muted-foreground">
+          <li>State the overview clearly (Task 1).</li>
+          <li>Answer the prompt directly (Task 2) in paragraph form.</li>
+          <li>Use varied linking words; avoid repetition.</li>
+          <li>Proofread last 2–3 minutes.</li>
+        </ul>
+        <div className="mt-3 flex gap-2">
+          <Button size="sm" variant="secondary" onClick={onOpenHelp}>Rubric</Button>
+          <Button size="sm" variant="ghost">Examples</Button>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-border/40 bg-elevated p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Word count</h3>
+          <span className="text-sm text-muted-foreground">{wordCount} words</span>
+        </div>
+
+        {/* Progress (no inline styles) */}
+        <div className="mt-2 h-2 w-full rounded-full bg-muted" role="progressbar" aria-valuemin={0} aria-valuemax={400} aria-valuenow={Math.min(wordCount, 400)}>
+          <div className={`h-2 rounded-full bg-primary transition-all ${widthClass}`} />
+        </div>
+
+        <p className="mt-2 text-xs text-muted-foreground">Aim ≥150 (T1) and ≥250 (T2).</p>
+      </section>
+
+      <section className="rounded-2xl border border-border/40 bg-elevated p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Voice draft</h3>
+          <Badge tone={voiceDraftEnabled ? 'green' : 'yellow'}>
+            {voiceDraftEnabled ? 'On' : 'Off'}
+          </Badge>
+        </div>
+        <Button className="mt-3 w-full" variant="secondary" onClick={onToggleVoice}>
+          {voiceDraftEnabled ? 'Disable' : 'Enable'}
+        </Button>
+      </section>
+
+      <section className="rounded-2xl border border-border/40 bg-elevated p-4">
+        <Button className="w-full" variant="ghost" onClick={onOpenHelp}>Need help?</Button>
+      </section>
+    </div>
+  );
+}
+
+===== File #34: components/writing/WritingFilterBar.tsx =====
+// components/writing/WritingFilterBar.tsx
+import React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+
+import { Button } from '@/components/design-system/Button';
+import { Icon } from '@/components/design-system/Icon';
+
+const KIND_VALUES = ['task1-graph', 'task1-letter', 'task2-opinion', 'task2-discuss', 'task2-advantages', 'task2-problem'] as const;
+type Kind = (typeof KIND_VALUES)[number];
+
+const KIND_LABELS: Record<Kind, string> = {
+  'task1-graph': 'Task 1: Graphs/Charts',
+  'task1-letter': 'Task 1: Letters',
+  'task2-opinion': 'Task 2: Opinion',
+  'task2-discuss': 'Task 2: Discuss Both Views',
+  'task2-advantages': 'Task 2: Advantages/Disadvantages',
+  'task2-problem': 'Task 2: Problem/Solution',
+};
+
+function normaliseFilter(v: unknown): 'all' | Kind {
+  if (typeof v !== 'string') return 'all';
+  const s = v.toLowerCase();
+  if (s === 'all') return 'all';
+  for (const kind of KIND_VALUES) {
+    if (s === kind || s.startsWith(kind.split('-')[1])) return kind;
+  }
+  return 'all';
+}
+
+export function WritingFilterBar() {
+  const router = useRouter();
+  const activeType = normaliseFilter(router.query.type);
+
+  const filters = [
+    { key: 'all' as const, label: 'All Tasks', icon: 'List' },
+    ...KIND_VALUES.map((kind) => ({
+      key: kind,
+      label: KIND_LABELS[kind],
+      icon: kind.startsWith('task1-') ? 'BarChart3' : 'Edit3',
+    })),
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-2 justify-center">
+      {filters.map(({ key, label, icon }) => (
+        <Link
+          key={key}
+          href={{
+            pathname: router.pathname,
+            query: key === 'all' ? {} : { type: key },
+          }}
+          className="transition-colors"
+          shallow
+        >
+          <Button
+            variant={activeType === key ? 'primary' : 'surface'}
+            size="sm"
+            className="rounded-ds-xl flex items-center gap-1.5"
+          >
+            <Icon name={icon} size={14} />
+            <span className="text-xs">{label}</span>
+          </Button>
+        </Link>
+      ))}
+    </div>
+  );
+}
+===== File #35: components/writing/ReevalHistory.tsx =====
+import React from 'react';
+import { Card } from '@/components/design-system/Card';
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+
+/**
+ * A record returned from the re‑evaluation API.  Each row contains the
+ * scores assigned by the AI, the marking mode, optional focus points and
+ * optional feedback generated by the model.  The `created_at` timestamp
+ * allows clients to sort or display when the re‑evaluation was performed.
+ */
+export type ReevalRow = {
+  id: string;
+  created_at: string;
+  /** One of the supported marking modes or a custom value. */
+  mode: string;
+  /** List of focus criteria chosen by the user during re‑evaluation. */
+  focus: string[];
+  /** Overall band score returned by the AI. */
+  band_overall: number;
+  /** Breakdown of scores across the four IELTS writing criteria. */
+  band_breakdown: {
+    task: number;
+    coherence: number;
+    lexical: number;
+    grammar: number;
+  };
+  /** Optional free‑form feedback from the AI. */
+  feedback?: string | null;
+  /** Model identifier used for scoring; may be displayed or logged. */
+  model?: string | null;
+};
+
+export interface ReevalHistoryProps {
+  /** The original band score for comparison; used to determine delta styling. */
+  originalOverall: number;
+  /** List of re‑evaluation rows to render. */
+  items: ReevalRow[];
+  /** Whether the current user has permission to restore a past score. */
+  canRestore?: boolean;
+  /** Handler invoked when the restore button is pressed. */
+  onRestore?: (row: ReevalRow) => void;
+}
+
+/**
+ * Render a history list of prior re‑evaluations.  Each entry displays the
+ * band score, timestamp, mode and focus, along with an optional restore
+ * button for privileged users.  Feedback from the AI is shown beneath the
+ * header if present.  When no history exists the component renders a
+ * simple placeholder message.
+ */
+export const ReevalHistory: React.FC<ReevalHistoryProps> = ({
+  originalOverall,
+  items,
+  canRestore = false,
+  onRestore,
+}) => {
+  if (!items || items.length === 0) {
+    return (
+      <Card className="card-surface p-6 rounded-ds-2xl">
+        <p className="text-muted-foreground">No re‑evaluations yet.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="card-surface p-6 rounded-ds-2xl">
+      <h3 className="text-h3 mb-4">Re‑evaluation History</h3>
+      <ul className="space-y-4">
+        {items.map((item) => {
+          // Determine whether the new score improved, worsened or matched the original.
+          const delta = item.band_overall - originalOverall;
+          const variant = delta > 0 ? 'success' : delta < 0 ? 'danger' : 'neutral';
+          return (
+            <li
+              key={item.id}
+              className="p-3.5 rounded-ds border border-lightBorder dark:border-white/10"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={variant} size="sm">
+                      {item.band_overall}
+                    </Badge>
+                    <span className="text-small opacity-80">
+                      {new Date(item.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-small text-muted-foreground">
+                    <span className="capitalize">Mode: {item.mode}</span>
+                    {item.focus?.length ? (
+                      <span>
+                        {' '}· Focus: {item.focus.join(', ')}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                {canRestore && onRestore && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => onRestore(item)}
+                    className="shrink-0"
+                  >
+                    Restore
+                  </Button>
+                )}
+              </div>
+              {item.feedback ? (
+                <p className="mt-2 text-small text-muted-foreground whitespace-pre-line">
+                  {item.feedback}
+                </p>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+};
+
+export default ReevalHistory;
+===== File #36: components/writing/WritingExamRoom.tsx =====
+// components/writing/WritingExamRoom.tsx
+// Main exam room shell for IELTS Writing mock attempts.
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import clsx from 'clsx';
+
+import { Alert } from '@/components/design-system/Alert';
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { Badge } from '@/components/design-system/Badge';
+import TextareaAutosize from '@/components/design-system/TextareaAutosize';
+import { BottomActionBar } from '@/components/mobile/BottomActionBar';
+import VoiceDraftToggle from '@/components/writing/VoiceDraftToggle';
+import WritingAutosaveIndicator from '@/components/writing/WritingAutosaveIndicator';
+import WritingTimer from '@/components/writing/WritingTimer';
+import { useAutoSaveDraft } from '@/lib/mock/useAutoSaveDraft';
+import { useExamTimer } from '@/lib/hooks/useExamTimer';
+import { persistExamEvent } from '@/lib/writing/autosave';
+import type { WritingExamPrompts, WritingScorePayload, WritingTaskType } from '@/types/writing';
+
+const MIN_WORDS: Record<WritingTaskType, number> = { task1: 150, task2: 250 };
+
+const countWords = (value: string) => {
+  if (!value) return 0;
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+};
+
+type SubmitResult = {
+  attemptId: string;
+  results: Partial<Record<WritingTaskType, WritingScorePayload>>;
+};
+
+type Props = {
+  attemptId: string;
+  prompts: WritingExamPrompts;
+  durationSeconds: number;
+  initialDraft?: {
+    task1?: { essay: string; wordCount: number };
+    task2?: { essay: string; wordCount: number };
+    updatedAt?: string;
+  } | null;
+  onSubmitSuccess?: (result: SubmitResult) => void;
+};
+
+export const WritingExamRoom: React.FC<Props> = ({
+  attemptId,
+  prompts,
+  durationSeconds,
+  initialDraft,
+  onSubmitSuccess,
+}) => {
+  const [activeTask, setActiveTask] = useState<WritingTaskType>('task1');
+  const [task1Essay, setTask1Essay] = useState(initialDraft?.task1?.essay ?? '');
+  const [task2Essay, setTask2Essay] = useState(initialDraft?.task2?.essay ?? '');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [focusWarning, setFocusWarning] = useState<string | null>(null);
+  const [tabSwitches, setTabSwitches] = useState(0);
+
+  const resumedAt = initialDraft?.updatedAt ? new Date(initialDraft.updatedAt) : null;
+
+  const { timeLeft, pause: pauseTimer, resume: resumeTimer } = useExamTimer(durationSeconds, {
+    autoStart: true,
+    onFinish: () => {
+      void handleSubmit(true);
+    },
+  });
+
+  const tabSwitchesRef = useRef(0);
+  const focusLostRef = useRef(false);
+  const warningTimeoutRef = useRef<number | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const counts = useMemo(
+    () => ({
+      task1: countWords(task1Essay),
+      task2: countWords(task2Essay),
+    }),
+    [task1Essay, task2Essay],
+  );
+
+  const elapsedSeconds = Math.max(0, durationSeconds - timeLeft);
+  const totalWordCount = counts.task1 + counts.task2;
+
+  const tasksPayload = useMemo(() => {
+    const payload: Record<string, { content: string; wordCount: number }> = {};
+    if (task1Essay.trim().length > 0) {
+      payload.task1 = { content: task1Essay, wordCount: counts.task1 };
+    }
+    if (task2Essay.trim().length > 0) {
+      payload.task2 = { content: task2Essay, wordCount: counts.task2 };
+    }
+    return payload;
+  }, [counts.task1, counts.task2, task1Essay, task2Essay]);
+
+  const { state: autosaveState, lastSavedAt, flush: flushAutosave } = useAutoSaveDraft({
+    attemptId,
+    activeTask,
+    tasks: tasksPayload,
+    elapsedSeconds,
+    enabled: !submitting,
+    throttleMs: 10000,
+  });
+
+  const showFocusWarning = useCallback((message: string) => {
+    setFocusWarning(message);
+    if (typeof window === 'undefined') return;
+    if (warningTimeoutRef.current) {
+      window.clearTimeout(warningTimeoutRef.current);
+    }
+    warningTimeoutRef.current = window.setTimeout(() => {
+      setFocusWarning(null);
+      warningTimeoutRef.current = null;
+    }, 6000);
+  }, []);
+
+  const incrementTabSwitches = useCallback(() => {
+    tabSwitchesRef.current += 1;
+    setTabSwitches(tabSwitchesRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    const handleFocusLoss = (reason: 'visibility' | 'blur') => {
+      if (focusLostRef.current) return;
+      focusLostRef.current = true;
+      incrementTabSwitches();
+      pauseTimer();
+      flushAutosave();
+      void persistExamEvent(attemptId, 'blur', {
+        reason,
+        tabSwitches: tabSwitchesRef.current,
+        occurredAt: new Date().toISOString(),
+      }).catch(() => {});
+    };
+
+    const handleFocusGain = (reason: 'visibility' | 'focus') => {
+      if (!focusLostRef.current) return;
+      focusLostRef.current = false;
+      resumeTimer();
+      showFocusWarning('You switched tabs during the test. The timer was paused while you were away.');
+      void persistExamEvent(attemptId, 'focus', {
+        reason,
+        tabSwitches: tabSwitchesRef.current,
+        resumedAt: new Date().toISOString(),
+      }).catch(() => {});
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        handleFocusLoss('visibility');
+      } else {
+        handleFocusGain('visibility');
+      }
+    };
+
+    const onBlur = () => handleFocusLoss('blur');
+    const onFocus = () => handleFocusGain('focus');
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [attemptId, flushAutosave, incrementTabSwitches, pauseTimer, resumeTimer, showFocusWarning]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && warningTimeoutRef.current) {
+        window.clearTimeout(warningTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleSubmit = useCallback(
+    async (autoTriggered = false) => {
+      if (submitting) return;
+      setSubmitting(true);
+      setError(null);
+      flushAutosave();
+
+      try {
+        const submissionTasks: {
+          task1?: { essay: string; promptId: string };
+          task2?: { essay: string; promptId: string };
+        } = {};
+        const trimmedTask1 = task1Essay.trim();
+        const trimmedTask2 = task2Essay.trim();
+        if (trimmedTask1.length > 0) {
+          submissionTasks.task1 = { essay: task1Essay, promptId: prompts.task1.id };
+        }
+        if (trimmedTask2.length > 0) {
+          submissionTasks.task2 = { essay: task2Essay, promptId: prompts.task2.id };
+        }
+
+        const res = await fetch('/api/mock/writing/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attemptId,
+            durationSeconds,
+            tasks: submissionTasks,
+          }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(payload?.error || 'Submission failed');
+        }
+        const data = (await res.json()) as SubmitResult;
+        onSubmitSuccess?.(data);
+      } catch (err: any) {
+        if (!autoTriggered) {
+          setError(err?.message ?? 'Unexpected error');
+        } else {
+          setError('Time elapsed. We attempted to auto-submit but encountered an error. Please try again.');
+        }
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [
+      attemptId,
+      durationSeconds,
+      flushAutosave,
+      onSubmitSuccess,
+      prompts.task1.id,
+      prompts.task2.id,
+      submitting,
+      task1Essay,
+      task2Essay,
+    ],
+  );
+
+  const tasks = useMemo(
+    () => [
+      {
+        key: 'task1' as const,
+        label: 'Task 1',
+        prompt: prompts.task1,
+        value: task1Essay,
+        setter: setTask1Essay,
+        count: counts.task1,
+      },
+      {
+        key: 'task2' as const,
+        label: 'Task 2',
+        prompt: prompts.task2,
+        value: task2Essay,
+        setter: setTask2Essay,
+        count: counts.task2,
+      },
+    ],
+    [counts.task1, counts.task2, prompts.task1, prompts.task2, task1Essay, task2Essay],
+  );
+
+  const active = tasks.find((task) => task.key === activeTask) ?? tasks[0];
+  const minWords = MIN_WORDS[active.key];
+  const textareaId = `writing-${active.key}-response`;
+  const helperId = `writing-${active.key}-helper`;
+  const belowMin = active.count < minWords;
+
+  const handleTranscript = useCallback(
+    (delta: string) => {
+      const addition = delta.trim();
+      if (!addition) return;
+      if (activeTask === 'task1') {
+        setTask1Essay((prev) => {
+          if (!prev) return addition;
+          const needsSpace = !/\s$/.test(prev);
+          return `${prev}${needsSpace ? ' ' : ''}${addition}`;
+        });
+      } else {
+        setTask2Essay((prev) => {
+          if (!prev) return addition;
+          const needsSpace = !/\s$/.test(prev);
+          return `${prev}${needsSpace ? ' ' : ''}${addition}`;
+        });
+      }
+    },
+    [activeTask, setTask1Essay, setTask2Essay],
+  );
+
+  useEffect(() => {
+    if (!voiceEnabled) return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const node = textareaRef.current;
+    if (!node) return;
+    try {
+      if (document.activeElement !== node) {
+        node.focus();
+      }
+      const end = node.value.length;
+      node.setSelectionRange(end, end);
+    } catch {
+      // ignore focus/selection errors
+    }
+  }, [activeTask, voiceEnabled]);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {focusWarning ? (
+        <Alert variant="warning" title="Focus guard">
+          {focusWarning}
+        </Alert>
+      ) : null}
+      {resumedAt ? (
+        <Alert
+          variant="info"
+          title="Draft restored"
+          description={`We loaded your last autosave from ${resumedAt.toLocaleString()}. Keep typing—autosave is active.`}
+        />
+      ) : null}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <aside className="flex flex-col gap-4">
+          {tasks.map((task) => (
+            <Card
+              key={task.key}
+              className={clsx(
+                'rounded-ds-2xl border border-border/60 bg-background/90 p-5 shadow-sm',
+                activeTask === task.key && 'border-primary/60 bg-primary/5 shadow-primary/10',
+              )}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {task.label}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="neutral" size="sm">
+                    {MIN_WORDS[task.key]}+ words
+                  </Badge>
+                  {activeTask === task.key ? (
+                    <Badge variant="primary" size="sm">
+                      Active
+                    </Badge>
+                  ) : null}
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                <Badge variant="info" size="sm">
+                  {task.prompt.module === 'general_training' ? 'General Training' : 'Academic'}
+                </Badge>
+                <Badge variant="subtle" size="sm" className="capitalize">
+                  {task.prompt.difficulty}
+                </Badge>
+              </div>
+              <h2 className="mt-4 text-lg font-semibold text-foreground">{task.prompt.title}</h2>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                {task.prompt.promptText}
+              </p>
+              {activeTask !== task.key ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-4 hidden rounded-ds lg:inline-flex"
+                  onClick={() => setActiveTask(task.key)}
+                >
+                  Focus this task
+                </Button>
+              ) : null}
+            </Card>
+          ))}
+        </aside>
+
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="rounded-ds-2xl border border-border/60 bg-background/95 p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <WritingAutosaveIndicator state={autosaveState} updatedAt={lastSavedAt} />
+                <Badge variant="info" size="sm">
+                  Focus guard
+                </Badge>
+                {tabSwitches > 0 ? (
+                  <Badge variant="warning" size="sm">
+                    {tabSwitches} tab switch{tabSwitches === 1 ? '' : 'es'} noted
+                  </Badge>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Leaving this tab pauses the timer automatically.
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Word count</span>
+                  <span className="font-mono text-base text-foreground">{counts[activeTask]}</span>
+                  <span className="text-xs text-muted-foreground">active</span>
+                  <span aria-hidden="true" className="text-muted-foreground">
+                    •
+                  </span>
+                  <span className="font-mono text-sm text-foreground">{totalWordCount}</span>
+                  <span className="text-xs text-muted-foreground">total</span>
+                </div>
+                <WritingTimer seconds={timeLeft} totalSeconds={durationSeconds} />
+                <Button
+                  onClick={() => handleSubmit(false)}
+                  loading={submitting}
+                  disabled={submitting}
+                  className="hidden rounded-ds md:inline-flex"
+                >
+                  Submit test
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            Complete both tasks within {Math.round(durationSeconds / 60)} minutes. Autosave runs every 10 seconds and the
+            timer pauses if you leave the tab.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {tasks.map((task) => (
+                <Button
+                  key={task.key}
+                  size="sm"
+                  variant={activeTask === task.key ? 'primary' : 'ghost'}
+                  className="rounded-full"
+                  onClick={() => setActiveTask(task.key)}
+                >
+                  {task.label} · {task.count} words
+                </Button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <VoiceDraftToggle onToggle={setVoiceEnabled} onTranscript={handleTranscript} />
+              {voiceEnabled ? (
+                <Badge variant="success" size="sm">
+                  Listening
+                </Badge>
+              ) : null}
+            </div>
+          </div>
+
+          {error ? (
+            <Alert variant="danger" title="Submission failed">
+              {error}
+            </Alert>
+          ) : null}
+
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-muted-foreground" htmlFor={textareaId}>
+              {active.label} response
+            </label>
+            <span className="text-xs text-muted-foreground">Aim for at least {minWords} words.</span>
+          </div>
+          <Card className="rounded-ds-2xl border border-border/60 bg-background/90 p-0">
+            <TextareaAutosize
+              minRows={voiceEnabled ? 14 : 18}
+              value={active.value}
+              id={textareaId}
+              aria-describedby={belowMin ? helperId : undefined}
+              onChange={(event) => active.setter(event.target.value)}
+              ref={textareaRef}
+              className="w-full resize-none rounded-ds-2xl border-0 bg-transparent p-6 text-base leading-7 text-foreground focus:outline-none"
+            />
+          </Card>
+          {belowMin ? (
+            <p id={helperId} className="text-sm text-amber-600">
+              Add at least {minWords - active.count} more words to meet the recommended minimum.
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="md:hidden">
+        <BottomActionBar
+          leading={<WritingAutosaveIndicator state={autosaveState} updatedAt={lastSavedAt} />}
+          stacked
+        >
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => handleSubmit(false)}
+            loading={submitting}
+            disabled={submitting}
+          >
+            Submit test
+          </Button>
+        </BottomActionBar>
+      </div>
+    </div>
+  );
+};
+
+export default WritingExamRoom;
+
+===== File #37: components/writing/VoiceDraftToggle.tsx =====
+'use client';
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+
+const isBrowser = typeof window !== 'undefined';
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  abort?: () => void;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface SpeechRecognitionEventLike {
+  resultIndex: number;
+  results: ArrayLike<SpeechRecognitionResultLike>;
+}
+
+interface SpeechRecognitionResultLike {
+  isFinal: boolean;
+  length: number;
+  [index: number]: { transcript: string };
+}
+
+interface SpeechRecognitionErrorEventLike {
+  error: string;
+}
+
+const getSpeechRecognition = (): SpeechRecognitionConstructor | null => {
+  if (!isBrowser) return null;
+  const AnyWindow = window as typeof window & {
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    SpeechRecognition?: SpeechRecognitionConstructor;
+  };
+  return AnyWindow.SpeechRecognition || AnyWindow.webkitSpeechRecognition || null;
+};
+
+type Props = {
+  onToggle?: (enabled: boolean) => void;
+  onTranscript?: (delta: string) => void;
+};
+
+const VoiceDraftToggle: React.FC<Props> = ({ onToggle, onTranscript }) => {
+  const [enabled, setEnabled] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const enabledRef = useRef(false);
+  const transcriptRef = useRef(onTranscript);
+  const toggleRef = useRef(onToggle);
+  const supportedRef = useRef(false);
+
+  useEffect(() => {
+    transcriptRef.current = onTranscript;
+  }, [onTranscript]);
+
+  useEffect(() => {
+    toggleRef.current = onToggle;
+  }, [onToggle]);
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
+  useEffect(() => {
+    supportedRef.current = supported;
+  }, [supported]);
+
+  useEffect(() => {
+    setSupported(Boolean(getSpeechRecognition()));
+  }, []);
+
+  const statusLabel = useMemo(() => {
+    if (!supported) return 'Unavailable';
+    return enabled ? 'Listening' : 'Off';
+  }, [enabled, supported]);
+
+  const teardownRecognition = useCallback(() => {
+    const instance = recognitionRef.current;
+    if (!instance) return;
+    instance.onresult = null;
+    instance.onerror = null;
+    instance.onend = null;
+    try {
+      instance.stop();
+    } catch {
+      // ignore stop errors
+    }
+    if (typeof instance.abort === 'function') {
+      try {
+        instance.abort();
+      } catch {
+        // ignore abort errors
+      }
+    }
+    recognitionRef.current = null;
+  }, []);
+
+  const ensureRecognition = useCallback((): SpeechRecognitionInstance | null => {
+    if (recognitionRef.current) return recognitionRef.current;
+    const RecognitionCtor = getSpeechRecognition();
+    if (!RecognitionCtor) return null;
+    const recognition = new RecognitionCtor();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    recognition.onresult = (event) => {
+      if (!enabledRef.current) return;
+      let finalText = '';
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        if (!result?.isFinal) continue;
+        const transcript = result[0]?.transcript ?? '';
+        if (transcript) {
+          finalText += transcript;
+        }
+      }
+      const trimmed = finalText.trim();
+      if (trimmed) {
+        transcriptRef.current?.(trimmed);
+      }
+    };
+    recognition.onerror = (event: SpeechRecognitionErrorEventLike) => {
+      const error = event?.error;
+      if (error === 'not-allowed' || error === 'service-not-allowed') {
+        enabledRef.current = false;
+        setEnabled(false);
+        setSupported(false);
+        toggleRef.current?.(false);
+        teardownRecognition();
+        return;
+      }
+      if (error === 'audio-capture') {
+        enabledRef.current = false;
+        setEnabled(false);
+        setSupported(false);
+        toggleRef.current?.(false);
+        teardownRecognition();
+        return;
+      }
+      if (!enabledRef.current) return;
+      if (error === 'aborted') return;
+      try {
+        recognition.stop();
+      } catch {
+        // ignore stop errors
+      }
+    };
+    recognition.onend = () => {
+      if (!enabledRef.current || !supportedRef.current) return;
+      try {
+        recognition.start();
+      } catch (error: any) {
+        if (
+          error?.name === 'NotAllowedError' ||
+          error?.name === 'NotReadableError' ||
+          error?.name === 'SecurityError'
+        ) {
+          enabledRef.current = false;
+          setEnabled(false);
+          setSupported(false);
+          toggleRef.current?.(false);
+          teardownRecognition();
+        }
+      }
+    };
+    recognitionRef.current = recognition;
+    return recognition;
+  }, [teardownRecognition]);
+
+  const disableVoice = useCallback(() => {
+    enabledRef.current = false;
+    setEnabled(false);
+    toggleRef.current?.(false);
+    const instance = recognitionRef.current;
+    if (!instance) return;
+    try {
+      instance.stop();
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (!supported) return;
+    if (enabledRef.current) {
+      disableVoice();
+      return;
+    }
+    const recognition = ensureRecognition();
+    if (!recognition) {
+      setSupported(false);
+      setEnabled(false);
+      toggleRef.current?.(false);
+      return;
+    }
+    enabledRef.current = true;
+    setEnabled(true);
+    toggleRef.current?.(true);
+    try {
+      recognition.start();
+    } catch (error: any) {
+      if (error?.name !== 'InvalidStateError') {
+        disableVoice();
+        if (
+          error?.name === 'NotAllowedError' ||
+          error?.name === 'NotReadableError' ||
+          error?.name === 'SecurityError'
+        ) {
+          setSupported(false);
+        }
+      }
+    }
+  }, [disableVoice, ensureRecognition, supported]);
+
+  useEffect(
+    () => () => {
+      disableVoice();
+      teardownRecognition();
+    },
+    [disableVoice, teardownRecognition],
+  );
+
+  return (
+    <div className="flex items-center justify-between rounded-ds-xl border border-border/70 bg-card/70 p-4">
+      <div>
+        <p className="text-sm font-medium text-foreground">Voice draft</p>
+        <p className="text-xs text-muted-foreground">
+          Dictate ideas hands-free. The autosave system will keep transcripts synced every few seconds.
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Badge size="sm" variant={enabled ? 'success' : 'secondary'}>
+          {statusLabel}
+        </Badge>
+        <Button
+          size="sm"
+          variant={enabled ? 'primary' : 'ghost'}
+          onClick={toggle}
+          disabled={!supported}
+          title={supported ? 'Toggle voice capture' : 'Browser speech recognition not supported'}
+        >
+          {enabled ? 'Stop' : 'Enable'}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default VoiceDraftToggle;
+

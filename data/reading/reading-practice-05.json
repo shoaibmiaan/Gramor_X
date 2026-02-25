@@ -1,0 +1,46 @@
+{
+  "id": "reading-practice-05",
+  "title": "Reading Practice Test 5 — Health & Innovation",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "passage-a",
+      "title": "Community Health Kitchens",
+      "text": "Cities are piloting community kitchens that offer nutrition classes alongside low-cost meals. Participants cook together, learn budgeting skills, and receive guidance from dietitians. Early evaluations in Chicago report declines in household food waste and improved diabetes management among attendees. Local councils are considering subscription models to fund ingredients without relying solely on donations.",
+      "questions": [
+        { "id": "A1", "type": "mcq", "prompt": "What services do community health kitchens provide?", "options": ["Luxury catering", "Nutrition classes and shared cooking", "Home renovation"], "answer": "Nutrition classes and shared cooking" },
+        { "id": "A2", "type": "gap", "prompt": "Which city is cited as evaluating the programme?", "answer": "Chicago" },
+        { "id": "A3", "type": "tfng", "prompt": "The passage claims the kitchens increase food waste.", "answer": "False" },
+        { "id": "A4", "type": "gap", "prompt": "What health improvement is mentioned among attendees?", "answer": "improved diabetes management" },
+        { "id": "A5", "type": "mcq", "prompt": "How might councils fund ingredients sustainably?", "options": ["Stop classes", "Subscription models", "Raise parking fees"], "answer": "Subscription models" },
+        { "id": "A6", "type": "tfng", "prompt": "Donations remain the only funding option discussed.", "answer": "False" }
+      ]
+    },
+    {
+      "id": "passage-b",
+      "title": "Portable Diagnostics",
+      "text": "Advances in microfluidics have produced handheld devices that analyse blood samples within minutes. Rural clinics in Kenya and Nepal now deploy the tools to screen for malaria and anaemia without full laboratories. Training community health workers to use the devices is vital; the most successful programmes pair on-site coaching with remote troubleshooting hotlines. Regulators still require lab confirmation for critical cases, but the devices speed up triage and treatment.",
+      "questions": [
+        { "id": "B1", "type": "gap", "prompt": "Which technology enables rapid diagnostics?", "answer": "microfluidics" },
+        { "id": "B2", "type": "mcq", "prompt": "Where are handheld diagnostic devices currently deployed?", "options": ["Rural clinics in Kenya and Nepal", "Corporate offices in Europe", "Submarines"], "answer": "Rural clinics in Kenya and Nepal" },
+        { "id": "B3", "type": "tfng", "prompt": "The devices have eliminated the need for any laboratory confirmation.", "answer": "False" },
+        { "id": "B4", "type": "gap", "prompt": "What support helps health workers operate the devices?", "answer": "remote troubleshooting hotlines" },
+        { "id": "B5", "type": "mcq", "prompt": "Which diseases are mentioned as being screened?", "options": ["Malaria and anaemia", "Common cold", "Arthritis"], "answer": "Malaria and anaemia" },
+        { "id": "B6", "type": "tfng", "prompt": "The passage states that training is unnecessary for the devices.", "answer": "False" }
+      ]
+    },
+    {
+      "id": "passage-c",
+      "title": "Collaborative Research Platforms",
+      "text": "Universities increasingly share labs via online booking systems that allow startups to rent equipment during off-peak hours. Shared platforms lower the cost of experimentation and encourage partnerships between academia and industry. Some institutions provide mentorship credits, giving entrepreneurs access to faculty advice alongside lab time. However, administrators must enforce safety protocols and protect intellectual property when multiple teams share facilities.",
+      "questions": [
+        { "id": "C1", "type": "mcq", "prompt": "Why are universities sharing laboratory space?", "options": ["To eliminate startups", "To reduce experimental costs and foster partnerships", "To close campuses"], "answer": "To reduce experimental costs and foster partnerships" },
+        { "id": "C2", "type": "gap", "prompt": "What system manages access to the labs?", "answer": "online booking systems" },
+        { "id": "C3", "type": "tfng", "prompt": "Mentorship credits give startups access to faculty expertise.", "answer": "True" },
+        { "id": "C4", "type": "mcq", "prompt": "What challenge must administrators address?", "options": ["Finding enough furniture", "Ensuring safety and intellectual property protections", "Moving campuses overseas"], "answer": "Ensuring safety and intellectual property protections" },
+        { "id": "C5", "type": "gap", "prompt": "When can startups use university labs according to the passage?", "answer": "off-peak hours" },
+        { "id": "C6", "type": "tfng", "prompt": "The passage suggests shared labs reduce collaboration.", "answer": "False" }
+      ]
+    }
+  ]
+}

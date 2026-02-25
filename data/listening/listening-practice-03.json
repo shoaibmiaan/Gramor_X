@@ -1,0 +1,56 @@
+{
+  "id": "listening-practice-03",
+  "title": "Academic Listening Test 3 — Professional Skills",
+  "durationSec": 1800,
+  "transcript": "Recording one is a phone call arranging a careers consultation. Recording two is a workplace induction talk. Recording three is a group of colleagues designing a training workshop. Recording four is a lecture on behavioural economics.",
+  "sections": [
+    {
+      "id": "part-1",
+      "title": "Section 1 — Careers Centre Call",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-03-part1.mp3",
+      "questions": [
+        { "id": "L3-Q1", "type": "gap", "prompt": "Which day is the appointment confirmed for?", "answer": "Friday" },
+        { "id": "L3-Q2", "type": "mcq", "prompt": "What time is offered for the appointment?", "options": ["10:30", "12:00", "15:00"], "answer": "10:30" },
+        { "id": "L3-Q3", "type": "short", "prompt": "What document does the adviser ask the caller to email beforehand?", "answer": "CV" },
+        { "id": "L3-Q4", "type": "gap", "prompt": "Which seminar room should the caller report to?", "answer": "B204" },
+        { "id": "L3-Q5", "type": "mcq", "prompt": "What follow-up support is mentioned?", "options": ["Mock interviews", "Networking evening", "Online course"], "answer": "Mock interviews" }
+      ]
+    },
+    {
+      "id": "part-2",
+      "title": "Section 2 — Workplace Induction",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-03-part2.mp3",
+      "questions": [
+        { "id": "L3-Q6", "type": "short", "prompt": "Which software system will new staff train on first?", "answer": "Nimbus" },
+        { "id": "L3-Q7", "type": "mcq", "prompt": "Where are the health and safety briefings held?", "options": ["Training suite", "Warehouse", "Conference hall"], "answer": "Training suite" },
+        { "id": "L3-Q8", "type": "gap", "prompt": "What is the code for accessing the staff intranet?", "answer": "4931" },
+        { "id": "L3-Q9", "type": "mcq", "prompt": "When does payroll information need to be submitted?", "options": ["Monday", "Wednesday", "Friday"], "answer": "Wednesday" },
+        { "id": "L3-Q10", "type": "gap", "prompt": "Which department hosts the mentoring lunch?", "answer": "People and Culture" }
+      ]
+    },
+    {
+      "id": "part-3",
+      "title": "Section 3 — Training Workshop Planning",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-03-part3.mp3",
+      "questions": [
+        { "id": "L3-Q11", "type": "mcq", "prompt": "Which topic is selected for the workshop?", "options": ["Design thinking", "Inclusive leadership", "Time management"], "answer": "Inclusive leadership" },
+        { "id": "L3-Q12", "type": "gap", "prompt": "How many breakout groups are proposed?", "answer": "4" },
+        { "id": "L3-Q13", "type": "short", "prompt": "Which case study will be analysed first?", "answer": "Aurora Bank" },
+        { "id": "L3-Q14", "type": "mcq", "prompt": "What engagement tool will they use for live polling?", "options": ["Slido", "Mentimeter", "Google Forms"], "answer": "Mentimeter" },
+        { "id": "L3-Q15", "type": "gap", "prompt": "How long will the feedback session last in minutes?", "answer": "25" }
+      ]
+    },
+    {
+      "id": "part-4",
+      "title": "Section 4 — Behavioural Economics Lecture",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-03-part4.mp3",
+      "questions": [
+        { "id": "L3-Q16", "type": "gap", "prompt": "Which economist introduced the concept of 'nudge' mentioned in the lecture?", "answer": "Richard Thaler" },
+        { "id": "L3-Q17", "type": "mcq", "prompt": "Which experiment is cited to illustrate loss aversion?", "options": ["Coffee mug exchange", "Marshmallow test", "Prisoner's dilemma"], "answer": "Coffee mug exchange" },
+        { "id": "L3-Q18", "type": "short", "prompt": "What term is used for decision shortcuts people rely on?", "answer": "heuristics" },
+        { "id": "L3-Q19", "type": "gap", "prompt": "How many participants were involved in the supermarket loyalty study?", "answer": "840" },
+        { "id": "L3-Q20", "type": "mcq", "prompt": "What policy example demonstrates defaults in practice?", "options": ["Pension enrolment", "Energy labelling", "Plastic tax"], "answer": "Pension enrolment" }
+      ]
+    }
+  ]
+}

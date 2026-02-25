@@ -1,0 +1,164 @@
+name: Batch Build & Merge PRs
+
+on:
+  workflow_dispatch:
+    inputs:
+      label:
+        description: "Only include PRs with this label"
+        default: "codex"
+        required: true
+      limit:
+        description: "Max PRs to process (oldest first)"
+        default: "15"
+        required: true
+      merge_method:
+        description: "merge | squash | rebase"
+        default: "squash"
+        required: true
+      dry_run:
+        description: "true = build only, don't merge"
+        default: "false"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: batch-build-and-merge
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_ENV: test
+
+      # ✅ Dummy env so your schema/env validation passes
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: anon_dummy
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_SERVICE_KEY: service_dummy
+      SUPABASE_SERVICE_ROLE_KEY: role_dummy
+      TWILIO_ACCOUNT_SID: ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      TWILIO_AUTH_TOKEN: dummytoken
+      TWILIO_VERIFY_SERVICE_SID: VAXxxxxxxxxxxxxxxxxxxxxxxxx
+      TWILIO_WHATSAPP_FROM: whatsapp:+10000000000
+      NEXT_PUBLIC_IDLE_TIMEOUT_MINUTES: '60'
+      STRIPE_PRICE_STARTER_MONTHLY: price_dummy
+      STRIPE_PRICE_STARTER_ANNUAL: price_dummy
+      STRIPE_PRICE_BOOSTER_MONTHLY: price_dummy
+      STRIPE_PRICE_BOOSTER_ANNUAL: price_dummy
+      STRIPE_PRICE_MASTER_MONTHLY: price_dummy
+      STRIPE_PRICE_MASTER_ANNUAL: price_dummy
+      NEXT_PUBLIC_DEV_PAYMENTS: '1'
+      EASYPASA_MERCHANT_ID: dummy_merchant
+      EASYPASA_SECRET: dummy_secret
+      JAZZCASH_MERCHANT_ID: dummy_merchant
+      JAZZCASH_INTEGRITY_SALT: dummy_salt
+      SPEAKING_DAILY_LIMIT: '5'
+
+    steps:
+      - name: Checkout base repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Prime install on base branch
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Install gh + jq
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+          echo "GH_TOKEN=$GITHUB_TOKEN" >> $GITHUB_ENV
+
+      - name: Collect PRs (open, labeled, oldest first)
+        id: collect
+        env:
+          LABEL: ${{ github.event.inputs.label }}
+          LIMIT: ${{ github.event.inputs.limit }}
+        run: |
+          set -euo pipefail
+          PRS=$(gh pr list --state open --search "label:${LABEL}" \
+                --limit "${LIMIT}" --json number,title,headRefName,isDraft,author,mergeable,headRepositoryOwner,headRepository \
+                | jq '[.[] | select(.isDraft==false)] | sort_by(.number)')
+          echo "$PRS" | jq -r '.[] | "#\(.number)  \(.headRefName)  \(.title)"'
+          echo "prs=$PRS" >> "$GITHUB_OUTPUT"
+
+      - name: Process PRs sequentially (build → optional merge)
+        env:
+          PRS: ${{ steps.collect.outputs.prs }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          MERGE_METHOD: ${{ github.event.inputs.merge_method }}
+        run: |
+          set -euo pipefail
+          passed=()
+          failed=()
+
+          count=$(echo "$PRS" | jq 'length')
+          echo "Total PRs: $count"
+
+          for i in $(seq 0 $((count-1))); do
+            pr=$(echo "$PRS" | jq -r ".[$i].number")
+            ref=$(echo "$PRS" | jq -r ".[$i].headRefName")
+            title=$(echo "$PRS" | jq -r ".[$i].title")
+
+            echo
+            echo "==============================="
+            echo "PR #$pr  [$ref]"
+            echo "Title: $title"
+            echo "==============================="
+
+            # Clean tree
+            git reset --hard
+            git clean -fd
+
+            # Fetch PR head into a local branch
+            git fetch origin "pull/${pr}/head:pr-${pr}" --force
+            git checkout -q "pr-${pr}"
+
+            # Fresh install per PR to be deterministic
+            if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+            # Tests/Lint/Build
+            set +e
+            npm test && npm run lint && npm run build
+            code=$?
+            set -e
+
+            if [ "$code" -eq 0 ]; then
+              echo "✅ Build PASSED for PR #$pr"
+              passed+=("$pr")
+
+              if [ "$DRY_RUN" != "true" ]; then
+                echo "Merging PR #$pr with method: $MERGE_METHOD"
+                # Will respect branch protection; merge only if allowed
+                gh pr merge "$pr" --${MERGE_METHOD} --delete-branch --auto || {
+                  echo "Could not merge PR #$pr (protection or required checks)."
+                }
+              else
+                echo "DRY RUN: skipping merge for PR #$pr"
+              fi
+            else
+              echo "❌ Build FAILED for PR #$pr"
+              failed+=("$pr")
+              gh pr comment "$pr" --body "❌ CI (batch) failed to build this PR. Please fix build/lint/tests. (Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+            fi
+          done
+
+          echo
+          echo "===== SUMMARY ====="
+          echo "Passed: ${passed[*]:-none}"
+          echo "Failed: ${failed[*]:-none}"
+          echo "==================="

@@ -1,0 +1,86 @@
+/* styles/themes/index.css */
+/* Base semantic map consumed by tailwind.config.js (gx-*) */
+:root {
+  --gx-background: var(--color-lightBg);
+  --gx-foreground: var(--color-lightText);
+  --gx-card: var(--color-lightCard);
+  --gx-card-foreground: var(--color-lightText);
+  --gx-popover: var(--color-lightCard);
+  --gx-popover-foreground: var(--color-lightText);
+  --gx-border: var(--color-lightBorder);
+  --gx-input: var(--color-lightBorder);
+  --gx-ring: var(--color-electricBlue);
+  --gx-muted: 245 245 248;
+  --gx-muted-foreground: 120 120 140;
+  --gx-focus-ring: var(--color-electricBlue);
+  --gx-focus-ring-strong: var(--color-neonGreen);
+  --gx-focus-ring-muted: var(--gx-muted-foreground);
+  --gx-chart-reading: var(--color-primary);
+  --gx-chart-listening: var(--color-secondary);
+  --gx-chart-writing: var(--color-accent);
+  --gx-chart-speaking: var(--color-purpleVibe);
+  --gx-chart-grid: var(--gx-border);
+  --gx-chart-axis: var(--gx-muted-foreground);
+  --gx-chart-tooltip-bg: var(--gx-card);
+  --gx-chart-tooltip-border: var(--gx-border);
+  --gx-chart-tooltip-fg: var(--gx-card-foreground);
+}
+
+/* Dark overrides (works with .dark by next-themes) */
+.dark {
+  --gx-background: 18 18 30;
+  --gx-foreground: 255 255 255;
+  --gx-card: 22 22 34;
+  --gx-card-foreground: 255 255 255;
+  --gx-popover: 22 22 34;
+  --gx-popover-foreground: 255 255 255;
+  --gx-border: 60 60 80;
+  --gx-input: 60 60 80;
+  --gx-ring: var(--color-neonGreen);
+  --gx-muted: 32 32 48;
+  --gx-muted-foreground: 180 180 200;
+  --gx-focus-ring: var(--color-neonGreen);
+  --gx-focus-ring-strong: var(--color-electricBlue);
+  --gx-focus-ring-muted: var(--gx-muted-foreground);
+  --gx-chart-reading: var(--color-primary);
+  --gx-chart-listening: var(--color-secondary);
+  --gx-chart-writing: var(--color-accent);
+  --gx-chart-speaking: var(--color-purpleVibe);
+  --gx-chart-grid: var(--gx-border);
+  --gx-chart-axis: var(--gx-muted-foreground);
+  --gx-chart-tooltip-bg: var(--gx-card);
+  --gx-chart-tooltip-border: var(--gx-border);
+  --gx-chart-tooltip-fg: var(--gx-card-foreground);
+}
+
+[data-theme='hc'] {
+  --gx-background: 0 0 0;
+  --gx-foreground: 255 255 255;
+  --gx-card: 0 0 0;
+  --gx-card-foreground: 255 255 255;
+  --gx-popover: 0 0 0;
+  --gx-popover-foreground: 255 255 255;
+  --gx-border: 255 255 255;
+  --gx-input: 255 255 255;
+  --gx-ring: 255 209 0;
+  --gx-muted: 30 30 30;
+  --gx-muted-foreground: 220 220 220;
+  --gx-focus-ring: 255 209 0;
+  --gx-focus-ring-strong: 0 255 255;
+  --gx-focus-ring-muted: 220 220 220;
+  --gx-chart-reading: 255 234 0;
+  --gx-chart-listening: 0 255 255;
+  --gx-chart-writing: 255 105 180;
+  --gx-chart-speaking: 255 255 255;
+  --gx-chart-grid: 255 255 255;
+  --gx-chart-axis: 255 255 255;
+  --gx-chart-tooltip-bg: 0 0 0;
+  --gx-chart-tooltip-border: 255 255 255;
+  --gx-chart-tooltip-fg: 255 255 255;
+}
+
+/* Optional seasonal themes override selectively */
+@import './spring.css';
+@import './summer.css';
+@import './autumn.css';
+@import './winter.css';

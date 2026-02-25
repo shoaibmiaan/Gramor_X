@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="2340" viewBox="0 0 1080 2340" role="img" aria-labelledby="title desc">
+  <title id="title">Google Play screenshot — Lesson overview</title>
+  <desc id="desc">Mobile screenshot showing lesson overview and progress charts.</desc>
+  <rect width="1080" height="2340" fill="#020617" />
+  <g transform="translate(96 120)">
+    <rect width="888" height="2100" rx="96" fill="#0F172A" stroke="#1E293B" stroke-width="5" />
+    <g transform="translate(120 200)" font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="0" y="0" font-size="48" fill="#38BDF8" font-weight="600">Listening Labs</text>
+      <text x="0" y="56" font-size="30" fill="#BAE6FD">Adaptive drills tailored to Band 7+</text>
+      <g transform="translate(0 120)">
+        <rect width="648" height="200" rx="28" fill="rgba(14,165,233,0.14)" />
+        <text x="48" y="90" font-size="26" fill="#F8FAFC">Focus area</text>
+        <text x="48" y="134" font-size="24" fill="#E0F2FE">Section 2 — Matching headings</text>
+        <text x="48" y="170" font-size="22" fill="#A5B4FC">Confidence: 62% → Goal: 80%</text>
+      </g>
+      <g transform="translate(0 360)">
+        <text x="0" y="0" font-size="34" fill="#E0F2FE" font-weight="600">Quick results</text>
+        <text x="0" y="60" font-size="26" fill="#C7D2FE">Accuracy 78% · Speed 6.2x · Notes reviewed 12</text>
+      </g>
+      <g transform="translate(0 520)">
+        <rect width="648" height="180" rx="28" fill="rgba(99,102,241,0.14)" />
+        <text x="48" y="80" font-size="28" fill="#F8FAFC">Start smart practice</text>
+        <text x="48" y="128" font-size="22" fill="#E0E7FF">10 questions · Instant explanations</text>
+      </g>
+      <g transform="translate(0 760)">
+        <rect width="648" height="360" rx="32" fill="rgba(45,212,191,0.12)" />
+        <text x="48" y="96" font-size="28" fill="#F8FAFC">Strategy tips</text>
+        <text x="48" y="140" font-size="24" fill="#D6BCFA">Listen for contrast words and paraphrases to anchor headings.</text>
+        <text x="48" y="200" font-size="24" fill="#BAE6FD">Pause the clip to take structured notes before selecting an answer.</text>
+      </g>
+    </g>
+  </g>
+</svg>

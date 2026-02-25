@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-01",
+  "title": "Academic Set 1 — Energy & Remote Work",
+  "description": "Line chart on renewable energy adoption and an opinion essay about remote work.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Renewable energy consumption",
+    "type": "academic",
+    "prompt": "The line graph shows the proportion of electricity generated from renewable sources in four countries (Canada, Germany, Japan and Brazil) between 2000 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Identify overall trends for each country before comparing specific years.",
+      "Highlight any years where countries experienced sharp increases or declines.",
+      "Group countries with similar patterns to avoid describing each year separately."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Remote work",
+    "prompt": "Many people now work remotely and communicate with colleagues online. Some people think this allows for a better work–life balance, while others believe it makes teamwork more difficult. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the statement and present your position.",
+      "Body paragraph 1: advantages of remote work for individuals.",
+      "Body paragraph 2: challenges remote work creates for collaboration.",
+      "Conclusion: restate your opinion and suggest how to balance both sides."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The line graph shows the proportion of electricity generated from renewable sources in four countries (Canada, Germany, Japan and Brazil) between 2000 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Many people now work remotely and communicate with colleagues online. Some people think this allows for a better work–life balance, while others believe it makes teamwork more difficult. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

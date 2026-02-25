@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1284" height="2778" viewBox="0 0 1284 2778" role="img" aria-labelledby="title desc">
+  <title id="title">App Store screenshot — GramorX dashboard</title>
+  <desc id="desc">Tall mockup of the GramorX dashboard summarizing progress.</desc>
+  <defs>
+    <linearGradient id="frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#1F2937" />
+    </linearGradient>
+  </defs>
+  <rect width="1284" height="2778" fill="#0F172A" />
+  <g transform="translate(122 144)">
+    <rect width="1040" height="2490" rx="120" fill="url(#frame)" stroke="#334155" stroke-width="6" />
+    <g transform="translate(130 200)">
+      <text x="0" y="0" font-family="'Inter', 'Segoe UI', sans-serif" font-size="56" fill="#E0F2FE" font-weight="600">
+        Welcome back, Sara!
+      </text>
+      <text x="0" y="70" font-family="'Inter', 'Segoe UI', sans-serif" font-size="32" fill="#BAE6FD">
+        Your path to Band 8.0 is on track — keep the streak alive.
+      </text>
+      <g transform="translate(0 140)">
+        <rect width="780" height="220" rx="32" fill="#1E3A8A" />
+        <text x="56" y="110" font-size="96" font-family="'Roboto Slab', 'Segoe UI', sans-serif" fill="#BFDBFE" font-weight="700">
+          87%
+        </text>
+        <text x="240" y="86" font-size="32" font-family="'Inter', 'Segoe UI', sans-serif" fill="#E0F2FE">
+          Mastery momentum this week
+        </text>
+        <text x="240" y="130" font-size="24" font-family="'Inter', 'Segoe UI', sans-serif" fill="#A5B4FC">
+          +12% vs last week · Listening focus recommended
+        </text>
+      </g>
+      <g transform="translate(0 420)">
+        <text x="0" y="0" font-size="38" font-family="'Roboto Slab', 'Segoe UI', sans-serif" fill="#E0F2FE">Today&apos;s plan</text>
+        <g transform="translate(0 50)">
+          <rect width="780" height="160" rx="28" fill="#0EA5E9" opacity="0.16" />
+          <text x="48" y="70" font-size="28" font-family="'Inter', 'Segoe UI', sans-serif" fill="#F8FAFC">Speaking warm-up (AI coach)</text>
+          <text x="48" y="110" font-size="24" font-family="'Inter', 'Segoe UI', sans-serif" fill="#E0F2FE">8 minutes · Feedback on pronunciation</text>
+        </g>
+        <g transform="translate(0 220)">
+          <rect width="780" height="160" rx="28" fill="#6366F1" opacity="0.16" />
+          <text x="48" y="70" font-size="28" font-family="'Inter', 'Segoe UI', sans-serif" fill="#F8FAFC">Writing Task 2 — Practice essay</text>
+          <text x="48" y="110" font-size="24" font-family="'Inter', 'Segoe UI', sans-serif" fill="#E0F2FE">Timed · Instant rubric scoring</text>
+        </g>
+        <g transform="translate(0 390)">
+          <rect width="780" height="160" rx="28" fill="#22D3EE" opacity="0.16" />
+          <text x="48" y="70" font-size="28" font-family="'Inter', 'Segoe UI', sans-serif" fill="#F8FAFC">Reading adaptive drill</text>
+          <text x="48" y="110" font-size="24" font-family="'Inter', 'Segoe UI', sans-serif" fill="#E0F2FE">Band 7+ · 15 min</text>
+        </g>
+      </g>
+      <g transform="translate(0 1080)">
+        <text x="0" y="0" font-size="38" font-family="'Roboto Slab', 'Segoe UI', sans-serif" fill="#E0F2FE">Progress snapshot</text>
+        <text x="0" y="70" font-size="26" font-family="'Inter', 'Segoe UI', sans-serif" fill="#BAE6FD">
+          Listening 7.5 · Reading 7.0 · Writing 6.5 · Speaking 7.0
+        </text>
+        <text x="0" y="120" font-size="24" font-family="'Inter', 'Segoe UI', sans-serif" fill="#A5B4FC">
+          AI insights: Increase writing attempts to unlock your next milestone.
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,20 @@
+name: cron-dispatch
+on:
+  schedule:
+    - cron: "*/15 * * * *" # every 15 minutes (UTC)
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call notifications dispatcher
+        env:
+          BASE_URL: ${{ secrets.PUBLIC_APP_URL }}  # e.g. https://gramorx.vercel.app
+          SIGNING: ${{ secrets.WHATSAPP_TASKS_SIGNING_SECRET }}
+        run: |
+          set -e
+          curl -fsS --retry 5 --retry-delay 10 \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Signature: $SIGNING" \
+            "$BASE_URL/api/cron/notifications-dispatch"

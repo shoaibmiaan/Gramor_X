@@ -1,0 +1,343 @@
+{
+  "id": "ielts-listening-full-003",
+  "title": "IELTS Listening Full Mock Exam 003",
+  "durationSec": 2400,
+  "transcript": "Candidates will hear a conference catering enquiry, a museum audio-guide briefing, a retrofit planning seminar, and an academic lecture on circular design.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Conference Catering Request",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-003-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-003-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Riverside Conference Suite",
+            "Hilltop Conservatory",
+            "West Pier Atrium",
+            "Oakwood Ballroom"
+          ],
+          "answer": "Riverside Conference Suite"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "3rd December"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "9:30 am"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "180"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Seasonal brunch buffet",
+            "Gourmet sandwich platters",
+            "Tapas evening",
+            "Outdoor barbecue"
+          ],
+          "answer": "Seasonal brunch buffet"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "320 pounds"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "dual projectors"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Liam"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Multi-storey car park C",
+            "Riverside lay-bys",
+            "Staff courtyard",
+            "Coach bays by Gate 2"
+          ],
+          "answer": "Multi-storey car park C"
+        },
+        {
+          "id": "ielts-listening-full-003-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "theatre seating"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Museum Audio Guide Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-003-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-003-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "museum education officer",
+            "gallery assistant",
+            "security supervisor",
+            "volunteer coordinator"
+          ],
+          "answer": "museum education officer"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "updated audio guide launch"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "18 minutes"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Sculpture Garden entrance"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": [
+            "Restored Gallery Two",
+            "Temporary Exhibit Hall",
+            "Archive Reading Room",
+            "Cafe mezzanine"
+          ],
+          "answer": "Restored Gallery Two"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Stand 4"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "GalleryNet-88"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Saturday"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": ["personal headphones", "formal dress shoes", "printed brochures", "tripods"],
+          "answer": "personal headphones"
+        },
+        {
+          "id": "ielts-listening-full-003-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0114 890 2231"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Seminar on Renewable Dorms",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-003-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-003-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "residential energy retrofit project",
+            "student wellbeing survey",
+            "campus theatre review",
+            "athletics sponsorship plan"
+          ],
+          "answer": "residential energy retrofit project"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Noor"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "27 October"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "every Monday evening"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "energy meter logging",
+            "paper questionnaires",
+            "focus groups only",
+            "lab simulations"
+          ],
+          "answer": "energy meter logging"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "GridTrack"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£520"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Professor Ellis"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "coordinating access to dorm rooms",
+            "booking translators",
+            "scheduling keynote speakers",
+            "ordering lab reagents"
+          ],
+          "answer": "coordinating access to dorm rooms"
+        },
+        {
+          "id": "ielts-listening-full-003-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "15 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Circular Design",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-003-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-003-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "circular design for consumer tech",
+            "agricultural irrigation",
+            "polar climate change",
+            "medieval literature"
+          ],
+          "answer": "circular design for consumer tech"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "68 percent"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "material passport"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Helsinki"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "regenerative manufacturing incentives",
+            "fashion trends",
+            "record tourism revenue",
+            "celebrity endorsements"
+          ],
+          "answer": "regenerative manufacturing incentives"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Nova Research Lab"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Circular Systems Digest"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2019"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "tracing supplier compliance",
+            "hiring seasonal guides",
+            "protecting coral reefs",
+            "managing rehearsal schedules"
+          ],
+          "answer": "tracing supplier compliance"
+        },
+        {
+          "id": "ielts-listening-full-003-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "close loops early"
+        }
+      ]
+    }
+  ]
+}

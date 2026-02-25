@@ -1,0 +1,63 @@
+{
+  "saved": {
+    "hero": {
+      "eyebrow": "Library",
+      "title": "Saved items",
+      "subtitle": "All of your bookmarked lessons, practice sets, and AI feedback in one place. Open items to resume where you left off or remove them when you’re done."
+    },
+    "auth": {
+      "title": "Sign in to view saved items",
+      "subtitle": "Bookmarks sync with your account so you can return to them anytime.",
+      "signIn": "Sign in"
+    },
+    "errors": {
+      "http": "We couldn’t load your saved items right now. Please refresh and try again.",
+      "generic": "Something went wrong while loading your saved items. Please try again."
+    },
+    "empty": {
+      "title": "You haven’t saved anything yet",
+      "subtitle": "Bookmark practice passages, vocab lists, and AI feedback to revisit them faster.",
+      "actions": {
+        "reading": "Browse reading practice",
+        "vocabulary": "Explore vocabulary decks"
+      }
+    },
+    "modules": {
+      "listening": "Listening",
+      "reading": "Reading",
+      "writing": "Writing",
+      "speaking": "Speaking",
+      "vocabulary": "Vocabulary",
+      "grammar": "Grammar",
+      "flagged": "Flagged",
+      "retake": "Retake queue",
+      "bookmark": "Bookmarks",
+      "other": "Other"
+    },
+    "categories": {
+      "bookmark": "Bookmark",
+      "listening": "Listening",
+      "reading": "Reading",
+      "writing": "Writing",
+      "speaking": "Speaking",
+      "vocabulary": "Vocabulary",
+      "grammar": "Grammar"
+    },
+    "group": {
+      "count": {
+        "one": "1 saved item",
+        "other": "{count} saved items"
+      }
+    },
+    "items": {
+      "savedOn": "Saved {date}",
+      "open": "Open",
+      "remove": "Remove",
+      "removing": "Removing…"
+    },
+    "pagination": {
+      "more": "Load more",
+      "loading": "Loading…"
+    }
+  }
+}

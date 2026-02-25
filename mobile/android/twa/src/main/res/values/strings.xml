@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GramorX</string>
+    <string name="production_url">https://gramorx.com/</string>
+    <string name="production_origin">https://gramorx.com</string>
+    <string name="file_provider_authority">com.gramorx.twa.fileprovider</string>
+    <string name="asset_statements">[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://gramorx.com"}}]</string>
+    <string name="delegate_default_scope">https://gramorx.com/</string>
+    <string name="delegate_notifications_scope">https://gramorx.com/</string>
+    <string name="delegate_file_handling_scope">https://gramorx.com/</string>
+</resources>

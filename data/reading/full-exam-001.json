@@ -1,0 +1,138 @@
+{
+  "id": "ielts-reading-full-001",
+  "title": "IELTS Academic Reading Full Mock Exam 001",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "passage-1",
+      "title": "The Revival of Urban Rivers",
+      "text": "For much of the twentieth century, urban rivers were treated as open sewers or industrial corridors. Factories lined the banks, pouring waste directly into the water. In recent decades, however, city planners have recognised the ecological and social value of restoring these waterways. The Cheonggyecheon stream in Seoul is a celebrated example. Once buried beneath an elevated highway, it has been uncovered and transformed into a linear park that draws millions of visitors annually. The project reintroduced native vegetation, encouraged wildlife to return, and lowered surrounding air temperatures. Similar schemes are underway in cities ranging from Los Angeles to Madrid, each balancing flood control, biodiversity, and public access.",
+      "questions": [
+        {
+          "id": "p1-q1",
+          "type": "tfng",
+          "prompt": "Cheonggyecheon stream was historically hidden beneath an elevated road.",
+          "answer": "True"
+        },
+        {
+          "id": "p1-q2",
+          "type": "tfng",
+          "prompt": "Urban river restoration projects are unique to Asia.",
+          "answer": "False"
+        },
+        {
+          "id": "p1-q3",
+          "type": "tfng",
+          "prompt": "The restoration in Seoul has reduced local temperatures.",
+          "answer": "True"
+        },
+        {
+          "id": "p1-q4",
+          "type": "mcq",
+          "prompt": "What was a major benefit of Seoul's project?",
+          "options": [
+            "Increased vehicle traffic",
+            "Greater factory output",
+            "Return of native species",
+            "Expansion of port facilities"
+          ],
+          "answer": "Return of native species"
+        },
+        {
+          "id": "p1-q5",
+          "type": "gap",
+          "prompt": "Name one European city mentioned that is restoring a river.",
+          "answer": "Madrid"
+        }
+      ]
+    },
+    {
+      "id": "passage-2",
+      "title": "Reimagining the Workplace",
+      "text": "Flexible working arrangements have shifted from a niche perk to an organisational imperative. During global lockdowns, millions of employees were forced to work from home, revealing both the potential and the pitfalls of remote work. Surveys now show that most knowledge workers desire a hybrid schedule, combining home and office days. This preference has prompted companies to redesign offices as collaboration hubs rather than rows of desks. Architects are integrating more project rooms, acoustic pods, and wellness spaces. Yet hybrid work requires careful coordination: teams must avoid scheduling conflicts, ensure equitable access to information, and nurture organisational culture even when colleagues rarely meet in person.",
+      "questions": [
+        {
+          "id": "p2-q6",
+          "type": "heading",
+          "prompt": "Choose the correct heading for the passage.",
+          "options": [
+            "The Failure of Remote Work",
+            "Offices of the Hybrid Era",
+            "Decline of Organisational Culture",
+            "Architects Return to Cubicles"
+          ],
+          "answer": "Offices of the Hybrid Era"
+        },
+        {
+          "id": "p2-q7",
+          "type": "yynn",
+          "prompt": "Do most knowledge workers now prefer a hybrid schedule?",
+          "answer": "Yes"
+        },
+        {
+          "id": "p2-q8",
+          "type": "yynn",
+          "prompt": "Are companies reducing collaborative space in offices?",
+          "answer": "No"
+        },
+        {
+          "id": "p2-q9",
+          "type": "gap",
+          "prompt": "Name one feature architects are adding to offices.",
+          "answer": "acoustic pods"
+        },
+        {
+          "id": "p2-q10",
+          "type": "match",
+          "prompt": "Match the challenge with its description.",
+          "options": ["Scheduling conflicts", "Equitable information", "Maintaining culture"],
+          "answer": "Maintaining culture"
+        }
+      ]
+    },
+    {
+      "id": "passage-3",
+      "title": "The Science of Sleep in Adolescents",
+      "text": "Teenagers require approximately eight to ten hours of sleep each night to support brain development, emotional regulation, and physical growth. Despite this, many adolescents regularly sleep far less. Researchers attribute the shortfall to early school start times, evening screen use, and social obligations. Chronic sleep deprivation is linked to mood disorders, decreased academic performance, and an elevated risk of accidents. In response, several school districts have shifted the first bell to later in the morning, allowing students to align with their natural circadian rhythms. Early results reveal improvements in attendance, grades, and overall wellbeing, though logistical challenges remain for families and transport providers.",
+      "questions": [
+        {
+          "id": "p3-q11",
+          "type": "mcq",
+          "prompt": "How many hours of sleep do adolescents typically need?",
+          "options": ["5-6", "6-7", "8-10", "10-12"],
+          "answer": "8-10"
+        },
+        {
+          "id": "p3-q12",
+          "type": "gap",
+          "prompt": "List one cause of reduced sleep mentioned.",
+          "answer": "early school start times"
+        },
+        {
+          "id": "p3-q13",
+          "type": "tfng",
+          "prompt": "Lack of sleep can affect academic results.",
+          "answer": "True"
+        },
+        {
+          "id": "p3-q14",
+          "type": "mcq",
+          "prompt": "What change have some schools implemented?",
+          "options": [
+            "Shorter school year",
+            "Later start times",
+            "Longer lunch breaks",
+            "Weekend classes"
+          ],
+          "answer": "Later start times"
+        },
+        {
+          "id": "p3-q15",
+          "type": "gap",
+          "prompt": "Name one positive outcome observed after the schedule change.",
+          "answer": "improved attendance"
+        }
+      ]
+    }
+  ]
+}

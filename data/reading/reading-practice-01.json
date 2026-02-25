@@ -1,0 +1,46 @@
+{
+  "id": "reading-practice-01",
+  "title": "Reading Practice Test 1 — Urban Futures",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "passage-a",
+      "title": "Reimagining the Night-time City",
+      "text": "Cities have traditionally prioritised daytime economic activity. Yet as retail patterns shift and flexible work becomes common, planners are reconsidering how streets function after dark. London and Melbourne now employ 'night mayors' who coordinate transport, policing, and culture to ensure evening economies remain vibrant without disturbing residents. Trials of 24-hour libraries and late-night childcare point to a future where services follow people’s schedules rather than the other way round. However, extending opening hours raises questions about fair pay and the environmental impact of running buildings overnight.",
+      "questions": [
+        { "id": "A1", "type": "tfng", "prompt": "1. Night mayors focus solely on policing nightlife districts.", "answer": "False" },
+        { "id": "A2", "type": "tfng", "prompt": "2. Some cities have experimented with keeping public libraries open throughout the night.", "answer": "True" },
+        { "id": "A3", "type": "tfng", "prompt": "3. The passage states that longer opening hours always improve sustainability.", "answer": "False" },
+        { "id": "A4", "type": "gap", "prompt": "Which Australian city is mentioned as appointing a night mayor?", "answer": "Melbourne" },
+        { "id": "A5", "type": "mcq", "prompt": "Why are cities rethinking how streets operate after dark?", "options": ["Crime has increased", "Working patterns are changing", "Public transport has expanded"], "answer": "Working patterns are changing" },
+        { "id": "A6", "type": "mcq", "prompt": "What concern is raised about keeping buildings open overnight?", "options": ["Lack of demand", "Staff training", "Energy consumption"], "answer": "Energy consumption" }
+      ]
+    },
+    {
+      "id": "passage-b",
+      "title": "Microforests and Climate Adaptation",
+      "text": "Microforests are compact plots densely planted with native species using a method pioneered by Japanese botanist Akira Miyawaki. Despite covering less than a tennis court, they can host hundreds of species and dramatically improve soil quality. European towns now crowd-fund tiny forests to cool heat islands and absorb rainwater during intense storms. Critics question the cost of maintenance, but advocates argue that the approach reconnects communities with biodiversity and can be implemented on neglected roadside verges or school grounds.",
+      "questions": [
+        { "id": "B1", "type": "gap", "prompt": "Which botanist developed the planting technique used for microforests?", "answer": "Akira Miyawaki" },
+        { "id": "B2", "type": "tfng", "prompt": "Microforests typically require large tracts of land to succeed.", "answer": "False" },
+        { "id": "B3", "type": "mcq", "prompt": "What benefit do European towns seek from microforests?", "options": ["Cheaper timber", "Cooling urban areas", "Tourism marketing"], "answer": "Cooling urban areas" },
+        { "id": "B4", "type": "gap", "prompt": "Where do supporters suggest microforests can be planted in cities?", "answer": "roadside verges" },
+        { "id": "B5", "type": "tfng", "prompt": "The passage suggests microforests always have low maintenance costs.", "answer": "False" },
+        { "id": "B6", "type": "mcq", "prompt": "What social value is attributed to microforests?", "options": ["Hosting music festivals", "Reconnecting residents with nature", "Expanding housing"], "answer": "Reconnecting residents with nature" }
+      ]
+    },
+    {
+      "id": "passage-c",
+      "title": "Mobility Hubs in Suburban Areas",
+      "text": "Suburban neighbourhoods often lack the transport options found in city centres. Mobility hubs aim to change that by combining bike hire, electric car clubs, parcel lockers, and community spaces in one location. Trial sites in the Netherlands show that when residents can access several transport modes within a short walk, private car usage drops by up to 15 percent. The success of such hubs depends on careful placement near schools or supermarkets, as well as reliable digital platforms that manage bookings and payments.",
+      "questions": [
+        { "id": "C1", "type": "mcq", "prompt": "Which services are mentioned as part of mobility hubs?", "options": ["Bike hire and parcel lockers", "Airport lounges", "Shipping containers"], "answer": "Bike hire and parcel lockers" },
+        { "id": "C2", "type": "tfng", "prompt": "Mobility hubs have resulted in a 15 percent increase in car ownership.", "answer": "False" },
+        { "id": "C3", "type": "gap", "prompt": "Which country is cited for piloting mobility hubs?", "answer": "Netherlands" },
+        { "id": "C4", "type": "mcq", "prompt": "Where should mobility hubs be located to work best?", "options": ["On rural farmland", "Near key local amenities", "Inside office towers"], "answer": "Near key local amenities" },
+        { "id": "C5", "type": "gap", "prompt": "What kind of platforms are required to manage bookings?", "answer": "digital" },
+        { "id": "C6", "type": "tfng", "prompt": "The passage claims mobility hubs can only operate in city centres.", "answer": "False" }
+      ]
+    }
+  ]
+}

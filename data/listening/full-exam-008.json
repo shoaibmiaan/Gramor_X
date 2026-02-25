@@ -1,0 +1,338 @@
+{
+  "id": "ielts-listening-full-008",
+  "title": "IELTS Listening Full Mock Exam 008",
+  "durationSec": 2400,
+  "transcript": "The listening paper spans a science expo registration call, a STEM roadshow briefing, a coding programme evaluation, and a lecture on quantum materials.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Science Expo Registration",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-008-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-008-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Discovery Hall Atrium",
+            "Riverside Deck",
+            "Grand Ballroom",
+            "Artisan Market Barn"
+          ],
+          "answer": "Discovery Hall Atrium"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "11th February"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "11:00 am"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "200"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Interactive tasting stations",
+            "Family-style supper",
+            "High tea tiered trays",
+            "Pizza buffet"
+          ],
+          "answer": "Interactive tasting stations"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "280 pounds"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "interactive demo tables"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Lucas"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Science centre west lot",
+            "Harbor pier spaces",
+            "Station forecourt",
+            "Hillside lane"
+          ],
+          "answer": "Science centre west lot"
+        },
+        {
+          "id": "ielts-listening-full-008-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "exhibit clusters"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — STEM Outreach Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-008-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-008-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "schools liaison officer",
+            "bus coordinator",
+            "press officer",
+            "museum curator"
+          ],
+          "answer": "schools liaison officer"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "mobile science lab roadshow"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "26 minutes"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Laboratory loading bay"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": ["Robotics carriage", "Planetarium dome", "VR theatre", "Chemistry pod"],
+          "answer": "Robotics carriage"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Unit B"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "STEMvan-6"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Wednesday"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": ["safety footwear", "formal blazers", "paper tickets", "hiking poles"],
+          "answer": "safety footwear"
+        },
+        {
+          "id": "ielts-listening-full-008-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "01792 430 667"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Youth Coding Evaluation",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-008-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-008-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "youth coding bootcamp evaluation",
+            "gardening society plan",
+            "art history exhibition",
+            "culinary pop-up event"
+          ],
+          "answer": "youth coding bootcamp evaluation"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Serena"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "19 July"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "every second Thursday"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "pre- and post-course surveys",
+            "street intercept interviews",
+            "archival dig",
+            "product taste tests"
+          ],
+          "answer": "pre- and post-course surveys"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "CodePulse"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£390"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Mr. Blake"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "tracking parental consent forms",
+            "reserving dance studios",
+            "shipping fragile sculptures",
+            "maintaining kitchen equipment"
+          ],
+          "answer": "tracking parental consent forms"
+        },
+        {
+          "id": "ielts-listening-full-008-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "11 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Quantum Materials",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-008-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-008-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "quantum materials for energy storage",
+            "ancient theatre history",
+            "culinary herbs",
+            "sports psychology"
+          ],
+          "answer": "quantum materials for energy storage"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "97 percent retention rate"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "layered perovskite lattice"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Dresden"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "demand for grid-scale batteries",
+            "tourist festival calendars",
+            "luxury dining trends",
+            "student orientation fairs"
+          ],
+          "answer": "demand for grid-scale batteries"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Quantum Horizons Lab"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Emerging Materials Review"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2024"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "scaling crystal fabrication",
+            "booking orchestra tours",
+            "restoring stone carvings",
+            "managing athlete transfers"
+          ],
+          "answer": "scaling crystal fabrication"
+        },
+        {
+          "id": "ielts-listening-full-008-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "balance stability with efficiency"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-4",
+  "title": "Reading Practice Test 9 — Historic Tide Mills",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Reviving the Belltide Tide Mill",
+      "text": "The Belltide Tide Mill last ground grain in 1936 before silting clogged its sluice gates. For decades the timber building sat empty beside the estuary, its gears rusting while saltwater crept into the stone foundations. In 2018 a local history society negotiated access and set about documenting the structure. Engineers surveyed the tide pond and found that rebuilding the sluice would require a modern gate fabricated from stainless steel to withstand current tidal surges. Volunteers stripped barnacles from the wheel, catalogued remaining cogs, and numbered each beam before it was dismantled for treatment.\n\nFunding from a coastal resilience grant paid for a floating workshop barge so repairs could take place without blocking navigation. The team trained apprentices from a nearby shipyard to carve replacement teeth from seasoned oak, reviving skills rarely used in the region. Instead of turning the mill into a static museum, project leaders installed transparent panels and a mezzanine walkway so visitors could watch the machinery operate safely during demonstration tides. The restored mill now powers a small bakery next door and exports surplus electricity to the local grid. Researchers continue to monitor vibration sensors hidden within the beams to ensure the structure remains stable during spring tides.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The tide mill remained operational until the late 1950s.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. Saltwater had damaged the building's foundations.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Access to the site was granted to the history society in 2018.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. Engineers decided to recreate the sluice gate using traditional iron fittings.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Volunteers labelled components before removing them for restoration.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Repairs were conducted on land to avoid interfering with river traffic.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Shipyard apprentices learned to carve wooden gear teeth.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. The mill was converted into a museum where machinery no longer moves.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. Visitors can view the mill's mechanisms while it operates.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. The site generates electricity beyond what the bakery needs.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. Researchers track the mill's stability using sensors.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. The restoration was entirely funded by ticket sales.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. The project has stopped monitoring tidal impacts on the mill.",
+          "answer": "False"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Partners in the Night Sky",
+      "text": "Astronomer Priya Khanna writes that the most exciting discoveries now emerge when professional observatories share work with amateur skywatchers. She argues that although large telescopes collect enormous datasets, automation cannot catch every fleeting phenomenon. Khanna cites the citizen-led NovaTrack network, which flagged a dimming star that later proved to host a dust cloud, as evidence that patient observers add value. She dismisses complaints that amateurs crowd observatory inboxes with erroneous reports, noting that machine-learning filters quickly sort high-quality data. What worries her more is that public agencies underfund the platforms that allow such collaboration.\n\nKhanna applauds observatories that run remote training sessions and lend small robotic telescopes to schools, insisting that mentorship ensures reliable contributions. She contends that paying modest stipends to amateur coordinators would improve retention, especially in rural communities where broadband remains patchy. Critics warn that sharing raw data risks revealing proprietary discoveries, but Khanna counters that clear embargo policies already govern publication. She concludes that astronomy will stagnate if its institutions treat the public as passive spectators instead of partners.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Khanna believes discoveries benefit from cooperation between professionals and amateurs.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. She argues that automation alone is sufficient to spot every celestial event.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Khanna references NovaTrack as an example of successful collaboration.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. She thinks amateur observations usually overwhelm scientists with useless messages.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Khanna worries about the lack of funding for collaboration tools.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. She opposes remote training programmes for volunteers.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Khanna suggests lending equipment to schools helps maintain data quality.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. She recommends compensating amateur coordinators for their time.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Khanna believes embargo policies are ineffective at protecting discoveries.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. She fears astronomy will stagnate if the public is excluded.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Khanna claims rural broadband challenges make collaboration impossible.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. She states that observatories should avoid sharing raw data altogether.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Khanna views amateurs merely as spectators.",
+          "answer": "No"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Modular Homes on the Move",
+      "text": "Architect Lina Bors develops modular housing units designed to be stacked temporarily on underused urban plots. Her team 3D-prints lightweight concrete shells with channels that accept interchangeable wall panels. Each module arrives on a flatbed truck and can be craned into place within four hours. Residents configure interior layouts by sliding prefabricated partitions that contain wiring and ventilation ducts. To reduce waste, panels are tracked with RFID tags so they can be refurbished and redeployed in future projects.\n\nThe prototype neighbourhood includes rooftop greenhouses irrigated by rainwater captured in bladder tanks. An energy management system balances power drawn from solar awnings with demand spikes from communal kitchens. Bors collaborates with social workers who match tenants to co-housing clusters based on accessibility needs. Local artists were commissioned to design façade screens, countering criticism that modular developments look monotonous. City officials monitor indoor air-quality sensors to assess whether the tight building envelope affects residents. After a three-year pilot, the team will relocate half the units to another district to test how easily communities can move with their housing.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What is distinctive about the housing shells Bors uses?",
+          "options": [
+            "A. They are carved from reclaimed timber.",
+            "B. They are 3D-printed with slots for interchangeable panels.",
+            "C. They are inflated on-site using fabric membranes.",
+            "D. They are manufactured from recycled glass bottles."
+          ],
+          "answer": "B. They are 3D-printed with slots for interchangeable panels."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. How long does it take to install a module on site?",
+          "options": [
+            "A. Less than half a day.",
+            "B. Two full days including finishing.",
+            "C. A week due to curing requirements.",
+            "D. Several minutes once panels arrive."
+          ],
+          "answer": "A. Less than half a day."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. How are interior layouts adjusted?",
+          "options": [
+            "A. Residents request custom carpentry.",
+            "B. Prefabricated partitions can be repositioned.",
+            "C. Walls are demolished and rebuilt.",
+            "D. Furniture doubles as structural support."
+          ],
+          "answer": "B. Prefabricated partitions can be repositioned."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. Why are RFID tags attached to panels?",
+          "options": [
+            "A. To monitor residents' movements.",
+            "B. To assist with future reuse and refurbishment.",
+            "C. To unlock doors remotely.",
+            "D. To provide wireless internet access."
+          ],
+          "answer": "B. To assist with future reuse and refurbishment."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. What feature tops the prototype neighbourhood?",
+          "options": [
+            "A. A helicopter landing pad.",
+            "B. Rooftop greenhouses using captured rainwater.",
+            "C. A sports stadium shared with the city.",
+            "D. A radio tower for emergency services."
+          ],
+          "answer": "B. Rooftop greenhouses using captured rainwater."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. How is energy managed within the development?",
+          "options": [
+            "A. Diesel generators run at night.",
+            "B. Power use is balanced between solar awnings and communal needs.",
+            "C. Residents pay separate suppliers for each module.",
+            "D. All electricity is imported from the national grid."
+          ],
+          "answer": "B. Power use is balanced between solar awnings and communal needs."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. Who helps determine tenant groupings?",
+          "options": [
+            "A. Local politicians.",
+            "B. Social workers assessing accessibility.",
+            "C. Architects from rival firms.",
+            "D. Construction contractors."
+          ],
+          "answer": "B. Social workers assessing accessibility."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. How did Bors address concerns about uniform building appearance?",
+          "options": [
+            "A. By covering units with identical metal panels.",
+            "B. By inviting artists to design façade screens.",
+            "C. By banning exterior decoration.",
+            "D. By painting every module grey."
+          ],
+          "answer": "B. By inviting artists to design façade screens."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. What do city officials monitor in the units?",
+          "options": [
+            "A. Noise levels from rooftop parties.",
+            "B. Indoor air-quality sensors.",
+            "C. Security camera footage.",
+            "D. Cooking habits of residents."
+          ],
+          "answer": "B. Indoor air-quality sensors."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. What happens after three years of the pilot?",
+          "options": [
+            "A. The housing will be dismantled permanently.",
+            "B. Half the units relocate to test portability.",
+            "C. Residents must purchase their modules.",
+            "D. The project will convert into office space."
+          ],
+          "answer": "B. Half the units relocate to test portability."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. Why are bladder tanks included?",
+          "options": [
+            "A. To store rainwater for the rooftop greenhouses.",
+            "B. To provide emergency fire suppression foam.",
+            "C. To cool the solar awnings at night.",
+            "D. To collect sewage before treatment."
+          ],
+          "answer": "A. To store rainwater for the rooftop greenhouses."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. What criticism do the façade screens respond to?",
+          "options": [
+            "A. That modular housing is too expensive.",
+            "B. That modular developments appear monotonous.",
+            "C. That tenants dislike outdoor spaces.",
+            "D. That modules cannot be stacked safely."
+          ],
+          "answer": "B. That modular developments appear monotonous."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each project partner with their contribution.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Social workers",
+                "right": ["Curating co-housing groupings"]
+              },
+              {
+                "left": "Artists",
+                "right": ["Designing façade screens"]
+              },
+              {
+                "left": "City officials",
+                "right": ["Reviewing air-quality data"]
+              },
+              {
+                "left": "RFID system",
+                "right": ["Tracking panels for reuse"]
+              }
+            ]
+          },
+          "answer": "Social workers -> Curating co-housing groupings"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What longer-term goal does relocating units serve?",
+          "options": [
+            "A. Testing how easily communities can move with their housing.",
+            "B. Selling modules to overseas buyers.",
+            "C. Converting the site into retail space.",
+            "D. Meeting legal requirements for demolition."
+          ],
+          "answer": "A. Testing how easily communities can move with their housing."
+        }
+      ]
+    }
+  ]
+}

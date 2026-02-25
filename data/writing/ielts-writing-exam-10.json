@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-10",
+  "title": "Academic Set 8 — Metro Extension & Arts Education",
+  "description": "Line graph of commute times after a metro extension and an essay on arts in school curricula.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Impact of a new metro line",
+    "type": "academic",
+    "prompt": "The graph below shows the average commute time for residents of three districts (Northside, Midtown and Riverside) before and after a new metro line was opened in 2012. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Describe overall changes for each district before focusing on details.",
+      "Highlight any differences in how quickly commute times fell after 2012.",
+      "Mention when commute times stabilised or increased again."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Arts in schools",
+    "prompt": "Some people think subjects such as art and music are as important as maths and science in schools, while others believe they should be optional. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: present the debate and your thesis.",
+      "Body paragraph 1: reasons for giving arts equal importance.",
+      "Body paragraph 2: arguments for focusing on core academic subjects.",
+      "Conclusion: restate your opinion and suggest how schools can balance priorities."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The graph below shows the average commute time for residents of three districts (Northside, Midtown and Riverside) before and after a new metro line was opened in 2012. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some people think subjects such as art and music are as important as maths and science in schools, while others believe they should be optional. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-22",
+  "title": "Academic Set 22 — Household Energy Storage & Climate Action",
+  "description": "Process diagram on home battery systems and an opinion essay on individual versus government climate action.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Home battery system process",
+    "type": "academic",
+    "prompt": "The diagram below shows how electricity is generated, stored, and distributed in a household energy system that uses solar panels and a battery. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Describe the key stages from energy generation to usage.",
+      "Explain how the battery interacts with the grid and home appliances.",
+      "Use sequencing language to connect each step clearly."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Responsibility for climate action",
+    "prompt": "Some people believe that individuals should make significant lifestyle changes to tackle climate change, while others argue that real impact can only be achieved by governments and large companies. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the statement and indicate you will examine both positions.",
+      "Body paragraph 1: explore arguments for individual responsibility with examples.",
+      "Body paragraph 2: consider reasons why systemic action from governments or corporations is crucial.",
+      "Conclusion: provide your opinion and suggest how both sides can contribute."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "The diagram below shows how electricity is generated, stored, and distributed in a household energy system that uses solar panels and a battery. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some people believe that individuals should make significant lifestyle changes to tackle climate change, while others argue that real impact can only be achieved by governments and large companies. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

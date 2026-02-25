@@ -1,0 +1,75 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "settings": {
+        "emulatedFormFactor": "mobile",
+        "chromeFlags": "--headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-zygote --single-process --disable-setuid-sandbox"
+      },
+      "url": [
+        "https://gramorx.com/",
+        "https://gramorx.com/pricing",
+        "http://localhost:3000/mock/reading/sample-001",
+        "http://localhost:3000/mock/reading/review/demo-attempt?paperId=sample-001"
+      ],
+      "budgets": [
+        {
+          "path": "/mock/reading/sample-001",
+          "resourceSizes": [
+            { "resourceType": "script", "budget": 420 },
+            { "resourceType": "image", "budget": 260 },
+            { "resourceType": "document", "budget": 100 },
+            { "resourceType": "third-party", "budget": 150 },
+            { "resourceType": "total", "budget": 1800 }
+          ],
+          "resourceCounts": [
+            { "resourceType": "script", "budget": 25 },
+            { "resourceType": "image", "budget": 12 },
+            { "resourceType": "third-party", "budget": 12 },
+            { "resourceType": "total", "budget": 70 }
+          ]
+        },
+        {
+          "path": "/mock/reading/review/demo-attempt",
+          "resourceSizes": [
+            { "resourceType": "script", "budget": 420 },
+            { "resourceType": "image", "budget": 220 },
+            { "resourceType": "document", "budget": 100 },
+            { "resourceType": "third-party", "budget": 150 },
+            { "resourceType": "total", "budget": 1600 }
+          ],
+          "resourceCounts": [
+            { "resourceType": "script", "budget": 25 },
+            { "resourceType": "image", "budget": 10 },
+            { "resourceType": "third-party", "budget": 12 },
+            { "resourceType": "total", "budget": 60 }
+          ]
+        }
+      ]
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.6 }],
+        "categories:accessibility": ["warn", { "minScore": 0.9 }],
+        "first-contentful-paint": [
+          "error",
+          { "maxNumericValue": 2500, "aggregationType": "optimistic" }
+        ],
+        "largest-contentful-paint": [
+          "error",
+          { "maxNumericValue": 3000, "aggregationType": "optimistic" }
+        ],
+        "total-blocking-time": [
+          "error",
+          { "maxNumericValue": 300, "aggregationType": "optimistic" }
+        ],
+        "cumulative-layout-shift": [
+          "error",
+          { "maxNumericValue": 0.1, "aggregationType": "optimistic" }
+        ],
+        "speed-index": ["error", { "maxNumericValue": 4300, "aggregationType": "optimistic" }]
+      }
+    },
+    "upload": { "target": "filesystem", "outputDir": "docs/baseline/lighthouse" }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "profile": {
+    "loading": "Loading…",
+    "title": "Profile",
+    "photo": {
+      "alt": "Avatar",
+      "uploading": "Uploading…",
+      "change": "Change photo"
+    },
+    "fields": {
+      "name": "Name:",
+      "country": "Country:",
+      "englishLevel": "English level:",
+      "goalBand": "Goal band:",
+      "studyPreferences": "Study preferences:",
+      "timeCommitment": "Time commitment:",
+      "language": "Preferred language:",
+      "examDate": "Exam date:"
+    },
+    "actions": {
+      "edit": "Edit profile"
+    },
+    "confirm": {
+      "delete": "Delete your account? This cannot be undone."
+    },
+    "toasts": {
+      "photo": {
+        "invalidType": "Please select a JPG, PNG, or WEBP image.",
+        "tooLarge": "Image too large. Max 3 MB.",
+        "updated": "Photo updated",
+        "failure": "Could not upload image. Please try again."
+      },
+      "export": {
+        "ready": "Export ready",
+        "failure": "Could not export data"
+      },
+      "delete": {
+        "failure": "Could not delete account"
+      }
+    }
+  }
+}

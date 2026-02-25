@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-25",
+  "title": "General Training Set 25 — Fitness Class & Shared Workspaces",
+  "description": "Informal letter about joining a local fitness class and an essay on shared office spaces for freelancers.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter to a neighbour about a fitness class",
+    "type": "general training",
+    "prompt": "A new fitness studio has opened in your neighbourhood and is offering a free introductory class. Write a letter to your neighbour inviting them to attend with you. In your letter: describe the class and why it interests you, explain how attending together could be beneficial, and suggest arrangements for meeting before or after the class.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Keep a friendly and encouraging tone for a neighbour.",
+      "Include practical information such as time, location, or instructor style.",
+      "Offer a clear plan for coordinating attendance."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Shared workspaces for freelancers",
+    "prompt": "Freelancers increasingly choose shared office spaces instead of working from home. Do the advantages of shared workspaces outweigh the disadvantages?",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: introduce the trend and state your view on whether benefits outweigh drawbacks.",
+      "Body paragraph 1: discuss advantages such as networking, structure, or amenities.",
+      "Body paragraph 2: consider disadvantages like cost, distractions, or commuting.",
+      "Conclusion: reaffirm your opinion and offer recommendations for freelancers."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "A new fitness studio has opened in your neighbourhood and is offering a free introductory class. Write a letter to your neighbour inviting them to attend with you. In your letter: describe the class and why it interests you, explain how attending together could be beneficial, and suggest arrangements for meeting before or after the class.",
+  "task2Prompt": "Freelancers increasingly choose shared office spaces instead of working from home. Do the advantages of shared workspaces outweigh the disadvantages?",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}
