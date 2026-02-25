@@ -17,6 +17,9 @@ export interface ProfileUpdatePayload {
   study_rhythm?: string;
   notification_channels?: string[];
   notification_time?: string | null;
+  onboarding_step?: number;
+  onboarding_complete?: boolean;
+  draft?: boolean;
   onboarding_completed_at?: string | null;
 }
 

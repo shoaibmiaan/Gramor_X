@@ -105,13 +105,19 @@ const OnboardingExamDatePage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      // TODO: persist exam info to your backend / Supabase profile table.
-      // Example (pseudo):
-      // await fetch('/api/onboarding/exam-date', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ timeframe, specificDate: specificDate || null }),
-      // });
+      const res = await fetch('/api/onboarding/exam-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timeframe,
+          examDate: specificDate || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to save exam date');
+      }
 
       await router.push({
         pathname: '/onboarding/study-rhythm',

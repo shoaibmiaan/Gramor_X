@@ -2,17 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
 import { getServerClient } from '@/lib/supabaseServer';
-import { generateStudyPlan } from '@/lib/ai/studyPlanGenerator'; // we'll create this
+import { generateStudyPlan } from '@/lib/ai/studyPlanGenerator';
 
 const Body = z.object({
   step: z.number().int().optional(),
   channels: z.array(z.enum(['email', 'whatsapp', 'in-app'])).min(1).optional(),
 });
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -31,7 +28,7 @@ export default async function handler(
   const step = parse.success ? parse.data.step ?? 5 : 5;
   const channels = parse.success ? parse.data.channels : undefined;
 
-  const update: Record<string, any> = {
+  const update: Record<string, unknown> = {
     onboarding_step: step,
     onboarding_complete: true,
     draft: false,
@@ -44,25 +41,26 @@ export default async function handler(
   const { error: updateError } = await supabase
     .from('profiles')
     .update(update)
-    .eq('user_id', user.id);
+    .eq('id', user.id);
 
   if (updateError) {
+    // eslint-disable-next-line no-console
     console.error('Error completing onboarding:', updateError);
     return res.status(500).json({ error: 'Failed to update profile' });
   }
 
-  // Trigger AI study plan generation asynchronously
-  // We need to fetch the full survey data first
+  await supabase.auth.updateUser({ data: { onboarding_complete: true } });
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('target_band, exam_date, baseline_scores, learning_style')
-    .eq('user_id', user.id)
-    .single();
+    .eq('id', user.id)
+    .maybeSingle();
 
   if (profile) {
-    // Fire and forget
     generateStudyPlan(user.id, profile).catch((err) =>
-      console.error('Study plan generation failed:', err)
+      // eslint-disable-next-line no-console
+      console.error('Study plan generation failed:', err),
     );
   }
 

@@ -95,8 +95,16 @@ const OnboardingStudyRhythmPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      // TODO: save to DB
-      // await fetch('/api/onboarding/study-rhythm', { ... })
+      const res = await fetch('/api/onboarding/study-rhythm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rhythm: selected }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to save study rhythm');
+      }
 
       await router.push({
         pathname: '/onboarding/notifications',

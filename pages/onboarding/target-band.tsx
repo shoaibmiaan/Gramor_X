@@ -119,14 +119,17 @@ const OnboardingTargetBandPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      // TODO: wire this to Supabase (profiles.goal_band / target_band)
-      // await fetch('/api/onboarding/target-band', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ targetBand }),
-      // });
+      const res = await fetch('/api/onboarding/target-band', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetBand: Number(targetBand.replace('+', '')) }),
+      });
 
-      // ✅ go to next step
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || 'Failed to save target band');
+      }
+
       await router.push({
         pathname: STEP_ROUTES['exam-date'],
         query: { next: nextPath },

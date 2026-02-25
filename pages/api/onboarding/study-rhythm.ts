@@ -1,4 +1,4 @@
-    import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerClient } from '@/lib/supabaseServer';
 import { StudyRhythmBody } from '@/lib/onboarding/schema';
 import { updateProfileForUser } from '@/lib/profile/update';
