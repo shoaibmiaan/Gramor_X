@@ -48,6 +48,7 @@ export function daysUntilExam(examDate: string): number {
   return Math.max(1, Math.ceil((examTs - todayTs) / 86_400_000));
 }
 
+// Rule #1: Short timeline = high intensity
 export function calculateDailyHours(examDate: string): 1 | 2 | 4 {
   const days = daysUntilExam(examDate);
   if (days < 30) {
@@ -61,6 +62,7 @@ export function calculateDailyHours(examDate: string): 1 | 2 | 4 {
   return 1;
 }
 
+// Rule #2: Low skill rating = priority
 export function weakestSkill(input: OnboardingPayload): SkillName {
   return (Object.keys(skillMap) as SkillName[]).reduce((lowest, skill) => {
     const levelKey = skillMap[skill];
@@ -69,37 +71,62 @@ export function weakestSkill(input: OnboardingPayload): SkillName {
   }, 'Reading');
 }
 
-function fallbackFocusForWeek(week: number, priority: SkillName, input: OnboardingPayload): string {
-  if (week <= 2) {
-    return `${priority} priority sprint + IELTS core strategies`;
-  }
-
-  if (input.targetBand >= 7.5 && calculateDailyHours(input.examDate) >= 2) {
-    return 'Timed exam strategy + high-band response frameworks';
-  }
-
-  return 'Foundation strengthening + integrated skills practice';
+function targetBandTrack(targetBand: number): 'strategy' | 'foundation' {
+  // Rule #3: High band target = strategy focus
+  // Rule #4: Low band target = foundation focus
+  return targetBand >= 7 ? 'strategy' : 'foundation';
 }
 
-export function buildFallbackPlan(input: OnboardingPayload): StudyPlan {
+function focusForWeek(week: number, priority: SkillName, track: 'strategy' | 'foundation'): string {
+  if (week <= 2) {
+    return `${priority} priority sprint + ${track === 'strategy' ? 'timed strategy' : 'core foundation'}`;
+  }
+
+  if (track === 'strategy') {
+    return `High-band strategy practice + integrated ${priority} refinement`;
+  }
+
+  return `Foundation building + integrated ${priority} reinforcement`;
+}
+
+function tasksForWeek(
+  week: number,
+  priority: SkillName,
+  track: 'strategy' | 'foundation',
+  dailyHours: number,
+  learningStyle: OnboardingPayload['learningStyle'],
+): string[] {
+  const intensityMinutes = dailyHours * 60;
+
+  if (week <= 2) {
+    return [
+      `${priority}: ${Math.round(intensityMinutes * 0.45)} min targeted drills and correction loop`,
+      `${track === 'strategy' ? 'Timed IELTS section strategy training' : 'Core grammar + vocabulary foundation block'} (${Math.round(intensityMinutes * 0.35)} min)`,
+      `${learningStyle} learning session + error-log review (${Math.round(intensityMinutes * 0.2)} min)`,
+    ];
+  }
+
+  return [
+    `Full IELTS mixed practice set (${Math.round(intensityMinutes * 0.5)} min)`,
+    `${track === 'strategy' ? 'Band 7+ response strategy and examiner-criteria practice' : 'Accuracy and language foundation strengthening'} (${Math.round(intensityMinutes * 0.3)} min)`,
+    `${priority} reinforcement + weekly review (${Math.round(intensityMinutes * 0.2)} min)`,
+  ];
+}
+
+// Deterministic, rule-based generator (no AI).
+export function buildRuleBasedPlan(input: OnboardingPayload): StudyPlan {
   const daysRemaining = daysUntilExam(input.examDate);
   const durationWeeks = Math.max(2, Math.min(24, Math.ceil(daysRemaining / 7)));
   const dailyHours = calculateDailyHours(input.examDate);
   const priority = weakestSkill(input);
+  const track = targetBandTrack(input.targetBand);
 
-  const weeklyPlan = Array.from({ length: Math.min(durationWeeks, 12) }, (_, index) => {
+  const weeklyPlan = Array.from({ length: durationWeeks }, (_, index) => {
     const week = index + 1;
-
     return {
       week,
-      focus: fallbackFocusForWeek(week, priority, input),
-      tasks: [
-        `Complete ${priority} focused drills (${dailyHours * 25} mins)`,
-        week <= 2
-          ? `Daily ${priority} correction journal + targeted feedback`
-          : 'Take one timed mini-test and review mistakes',
-        `Do a ${input.learningStyle} learning block + vocabulary revision`,
-      ],
+      focus: focusForWeek(week, priority, track),
+      tasks: tasksForWeek(week, priority, track, dailyHours, input.learningStyle),
     };
   });
 
@@ -111,42 +138,16 @@ export function buildFallbackPlan(input: OnboardingPayload): StudyPlan {
   };
 }
 
-export function normalizeStudyPlan(input: OnboardingPayload, candidate: unknown): StudyPlan {
-  const priority = weakestSkill(input);
-  const enforcedDailyHours = calculateDailyHours(input.examDate);
-  const fallback = buildFallbackPlan(input);
+// Backward compatibility for existing imports.
+export function buildFallbackPlan(input: OnboardingPayload): StudyPlan {
+  return buildRuleBasedPlan(input);
+}
 
+export function normalizeStudyPlan(input: OnboardingPayload, candidate: unknown): StudyPlan {
   const parsed = studyPlanSchema.safeParse(candidate);
   if (!parsed.success) {
-    return fallback;
+    return buildRuleBasedPlan(input);
   }
 
-  const weeks = parsed.data.weekly_plan.length > 0 ? parsed.data.weekly_plan : fallback.weekly_plan;
-  const firstWeek = weeks[0] ?? fallback.weekly_plan[0];
-  const secondWeek = weeks[1] ?? {
-    ...firstWeek,
-    week: 2,
-  };
-
-  const forcedFirstTwo = [
-    {
-      ...firstWeek,
-      week: 1,
-      focus: `${priority} priority sprint: ${firstWeek.focus}`,
-    },
-    {
-      ...secondWeek,
-      week: 2,
-      focus: `${priority} priority sprint: ${secondWeek.focus}`,
-    },
-  ];
-
-  const rest = weeks.slice(2).map((item, idx) => ({ ...item, week: idx + 3 }));
-
-  return {
-    duration_weeks: Math.max(parsed.data.duration_weeks, 2),
-    daily_hours: enforcedDailyHours,
-    weekly_plan: [...forcedFirstTwo, ...rest],
-    priority_skill: priority,
-  };
+  return parsed.data;
 }
