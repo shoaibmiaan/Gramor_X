@@ -33,8 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role,onboarding_complete')
+    .select('role')
     .or(`user_id.eq.${user.id},id.eq.${user.id}`)
+    .maybeSingle();
+
+  const { data: onboardingRow } = await supabase
+    .from('user_onboarding')
+    .select('id')
+    .eq('user_id', user.id)
     .maybeSingle();
 
   const role =
@@ -43,9 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     ((user.user_metadata as any)?.role as string | undefined) ??
     null;
 
-  const onboardingComplete =
-    profile?.onboarding_complete === true ||
-    (user.user_metadata as Record<string, unknown> | undefined)?.onboarding_complete === true;
+  const onboardingComplete = Boolean(onboardingRow?.id);
 
   return res.status(200).json({
     authenticated: true,
