@@ -139,7 +139,19 @@ export default function LoginWithEmail() {
         })
         .catch(err => console.error('Set session failed:', err));
 
-      const serverSynced = await syncServerSession(body.session);
+      // --- FIX: Ensure server session cookie is set before redirect ---
+      let serverSynced = await syncServerSession(body.session);
+      if (!serverSynced) {
+        // Retry once after a short delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        serverSynced = await syncServerSession(body.session);
+      }
+      if (!serverSynced) {
+        setErr('Failed to establish secure session. Please try again.');
+        setLoading(false);
+        return;
+      }
+      // --- END FIX ---
 
       const {
         data: { user },
@@ -149,10 +161,6 @@ export default function LoginWithEmail() {
 
       // Skip OTP if both email and password are provided
       if (!body.mfaRequired) {
-        if (!serverSynced) {
-          await syncServerSession(body.session);
-        }
-
         await recordLoginEvent(body.session);
 
         const rawNext = typeof router.query.next === 'string' ? router.query.next : '';

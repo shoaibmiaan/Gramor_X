@@ -57,18 +57,18 @@ function writeSessionCookies(res: NextApiResponse, session: SupabaseSession | nu
 
   const maxAge = typeof session.expires_in === 'number' ? session.expires_in : undefined;
 
-  // Access token cookie – must be readable by client-side JS
+  // 1. Access token cookie – must be readable by client‑side JS
   appendSetCookie(
     res,
     serializeCookie('sb-access-token', session.access_token, {
       ...baseOptions,
-      httpOnly: false, // ← changed from true to false
+      httpOnly: false,
       ...(typeof maxAge === 'number' ? { maxAge } : {}),
       ...(session.expires_at ? { expires: new Date(session.expires_at * 1000) } : {}),
     }),
   );
 
-  // Refresh token cookie – keep HttpOnly for security
+  // 2. Refresh token cookie – HttpOnly for security
   if (session.refresh_token) {
     appendSetCookie(
       res,
@@ -79,6 +79,32 @@ function writeSessionCookies(res: NextApiResponse, session: SupabaseSession | nu
       }),
     );
   }
+
+  // 3. 🔥 Combined cookie – used by many server‑side clients
+  const combinedValue = JSON.stringify({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+    expires_at: session.expires_at,
+  });
+  appendSetCookie(
+    res,
+    serializeCookie('sb:token', combinedValue, {
+      ...baseOptions,
+      httpOnly: true,
+      maxAge: session.expires_in ?? 60 * 60 * 24 * 30,
+    })
+  );
+
+  // 4. 🔥 Legacy cookie (optional) – some older setups expect this name
+  appendSetCookie(
+    res,
+    serializeCookie('supabase-auth-token', combinedValue, {
+      ...baseOptions,
+      httpOnly: true,
+      maxAge: session.expires_in ?? 60 * 60 * 24 * 30,
+    })
+  );
+
   return true;
 }
 
