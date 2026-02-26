@@ -307,7 +307,9 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   // route config
   const routeConfiguration = useRouteConfiguration(pathname);
-  const forceLayoutOnAuthPage = routeConfiguration.isAuthPage && !!user;
+  // Keep auth pages chrome-free even when a stale client-side user object exists.
+  // This prevents a mixed UI state (logged-in header + login form) while redirecting.
+  const forceLayoutOnAuthPage = false;
 
   // access guard
   useRouteAccessCheck(pathname, role);
