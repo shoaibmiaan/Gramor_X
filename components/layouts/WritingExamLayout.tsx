@@ -30,7 +30,7 @@ export default function WritingExamLayout({
       {/* Sticky, quiet topbar */}
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 py-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
               href="/dashboard"
               className="inline-flex items-center rounded-md px-2 py-1 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
@@ -38,7 +38,7 @@ export default function WritingExamLayout({
               ← Exit
             </Link>
 
-            <h1 className="flex-1 truncate text-base font-semibold tracking-tight">
+            <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
               {topbar.title}
               {topbar.attemptId ? (
                 <span className="ml-2 align-middle text-xs font-normal text-neutral-500">
@@ -79,7 +79,7 @@ export default function WritingExamLayout({
       </header>
 
       {/* Two-pane calm workspace */}
-      <main className="mx-auto grid min-h-[calc(100vh-52px)] max-w-7xl grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[minmax(380px,520px)_1fr]">
+      <main className="mx-auto grid min-h-[calc(100dvh-52px)] max-w-7xl grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-[minmax(380px,520px)_1fr]">
         {/* LEFT: Task / prompt */}
         <section className="flex min-h-[40vh] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white">
           <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-2">

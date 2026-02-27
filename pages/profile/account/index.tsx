@@ -317,10 +317,10 @@ export default function AccountHubPage() {
         />
       </Head>
 
-      <main className="bg-background py-16 text-foreground">
-        <Container className="space-y-8">
+      <main className="bg-background py-8 text-foreground sm:py-12 lg:py-16">
+        <Container className="space-y-6 sm:space-y-8">
           <header className="mb-6">
-            <h1 className="flex items-center gap-3 text-h2 font-bold">
+            <h1 className="flex flex-wrap items-center gap-3 text-h3 font-bold sm:text-h2">
               <SettingsIcon className="h-8 w-8" />
               Account &amp; Settings
             </h1>
@@ -694,7 +694,7 @@ export default function AccountHubPage() {
                     Email on file:
                   </span>
                   <span
-                    className="max-w-[150px] truncate font-medium"
+                    className="max-w-[140px] truncate font-medium sm:max-w-[220px]"
                     title={email || ''}
                   >
                     {email || 'Not set'}

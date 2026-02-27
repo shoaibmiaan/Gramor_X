@@ -45,12 +45,12 @@ const formatDisplayDate = (iso: string | null) => {
 
 const StreakPage: NextPage<Props> = ({ streak, history }) => {
   return (
-    <section className="bg-background text-foreground py-16">
+    <section className="bg-background py-10 text-foreground sm:py-14">
       <Container>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="font-slab text-display">Your streak</h1>
-            <p className="text-body text-muted-foreground">
+            <h1 className="font-slab text-h2 sm:text-display">Your streak</h1>
+            <p className="max-w-2xl text-body text-muted-foreground">
               Keep learning every day—complete a study task before midnight Pakistan time to maintain the streak.
             </p>
           </div>
@@ -59,14 +59,14 @@ const StreakPage: NextPage<Props> = ({ streak, history }) => {
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
           <Card className="rounded-ds-2xl p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="font-slab text-h3">Calendar heatmap</h2>
                 <p className="text-small text-muted-foreground">
                   Each square represents a day. Darker shades mean more tasks completed.
                 </p>
               </div>
-              <span className="text-xs text-muted-foreground">PKT timezone</span>
+              <span className="text-xs text-muted-foreground sm:text-right">PKT timezone</span>
             </div>
             <div className="mt-6">
               <Heatmap data={history} />

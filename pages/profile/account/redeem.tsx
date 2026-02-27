@@ -105,8 +105,8 @@ export default function RedeemPinPage() {
         />
       </Head>
 
-      <main className="min-h-screen bg-background text-foreground py-8">
-        <Container className="max-w-2xl space-y-6">
+      <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
+        <Container className="max-w-2xl space-y-5 sm:space-y-6">
           <header className="space-y-1">
             <h1 className="text-h2 font-semibold text-foreground">
               Redeem Premium PIN
@@ -164,7 +164,7 @@ export default function RedeemPinPage() {
                 </Alert>
               )}
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   type="submit"
                   loading={loading}

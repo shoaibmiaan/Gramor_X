@@ -129,7 +129,7 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
       </Head>
 
       <main className="min-h-screen bg-background text-foreground">
-        <Container className="py-10 space-y-8 max-w-5xl">
+        <Container className="max-w-5xl space-y-6 py-8 sm:space-y-8 sm:py-10">
           {/* Header */}
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
@@ -142,7 +142,7 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button
                 variant="ghost"
                 size="sm"
@@ -172,7 +172,7 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
                     : 'No activity recorded yet'}
                 </span>
               </div>
-              <div className="h-4 w-px bg-border/60" />
+              <div className="hidden h-4 w-px bg-border/60 sm:block" />
               <p className="text-muted-foreground">
                 This log is personal to you. Only you and admins (for support)
                 can see it.
@@ -197,7 +197,7 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
             <div className="space-y-8">
               {groups.map(([dateLabel, rows]) => (
                 <section key={dateLabel} className="space-y-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="h-px flex-1 bg-border/60" />
                     <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                       {dateLabel}
