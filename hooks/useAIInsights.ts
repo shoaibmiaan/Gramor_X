@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import type { SubscriptionTier } from '@/lib/navigation/types';
+import useEntitlement from '@/hooks/useEntitlement';
 import type { DashboardData } from '@/hooks/useDashboardData';
 
 export type AIInsight = {
@@ -31,8 +32,10 @@ const inferWeakestSkill = (data: DashboardData): string => {
 };
 
 export function useAIInsights(data: DashboardData, tier: SubscriptionTier) {
+  const entitlement = useEntitlement(tier);
+
   return useMemo(() => {
-    const depth = tier === 'owl' ? 'deep' : 'standard';
+    const depth = entitlement.canAccessFeature('advancedInsights') ? 'deep' : 'standard';
     const insights: AIInsight[] = [];
 
     const history = data.bandHistory;
@@ -80,7 +83,7 @@ export function useAIInsights(data: DashboardData, tier: SubscriptionTier) {
     }
 
     return insights.slice(0, 3);
-  }, [data, tier]);
+  }, [data, entitlement]);
 }
 
 export default useAIInsights;

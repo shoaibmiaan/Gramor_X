@@ -43,6 +43,10 @@ import FreeView from '@/pages/dashboard/components/tiers/FreeView';
 import SeedlingView from '@/pages/dashboard/components/tiers/SeedlingView';
 import RocketView from '@/pages/dashboard/components/tiers/RocketView';
 import OwlView from '@/pages/dashboard/components/tiers/OwlView';
+import { getDashboardAggregate, type DashboardAggregate } from '@/lib/services/dashboardService';
+import { normalizeTier } from '@/lib/config/featureFlags';
+import useEntitlement from '@/hooks/useEntitlement';
+import TierGuard from '@/components/entitlements/TierGuard';
 
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), {
   ssr: false,
@@ -110,6 +114,13 @@ type BaselineScores = {
   writing: number;
   listening: number;
   speaking: number;
+};
+
+
+const TIER_VIEW_MAP: Record<Exclude<SubscriptionTier, 'free'>, React.ComponentType<{ userId: string | null; targetBand: number }>> = {
+  seedling: SeedlingView,
+  rocket: RocketView,
+  owl: OwlView,
 };
 
 type StudyPlanSnapshot = {
@@ -207,6 +218,7 @@ const Dashboard: NextPage = () => {
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [authTier, setAuthTier] = useState<SubscriptionTier | null>(null);
+  const [dashboardAggregate, setDashboardAggregate] = useState<DashboardAggregate | null>(null);
 
   const {
     current: streak,
@@ -262,7 +274,8 @@ const Dashboard: NextPage = () => {
 
         const authUser = session?.user ?? null;
         setSessionUserId(authUser?.id ?? null);
-        setAuthTier(getTierFromAuthContext(authUser));
+        const authContextTier = getTierFromAuthContext(authUser);
+        setAuthTier(authContextTier);
 
         if (!authUser) {
           // redirect to login preserving next
@@ -318,21 +331,29 @@ const Dashboard: NextPage = () => {
         setNeedsSetup(!!(draftFlag || explicitIncomplete || heuristicIncomplete));
         setProfile(p ?? null);
 
-        const { data: planRow, error: planError } = await supabaseBrowser
-          .from('study_plans')
-          .select('target_band,goal_band,exam_date,plan_data,plan_json,weeks,updated_at,created_at')
-          .eq('user_id', authUser.id)
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const [planRes, aggregate] = await Promise.all([
+          supabaseBrowser
+            .from('study_plans')
+            .select('target_band,goal_band,exam_date,plan_data,plan_json,weeks,updated_at,created_at')
+            .eq('user_id', authUser.id)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          getDashboardAggregate(supabaseBrowser as any, authUser.id),
+        ]);
 
-        if (planError) {
+        if (planRes.error) {
           // eslint-disable-next-line no-console
-          console.error('[dashboard] study plan load error:', planError);
+          console.error('[dashboard] study plan load error:', planRes.error);
         } else {
           setStudyPlanSnapshot(
-            buildStudyPlanSnapshot((planRow as Record<string, unknown> | null) ?? null),
+            buildStudyPlanSnapshot((planRes.data as Record<string, unknown> | null) ?? null),
           );
+        }
+
+        setDashboardAggregate(aggregate);
+        if (!authContextTier) {
+          setAuthTier(normalizeTier(aggregate.subscription.planId));
         }
 
         setLoading(false);
@@ -373,9 +394,11 @@ const Dashboard: NextPage = () => {
   const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   // AI plan & view-model
-  const ai: AIPlan = (profile?.ai_recommendation ?? {}) as AIPlan;
+  const aggregateAi = (dashboardAggregate?.recommendations?.[0]?.content ?? null) as AIPlan | null;
+  const ai: AIPlan = (aggregateAi ?? profile?.ai_recommendation ?? {}) as AIPlan;
   const subscriptionTier: SubscriptionTier =
     authTier ?? (profile?.tier as SubscriptionTier | undefined) ?? 'free';
+  const entitlement = useEntitlement(subscriptionTier);
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
   const topBadges = earnedBadges.slice(0, 3);
 
@@ -560,7 +583,7 @@ const Dashboard: NextPage = () => {
   }, [trackFeatureOpen]);
 
   const innovationTiles = useMemo<InnovationTile[]>(() => {
-    const isFreeTier = subscriptionTier === 'free';
+    const isFreeTier = !entitlement.canAccessFeature('aiCoach');
 
     return [
       {
@@ -617,16 +640,13 @@ const Dashboard: NextPage = () => {
 
   if (loading) return loadingSkeleton;
 
-  if (subscriptionTier === 'seedling') {
-    return <SeedlingView userId={sessionUserId} targetBand={goalBand ?? 7} />;
-  }
-
-  if (subscriptionTier === 'rocket') {
-    return <RocketView userId={sessionUserId} targetBand={goalBand ?? 7} />;
-  }
-
-  if (subscriptionTier === 'owl') {
-    return <OwlView userId={sessionUserId} targetBand={goalBand ?? 7} />;
+  const TierView = subscriptionTier === 'free' ? null : TIER_VIEW_MAP[subscriptionTier];
+  if (TierView) {
+    return (
+      <TierGuard tier={subscriptionTier} minTier={subscriptionTier}>
+        <TierView userId={sessionUserId} targetBand={goalBand ?? 7} />
+      </TierGuard>
+    );
   }
 
   const accentClass: Record<NonNullable<InnovationTile['accent']>, string> = {
