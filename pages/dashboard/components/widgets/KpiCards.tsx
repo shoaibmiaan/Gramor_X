@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import useTierFeatures from '@/hooks/useTierFeatures';
@@ -75,4 +75,4 @@ const KpiCards = ({ tier }: KpiCardsProps) => {
   );
 };
 
-export default KpiCards;
+export default memo(KpiCards);

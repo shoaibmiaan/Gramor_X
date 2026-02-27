@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   CartesianGrid,
   Label,
@@ -96,4 +97,4 @@ const BandProgress = ({ points, targetBand, tier }: BandProgressProps) => {
   );
 };
 
-export default BandProgress;
+export default memo(BandProgress);

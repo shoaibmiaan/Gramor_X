@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import Link from 'next/link';
 
 import type { SubscriptionTier } from '@/lib/navigation/types';
@@ -52,4 +53,4 @@ const WeaknessMap = ({ tier, skillScores }: WeaknessMapProps) => {
   );
 };
 
-export default WeaknessMap;
+export default memo(WeaknessMap);

@@ -179,9 +179,34 @@ export function useDashboardData({ userId, tier, realtime = false }: UseDashboar
 
     const channel = supabaseBrowser
       .channel(`dashboard-data-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'study_logs', filter: `user_id=eq.${userId}` }, () => {
-        void load();
-      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'study_logs', filter: `user_id=eq.${userId}` },
+        () => {
+          void load();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'coach_notes', filter: `user_id=eq.${userId}` },
+        () => {
+          void load();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'band_history', filter: `user_id=eq.${userId}` },
+        () => {
+          void load();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'practice_completion', filter: `user_id=eq.${userId}` },
+        () => {
+          void load();
+        },
+      )
       .subscribe();
 
     return () => {
