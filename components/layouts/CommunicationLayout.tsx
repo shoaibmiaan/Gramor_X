@@ -17,9 +17,9 @@ export function CommunicationLayout({ children }: CommunicationLayoutProps) {
     currentPath === path || currentPath.startsWith(`${path}/`);
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background lg:h-screen lg:flex-row">
       {/* Sidebar */}
-      <div className="flex w-80 flex-col border-r bg-card">
+      <div className="flex w-full flex-col border-b bg-card lg:w-80 lg:shrink-0 lg:border-b-0 lg:border-r">
         <div className="border-b p-4">
           <h2 className="text-lg font-semibold">Messages</h2>
           <p className="text-sm text-muted-foreground">
@@ -27,10 +27,10 @@ export function CommunicationLayout({ children }: CommunicationLayoutProps) {
           </p>
         </div>
 
-        <nav className="flex-1 space-y-1 p-2">
+        <nav className="flex-1 -mx-1 flex gap-2 overflow-x-auto p-2 lg:mx-0 lg:block lg:space-y-1 lg:overflow-visible">
           <Button
             variant={isActive('/messages') ? 'secondary' : 'ghost'}
-            className="w-full justify-start"
+            className="shrink-0 justify-start whitespace-nowrap lg:w-full"
             asChild
           >
             <Link href="/messages">
@@ -43,7 +43,7 @@ export function CommunicationLayout({ children }: CommunicationLayoutProps) {
 
           <Button
             variant={isActive('/chat') ? 'secondary' : 'ghost'}
-            className="w-full justify-start"
+            className="shrink-0 justify-start whitespace-nowrap lg:w-full"
             asChild
           >
             <Link href="/chat">
@@ -56,7 +56,7 @@ export function CommunicationLayout({ children }: CommunicationLayoutProps) {
 
           <Button
             variant={isActive('/inbox') ? 'secondary' : 'ghost'}
-            className="w-full justify-start"
+            className="shrink-0 justify-start whitespace-nowrap lg:w-full"
             asChild
           >
             <Link href="/inbox">
@@ -69,7 +69,7 @@ export function CommunicationLayout({ children }: CommunicationLayoutProps) {
         </nav>
 
         {/* Recent conversations placeholder */}
-        <div className="border-t p-4">
+        <div className="border-t p-4 lg:block">
           <h3 className="mb-2 text-sm font-medium">Recent Conversations</h3>
           <div className="space-y-2">
             <Card className="cursor-pointer p-3 hover:bg-accent">
