@@ -519,15 +519,15 @@ const Dashboard: NextPage = () => {
   if (loading) return loadingSkeleton;
 
   if (subscriptionTier === 'seedling') {
-    return <SeedlingView />;
+    return <SeedlingView userId={sessionUserId} targetBand={goalBand ?? 7} />;
   }
 
   if (subscriptionTier === 'rocket') {
-    return <RocketView />;
+    return <RocketView userId={sessionUserId} targetBand={goalBand ?? 7} />;
   }
 
   if (subscriptionTier === 'owl') {
-    return <OwlView />;
+    return <OwlView userId={sessionUserId} targetBand={goalBand ?? 7} />;
   }
 
   const accentClass: Record<NonNullable<InnovationTile['accent']>, string> = {
