@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import type { User } from '@supabase/supabase-js';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -39,10 +38,6 @@ import GoalRoadmap from '@/components/feature/GoalRoadmap';
 
 import type { Profile, AIPlan } from '@/types/profile';
 import type { SubscriptionTier } from '@/lib/navigation/types';
-import FreeView from '@/pages/dashboard/components/tiers/FreeView';
-import SeedlingView from '@/pages/dashboard/components/tiers/SeedlingView';
-import RocketView from '@/pages/dashboard/components/tiers/RocketView';
-import OwlView from '@/pages/dashboard/components/tiers/OwlView';
 
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), {
   ssr: false,
@@ -105,30 +100,12 @@ type ActionItem = {
   done?: boolean;
 };
 
-const isSubscriptionTier = (value: unknown): value is SubscriptionTier =>
-  value === 'free' || value === 'seedling' || value === 'rocket' || value === 'owl';
-
-const getTierFromAuthContext = (user: User | null): SubscriptionTier | null => {
-  const userMetadataTier = user?.user_metadata?.tier;
-  if (isSubscriptionTier(userMetadataTier)) {
-    return userMetadataTier;
-  }
-
-  const appMetadataTier = user?.app_metadata?.tier;
-  if (isSubscriptionTier(appMetadataTier)) {
-    return appMetadataTier;
-  }
-
-  return null;
-};
-
 const Dashboard: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
-  const [authTier, setAuthTier] = useState<SubscriptionTier | null>(null);
 
   const {
     current: streak,
@@ -184,7 +161,6 @@ const Dashboard: NextPage = () => {
 
         const authUser = session?.user ?? null;
         setSessionUserId(authUser?.id ?? null);
-        setAuthTier(getTierFromAuthContext(authUser));
 
         if (!authUser) {
           // redirect to login preserving next
@@ -280,7 +256,7 @@ const Dashboard: NextPage = () => {
   // AI plan & view-model
   const ai: AIPlan = (profile?.ai_recommendation ?? {}) as AIPlan;
   const subscriptionTier: SubscriptionTier =
-    authTier ?? (profile?.tier as SubscriptionTier | undefined) ?? 'free';
+    (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
   const topBadges = earnedBadges.slice(0, 3);
 
@@ -518,18 +494,6 @@ const Dashboard: NextPage = () => {
 
   if (loading) return loadingSkeleton;
 
-  if (subscriptionTier === 'seedling') {
-    return <SeedlingView userId={sessionUserId} targetBand={goalBand ?? 7} />;
-  }
-
-  if (subscriptionTier === 'rocket') {
-    return <RocketView userId={sessionUserId} targetBand={goalBand ?? 7} />;
-  }
-
-  if (subscriptionTier === 'owl') {
-    return <OwlView userId={sessionUserId} targetBand={goalBand ?? 7} />;
-  }
-
   const accentClass: Record<NonNullable<InnovationTile['accent']>, string> = {
     primary: 'bg-primary/15 text-primary',
     secondary: 'bg-secondary/15 text-secondary',
@@ -559,7 +523,7 @@ const Dashboard: NextPage = () => {
     );
 
   return (
-    <FreeView>
+    <>
       <Head>
         <title>Dashboard — Gramor_X</title>
       </Head>
@@ -1265,7 +1229,7 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
       )}
-    </FreeView>
+    </>
   );
 };
 
