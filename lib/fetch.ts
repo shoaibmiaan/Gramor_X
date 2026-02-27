@@ -4,3 +4,5 @@ export async function fetchJSON(url: string, options?: RequestInit) {
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   return res.json();
 }
+
+export const fetcher = (url: string) => fetchJSON(url);

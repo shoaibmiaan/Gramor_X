@@ -58,7 +58,10 @@ function ymdToIsoEnd(ymd: string) {
   return `${ymd}T23:59:59.999Z`;
 }
 
-async function safeCount(table: string, builder: (q: ReturnType<typeof supabaseAdmin.from>) => any) {
+async function safeCount(
+  table: string,
+  builder: (q: ReturnType<typeof supabaseAdmin.from>) => any,
+) {
   try {
     const base = supabaseAdmin.from(table);
     const { count, error } = await builder(base).select('*', { count: 'exact', head: true });
@@ -104,14 +107,15 @@ async function recentUsers(): Promise<Signup[]> {
     // fallback to auth.users
     try {
       const { data } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 5 });
-      return (data.users ?? []).sort(
-        (a, b) => +new Date(b.created_at) - +new Date(a.created_at)
-      ).slice(0, 5).map((u) => ({
-        id: u.id,
-        name: (u.user_metadata?.name as string) || '—',
-        email: u.email ?? '—',
-        joinedAt: new Date(u.created_at).toLocaleString(),
-      }));
+      return (data.users ?? [])
+        .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+        .slice(0, 5)
+        .map((u) => ({
+          id: u.id,
+          name: (u.user_metadata?.name as string) || '—',
+          email: u.email ?? '—',
+          joinedAt: new Date(u.created_at).toLocaleString(),
+        }));
     } catch {
       return [];
     }
@@ -169,13 +173,26 @@ async function seriesCounts(fromIso: string, toIso: string, onlyModule?: Module)
   return { labels, values };
 }
 
-async function moduleBlock(name: Module, table: string, fromIso: string, toIso: string): Promise<ModuleRow> {
-  const attempts = await safeCount(table, (q) => q.gte('created_at', fromIso).lte('created_at', toIso));
+async function moduleBlock(
+  name: Module,
+  table: string,
+  fromIso: string,
+  toIso: string,
+): Promise<ModuleRow> {
+  const attempts = await safeCount(table, (q) =>
+    q.gte('created_at', fromIso).lte('created_at', toIso),
+  );
   const avgScore = await safeAvgScore(table, fromIso, toIso);
   return { module: name, attempts, avgScore };
 }
 
-async function queueCount(primaryTable: string, fallbackTable: string, statusCol = 'status', fromIso?: string, toIso?: string) {
+async function queueCount(
+  primaryTable: string,
+  fallbackTable: string,
+  statusCol = 'status',
+  fromIso?: string,
+  toIso?: string,
+) {
   const builder = (q: any) => {
     let qq = q.eq(statusCol, 'pending');
     if (fromIso) qq = qq.gte('created_at', fromIso);
@@ -192,7 +209,35 @@ async function queueCount(primaryTable: string, fallbackTable: string, statusCol
   });
 }
 
-async function studentsPaged(fromIso: string, toIso: string, cohort?: string, q?: string, page = 1, size = 10): Promise<StudentsBlock> {
+async function queueCountForModule(module: 'speaking' | 'writing', fromIso: string, toIso: string) {
+  const moduleCandidates = ['module', 'task_type', 'queue_type'];
+
+  for (const column of moduleCandidates) {
+    const count = await safeCount('ai_eval_queue', (q: any) => {
+      let qq = q.eq('status', 'pending').eq(column, module);
+      qq = qq.gte('created_at', fromIso).lte('created_at', toIso);
+      return qq;
+    });
+    if (count > 0) return count;
+  }
+
+  return queueCount(
+    'ai_eval_queue',
+    module === 'speaking' ? 'speaking_attempts' : 'writing_attempts',
+    'status',
+    fromIso,
+    toIso,
+  );
+}
+
+async function studentsPaged(
+  fromIso: string,
+  toIso: string,
+  cohort?: string,
+  q?: string,
+  page = 1,
+  size = 10,
+): Promise<StudentsBlock> {
   // Try profiles table first
   try {
     let sel = supabaseAdmin
@@ -238,7 +283,9 @@ async function studentsPaged(fromIso: string, toIso: string, cohort?: string, q?
         users = users.filter(
           (u) =>
             (u.email ?? '').toLowerCase().includes(qq) ||
-            (String(u.user_metadata?.name ?? '').toLowerCase().includes(qq))
+            String(u.user_metadata?.name ?? '')
+              .toLowerCase()
+              .includes(qq),
         );
       }
       const fIso = +new Date(fromIso);
@@ -270,7 +317,10 @@ async function studentsPaged(fromIso: string, toIso: string, cohort?: string, q?
   }
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<Payload | { error: string }>) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<Payload | { error: string }>,
+) {
   try {
     await requireRole(req, ['admin']);
   } catch {
@@ -291,12 +341,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const fromIso = ymdToIsoStart(from);
     const toIso = ymdToIsoEnd(to);
 
-    const onlyModule = (['Listening', 'Reading', 'Writing', 'Speaking'].includes(moduleParam || '') ? moduleParam : undefined) as Module | undefined;
+    const onlyModule = (
+      ['Listening', 'Reading', 'Writing', 'Speaking'].includes(moduleParam || '')
+        ? moduleParam
+        : undefined
+    ) as Module | undefined;
 
     // ---- Core blocks
     const totalUsers = await (async () => {
       try {
-        const { count } = await supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true });
+        const { count } = await supabaseAdmin
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
         return count ?? 0;
       } catch {
         return 0;
@@ -313,8 +369,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       }
     })();
 
-    const speakingPending = await queueCount('ai_eval_queue', 'speaking_attempts', 'status', fromIso, toIso);
-    const writingPending = await queueCount('ai_eval_queue', 'writing_attempts', 'status', fromIso, toIso);
+    const speakingPending = await queueCountForModule('speaking', fromIso, toIso);
+    const writingPending = await queueCountForModule('writing', fromIso, toIso);
 
     const [listeningM, readingM, writingM, speakingM] = await Promise.all([
       moduleBlock('Listening', MODULE_TABLE.Listening, fromIso, toIso),
@@ -323,13 +379,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       moduleBlock('Speaking', MODULE_TABLE.Speaking, fromIso, toIso),
     ]);
 
-    const attemptsWindowTotal = [listeningM, readingM, writingM, speakingM]
-      .reduce((acc, r) => acc + r.attempts, 0);
+    const attemptsWindowTotal = [listeningM, readingM, writingM, speakingM].reduce(
+      (acc, r) => acc + r.attempts,
+      0,
+    );
 
     const stats: Stat[] = [
       { label: 'Total Users', value: totalUsers ? totalUsers.toLocaleString() : '—' },
       { label: 'Daily Active', value: '—', sub: 'hook activity later' },
-      { label: `Attempts (${from} → ${to})`, value: attemptsWindowTotal.toLocaleString(), sub: onlyModule ? `Only ${onlyModule}` : 'All modules' },
+      {
+        label: `Attempts (${from} → ${to})`,
+        value: attemptsWindowTotal.toLocaleString(),
+        sub: onlyModule ? `Only ${onlyModule}` : 'All modules',
+      },
       { label: 'Reading Tests', value: readingTests.toString(), sub: 'Published/Total' },
       { label: 'Speaking Queue', value: speakingPending.toString(), sub: 'Awaiting AI eval' },
       { label: 'MRR (PKR)', value: '—', sub: 'Stripe later' },
