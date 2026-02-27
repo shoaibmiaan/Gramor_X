@@ -55,13 +55,11 @@ export default function AuthConfirmPage() {
   }, [router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-      <div className="rounded-lg border border-border px-6 py-8 text-center shadow-sm">
+    <div className="rounded-ds-2xl border border-border bg-card/40 px-6 py-8 text-center shadow-sm">
         <p className="text-base font-medium">Verifying your email…</p>
         <p className="mt-2 text-sm text-muted-foreground">
           This usually takes just a moment. Please don’t close this tab.
         </p>
-      </div>
     </div>
   );
 }

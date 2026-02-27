@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import AuthLayout from '@/components/layouts/AuthLayout';
 import { Alert } from '@/components/design-system/Alert';
+import { Input } from '@/components/design-system/Input';
+import { Button } from '@/components/design-system/Button';
+import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { redirectByRole } from '@/lib/routeAccess';
 
@@ -31,30 +33,27 @@ export default function MfaPage() {
   };
 
   return (
-    <AuthLayout title="Two-factor authentication" subtitle="Enter the 6-digit code from your authenticator app." showRightOnMobile>
-      <form onSubmit={submit} className="mt-4 space-y-4 max-w-sm">
-        <input
+    <>
+      <SectionLabel>Two-factor authentication</SectionLabel>
+      <form onSubmit={submit} className="mt-2 max-w-sm space-y-4">
+        <Input
+          label="Verification code"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\s+/g, ''))}
           placeholder="123456"
-          className="w-full rounded-md border px-3 py-2"
           inputMode="numeric"
           pattern="[0-9]{6}"
           required
         />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-vibrantPurple px-3 py-2 text-white"
-        >
+        <Button type="submit" disabled={loading} fullWidth className="rounded-ds-xl">
           {loading ? 'Verifying…' : 'Verify'}
-        </button>
+        </Button>
       </form>
       {error && (
         <Alert variant="warning" title="Verification error" className="mt-4">
           {error}
         </Alert>
       )}
-    </AuthLayout>
+    </>
   );
 }
