@@ -105,6 +105,83 @@ type ActionItem = {
   done?: boolean;
 };
 
+type BaselineScores = {
+  reading: number;
+  writing: number;
+  listening: number;
+  speaking: number;
+};
+
+type StudyPlanSnapshot = {
+  targetBand: number | null;
+  examDate: string | null;
+  generatedAt: string | null;
+  totalWeeks: number | null;
+  firstWeekFocus: string | null;
+  recommendations: string[];
+  firstWeekTaskCount: number;
+};
+
+const formatDateLabel = (value: string | null | undefined) => {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString();
+};
+
+const parseBaselineScores = (value: unknown): BaselineScores | null => {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  const reading = Number(raw.reading);
+  const writing = Number(raw.writing);
+  const listening = Number(raw.listening);
+  const speaking = Number(raw.speaking);
+
+  const allFinite = [reading, writing, listening, speaking].every((n) => Number.isFinite(n));
+  if (!allFinite) return null;
+
+  return { reading, writing, listening, speaking };
+};
+
+const buildStudyPlanSnapshot = (row: Record<string, unknown> | null): StudyPlanSnapshot | null => {
+  if (!row) return null;
+
+  const planData =
+    (row.plan_data as Record<string, unknown> | null) ??
+    (row.plan_json as Record<string, unknown> | null) ??
+    null;
+  const weeksRaw = (planData?.weeks as unknown[]) ?? (row.weeks as unknown[]) ?? [];
+  const firstWeek = weeksRaw[0] as Record<string, unknown> | undefined;
+  const firstWeekDays = (firstWeek?.days as unknown[]) ?? [];
+  const firstWeekTaskCount = firstWeekDays.reduce((acc, day) => {
+    const tasks = ((day as Record<string, unknown>)?.tasks as unknown[]) ?? [];
+    return acc + tasks.length;
+  }, 0);
+
+  const weeksCountFromPlan = Number(planData?.totalWeeks);
+  const totalWeeks = Number.isFinite(weeksCountFromPlan)
+    ? weeksCountFromPlan
+    : weeksRaw.length || null;
+
+  const recommendations = Array.isArray(planData?.recommendations)
+    ? (planData?.recommendations as unknown[])
+        .map((item) => String(item ?? '').trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+
+  const targetBandRaw = Number(row.target_band ?? row.goal_band ?? planData?.target_band ?? null);
+
+  return {
+    targetBand: Number.isFinite(targetBandRaw) ? targetBandRaw : null,
+    examDate: (row.exam_date as string | null) ?? (planData?.exam_date as string | null) ?? null,
+    generatedAt: (row.updated_at as string | null) ?? (row.created_at as string | null) ?? null,
+    totalWeeks,
+    firstWeekFocus: (firstWeek?.focus as string | null) ?? null,
+    recommendations,
+    firstWeekTaskCount,
+  };
+};
+
 const isSubscriptionTier = (value: unknown): value is SubscriptionTier =>
   value === 'free' || value === 'seedling' || value === 'rocket' || value === 'owl';
 
@@ -125,6 +202,7 @@ const getTierFromAuthContext = (user: User | null): SubscriptionTier | null => {
 const Dashboard: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [studyPlanSnapshot, setStudyPlanSnapshot] = useState<StudyPlanSnapshot | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
@@ -239,6 +317,24 @@ const Dashboard: NextPage = () => {
 
         setNeedsSetup(!!(draftFlag || explicitIncomplete || heuristicIncomplete));
         setProfile(p ?? null);
+
+        const { data: planRow, error: planError } = await supabaseBrowser
+          .from('study_plans')
+          .select('target_band,goal_band,exam_date,plan_data,plan_json,weeks,updated_at,created_at')
+          .eq('user_id', authUser.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (planError) {
+          // eslint-disable-next-line no-console
+          console.error('[dashboard] study plan load error:', planError);
+        } else {
+          setStudyPlanSnapshot(
+            buildStudyPlanSnapshot((planRow as Record<string, unknown> | null) ?? null),
+          );
+        }
+
         setLoading(false);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -286,6 +382,10 @@ const Dashboard: NextPage = () => {
   const goalBand =
     typeof profile?.goal_band === 'number' ? profile.goal_band : (ai.suggestedGoal ?? null);
   const targetStudyTime = profile?.time_commitment || '1–2h/day';
+  const baselineScores = useMemo(
+    () => parseBaselineScores(profile?.baseline_scores ?? null),
+    [profile?.baseline_scores],
+  );
 
   const examDate = useMemo(() => {
     if (!profile?.exam_date) return null;
@@ -710,6 +810,180 @@ const Dashboard: NextPage = () => {
                 </div>
               </div>
             </div>
+
+            {/* ONBOARDING OUTCOME + AI STUDY PLAN */}
+            <section className="grid gap-6 lg:grid-cols-2" id="goal-summary">
+              <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-slab text-h2">Onboarding outcome</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Your profile inputs now power every recommendation and study flow.
+                    </p>
+                  </div>
+                  <Badge variant="neutral" size="sm">
+                    Step {(profile?.onboarding_step ?? 0).toString()}
+                  </Badge>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Target band
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">
+                      {typeof goalBand === 'number' ? goalBand.toFixed(1) : '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Exam date
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">
+                      {formatDateLabel(profile?.exam_date ?? null)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Study rhythm
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">{targetStudyTime}</p>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Language
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">
+                      {(profile?.preferred_language ?? 'en').toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+
+                {baselineScores ? (
+                  <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-4">
+                    <p className="text-sm font-semibold text-foreground">Baseline scores</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground sm:grid-cols-4">
+                      <span>Reading: {baselineScores.reading}</span>
+                      <span>Writing: {baselineScores.writing}</span>
+                      <span>Listening: {baselineScores.listening}</span>
+                      <span>Speaking: {baselineScores.speaking}</span>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="/onboarding/review">
+                    <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                      Review onboarding inputs
+                    </Button>
+                  </Link>
+                  <Link href="/profile">
+                    <Button variant="secondary" size="sm" className="rounded-ds-xl">
+                      Update profile
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+
+              <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-slab text-h2">AI generated study plan</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Generated from your onboarding response and continuously usable from
+                      dashboard.
+                    </p>
+                  </div>
+                  <Badge variant={studyPlanSnapshot ? 'success' : 'warning'} size="sm">
+                    {studyPlanSnapshot ? 'Ready' : 'Pending'}
+                  </Badge>
+                </div>
+
+                {studyPlanSnapshot ? (
+                  <>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Plan target
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {typeof studyPlanSnapshot.targetBand === 'number'
+                            ? studyPlanSnapshot.targetBand.toFixed(1)
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Duration
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {studyPlanSnapshot.totalWeeks
+                            ? `${studyPlanSnapshot.totalWeeks} weeks`
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Exam date
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {formatDateLabel(studyPlanSnapshot.examDate)}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Generated
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {formatDateLabel(studyPlanSnapshot.generatedAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-4">
+                      <p className="text-sm font-semibold text-foreground">Week 1 focus</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {studyPlanSnapshot.firstWeekFocus || 'Focus details unavailable'}
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Planned tasks this week: {studyPlanSnapshot.firstWeekTaskCount}
+                      </p>
+                    </div>
+
+                    {studyPlanSnapshot.recommendations.length > 0 ? (
+                      <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-4">
+                        <p className="text-sm font-semibold text-foreground">
+                          Top AI recommendations
+                        </p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                          {studyPlanSnapshot.recommendations.map((note) => (
+                            <li key={note}>{note}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="mt-5 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm text-warning">
+                    Your study plan is not ready yet. Complete onboarding review and generate your
+                    AI plan.
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="/study-plan">
+                    <Button variant="primary" size="sm" className="rounded-ds-xl">
+                      Open study plan
+                    </Button>
+                  </Link>
+                  <Link href="/onboarding/review">
+                    <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                      Edit onboarding responses
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            </section>
 
             {/* NEXT TASK */}
             <NextTaskCard
