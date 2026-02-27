@@ -53,6 +53,19 @@ function isSafePostAuthRedirect(path: string | null) {
   return true;
 }
 
+function assignRedirectTarget(url: URL, targetPath: string, fallbackPath: string) {
+  const destination = isSafePostAuthRedirect(targetPath) ? targetPath : fallbackPath;
+
+  try {
+    const parsed = new URL(destination, url.origin);
+    url.pathname = parsed.pathname;
+    url.search = parsed.search;
+  } catch {
+    url.pathname = fallbackPath;
+    url.search = '';
+  }
+}
+
 // ensure refreshed cookies from Supabase are preserved when redirecting
 function redirectWithCookies(from: NextResponse, url: URL) {
   const r = NextResponse.redirect(url);
@@ -146,8 +159,7 @@ export async function middleware(req: NextRequest) {
     if (isPremiumPinPage && pinOk) {
       const url = req.nextUrl.clone();
       const nextParam = req.nextUrl.searchParams.get('next');
-      url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/premium';
-      url.search = '';
+      assignRedirectTarget(url, nextParam ?? '', '/premium');
       return redirectWithCookies(res, url);
     }
 
@@ -179,8 +191,7 @@ export async function middleware(req: NextRequest) {
   if (authState.authenticated && isAuthPage) {
     const url = req.nextUrl.clone();
     const nextParam = req.nextUrl.searchParams.get('next');
-    url.pathname = isSafePostAuthRedirect(nextParam) ? nextParam : '/';
-    url.search = '';
+    assignRedirectTarget(url, nextParam ?? '', '/');
     return redirectWithCookies(res, url);
   }
 
@@ -199,8 +210,7 @@ export async function middleware(req: NextRequest) {
       } else if (isOnboardingRoute) {
         const url = req.nextUrl.clone();
         const nextParam = req.nextUrl.searchParams.get('next');
-        url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
-        url.search = '';
+        assignRedirectTarget(url, nextParam ?? '', '/dashboard');
         return redirectWithCookies(res, url);
       }
     }
