@@ -105,6 +105,83 @@ type ActionItem = {
   done?: boolean;
 };
 
+type BaselineScores = {
+  reading: number;
+  writing: number;
+  listening: number;
+  speaking: number;
+};
+
+type StudyPlanSnapshot = {
+  targetBand: number | null;
+  examDate: string | null;
+  generatedAt: string | null;
+  totalWeeks: number | null;
+  firstWeekFocus: string | null;
+  recommendations: string[];
+  firstWeekTaskCount: number;
+};
+
+const formatDateLabel = (value: string | null | undefined) => {
+  if (!value) return '—';
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString();
+};
+
+const parseBaselineScores = (value: unknown): BaselineScores | null => {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  const reading = Number(raw.reading);
+  const writing = Number(raw.writing);
+  const listening = Number(raw.listening);
+  const speaking = Number(raw.speaking);
+
+  const allFinite = [reading, writing, listening, speaking].every((n) => Number.isFinite(n));
+  if (!allFinite) return null;
+
+  return { reading, writing, listening, speaking };
+};
+
+const buildStudyPlanSnapshot = (row: Record<string, unknown> | null): StudyPlanSnapshot | null => {
+  if (!row) return null;
+
+  const planData =
+    (row.plan_data as Record<string, unknown> | null) ??
+    (row.plan_json as Record<string, unknown> | null) ??
+    null;
+  const weeksRaw = (planData?.weeks as unknown[]) ?? (row.weeks as unknown[]) ?? [];
+  const firstWeek = weeksRaw[0] as Record<string, unknown> | undefined;
+  const firstWeekDays = (firstWeek?.days as unknown[]) ?? [];
+  const firstWeekTaskCount = firstWeekDays.reduce((acc, day) => {
+    const tasks = ((day as Record<string, unknown>)?.tasks as unknown[]) ?? [];
+    return acc + tasks.length;
+  }, 0);
+
+  const weeksCountFromPlan = Number(planData?.totalWeeks);
+  const totalWeeks = Number.isFinite(weeksCountFromPlan)
+    ? weeksCountFromPlan
+    : weeksRaw.length || null;
+
+  const recommendations = Array.isArray(planData?.recommendations)
+    ? (planData?.recommendations as unknown[])
+        .map((item) => String(item ?? '').trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+
+  const targetBandRaw = Number(row.target_band ?? row.goal_band ?? planData?.target_band ?? null);
+
+  return {
+    targetBand: Number.isFinite(targetBandRaw) ? targetBandRaw : null,
+    examDate: (row.exam_date as string | null) ?? (planData?.exam_date as string | null) ?? null,
+    generatedAt: (row.updated_at as string | null) ?? (row.created_at as string | null) ?? null,
+    totalWeeks,
+    firstWeekFocus: (firstWeek?.focus as string | null) ?? null,
+    recommendations,
+    firstWeekTaskCount,
+  };
+};
+
 const isSubscriptionTier = (value: unknown): value is SubscriptionTier =>
   value === 'free' || value === 'seedling' || value === 'rocket' || value === 'owl';
 
@@ -125,6 +202,7 @@ const getTierFromAuthContext = (user: User | null): SubscriptionTier | null => {
 const Dashboard: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [studyPlanSnapshot, setStudyPlanSnapshot] = useState<StudyPlanSnapshot | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
@@ -235,11 +313,28 @@ const Dashboard: NextPage = () => {
         const draftFlag = (p as any)?.draft === true;
         const explicitIncomplete = (p as any)?.onboarding_complete === false;
         const heuristicIncomplete =
-          (p as any)?.onboarding_complete == null &&
-          (!p?.full_name || !p?.preferred_language);
+          (p as any)?.onboarding_complete == null && (!p?.full_name || !p?.preferred_language);
 
         setNeedsSetup(!!(draftFlag || explicitIncomplete || heuristicIncomplete));
         setProfile(p ?? null);
+
+        const { data: planRow, error: planError } = await supabaseBrowser
+          .from('study_plans')
+          .select('target_band,goal_band,exam_date,plan_data,plan_json,weeks,updated_at,created_at')
+          .eq('user_id', authUser.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (planError) {
+          // eslint-disable-next-line no-console
+          console.error('[dashboard] study plan load error:', planError);
+        } else {
+          setStudyPlanSnapshot(
+            buildStudyPlanSnapshot((planRow as Record<string, unknown> | null) ?? null),
+          );
+        }
+
         setLoading(false);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -285,8 +380,12 @@ const Dashboard: NextPage = () => {
   const topBadges = earnedBadges.slice(0, 3);
 
   const goalBand =
-    typeof profile?.goal_band === 'number' ? profile.goal_band : ai.suggestedGoal ?? null;
+    typeof profile?.goal_band === 'number' ? profile.goal_band : (ai.suggestedGoal ?? null);
   const targetStudyTime = profile?.time_commitment || '1–2h/day';
+  const baselineScores = useMemo(
+    () => parseBaselineScores(profile?.baseline_scores ?? null),
+    [profile?.baseline_scores],
+  );
 
   const examDate = useMemo(() => {
     if (!profile?.exam_date) return null;
@@ -297,11 +396,7 @@ const Dashboard: NextPage = () => {
   const daysUntilExam = useMemo(() => {
     if (!examDate) return null;
     const today = new Date();
-    const startOfToday = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-    );
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const diffMs = examDate.getTime() - startOfToday.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     return diffDays >= 0 ? diffDays : 0;
@@ -313,9 +408,7 @@ const Dashboard: NextPage = () => {
 
     const fromAI =
       aiAny?.speakingFocusTopic ||
-      (ai.sessionMix ?? []).find(
-        (entry: any) => entry?.skill?.toLowerCase() === 'speaking',
-      )?.topic;
+      (ai.sessionMix ?? []).find((entry: any) => entry?.skill?.toLowerCase() === 'speaking')?.topic;
 
     if (typeof fromAI === 'string' && fromAI.trim().length > 0) {
       return fromAI;
@@ -331,8 +424,7 @@ const Dashboard: NextPage = () => {
     if (label.includes('family')) return 'family';
     if (label.includes('hometown') || label.includes('city') || label.includes('place'))
       return 'hometown';
-    if (label.includes('work') || label.includes('job') || label.includes('study'))
-      return 'work';
+    if (label.includes('work') || label.includes('job') || label.includes('study')) return 'work';
     if (label.includes('free time') || label.includes('hobby') || label.includes('leisure'))
       return 'free-time';
     if (label.includes('travel') || label.includes('holiday')) return 'travel';
@@ -419,11 +511,18 @@ const Dashboard: NextPage = () => {
     return items;
   }, [daysUntilExam, examDate, streak, streakProtected, speakingVocabTopic, speakingVocabSlug]);
 
-  const trackFeatureOpen = useCallback((feature: string) => {
-    // window.analytics?.track('feature_open', { feature, userId: sessionUserId });
-    // eslint-disable-next-line no-console
-    console.log('[feature] open', feature);
-  }, []);
+  const trackFeatureOpen = useCallback(
+    (feature: string) => {
+      if (typeof window === 'undefined') return;
+      const analytics = (
+        window as Window & {
+          analytics?: { track?: (event: string, payload: Record<string, unknown>) => void };
+        }
+      ).analytics;
+      analytics?.track?.('feature_open', { feature, userId: sessionUserId });
+    },
+    [sessionUserId],
+  );
 
   const openAICoach = useCallback(() => {
     setShowAICoach(true);
@@ -537,11 +636,7 @@ const Dashboard: NextPage = () => {
     info: 'bg-electricBlue/15 text-electricBlue',
   };
 
-  const renderTileAction = (
-    key: string,
-    action: TileAction,
-    variant: 'primary' | 'ghost',
-  ) =>
+  const renderTileAction = (key: string, action: TileAction, variant: 'primary' | 'ghost') =>
     'href' in action ? (
       <Button key={key} size="sm" variant={variant} className="rounded-ds-xl" asChild>
         <Link href={action.href}>{action.label}</Link>
@@ -593,9 +688,7 @@ const Dashboard: NextPage = () => {
                 {profileAvatarUrl ? (
                   <Image
                     src={profileAvatarUrl}
-                    alt={
-                      profile?.full_name ? `${profile.full_name} avatar` : 'Profile avatar'
-                    }
+                    alt={profile?.full_name ? `${profile.full_name} avatar` : 'Profile avatar'}
                     width={64}
                     height={64}
                     className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/40"
@@ -616,8 +709,7 @@ const Dashboard: NextPage = () => {
                       Welcome back, {profile?.full_name || 'Learner'}
                     </h1>
                     <p className="text-grayish">
-                      Every module below is wired into your IELTS goal—choose where to dive
-                      in next.
+                      Every module below is wired into your IELTS goal—choose where to dive in next.
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-small text-muted-foreground">
@@ -629,9 +721,7 @@ const Dashboard: NextPage = () => {
                     ) : (
                       <span>• Set your goal to unlock tailored guidance</span>
                     )}
-                    {targetStudyTime ? (
-                      <span>• Study rhythm: {targetStudyTime}</span>
-                    ) : null}
+                    {targetStudyTime ? <span>• Study rhythm: {targetStudyTime}</span> : null}
                   </div>
                 </div>
               </div>
@@ -645,19 +735,11 @@ const Dashboard: NextPage = () => {
                     </Badge>
                   )}
                   <Badge size="sm">🛡 {shields}</Badge>
-                  <Button
-                    onClick={claimShield}
-                    variant="secondary"
-                    className="rounded-ds-xl"
-                  >
+                  <Button onClick={claimShield} variant="secondary" className="rounded-ds-xl">
                     Claim Shield
                   </Button>
                   {shields > 0 && (
-                    <Button
-                      onClick={useShield}
-                      variant="secondary"
-                      className="rounded-ds-xl"
-                    >
+                    <Button onClick={useShield} variant="secondary" className="rounded-ds-xl">
                       Use Shield
                     </Button>
                   )}
@@ -680,9 +762,7 @@ const Dashboard: NextPage = () => {
                     tone="primary"
                     size="sm"
                     className="rounded-ds-xl"
-                    leadingIcon={
-                      <Icon name="Sparkles" size={16} className="text-primary" />
-                    }
+                    leadingIcon={<Icon name="Sparkles" size={16} className="text-primary" />}
                   >
                     AI Coach
                   </Button>
@@ -702,9 +782,7 @@ const Dashboard: NextPage = () => {
                     tone="success"
                     size="sm"
                     className="rounded-ds-xl"
-                    leadingIcon={
-                      <Icon name="NotebookPen" size={16} className="text-success" />
-                    }
+                    leadingIcon={<Icon name="NotebookPen" size={16} className="text-success" />}
                   >
                     Mistakes Book
                   </Button>
@@ -715,11 +793,7 @@ const Dashboard: NextPage = () => {
                     size="sm"
                     className="rounded-ds-xl"
                     leadingIcon={
-                      <Icon
-                        name="MessageCircle"
-                        size={16}
-                        className="text-electricBlue"
-                      />
+                      <Icon name="MessageCircle" size={16} className="text-electricBlue" />
                     }
                   >
                     WhatsApp Tasks
@@ -736,6 +810,180 @@ const Dashboard: NextPage = () => {
                 </div>
               </div>
             </div>
+
+            {/* ONBOARDING OUTCOME + AI STUDY PLAN */}
+            <section className="grid gap-6 lg:grid-cols-2" id="goal-summary">
+              <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-slab text-h2">Onboarding outcome</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Your profile inputs now power every recommendation and study flow.
+                    </p>
+                  </div>
+                  <Badge variant="neutral" size="sm">
+                    Step {(profile?.onboarding_step ?? 0).toString()}
+                  </Badge>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Target band
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">
+                      {typeof goalBand === 'number' ? goalBand.toFixed(1) : '—'}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Exam date
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">
+                      {formatDateLabel(profile?.exam_date ?? null)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Study rhythm
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">{targetStudyTime}</p>
+                  </div>
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Language
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-foreground">
+                      {(profile?.preferred_language ?? 'en').toUpperCase()}
+                    </p>
+                  </div>
+                </div>
+
+                {baselineScores ? (
+                  <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-4">
+                    <p className="text-sm font-semibold text-foreground">Baseline scores</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground sm:grid-cols-4">
+                      <span>Reading: {baselineScores.reading}</span>
+                      <span>Writing: {baselineScores.writing}</span>
+                      <span>Listening: {baselineScores.listening}</span>
+                      <span>Speaking: {baselineScores.speaking}</span>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="/onboarding/review">
+                    <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                      Review onboarding inputs
+                    </Button>
+                  </Link>
+                  <Link href="/profile">
+                    <Button variant="secondary" size="sm" className="rounded-ds-xl">
+                      Update profile
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+
+              <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-slab text-h2">AI generated study plan</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Generated from your onboarding response and continuously usable from
+                      dashboard.
+                    </p>
+                  </div>
+                  <Badge variant={studyPlanSnapshot ? 'success' : 'warning'} size="sm">
+                    {studyPlanSnapshot ? 'Ready' : 'Pending'}
+                  </Badge>
+                </div>
+
+                {studyPlanSnapshot ? (
+                  <>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Plan target
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {typeof studyPlanSnapshot.targetBand === 'number'
+                            ? studyPlanSnapshot.targetBand.toFixed(1)
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Duration
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {studyPlanSnapshot.totalWeeks
+                            ? `${studyPlanSnapshot.totalWeeks} weeks`
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Exam date
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {formatDateLabel(studyPlanSnapshot.examDate)}
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Generated
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-foreground">
+                          {formatDateLabel(studyPlanSnapshot.generatedAt)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-4">
+                      <p className="text-sm font-semibold text-foreground">Week 1 focus</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {studyPlanSnapshot.firstWeekFocus || 'Focus details unavailable'}
+                      </p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Planned tasks this week: {studyPlanSnapshot.firstWeekTaskCount}
+                      </p>
+                    </div>
+
+                    {studyPlanSnapshot.recommendations.length > 0 ? (
+                      <div className="mt-4 rounded-xl border border-border/50 bg-card/60 p-4">
+                        <p className="text-sm font-semibold text-foreground">
+                          Top AI recommendations
+                        </p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                          {studyPlanSnapshot.recommendations.map((note) => (
+                            <li key={note}>{note}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="mt-5 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm text-warning">
+                    Your study plan is not ready yet. Complete onboarding review and generate your
+                    AI plan.
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link href="/study-plan">
+                    <Button variant="primary" size="sm" className="rounded-ds-xl">
+                      Open study plan
+                    </Button>
+                  </Link>
+                  <Link href="/onboarding/review">
+                    <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                      Edit onboarding responses
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+            </section>
 
             {/* NEXT TASK */}
             <NextTaskCard
@@ -755,8 +1003,8 @@ const Dashboard: NextPage = () => {
                 <div>
                   <h2 className="font-slab text-h2">AI workspace</h2>
                   <p className="text-grayish">
-                    Keep your adaptive tools in one consistent hub—jump in wherever you
-                    need support.
+                    Keep your adaptive tools in one consistent hub—jump in wherever you need
+                    support.
                   </p>
                 </div>
                 <Badge variant="neutral" size="sm">
@@ -766,15 +1014,13 @@ const Dashboard: NextPage = () => {
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {innovationTiles.map((tile) => {
-                  const iconBg = tile.accent
-                    ? accentClass[tile.accent]
-                    : accentClass.primary;
+                  const iconBg = tile.accent ? accentClass[tile.accent] : accentClass.primary;
                   const badgeVariant: 'accent' | 'success' | 'neutral' =
                     tile.badge === 'Rocket'
                       ? 'accent'
                       : tile.badge === 'New'
-                      ? 'success'
-                      : 'neutral';
+                        ? 'success'
+                        : 'neutral';
 
                   return (
                     <Card
@@ -799,9 +1045,7 @@ const Dashboard: NextPage = () => {
                                 </Badge>
                               ) : null}
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {tile.description}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{tile.description}</p>
                           </div>
                         </div>
                         {tile.meta ? (
@@ -920,9 +1164,7 @@ const Dashboard: NextPage = () => {
                         </span>
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="font-semibold text-lg text-foreground">
-                              {item.title}
-                            </h3>
+                            <h3 className="font-semibold text-lg text-foreground">{item.title}</h3>
                             {item.done ? (
                               <Badge variant="success" size="xs">
                                 Done
@@ -939,17 +1181,9 @@ const Dashboard: NextPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      {renderTileAction(
-                        `${item.id}-primary`,
-                        item.primary,
-                        'primary',
-                      )}
+                      {renderTileAction(`${item.id}-primary`, item.primary, 'primary')}
                       {item.secondary
-                        ? renderTileAction(
-                            `${item.id}-secondary`,
-                            item.secondary,
-                            'ghost',
-                          )
+                        ? renderTileAction(`${item.id}-secondary`, item.secondary, 'ghost')
                         : null}
                     </div>
                   </Card>
@@ -958,7 +1192,7 @@ const Dashboard: NextPage = () => {
             </section>
 
             {/* NEXT LESSONS */}
-            {((ai.sessionMix ?? ai.sequence) ?? []).length > 0 && (
+            {(ai.sessionMix ?? ai.sequence ?? []).length > 0 && (
               <div className="mt-10" id="next-sessions">
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -978,13 +1212,12 @@ const Dashboard: NextPage = () => {
                 <div className="grid gap-6 md:grid-cols-3">
                   {(ai.sessionMix && ai.sessionMix.length
                     ? ai.sessionMix
-                    : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' })))
+                    : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
+                  )
                     .slice(0, 3)
                     .map((entry, index) => {
                       const hrefSkill = entry.skill.toLowerCase();
-                      const title = entry.topic
-                        ? `${entry.skill}: ${entry.topic}`
-                        : entry.skill;
+                      const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
                       return (
                         <Card
                           key={`${entry.skill}-${entry.topic || index}`}
@@ -1047,9 +1280,7 @@ const Dashboard: NextPage = () => {
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-slab text-h2">Roadmap to exam day</h2>
-                  <p className="text-grayish">
-                    See which stage you are in and what to do next.
-                  </p>
+                  <p className="text-grayish">See which stage you are in and what to do next.</p>
                 </div>
                 <Link href="/exam-day" className="shrink-0">
                   <Button variant="ghost" size="sm" className="rounded-ds-xl">
@@ -1103,11 +1334,7 @@ const Dashboard: NextPage = () => {
                       Check visa target
                     </Button>
                   </Link>
-                  <Button
-                    onClick={shareDashboard}
-                    variant="secondary"
-                    className="rounded-ds-xl"
-                  >
+                  <Button onClick={shareDashboard} variant="secondary" className="rounded-ds-xl">
                     Share progress
                   </Button>
                 </div>
@@ -1200,18 +1427,11 @@ const Dashboard: NextPage = () => {
       {/* Innovation modals */}
       {showAICoach && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowAICoach(false)}
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAICoach(false)} />
           <div className="relative w-full max-w-4xl rounded-ds-2xl p-6">
             <AICoachPanel
               onClose={() => setShowAICoach(false)}
-              profile={
-                profile
-                  ? { user_id: profile.user_id, full_name: profile.full_name }
-                  : null
-              }
+              profile={profile ? { user_id: profile.user_id, full_name: profile.full_name } : null}
               onOpenStudyBuddy={() => {
                 setShowAICoach(false);
                 setShowStudyBuddy(true);
@@ -1223,15 +1443,9 @@ const Dashboard: NextPage = () => {
 
       {showStudyBuddy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowStudyBuddy(false)}
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowStudyBuddy(false)} />
           <div className="relative w-full max-w-3xl rounded-ds-2xl p-6">
-            <StudyBuddyPanel
-              onClose={() => setShowStudyBuddy(false)}
-              profile={profile ?? null}
-            />
+            <StudyBuddyPanel onClose={() => setShowStudyBuddy(false)} profile={profile ?? null} />
           </div>
         </div>
       )}
@@ -1243,10 +1457,7 @@ const Dashboard: NextPage = () => {
             onClick={() => setShowMistakesBook(false)}
           />
           <div className="relative w-full max-w-3xl rounded-ds-2xl p-6">
-            <MistakesBookPanel
-              onClose={() => setShowMistakesBook(false)}
-              userId={sessionUserId}
-            />
+            <MistakesBookPanel onClose={() => setShowMistakesBook(false)} userId={sessionUserId} />
           </div>
         </div>
       )}
