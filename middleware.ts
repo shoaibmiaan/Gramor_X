@@ -127,6 +127,16 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
+  const hostHeader = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
+  const host = hostHeader?.split(',')[0]?.trim().toLowerCase();
+
+  if (host && host.startsWith('www.')) {
+    const canonicalUrl = req.nextUrl.clone();
+    canonicalUrl.host = host.slice(4);
+    canonicalUrl.protocol = 'https:';
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
   // Skip static and API routes (we only guard real pages)
   if (
     pathname.startsWith('/_next') || // includes /_next/data prefetches
