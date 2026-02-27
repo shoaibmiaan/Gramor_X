@@ -6,6 +6,7 @@ import { DateTime } from 'luxon';
 
 import type { PlanId } from '@/types/pricing';
 import { xpDailyCap } from '@/lib/plan/gates';
+import { getUserEffectivePlan } from '@/lib/repositories/subscriptionRepository';
 
 // ---------------------------------------------------------------------------
 // Vocabulary ritual XP helpers
@@ -117,14 +118,8 @@ async function fetchPlanDetails(
   userId: string,
 ): Promise<{ plan: PlanId; multiplier: number }> {
   try {
-    const { data } = await client
-      .from('profiles')
-      .select('plan')
-      .eq('id', userId)
-      .limit(1)
-      .maybeSingle();
-
-    const plan = (data as { plan?: string | null } | null)?.plan ?? undefined;
+    const effective = await getUserEffectivePlan(client as any, userId);
+    const plan = effective.plan;
     return { plan: (plan as PlanId | undefined) ?? 'free', multiplier: multiplierForPlan(plan) };
   } catch {
     return { plan: 'free', multiplier: 1 };

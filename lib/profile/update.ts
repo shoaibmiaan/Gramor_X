@@ -1,5 +1,6 @@
 // lib/profile/update.ts
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { updateProfileByUserId } from '@/lib/repositories/profileRepository';
 // If you have a generated Database type, import it and use SupabaseClient<Database>
 //
 // import type { Database } from '@/types/supabase';
@@ -29,10 +30,7 @@ export async function updateProfileForUser(
   userId: string,
   patch: ProfileUpdatePayload
 ) {
-  const { error } = await supabase
-    .from('profiles')
-    .update(patch)
-    .eq('id', userId);
+  const { error } = await updateProfileByUserId(supabase, userId, patch as Record<string, unknown>);
 
   return { error };
 }

@@ -25,6 +25,7 @@ import {
 } from '@/lib/profile-options';
 import { resolveAvatarUrl } from '@/lib/avatar';
 import type { AIPlan } from '@/types/profile';
+import { getProfileByUserId, getProfileSetupState, upsertProfileSetup } from '@/lib/repositories/profileRepository';
 
 /** ——— UI helpers ——— */
 const Section: React.FC<{ title: string; subtitle?: string; children: React.ReactNode; defaultOpen?: boolean }> = ({
@@ -192,11 +193,7 @@ export function ProfileSetupLayout() {
       console.log('Authenticated user ID:', session.user.id);
       console.log('JWT role:', session.user.app_metadata?.role); // Debug JWT role
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`id.eq.${session.user.id},user_id.eq.${session.user.id}`)
-        .maybeSingle();
+      const { data, error } = await getProfileByUserId(supabase as any, session.user.id);
 
       if (error && error.code !== 'PGRST116') setError(error.message);
       if (data) {
@@ -512,16 +509,19 @@ export function ProfileSetupLayout() {
       const { data: { session } } = await supabase.auth.getSession();
       console.log('JWT role:', session?.user?.app_metadata?.role);
 
-      const { data: existing } = await supabase.from('profiles').select('id, setup_complete').eq('id', userId).maybeSingle();
+      const { data: existing } = await getProfileSetupState(supabase as any, userId);
       if (existing?.setup_complete && !finalize) {
         setError('Profile is already complete and cannot be updated as a draft.');
         setSaving(false);
         return;
       }
 
-      const { error: upsertErr } = existing
-        ? await supabase.from('profiles').update(payload).eq('id', userId)
-        : await supabase.from('profiles').insert(payload);
+      const { error: upsertErr } = await upsertProfileSetup(
+        supabase as any,
+        userId,
+        payload,
+        payload,
+      );
 
       if (upsertErr) {
         if (upsertErr.code === '42501') {

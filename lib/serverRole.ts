@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { extractRole, type AppRole } from '@/lib/roles';
+import { getProfileRole } from '@/lib/repositories/profileRepository';
 
 /**
  * Resolve the application role for a Supabase user on the server.
@@ -13,11 +14,7 @@ export async function resolveUserRole(user: User | null | undefined): Promise<Ap
   if (metaRole) return metaRole;
 
   try {
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
+    const { data, error } = await getProfileRole(supabaseAdmin as any, user.id);
 
     if (error) {
       // Silently ignore errors and treat as no role.

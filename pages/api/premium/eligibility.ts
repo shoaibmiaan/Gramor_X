@@ -1,6 +1,7 @@
 // pages/api/premium/eligibility.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { getUserEffectivePlan } from '@/lib/repositories/subscriptionRepository';
 
 // Use service role client for token verification (no refresh needed)
 const supabaseAdmin = createClient(
@@ -27,18 +28,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({ eligible: false, plan: null, reason: 'unauthenticated' });
   }
 
-  // Fetch user's plan
-  const { data: profile, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('plan')
-    .eq('id', user.id)
-    .single();
+  const effective = await getUserEffectivePlan(supabaseAdmin as any, user.id);
+  const plan = effective.plan as string | null;
 
-  if (profileError || !profile) {
+  if (!plan) {
     return res.status(200).json({ eligible: false, plan: null, reason: 'no_profile' });
   }
-
-  const plan = profile.plan as string | null;
   const eligible = plan === 'premium' || plan === 'master';
 
   return res.status(200).json({ eligible, plan, reason: eligible ? undefined : 'plan_required' });
