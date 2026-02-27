@@ -4,6 +4,7 @@
 import { supabaseService } from '@/lib/supabaseServer';
 import { renderLifecycleTemplate, type LifecycleEventType } from '@/lib/lifecycle/templates';
 import type { Database } from '@/types/supabase';
+import { getLifecycleContactProfile } from '@/lib/repositories/profileRepository';
 
 type LifecycleChannel = 'email' | 'whatsapp';
 
@@ -86,13 +87,7 @@ export async function enqueueLifecycleEvent(
   const safeContext = sanitizeContext(options.context);
 
   const [{ data: profile, error: profileError }, { data: optIn, error: optError }] = await Promise.all([
-    client
-      .from('profiles')
-      .select(
-        'user_id, full_name, email, phone, phone_verified, whatsapp_opt_in, notification_channels, locale, preferred_language',
-      )
-      .eq('user_id', options.userId)
-      .maybeSingle(),
+    getLifecycleContactProfile(client as any, options.userId),
     client
       .from('notifications_opt_in')
       .select('email_opt_in, sms_opt_in, wa_opt_in')

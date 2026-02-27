@@ -1,6 +1,7 @@
 // pages/api/premium/status.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { getUserEffectivePlan } from '@/lib/repositories/subscriptionRepository';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,16 +32,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({ pinOk, loggedIn: false, userId: null, plan: null });
   }
 
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('plan')
-    .eq('id', user.id)
-    .single();
+  const effective = await getUserEffectivePlan(supabaseAdmin as any, user.id);
 
   return res.status(200).json({
     pinOk,
     loggedIn: true,
     userId: user.id,
-    plan: (profile?.plan ?? null) as string | null,
+    plan: (effective.plan ?? null) as string | null,
   });
 }

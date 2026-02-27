@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
 import { getServerClient } from '@/lib/supabaseServer';
+import { getProfileRole } from '@/lib/repositories/profileRepository';
 
 export type QuotaResult = { ok: true } | { ok: false; reason: string };
 
@@ -30,12 +31,7 @@ export async function checkQuota(
     if (!user) return { ok: false, reason: 'unauthorized' };
 
     // ---- role bypass ----
-    const roleRow = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-
+    const roleRow = await getProfileRole(supabase as any, user.id);
     const role = roleRow.data?.role ?? 'student';
     if (role === 'admin') return { ok: true };
     if (TEACHER_BYPASS && role === 'teacher') return { ok: true };

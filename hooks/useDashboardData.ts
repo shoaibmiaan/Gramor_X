@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import useTierFeatures from '@/hooks/useTierFeatures';
+import useEntitlement from '@/hooks/useEntitlement';
+import { getDashboardAggregate } from '@/lib/services/dashboardService';
 
 type UseDashboardDataParams = {
   userId: string | null;
@@ -66,6 +68,7 @@ const emptyData: DashboardData = {
 
 export function useDashboardData({ userId, tier, realtime = false }: UseDashboardDataParams) {
   const features = useTierFeatures(tier);
+  const entitlement = useEntitlement(tier);
   const [data, setData] = useState<DashboardData>(() => ({
     ...emptyData,
     usageLimits: {
@@ -99,7 +102,7 @@ export function useDashboardData({ userId, tier, realtime = false }: UseDashboar
       setError(null);
 
       try {
-        const [performanceRes, logsRes, bandRes, usageRes] = await Promise.all([
+        const [performanceRes, logsRes, bandRes, usageRes, aggregate] = await Promise.all([
           supabaseBrowser
             .from('dashboard_performance')
             .select('overall_band,practice_hours,study_streak,mock_tests')
@@ -120,6 +123,7 @@ export function useDashboardData({ userId, tier, realtime = false }: UseDashboar
             .select('ai_writing_used,speaking_analysis_used')
             .eq('user_id', userId)
             .maybeSingle(),
+          getDashboardAggregate(supabaseBrowser as any, userId),
         ]);
 
         if (!active) return;
@@ -133,9 +137,9 @@ export function useDashboardData({ userId, tier, realtime = false }: UseDashboar
 
         setData({
           performance: {
-            overallBand: performanceRes.data?.overall_band ?? null,
+            overallBand: performanceRes.data?.overall_band ?? aggregate.score.band ?? null,
             practiceHours: Number(performanceRes.data?.practice_hours ?? 0),
-            studyStreak: Number(performanceRes.data?.study_streak ?? 0),
+            studyStreak: Number(performanceRes.data?.study_streak ?? aggregate.streak.streakDays ?? 0),
             mockTests: Number(performanceRes.data?.mock_tests ?? 0),
           },
           studyLogs: (logsRes.data ?? []).map((row: any) => ({
@@ -170,7 +174,7 @@ export function useDashboardData({ userId, tier, realtime = false }: UseDashboar
 
     void load();
 
-    const shouldSubscribeRealtime = realtime && tier === 'owl' && !!userId;
+    const shouldSubscribeRealtime = realtime && entitlement.canAccessFeature('realtimeDashboard') && !!userId;
     if (!shouldSubscribeRealtime) {
       return () => {
         active = false;
@@ -213,7 +217,7 @@ export function useDashboardData({ userId, tier, realtime = false }: UseDashboar
       active = false;
       void supabaseBrowser.removeChannel(channel);
     };
-  }, [features.aiWritingLimit, features.speakingAnalysisLimit, realtime, tier, userId]);
+  }, [entitlement, features.aiWritingLimit, features.speakingAnalysisLimit, realtime, tier, userId]);
 
   return useMemo(
     () => ({

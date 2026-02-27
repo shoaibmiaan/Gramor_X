@@ -18,6 +18,7 @@ import {
 } from '@/lib/profile-options';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { useLocale } from '@/lib/locale';
+import { getProfileByUserId, getProfileSetupState, upsertProfileSetup } from '@/lib/repositories/profileRepository';
 import type { AIPlan } from '@/types/profile';
 import {
   clampDailyQuota,
@@ -189,11 +190,7 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setIsAuthenticated(true);
         setUserId(session.user.id);
 
-        const { data, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .or(`id.eq.${session.user.id},user_id.eq.${session.user.id}`)
-          .maybeSingle();
+        const { data, error: profileError } = await getProfileByUserId(supabase as any, session.user.id);
 
         if (!active) return;
 
@@ -539,24 +536,19 @@ export const ProfileSetupProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     try {
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id, user_id, setup_complete')
-        .or(`id.eq.${userId},user_id.eq.${userId}`)
-        .maybeSingle();
-
+      const { data: existing } = await getProfileSetupState(supabase as any, userId);
       if (existing?.setup_complete && !finalize) {
         setError('Profile is already complete and cannot be updated as a draft.');
         setSaving(false);
         return;
       }
 
-      const { error: upsertErr } = existing
-        ? await supabase
-            .from('profiles')
-            .update(basePayload)
-            .eq(existing.id ? 'id' : 'user_id', existing.id ?? existing?.user_id ?? userId)
-        : await supabase.from('profiles').insert(insertPayload);
+      const { error: upsertErr } = await upsertProfileSetup(
+        supabase as any,
+        userId,
+        basePayload,
+        insertPayload,
+      );
 
       if (upsertErr) {
         if (upsertErr.code === '42501') {

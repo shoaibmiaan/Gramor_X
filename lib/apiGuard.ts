@@ -2,10 +2,10 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { getProfilePlanAndRole } from '@/lib/repositories/profileRepository';
+import { getUserEffectivePlan } from '@/lib/repositories/subscriptionRepository';
 
 type PlanId = 'free' | 'starter' | 'booster' | 'master';
-type Role = 'user' | 'admin' | 'teacher' | 'org' | null;
-
 const PLAN_ORDER: Record<PlanId, number> = {
   free: 0,
   starter: 1,
@@ -46,13 +46,10 @@ export function withPlan(
       return;
     }
 
-    // Read profile (RLS should allow user to read own profile)
-    type ProfileRow = { id: string; plan: PlanId | null; role: Role };
-    const { data: profile, error: profileErr } = await supabase
-      .from('profiles')
-      .select('id, plan, role')
-      .eq('id', user.id)
-      .single<ProfileRow>();
+    const [{ data: profile, error: profileErr }, effectivePlan] = await Promise.all([
+      getProfilePlanAndRole(supabase, user.id),
+      getUserEffectivePlan(supabase, user.id),
+    ]);
 
     if (profileErr || !profile) {
       res.status(500).json({ error: 'Profile lookup failed' });
@@ -72,7 +69,7 @@ export function withPlan(
     }
 
     // Compare plans
-    const currentPlan: PlanId = normalizePlan(profile.plan);
+    const currentPlan: PlanId = effectivePlan.plan;
     if (PLAN_ORDER[currentPlan] >= PLAN_ORDER[required]) {
       return handler(req, res);
     }
@@ -85,9 +82,4 @@ export function withPlan(
       upgradeUrl: `/pricing?required=${required}`,
     });
   };
-}
-
-function normalizePlan(plan: PlanId | string | null | undefined): PlanId {
-  const p = (plan ?? 'free').toLowerCase();
-  return p === 'starter' || p === 'booster' || p === 'master' ? p : 'free';
 }
