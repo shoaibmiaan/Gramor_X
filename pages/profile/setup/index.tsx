@@ -1,15 +1,15 @@
-// pages/profile/account/referrals.tsx
+// pages/profile/setup/index.tsx
 import type { GetServerSideProps, NextPage } from 'next';
 
-const ProfileAccountReferralsPage: NextPage = () => null;
+const ProfileSetupRedirectPage: NextPage = () => null;
 
 export const getServerSideProps: GetServerSideProps = async () => {
   return {
     redirect: {
-      destination: '/profile/account/referrals',
+      destination: '/profile',
       permanent: false,
     },
   };
 };
 
-export default ProfileAccountReferralsPage;
+export default ProfileSetupRedirectPage;

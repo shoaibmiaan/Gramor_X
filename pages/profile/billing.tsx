@@ -91,7 +91,7 @@ export default function BillingHistoryPage() {
         <Head>
           <title>Billing History · GramorX</title>
         </Head>
-        <main className="py-24 bg-background text-foreground">
+        <main className="bg-background py-10 text-foreground sm:py-14 lg:py-20">
           <Container>
             <Card className="mx-auto max-w-xl rounded-ds-2xl p-6">
               {t('billing.loading', 'Loading billing history…')}
@@ -116,9 +116,9 @@ export default function BillingHistoryPage() {
           />
         </Head>
 
-        <main className="py-24 bg-background text-foreground">
+        <main className="bg-background py-10 text-foreground sm:py-14 lg:py-20">
           <Container>
-            <div className="mx-auto max-w-4xl space-y-6">
+            <div className="mx-auto max-w-4xl space-y-5 sm:space-y-6">
               {error && (
                 <Alert variant="error" role="alert" className="rounded-ds-2xl">
                   {error}
@@ -134,8 +134,8 @@ export default function BillingHistoryPage() {
                 </Alert>
               )}
 
-              <Card className="rounded-ds-2xl p-6">
-                <div className="mb-6 flex items-center justify-between">
+              <Card className="rounded-ds-2xl p-4 sm:p-6">
+                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h1 className="font-slab text-display">
                     {t('billing.title', 'Billing History')}
                   </h1>
@@ -143,7 +143,7 @@ export default function BillingHistoryPage() {
                     <Button
                       variant="outline"
                       className="rounded-ds-xl"
-                      onClick={() => router.push('/profile/profile/account/billing')}
+                      onClick={() => router.push('/profile/account/billing')}
                     >
                       {t(
                         'billing.portal',
@@ -159,7 +159,7 @@ export default function BillingHistoryPage() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-small">
+                    <table className="min-w-[640px] w-full text-small">
                       <thead>
                         <tr className="border-b border-border">
                           <th className="py-3 text-left">

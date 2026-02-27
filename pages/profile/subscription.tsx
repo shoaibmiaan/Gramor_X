@@ -141,8 +141,8 @@ export default function SubscriptionPage() {
                 {error}
               </Alert>
             )}
-            <Card className="rounded-ds-2xl p-6">
-              <div className="mb-6 flex items-center justify-between">
+            <Card className="rounded-ds-2xl p-4 sm:p-6">
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="font-slab text-display">
                   {t('subscription.title', 'Subscription')}
                 </h1>
@@ -213,7 +213,7 @@ export default function SubscriptionPage() {
                     <Button
                       variant="ghost"
                       className="rounded-ds-xl"
-                      onClick={() => router.push('/profile/profile/account/billing')}
+                      onClick={() => router.push('/profile/account/billing')}
                     >
                       {t('subscription.billing', 'View billing history')}
                     </Button>

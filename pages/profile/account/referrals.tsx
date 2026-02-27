@@ -14,8 +14,8 @@ const ReferralsPage: NextPage = () => (
         content="Share your referral link and earn premium credits when friends join GramorX."
       />
     </Head>
-    <main className="min-h-screen bg-background text-foreground py-8">
-      <Container className="max-w-3xl">
+    <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
+      <Container className="max-w-3xl space-y-4 sm:space-y-6">
         <h1 className="text-h2 font-semibold">Referrals</h1>
         <p className="mt-1 text-small text-muted-foreground">
           Share your code with friends and both of you receive premium credits
