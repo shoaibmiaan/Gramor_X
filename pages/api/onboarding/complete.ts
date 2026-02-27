@@ -83,6 +83,7 @@ export default async function handler(
   const patch: Record<string, any> = {
     onboarding_step: step,
     onboarding_complete: true,
+    onboarding_completed_at: new Date().toISOString(),
     draft: false,
   };
 
@@ -93,7 +94,7 @@ export default async function handler(
   const { error: updateError } = await supabase
     .from('profiles')
     .update(patch)
-    .eq('user_id', user.id);
+    .or(`user_id.eq.${user.id},id.eq.${user.id}`);
 
   if (updateError) {
     console.error('onboarding/complete update error:', updateError);
