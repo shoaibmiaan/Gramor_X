@@ -1,0 +1,88 @@
+-- Phase 1 rollback helper
+-- Restores legacy profile columns and data from profile_phase1_backup.
+-- Execute only if Phase 1 cutover must be reverted.
+
+BEGIN;
+
+ALTER TABLE IF EXISTS public.profiles
+  ADD COLUMN IF NOT EXISTS country text,
+  ADD COLUMN IF NOT EXISTS english_level text,
+  ADD COLUMN IF NOT EXISTS goal_band numeric(2,1),
+  ADD COLUMN IF NOT EXISTS exam_date date,
+  ADD COLUMN IF NOT EXISTS study_prefs text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS time_commitment text,
+  ADD COLUMN IF NOT EXISTS time_commitment_min integer,
+  ADD COLUMN IF NOT EXISTS days_per_week smallint,
+  ADD COLUMN IF NOT EXISTS preferred_language text,
+  ADD COLUMN IF NOT EXISTS language_preference text,
+  ADD COLUMN IF NOT EXISTS goal_reason text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS learning_style text,
+  ADD COLUMN IF NOT EXISTS ai_recommendation jsonb DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS setup_complete boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS status text,
+  ADD COLUMN IF NOT EXISTS weaknesses text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS focus_topics text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS daily_quota_goal integer,
+  ADD COLUMN IF NOT EXISTS study_days text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS study_minutes_per_day integer,
+  ADD COLUMN IF NOT EXISTS onboarding_step smallint DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS onboarding_complete boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS whatsapp_opt_in boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS notification_channels text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS marketing_opt_in boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS quiet_hours_start time,
+  ADD COLUMN IF NOT EXISTS quiet_hours_end time,
+  ADD COLUMN IF NOT EXISTS membership text,
+  ADD COLUMN IF NOT EXISTS tier text,
+  ADD COLUMN IF NOT EXISTS plan text,
+  ADD COLUMN IF NOT EXISTS teacher_onboarding_completed boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS teacher_approved boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS teacher_subjects text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS teacher_bio text,
+  ADD COLUMN IF NOT EXISTS teacher_experience_years integer,
+  ADD COLUMN IF NOT EXISTS teacher_cv_url text,
+  ADD COLUMN IF NOT EXISTS buddy_seats integer,
+  ADD COLUMN IF NOT EXISTS buddy_seats_used integer;
+
+UPDATE public.profiles p
+SET
+  country = b.country,
+  english_level = b.english_level,
+  goal_band = b.goal_band,
+  exam_date = b.exam_date,
+  study_prefs = COALESCE(b.study_prefs, '{}'::text[]),
+  time_commitment = b.time_commitment,
+  time_commitment_min = b.time_commitment_min,
+  days_per_week = b.days_per_week,
+  preferred_language = b.preferred_language,
+  language_preference = b.language_preference,
+  goal_reason = COALESCE(b.goal_reason, '{}'::text[]),
+  learning_style = b.learning_style,
+  ai_recommendation = COALESCE(b.ai_recommendation, '{}'::jsonb),
+  setup_complete = COALESCE(b.setup_complete, false),
+  status = b.status,
+  weaknesses = COALESCE(b.weaknesses, '{}'::text[]),
+  focus_topics = COALESCE(b.focus_topics, '{}'::text[]),
+  daily_quota_goal = b.daily_quota_goal,
+  study_days = COALESCE(b.study_days, '{}'::text[]),
+  study_minutes_per_day = b.study_minutes_per_day,
+  onboarding_step = COALESCE(b.onboarding_step, 0),
+  onboarding_complete = COALESCE(b.onboarding_complete, false),
+  whatsapp_opt_in = COALESCE(b.whatsapp_opt_in, false),
+  notification_channels = COALESCE(b.notification_channels, '{}'::text[]),
+  membership = b.membership,
+  tier = b.tier,
+  plan = b.plan,
+  teacher_onboarding_completed = COALESCE(b.teacher_onboarding_completed, false),
+  teacher_approved = COALESCE(b.teacher_approved, false),
+  teacher_subjects = COALESCE(b.teacher_subjects, '{}'::text[]),
+  teacher_bio = b.teacher_bio,
+  teacher_experience_years = b.teacher_experience_years,
+  teacher_cv_url = b.teacher_cv_url,
+  buddy_seats = b.buddy_seats,
+  buddy_seats_used = b.buddy_seats_used,
+  updated_at = now()
+FROM public.profile_phase1_backup b
+WHERE b.id = p.id;
+
+COMMIT;
