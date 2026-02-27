@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import clsx from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/design-system/ThemeToggle';
@@ -11,9 +10,6 @@ type Props = {
   subtitle?: string;
   children: React.ReactNode;
   right?: React.ReactNode;
-  showRightOnMobile?: boolean;
-  mobilePrimaryLabel?: string;
-  mobileSecondaryLabel?: string;
 };
 
 const DefaultRight = () => (
@@ -37,17 +33,8 @@ export default function AuthLayout({
   subtitle,
   children,
   right,
-  showRightOnMobile = false,
-  mobilePrimaryLabel = 'Account',
-  mobileSecondaryLabel = 'Highlights',
 }: Props) {
-  const [mobileView, setMobileView] =
-    React.useState<'left' | 'right'>('left');
-
   const rightContent = right ?? <DefaultRight />;
-
-  const hideLeft = showRightOnMobile && mobileView !== 'left';
-  const hideRight = showRightOnMobile && mobileView !== 'right';
 
   return (
     <div className="relative min-h-[100dvh] bg-background text-foreground">
@@ -56,37 +43,7 @@ export default function AuthLayout({
         <ThemeToggle />
       </div>
 
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[1200px] flex-col px-3 py-4 sm:px-4 sm:py-6">
-        {/* ---------------- MOBILE TOGGLE ---------------- */}
-        {showRightOnMobile && (
-          <div className="mb-6 flex justify-center md:hidden">
-            <div className="flex w-full max-w-sm rounded-full bg-muted/70 p-1 backdrop-blur">
-              <button
-                onClick={() => setMobileView('left')}
-                className={clsx(
-                  'flex-1 rounded-full px-4 py-2 text-sm transition',
-                  mobileView === 'left'
-                    ? 'bg-background shadow-sm'
-                    : 'text-mutedText'
-                )}
-              >
-                {mobilePrimaryLabel}
-              </button>
-
-              <button
-                onClick={() => setMobileView('right')}
-                className={clsx(
-                  'flex-1 rounded-full px-4 py-2 text-sm transition',
-                  mobileView === 'right'
-                    ? 'bg-background shadow-sm'
-                    : 'text-mutedText'
-                )}
-              >
-                {mobileSecondaryLabel}
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[1200px] flex-col px-3 py-3 sm:px-4 sm:py-4">
 
         {/* ---------------- SPLIT LAYOUT ---------------- */}
         <div
@@ -102,13 +59,7 @@ export default function AuthLayout({
           "
         >
           {/* LEFT PANEL */}
-          <section
-            className={clsx(
-              'flex flex-col justify-center bg-background',
-              'px-[clamp(1rem,4vw,3rem)] py-[clamp(1.25rem,6vh,4rem)] sm:px-[clamp(1.5rem,4vw,3rem)] sm:py-[clamp(2rem,6vh,4rem)]',
-              hideLeft && 'hidden md:flex'
-            )}
-          >
+          <section className="flex flex-col justify-center bg-background px-[clamp(1rem,4vw,3rem)] py-[clamp(1rem,4vh,2rem)] sm:px-[clamp(1.5rem,4vw,3rem)] sm:py-[clamp(1.25rem,4vh,2.5rem)]">
             <div className="mx-auto w-full max-w-md space-y-5 sm:space-y-6">
               {/* Brand */}
               <Link
@@ -146,12 +97,7 @@ export default function AuthLayout({
 
           {/* RIGHT PANEL */}
           <aside
-            className={clsx(
-              'flex items-center justify-center bg-muted',
-              'border-t md:border-t-0 md:border-l border-border',
-              'p-[clamp(1.5rem,4vw,3rem)]',
-              hideRight && 'hidden md:flex'
-            )}
+            className="hidden items-center justify-center border-t border-border bg-muted p-[clamp(1.5rem,4vw,3rem)] md:flex md:border-l md:border-t-0"
           >
             <div className="h-full w-full">{rightContent}</div>
           </aside>

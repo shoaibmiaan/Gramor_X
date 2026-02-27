@@ -105,9 +105,9 @@ export default function VerifyEmailPage() {
   // If the page was opened without an email param, nudge them back
   if (!email) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-12">
+      <div className="space-y-4">
         <SectionLabel>Verify your email</SectionLabel>
-        <Alert variant="warning" title="No email found" className="mt-4">
+        <Alert variant="warning" title="No email found">
           We couldn’t detect your email address for verification.&nbsp;
           <Link className="text-primary underline" href={SIGNUP}>
             Go back to sign up
@@ -123,26 +123,26 @@ export default function VerifyEmailPage() {
   const mailto = `mailto:${encodeURIComponent(email)}`;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12">
+    <div className="space-y-4">
       <SectionLabel>Verify your email</SectionLabel>
 
       {err && (
-        <Alert variant="warning" title="Error" className="mt-4" role="status" aria-live="assertive">
+        <Alert variant="warning" title="Error" role="status" aria-live="assertive">
           {err}
         </Alert>
       )}
 
       {status === 'sent' && !err && (
-        <Alert variant="success" title="Sent" className="mt-4" role="status" aria-live="polite">
+        <Alert variant="success" title="Sent" role="status" aria-live="polite">
           Verification email sent. Please check your inbox.
         </Alert>
       )}
 
-      <p className="mt-6 text-muted-foreground">
+      <p className="text-muted-foreground">
         We sent a verification link to <strong>{email}</strong>. Click it to verify and continue setup.
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className="space-y-4">
         <Button onClick={onResend} className="w-full" disabled={status === 'sending' || cooldown > 0}>
           {status === 'sending'
             ? 'Sending…'
@@ -171,7 +171,7 @@ export default function VerifyEmailPage() {
         </div>
       </div>
 
-      <Button asChild variant="secondary" className="mt-6 rounded-ds-xl" fullWidth>
+      <Button asChild variant="secondary" className="rounded-ds-xl" fullWidth>
         <Link href={SIGNUP}>Back to Sign-up Options</Link>
       </Button>
     </div>
