@@ -7,6 +7,7 @@ import {
   isPublicRoute,
   isGuestOnlyRoute,
   redirectByRole,
+  isSafePostAuthRedirect,
 } from './routeAccess';
 
 test('canAccess respects role gates', () => {
@@ -39,4 +40,13 @@ test('redirectByRole sends unverified users to verification', () => {
 
 test('verification page is considered public', () => {
   assert.strictEqual(isPublicRoute('/auth/verify'), true);
+});
+
+
+test('isSafePostAuthRedirect blocks auth routes and allows app routes', () => {
+  assert.strictEqual(isSafePostAuthRedirect('/dashboard'), true);
+  assert.strictEqual(isSafePostAuthRedirect('/progress?tab=weekly'), true);
+  assert.strictEqual(isSafePostAuthRedirect('/login/email?role=student'), false);
+  assert.strictEqual(isSafePostAuthRedirect('/auth/verify'), false);
+  assert.strictEqual(isSafePostAuthRedirect('//evil.com'), false);
 });

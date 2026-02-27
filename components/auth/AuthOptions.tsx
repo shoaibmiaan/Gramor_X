@@ -15,7 +15,7 @@ import {
 } from '@/components/design-system/icons';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
-import { destinationByRole } from '@/lib/routeAccess';
+import { destinationByRole, isSafePostAuthRedirect } from '@/lib/routeAccess';
 
 type AuthMode = 'login' | 'signup';
 type OAuthProvider = 'apple' | 'google' | 'facebook';
@@ -33,7 +33,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
 
   const ref = mode === 'signup' && typeof router.query.ref === 'string' ? router.query.ref : '';
   const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const next = isSafePostAuthRedirect(rawNext) ? rawNext : '';
   const actionVerb = mode === 'login' ? 'Sign in' : 'Sign up';
   const sharedQS = useMemo(() => {
     const qp = new URLSearchParams();

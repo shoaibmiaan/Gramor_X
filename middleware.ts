@@ -47,6 +47,12 @@ function pathStartsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+function isSafePostAuthRedirect(path: string | null) {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) return false;
+  if (pathStartsWithAny(path, AUTH_PAGES)) return false;
+  return true;
+}
+
 // ensure refreshed cookies from Supabase are preserved when redirecting
 function redirectWithCookies(from: NextResponse, url: URL) {
   const r = NextResponse.redirect(url);
@@ -173,7 +179,7 @@ export async function middleware(req: NextRequest) {
   if (authState.authenticated && isAuthPage) {
     const url = req.nextUrl.clone();
     const nextParam = req.nextUrl.searchParams.get('next');
-    url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/';
+    url.pathname = isSafePostAuthRedirect(nextParam) ? nextParam : '/';
     url.search = '';
     return redirectWithCookies(res, url);
   }
