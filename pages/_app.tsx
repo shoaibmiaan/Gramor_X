@@ -22,7 +22,7 @@ import { env } from '@/lib/env';
 import { LocaleProvider, useLocale } from '@/lib/locale';
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
-import { destinationByRole } from '@/lib/routeAccess';
+import { destinationByRole, isSafePostAuthRedirect } from '@/lib/routeAccess';
 import { refreshClientFlags, flagsHydratedRef } from '@/lib/flags/refresh';
 import { InstalledAppProvider } from '@/hooks/useInstalledApp';
 
@@ -151,7 +151,7 @@ function useAuthBridge() {
         const url = new URL(window.location.href);
         const next = url.searchParams.get('next');
         const target =
-          next && next.startsWith('/')
+          isSafePostAuthRedirect(next)
             ? next
             : destinationByRole(session.user) ?? '/';
         router.replace(target);
@@ -169,7 +169,7 @@ function useAuthBridge() {
         if (event === 'SIGNED_IN' && sessionNow?.user) {
           const url = new URL(window.location.href);
           const next = url.searchParams.get('next');
-          if (next && next.startsWith('/')) {
+          if (isSafePostAuthRedirect(next)) {
             router.replace(next);
           } else if (isAuthPage(router.pathname)) {
             router.replace(destinationByRole(sessionNow.user));

@@ -10,7 +10,7 @@ import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
-import { destinationByRole } from '@/lib/routeAccess';
+import { destinationByRole, isSafePostAuthRedirect } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
@@ -156,7 +156,7 @@ export default function LoginWithEmail() {
         await recordLoginEvent(body.session);
 
         const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-        const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
+        const safeNext = isSafePostAuthRedirect(rawNext) ? rawNext : null;
 
         const fallback = user ? destinationByRole(user) : '/dashboard';
         const target = safeNext ?? fallback;

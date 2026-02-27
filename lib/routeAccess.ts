@@ -47,6 +47,16 @@ const matchesRoute = (path: string, allowlist: RouteMatcher[]) => {
 export const isPublicRoute = (path: string) => matchesRoute(path, PUBLIC_ROUTES);
 export const isGuestOnlyRoute = (path: string) => matchesRoute(path, GUEST_ONLY_ROUTES);
 
+/**
+ * Validates a `next` path used after auth so we don't redirect users back into auth screens.
+ */
+export const isSafePostAuthRedirect = (path: string): boolean => {
+  if (!path || !path.startsWith('/') || path.startsWith('//')) return false;
+  if (isGuestOnlyRoute(path)) return false;
+  if (/^\/auth\/(login|signup|register|mfa|verify)(\/|$)/.test(path)) return false;
+  return true;
+};
+
 /** Role extraction */
 export const getUserRole = (user: User | null | undefined): AppRole | null =>
   extractRole(user);
