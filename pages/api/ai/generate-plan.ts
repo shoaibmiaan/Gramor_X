@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerClient } from '@/lib/supabaseServer';
 import {
-  buildRuleBasedPlan,
+  generateOnboardingStudyPlan,
   onboardingPayloadSchema,
   studyPlanSchema,
   type StudyPlan,
@@ -33,8 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const input = parsedInput.data;
 
-    // Deterministic rule-based output (no OpenAI usage).
-    const generated = buildRuleBasedPlan(input);
+    const generated = await generateOnboardingStudyPlan(input);
     const validated = studyPlanSchema.safeParse(generated);
     if (!validated.success) {
       return res.status(500).json({ error: 'Failed to build a valid study plan' });
