@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { aiClient, isAIAvailable } from '@/lib/ai/client';
 
 export const learningStyleSchema = z.enum(['Video', 'Practice Tests', 'Flashcards', 'Mixed']);
 export const skillNameSchema = z.enum(['Reading', 'Writing', 'Listening', 'Speaking']);
@@ -150,4 +151,65 @@ export function normalizeStudyPlan(input: OnboardingPayload, candidate: unknown)
   }
 
   return parsed.data;
+}
+
+function extractJson(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const fenced = trimmed.match(/```json\s*([\s\S]*?)```/i) ?? trimmed.match(/```\s*([\s\S]*?)```/i);
+  const payload = fenced?.[1] ?? trimmed;
+
+  try {
+    return JSON.parse(payload);
+  } catch {
+    const objectMatch = payload.match(/\{[\s\S]*\}/);
+    if (!objectMatch) return null;
+    try {
+      return JSON.parse(objectMatch[0]);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function buildAIPrompt(input: OnboardingPayload): string {
+  return [
+    'Create a personalized IELTS study plan from this onboarding profile.',
+    'Return ONLY valid JSON using this exact shape:',
+    '{"duration_weeks":number,"daily_hours":number,"priority_skill":"Reading|Writing|Listening|Speaking","weekly_plan":[{"week":number,"focus":string,"tasks":[string]}]}',
+    `targetBand: ${input.targetBand}`,
+    `examDate: ${input.examDate}`,
+    `readingLevel(1-5): ${input.readingLevel}`,
+    `writingLevel(1-5): ${input.writingLevel}`,
+    `listeningLevel(1-5): ${input.listeningLevel}`,
+    `speakingLevel(1-5): ${input.speakingLevel}`,
+    `learningStyle: ${input.learningStyle}`,
+    'Guidelines: keep plan realistic and concise, prioritize weakest skills first, include a clear focus and 3 concrete tasks per week.',
+  ].join('\n');
+}
+
+export async function generateOnboardingStudyPlan(input: OnboardingPayload): Promise<StudyPlan> {
+  if (!isAIAvailable) {
+    return buildRuleBasedPlan(input);
+  }
+
+  try {
+    const raw = await aiClient.generateChatCompletion([
+      {
+        role: 'system',
+        content:
+          'You are an IELTS tutor AI. You must return strict JSON only with no markdown or extra text.',
+      },
+      {
+        role: 'user',
+        content: buildAIPrompt(input),
+      },
+    ]);
+
+    const candidate = extractJson(raw);
+    return normalizeStudyPlan(input, candidate);
+  } catch {
+    return buildRuleBasedPlan(input);
+  }
 }
