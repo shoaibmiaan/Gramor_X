@@ -79,8 +79,9 @@ function GuardSkeleton() {
 // ---------- Route type helpers ----------
 const isAuthPage = (pathname: string) =>
   /^\/(login|signup|register)(\/|$)/.test(pathname) ||
-  /^\/auth\/(login|signup|register|mfa|verify)(\/|$)/.test(pathname) ||
-  pathname === '/forgot-password';
+  /^\/auth\/(login|signup|register|mfa|verify|forgot|reset|confirm|callback)(\/|$)/.test(pathname) ||
+  pathname === '/forgot-password' ||
+  pathname === '/update-password';
 
 const isPremiumRoomRoute = (pathname: string) =>
   pathname.startsWith('/premium/') && !pathname.startsWith('/premium-pin');

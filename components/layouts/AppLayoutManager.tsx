@@ -312,7 +312,35 @@ export function AppLayoutManager({
     if (nakedAuthRoutes.includes(router.pathname)) {
       return content;
     }
-    if (auth) return <AuthLayout>{content}</AuthLayout>;
+    if (auth) {
+      const authCopy: Record<string, { title: string; subtitle: string }> = {
+        '/login': { title: 'Welcome back', subtitle: 'Sign in to continue your IELTS prep journey.' },
+        '/login/index': { title: 'Welcome back', subtitle: 'Sign in to continue your IELTS prep journey.' },
+        '/login/email': { title: 'Sign in with email', subtitle: 'Use your email and password to access your account.' },
+        '/login/phone': { title: 'Sign in with phone', subtitle: 'Get a one-time code on your phone and continue securely.' },
+        '/login/password': { title: 'Set new password', subtitle: 'Create a secure password to protect your account.' },
+        '/signup': { title: 'Create your account', subtitle: 'Choose a sign-up method and start improving your band score.' },
+        '/signup/index': { title: 'Create your account', subtitle: 'Choose a sign-up method and start improving your band score.' },
+        '/signup/email': { title: 'Sign up with email', subtitle: 'Create your account using email verification.' },
+        '/signup/phone': { title: 'Sign up with phone', subtitle: 'Create your account with a secure SMS verification code.' },
+        '/signup/password': { title: 'Create password', subtitle: 'Set a strong password to finish your account setup.' },
+        '/signup/verify': { title: 'Verify your email', subtitle: 'Check your inbox and confirm your email to continue.' },
+        '/auth/forgot': { title: 'Forgot password', subtitle: 'We will send a reset link to your email address.' },
+        '/auth/reset': { title: 'Reset password', subtitle: 'Choose a new password and sign in again.' },
+        '/auth/verify': { title: 'Email verification', subtitle: 'Finalizing your verification and secure sign-in.' },
+        '/auth/confirm': { title: 'Confirm your email', subtitle: 'We are validating your email confirmation link.' },
+        '/auth/mfa': { title: 'Two-factor authentication', subtitle: 'Enter the 6-digit code from your authenticator app.' },
+        '/forgot-password': { title: 'Forgot password', subtitle: 'We will send a reset link to your email address.' },
+        '/update-password': { title: 'Update password', subtitle: 'Set a new password and get back into your account.' },
+      };
+
+      const copy = authCopy[router.pathname] ?? {
+        title: 'Welcome',
+        subtitle: 'Secure sign in and sign up experience across all devices.',
+      };
+
+      return <AuthLayout title={copy.title} subtitle={copy.subtitle}>{content}</AuthLayout>;
+    }
     if (proctoring) return <ProctoringLayout>{content}</ProctoringLayout>;
     return content;
   };

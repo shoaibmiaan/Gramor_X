@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { ThemeToggle } from '@/components/design-system/ThemeToggle';
 
 type Props = {
-  title: string;
+  title?: string;
   subtitle?: string;
   children: React.ReactNode;
   right?: React.ReactNode;
@@ -33,7 +33,7 @@ const DefaultRight = () => (
 );
 
 export default function AuthLayout({
-  title,
+  title = 'Welcome',
   subtitle,
   children,
   right,
@@ -56,7 +56,7 @@ export default function AuthLayout({
         <ThemeToggle />
       </div>
 
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[1200px] flex-col px-4 py-6">
+      <div className="mx-auto flex min-h-[100dvh] w-full max-w-[1200px] flex-col px-3 py-4 sm:px-4 sm:py-6">
         {/* ---------------- MOBILE TOGGLE ---------------- */}
         {showRightOnMobile && (
           <div className="mb-6 flex justify-center md:hidden">
@@ -93,10 +93,10 @@ export default function AuthLayout({
           className="
             flex-1
             overflow-hidden
-            rounded-2xl
+            rounded-xl
             border border-border
             bg-card/10
-            shadow-xl
+            shadow-lg sm:rounded-2xl sm:shadow-xl
             md:grid
             md:grid-cols-[1.1fr_0.9fr]
           "
@@ -105,11 +105,11 @@ export default function AuthLayout({
           <section
             className={clsx(
               'flex flex-col justify-center bg-background',
-              'px-[clamp(1.5rem,4vw,3rem)] py-[clamp(2rem,6vh,4rem)]',
+              'px-[clamp(1rem,4vw,3rem)] py-[clamp(1.25rem,6vh,4rem)] sm:px-[clamp(1.5rem,4vw,3rem)] sm:py-[clamp(2rem,6vh,4rem)]',
               hideLeft && 'hidden md:flex'
             )}
           >
-            <div className="mx-auto w-full max-w-md space-y-6">
+            <div className="mx-auto w-full max-w-md space-y-5 sm:space-y-6">
               {/* Brand */}
               <Link
                 href="/"
@@ -129,7 +129,7 @@ export default function AuthLayout({
 
               {/* Heading */}
               <div className="space-y-2">
-                <h1 className="font-slab text-h1 font-bold">
+                <h1 className="font-slab text-2xl font-bold leading-tight sm:text-h1">
                   {title}
                 </h1>
 
