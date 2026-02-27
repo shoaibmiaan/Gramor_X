@@ -1,0 +1,338 @@
+{
+  "id": "ielts-listening-full-010",
+  "title": "IELTS Listening Full Mock Exam 010",
+  "durationSec": 2400,
+  "transcript": "Audio features a corporate retreat planning call, a leadership retreat briefing, a workshop on hybrid work, and a lecture on adaptive workspaces.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Corporate Retreat Planning",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-010-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-010-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Summit Ridge Lodge",
+            "Harbor Banquet Hall",
+            "City Arts Loft",
+            "Garden Terrace Marquee"
+          ],
+          "answer": "Summit Ridge Lodge"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "15th November"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "2:30 pm"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "140"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Seasonal tasting menu",
+            "Street food courts",
+            "Tapas evening",
+            "Dessert showcase"
+          ],
+          "answer": "Seasonal tasting menu"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "400 pounds"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "hybrid meeting console"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Elena"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Lodge upper car park",
+            "Harbor deck level 4",
+            "Station car park",
+            "Meadow overflow field"
+          ],
+          "answer": "Lodge upper car park"
+        },
+        {
+          "id": "ielts-listening-full-010-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "cabaret rounds"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Leadership Retreat Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-010-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-010-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": [
+            "organisational coach",
+            "finance director",
+            "travel coordinator",
+            "wellness officer"
+          ],
+          "answer": "organisational coach"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "leadership retreat agenda"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "27 minutes"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Summit Pavilion lobby"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": ["Mindfulness deck", "Strategy lab", "Innovation trail", "Dining hall"],
+          "answer": "Mindfulness deck"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Cabin 6"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "SummitPeak-12"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Sunday"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": ["weatherproof jacket", "formal blazers", "passport wallet", "sports racket"],
+          "answer": "weatherproof jacket"
+        },
+        {
+          "id": "ielts-listening-full-010-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "01865 905 443"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Hybrid Work Workshop",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-010-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-010-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "hybrid work policy playbook",
+            "student orientation concert",
+            "heritage mural project",
+            "nutrition app launch"
+          ],
+          "answer": "hybrid work policy playbook"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Georgia"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "21 February"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "every other Wednesday"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "employee listening sessions",
+            "mail-out questionnaires",
+            "soil sampling",
+            "audition recordings"
+          ],
+          "answer": "employee listening sessions"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "PulseWorks"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£430"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Mr. Donovan"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "synthesising feedback from global teams",
+            "booking the recital hall",
+            "maintaining greenhouse lighting",
+            "curating pop-up kitchens"
+          ],
+          "answer": "synthesising feedback from global teams"
+        },
+        {
+          "id": "ielts-listening-full-010-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "17 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Adaptive Workspaces",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-010-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-010-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "adaptive workspaces and wellbeing",
+            "marine conservation",
+            "culinary spices",
+            "ancient theatre restoration"
+          ],
+          "answer": "adaptive workspaces and wellbeing"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "73 percent staff satisfaction"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "dynamic zoning model"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Melbourne"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "employee wellbeing mandates",
+            "coastal tourism spending",
+            "artisan market buzz",
+            "student film festivals"
+          ],
+          "answer": "employee wellbeing mandates"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "Worklife Futures Lab"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Healthy Offices Blueprint"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2022"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "retrofitting legacy HVAC systems",
+            "training scuba teams",
+            "sourcing organic saffron",
+            "preserving stage props"
+          ],
+          "answer": "retrofitting legacy HVAC systems"
+        },
+        {
+          "id": "ielts-listening-full-010-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "design with people at centre"
+        }
+      ]
+    }
+  ]
+}

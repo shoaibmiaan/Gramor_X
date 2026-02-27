@@ -1,0 +1,56 @@
+{
+  "id": "listening-practice-02",
+  "title": "Academic Listening Test 2 — Community Life",
+  "durationSec": 1800,
+  "transcript": "Section one features a parent enrolling a child in swimming lessons. Section two is an announcement about community garden plots. Section three captures a planning meeting for a cultural festival. Section four is a lecture about urban resilience.",
+  "sections": [
+    {
+      "id": "part-1",
+      "title": "Section 1 — Leisure Centre Reception",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-02-part1.mp3",
+      "questions": [
+        { "id": "L2-Q1", "type": "mcq", "prompt": "Which swim level is recommended for the child?", "options": ["Beginner", "Intermediate", "Advanced"], "answer": "Intermediate" },
+        { "id": "L2-Q2", "type": "gap", "prompt": "On which day of the week does the lesson take place?", "answer": "Tuesday" },
+        { "id": "L2-Q3", "type": "gap", "prompt": "How much is the registration fee in pounds?", "answer": "25" },
+        { "id": "L2-Q4", "type": "short", "prompt": "What document must the parent bring on the first day?", "answer": "medical form" },
+        { "id": "L2-Q5", "type": "mcq", "prompt": "Which instructor will lead the class?", "options": ["Ella", "Mark", "Priya"], "answer": "Priya" }
+      ]
+    },
+    {
+      "id": "part-2",
+      "title": "Section 2 — Community Garden Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-02-part2.mp3",
+      "questions": [
+        { "id": "L2-Q6", "type": "gap", "prompt": "How many new garden plots are available this season?", "answer": "28" },
+        { "id": "L2-Q7", "type": "mcq", "prompt": "What is the soil tested for every month?", "options": ["pH", "Moisture", "Nutrients"], "answer": "Nutrients" },
+        { "id": "L2-Q8", "type": "gap", "prompt": "Which shed contains the communal tools?", "answer": "north" },
+        { "id": "L2-Q9", "type": "short", "prompt": "What is the email address for submitting volunteer hours?", "answer": "garden@council.uk" },
+        { "id": "L2-Q10", "type": "mcq", "prompt": "Which crop is prohibited in the shared beds?", "options": ["Tomatoes", "Corn", "Pumpkins"], "answer": "Pumpkins" }
+      ]
+    },
+    {
+      "id": "part-3",
+      "title": "Section 3 — Cultural Festival Meeting",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-02-part3.mp3",
+      "questions": [
+        { "id": "L2-Q11", "type": "mcq", "prompt": "Which performance does the committee add to the programme?", "options": ["Jazz band", "Storytelling", "Food demonstration"], "answer": "Storytelling" },
+        { "id": "L2-Q12", "type": "short", "prompt": "Which sponsor offers the lighting equipment?", "answer": "BrightCo" },
+        { "id": "L2-Q13", "type": "gap", "prompt": "How many volunteers are assigned to the welcome desk?", "answer": "6" },
+        { "id": "L2-Q14", "type": "mcq", "prompt": "Where will the art exhibition be displayed?", "options": ["Gallery tent", "Town hall", "Library foyer"], "answer": "Library foyer" },
+        { "id": "L2-Q15", "type": "short", "prompt": "Which committee member is coordinating social media?", "answer": "Hannah" }
+      ]
+    },
+    {
+      "id": "part-4",
+      "title": "Section 4 — Urban Resilience Lecture",
+      "audioUrl": "https://cdn.example.com/audio/listening-practice-02-part4.mp3",
+      "questions": [
+        { "id": "L2-Q16", "type": "gap", "prompt": "Which city is highlighted for its flood defences?", "answer": "Rotterdam" },
+        { "id": "L2-Q17", "type": "mcq", "prompt": "What proportion of the lecture's case studies focus on heatwaves?", "options": ["one quarter", "one third", "one half"], "answer": "one third" },
+        { "id": "L2-Q18", "type": "short", "prompt": "What term is used for citizens trained to respond to emergencies?", "answer": "resilience stewards" },
+        { "id": "L2-Q19", "type": "gap", "prompt": "How many stages are included in the resilience framework?", "answer": "5" },
+        { "id": "L2-Q20", "type": "mcq", "prompt": "Which funding source does the lecturer say is underused?", "options": ["Green bonds", "Insurance rebates", "Crowdfunding"], "answer": "Green bonds" }
+      ]
+    }
+  ]
+}

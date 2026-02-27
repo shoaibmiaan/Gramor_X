@@ -1,0 +1,333 @@
+{
+  "id": "ielts-listening-full-007",
+  "title": "IELTS Listening Full Mock Exam 007",
+  "durationSec": 2400,
+  "transcript": "Sections include a pitch venue booking, an accelerator orientation, a strategy roundtable on green logistics, and a lecture on AI supply chains.",
+  "sections": [
+    {
+      "id": "section-1",
+      "title": "Section 1 — Entrepreneurship Pitch Booking",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-007-section1.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-007-s1-q1",
+          "type": "mcq",
+          "prompt": "Which venue is reserved for the event?",
+          "options": [
+            "Innovation Loft Auditorium",
+            "Harbor Gallery",
+            "Mountain View Chalet",
+            "Library Reading Room"
+          ],
+          "answer": "Innovation Loft Auditorium"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q2",
+          "type": "gap",
+          "prompt": "Event date confirmed",
+          "answer": "7th March"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q3",
+          "type": "gap",
+          "prompt": "Start time",
+          "answer": "6:15 pm"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q4",
+          "type": "gap",
+          "prompt": "Number of attendees",
+          "answer": "110"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q5",
+          "type": "mcq",
+          "prompt": "Catering choice",
+          "options": [
+            "Street food tastings",
+            "Sushi omakase",
+            "Formal banqueting",
+            "Dessert-only buffet"
+          ],
+          "answer": "Street food tastings"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q6",
+          "type": "gap",
+          "prompt": "Deposit amount due",
+          "answer": "220 pounds"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q7",
+          "type": "gap",
+          "prompt": "Special equipment requested",
+          "answer": "LED display wall"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q8",
+          "type": "short",
+          "prompt": "Who will collect the keys?",
+          "answer": "Hannah"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q9",
+          "type": "mcq",
+          "prompt": "Where should guests park?",
+          "options": [
+            "Innovation car park level 3",
+            "City south lot",
+            "Seafront bays",
+            "North meadow overflow"
+          ],
+          "answer": "Innovation car park level 3"
+        },
+        {
+          "id": "ielts-listening-full-007-s1-q10",
+          "type": "gap",
+          "prompt": "Preferred seating layout",
+          "answer": "demo booths"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Section 2 — Startup Accelerator Briefing",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-007-section2.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-007-s2-q1",
+          "type": "mcq",
+          "prompt": "What is the speaker's role?",
+          "options": ["program director", "finance mentor", "community manager", "legal advisor"],
+          "answer": "program director"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q2",
+          "type": "gap",
+          "prompt": "Main briefing topic",
+          "answer": "orientation for accelerator cohort"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q3",
+          "type": "gap",
+          "prompt": "Duration of the talk",
+          "answer": "28 minutes"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q4",
+          "type": "gap",
+          "prompt": "Meeting point",
+          "answer": "Founders Hub reception"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q5",
+          "type": "mcq",
+          "prompt": "First location on the tour",
+          "options": ["Prototype showcase", "Mentor lounge", "Roof deck", "Finance office"],
+          "answer": "Prototype showcase"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q6",
+          "type": "gap",
+          "prompt": "Map label for the creative studio",
+          "answer": "Pod 8"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q7",
+          "type": "gap",
+          "prompt": "Wi-Fi access code",
+          "answer": "LaunchLab-24"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q8",
+          "type": "short",
+          "prompt": "Which day includes the live Q&A?",
+          "answer": "Monday"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q9",
+          "type": "mcq",
+          "prompt": "What must participants bring?",
+          "options": ["laptop and charger", "formal gowns", "printed resumes", "gym kit"],
+          "answer": "laptop and charger"
+        },
+        {
+          "id": "ielts-listening-full-007-s2-q10",
+          "type": "gap",
+          "prompt": "Emergency contact number",
+          "answer": "0131 664 8022"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Section 3 — Roundtable on Green Logistics",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-007-section3.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-007-s3-q1",
+          "type": "mcq",
+          "prompt": "What project are the students discussing?",
+          "options": [
+            "green last-mile logistics pilot",
+            "campus choir programme",
+            "digital library interface",
+            "student wellness fair"
+          ],
+          "answer": "green last-mile logistics pilot"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q2",
+          "type": "gap",
+          "prompt": "Project lead",
+          "answer": "Ibrahim"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q3",
+          "type": "gap",
+          "prompt": "Submission deadline",
+          "answer": "2 May"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q4",
+          "type": "gap",
+          "prompt": "Team meeting cadence",
+          "answer": "fortnightly on Tuesdays"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q5",
+          "type": "mcq",
+          "prompt": "Chosen research method",
+          "options": [
+            "sensor-enabled delivery trials",
+            "email interviews",
+            "focus groups only",
+            "lab dissections"
+          ],
+          "answer": "sensor-enabled delivery trials"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q6",
+          "type": "gap",
+          "prompt": "Software platform",
+          "answer": "RouteSense"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q7",
+          "type": "gap",
+          "prompt": "Allocated budget",
+          "answer": "£510"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q8",
+          "type": "short",
+          "prompt": "Which lecturer will review their draft?",
+          "answer": "Dr. Harper"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q9",
+          "type": "mcq",
+          "prompt": "Primary challenge identified",
+          "options": [
+            "balancing courier schedules",
+            "finding rehearsal pianists",
+            "managing museum humidity",
+            "coordinating swim lanes"
+          ],
+          "answer": "balancing courier schedules"
+        },
+        {
+          "id": "ielts-listening-full-007-s3-q10",
+          "type": "gap",
+          "prompt": "Planned presentation length",
+          "answer": "13 minutes"
+        }
+      ]
+    },
+    {
+      "id": "section-4",
+      "title": "Section 4 — Lecture on Supply Chain AI",
+      "audioUrl": "https://cdn.example.com/audio/listening/full-007-section4.mp3",
+      "questions": [
+        {
+          "id": "ielts-listening-full-007-s4-q1",
+          "type": "mcq",
+          "prompt": "What is the lecture mainly about?",
+          "options": [
+            "AI optimisation of supply chains",
+            "ethnomusicology fieldwork",
+            "culinary pastry science",
+            "ancient language revival"
+          ],
+          "answer": "AI optimisation of supply chains"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q2",
+          "type": "gap",
+          "prompt": "Key statistic mentioned",
+          "answer": "18 percent cost reduction"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q3",
+          "type": "gap",
+          "prompt": "Term introduced by the lecturer",
+          "answer": "predictive routing engine"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q4",
+          "type": "gap",
+          "prompt": "City used as a case study",
+          "answer": "Busan"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q5",
+          "type": "mcq",
+          "prompt": "Main driver behind the initiative",
+          "options": [
+            "real-time inventory visibility",
+            "festival sponsorships",
+            "beach tourism booms",
+            "student orientation demand"
+          ],
+          "answer": "real-time inventory visibility"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q6",
+          "type": "gap",
+          "prompt": "Research team leading the work",
+          "answer": "LogiMind Centre"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q7",
+          "type": "gap",
+          "prompt": "Suggested further reading",
+          "answer": "Adaptive Supply Lines Journal"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q8",
+          "type": "short",
+          "prompt": "Pilot programme launch year",
+          "answer": "2020"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q9",
+          "type": "mcq",
+          "prompt": "Ongoing challenge highlighted",
+          "options": [
+            "data-sharing agreements between partners",
+            "growing rare orchids",
+            "restoring antique maps",
+            "maintaining orchestra archives"
+          ],
+          "answer": "data-sharing agreements between partners"
+        },
+        {
+          "id": "ielts-listening-full-007-s4-q10",
+          "type": "gap",
+          "prompt": "Final takeaway phrase",
+          "answer": "treat data as shared infrastructure"
+        }
+      ]
+    }
+  ]
+}

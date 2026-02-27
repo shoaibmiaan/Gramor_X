@@ -1,0 +1,369 @@
+# GramorX — Enterprise UI Design Guideline
+
+Version 1.0
+Applies to: All Designers & Product UI Contributors
+
+---
+
+# 1. Design Philosophy
+
+GramorX UI must feel:
+
+✅ Educational but premium
+✅ Calm and distraction-free
+✅ Accessible by default
+✅ Consistent across all pages
+✅ Enterprise SaaS quality (Not startup chaos)
+
+### Core Principles
+
+1. **Consistency over creativity**
+2. **Reuse before redesign**
+3. **Clarity before decoration**
+4. **Accessibility is mandatory**
+5. **System > Individual Page**
+
+---
+
+# 2. Design System Architecture (Project Truth)
+
+Designers MUST align with these folders:
+
+| Layer           | Location              | Purpose                 |
+| --------------- | --------------------- | ----------------------- |
+| Design Tokens   | `styles/tokens.css`   | Colors, spacing, radius |
+| Semantic Styles | `styles/semantic.css` | Meaning-based styles    |
+| Premium Styling | `styles/premium.css`  | Paid-tier visuals       |
+| Components      | `design-system/`      | Core UI primitives      |
+| Layout Shells   | `layouts/`            | Page structure          |
+| Storybook       | `stories/`            | Component reference     |
+
+🚨 Never invent styles outside this system.
+
+---
+
+# 3. Layout Rules
+
+## Page Structure (Mandatory)
+
+Every page follows:
+
+```
+Header
+↓
+Page Container
+↓
+Content Sections
+↓
+Footer
+```
+
+Use existing:
+
+* `Layout.tsx`
+* `PremiumShell.tsx`
+* `WritingLayout.tsx`
+
+### Container Width
+
+| Device  | Max Width |
+| ------- | --------- |
+| Desktop | 1200px    |
+| Tablet  | 960px     |
+| Mobile  | 100%      |
+
+Content must stay centered.
+
+---
+
+# 4. Spacing System
+
+Spacing is token-based only.
+
+### Allowed spacing scale:
+
+```
+4px  → xs
+8px  → sm
+16px → md
+24px → lg
+32px → xl
+48px → 2xl
+64px → section spacing
+```
+
+❌ No random margins like 13px, 27px.
+
+---
+
+# 5. Typography Standards
+
+## Hierarchy
+
+| Usage         | Size    | Weight   |
+| ------------- | ------- | -------- |
+| Page Title    | 28–32px | Bold     |
+| Section Title | 22–24px | Semibold |
+| Card Title    | 18px    | Medium   |
+| Body Text     | 14–16px | Regular  |
+| Helper Text   | 12–13px | Regular  |
+
+### Rules
+
+* Max **2 font weights per screen**
+* Avoid ALL CAPS paragraphs
+* Line height ≥ 1.4
+
+---
+
+# 6. Color Usage (Token Driven)
+
+Designers must use semantic meaning.
+
+| Meaning    | Usage        |
+| ---------- | ------------ |
+| Primary    | Main actions |
+| Success    | Completion   |
+| Warning    | Attention    |
+| Danger     | Errors       |
+| Surface    | Cards        |
+| Background | Page base    |
+
+❌ Never pick colors manually from picker.
+
+Always reference tokens.
+
+---
+
+# 7. Component Usage Rules
+
+Use components from:
+
+```
+design-system/
+```
+
+Includes:
+
+* Checkbox
+* Radio
+* Select
+* Toggle
+
+### Golden Rule
+
+> If component exists → reuse it
+> If slightly different → extend it
+> Never redesign from scratch.
+
+---
+
+# 8. Card Design Standard
+
+All cards must include:
+
+✅ Padding: 16–24px
+✅ Radius from token
+✅ Soft shadow only
+✅ Clear hierarchy
+
+Structure:
+
+```
+Title
+Description (optional)
+Content
+Primary Action
+Secondary Action
+```
+
+---
+
+# 9. Buttons
+
+### Types Allowed
+
+| Type      | Usage            |
+| --------- | ---------------- |
+| Primary   | One per section  |
+| Secondary | Supporting       |
+| Ghost     | Low emphasis     |
+| Danger    | Destructive only |
+
+Rules:
+
+* Never more than **1 primary button per area**
+* Minimum height: 40px
+
+---
+
+# 10. Forms & Inputs
+
+Use consistent flow:
+
+```
+Label
+Input
+Helper text
+Error message
+```
+
+### Validation
+
+* Error appears instantly
+* Red + message
+* Never color-only feedback
+
+---
+
+# 11. Interaction States (Required)
+
+Every interactive element MUST define:
+
+| State    |
+| -------- |
+| Default  |
+| Hover    |
+| Focus    |
+| Active   |
+| Disabled |
+| Loading  |
+
+Missing states = incomplete design.
+
+---
+
+# 12. Accessibility (Non-Negotiable)
+
+Already supported via:
+
+* `HighContrastContext`
+* Accessibility pages
+
+Design must ensure:
+
+✅ Color contrast AA minimum
+✅ Keyboard navigation works
+✅ Focus visible always
+✅ Icons not color-only meaning
+
+---
+
+# 13. Premium UI Rules
+
+Premium visuals live in:
+
+```
+styles/premium.css
+premium-ui/
+```
+
+Premium = refinement, NOT redesign.
+
+Allowed:
+
+* subtle gradients
+* elevation
+* accent highlights
+
+Not allowed:
+
+* new layout structures.
+
+---
+
+# 14. Navigation Consistency
+
+Defined in:
+
+```
+config/navigation.ts
+```
+
+Designers must NOT:
+
+* change nav order randomly
+* rename items visually without product approval
+
+---
+
+# 15. Icon Usage
+
+Rules:
+
+* Same icon family everywhere
+* 20–24px standard
+* Icons always aligned with text baseline
+
+---
+
+# 16. Page Creation Checklist
+
+Before delivering design:
+
+✅ Uses existing layout shell
+✅ Uses design-system components
+✅ Token spacing only
+✅ Typography hierarchy respected
+✅ Interaction states designed
+✅ Accessible contrast checked
+✅ Matches Storybook components
+
+---
+
+# 17. Storybook = Visual Source of Truth
+
+Reference:
+
+```
+stories/
+```
+
+Designers must validate components against Storybook before handoff.
+
+If mismatch → update system, not page.
+
+---
+
+# 18. Do & Don't
+
+## ✅ DO
+
+* Extend patterns
+* Keep calm UI
+* Reduce visual noise
+* Align spacing precisely
+
+## ❌ DON'T
+
+* Invent new button styles
+* Mix spacing scales
+* Add random shadows
+* Change colors manually
+
+---
+
+# 19. Enterprise Quality Standard
+
+A page is considered **production-ready** only if:
+
+* Looks identical in spacing rhythm to other pages
+* No unique styling logic
+* Components reusable elsewhere
+* Accessible without mouse
+* Feels part of one product
+
+---
+
+# 20. Designer Workflow
+
+1. Check existing component
+2. Check Storybook
+3. Design using tokens
+4. Validate accessibility
+5. Submit with states
+6. Developer maps to existing component
+
+---
+
+END OF GUIDELINE

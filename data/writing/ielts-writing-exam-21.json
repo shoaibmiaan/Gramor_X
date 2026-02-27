@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-21",
+  "title": "General Training Set 21 — Language Club & Public Transport",
+  "description": "Formal letter about launching a workplace language club and an essay on subsidised public transport.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter to a human resources manager",
+    "type": "general training",
+    "prompt": "Your company has recently hired many international employees who would like to improve their language skills. Write a letter to the human resources manager proposing a lunchtime language club. In your letter: explain why employees are interested in the club, describe the format and resources you would need, and request support to promote the initiative.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Adopt a professional and respectful tone appropriate for a manager.",
+      "Provide clear details about scheduling and participation.",
+      "Suggest benefits for the company such as inclusion or teamwork."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Subsidised public transport",
+    "prompt": "Some people think local governments should offer free or heavily discounted public transport to reduce congestion and pollution. Do you agree or disagree?",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the statement and give your overall opinion.",
+      "Body paragraph 1: present arguments supporting subsidies, with examples.",
+      "Body paragraph 2: acknowledge limitations or alternative solutions if relevant.",
+      "Conclusion: restate your stance and recommend how authorities should proceed."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "Your company has recently hired many international employees who would like to improve their language skills. Write a letter to the human resources manager proposing a lunchtime language club. In your letter: explain why employees are interested in the club, describe the format and resources you would need, and request support to promote the initiative.",
+  "task2Prompt": "Some people think local governments should offer free or heavily discounted public transport to reduce congestion and pollution. Do you agree or disagree?",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

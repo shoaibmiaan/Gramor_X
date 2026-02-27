@@ -1,0 +1,69 @@
+{
+  "layouts": {
+    "publicMarketing": [
+      "/",
+      "/pricing",
+      "/faq",
+      "/roadmap",
+      "/waitlist",
+      "/blog",
+      "/blog/:slug",
+      "/community"
+    ],
+    "auth": [
+      "/login",
+      "/login/*",
+      "/signup",
+      "/signup/*",
+      "/auth/*",
+      "/forgot-password",
+      "/update-password"
+    ],
+    "dashboard": [
+      "/dashboard",
+      "/progress/*",
+      "/saved",
+      "/notifications",
+      "/profile/*",
+      "/account/*"
+    ],
+    "learning": [
+      "/learning/*",
+      "/practice/*",
+      "/vocabulary/*",
+      "/vocab",
+      "/reading",
+      "/listening",
+      "/speaking",
+      "/writing"
+    ],
+    "examResources": ["/exam/rehearsal", "/exam-day"],
+    "mockHub": [
+      "/mock",
+      "/mock/full",
+      "/mock/analytics",
+      "/mock/:section",
+      "/mock/reading",
+      "/mock/listening",
+      "/mock/speaking"
+    ],
+    "reviewReports": ["/review/*", "/reading/stats", "/reports/*", "/progress/*"],
+    "teacher": ["/teacher/*"],
+    "institutions": ["/institutions/*"],
+    "marketplace": ["/marketplace"],
+    "admin": ["/admin/*"],
+    "proctoring": ["/proctoring/*"],
+    "premiumUi": ["/premium/*"]
+  },
+  "attemptRoutes": [
+    "^/premium/listening/[^/]+$",
+    "^/premium/reading/[^/]+$",
+    "^/writing/mock/[^/]+/workspace$",
+    "^/mock/reading/[^/]+$",
+    "^/mock/listening/[^/]+$",
+    "^/reading/[^/]+$",
+    "^/listening/[^/]+$",
+    "^/speaking/simulator(/.*)?$",
+    "^/speaking/attempts/[^/]+(/.*)?$"
+  ]
+}

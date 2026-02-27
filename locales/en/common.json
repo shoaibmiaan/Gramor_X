@@ -1,0 +1,68 @@
+{
+  "Language Settings": "Language Settings",
+  "Choose your preferred interface language.": "Choose your preferred interface language.",
+  "Language": "Language",
+  "Saving…": "Saving…",
+  "Saved ✓": "Saved ✓",
+  "Error": "Error",
+  "Preview (English)": "Preview (English)",
+  "Preview (Urdu)": "Preview (Urdu)",
+  "Current locale": "Current locale",
+  "writing": {
+    "accessibilityHints": {
+      "badge": "Accessibility",
+      "title": "Accessibility tips for writing feedback",
+      "description": "These pages are structured so you can review scores with a keyboard or screen reader.",
+      "items": {
+        "headings": {
+          "title": "Navigate by headings",
+          "body": "Task summaries and supporting sections use logical heading levels. Use your screen reader shortcuts to jump between Task 1, Task 2, and supporting insights."
+        },
+        "bandBreakdown": {
+          "title": "Band breakdowns",
+          "body": "Criterion scores are presented as definition lists so assistive tech announces the criterion before the band and feedback snippet."
+        },
+        "textAlternatives": {
+          "title": "Text alternatives",
+          "body": "Charts and highlights are followed by text-based summaries so information remains available if visual elements are hard to perceive."
+        }
+      },
+      "footer": "If you notice an accessibility issue, email support@gramorx.com and the team will help."
+    }
+  },
+  "footer": {
+    "brand": {
+      "description": "The most advanced IELTS preparation platform powered by AI and expert teaching."
+    },
+    "resources": {
+      "bandScorePredictor": "Band Score Predictor",
+      "listeningPractice": "Listening Practice",
+      "readingPractice": "Reading Practice",
+      "writingTaskSamples": "Writing Task Samples",
+      "speakingQuestions": "Speaking Questions"
+    },
+    "quickLinks": {
+      "pricingPlans": "Pricing & Plans",
+      "referralRewards": "Referral Rewards",
+      "partnerProgram": "Partner Program",
+      "support": "Support",
+      "blog": "Blog",
+      "faq": "FAQ"
+    },
+    "contact": {
+      "email": "info@solvioadvisors.com",
+      "phone": "+1 (972) 295-4571",
+      "location": "Houston, USA",
+      "supportHours": "Support: 24/7"
+    }
+  },
+  "common": {
+    "languages": {
+      "en": "English",
+      "ur": "Urdu"
+    },
+    "status": {
+      "updating": "Updating…"
+    }
+  }
+}

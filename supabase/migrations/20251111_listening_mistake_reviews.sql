@@ -1,0 +1,2 @@
+-- Auto-generated placeholder migration — replace with real SQL from the spec.
+-- Keep filename to preserve ordering.

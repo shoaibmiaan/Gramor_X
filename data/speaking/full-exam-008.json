@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-008",
+  "title": "IELTS Speaking Full Mock Exam 008",
+  "part1": [
+    "Do you like shopping in big stores or small shops?",
+    "How often do you shop online?",
+    "What factors influence your buying decisions?",
+    "Have your spending habits changed recently?",
+    "Do you prefer paying by cash or card?",
+    "Is there something you would like to save up for?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a purchase you made that you were very satisfied with.",
+      "You should say:",
+      "• what you bought",
+      "• where you bought it",
+      "• why you chose that item",
+      "and explain why you were pleased with it."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "Why do people sometimes regret their purchases?",
+    "How do advertisements affect consumer behaviour?",
+    "Should governments control the amount of advertising?",
+    "Do you think people will shop more online in the future?"
+  ]
+}

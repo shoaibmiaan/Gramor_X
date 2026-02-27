@@ -1,0 +1,330 @@
+{
+  "id": "reading-test-1",
+  "title": "Reading Practice Test 6 — Palladian Revival",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "A new exhibition celebrates Palladio’s architecture 500 years on",
+      "text": "Andrea Palladio: Italian architect\n\nA. Vicenza is a pleasant, prosperous city in the Veneto, 60km west of Venice. Its grand families settled and farmed the area from the 16th century. But its principal claim to fame is Andrea Palladio, who is such an influential architect that a neoclassical style is known as Palladian. The city is a permanent exhibition of some of his finest buildings, and as he was born—in Padua, to be precise—500 years ago, the International Centre for the Study of Palladio's Architecture has an excellent excuse for mounting la grande mostra, the big show.\n\nB. The exhibition has the special advantage of being held in one of Palladio's buildings, Palazzo Barbaran da Porto. Its bold facade is a mixture of rustication and decoration set between two rows of elegant columns. On the second floor the pediments are alternately curved or pointed, a Palladian trademark. The harmonious proportions of the atrium at the entrance lead through to a dramatic interior of fine fireplaces and painted ceilings. Palladio's design is simple, clear and not over-crowded. The show has been organised on the same principles, according to Howard Burns, the architectural historian who co-curated it.\n\nC. Palladio's father was a miller who settled in Vicenza, where the young Andrea was apprenticed to a skilled stonemason. How did a humble miller's son become a world renowned architect? The answer in the exhibition is that, as a young man, Palladio excelled at carving decorative stonework on columns, doorways and fireplaces. He was plainly intelligent, and lucky enough to come across a rich patron, Gian Giorgio Trissino, a landowner and scholar, who organised his education, taking him to Rome in the 1540s, where he studied the masterpieces of classical Roman and Greek architecture and the work of other influential architects of the time, such as Donato Bramante and Raphael.\n\nD. Burns argues that social mobility was also important. Entrepreneurs, prosperous from agriculture in the Veneto, commissioned the promising local architect to design their country villas and their urban mansions. In Venice the aristocracy were anxious to co-opt talented artists, and Palladio was given the chance to design the buildings that have made him famous—the churches of San Giorgio Maggiore and the Redentore, both easy to admire because they can be seen from the city's historical centre across a stretch of water.\n\nE. He tried his hand at bridges—his unbuilt version of the Rialto Bridge was decorated with the large pediment and columns of a temple—and, after a fire at the Ducal Palace, he offered an alternative design which bears an uncanny resemblance to the Banqueting House in Whitehall in London. Since it was designed by Inigo Jones, Palladio's first foreign disciple, this is not as surprising as it sounds.\n\nF. Jones, who visited Italy in 1614, bought a trunk full of the master's architectural drawings; they passed through the hands of the Dukes of Burlington and Devonshire before settling at the Royal Institute of British Architects in 1894. Many are now on display at Palazzo Barbaran. What they show is how Palladio drew on the buildings of ancient Rome as models. The major theme of both his rural and urban building was temple architecture, with a strong pointed pediment supported by columns and approached by wide steps.\n\nG. Palladio's work for rich landowners alienates unreconstructed critics on the Italian left, but among the papers in the show are designs for cheap housing in Venice. In the wider world, Palladio's reputation has been nurtured by a text he wrote and illustrated, 'Quattro Libri dell' Architettura'. His influence spread to St Petersburg and to Charlottesville in Virginia, where Thomas Jefferson commissioned a Palladian villa he called Monticello.\n\nH. Vicenza's show contains detailed models of the major buildings and is leavened by portraits of Palladio's teachers and clients by Titian, Veronese and Tintoretto; the paintings of his Venetian buildings are all by Canaletto, no less. This is an uncompromising exhibition; many of the drawings are small and faint, and there are no sideshows for children, but the impact of harmonious lines and satisfying proportions is to impart in a viewer a feeling of benevolent calm. Palladio is history's most therapeutic architect.\n\nI. 'Palladio, 500 Anni: La Grande Mostra' is at Palazzo Barbaran da Porto, Vicenza, until January 6th 2009. The exhibition continues at the Royal Academy of Arts, London, from January 31st to April 13th, and travels afterwards to Barcelona and Madrid.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The building where the exhibition is staged has been newly renovated.",
+          "answer": "Not Given"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. Palazzo Barbaran da Porto typically represents Palladio’s design.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Palladio’s father worked as an architect.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. Palladio’s family refused to pay for his architectural studies.",
+          "answer": "Not Given"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Palladio’s alternative design for the Ducal Palace in Venice was based on an English building.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. Palladio designed buildings for both wealthy and poor people.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. The exhibition includes paintings of people by famous artists.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "gap",
+          "prompt": "8. What job was Palladio training for before he became an architect?",
+          "answer": "stonemason"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "gap",
+          "prompt": "9. Who arranged Palladio's architectural studies?",
+          "answer": "Gian Giorgio Trissino"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "gap",
+          "prompt": "10. Who was the first non-Italian architect influenced by Palladio?",
+          "answer": "Inigo Jones"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "gap",
+          "prompt": "11. What type of Ancient Roman buildings most heavily influenced Palladio's work?",
+          "answer": "temple architecture"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "gap",
+          "prompt": "12. What did Palladio write that strengthened his reputation?",
+          "answer": "Quattro Libri dell' Architettura"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "gap",
+          "prompt": "13. In the writer's opinion, what feeling will visitors to the exhibition experience?",
+          "answer": "benevolent calm"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "The future never dies?",
+      "text": "The prospects for humanity and for the world as a whole are somewhere between glorious and dire. It is hard to be much more precise.\n\nA. By ‘glorious’ I mean that our descendants - all who are born on to this Earth - could live very comfortably and securely, and could continue to do so for as long as the Earth can support life, which should be for a very long time indeed. We should at least be thinking in terms of the next million years. Furthermore, our descendants could continue to enjoy the company of other species - establishing a much better relationship with them than we have now. Other animals need not live in constant fear of us. Many of those fellow species now seem bound to become extinct, but a significant proportion could and should continue to live alongside us. Such a future may seem ideal, and so it is. Yet I do not believe it is fanciful. There is nothing in the physical fabric of the Earth or in our own biology to suggest that this is not possible.\n\nB. ‘Dire’ means that we human beings could be in deep trouble within the next few centuries, living but also dying in large numbers in political terror and from starvation, while huge numbers of our fellow creatures would simply disappear, leaving only the ones that we find convenient - chickens, cattle - or that we can't shake off, like flies and mice. I'm taking it to be self-evident that glory is preferable.\n\nC. Our future is not entirely in our own hands because the Earth has its own rules, is part of the solar system and is neither stable nor innately safe. Other planets in the solar system are quite beyond habitation, because their temperature is far too high or too low to be endured, and ours, too, in principle could tip either way. Even relatively unspectacular changes in the atmosphere could do the trick. The core of the Earth is hot, which in many ways is good for living creatures, but every now and again, the molten rock bursts through volcanoes on the surface. Among the biggest volcanic eruptions in recent memory was Mount St Helens, in the USA, which threw out a cubic kilometre of ash - fortunately in an area where very few people live. In 1815, Tambora (in present-day Indonesia) expelled so much ash into the upper atmosphere that climatic effects seriously harmed food production around the world for season after season. Entire civilisations have been destroyed by volcanoes.\n\nD. Yet nothing we have so far experienced shows what volcanoes can really do. Yellowstone National Park in the USA occupies the caldera (the crater formed when a volcano collapses) of an exceedingly ancient volcano of extraordinary magnitude. Modern surveys show that its centre is now rising. Sometime in the next 200 million years, Yellowstone could erupt again, and when it does, the whole world will be transformed. Yellowstone could erupt tomorrow. But there's a very good chance that it will give us another million years, and that surely is enough to be going on with. It seems sensible to assume that this will be the case.\n\nE. The universe at large is dangerous, too: in particular, we share the sky with vast numbers of asteroids, and every now and again, they come into our planet's atmosphere. An asteroid the size of a small island, hitting the Earth at 15,000 kilometres an hour (a relatively modest speed by the standards of heavenly bodies), would strike the ocean bed like a rock in a puddle, send a tidal wave around the world as high as a small mountain and as fast as a jumbo jet, and propel us into an ice age that could last for centuries. There are plans to head off such disasters (including rockets to push approaching asteroids into new trajectories), but in truth it's down to luck.\n\nF. On the other hand, the archaeological and the fossil evidence shows that no truly devastating asteroid has struck since the one that seems to have accounted for the extinction of the dinosaurs 65 million years ago. So again, there seems no immediate reason for despair. The Earth is indeed an uncertain place, in an uncertain universe, but with average luck, it should do us well enough. If the world does become inhospitable in the next few thousand or million years, then it will probably be our own fault. In short, despite the underlying uncertainty, our own future and that of our fellow creatures is very much in our own hands.\n\nG. Given average luck on the geological and the cosmic scale, the difference between glory and disaster will be made, and is being made, by politics. Certain kinds of political systems and strategies would predispose us to long-term survival (and indeed to comfort and security and the pleasure of being alive), while others would take us more and more frenetically towards collapse. The broad point is, though, that we need to look at ourselves - humanity - and at the world in general in a quite new light. Our material problems are fundamentally those of biology. We need to think, and we need our politicians to think, biologically. Do that, and take the ideas seriously, and we are in with a chance. Ignore biology and we and our fellow creatures haven't a hope.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. It seems predictable that some species will disappear.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. The nature of the Earth and human biology make it impossible for human beings to survive another million years.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. An eruption by Yellowstone is likely to be more destructive than previous volcanic eruptions.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. There is a greater chance of the Earth being hit by small asteroids than by large ones.",
+          "answer": "Not Given"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. If the world becomes uninhabitable, it is most likely to be as a result of a natural disaster.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. Politicians currently in power seem unlikely to change their way of thinking.",
+          "answer": "Not Given"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "gap",
+          "prompt": "20. The Earth could become uninhabitable, like other planets, through a major change in the ______.",
+          "answer": "atmosphere"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "gap",
+          "prompt": "21. Volcanic eruptions of ______ can lead to shortages of food in a wide area.",
+          "answer": "this magnitude"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "gap",
+          "prompt": "22. Volcanic eruptions of this magnitude can lead to shortages of ______ in a wide area.",
+          "answer": "food"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "gap",
+          "prompt": "23. An asteroid hitting the Earth could create a ______ that would result in a new ice age.",
+          "answer": "tidal wave"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "gap",
+          "prompt": "24. An asteroid hitting the Earth could create a tidal wave that would result in a new ______.",
+          "answer": "ice age"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "gap",
+          "prompt": "25. Plans are being made to use ______ to deflect asteroids heading for the Earth.",
+          "answer": "rockets"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "mcq",
+          "prompt": "26. What is the writer’s purpose in Reading Passage 2?",
+          "options": [
+            "A. to propose a new theory about the causes of natural disasters",
+            "B. to prove that generally held beliefs about the future are all mistaken",
+            "C. to present a range of opinions currently held by scientists",
+            "D. to argue the need for a general change in behavior"
+          ],
+          "answer": "D. to argue the need for a general change in behavior"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Pottery production in ancient Akrotiri",
+      "text": "A. Excavations at the site of prehistoric Akrotiri, on the coast of the Aegean Sea, have revealed much about the technical aspects of pottery manufacture, indisputably one of the basic industries of this Greek city. However, considerably less is known about the socio-economic context and the way production was organised.\n\nB. The bulk of pottery found at Akrotiri is locally made, and dates from the late fifteenth century BC. It clearly fulfilled a vast range of the settlement’s requirements: more than fifty different types of pots can be distinguished. The pottery found includes a wide variety of functional types like storage jars, smaller containers, pouring vessels, cooking pots, drinking vessels and so on, which all relate to specific activities and which would have been made and distributed with those activities in mind. Given the large number of shapes produced and the relatively high degree of standardisation, it has generally been assumed that most, if not all, of Akrotiri pottery was produced by specialised craftsmen in a non-domestic context. Unfortunately neither the potters’ workshops nor kilns have been found within the excavated area. The reason may be that the ceramic workshops were located on the periphery of the site, which has not yet been excavated. In any event, the ubiquity of the pottery, and the consistent repetition of the same types in different sizes, suggest production on an industrial scale.\n\nC. The Akrotirian potters seem to have responded to pressures beyond their households, namely to the increasing complexity of regional distribution and exchange systems. We can imagine them as full-time craftsmen working permanently in a high production-rate craft such as pottery manufacture, and supporting themselves entirely from the proceeds of their craft. In view of the above, one can begin to speak in terms of mass-produced pottery and the existence of organised workshops of craftsmen during the period 1550—1500 BC. Yet, how pottery production was organised at Akrotiri remains an open question, as there is no real documentary evidence. Our entire knowledge comes from the ceramic material itself, and the tentative conclusions which can be drawn from it.\n\nD. The invention of units of quantity and of a numerical system to count them was of capital importance for an exchange-geared society such as that of Akrotiri. In spite of the absence of any written records, the archaeological evidence reveals that concepts of measurements, both of weight and number, had been formulated. Standard measures may already have been in operation, such as those evidenced by a graduated series of lead weights— made in disc form—found at the site. The existence of units of capacity in Late Bronze Age times is also evidenced, by the notation of units of a liquid measure for wine on excavated containers.\n\nE. It must be recognised that the function of pottery vessels plays a very important role in determining their characteristics. The intended function affects the choice of clay, the production technique, and the shape and the size of the pots. For example, large storage jars (pithoi) would be needed to store commodities, whereas smaller containers would be used for transport. In fact, the length of a man’s arm limits the size of a smaller pot to a capacity of about twenty litres; that is also the maximum a man can comfortably carry.\n\nF. The various sizes of container would thus represent standard quantities of a commodity, which is a fundamental element in the function of exchange. Akrotirian merchants handling a commodity such as wine would have been able to determine easily the amount of wine they were transporting from the number of containers they carried in their ships, since the capacity of each container was known to be 14-18 litres. (We could draw a parallel here with the current practice in Greece of selling oil in 17 kilogram tins.)\n\nG. We may therefore assume that the shape, capacity, and, sometimes decoration of vessels are indicative of the commodity contained by them. Since individual transactions would normally involve different quantities of a given commodity, a range of ‘standardised’ types of vessel would be needed to meet traders’ requirements.\n\nH. In trying to reconstruct systems of capacity by measuring the volume of excavated pottery, a rather generous range of tolerances must be allowed. It seems possible that the potters of that time had specific sizes of vessel in mind, and tried to reproduce them using a specific type and amount of clay. However, it would be quite difficult for them to achieve the exact size required every time, without any mechanical means of regulating symmetry and wall thickness, and some potters would be more skilled than others. In addition, variations in the repetition of types and size may also occur because of unforeseen circumstances during the throwing process. For instance, instead of destroying the entire pot if the clay in the rim contained a piece of grit, a potter might produce a smaller pot by simply cutting off the rim. Even where there is no noticeable external difference between pots meant to contain the same quantity of a commodity, differences in their capacity can actually reach one or two litres. In one case the deviation from the required size appears to be as much as 10-20 percent.\n\nI. The establishment of regular trade routes within the Aegean led to increased movement of goods; consequently a regular exchange of local, luxury and surplus goods, including metals, would have become feasible as a result of the advances in transport technology. The increased demand for standardised exchanges, inextricably linked to commercial transactions, might have been one of the main factors which led to the standardisation of pottery production. Thus, the whole network of ceramic production and exchange would have depended on specific regional economic conditions, and would reflect the socio-economic structure of prehistoric Akrotiri.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What does the writer say about items of pottery excavated at Akrotiri?",
+          "options": [
+            "A. There was very little duplication.",
+            "B. They would have met a big variety of needs.",
+            "C. Most of them had been imported from other places.",
+            "D. The intended purpose of each piece was unclear."
+          ],
+          "answer": "B. They would have met a big variety of needs."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. The assumption that pottery from Akrotiri was produced by specialists is partly based on",
+          "options": [
+            "A. The discovery of kilns.",
+            "B. The central location of workshops.",
+            "C. The sophistication of decorative patterns.",
+            "D. The wide range of shapes represented."
+          ],
+          "answer": "D. The wide range of shapes represented."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "match",
+          "prompt": "29. The assumption that standard units of weight were in use could be based on",
+          "options": [
+            "A. The discovery of a collection of metal discs.",
+            "B. The size and type of the sailing ships in use.",
+            "C. Variations in the exact shape and thickness of similar containers.",
+            "D. The physical characteristics of workmen.",
+            "E. Marks found on wine containers.",
+            "F. The variety of commodities for which they would have been used."
+          ],
+          "answer": "A. The discovery of a collection of metal discs."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "match",
+          "prompt": "30. Evidence of the use of standard units of volume is provided by",
+          "options": [
+            "A. The discovery of a collection of metal discs.",
+            "B. The size and type of the sailing ships in use.",
+            "C. Variations in the exact shape and thickness of similar containers.",
+            "D. The physical characteristics of workmen.",
+            "E. Marks found on wine containers.",
+            "F. The variety of commodities for which they would have been used."
+          ],
+          "answer": "E. Marks found on wine containers."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "match",
+          "prompt": "31. The size of certain types of containers would have been restricted by",
+          "options": [
+            "A. The discovery of a collection of metal discs.",
+            "B. The size and type of the sailing ships in use.",
+            "C. Variations in the exact shape and thickness of similar containers.",
+            "D. The physical characteristics of workmen.",
+            "E. Marks found on wine containers.",
+            "F. The variety of commodities for which they would have been used."
+          ],
+          "answer": "D. The physical characteristics of workmen."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "match",
+          "prompt": "32. Attempts to identify the intended capacity of containers are complicated by",
+          "options": [
+            "A. The discovery of a collection of metal discs.",
+            "B. The size and type of the sailing ships in use.",
+            "C. Variations in the exact shape and thickness of similar containers.",
+            "D. The physical characteristics of workmen.",
+            "E. Marks found on wine containers.",
+            "F. The variety of commodities for which they would have been used."
+          ],
+          "answer": "C. Variations in the exact shape and thickness of similar containers."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "yynn",
+          "prompt": "33. There are plans to excavate new areas of the archaeological site in the near future.",
+          "answer": "Not Given"
+        },
+        {
+          "id": "S3-Q34",
+          "type": "yynn",
+          "prompt": "34. Some of the evidence concerning pottery production in ancient Akrotiri comes from written records.",
+          "answer": "No"
+        },
+        {
+          "id": "S3-Q35",
+          "type": "yynn",
+          "prompt": "35. Pots for transporting liquids would have held no more than about 20 litres.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S3-Q36",
+          "type": "yynn",
+          "prompt": "36. It would have been hard for merchants to calculate how much wine was on their ships.",
+          "answer": "No"
+        },
+        {
+          "id": "S3-Q37",
+          "type": "yynn",
+          "prompt": "37. The capacity of containers intended to hold the same amounts differed by up to 20 percent.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S3-Q38",
+          "type": "yynn",
+          "prompt": "38. Regular trading of goods around the Aegean would have led to the general standardisation of quantities.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S3-Q39",
+          "type": "mcq",
+          "prompt": "39. What does the writer say about the standardisation of container sizes?",
+          "options": [
+            "A. Containers which looked the same from the outside often varied in capacity.",
+            "B. The instruments used to control container size were unreliable.",
+            "C. The unsystematic use of different types of clay resulted in size variations.",
+            "D. Potters usually discarded containers which were of a non-standard size."
+          ],
+          "answer": "A. Containers which looked the same from the outside often varied in capacity."
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What is probably the main purpose of Reading Passage 3?",
+          "options": [
+            "A. To evaluate the quality of pottery containers found in prehistoric Akrotiri.",
+            "B. To suggest how features of pottery production at Akrotiri reflected other developments in the region.",
+            "C. To outline the development of pottery-making skills in ancient Greece.",
+            "D. To describe methods for storing and transporting household goods in prehistoric societies."
+          ],
+          "answer": "B. To suggest how features of pottery production at Akrotiri reflected other developments in the region."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-11",
+  "title": "Academic Set 11 — Urban Cycling & Creative Funding",
+  "description": "Line graph on city cycling journeys and an opinion essay on arts grants.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Bicycle journeys in three cities",
+    "type": "academic",
+    "prompt": "The line graph below shows the number of daily bicycle journeys made in Amsterdam, Bogotá, and Copenhagen between 2010 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Identify which city experienced the greatest overall growth.",
+      "Group years into periods of similar change instead of describing each year.",
+      "Refer to notable peaks or declines and compare cities directly."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Public funding for artists",
+    "prompt": "Some people believe governments should prioritise funding community art programmes rather than large national galleries. To what extent do you agree or disagree?",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the topic and present your view.",
+      "Body paragraph 1: reasons to invest in community art initiatives.",
+      "Body paragraph 2: arguments for or against maintaining national galleries.",
+      "Conclusion: restate your position and propose a balanced funding approach."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The line graph below shows the number of daily bicycle journeys made in Amsterdam, Bogotá, and Copenhagen between 2010 and 2020. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some people believe governments should prioritise funding community art programmes rather than large national galleries. To what extent do you agree or disagree?",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

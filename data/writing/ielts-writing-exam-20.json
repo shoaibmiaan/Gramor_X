@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-20",
+  "title": "Academic Set 20 — Urban Cycling Hubs & Public Health",
+  "description": "Table on bike-share journeys combined with a cause-and-effect essay about city health initiatives.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Bike-share journeys by city district",
+    "type": "academic",
+    "prompt": "The table below shows the average number of daily bike-share journeys (in thousands) in five districts of a European capital in 2019 and 2023. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Compare how usage changed in the central districts versus suburban areas.",
+      "Highlight the districts with the largest increases or decreases.",
+      "Group data logically instead of describing each figure separately."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Cause-effect essay — City health programmes",
+    "prompt": "Many cities invest in programmes such as bike lanes, outdoor gyms, and walking festivals to encourage healthier lifestyles. What effects can these initiatives have on residents, and what factors determine their success?",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: present the context and mention that you will examine effects and success factors.",
+      "Body paragraph 1: describe positive outcomes for public health, environment, or community engagement.",
+      "Body paragraph 2: analyse elements that make programmes effective, such as funding, accessibility, or promotion.",
+      "Conclusion: summarise main effects and emphasise the need for sustained support."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "The table below shows the average number of daily bike-share journeys (in thousands) in five districts of a European capital in 2019 and 2023. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Many cities invest in programmes such as bike lanes, outdoor gyms, and walking festivals to encourage healthier lifestyles. What effects can these initiatives have on residents, and what factors determine their success?",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

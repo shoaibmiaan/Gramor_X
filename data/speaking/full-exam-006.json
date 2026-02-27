@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-006",
+  "title": "IELTS Speaking Full Mock Exam 006",
+  "part1": [
+    "What kind of holidays do you enjoy the most?",
+    "Do you prefer travelling alone or with others?",
+    "How do you usually plan your trips?",
+    "What was your most recent holiday like?",
+    "Do you like visiting the same place more than once?",
+    "What souvenirs do you usually bring back?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a place you visited that exceeded your expectations.",
+      "You should say:",
+      "• where you went",
+      "• why you chose to go there",
+      "• what you did during the visit",
+      "and explain why it was better than you anticipated."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "How have travel habits changed compared to the past?",
+    "What impact does tourism have on local communities?",
+    "Should governments limit the number of tourists in popular destinations?",
+    "How might virtual reality affect future travel choices?"
+  ]
+}

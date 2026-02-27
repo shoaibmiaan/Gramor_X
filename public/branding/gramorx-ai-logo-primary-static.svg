@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1800" height="480" viewBox="0 0 1800 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gxGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9D4EDD"/>
+      <stop offset="100%" stop-color="#00BBF9"/>
+    </linearGradient>
+    <linearGradient id="aiGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00BBF9"/>
+      <stop offset="100%" stop-color="#9D4EDD"/>
+    </linearGradient>
+  </defs>
+  <text x="60" y="320" font-family="Roboto Slab, serif" font-weight="700" font-size="200" fill="url(#gxGradient2)">
+    Gramor<tspan fill="#80FFDB">X</tspan>
+  </text>
+  <circle cx="1110" cy="260" r="6" fill="#80FFDB" opacity="0.75"/>
+  <text x="1140" y="320" font-family="Poppins, sans-serif" font-weight="700" font-size="200" fill="url(#aiGradient2)">
+    AI
+  </text>
+  <text x="66" y="380" font-family="Poppins, sans-serif" font-size="44" fill="#B4DDF0" opacity="0.95">
+    Train smarter. Speak sharper.
+  </text>
+</svg>

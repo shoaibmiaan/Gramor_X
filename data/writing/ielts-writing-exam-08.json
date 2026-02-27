@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-08",
+  "title": "General Training Set 2 — Noisy Neighbours & Libraries",
+  "description": "Informal-semi complaint letter to a neighbour and an essay about the role of public libraries.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter to a neighbour about noise",
+    "type": "general training",
+    "prompt": "Your new neighbour has been making a lot of noise late at night. Write a letter to your neighbour. In your letter: explain the situation, describe how the noise affects you, and suggest a solution to the problem.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Adopt a polite but firm tone to maintain a good relationship.",
+      "Include details about when the noise happens and why it is a problem.",
+      "Offer a reasonable suggestion to resolve the issue."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Public libraries",
+    "prompt": "Some people think public libraries are no longer necessary because of digital resources. Others believe libraries are essential for communities. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the debate and state your view.",
+      "Body paragraph 1: reasons people feel digital resources can replace libraries.",
+      "Body paragraph 2: arguments for keeping libraries as community hubs.",
+      "Conclusion: present your opinion with a clear justification."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "Your new neighbour has been making a lot of noise late at night. Write a letter to your neighbour. In your letter: explain the situation, describe how the noise affects you, and suggest a solution to the problem.",
+  "task2Prompt": "Some people think public libraries are no longer necessary because of digital resources. Others believe libraries are essential for communities. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

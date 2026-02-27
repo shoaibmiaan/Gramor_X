@@ -1,0 +1,50 @@
+{
+  "id": "ielts-writing-exam-19",
+  "title": "General Training Set 19 — Volunteer Fair & Four-day Weeks",
+  "description": "Informal letter inviting a friend to a volunteer fair and an essay on four-day working weeks.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter to a friend about a volunteer opportunity",
+    "type": "general training",
+    "prompt": "Your local community centre is hosting a volunteer fair next month, and you think your friend would be interested in taking part. Write a letter to your friend. In your letter: describe the event and its purpose, explain why you think your friend would enjoy it, and suggest how you could prepare together beforehand.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Keep a warm and enthusiastic tone appropriate for a friend.",
+      "Include specific examples of volunteer activities on offer.",
+      "Suggest practical arrangements like transport or meeting times."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Achievement",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task2": {
+    "title": "Advantage-disadvantage essay — Four-day working weeks",
+    "prompt": "Some employers are experimenting with a four-day working week without reducing salaries. Discuss the advantages and disadvantages of this approach and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: outline the trend and indicate that you will weigh both sides.",
+      "Body paragraph 1: explore potential benefits for productivity, wellbeing, or recruitment.",
+      "Body paragraph 2: consider challenges such as coverage, cost, or customer service.",
+      "Conclusion: state your view and suggest conditions for implementing shorter weeks."
+    ],
+    "assessment": {
+      "criteria": [
+        "Task Response",
+        "Coherence and Cohesion",
+        "Lexical Resource",
+        "Grammatical Range and Accuracy"
+      ]
+    }
+  },
+  "task1Prompt": "Your local community centre is hosting a volunteer fair next month, and you think your friend would be interested in taking part. Write a letter to your friend. In your letter: describe the event and its purpose, explain why you think your friend would enjoy it, and suggest how you could prepare together beforehand.",
+  "task2Prompt": "Some employers are experimenting with a four-day working week without reducing salaries. Discuss the advantages and disadvantages of this approach and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

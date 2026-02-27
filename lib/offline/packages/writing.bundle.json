@@ -1,0 +1,30 @@
+{
+  "id": "mock-writing-offline",
+  "version": 1,
+  "assets": [
+    {
+      "url": "/offline/writing/prompts.json",
+      "revision": "50ec4e577386cb5d3a3a3994cdb63e496605801e24bd3291bf2bdc90045474ed",
+      "type": "json",
+      "description": "Five IELTS-style writing mock exams with task briefs and scaffolding."
+    },
+    {
+      "url": "/offline/writing/templates/task1-academic.md",
+      "revision": "7d1bf8e8d90eb6b4f716cb6ba93f4cc6cfc6fce5f1bfb64cdde431b03787e6c3",
+      "type": "markdown",
+      "description": "Academic Task 1 planning checklist to reference offline."
+    },
+    {
+      "url": "/offline/writing/templates/task1-general-letter.md",
+      "revision": "75e75025ce184123644895001c3977b154d39e91a296adbe9dccf438cf4ca4cf",
+      "type": "markdown",
+      "description": "General Training Task 1 letter planning guide."
+    },
+    {
+      "url": "/offline/writing/templates/task2-essay-outline.md",
+      "revision": "7758f6c85bf5bf9dd302edfaf9d44188546f72dc3d88f50574e3a291e04774b4",
+      "type": "markdown",
+      "description": "Reusable outline for Task 2 essays covering introductions, body paragraphs and conclusions."
+    }
+  ]
+}

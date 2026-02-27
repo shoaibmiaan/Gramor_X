@@ -1,0 +1,69 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "84L2Z4B99Q.com.gramorx.portal",
+        "paths": [
+          "/",
+          "/login",
+          "/signup",
+          "/dashboard",
+          "/dashboard/*",
+          "/study-plan",
+          "/study-plan/*",
+          "/mistakes",
+          "/mistakes/*",
+          "/predictor",
+          "/predictor/*",
+          "/reports",
+          "/reports/*",
+          "/orgs",
+          "/orgs/*",
+          "/admin/*",
+          "/teacher",
+          "/teacher/*",
+          "/learning",
+          "/learning/*",
+          "/mock",
+          "/mock/*",
+          "/writing/mock",
+          "/writing/mock/*",
+          "/challenge",
+          "/challenge/*"
+        ]
+      },
+      {
+        "appID": "84L2Z4B99Q.com.gramorx.portal.beta",
+        "paths": [
+          "/",
+          "/login",
+          "/signup",
+          "/dashboard",
+          "/dashboard/*",
+          "/study-plan",
+          "/study-plan/*",
+          "/mistakes",
+          "/mistakes/*",
+          "/predictor",
+          "/predictor/*",
+          "/reports",
+          "/reports/*",
+          "/orgs",
+          "/orgs/*",
+          "/admin/*",
+          "/teacher",
+          "/teacher/*",
+          "/learning",
+          "/learning/*",
+          "/mock",
+          "/mock/*",
+          "/writing/mock",
+          "/writing/mock/*",
+          "/challenge",
+          "/challenge/*"
+        ]
+      }
+    ]
+  }
+}

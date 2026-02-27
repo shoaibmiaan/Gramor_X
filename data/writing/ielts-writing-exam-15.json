@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-15",
+  "title": "General Training Set 15 — Fitness Programme & Social Media",
+  "description": "Informal letter about joining a workplace fitness challenge and an opinion essay on social media breaks.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Letter to a colleague about a fitness challenge",
+    "type": "general training",
+    "prompt": "Your company is organising a month-long fitness challenge and you want to invite a colleague from another office to join your team. Write a letter to your colleague. In your letter: explain why you are writing, describe the activities included in the challenge, and suggest how you can stay motivated together despite working in different locations.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Use a friendly but professional tone suitable for a colleague.",
+      "Include practical details about how the challenge works.",
+      "Propose communication ideas that show enthusiasm and support."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Opinion essay — Social media breaks at work",
+    "prompt": "Some people think employees should be allowed regular breaks to check social media during working hours, while others disagree. Discuss both views and give your own opinion.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: summarise the debate and state your stance.",
+      "Body paragraph 1: arguments supporting social media breaks (stress relief, communication).",
+      "Body paragraph 2: arguments against them (distraction, productivity).",
+      "Conclusion: provide your opinion and recommend guidelines if appropriate."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "Your company is organising a month-long fitness challenge and you want to invite a colleague from another office to join your team. Write a letter to your colleague. In your letter: explain why you are writing, describe the activities included in the challenge, and suggest how you can stay motivated together despite working in different locations.",
+  "task2Prompt": "Some people think employees should be allowed regular breaks to check social media during working hours, while others disagree. Discuss both views and give your own opinion.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

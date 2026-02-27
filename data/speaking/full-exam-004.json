@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-004",
+  "title": "IELTS Speaking Full Mock Exam 004",
+  "part1": [
+    "What type of music do you like listening to?",
+    "Have your musical tastes changed much since childhood?",
+    "Do you prefer live concerts or recorded music?",
+    "Can you concentrate while listening to music?",
+    "Is there a musical instrument you would like to learn?",
+    "How often do you discover new artists or songs?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a song or piece of music that has a special meaning for you.",
+      "You should say:",
+      "• what the music is",
+      "• where you first heard it",
+      "• how often you listen to it",
+      "and explain why it is meaningful to you."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "How does music influence people's moods?",
+    "Should schools invest more in music education?",
+    "How has technology changed the way people listen to music?",
+    "Do you think traditional music will survive in the modern world?"
+  ]
+}

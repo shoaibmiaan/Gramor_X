@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1284" height="2778" viewBox="0 0 1284 2778" role="img" aria-labelledby="title desc">
+  <title id="title">App Store screenshot — AI speaking coach</title>
+  <desc id="desc">Tall mockup showing the AI speaking coach feedback screen.</desc>
+  <rect width="1284" height="2778" fill="#020617" />
+  <g transform="translate(122 144)">
+    <rect width="1040" height="2490" rx="120" fill="#0F172A" stroke="#1E293B" stroke-width="6" />
+    <g transform="translate(130 220)" font-family="'Inter', 'Segoe UI', sans-serif">
+      <text x="0" y="0" font-size="54" fill="#38BDF8" font-weight="600">Speaking Coach</text>
+      <text x="0" y="62" font-size="32" fill="#BAE6FD">Real-time transcripts and pronunciation insights.</text>
+      <g transform="translate(0 140)">
+        <rect width="780" height="320" rx="32" fill="rgba(59,130,246,0.12)" />
+        <text x="48" y="90" font-size="24" fill="#E2E8F0">Prompt</text>
+        <text x="48" y="130" font-size="28" fill="#F8FAFC">Describe a memorable journey you took last year.</text>
+        <text x="48" y="210" font-size="24" fill="#E2E8F0">Transcript</text>
+        <text x="48" y="250" font-size="22" fill="#C7D2FE">"I travelled to Istanbul with my best friend where we explored the bazaars and practiced Turkish phrases."</text>
+      </g>
+      <g transform="translate(0 510)">
+        <rect width="780" height="420" rx="32" fill="rgba(45,212,191,0.12)" />
+        <text x="48" y="90" font-size="24" fill="#E2E8F0">Pronunciation heatmap</text>
+        <text x="48" y="140" font-size="22" fill="#94A3B8">Tap highlighted words to hear model pronunciation.</text>
+        <g transform="translate(48 180)">
+          <rect width="180" height="72" rx="18" fill="#0EA5E9" />
+          <text x="90" y="46" text-anchor="middle" font-size="28" fill="#F8FAFC">bazaar</text>
+        </g>
+        <g transform="translate(260 180)">
+          <rect width="180" height="72" rx="18" fill="#A855F7" />
+          <text x="90" y="46" text-anchor="middle" font-size="28" fill="#F8FAFC">phrases</text>
+        </g>
+        <g transform="translate(472 180)">
+          <rect width="180" height="72" rx="18" fill="#F97316" />
+          <text x="90" y="46" text-anchor="middle" font-size="28" fill="#F8FAFC">explored</text>
+        </g>
+      </g>
+      <g transform="translate(0 1040)">
+        <text x="0" y="0" font-size="36" fill="#38BDF8" font-weight="600">Band estimate 7.5</text>
+        <text x="0" y="60" font-size="26" fill="#A5B4FC">Delivery 7 · Lexical resource 8 · Grammar 7 · Pronunciation 8</text>
+        <g transform="translate(0 110)">
+          <rect width="780" height="220" rx="28" fill="rgba(99,102,241,0.12)" />
+          <text x="48" y="90" font-size="26" fill="#F8FAFC">Next step</text>
+          <text x="48" y="130" font-size="24" fill="#E0E7FF">Practice conditional sentences with the Speaking Lab mini drills.</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

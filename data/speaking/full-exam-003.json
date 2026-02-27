@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-003",
+  "title": "IELTS Speaking Full Mock Exam 003",
+  "part1": [
+    "How do you usually keep fit?",
+    "What kinds of exercises do you find most enjoyable?",
+    "Have your fitness habits changed over the years?",
+    "Do you prefer working out alone or with others?",
+    "What role does diet play in staying healthy for you?",
+    "Is there a sport you would like to try in the future?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe a memorable outdoor activity you have done.",
+      "You should say:",
+      "• what the activity was",
+      "• where and when you did it",
+      "• who you did it with",
+      "and explain why it was memorable for you."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "Why do some people find it hard to maintain an exercise routine?",
+    "How can governments encourage citizens to lead healthier lifestyles?",
+    "Do you think technology helps or hinders physical fitness?",
+    "What trends in health and fitness do you expect to see in the future?"
+  ]
+}

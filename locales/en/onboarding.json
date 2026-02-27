@@ -1,0 +1,61 @@
+{
+  "onboarding": {
+    "hero": {
+      "eyebrow": "Welcome aboard",
+      "title": "Let’s tailor your IELTS prep",
+      "subtitle": "Three quick questions so we can personalise mocks, reminders, and feedback."
+    },
+    "steps": {
+      "band": {
+        "title": "Target band",
+        "description": "What score are you aiming for?"
+      },
+      "date": {
+        "title": "Exam date",
+        "description": "When is your IELTS exam?"
+      },
+      "whatsapp": {
+        "title": "WhatsApp updates",
+        "description": "Get gentle reminders and nudges."
+      }
+    },
+    "errors": {
+      "loadProfile": "Unable to load profile.",
+      "saveProfile": "Unable to save changes.",
+      "bandRange": "Choose a band between 4.0 and 9.0.",
+      "phoneFormat": "Enter a valid phone number in international format (e.g. +14155552671).",
+      "skip": "Unable to skip onboarding."
+    },
+    "footer": {
+      "step": "Step {current} of {total}",
+      "back": "Back",
+      "skip": "Skip for now",
+      "saving": "Saving…",
+      "finish": "Finish",
+      "next": "Continue"
+    },
+    "stepper": {
+      "aria": "Onboarding steps",
+      "done": "Done",
+      "current": "Now",
+      "next": "Next"
+    },
+    "band": {
+      "label": "Target overall band",
+      "helper": "You can update this any time from your profile.",
+      "tip": "Most universities ask for 6.5–7.0. Aim 0.5 higher to give yourself a buffer on test day."
+    },
+    "date": {
+      "label": "IELTS exam date",
+      "helper": "Not sure yet? Leave blank and we’ll suggest a four-week ramp-up.",
+      "tip": "We’ll pace mocks and AI-evaluated writing tasks to help you peak at the right time."
+    },
+    "whatsapp": {
+      "optInTitle": "Send me WhatsApp nudges",
+      "optInCopy": "2–3 gentle reminders per week with study prompts and quick wins. You can opt out any time.",
+      "numberLabel": "WhatsApp number",
+      "numberHelper": "We’ll only use this for study reminders. Standard carrier charges may apply.",
+      "emailFallback": "Prefer email? No problem — you can enable WhatsApp reminders later from Settings › Notifications."
+    }
+  }
+}

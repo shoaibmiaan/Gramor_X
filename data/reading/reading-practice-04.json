@@ -1,0 +1,46 @@
+{
+  "id": "reading-practice-04",
+  "title": "Reading Practice Test 4 — Environment & Culture",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "passage-a",
+      "title": "Rooftop Wetlands",
+      "text": "Architects are experimenting with rooftop wetlands that filter rainwater and provide habitats for migrating birds. The systems layer lightweight soil, membrane liners, and shallow pools to mimic marshlands. Pilot projects in Singapore show the wetlands lowering building temperatures and capturing stormwater before it overwhelms drains. Maintenance crews must monitor mosquito populations, yet the biodiversity gains have attracted university researchers.",
+      "questions": [
+        { "id": "A1", "type": "mcq", "prompt": "What benefit do rooftop wetlands provide according to the passage?", "options": ["Higher electricity consumption", "Cooling buildings and absorbing stormwater", "Additional parking"], "answer": "Cooling buildings and absorbing stormwater" },
+        { "id": "A2", "type": "gap", "prompt": "Which city hosts pilot rooftop wetlands?", "answer": "Singapore" },
+        { "id": "A3", "type": "tfng", "prompt": "The wetlands eliminate the need for maintenance crews.", "answer": "False" },
+        { "id": "A4", "type": "gap", "prompt": "What wildlife benefit is mentioned?", "answer": "habitats for migrating birds" },
+        { "id": "A5", "type": "mcq", "prompt": "Why are researchers interested in the projects?", "options": ["To study biodiversity gains", "To convert them into shopping areas", "To test new advertising"], "answer": "To study biodiversity gains" },
+        { "id": "A6", "type": "tfng", "prompt": "The wetlands cause storm drains to overflow more often.", "answer": "False" }
+      ]
+    },
+    {
+      "id": "passage-b",
+      "title": "Revitalising Indigenous Languages",
+      "text": "In New Zealand, immersion preschools known as kōhanga reo helped revive Māori language use among younger generations. Similar approaches are emerging in Canada and Norway, blending community elders’ stories with digital learning apps. Success relies on training fluent teachers and producing contemporary media—songs, podcasts, and comics—that make everyday usage natural. Funding remains patchy, but language advocates partner with broadcasters to reach national audiences.",
+      "questions": [
+        { "id": "B1", "type": "gap", "prompt": "What are Māori immersion preschools called?", "answer": "kōhanga reo" },
+        { "id": "B2", "type": "tfng", "prompt": "The passage states that only New Zealand is working on language revitalisation.", "answer": "False" },
+        { "id": "B3", "type": "mcq", "prompt": "Which media are used to encourage everyday language use?", "options": ["Songs, podcasts, and comics", "Static billboards", "Financial reports"], "answer": "Songs, podcasts, and comics" },
+        { "id": "B4", "type": "gap", "prompt": "Who contributes stories to digital learning apps?", "answer": "community elders" },
+        { "id": "B5", "type": "mcq", "prompt": "What challenge persists for language programmes?", "options": ["Lack of interest from teachers", "Unreliable funding", "Too many textbooks"], "answer": "Unreliable funding" },
+        { "id": "B6", "type": "tfng", "prompt": "Broadcasters refuse to work with language advocates.", "answer": "False" }
+      ]
+    },
+    {
+      "id": "passage-c",
+      "title": "Theatre in Virtual Reality",
+      "text": "Theatre companies are experimenting with virtual reality (VR) to reach audiences unable to travel. Productions film performances with 360-degree cameras and overlay interactive elements so viewers can choose different character perspectives. Accessibility advocates welcome captioning and language options integrated into the VR experience. Nevertheless, companies must balance production costs with ticket prices to ensure projects remain viable.",
+      "questions": [
+        { "id": "C1", "type": "tfng", "prompt": "VR theatre prevents audiences from choosing perspectives.", "answer": "False" },
+        { "id": "C2", "type": "mcq", "prompt": "Why do accessibility advocates support VR theatre?", "options": ["It eliminates subtitles", "It integrates captioning and language options", "It requires expensive travel"], "answer": "It integrates captioning and language options" },
+        { "id": "C3", "type": "gap", "prompt": "What technology captures performances for VR?", "answer": "360-degree cameras" },
+        { "id": "C4", "type": "mcq", "prompt": "What challenge do companies face when using VR?", "options": ["Finding actors", "Balancing production costs with ticket prices", "Lack of audience interest"], "answer": "Balancing production costs with ticket prices" },
+        { "id": "C5", "type": "gap", "prompt": "Who is VR theatre intended to reach beyond local attendees?", "answer": "audiences unable to travel" },
+        { "id": "C6", "type": "tfng", "prompt": "The passage claims VR theatre replaces stage performances entirely.", "answer": "False" }
+      ]
+    }
+  ]
+}

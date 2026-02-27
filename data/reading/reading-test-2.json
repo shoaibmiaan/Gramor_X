@@ -1,0 +1,366 @@
+{
+  "id": "reading-test-2",
+  "title": "Reading Practice Test 7 — Orchard Renewal",
+  "durationSec": 3600,
+  "passages": [
+    {
+      "id": "section-1",
+      "title": "Restoring Edgewood Orchard",
+      "text": "Rivershire's Edgewood orchard had been left to collapse after the last caretaker retired in 1982. The market for eating apples in the Midlands had slumped, and the county council who owned the land cut down the irrigation pipes and let the hedges grow wild. When the Rivershire Horticultural Trust visited the site in 2021 they found only eight gnarled trees still fruiting and a tangle of brambles covering the remaining acre. Trust director Salma Dhar remembered a 1978 agricultural survey that catalogued forty-two varieties planted at Edgewood, many of them now difficult to find in commercial nurseries. She persuaded the council to lease the orchard for a token one pound a year so that volunteers could restore it as a community food source.\n\nThe restoration began with mapping the surviving tree stock and scouring nearby villages for scion wood. Retired pomologist Eric Lynes ran weekend grafting workshops that trained more than sixty volunteers in how to raise new rootstocks. The project also introduced flowering meadows for local beekeepers, and a soil laboratory at Rivershire College analysed mineral deficiencies caused by decades of neglect. Instead of ripping out the hedges, the team layered them to form wildlife corridors. By the autumn of 2023 the trust had replanted thirty saplings and installed discreet rain-fed tanks to replace the lost irrigation. Local schools now use the orchard for science lessons, and a small farm shop sells juice pressed on-site each Friday.",
+      "questions": [
+        {
+          "id": "S1-Q1",
+          "type": "tfng",
+          "prompt": "1. The county council initiated the plans to restore Edgewood orchard.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q2",
+          "type": "tfng",
+          "prompt": "2. The orchard stopped being cared for in the early 1980s.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q3",
+          "type": "tfng",
+          "prompt": "3. Irrigation equipment was removed before the orchard was abandoned.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q4",
+          "type": "tfng",
+          "prompt": "4. The 1978 survey recorded fewer than twenty types of apples at Edgewood.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q5",
+          "type": "tfng",
+          "prompt": "5. Some of the apple varieties from Edgewood are rare in modern nurseries.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q6",
+          "type": "tfng",
+          "prompt": "6. The trust pays a large annual rent for the orchard lease.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q7",
+          "type": "tfng",
+          "prompt": "7. Volunteers located new plant material in neighbouring settlements.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q8",
+          "type": "tfng",
+          "prompt": "8. Only professional horticulturalists were allowed to attend the grafting workshops.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q9",
+          "type": "tfng",
+          "prompt": "9. The project decided to remove the overgrown hedges entirely.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q10",
+          "type": "tfng",
+          "prompt": "10. Rivershire College contributed scientific support to the restoration.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q11",
+          "type": "tfng",
+          "prompt": "11. The new irrigation tanks rely on rainwater.",
+          "answer": "True"
+        },
+        {
+          "id": "S1-Q12",
+          "type": "tfng",
+          "prompt": "12. Local children are prohibited from visiting the orchard.",
+          "answer": "False"
+        },
+        {
+          "id": "S1-Q13",
+          "type": "tfng",
+          "prompt": "13. Juice from the orchard is sold directly to residents.",
+          "answer": "True"
+        }
+      ]
+    },
+    {
+      "id": "section-2",
+      "title": "Reimagining Midtown's Streets",
+      "text": "Midtown's experiment with rentable electric scooters has polarised residents, and columnist Javier Moreno argues that the disagreement hides a deeper question about who city streets are for. He notes that the pilot programme was launched with minimal consultation, leaving community groups feeling ignored, yet he concedes that the scooters quickly replaced thousands of short car journeys. Moreno dismisses claims that they are inherently dangerous, pointing out that injury rates published by the transit authority mirror those seen when bicycles first expanded in the 1990s. He is more concerned about clutter, arguing that parking hubs were rolled out too slowly for pavements as narrow as Midtown's.\n\nMoreno believes that regulating scooter speeds would calm tensions with pedestrians, but he rejects the idea of a blanket ban. In his view, the city has historically privileged motorists, and reallocating road space is overdue. He praises a recent council decision to convert two parking lanes into protected scooter and cycle corridors, suggesting that the move will also help small businesses by freeing up delivery bays. Critics worry that tourists will be confused by the new layouts, but Moreno counters that clear signage and multilingual tutorials already exist. He concludes that the scooter programme should continue only if officials commit to co-designing street changes with neighbourhood councils.",
+      "questions": [
+        {
+          "id": "S2-Q14",
+          "type": "yynn",
+          "prompt": "14. Moreno thinks officials consulted local organisations adequately before launching the scooter scheme.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q15",
+          "type": "yynn",
+          "prompt": "15. He accepts that scooters have replaced many brief car trips in Midtown.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q16",
+          "type": "yynn",
+          "prompt": "16. Moreno believes scooters are more dangerous than bicycles were when first introduced.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q17",
+          "type": "yynn",
+          "prompt": "17. He is worried about how parked scooters block narrow pavements.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q18",
+          "type": "yynn",
+          "prompt": "18. Moreno wants scooters to be banned completely from Midtown.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q19",
+          "type": "yynn",
+          "prompt": "19. He argues that city streets have long prioritised car drivers.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q20",
+          "type": "yynn",
+          "prompt": "20. Moreno disapproves of converting parking lanes into scooter corridors.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q21",
+          "type": "yynn",
+          "prompt": "21. He thinks the new corridors could benefit local shops.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q22",
+          "type": "yynn",
+          "prompt": "22. Moreno is sceptical that signage will help tourists use the system.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q23",
+          "type": "yynn",
+          "prompt": "23. He proposes that any continuation of the programme must involve neighbourhood input.",
+          "answer": "Yes"
+        },
+        {
+          "id": "S2-Q24",
+          "type": "yynn",
+          "prompt": "24. Moreno says scooter speeds should remain unregulated.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q25",
+          "type": "yynn",
+          "prompt": "25. He insists that multilingual tutorials do not yet exist.",
+          "answer": "No"
+        },
+        {
+          "id": "S2-Q26",
+          "type": "yynn",
+          "prompt": "26. Moreno criticises the council for reallocating delivery bays.",
+          "answer": "No"
+        }
+      ]
+    },
+    {
+      "id": "section-3",
+      "title": "Tracking Tidal Light",
+      "text": "Marine biologist Wei-Ling Zhao leads the Tidal Light Initiative, a collaboration among four coastal laboratories that study bioluminescent organisms. Their latest project, GlowLine, tracks seasonal blooms of plankton that emit light when disturbed by waves. The team deploys fibre-optic cables along three estuaries to record flashes and compare them with satellite imagery. Zhao pairs the optical data with genetic samples collected by divers, revealing that each bloom contains dozens of distinct species. Funding from the Ocean Futures Fund allowed the group to build a mobile laboratory on a retrofitted ferry so that school groups can join overnight surveys.\n\nThe scientists are keen to move beyond observation. They test how temperature shifts alter light intensity and are experimenting with biodegradable sensors that degrade after six weeks. Engineer Marta Ruiz is developing a machine-learning model that predicts where GlowLine should anchor the ferry to capture the brightest displays. The model analyses tidal flow, nutrient levels, and even the wake from commercial ships. Because nearby fisheries worry that the work could disrupt spawning, Zhao hosts monthly forums with boat captains to share results. The team has also begun working with lighting designers who want to apply bioluminescent principles to energy-efficient waterfront installations.",
+      "questions": [
+        {
+          "id": "S3-Q27",
+          "type": "mcq",
+          "prompt": "27. What is the primary aim of the GlowLine project?",
+          "options": [
+            "A. To engineer brighter artificial lights for harbours.",
+            "B. To monitor naturally occurring luminous plankton.",
+            "C. To replace satellite data with underwater cameras.",
+            "D. To map fishing routes along the coast."
+          ],
+          "answer": "B. To monitor naturally occurring luminous plankton."
+        },
+        {
+          "id": "S3-Q28",
+          "type": "mcq",
+          "prompt": "28. How do researchers compare the light captured by the fibre-optic cables?",
+          "options": [
+            "A. By checking it against archives from previous decades.",
+            "B. By measuring the angle of waves hitting the shore.",
+            "C. By matching it with readings taken from orbit.",
+            "D. By timing the dives of marine mammals."
+          ],
+          "answer": "C. By matching it with readings taken from orbit."
+        },
+        {
+          "id": "S3-Q29",
+          "type": "mcq",
+          "prompt": "29. What has the genetic sampling revealed about each bloom?",
+          "options": [
+            "A. They are dominated by a single hardy species.",
+            "B. They consist of many different kinds of plankton.",
+            "C. They are caused by pollutants from ferries.",
+            "D. They rarely occur in estuaries."
+          ],
+          "answer": "B. They consist of many different kinds of plankton."
+        },
+        {
+          "id": "S3-Q30",
+          "type": "mcq",
+          "prompt": "30. Why was a ferry converted into a mobile laboratory?",
+          "options": [
+            "A. To host visiting students during overnight studies.",
+            "B. To transport equipment between the four laboratories.",
+            "C. To provide housing for the research staff.",
+            "D. To replace the need for fixed coastal stations."
+          ],
+          "answer": "A. To host visiting students during overnight studies."
+        },
+        {
+          "id": "S3-Q31",
+          "type": "mcq",
+          "prompt": "31. What do the scientists investigate in addition to observing the plankton?",
+          "options": [
+            "A. The economic value of tourism generated by the displays.",
+            "B. The influence of temperature changes on emitted light.",
+            "C. The possibility of exporting specimens overseas.",
+            "D. The nutritional benefits of plankton for aquaculture."
+          ],
+          "answer": "B. The influence of temperature changes on emitted light."
+        },
+        {
+          "id": "S3-Q32",
+          "type": "mcq",
+          "prompt": "32. What feature do the new sensors being trialled share?",
+          "options": [
+            "A. They automatically repair themselves after storms.",
+            "B. They transmit data without using batteries.",
+            "C. They decompose naturally within a set period.",
+            "D. They attach to whales for migration studies."
+          ],
+          "answer": "C. They decompose naturally within a set period."
+        },
+        {
+          "id": "S3-Q33",
+          "type": "mcq",
+          "prompt": "33. What is the role of the predictive model designed by Marta Ruiz?",
+          "options": [
+            "A. To inform the best places to position the research ferry.",
+            "B. To monitor the wake created by fishing trawlers.",
+            "C. To control the brightness of coastal lighting.",
+            "D. To determine which species should be sampled next."
+          ],
+          "answer": "A. To inform the best places to position the research ferry."
+        },
+        {
+          "id": "S3-Q34",
+          "type": "mcq",
+          "prompt": "34. Which factor is NOT mentioned as an input for the model?",
+          "options": [
+            "A. Tidal movements.",
+            "B. Nutrient availability.",
+            "C. Weather forecasts.",
+            "D. Disturbance from ships."
+          ],
+          "answer": "C. Weather forecasts."
+        },
+        {
+          "id": "S3-Q35",
+          "type": "mcq",
+          "prompt": "35. Why do local fisheries monitor GlowLine's activity?",
+          "options": [
+            "A. They fear the project could interfere with breeding cycles.",
+            "B. They want to invest in the mobile laboratory.",
+            "C. They depend on the team for satellite data.",
+            "D. They hope to hire students trained by the project."
+          ],
+          "answer": "A. They fear the project could interfere with breeding cycles."
+        },
+        {
+          "id": "S3-Q36",
+          "type": "mcq",
+          "prompt": "36. How does Zhao address the concerns of boat captains?",
+          "options": [
+            "A. By limiting surveys to off-season months.",
+            "B. By organising monthly public meetings.",
+            "C. By offering compensation for delays.",
+            "D. By relocating research to different estuaries."
+          ],
+          "answer": "B. By organising monthly public meetings."
+        },
+        {
+          "id": "S3-Q37",
+          "type": "mcq",
+          "prompt": "37. Who is collaborating with the scientists to adapt bioluminescent ideas?",
+          "options": [
+            "A. Offshore drilling companies.",
+            "B. Coastal lighting designers.",
+            "C. Maritime historians.",
+            "D. Government defence contractors."
+          ],
+          "answer": "B. Coastal lighting designers."
+        },
+        {
+          "id": "S3-Q38",
+          "type": "mcq",
+          "prompt": "38. What does the mobile lab allow school groups to do?",
+          "options": [
+            "A. Participate in overnight field research.",
+            "B. Complete university-level genetics courses.",
+            "C. Manage the ferry's navigation system.",
+            "D. Collect specimens for private aquariums."
+          ],
+          "answer": "A. Participate in overnight field research."
+        },
+        {
+          "id": "S3-Q39",
+          "type": "match",
+          "prompt": "39. Match each research component with the purpose described in the passage.",
+          "options": {
+            "pairs": [
+              {
+                "left": "Fibre-optic cables",
+                "right": ["Recording flashes produced in the water"]
+              },
+              {
+                "left": "Genetic sampling",
+                "right": ["Identifying the diversity of species in blooms"]
+              },
+              {
+                "left": "Biodegradable sensors",
+                "right": ["Reducing the environmental footprint of monitoring"]
+              },
+              {
+                "left": "Machine-learning model",
+                "right": ["Forecasting where to position observation platforms"]
+              }
+            ]
+          },
+          "answer": "Fibre-optic cables -> Recording flashes produced in the water"
+        },
+        {
+          "id": "S3-Q40",
+          "type": "mcq",
+          "prompt": "40. What condition does Zhao set for future waterfront lighting projects?",
+          "options": [
+            "A. They must directly fund GlowLine's fieldwork.",
+            "B. They should rely exclusively on solar power.",
+            "C. They need to respect lessons learned from bioluminescence.",
+            "D. They have to be supervised by the Ocean Futures Fund."
+          ],
+          "answer": "C. They need to respect lessons learned from bioluminescence."
+        }
+      ]
+    }
+  ]
+}

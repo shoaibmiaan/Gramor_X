@@ -1,0 +1,40 @@
+{
+  "id": "ielts-writing-exam-03",
+  "title": "Academic Set 3 — Recycling & Gap Years",
+  "description": "Process diagram of recycling plastic bottles and a discussion about taking a gap year.",
+  "durationSec": 3600,
+  "task1": {
+    "title": "Recycling plastic bottles",
+    "type": "academic",
+    "prompt": "The diagram illustrates the process by which plastic bottles are collected and recycled into new products. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+    "minWords": 150,
+    "maxTimeMinutes": 20,
+    "hints": [
+      "Identify the start and end points of the process clearly.",
+      "Group stages that involve similar activities, such as sorting or manufacturing.",
+      "Use sequencing language (first, next, after that) to describe the stages logically."
+    ],
+    "assessment": {
+      "criteria": ["Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task2": {
+    "title": "Advantages and disadvantages — Gap years",
+    "prompt": "Some students take a gap year after finishing school to travel or work before starting university. Discuss the advantages and disadvantages of taking a gap year.",
+    "minWords": 250,
+    "maxTimeMinutes": 40,
+    "outline": [
+      "Introduction: paraphrase the topic and state that you will examine both sides.",
+      "Body paragraph 1: advantages of a gap year with examples.",
+      "Body paragraph 2: drawbacks or risks associated with delaying studies.",
+      "Conclusion: summarise your main points and give a balanced opinion."
+    ],
+    "assessment": {
+      "criteria": ["Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy"]
+    }
+  },
+  "task1Prompt": "The diagram illustrates the process by which plastic bottles are collected and recycled into new products. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
+  "task2Prompt": "Some students take a gap year after finishing school to travel or work before starting university. Discuss the advantages and disadvantages of taking a gap year.",
+  "minWordsTask1": 150,
+  "minWordsTask2": 250
+}

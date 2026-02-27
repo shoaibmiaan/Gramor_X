@@ -1,0 +1,948 @@
+[
+  {
+    "id": "drill-tr-bridging-01",
+    "slug": "task-response-bridging-claims",
+    "title": "Bridge topic sentences to thesis",
+    "criterion": "TR",
+    "durationMinutes": 6,
+    "tags": ["task_response", "cohesion"],
+    "prompt": "Rewrite each topic sentence so it clearly advances the thesis: 'Cities must rebalance transport investment.'",
+    "steps": [
+      "Identify the paragraph's intended focus.",
+      "Name the benefit or consequence linking back to the thesis.",
+      "Draft a revised topic sentence in one line.",
+      "Check that the sentence signals progression (first, secondly, ultimately)."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "Congestion pricing is controversial.",
+        "target": "Congestion pricing channels drivers toward transit, fulfilling the city's rebalancing goal."
+      },
+      {
+        "type": "rewrite",
+        "input": "Bus routes could be improved.",
+        "target": "Prioritising bus-only corridors proves the city is shifting resources from private cars to mass transit."
+      }
+    ],
+    "takeaway": "Every paragraph opener should echo the central decision cities must make."
+  },
+  {
+    "id": "drill-tr-thesis-02",
+    "slug": "task-response-thesis-precision",
+    "title": "Sharpen the thesis",
+    "criterion": "TR",
+    "durationMinutes": 5,
+    "tags": ["task_response", "planning"],
+    "prompt": "Given a Task 2 question, craft a thesis that states your position and roadmap in 2 clauses.",
+    "steps": [
+      "Underline the task command words.",
+      "List the two main reasons you will defend.",
+      "Combine them into a single, decisive sentence.",
+      "Check for hedging or vague verbs and replace them."
+    ],
+    "checks": [
+      {
+        "type": "compare",
+        "question": "Should public transport receive more funding than roads?",
+        "weak": "Governments should consider spending more on public transport.",
+        "strong": "Governments must divert future infrastructure budgets to metro and bus systems because they move more people with lower emissions."
+      }
+    ],
+    "takeaway": "IELTS examiners reward clear, committed stances."
+  },
+  {
+    "id": "drill-tr-examples-03",
+    "slug": "task-response-evidence",
+    "title": "Evidence to anchor ideas",
+    "criterion": "TR",
+    "durationMinutes": 7,
+    "tags": ["task_response", "examples"],
+    "prompt": "Pair each claim with a concrete statistic, study, or case. Avoid generic phrases like 'some people say'.",
+    "steps": [
+      "Note the main claim.",
+      "Identify a real or plausible supporting example.",
+      "Write a 1-sentence illustration using numbers or proper nouns.",
+      "Explain how it proves the claim in 1 more sentence."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Complete the example: 'Singapore's _________ shows that road pricing can reduce downtown traffic by 25%.'",
+        "answer": "Electronic Road Pricing scheme"
+      }
+    ],
+    "takeaway": "Specifics signal real-world awareness and strengthen Task Response."
+  },
+  {
+    "id": "drill-tr-conclusion-04",
+    "slug": "task-response-decisions",
+    "title": "Decisive conclusions",
+    "criterion": "TR",
+    "durationMinutes": 5,
+    "tags": ["task_response", "conclusion"],
+    "prompt": "Draft a conclusion that synthesises reasons and issues a forward-looking recommendation.",
+    "steps": [
+      "Restate the thesis using different wording.",
+      "Compress your two strongest reasons into a single compound sentence.",
+      "Add a call-to-action or forecast to close the essay.",
+      "Trim filler phrases (In conclusion, In summary)."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "In conclusion, there are many reasons for this.",
+        "target": "Ultimately, cities that back rapid transit over highways will ease congestion and cut emissions, so budgets should follow commuters, not cars."
+      }
+    ],
+    "takeaway": "A firm recommendation tells the examiner you addressed the question fully."
+  },
+  {
+    "id": "drill-tr-outline-05",
+    "slug": "task-response-outline",
+    "title": "Two-minute outline sprint",
+    "criterion": "TR",
+    "durationMinutes": 5,
+    "tags": ["task_response", "planning"],
+    "prompt": "Use the provided template to outline an essay in under two minutes.",
+    "steps": [
+      "Write the thesis.",
+      "List two body topic sentences.",
+      "Add one evidence note per paragraph.",
+      "Sketch the conclusion action."
+    ],
+    "checks": [
+      {
+        "type": "timer",
+        "durationSeconds": 120,
+        "goal": "Finish an outline template."
+      }
+    ],
+    "takeaway": "A quick outline keeps Task Response on target under exam timing."
+  },
+  {
+    "id": "drill-cc-linkers-01",
+    "slug": "coherence-additive-linkers",
+    "title": "Upgrade cohesion markers",
+    "criterion": "CC",
+    "durationMinutes": 6,
+    "tags": ["cohesion", "linkers"],
+    "prompt": "Replace basic linkers (and, but) with precise cohesive devices that show logic.",
+    "steps": [
+      "Scan the paragraph for repeated basic linkers.",
+      "Choose an advanced linker category (result, contrast, concession).",
+      "Swap the linker and adjust punctuation if needed.",
+      "Read aloud to ensure flow is natural."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "Cars are convenient and they cause pollution.",
+        "target": "Cars are convenient; nevertheless, they intensify urban pollution."
+      },
+      {
+        "type": "rewrite",
+        "input": "The metro is reliable and it is affordable.",
+        "target": "The metro is reliable; moreover, it remains affordable for commuters."
+      }
+    ],
+    "takeaway": "Diverse cohesive devices raise your Cohesion & Coherence score."
+  },
+  {
+    "id": "drill-cc-reference-02",
+    "slug": "coherence-reference-chains",
+    "title": "Tighten reference chains",
+    "criterion": "CC",
+    "durationMinutes": 6,
+    "tags": ["cohesion", "pronouns"],
+    "prompt": "Replace vague pronouns with precise references to maintain clarity.",
+    "steps": [
+      "Underline each pronoun in the paragraph.",
+      "Write the noun it refers to in the margin.",
+      "If unclear, replace the pronoun with a short noun phrase.",
+      "Check that successive sentences build on the same topic."
+    ],
+    "checks": [
+      {
+        "type": "compare",
+        "question": "Identify the ambiguous pronoun in 'This shows they care about it.'",
+        "weak": "This shows they care about it.",
+        "strong": "This response shows city planners care about efficient commuting."
+      }
+    ],
+    "takeaway": "Clear reference chains prevent reader confusion."
+  },
+  {
+    "id": "drill-cc-paragraph-03",
+    "slug": "coherence-paragraph-focus",
+    "title": "One idea per paragraph",
+    "criterion": "CC",
+    "durationMinutes": 7,
+    "tags": ["cohesion", "structure"],
+    "prompt": "Reorganise mixed ideas into focused paragraphs with sequencing words.",
+    "steps": [
+      "Highlight sentences covering different ideas.",
+      "Group sentences by idea and order them logically.",
+      "Add sequencing markers to show progression.",
+      "Rewrite the paragraph in the new order."
+    ],
+    "checks": [
+      {
+        "type": "ordering",
+        "items": [
+          "Explain the congestion problem.",
+          "Introduce the city's transport plan.",
+          "Show the plan's results."
+        ]
+      }
+    ],
+    "takeaway": "Paragraph focus keeps your argument easy to follow."
+  },
+  {
+    "id": "drill-cc-signpost-04",
+    "slug": "coherence-signpost",
+    "title": "Signpost the reader",
+    "criterion": "CC",
+    "durationMinutes": 5,
+    "tags": ["cohesion", "signposting"],
+    "prompt": "Insert signposting phrases that preview paragraph content.",
+    "steps": [
+      "Locate paragraphs lacking transitions.",
+      "Add a fronted clause that previews the argument.",
+      "Use sequencers like 'Turning to' or 'A further benefit is'.",
+      "Read aloud to ensure tone remains academic."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "Another point is that buses are cheap.",
+        "target": "Turning to affordability, bus networks remain accessible to low-income commuters."
+      }
+    ],
+    "takeaway": "Signposting guides the examiner through your logic."
+  },
+  {
+    "id": "drill-cc-map-05",
+    "slug": "coherence-task1-flow",
+    "title": "Task 1 flow words",
+    "criterion": "CC",
+    "durationMinutes": 6,
+    "tags": ["task1", "cohesion"],
+    "prompt": "Connect trends in a Task 1 overview using sequencing adverbs and comparatives.",
+    "steps": [
+      "Identify the main stages or trends.",
+      "Assign a sequencing adverb (initially, subsequently, finally).",
+      "Link contrasting trends using 'whereas' or 'while'.",
+      "Write a polished overview paragraph."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Complete: 'Initially, solar usage was low, ______ it surged after subsidies.'",
+        "answer": "whereas"
+      }
+    ],
+    "takeaway": "Cohesive sequencing lifts Task 1 organisation."
+  },
+  {
+    "id": "drill-lr-collocation-01",
+    "slug": "lexical-collocation-upgrades",
+    "title": "Upgrade collocations",
+    "criterion": "LR",
+    "durationMinutes": 6,
+    "tags": ["lexical", "collocations"],
+    "prompt": "Replace basic verb-noun combinations with precise collocations.",
+    "steps": [
+      "Highlight generic verbs (make, do, get).",
+      "Brainstorm a stronger verb that matches the noun.",
+      "Swap the phrase and read aloud for tone.",
+      "Record two alternatives for future essays."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "make a decision",
+        "target": "reach a decision"
+      },
+      {
+        "type": "rewrite",
+        "input": "get better services",
+        "target": "secure better services"
+      }
+    ],
+    "takeaway": "Specific collocations show lexical resource range."
+  },
+  {
+    "id": "drill-lr-synonym-02",
+    "slug": "lexical-synonym-bands",
+    "title": "Synonym bands",
+    "criterion": "LR",
+    "durationMinutes": 6,
+    "tags": ["lexical", "synonyms"],
+    "prompt": "Group synonyms by tone (neutral, formal, emphatic) and swap them into sample sentences.",
+    "steps": [
+      "List three synonyms for each common adjective.",
+      "Label them by tone.",
+      "Rewrite sample sentences choosing the tone that fits the argument.",
+      "Check for repetition in neighbouring sentences."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Formal alternative to 'big improvement'",
+        "answer": "substantial improvement"
+      }
+    ],
+    "takeaway": "Tone-aware synonyms lift lexical variety."
+  },
+  {
+    "id": "drill-lr-hedges-03",
+    "slug": "lexical-cut-hedging",
+    "title": "Cut hedging phrases",
+    "criterion": "LR",
+    "durationMinutes": 5,
+    "tags": ["lexical", "clarity"],
+    "prompt": "Edit sentences to remove redundant hedging (maybe, kind of, really).",
+    "steps": [
+      "Underline hedging phrases in each sentence.",
+      "Decide if evidence justifies a confident verb.",
+      "Replace with precise verbs or delete entirely.",
+      "Read aloud to ensure tone stays measured."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "It really might help traffic a lot.",
+        "target": "It will significantly reduce traffic."
+      }
+    ],
+    "takeaway": "Confident wording strengthens arguments."
+  },
+  {
+    "id": "drill-lr-rare-04",
+    "slug": "lexical-rare-words",
+    "title": "Rare word density",
+    "criterion": "LR",
+    "durationMinutes": 7,
+    "tags": ["lexical", "variety"],
+    "prompt": "Revise a paragraph to include three topic-specific rare words naturally.",
+    "steps": [
+      "List relevant domain vocabulary (e.g., 'congestion charge').",
+      "Select three that fit logically.",
+      "Rewrite sentences to integrate them without sounding forced.",
+      "Check grammar and tone."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Insert a transport-specific term for 'price for drivers entering downtown'.",
+        "answer": "congestion levy"
+      }
+    ],
+    "takeaway": "Topic-specific lexis proves range."
+  },
+  {
+    "id": "drill-lr-paraphrase-05",
+    "slug": "lexical-paraphrase-intro",
+    "title": "Paraphrase the prompt",
+    "criterion": "LR",
+    "durationMinutes": 5,
+    "tags": ["lexical", "paraphrase"],
+    "prompt": "Transform the question statement using synonyms and grammar shifts without altering meaning.",
+    "steps": [
+      "Highlight keywords in the prompt.",
+      "List synonyms or noun/verb conversions.",
+      "Rewrite the sentence using two changes.",
+      "Check the paraphrase retains the original meaning."
+    ],
+    "checks": [
+      {
+        "type": "compare",
+        "question": "'Governments should invest more in public transport than roads.'",
+        "weak": "People think governments need to spend more on buses than roads.",
+        "strong": "Many argue authorities must reallocate infrastructure budgets toward mass transit rather than highways."
+      }
+    ],
+    "takeaway": "A sophisticated paraphrase immediately signals lexical range."
+  },
+  {
+    "id": "drill-gra-sentence-01",
+    "slug": "grammar-complex-sentences",
+    "title": "Add complex sentences",
+    "criterion": "GRA",
+    "durationMinutes": 6,
+    "tags": ["grammar", "complex"],
+    "prompt": "Combine short sentences into complex ones using relative clauses or subordinators.",
+    "steps": [
+      "Identify two short related sentences.",
+      "Choose a relative pronoun or subordinating conjunction.",
+      "Merge the sentences and adjust punctuation.",
+      "Check for subject-verb agreement."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "The city built new cycle lanes. They are safe.",
+        "target": "The city built new cycle lanes that are safe."
+      }
+    ],
+    "takeaway": "Complex sentences showcase grammatical range."
+  },
+  {
+    "id": "drill-gra-tense-02",
+    "slug": "grammar-tense-control",
+    "title": "Control tenses in Task 1",
+    "criterion": "GRA",
+    "durationMinutes": 6,
+    "tags": ["grammar", "tense", "task1"],
+    "prompt": "Review Task 1 sentences and ensure tense matches the timeline shown.",
+    "steps": [
+      "Check whether the chart is past, present, or future.",
+      "Underline verbs and adjust tense accordingly.",
+      "Add time markers where missing.",
+      "Re-read to ensure consistency."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "In 2010, the city invests in buses.",
+        "target": "In 2010, the city invested in buses."
+      }
+    ],
+    "takeaway": "Accurate tense control prevents grammar penalties."
+  },
+  {
+    "id": "drill-gra-punctuation-03",
+    "slug": "grammar-punctuation",
+    "title": "Comma and semicolon control",
+    "criterion": "GRA",
+    "durationMinutes": 5,
+    "tags": ["grammar", "punctuation"],
+    "prompt": "Fix comma splices and run-ons in sample sentences.",
+    "steps": [
+      "Identify independent clauses.",
+      "Choose to join with a semicolon, conjunction, or period.",
+      "Rewrite the sentence correctly.",
+      "Read aloud to confirm rhythm."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "People drive to work, the buses are unreliable.",
+        "target": "People drive to work because the buses are unreliable."
+      }
+    ],
+    "takeaway": "Proper punctuation shows control at Band 7+."
+  },
+  {
+    "id": "drill-gra-agreement-04",
+    "slug": "grammar-subject-verb",
+    "title": "Subject-verb agreement clinic",
+    "criterion": "GRA",
+    "durationMinutes": 5,
+    "tags": ["grammar", "agreement"],
+    "prompt": "Spot agreement errors in transport-themed sentences and fix them.",
+    "steps": [
+      "Underline the subject.",
+      "Decide if it is singular or plural.",
+      "Adjust the verb to match.",
+      "Check for compound subjects joined by 'and' or 'or'."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Neither the buses nor the train ____ on time.",
+        "answer": "arrives"
+      }
+    ],
+    "takeaway": "Subject-verb agreement errors are costly at Band 6."
+  },
+  {
+    "id": "drill-gra-articles-05",
+    "slug": "grammar-article-precision",
+    "title": "Article precision",
+    "criterion": "GRA",
+    "durationMinutes": 5,
+    "tags": ["grammar", "articles"],
+    "prompt": "Insert correct articles (a, an, the, zero) into transport-focused sentences.",
+    "steps": [
+      "Identify whether the noun is specific or general.",
+      "Check for countability.",
+      "Choose the appropriate article or zero article.",
+      "Read aloud to ensure natural phrasing."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "____ congestion charge was introduced last year.",
+        "answer": "The"
+      }
+    ],
+    "takeaway": "Article accuracy is a quick win for higher GRA scores."
+  },
+  {
+    "id": "drill-tr-counter-06",
+    "slug": "task-response-counterarguments",
+    "title": "Counterargument sandwich",
+    "criterion": "TR",
+    "durationMinutes": 6,
+    "tags": ["task_response", "counterargument"],
+    "prompt": "Write a counterargument paragraph that concedes, refutes, and returns to your stance.",
+    "steps": [
+      "State an opposing view fairly.",
+      "Acknowledge why it appeals to some people.",
+      "Use evidence to refute it.",
+      "Reaffirm why your stance still holds."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "Some say roads are faster. But I disagree.",
+        "target": "While some argue roads keep freight moving faster, data from Seoul shows bus rapid transit moves twice as many commuters per hour, so investment belongs on transit corridors."
+      }
+    ],
+    "takeaway": "Balanced refutations strengthen Task Response band."
+  },
+  {
+    "id": "drill-tr-question-07",
+    "slug": "task-response-question-types",
+    "title": "Decode question types",
+    "criterion": "TR",
+    "durationMinutes": 5,
+    "tags": ["task_response", "analysis"],
+    "prompt": "Categorise Task 2 prompts (opinion, discussion, problem/solution, advantages/disadvantages) and note the required moves.",
+    "steps": [
+      "Underline directive words.",
+      "Assign the prompt to a pattern.",
+      "List paragraph functions.",
+      "Check your outline matches the pattern."
+    ],
+    "checks": [
+      {
+        "type": "match",
+        "pairs": [
+          ["To what extent", "Opinion"],
+          ["Discuss both views", "Discussion"],
+          ["Problems and solutions", "Problem/Solution"]
+        ]
+      }
+    ],
+    "takeaway": "Correct prompt typing avoids off-topic essays."
+  },
+  {
+    "id": "drill-tr-task1-overview-08",
+    "slug": "task1-overview-statements",
+    "title": "Task 1 overview laser",
+    "criterion": "TR",
+    "durationMinutes": 5,
+    "tags": ["task1", "overview"],
+    "prompt": "Write overview sentences that summarise the dominant trends in charts and diagrams.",
+    "steps": [
+      "Identify the highest/lowest values.",
+      "Spot overall trends (increase, decrease, fluctuation).",
+      "Combine them into two concise sentences.",
+      "Avoid detailed numbers."
+    ],
+    "checks": [
+      {
+        "type": "compare",
+        "question": "Line chart of renewable energy rising in Germany and Spain, steady in Australia.",
+        "weak": "Germany and Spain go up but Australia is low.",
+        "strong": "Germany and Spain roughly tripled their renewable share, while Australia stayed comparatively flat."
+      }
+    ],
+    "takeaway": "Strong overviews unlock higher Task 1 bands."
+  },
+  {
+    "id": "drill-tr-timing-09",
+    "slug": "task-response-timing",
+    "title": "Timing splits",
+    "criterion": "TR",
+    "durationMinutes": 4,
+    "tags": ["task_response", "timing"],
+    "prompt": "Practise allocating the 40-minute Task 2 window across planning, drafting, and revising.",
+    "steps": [
+      "Set a 5-minute planning timer.",
+      "Write for 30 minutes.",
+      "Reserve 5 minutes to edit.",
+      "Note how long each stage actually took."
+    ],
+    "checks": [
+      {
+        "type": "reflection",
+        "question": "Where did you overspend time?",
+        "answer": null
+      }
+    ],
+    "takeaway": "Planning discipline preserves Task Response quality."
+  },
+  {
+    "id": "drill-tr-task2-intro-10",
+    "slug": "task-response-introductions",
+    "title": "Hook the introduction",
+    "criterion": "TR",
+    "durationMinutes": 5,
+    "tags": ["task_response", "introduction"],
+    "prompt": "Draft introductions that paraphrase the question, state a thesis, and preview points in under 60 words.",
+    "steps": [
+      "Paraphrase the prompt.",
+      "State your position.",
+      "Preview two key reasons.",
+      "Check word count under 60."
+    ],
+    "checks": [
+      {
+        "type": "wordcount",
+        "maxWords": 60
+      }
+    ],
+    "takeaway": "Concise introductions save time for main paragraphs."
+  },
+  {
+    "id": "drill-cc-transition-06",
+    "slug": "coherence-transition-bank",
+    "title": "Transition bank sprint",
+    "criterion": "CC",
+    "durationMinutes": 5,
+    "tags": ["cohesion", "transitions"],
+    "prompt": "Build a bank of advanced transitions for contrast, cause, and exemplification.",
+    "steps": [
+      "Create three columns (contrast, cause, example).",
+      "List at least four transitions per column.",
+      "Write sample sentences using them.",
+      "Store favourites in your notes."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Contrast linker meaning 'despite that'",
+        "answer": "nevertheless"
+      }
+    ],
+    "takeaway": "Varied transitions prevent cohesion penalties."
+  },
+  {
+    "id": "drill-cc-theme-07",
+    "slug": "coherence-theme-strings",
+    "title": "Theme strings",
+    "criterion": "CC",
+    "durationMinutes": 7,
+    "tags": ["cohesion", "theme-rheme"],
+    "prompt": "Reorder sentences so that each new sentence picks up the theme from the previous clause.",
+    "steps": [
+      "Identify the theme (topic) of each sentence.",
+      "Ensure the next sentence starts with that idea.",
+      "Rephrase where necessary to maintain flow.",
+      "Check the paragraph reads like a logical chain."
+    ],
+    "checks": [
+      {
+        "type": "ordering",
+        "items": ["Introduce cycling policy", "Explain funding", "Show commuter impact"]
+      }
+    ],
+    "takeaway": "Theme strings make paragraphs coherent."
+  },
+  {
+    "id": "drill-cc-cohesive-08",
+    "slug": "coherence-cohesive-nouns",
+    "title": "Cohesive nouns",
+    "criterion": "CC",
+    "durationMinutes": 6,
+    "tags": ["cohesion", "nouns"],
+    "prompt": "Swap repeated phrases with cohesive nouns (measure, initiative, approach) to avoid repetition.",
+    "steps": [
+      "Highlight repeated nouns.",
+      "Select cohesive nouns to refer back to them.",
+      "Rewrite sentences using the cohesive noun.",
+      "Check pronoun agreement."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "The policy is helpful because the policy...",
+        "target": "The policy is helpful because this initiative ..."
+      }
+    ],
+    "takeaway": "Cohesive nouns tidy up repetition."
+  },
+  {
+    "id": "drill-cc-sentence-flow-09",
+    "slug": "coherence-sentence-flow",
+    "title": "Sentence flow rescore",
+    "criterion": "CC",
+    "durationMinutes": 6,
+    "tags": ["cohesion", "flow"],
+    "prompt": "Insert linking clauses to smooth abrupt sentence jumps.",
+    "steps": [
+      "Read sentences aloud to spot jumps.",
+      "Add participle clauses or fronted adverbs.",
+      "Ensure references stay clear.",
+      "Re-read for rhythm."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "Metro lines are frequent. People still drive.",
+        "target": "Although metro lines run every three minutes, many commuters still drive."
+      }
+    ],
+    "takeaway": "Smooth flow boosts coherence scores."
+  },
+  {
+    "id": "drill-cc-cohesion-audit-10",
+    "slug": "coherence-audit",
+    "title": "Cohesion audit",
+    "criterion": "CC",
+    "durationMinutes": 8,
+    "tags": ["cohesion", "review"],
+    "prompt": "Audit an essay for cohesion by checking transitions, references, and paragraph goals.",
+    "steps": [
+      "Use a checklist covering linkers, references, and logical order.",
+      "Mark any missing connections.",
+      "Rewrite or insert linking phrases.",
+      "Summarise improvements."
+    ],
+    "checks": [
+      {
+        "type": "checklist",
+        "items": [
+          "Every paragraph has a clear topic sentence",
+          "Transitions show contrast or result",
+          "Pronouns refer to clear nouns"
+        ]
+      }
+    ],
+    "takeaway": "Systematic audits reveal hidden cohesion gaps."
+  },
+  {
+    "id": "drill-lr-tone-06",
+    "slug": "lexical-tone-shift",
+    "title": "Tone shift practice",
+    "criterion": "LR",
+    "durationMinutes": 6,
+    "tags": ["lexical", "tone"],
+    "prompt": "Rewrite informal sentences in an academic tone without sounding robotic.",
+    "steps": [
+      "Highlight slang or casual phrases.",
+      "Replace with formal equivalents.",
+      "Adjust sentence structure for clarity.",
+      "Read aloud to check flow."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "Cars are a total nightmare in rush hour.",
+        "target": "Private cars create severe congestion during peak hours."
+      }
+    ],
+    "takeaway": "Formal tone suits IELTS academic tasks."
+  },
+  {
+    "id": "drill-lr-field-07",
+    "slug": "lexical-field-notes",
+    "title": "Field vocabulary notes",
+    "criterion": "LR",
+    "durationMinutes": 7,
+    "tags": ["lexical", "field"],
+    "prompt": "Collect domain-specific vocabulary sets (transport, environment, education) with definitions and sample sentences.",
+    "steps": [
+      "Pick a domain.",
+      "List five advanced nouns/verbs/adjectives.",
+      "Write definitions and example sentences.",
+      "Review and test yourself later."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Term for 'a charge for entering city centres'",
+        "answer": "cordon fee"
+      }
+    ],
+    "takeaway": "Thematic vocabulary boosts lexical resource."
+  },
+  {
+    "id": "drill-lr-wordfamilies-08",
+    "slug": "lexical-word-families",
+    "title": "Word family switch",
+    "criterion": "LR",
+    "durationMinutes": 5,
+    "tags": ["lexical", "word-formation"],
+    "prompt": "Convert root words into different forms (noun, verb, adjective, adverb) and use them in sentences.",
+    "steps": [
+      "Write the root word.",
+      "Generate each word form.",
+      "Create sentences relevant to transport.",
+      "Check collocation accuracy."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Adjective form of 'sustain'",
+        "answer": "sustainable"
+      }
+    ],
+    "takeaway": "Word-family agility widens lexical options."
+  },
+  {
+    "id": "drill-lr-metaphor-09",
+    "slug": "lexical-precise-metaphors",
+    "title": "Precise metaphors",
+    "criterion": "LR",
+    "durationMinutes": 6,
+    "tags": ["lexical", "imagery"],
+    "prompt": "Replace clich\u00e9d metaphors with precise imagery rooted in the topic.",
+    "steps": [
+      "Identify the clich\u00e9.",
+      "Brainstorm imagery connected to transport.",
+      "Rewrite the sentence.",
+      "Ensure meaning stays literal enough for IELTS."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "Traffic is a double-edged sword.",
+        "target": "Traffic is a knot that slows every bus heading downtown."
+      }
+    ],
+    "takeaway": "Fresh imagery keeps language vivid without risking misinterpretation."
+  },
+  {
+    "id": "drill-lr-cohesion-10",
+    "slug": "lexical-cohesion",
+    "title": "Lexical cohesion sets",
+    "criterion": "LR",
+    "durationMinutes": 6,
+    "tags": ["lexical", "cohesion"],
+    "prompt": "Create lexical sets for key themes and ensure they appear across a paragraph to reinforce cohesion.",
+    "steps": [
+      "Choose a theme (e.g., public transport).",
+      "List related terms (ridership, fare cap, dwell time).",
+      "Write a paragraph using at least three terms.",
+      "Highlight how they reinforce the theme."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Word meaning 'time a train stops at a station'",
+        "answer": "dwell time"
+      }
+    ],
+    "takeaway": "Lexical sets help examiners see topic control."
+  },
+  {
+    "id": "drill-gra-clause-06",
+    "slug": "grammar-relative-clauses",
+    "title": "Relative clause ladder",
+    "criterion": "GRA",
+    "durationMinutes": 6,
+    "tags": ["grammar", "clauses"],
+    "prompt": "Transform simple sentences by embedding relative clauses to add detail.",
+    "steps": [
+      "Pick a noun that could take a clause.",
+      "Add who/which/that clauses with extra information.",
+      "Ensure commas are used correctly.",
+      "Read aloud to confirm clarity."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "The train was delayed. It broke down.",
+        "target": "The train, which broke down, was delayed."
+      }
+    ],
+    "takeaway": "Relative clauses show syntactic range."
+  },
+  {
+    "id": "drill-gra-modals-07",
+    "slug": "grammar-modals-precision",
+    "title": "Precise modals",
+    "criterion": "GRA",
+    "durationMinutes": 5,
+    "tags": ["grammar", "modals"],
+    "prompt": "Select modals that express obligation, possibility, or prediction accurately.",
+    "steps": [
+      "Identify the intended strength of the claim.",
+      "Choose an appropriate modal (must, should, could, is likely to).",
+      "Rewrite the sentence.",
+      "Check consistency with evidence."
+    ],
+    "checks": [
+      {
+        "type": "fill",
+        "question": "Modal expressing strong obligation",
+        "answer": "must"
+      }
+    ],
+    "takeaway": "Accurate modals prevent examiner confusion."
+  },
+  {
+    "id": "drill-gra-inversion-08",
+    "slug": "grammar-inversion",
+    "title": "Inversion emphasis",
+    "criterion": "GRA",
+    "durationMinutes": 6,
+    "tags": ["grammar", "inversion"],
+    "prompt": "Practise inversion structures (Not only..., Rarely..., Had ...) to add emphasis appropriately.",
+    "steps": [
+      "Rewrite sentences beginning with inversion.",
+      "Ensure auxiliary verbs are placed before the subject.",
+      "Use commas where necessary.",
+      "Keep tone formal."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "People rarely consider bus frequency.",
+        "target": "Rarely do people consider bus frequency."
+      }
+    ],
+    "takeaway": "Advanced structures like inversion demonstrate grammatical range."
+  },
+  {
+    "id": "drill-gra-conditionals-09",
+    "slug": "grammar-conditionals",
+    "title": "Conditional accuracy",
+    "criterion": "GRA",
+    "durationMinutes": 6,
+    "tags": ["grammar", "conditionals"],
+    "prompt": "Fix mixed conditional errors and ensure verbs match the scenario.",
+    "steps": [
+      "Decide if the condition is real, hypothetical, or past.",
+      "Choose the correct tense pair.",
+      "Rewrite the sentence.",
+      "Check punctuation."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "If cities invested last year, traffic will reduce.",
+        "target": "If cities had invested last year, traffic would have reduced."
+      }
+    ],
+    "takeaway": "Conditional control is essential for Band 7+."
+  },
+  {
+    "id": "drill-gra-parallel-10",
+    "slug": "grammar-parallel-structure",
+    "title": "Parallel structure polish",
+    "criterion": "GRA",
+    "durationMinutes": 5,
+    "tags": ["grammar", "parallelism"],
+    "prompt": "Edit sentences so listed items follow the same grammatical form.",
+    "steps": [
+      "Identify lists or paired ideas.",
+      "Check each element uses the same grammatical pattern.",
+      "Rewrite to align forms.",
+      "Read aloud for rhythm."
+    ],
+    "checks": [
+      {
+        "type": "rewrite",
+        "input": "The policy aims to cut costs, improving safety, and to attract riders.",
+        "target": "The policy aims to cut costs, improve safety, and attract riders."
+      }
+    ],
+    "takeaway": "Parallel structures keep sentences balanced."
+  }
+]

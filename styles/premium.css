@@ -1,0 +1,330 @@
+/* Tailwind INPUT for the premium bundle (compiled -> public/premium.css) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Base tokens & themes ---------- */
+@layer base {
+  :root {
+    --pr-radius: 16px;
+    --pr-shadow-md: 0 8px 24px rgba(0,0,0,0.20);
+    --pr-shadow-lg: 0 18px 48px rgba(0,0,0,0.30);
+
+    /* Theme preview tokens (used by switcher dots only) */
+    --pr-preview-carbon: #0b0f1a;
+    --pr-preview-ivory: #f7f7fb;
+    --pr-preview-royal-start: #7c3aed;
+    --pr-preview-royal-end: #4c1d95;
+    --pr-preview-aurora-start: #0ea5e9;
+    --pr-preview-aurora-end: #0284c7;
+  }
+
+  /* Carbon (dark) */
+  [data-pr-theme="carbon"] {
+    --pr-bg: #0b0f1a;
+    --pr-fg: #e6eaf2;
+    --pr-card: #0f1626;
+    --pr-border: #24304a;
+    --pr-primary: #3390ff;
+    --pr-success: #35d399;
+    --pr-danger: #ff6b8b;
+
+    /* animated bg orbs */
+    --orb-1: #2b74ff;
+    --orb-2: #7c3aed;
+    --orb-3: #06b6d4;
+  }
+
+  /* Ivory (light) */
+  [data-pr-theme="ivory"] {
+    --pr-bg: #f7f7fb;
+    --pr-fg: #0b1324;
+    --pr-card: #ffffff;
+    --pr-border: #e6e8ef;
+    --pr-primary: #2563eb;
+    --pr-success: #16a34a;
+    --pr-danger: #e11d48;
+
+    --orb-1: #4f46e5;
+    --orb-2: #14b8a6;
+    --orb-3: #a855f7;
+  }
+
+  /* Royal Aster */
+  [data-pr-theme="royal"] {
+    --pr-bg: #0e0a18;
+    --pr-fg: #efeaff;
+    --pr-card: #15122a;
+    --pr-border: #2e2954;
+    --pr-primary: #7c3aed;
+    --pr-success: #22c55e;
+    --pr-danger: #f43f5e;
+
+    --orb-1: #7c3aed;
+    --orb-2: #22d3ee;
+    --orb-3: #a78bfa;
+  }
+
+  /* Aurora Neo */
+  [data-pr-theme="aurora"] {
+    --pr-bg: #07141e;
+    --pr-fg: #e7f7ff;
+    --pr-card: #0b1b28;
+    --pr-border: #143247;
+    --pr-primary: #0ea5e9;
+    --pr-success: #35d399;
+    --pr-danger: #ff6b8b;
+
+    --orb-1: #22d3ee;
+    --orb-2: #60a5fa;
+    --orb-3: #34d399;
+  }
+
+  /* Ensure page background follows the theme as a fallback */
+  html[data-pr-theme] {
+    background-color: var(--pr-bg);
+    color: var(--pr-fg);
+  }
+}
+
+/* ---------- Components used on Premium pages ---------- */
+@layer components {
+  .pr-card {
+    background: var(--pr-card);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius);
+    box-shadow: var(--pr-shadow-md);
+  }
+
+  .pr-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1;
+    border: 1px solid transparent;
+  }
+  .pr-badge-success {
+    border-color: var(--pr-success);
+    color: var(--pr-success);
+    background: color-mix(in oklab, var(--pr-success), var(--pr-bg) 85%);
+  }
+  .pr-badge-primary {
+    border-color: var(--pr-primary);
+    color: var(--pr-primary);
+    background: color-mix(in oklab, var(--pr-primary), var(--pr-bg) 85%);
+  }
+
+  .pr-link { text-decoration: none; color: var(--pr-primary); }
+  .pr-link:hover { text-decoration: underline; }
+
+  .pr-muted { color: color-mix(in oklab, var(--pr-fg), var(--pr-bg) 45%); }
+
+  .pr-text-h2 { font-size: 28px; line-height: 1.2; font-weight: 600; }
+  .pr-text-h5 { font-size: 18px; line-height: 1.25; font-weight: 600; }
+  .pr-text-small { font-size: 12px; line-height: 1.3; }
+
+  /* Theme switcher preview dots */
+  .pr-theme-dot {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--pr-border);
+  }
+  .pr-theme-dot--carbon { background: var(--pr-preview-carbon); }
+  .pr-theme-dot--ivory  { background: var(--pr-preview-ivory); }
+  .pr-theme-dot--royal  { background: linear-gradient(135deg, var(--pr-preview-royal-start) 0%, var(--pr-preview-royal-end) 100%); }
+  .pr-theme-dot--aurora { background: linear-gradient(135deg, var(--pr-preview-aurora-start) 0%, var(--pr-preview-aurora-end) 100%); }
+}
+
+/* ---------- Cinematic animated background (shared across themes) ---------- */
+/* Rendered by <div class="lux-bg" /> inside the provider. Lives behind content. */
+.lux-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(1200px 900px at 50% 0%, color-mix(in oklab, var(--pr-fg), var(--pr-bg) 92%) 0%, transparent 60%),
+              var(--pr-bg);
+}
+
+/* Two moving color orbs + one slow aurora sheet */
+.lux-bg::before,
+.lux-bg::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+
+.lux-bg::before {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-1), transparent 40%) 0%, transparent 100%);
+  animation: lux-orb-a 28s ease-in-out infinite;
+}
+
+.lux-bg::after {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-2), transparent 45%) 0%, transparent 100%);
+  animation: lux-orb-b 32s ease-in-out infinite;
+}
+
+/* A slow “sheet” moving diagonally for depth */
+.lux-sheet {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg,
+      transparent 0%,
+      color-mix(in oklab, var(--orb-3), transparent 70%) 35%,
+      transparent 70%),
+    radial-gradient(1000px 800px at 20% 120%,
+      color-mix(in oklab, var(--orb-3), transparent 85%) 0%,
+      transparent 60%);
+  filter: blur(30px);
+  mix-blend-mode: screen;
+  opacity: .35;
+  animation: lux-sheet-move 60s linear infinite;
+}
+.lux-bg > .lux-sheet { position:absolute; }
+
+/* Keyframes */
+@keyframes lux-orb-a {
+  0%   { transform: translate(-15%, -8%) scale(1.1); }
+  25%  { transform: translate(20%, -5%)  scale(1.0); }
+  50%  { transform: translate(35%, 15%)  scale(1.15); }
+  75%  { transform: translate(-10%, 10%) scale(1.05); }
+  100% { transform: translate(-15%, -8%) scale(1.1); }
+}
+
+@keyframes lux-orb-b {
+  0%   { transform: translate(10%, 10%) scale(1.0) rotate(0deg); }
+  33%  { transform: translate(-20%, 25%) scale(1.12) rotate(60deg); }
+  66%  { transform: translate(15%, -15%) scale(1.06) rotate(120deg); }
+  100% { transform: translate(10%, 10%) scale(1.0) rotate(180deg); }
+}
+
+@keyframes lux-sheet-move {
+  0%   { transform: translate3d(-10%, 0, 0) rotate(0.0001deg); }
+  50%  { transform: translate3d(15%, -5%, 0) rotate(0.0001deg); }
+  100% { transform: translate3d(-10%, 0, 0) rotate(0.0001deg); }
+}
+
+/* Optional: add the sheet element automatically so you don't have to place it in JSX */
+.lux-bg::marker { content: ""; } /* no-op so we can use :has safely if supported */
+@supports selector(:has(*)) {
+  .lux-bg:has(*) {}
+}
+/* Create the sheet via pseudo element on the container to avoid extra DOM */
+.lux-bg::selection { background: transparent; } /* silence safari quirks */
+.lux-bg > .lux-sheet,
+.lux-bg::after,
+.lux-bg::before { will-change: transform; }
+/* ---------- Cinematic animated background (already provided earlier) ---------- */
+.lux-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(1200px 900px at 50% 0%, color-mix(in oklab, var(--pr-fg), var(--pr-bg) 92%) 0%, transparent 60%),
+              var(--pr-bg);
+}
+.lux-bg::before,
+.lux-bg::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+.lux-bg::before {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-1), transparent 40%) 0%, transparent 100%);
+  animation: lux-orb-a 28s ease-in-out infinite;
+}
+.lux-bg::after {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--orb-2), transparent 45%) 0%, transparent 100%);
+  animation: lux-orb-b 32s ease-in-out infinite;
+}
+.lux-sheet {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg,
+      transparent 0%,
+      color-mix(in oklab, var(--orb-3), transparent 70%) 35%,
+      transparent 70%),
+    radial-gradient(1000px 800px at 20% 120%,
+      color-mix(in oklab, var(--orb-3), transparent 85%) 0%,
+      transparent 60%);
+  filter: blur(30px);
+  mix-blend-mode: screen;
+  opacity: .35;
+  animation: lux-sheet-move 60s linear infinite;
+}
+@keyframes lux-orb-a {
+  0%   { transform: translate(-15%, -8%) scale(1.1); }
+  25%  { transform: translate(20%, -5%)  scale(1.0); }
+  50%  { transform: translate(35%, 15%)  scale(1.15); }
+  75%  { transform: translate(-10%, 10%) scale(1.05); }
+  100% { transform: translate(-15%, -8%) scale(1.1); }
+}
+@keyframes lux-orb-b {
+  0%   { transform: translate(10%, 10%) scale(1.0) rotate(0deg); }
+  33%  { transform: translate(-20%, 25%) scale(1.12) rotate(60deg); }
+  66%  { transform: translate(15%, -15%) scale(1.06) rotate(120deg); }
+  100% { transform: translate(10%, 10%) scale(1.0) rotate(180deg); }
+}
+@keyframes lux-sheet-move {
+  0%   { transform: translate3d(-10%, 0, 0) rotate(0.0001deg); }
+  50%  { transform: translate3d(15%, -5%, 0) rotate(0.0001deg); }
+  100% { transform: translate3d(-10%, 0, 0) rotate(0.0001deg); }
+}
+
+/* ---------- Global “Exit Premium” floating button ---------- */
+.pr-exit-btn {
+  position: fixed;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+
+  padding: .6rem .9rem;
+  border-radius: 9999px;
+  border: 1px solid var(--pr-border);
+
+  /* glassy pill that works on all themes */
+  background: color-mix(in oklab, var(--pr-card), var(--pr-bg) 20%);
+  color: var(--pr-fg);
+  box-shadow: var(--pr-shadow-md);
+  backdrop-filter: blur(8px);
+
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+
+  transition: transform .18s ease, background .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.pr-exit-btn:hover {
+  background: color-mix(in oklab, var(--pr-fg), var(--pr-bg) 94%);
+  box-shadow: var(--pr-shadow-lg);
+  transform: translateY(-1px);
+}
+.pr-exit-btn:active {
+  transform: translateY(0);
+}
+.pr-exit-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--pr-primary), transparent 60%);
+  border-color: var(--pr-primary);
+}

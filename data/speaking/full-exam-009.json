@@ -1,0 +1,30 @@
+{
+  "id": "ielts-speaking-full-009",
+  "title": "IELTS Speaking Full Mock Exam 009",
+  "part1": [
+    "How often do you spend time in nature?",
+    "Do you prefer parks, forests, or beaches?",
+    "Have you ever grown plants or vegetables?",
+    "Do you think people should spend more time outdoors?",
+    "Are there any environmental issues in your area?",
+    "How do you usually travel to natural places?"
+  ],
+  "part2": {
+    "cueCard": [
+      "Describe an environmental organisation or initiative you admire.",
+      "You should say:",
+      "• what it does",
+      "• how you learned about it",
+      "• what impact it has had",
+      "and explain why you find it admirable."
+    ],
+    "prepSec": 60,
+    "speakSec": 120
+  },
+  "part3": [
+    "Why do some people ignore environmental problems?",
+    "How can schools educate children about the environment?",
+    "Should companies be responsible for cleaning up pollution they create?",
+    "What environmental challenges do you think future generations will face?"
+  ]
+}
