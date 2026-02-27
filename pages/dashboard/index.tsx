@@ -560,7 +560,6 @@ const Dashboard: NextPage = () => {
 
   return (
     <FreeView>
-      <>
       <Head>
         <title>Dashboard — Gramor_X</title>
       </Head>
@@ -1266,7 +1265,6 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
       )}
-      </>
     </FreeView>
   );
 };
