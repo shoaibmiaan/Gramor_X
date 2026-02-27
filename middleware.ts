@@ -67,8 +67,8 @@ function assignRedirectTarget(url: URL, targetPath: string, fallbackPath: string
 }
 
 // ensure refreshed cookies from Supabase are preserved when redirecting
-function redirectWithCookies(from: NextResponse, url: URL) {
-  const r = NextResponse.redirect(url);
+function redirectWithCookies(from: NextResponse, url: URL, status?: 307 | 308) {
+  const r = NextResponse.redirect(url, status);
   // copy any cookies written to `from` (e.g., refreshed tokens) into the redirect
   for (const c of from.cookies.getAll()) r.cookies.set(c);
   return r;
@@ -144,6 +144,16 @@ export async function middleware(req: NextRequest) {
 
   const res = NextResponse.next();
   const authState = await loadAuthState(req, res);
+
+  const hostHeader = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
+  const host = hostHeader?.split(',')[0]?.trim().toLowerCase();
+
+  if (host && host.startsWith('www.')) {
+    const canonicalUrl = req.nextUrl.clone();
+    canonicalUrl.host = host.slice(4);
+    canonicalUrl.protocol = 'https:';
+    return redirectWithCookies(res, canonicalUrl, 308);
+  }
 
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
