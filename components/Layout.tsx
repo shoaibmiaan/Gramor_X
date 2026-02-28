@@ -1,4 +1,3 @@
-// components/Layout.tsx
 'use client';
 
 import React from 'react';
@@ -11,8 +10,10 @@ import FooterMini from '@/components/navigation/FooterMini';
 import QuickAccessWidget from '@/components/navigation/QuickAccessWidget';
 import HeaderMini from '@/components/navigation/HeaderMini';
 
+import { Container } from '@/components/design-system/Container';
+
 const BottomNav = dynamic(
-  () => import('@/components/navigation/BottomNav').then((m) => m.default || m),
+  () => import('@/components/navigation/BottomNav'),
   { ssr: false }
 );
 
@@ -20,18 +21,16 @@ type LayoutProps = {
   children: React.ReactNode;
 };
 
-// Mini Footer patterns
+// Route patterns (unchanged)
 const MINI_ROUTE_PATTERNS: RegExp[] = [
   /^\/(login|signup|verify|reset|onboarding)/,
   /^\/(dashboard|account|speaking|listening|reading|writing|ai|partners|admin|mock)(\/|$)/,
 ];
 
-// Hide bottom nav
 const HIDE_BOTTOM_NAV_PATTERNS: RegExp[] = [
   /^\/(login|signup|verify|reset|admin)(\/|$)/,
 ];
 
-// ✅ HEADER MINI ONLY FOR /mock + ALL CHILD ROUTES
 const HEADER_MINI_FOR_MOCK_ONLY: RegExp[] = [
   /^\/mock(?:\/.*)?$/,
 ];
@@ -46,20 +45,24 @@ export default function Layout({ children }: LayoutProps) {
   const showBottomNav = !matches(HIDE_BOTTOM_NAV_PATTERNS, pathname);
   const isMockRoute = matches(HEADER_MINI_FOR_MOCK_ONLY, pathname);
 
-  // Debug ke liye chaho to ye 2 line temporarily dal ke dekh sakte ho:
-  // console.log('[LAYOUT] pathname', pathname, 'isMockRoute', isMockRoute);
-
   return (
     <>
+      {/* Accessible skip link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only fixed top-4 left-4 z-50 bg-background px-4 py-2 rounded-ds-xl border border-border shadow-sm focus:ring-2 focus:ring-primary"
+      >
+        Skip to main content
+      </a>
+
       <a id="top" aria-hidden="true" />
 
       {isMockRoute ? <HeaderMini /> : <Header />}
 
-      <main
-        id="main-content"
-        className="min-h-[60vh] pt-safe pb-[calc(env(safe-area-inset-bottom,0px)+72px)] md:pb-16 lg:pb-20"
-      >
-        {children}
+      <main id="main-content" className="min-h-screen bg-surface">
+        <Container className="py-8 md:py-12 lg:py-16">
+          {children}
+        </Container>
       </main>
 
       {useMiniFooter ? <FooterMini /> : <Footer />}

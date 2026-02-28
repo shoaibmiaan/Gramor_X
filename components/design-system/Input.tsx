@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Loader2 } from 'lucide-react'; // or your icon library
 
 const cx = (...xs: Array<string | false | null | undefined>) => xs.filter(Boolean).join(' ');
 
@@ -17,34 +18,34 @@ export type InputProps = Readonly<
     variant?: FieldVariant;
     leftSlot?: React.ReactNode;
     rightSlot?: React.ReactNode;
+    isLoading?: boolean;
   }
 >;
 
 const sizeMap: Record<FieldSize, string> = {
   sm: 'h-9 px-3 text-small rounded-ds-lg',
-  md: 'h-11 px-4 text-base rounded-ds-xl',
+  md: 'h-10 px-4 text-base rounded-ds-xl',   // 40px = guideline min height
   lg: 'h-12 px-5 text-base rounded-ds-2xl',
 };
 
 const baseInput =
   'w-full border border-border bg-input text-foreground placeholder:text-muted-foreground/70 ' +
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ' +
-  'focus-visible:ring-offset-1 ring-offset-background transition-shadow';
+  'focus-visible:ring-offset-2 ring-offset-background transition-all';
 
 const variantMap: Record<FieldVariant, string> = {
-  solid: baseInput,
+  solid: baseInput + ' hover:border-primary/40 hover:bg-accent/30',
   subtle:
     'w-full border border-transparent bg-card text-foreground placeholder:text-muted-foreground/70 ' +
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ' +
-    'focus-visible:ring-offset-1 ring-offset-background transition-shadow',
+    'focus-visible:ring-offset-2 ring-offset-background transition-all hover:bg-accent/30',
   ghost:
     'w-full border border-transparent bg-transparent text-foreground placeholder:text-muted-foreground/70 ' +
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ' +
-    'focus-visible:ring-offset-1 ring-offset-background transition-shadow',
+    'focus-visible:ring-offset-2 ring-offset-background transition-all hover:bg-accent/20',
   underline:
-    'w-full border-0 border-b border-border rounded-none bg-transparent text-foreground ' +
-    'placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-0 ' +
-    'focus-visible:border-primary transition-shadow',
+    'w-full border-0 border-b border-border bg-transparent text-foreground placeholder:text-muted-foreground/70 ' +
+    'focus-visible:outline-none focus-visible:border-primary focus-visible:ring-0 transition-all hover:border-primary/60',
 };
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -63,6 +64,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       rightSlot,
       disabled,
       readOnly,
+      isLoading = false,
       ...props
     },
     ref
@@ -73,11 +75,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const resolvedHint = helperText ?? hint;
     const hintId = resolvedHint ? `${inputId}-hint` : undefined;
     const errorId = error ? `${inputId}-error` : undefined;
-    const describedBy =
-      [error ? errorId : null, resolvedHint ? hintId : null].filter(Boolean).join(' ') || undefined;
+    const describedBy = [errorId, hintId].filter(Boolean).join(' ') || undefined;
 
     const hasLeft = Boolean(leftSlot);
-    const hasRight = Boolean(rightSlot);
+    const hasRight = Boolean(rightSlot) || isLoading;
 
     return (
       <div className="w-full">
@@ -103,25 +104,31 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             aria-invalid={Boolean(error) || undefined}
             aria-describedby={describedBy}
-            required={required}
+            aria-required={required}
+            disabled={disabled || isLoading}
             readOnly={readOnly}
-            disabled={disabled}
-            // iOS zoom guard
             className={cx(
-              'text-[16px]',
+              'text-[16px]', // iOS zoom guard
               variantMap[variant],
               sizeMap[size],
-              hasLeft && (size === 'sm' ? 'pl-8' : size === 'md' ? 'pl-10' : 'pl-11'),
-              hasRight && (size === 'sm' ? 'pr-8' : size === 'md' ? 'pr-10' : 'pr-11'),
-              disabled && 'opacity-60 cursor-not-allowed',
+              hasLeft && (size === 'sm' ? 'pl-9' : size === 'md' ? 'pl-10' : 'pl-11'),
+              hasRight && (size === 'sm' ? 'pr-9' : size === 'md' ? 'pr-10' : 'pr-11'),
+              disabled && 'opacity-60 cursor-not-allowed bg-muted/50',
+              readOnly && 'bg-muted/30 cursor-default',
               error && 'border-sunsetOrange focus-visible:ring-0 focus-visible:border-sunsetOrange',
               className
             )}
             {...props}
           />
 
-          {hasRight && (
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+          {isLoading && (
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </span>
+          )}
+
+          {!isLoading && hasRight && (
+            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
               {rightSlot}
             </span>
           )}
