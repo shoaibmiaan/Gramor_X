@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev\" \"npm:dev:premium\"",
+    "dev": "concurrently \"npm:dev:next\" \"npm:dev:premium\"",
     "dev:premium": "tailwindcss -i ./styles/premium.css -c tailwind.config.premium.js -o ./public/premium.css --watch",
     "dev:3001": "next dev -p 3001 -H 0.0.0.0",
     "build": "npm run routes:gen && npm run build:premium && node ./scripts/next-build.mjs",
@@ -49,7 +49,8 @@
     "lh:summary": "node scripts/lh-extract.mjs",
     "prepare": "husky",
     "replace-createClient": "node replace-createClient.js",
-    "lhci": "lhci autorun --config=.lighthouserc.json"
+    "lhci": "lhci autorun --config=.lighthouserc.json",
+    "dev:next": "node scripts/dev-next.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.916.0",
