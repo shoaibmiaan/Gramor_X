@@ -1,8 +1,7 @@
 // pages/index.tsx
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -178,7 +177,7 @@ const plans = [
   {
     id: 'rocket',
     name: 'Rocket',
-    price: 'Best for 6.5 → 7.5+',
+    price: '$19/month · Best for 6.5 → 7.5+',
     tag: 'Most popular',
     bullets: [
       'Deeper AI writing + speaking feedback',
@@ -201,6 +200,74 @@ const plans = [
 ];
 
 const LandingPage: React.FC = () => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [waitlistForm, setWaitlistForm] = useState({ email: '', targetBand: '' });
+  const [waitlistState, setWaitlistState] = useState({ loading: false, error: '', success: '' });
+
+  const launchDate = useMemo(() => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + ((4 - date.getUTCDay() + 7) % 7 || 7));
+    date.setUTCHours(12, 0, 0, 0);
+    return date;
+  }, []);
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const diff = launchDate.getTime() - Date.now();
+
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [launchDate]);
+
+  const handleWaitlistSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setWaitlistState({ loading: false, error: '', success: '' });
+
+    const email = waitlistForm.email.trim();
+    const targetBand = waitlistForm.targetBand.trim();
+    const isValidEmail = /^\S+@\S+\.\S+$/.test(email);
+    const isValidBand = /^([0-8](\.0|\.5)?|9(\.0)?)$/.test(targetBand);
+
+    if (!isValidEmail) {
+      setWaitlistState({ loading: false, error: 'Please enter a valid email address.', success: '' });
+      return;
+    }
+
+    if (!isValidBand) {
+      setWaitlistState({
+        loading: false,
+        error: 'Enter an IELTS target band from 0.0 to 9.0 (in 0.5 steps).',
+        success: '',
+      });
+      return;
+    }
+
+    setWaitlistState({ loading: true, error: '', success: '' });
+    await new Promise((resolve) => setTimeout(resolve, 900));
+
+    setWaitlistState({
+      loading: false,
+      error: '',
+      success: 'You are on the waitlist. We will email you when your cohort opens.',
+    });
+    setWaitlistForm({ email: '', targetBand: '' });
+  };
+
   return (
     <>
       <Head>
@@ -256,12 +323,7 @@ const LandingPage: React.FC = () => {
                   >
                     <Link href="/signup">Start free practice</Link>
                   </Button>
-                  <Button
-                    asChild
-                    variant="secondary"
-                    size="lg"
-                    className="rounded-ds-2xl px-6"
-                  >
+                  <Button asChild variant="ghost" size="lg" className="rounded-ds-2xl px-6">
                     <Link href="/login?next=/dashboard">View my dashboard</Link>
                   </Button>
                 </div>
@@ -283,7 +345,7 @@ const LandingPage: React.FC = () => {
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                         Vocabulary spotlight
                       </p>
-                      <h2 className="font-slab text-h3">Word of the day</h2>
+                      <h3 className="font-slab text-h3">Word of the day</h3>
                     </div>
                     <Badge variant="accent" size="sm">
                       Lexical Resource
@@ -341,26 +403,38 @@ const LandingPage: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-slab text-h3 leading-none">7 days</p>
+                      <p className="font-slab text-h3 leading-none">{timeLeft.days} days</p>
                       <p className="text-xs text-muted-foreground">until next public batch</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs text-muted-foreground">
+                  <div
+                    className="mt-4 grid grid-cols-4 gap-2 text-center text-xs text-muted-foreground"
+                    aria-live="polite"
+                    aria-label={`Time until next batch opens: ${timeLeft.days} days, ${timeLeft.hours} hours, ${timeLeft.minutes} minutes, ${timeLeft.seconds} seconds`}
+                  >
                     <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">07</div>
+                      <div className="font-semibold text-foreground">
+                        {String(timeLeft.days).padStart(2, '0')}
+                      </div>
                       <div>Days</div>
                     </div>
                     <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">16</div>
+                      <div className="font-semibold text-foreground">
+                        {String(timeLeft.hours).padStart(2, '0')}
+                      </div>
                       <div>Hours</div>
                     </div>
                     <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">45</div>
+                      <div className="font-semibold text-foreground">
+                        {String(timeLeft.minutes).padStart(2, '0')}
+                      </div>
                       <div>Min</div>
                     </div>
                     <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">30</div>
+                      <div className="font-semibold text-foreground">
+                        {String(timeLeft.seconds).padStart(2, '0')}
+                      </div>
                       <div>Sec</div>
                     </div>
                   </div>
@@ -395,19 +469,19 @@ const LandingPage: React.FC = () => {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {quickLinks.map((item) => (
-                <Card
+                <Link
                   key={item.href}
-                  className="group flex h-full cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg"
+                  href={item.href}
+                  className="group block rounded-ds-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  aria-label={`${item.label}: ${item.description}`}
                 >
-                  <Link href={item.href} className="flex h-full flex-col gap-3">
+                  <Card className="flex h-full cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg group-focus-visible:border-primary group-focus-visible:ring-2 group-focus-visible:ring-primary/60">
                     <div className="flex items-start gap-3">
                       <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                         <Icon name={item.icon} size={18} />
                       </span>
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">
-                          {item.label}
-                        </p>
+                        <p className="text-sm font-semibold text-foreground">{item.label}</p>
                         <p className="text-xs text-muted-foreground">{item.description}</p>
                       </div>
                     </div>
@@ -415,8 +489,8 @@ const LandingPage: React.FC = () => {
                       Open
                       <Icon name="ArrowRight" size={14} className="ml-1" />
                     </span>
-                  </Link>
-                </Card>
+                  </Card>
+                </Link>
               ))}
             </div>
           </Container>
@@ -441,60 +515,53 @@ const LandingPage: React.FC = () => {
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {modules.map((mod) => (
-                <Card
+                <Link
                   key={mod.id}
-                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg"
+                  href={mod.href}
+                  className="group block rounded-ds-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  aria-label={`Open module: ${mod.title}`}
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-                          <Icon name={mod.icon} size={22} />
-                        </span>
-                        <div>
-                          <h3 className="font-semibold text-lg text-foreground">
-                            {mod.title}
-                          </h3>
-                          <p className="text-xs text-muted-foreground">{mod.description}</p>
+                  <Card className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg group-focus-visible:border-primary group-focus-visible:ring-2 group-focus-visible:ring-primary/60">
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                            <Icon name={mod.icon} size={22} />
+                          </span>
+                          <div>
+                            <h3 className="font-semibold text-lg text-foreground">{mod.title}</h3>
+                            <p className="text-xs text-muted-foreground">{mod.description}</p>
+                          </div>
                         </div>
+                        <Badge
+                          size="xs"
+                          variant={
+                            mod.statusTone === 'success'
+                              ? 'success'
+                              : mod.statusTone === 'accent'
+                              ? 'accent'
+                              : 'neutral'
+                          }
+                        >
+                          {mod.status}
+                        </Badge>
                       </div>
-                      <Badge
-                        size="xs"
-                        variant={
-                          mod.statusTone === 'success'
-                            ? 'success'
-                            : mod.statusTone === 'accent'
-                            ? 'accent'
-                            : 'neutral'
-                        }
-                      >
-                        {mod.status}
-                      </Badge>
+
+                      <ul className="space-y-2 text-xs text-muted-foreground">
+                        {mod.bullets.map((b) => (
+                          <li key={b} className="flex items-start gap-2">
+                            <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
+                              <Icon name="Check" size={10} />
+                            </span>
+                            <span>{b}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
 
-                    <ul className="space-y-2 text-xs text-muted-foreground">
-                      {mod.bullets.map((b) => (
-                        <li key={b} className="flex items-start gap-2">
-                          <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
-                            <Icon name="Check" size={10} />
-                          </span>
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-4">
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="secondary"
-                      className="w-full rounded-ds-xl"
-                    >
-                      <Link href={mod.href}>Open {mod.title}</Link>
-                    </Button>
-                  </div>
-                </Card>
+                    <div className="pt-4 text-xs font-medium text-primary">Open {mod.title} →</div>
+                  </Card>
+                </Link>
               ))}
             </div>
           </Container>
@@ -611,7 +678,7 @@ const LandingPage: React.FC = () => {
                       className="w-full rounded-ds-xl"
                     >
                       <Link href="/pricing">
-                        {plan.id === 'free' ? 'Stay on Free' : 'See plan details'}
+                        {plan.id === 'free' ? 'Choose Free' : 'See plan details'}
                       </Link>
                     </Button>
                   </div>
@@ -645,38 +712,64 @@ const LandingPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="grid gap-3 md:grid-cols-1">
+                  <form className="grid gap-3 md:grid-cols-1" onSubmit={handleWaitlistSubmit} noValidate>
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-medium text-muted-foreground">
+                      <label htmlFor="waitlist-email" className="text-xs font-medium text-muted-foreground">
                         Email
                       </label>
                       <input
+                        id="waitlist-email"
                         type="email"
+                        value={waitlistForm.email}
+                        onChange={(event) =>
+                          setWaitlistForm((previous) => ({ ...previous, email: event.target.value }))
+                        }
                         className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                         placeholder="you@example.com"
+                        required
                       />
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-medium text-muted-foreground">
+                      <label htmlFor="waitlist-target-band" className="text-xs font-medium text-muted-foreground">
                         Target IELTS band
                       </label>
                       <input
+                        id="waitlist-target-band"
                         type="text"
+                        value={waitlistForm.targetBand}
+                        onChange={(event) =>
+                          setWaitlistForm((previous) => ({ ...previous, targetBand: event.target.value }))
+                        }
                         className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
                         placeholder="e.g. 7.0, 7.5, 8.0"
+                        inputMode="numeric"
+                        pattern="([0-8](\.0|\.5)?|9(\.0)?)"
+                        required
                       />
                     </div>
                     <Button
-                      type="button"
+                      type="submit"
                       variant="accent"
                       className="mt-1 w-full rounded-ds-xl"
+                      loading={waitlistState.loading}
+                      loadingText="Joining…"
                     >
                       Join waitlist
                     </Button>
+                    {waitlistState.error ? (
+                      <p className="text-xs text-danger" role="alert">
+                        {waitlistState.error}
+                      </p>
+                    ) : null}
+                    {waitlistState.success ? (
+                      <p className="text-xs text-success" role="status">
+                        {waitlistState.success}
+                      </p>
+                    ) : null}
                     <p className="text-[11px] text-muted-foreground">
                       No spam. We’ll only email when your batch is actually opening.
                     </p>
-                  </div>
+                  </form>
                 </div>
               </div>
             </Card>
