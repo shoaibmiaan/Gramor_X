@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { getServerClient } from '@/lib/supabaseServer';
 import { generatePlanFromAI } from '@/lib/ai/studyPlanGenerator';
 import { upsertOnboardingSession, upsertUserPreferences } from '@/lib/repositories/profileRepository';
-import { createAiRecommendation } from '@/lib/repositories/aiRepository';
+import { createAiDiagnostic, createAiRecommendation } from '@/lib/repositories/aiRepository';
 import { env } from '@/lib/env';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const RegenerateSchema = z.object({
   targetBand: z.number().min(4).max(9).optional(),
@@ -31,6 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const log = createDomainLogger('/api/ai/study-plan/regenerate');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -110,10 +112,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         modelVersion: env.OPENAI_MODEL ?? 'fallback-model',
         expiresAt: plusDaysIso(30),
       }),
+      createAiDiagnostic(
+        supabase as any,
+        user.id,
+        'study_plan_regeneration',
+        { targetBand: input.targetBand, learningStyle: input.learningStyle },
+        env.OPENAI_MODEL ?? 'fallback-model',
+      ),
     ]);
 
+    log.info('ai.recommendation.regenerated', { userId: user.id, type: 'study_plan_regeneration', targetBand: input.targetBand });
     return res.status(200).json({ plan });
   } catch (error) {
+    log.error('ai.recommendation.regenerated', { userId: user.id, error: error instanceof Error ? error.message : 'unknown' });
     console.error('Regeneration error:', error);
     return res.status(500).json({ error: 'Failed to regenerate study plan' });
   }

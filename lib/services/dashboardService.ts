@@ -9,7 +9,16 @@ export type DashboardAggregate = {
   lastScoreAt: string | null;
   streakDays: number;
   lastActivityDate: string | null;
-  recommendations: Array<{ id: string; type: string; priority: number; content: Record<string, unknown>; modelVersion: string | null; createdAt: string | null; expiresAt: string | null; consumedAt: string | null }>; 
+  recommendations: Array<{
+    id: string;
+    type: string;
+    priority: number;
+    content: Record<string, unknown>;
+    modelVersion: string | null;
+    createdAt: string | null;
+    expiresAt: string | null;
+    consumedAt: string | null;
+  }>;
   subscription: { planId: string; status: string | null };
   progress: {
     recommendationsCount: number;
@@ -18,10 +27,34 @@ export type DashboardAggregate = {
   };
 };
 
+type CacheEntry = { value: DashboardAggregate; expiresAt: number };
+const CACHE_TTL_MS = 30_000;
+const dashboardCache = new Map<string, CacheEntry>();
+
+function readCache(userId: string): DashboardAggregate | null {
+  const hit = dashboardCache.get(userId);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) {
+    dashboardCache.delete(userId);
+    return null;
+  }
+  return hit.value;
+}
+
+function writeCache(userId: string, value: DashboardAggregate) {
+  dashboardCache.set(userId, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
 export async function getDashboardAggregate(
   client: SupabaseClient<any, 'public', any>,
   userId: string,
+  opts?: { skipCache?: boolean },
 ): Promise<DashboardAggregate> {
+  if (!opts?.skipCache) {
+    const cached = readCache(userId);
+    if (cached) return cached;
+  }
+
   const [scoreRes, streakRes, recsRes, subscription] = await Promise.all([
     getLatestUserScore(client as any, userId),
     getLatestStreakLog(client as any, userId),
@@ -44,7 +77,7 @@ export async function getDashboardAggregate(
   const confidence: DashboardAggregate['progress']['scoreConfidence'] =
     currentBand == null ? 'low' : currentBand >= 7 ? 'high' : 'medium';
 
-  return {
+  const aggregate: DashboardAggregate = {
     currentBand,
     currentScore: scoreRes.data?.score == null ? null : Number(scoreRes.data.score),
     lastScoreAt: scoreRes.data?.occurred_at ?? null,
@@ -61,4 +94,7 @@ export async function getDashboardAggregate(
       scoreConfidence: confidence,
     },
   };
+
+  writeCache(userId, aggregate);
+  return aggregate;
 }

@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { getServerClient } from '@/lib/supabaseServer';
 import { generatePlanFromAI } from '@/lib/ai/studyPlanGenerator';
 import type { StudyPlan } from '@/types/study-plan';
-import { createAiRecommendation } from '@/lib/repositories/aiRepository';
+import { createAiDiagnostic, createAiRecommendation } from '@/lib/repositories/aiRepository';
 import { env } from '@/lib/env';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const GenerateSchema = z.object({
   targetBand: z.number().min(4).max(9),
@@ -29,6 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const log = createDomainLogger('/api/ai/study-plan/generate');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -86,8 +88,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       expiresAt: plusDaysIso(30),
     });
 
+    await createAiDiagnostic(
+      supabase as any,
+      user.id,
+      'study_plan_generation',
+      { targetBand, learningStyle, baselineScores },
+      env.OPENAI_MODEL ?? 'fallback-model',
+    );
+
+    log.info('ai.recommendation.generated', { userId: user.id, type: 'study_plan', targetBand });
     return res.status(200).json({ plan });
   } catch (error) {
+    log.error('ai.recommendation.generated', { userId: user.id, error: error instanceof Error ? error.message : 'unknown' });
     console.error('Plan generation error:', error);
     return res.status(500).json({ error: 'Failed to generate study plan' });
   }

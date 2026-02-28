@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { getServerClient } from '@/lib/supabaseServer';
 import { upsertNotificationSettings, upsertOnboardingSession } from '@/lib/repositories/profileRepository';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const Body = z.object({
   step: z
@@ -67,6 +68,7 @@ export default async function handler(
     );
   }
 
+  const log = createDomainLogger('/api/onboarding/complete');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -112,5 +114,6 @@ export default async function handler(
     // The client can refresh the session manually.
   }
 
+  log.info('onboarding.completed', { userId: user.id, step, channels: channels ?? [] });
   return res.status(200).json({ ok: true });
 }

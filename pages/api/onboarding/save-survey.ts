@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { getServerClient } from '@/lib/supabaseServer';
 import { upsertOnboardingSession, upsertUserPreferences } from '@/lib/repositories/profileRepository';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const SurveySchema = z.object({
   targetBand: z.number().min(4).max(9),
@@ -23,6 +24,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const log = createDomainLogger('/api/onboarding/save-survey');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -66,5 +68,6 @@ export default async function handler(
     return res.status(500).json({ error: 'Failed to save survey data' });
   }
 
+  log.info('onboarding.survey_saved', { userId: user.id, targetBand, learningStyle });
   return res.status(200).json({ success: true });
 }
