@@ -145,12 +145,13 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const authState = await loadAuthState(req, res);
 
-  const hostHeader = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
-  const host = hostHeader?.split(',')[0]?.trim().toLowerCase();
+  // Use the resolved request hostname to avoid redirect loops caused by
+  // upstream/proxy forwarding headers that may preserve the original host.
+  const host = req.nextUrl.hostname.trim().toLowerCase();
 
-  if (host && host.startsWith('www.')) {
+  if (host.startsWith('www.')) {
     const canonicalUrl = req.nextUrl.clone();
-    canonicalUrl.host = host.slice(4);
+    canonicalUrl.hostname = host.slice(4);
     canonicalUrl.protocol = 'https:';
     return redirectWithCookies(res, canonicalUrl, 308);
   }
