@@ -1,3 +1,4 @@
+// components/Layout.tsx
 'use client';
 
 import React from 'react';
@@ -21,7 +22,7 @@ type LayoutProps = {
   children: React.ReactNode;
 };
 
-// Route patterns (unchanged)
+// Route patterns (unchanged from your version)
 const MINI_ROUTE_PATTERNS: RegExp[] = [
   /^\/(login|signup|verify|reset|onboarding)/,
   /^\/(dashboard|account|speaking|listening|reading|writing|ai|partners|admin|mock)(\/|$)/,
@@ -50,7 +51,7 @@ export default function Layout({ children }: LayoutProps) {
       {/* Accessible skip link */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only fixed top-4 left-4 z-50 bg-background px-4 py-2 rounded-ds-xl border border-border shadow-sm focus:ring-2 focus:ring-primary"
+        className="sr-only focus:not-sr-only fixed top-4 left-4 z-50 bg-background px-4 py-2 rounded-2xl border border-border shadow-sm focus:ring-2 focus:ring-primary"
       >
         Skip to main content
       </a>
@@ -59,7 +60,10 @@ export default function Layout({ children }: LayoutProps) {
 
       {isMockRoute ? <HeaderMini /> : <Header />}
 
-      <main id="main-content" className="min-h-screen bg-surface">
+      <main
+        id="main-content"
+        className="min-h-screen bg-background dark:bg-darker"
+      >
         <Container className="py-8 md:py-12 lg:py-16">
           {children}
         </Container>
