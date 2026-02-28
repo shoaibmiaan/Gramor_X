@@ -15,7 +15,14 @@ const DashboardPage: NextPage = () => {
   const { aggregate } = useDashboardAggregate(true);
 
   const recommendations = (aggregate?.recommendations ?? [])
-    .map((item) => item.content?.summary)
+    .map((item) => {
+      const summary = item.content?.summary;
+      const title = item.content?.title;
+      const fallback = `Recommendation (${item.type})`;
+      if (typeof summary === 'string' && summary.length > 0) return summary;
+      if (typeof title === 'string' && title.length > 0) return title;
+      return fallback;
+    })
     .filter((value): value is string => typeof value === 'string' && value.length > 0);
 
   const currentBand = aggregate?.currentBand == null ? '—' : aggregate.currentBand.toFixed(1);

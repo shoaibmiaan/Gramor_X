@@ -2,6 +2,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { getServerClient } from '@/lib/supabaseServer';
 import { generatePlanFromAI } from '@/lib/ai/studyPlanGenerator';
+import { upsertOnboardingSession, upsertUserPreferences } from '@/lib/repositories/profileRepository';
+import { createAiRecommendation } from '@/lib/repositories/aiRepository';
+import { env } from '@/lib/env';
 
 const RegenerateSchema = z.object({
   targetBand: z.number().min(4).max(9).optional(),
@@ -17,10 +20,13 @@ const RegenerateSchema = z.object({
   learningStyle: z.enum(['video', 'tips', 'practice', 'flashcards']).optional(),
 });
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+function plusDaysIso(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -40,25 +46,28 @@ export default async function handler(
     return res.status(400).json({ error: 'Invalid payload', details: parse.error.flatten() });
   }
 
-  // Fetch current profile to get missing fields if not provided
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('target_band, exam_date, baseline_scores, learning_style')
-    .eq('user_id', user.id)
-    .single();
-
-  if (profileError || !profile) {
-    return res.status(404).json({ error: 'Profile not found' });
-  }
+  const [prefsRes, onboardingRes] = await Promise.all([
+    supabase
+      .from('user_preferences')
+      .select('goal_band, exam_date, learning_style')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('onboarding_sessions')
+      .select('payload')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<{ payload: { baseline_scores?: Record<string, number> } | null }>(),
+  ]);
 
   const input = {
-    targetBand: parse.data.targetBand ?? profile.target_band,
-    examDate: parse.data.examDate ?? profile.exam_date,
-    baselineScores: parse.data.baselineScores ?? profile.baseline_scores,
-    learningStyle: parse.data.learningStyle ?? profile.learning_style,
+    targetBand: parse.data.targetBand ?? prefsRes.data?.goal_band ?? null,
+    examDate: parse.data.examDate ?? prefsRes.data?.exam_date ?? null,
+    baselineScores: parse.data.baselineScores ?? onboardingRes.data?.payload?.baseline_scores ?? null,
+    learningStyle: parse.data.learningStyle ?? prefsRes.data?.learning_style ?? null,
   };
 
-  // Validate required fields
   if (!input.targetBand || !input.baselineScores || !input.learningStyle) {
     return res.status(400).json({ error: 'Insufficient data to regenerate plan' });
   }
@@ -66,40 +75,42 @@ export default async function handler(
   try {
     const plan = await generatePlanFromAI(input);
 
-    // Insert new plan as active
-    const { error: insertError } = await supabase
-      .from('user_study_plans')
-      .insert({
-        user_id: user.id,
-        plan,
-        generated_at: new Date().toISOString(),
-        active: true,
-      });
+    await supabase.from('user_study_plans').update({ active: false }).eq('user_id', user.id).eq('active', true);
 
-    if (insertError) {
-      throw insertError;
-    }
+    const { error: insertError } = await supabase.from('user_study_plans').insert({
+      user_id: user.id,
+      plan,
+      generated_at: new Date().toISOString(),
+      active: true,
+    });
 
-    // Deactivate previous plans
-    await supabase
-      .from('user_study_plans')
-      .update({ active: false })
-      .eq('user_id', user.id)
-      .neq('active', true); // safer: update all where active = true except the new one (but we don't have ID yet). Alternative: update all and rely on the newest active.
+    if (insertError) throw insertError;
 
-    // Better: set all to false, then the new one is active
-    await supabase
-      .from('user_study_plans')
-      .update({ active: false })
-      .eq('user_id', user.id);
-
-    // Now set the new one active
-    await supabase
-      .from('user_study_plans')
-      .update({ active: true })
-      .eq('user_id', user.id)
-      .order('generated_at', { ascending: false })
-      .limit(1);
+    await Promise.all([
+      upsertUserPreferences(supabase as any, user.id, {
+        goal_band: input.targetBand,
+        exam_date: input.examDate,
+        learning_style: input.learningStyle,
+      }),
+      upsertOnboardingSession(supabase as any, user.id, {
+        payload: {
+          baseline_scores: input.baselineScores,
+          regenerated_at: new Date().toISOString(),
+        },
+      }),
+      createAiRecommendation(supabase as any, {
+        userId: user.id,
+        type: 'study_plan_regeneration',
+        priority: 5,
+        content: {
+          summary: 'Your study plan was regenerated using your latest profile and onboarding signals.',
+          sequence: ['reading', 'writing', 'listening', 'speaking'],
+          targetBand: input.targetBand,
+        },
+        modelVersion: env.OPENAI_MODEL ?? 'fallback-model',
+        expiresAt: plusDaysIso(30),
+      }),
+    ]);
 
     return res.status(200).json({ plan });
   } catch (error) {

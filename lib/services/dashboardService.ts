@@ -9,7 +9,7 @@ export type DashboardAggregate = {
   lastScoreAt: string | null;
   streakDays: number;
   lastActivityDate: string | null;
-  recommendations: Array<{ id: string; type: string; priority: number; content: Record<string, unknown> }>;
+  recommendations: Array<{ id: string; type: string; priority: number; content: Record<string, unknown>; modelVersion: string | null; createdAt: string | null; expiresAt: string | null; consumedAt: string | null }>; 
   subscription: { planId: string; status: string | null };
   progress: {
     recommendationsCount: number;
@@ -34,6 +34,10 @@ export async function getDashboardAggregate(
     type: String(row.type ?? 'study_plan'),
     priority: Number(row.priority ?? 1),
     content: (row.content ?? {}) as Record<string, unknown>,
+    modelVersion: row.model_version == null ? null : String(row.model_version),
+    createdAt: row.created_at == null ? null : String(row.created_at),
+    expiresAt: row.expires_at == null ? null : String(row.expires_at),
+    consumedAt: row.consumed_at == null ? null : String(row.consumed_at),
   }));
 
   const currentBand = scoreRes.data?.band == null ? null : Number(scoreRes.data.band);
