@@ -13,7 +13,7 @@ import { Input } from '@/components/design-system/Input';
 import Icon, { type IconName } from '@/components/design-system/Icon';
 
 // ────────────────────────────────────────────────
-// Data
+// Data (kept exactly as in your current version)
 // ────────────────────────────────────────────────
 
 const modules = [
@@ -222,10 +222,11 @@ export default function LandingPage() {
         <section className="py-16">
           <Container>
             <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr] lg:items-center">
+              {/* Left side */}
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-full bg-card/70 px-3 py-1 text-xs font-medium text-muted ring-1 ring-border/60">
                   <span className="inline-flex size-5 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon name="Sparkles" size={16} />
+                    <Icon name="Sparkles" size={20} />
                   </span>
                   <span>Private beta • IELTS four modules + AI Lab</span>
                 </div>
@@ -250,10 +251,20 @@ export default function LandingPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-4 pt-4">
-                  <Button asChild variant="primary" size="lg" className="rounded-2xl px-6">
+                  <Button
+                    asChild
+                    variant="primary"
+                    size="lg"
+                    className="rounded-2xl px-8"
+                  >
                     <Link href="/signup">Start free practice</Link>
                   </Button>
-                  <Button asChild variant="secondary" size="lg" className="rounded-2xl px-6">
+                  <Button
+                    asChild
+                    variant="secondary"
+                    size="lg"
+                    className="rounded-2xl px-8"
+                  >
                     <Link href="/login?next=/dashboard">View my dashboard</Link>
                   </Button>
                 </div>
@@ -263,19 +274,19 @@ export default function LandingPage() {
                     <Icon name="ShieldCheck" size={20} /> No-card free tier
                   </span>
                   <span>•</span>
-                  <span>AI usage is capped on Free and unlocked on Rocket</span>
+                  <span>AI usage capped on Free • unlocked on Rocket</span>
                 </div>
               </div>
 
+              {/* Right side - Vocabulary Spotlight */}
               <div className="space-y-6">
-                {/* Word of the Day Card */}
                 <Card className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                         Vocabulary spotlight
                       </p>
-                      <h2 className="font-slab text-h3 mt-1">Word of the day</h2>
+                      <h2 className="mt-1 font-slab text-h3">Word of the day</h2>
                     </div>
                     <Badge variant="accent" size="sm">
                       Lexical Resource
@@ -293,7 +304,7 @@ export default function LandingPage() {
                       </p>
                     </div>
 
-                    <p className="border-l-2 border-primary/40 pl-3 text-small text-primary/90 dark:text-primary">
+                    <p className="border-l-2 border-primary/40 pl-3 text-small text-primary/90">
                       “Finding a platform that understood my exact band goal felt like pure serendipity.”
                     </p>
 
@@ -303,53 +314,15 @@ export default function LandingPage() {
                       <span>Useful in Speaking Part 1 & Writing Task 2</span>
                     </div>
 
-                    <div>
-                      <Button asChild size="sm" variant="secondary" className="rounded-2xl">
-                        <Link href="/vocabulary">Take 60-second vocab quiz</Link>
-                      </Button>
-                    </div>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="secondary"
+                      className="rounded-2xl"
+                    >
+                      <Link href="/vocabulary">Take 60-second vocab quiz</Link>
+                    </Button>
                   </div>
-                </Card>
-
-                {/* Next launch window Card */}
-                <Card className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-                        Next launch window
-                      </p>
-                      <p className="text-small text-muted">
-                        We onboard small cohorts so support never feels like a ticketing system.
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-slab text-h3 leading-none">7 days</p>
-                      <p className="text-xs text-muted">until next public batch</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-4 gap-2 text-center text-xs text-muted">
-                    <div className="rounded-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">07</div>
-                      <div>Days</div>
-                    </div>
-                    <div className="rounded-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">16</div>
-                      <div>Hours</div>
-                    </div>
-                    <div className="rounded-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">45</div>
-                      <div>Min</div>
-                    </div>
-                    <div className="rounded-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">30</div>
-                      <div>Sec</div>
-                    </div>
-                  </div>
-
-                  <p className="mt-4 text-xs text-muted">
-                    Join the waitlist now and we’ll reserve early-bird pricing for you when the batch opens.
-                  </p>
                 </Card>
               </div>
             </div>
@@ -359,23 +332,18 @@ export default function LandingPage() {
         {/* PORTAL HUB */}
         <section className="py-16 bg-muted/30">
           <Container>
-            <div className="mb-8 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="font-slab text-h2">Portal hub</h2>
-                <p className="mt-1 text-body text-muted">
-                  From this page, you can jump to any core area — dashboard, modules, AI Lab, billing, or onboarding.
-                </p>
-              </div>
-              <Badge variant="neutral" size="sm">
-                All navigation lives here
-              </Badge>
+            <div className="mb-8">
+              <h2 className="font-slab text-h2">Portal hub</h2>
+              <p className="mt-2 text-body text-muted">
+                Jump to dashboard, modules, AI Lab, billing or onboarding from here.
+              </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {quickLinks.map((item) => (
                 <Card
                   key={item.href}
-                  className="group flex h-full flex-col rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+                  className="group h-full rounded-2xl border border-border/60 bg-card p-6 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
                 >
                   <Link href={item.href} className="flex h-full flex-col gap-4">
                     <div className="flex items-start gap-4">
@@ -389,8 +357,7 @@ export default function LandingPage() {
                     </div>
                     <div className="mt-auto">
                       <span className="inline-flex items-center text-sm font-medium text-primary group-hover:underline">
-                        Open
-                        <Icon name="ArrowRight" size={16} className="ml-1.5" />
+                        Open <Icon name="ArrowRight" size={16} className="ml-1.5" />
                       </span>
                     </div>
                   </Link>
@@ -404,14 +371,14 @@ export default function LandingPage() {
         <section className="py-16">
           <Container>
             <div className="mb-10 text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                Four modules + AI, one workspace
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Four modules + AI Lab
               </p>
               <h2 className="mt-2 font-slab text-h2">
-                Everything you need to go from “stuck” to exam-ready.
+                From stuck to exam-ready
               </h2>
-              <p className="mt-3 text-body text-muted md:mx-auto md:max-w-2xl">
-                Not just practice questions. A full stack: onboarding, learning, practice, mocks, AI feedback, analytics, and gamification — all aware of your goal band and exam date.
+              <p className="mt-3 text-body text-muted max-w-3xl mx-auto">
+                Onboarding → learning → practice → mocks → AI feedback → analytics → streaks — all tied to your goal band.
               </p>
             </div>
 
@@ -469,12 +436,12 @@ export default function LandingPage() {
         <section className="py-16 bg-muted/30">
           <Container>
             <div className="mb-10 text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                 Real prep, real constraints
               </p>
               <h2 className="mt-2 font-slab text-h2">Built for people with limited time.</h2>
               <p className="mt-3 text-body text-muted md:mx-auto md:max-w-2xl">
-                Evening learners, working professionals, undergrads — we optimize around your bandwidth, not around 6-hour study fantasies.
+                Evening learners, working professionals, undergrads — we optimize around your bandwidth.
               </p>
             </div>
 
@@ -511,18 +478,18 @@ export default function LandingPage() {
           <Container>
             <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                   Pricing preview
                 </p>
                 <h2 className="mt-1 font-slab text-h2">
-                  Start free. Upgrade when you’re serious.
+                  Start free. Upgrade when serious.
                 </h2>
                 <p className="mt-2 text-body text-muted md:max-w-xl">
-                  Free covers basic practice and a taste of AI. Rocket unlocks deeper feedback and more mocks. Institutional is for teachers and academies.
+                  Free gives basic access. Rocket unlocks deep AI + more mocks. Institutional for schools.
                 </p>
               </div>
               <Button asChild size="sm" variant="ghost" className="rounded-2xl">
-                <Link href="/pricing">View full pricing page</Link>
+                <Link href="/pricing">View full pricing</Link>
               </Button>
             </div>
 
@@ -572,61 +539,59 @@ export default function LandingPage() {
           </Container>
         </section>
 
-        {/* WAITLIST CTA */}
+        {/* WAITLIST / FINAL CTA */}
         <section className="py-16 bg-muted/30">
           <Container>
             <Card className="mx-auto max-w-4xl rounded-2xl border border-border/60 bg-card p-8 shadow-sm">
               <div className="grid gap-10 md:grid-cols-[1.4fr_1fr] md:items-center">
                 <div className="space-y-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                     Pre-launch batch
                   </p>
                   <h2 className="font-slab text-h2">
-                    Join the early cohort and lock in better pricing.
+                    Join early — lock better pricing.
                   </h2>
                   <p className="text-body text-muted">
-                    We’re onboarding in waves so we don’t drown support. Add your email and target band, and we’ll send a proper orientation when your batch opens — no spam, no fake urgency.
+                    We onboard in small waves to keep support personal. Add email + target band — we’ll notify when your batch opens.
                   </p>
                   <ul className="mt-3 space-y-1.5 text-sm text-muted">
-                    <li>• First wave gets discounted Rocket pricing.</li>
-                    <li>• Teachers / academies can request a separate call.</li>
+                    <li>• First wave = discounted Rocket</li>
+                    <li>• Teachers / academies → separate call</li>
                   </ul>
                 </div>
 
-                <div className="space-y-6">
-                  <form className="space-y-5">
-                    <div className="space-y-2">
-                      <label htmlFor="waitlist-email" className="block text-sm font-medium text-foreground">
-                        Email
-                      </label>
-                      <Input
-                        id="waitlist-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        required
-                      />
-                    </div>
+                <form className="space-y-5">
+                  <div className="space-y-2">
+                    <label htmlFor="waitlist-email" className="block text-sm font-medium text-foreground">
+                      Email
+                    </label>
+                    <Input
+                      id="waitlist-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      required
+                    />
+                  </div>
 
-                    <div className="space-y-2">
-                      <label htmlFor="waitlist-band" className="block text-sm font-medium text-foreground">
-                        Target IELTS band
-                      </label>
-                      <Input
-                        id="waitlist-band"
-                        type="text"
-                        placeholder="e.g. 7.0, 7.5, 8.0"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label htmlFor="waitlist-band" className="block text-sm font-medium text-foreground">
+                      Target band
+                    </label>
+                    <Input
+                      id="waitlist-band"
+                      type="text"
+                      placeholder="e.g. 7.0, 7.5, 8.0"
+                    />
+                  </div>
 
-                    <Button type="submit" variant="accent" className="w-full rounded-2xl">
-                      Join waitlist
-                    </Button>
+                  <Button type="submit" variant="primary" className="w-full rounded-2xl">
+                    Join waitlist
+                  </Button>
 
-                    <p className="text-xs text-muted text-center mt-2">
-                      No spam. We’ll only email when your batch is actually opening.
-                    </p>
-                  </form>
-                </div>
+                  <p className="text-xs text-muted text-center">
+                    No spam — only batch opening notification
+                  </p>
+                </form>
               </div>
             </Card>
           </Container>
