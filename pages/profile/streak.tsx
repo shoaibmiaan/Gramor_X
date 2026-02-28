@@ -1,4 +1,5 @@
 import type { GetServerSideProps, NextPage } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 
@@ -110,6 +111,8 @@ const StreakPage: NextPage<Props> = ({ streak, history }) => {
 };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  const auth = await requireAuthenticatedPage(ctx, {});
+  if ('redirect' in auth) return auth;
   const supabase = getServerClient(ctx.req, ctx.res);
   const {
     data: { user },

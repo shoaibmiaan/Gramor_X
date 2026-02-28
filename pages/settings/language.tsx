@@ -1,3 +1,5 @@
+import type { GetServerSideProps } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 // pages/settings/language.tsx 
 import * as React from "react";
 import Head from "next/head";
@@ -107,3 +109,6 @@ export default function LanguageSettingsPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});

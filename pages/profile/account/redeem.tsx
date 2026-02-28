@@ -1,3 +1,5 @@
+import type { GetServerSideProps } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 import * as React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -196,3 +198,6 @@ export default function RedeemPinPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Head from 'next/head';
 import type { GetServerSideProps, NextPage } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 
 import { getServerClient } from '@/lib/supabaseServer';
 import type { Database } from '@/lib/database.types';
@@ -15,6 +16,8 @@ type ActivityRow = Database['public']['Tables']['activity_log']['Row'];
 
 type Props = {
   activities: ActivityRow[];
+  page: number;
+  hasMore: boolean;
 };
 
 const moduleLabel: Record<string, string> = {
@@ -105,7 +108,7 @@ function describeActivity(row: ActivityRow): string {
   }
 }
 
-const ActivityPage: NextPage<Props> = ({ activities }) => {
+const ActivityPage: NextPage<Props> = ({ activities, page, hasMore }) => {
   const groups = React.useMemo(() => {
     const map = new Map<string, ActivityRow[]>();
 
@@ -267,6 +270,18 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
               ))}
             </div>
           )}
+
+
+          <div className="flex items-center justify-between gap-3">
+            <Button href={`/profile/account/activity?page=${Math.max(1, page - 1)}`} variant="ghost" size="sm" disabled={page <= 1}>
+              Previous
+            </Button>
+            <p className="text-xs text-muted-foreground">Page {page}</p>
+            <Button href={`/profile/account/activity?page=${page + 1}`} variant="outline" size="sm" disabled={!hasMore}>
+              Next
+            </Button>
+          </div>
+
         </Container>
       </main>
     </>
@@ -274,6 +289,8 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
 };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  const auth = await requireAuthenticatedPage(ctx, {});
+  if ('redirect' in auth) return auth;
   const supabase = getServerClient(ctx.req, ctx.res);
 
   const {
@@ -283,27 +300,38 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   if (!user) {
     return {
       redirect: {
-        destination: '/auth/login?next=/account/activity',
+        destination: '/auth/login?next=/profile/account/activity',
         permanent: false,
       },
     };
   }
+
+  const page = Math.max(1, Number(ctx.query.page ?? 1) || 1);
+  const pageSize = 25;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize;
 
   const { data, error } = await supabase
     .from('activity_log')
     .select('*')
     .eq('user_id', user.id)
     .order('occurred_at', { ascending: false })
-    .limit(200);
+    .range(from, to);
 
   if (error) {
     // eslint-disable-next-line no-console
     console.error('[activity_log] fetch failed', error);
   }
 
+  const rows = [...(data ?? [])];
+  const hasMore = rows.length > pageSize;
+  if (hasMore) rows.pop();
+
   return {
     props: {
-      activities: data ?? [],
+      activities: rows,
+      page,
+      hasMore,
     },
   };
 };

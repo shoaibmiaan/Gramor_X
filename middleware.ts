@@ -18,8 +18,10 @@ const AUTH_PAGES = [
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
+  '/profile',
   '/settings',
   '/notifications',
+  '/update-password',
   '/study-plan',
   '/progress',
   '/leaderboard',
@@ -41,6 +43,10 @@ const PROTECTED_PREFIXES = [
   '/admin',
   '/institutions',
   '/marketplace',
+];
+const ROLE_PROTECTED_PREFIXES: Array<{ prefix: string; roles: string[] }> = [
+  { prefix: '/admin', roles: ['admin'] },
+  { prefix: '/teacher', roles: ['teacher', 'admin'] },
 ];
 
 function pathStartsWithAny(pathname: string, prefixes: string[]) {
@@ -202,6 +208,17 @@ export async function middleware(req: NextRequest) {
   }
 
   if (authState.authenticated) {
+    const routeGate = ROLE_PROTECTED_PREFIXES.find((gate) => pathname === gate.prefix || pathname.startsWith(`${gate.prefix}/`));
+    if (routeGate) {
+      const currentRole = authState.role ?? '';
+      if (!routeGate.roles.includes(currentRole)) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/restricted';
+        url.search = '';
+        return redirectWithCookies(res, url);
+      }
+    }
+
     const role = authState.role ?? undefined;
     const skipOnboardingGuard = role === 'teacher' || role === 'admin';
 
@@ -229,6 +246,6 @@ export async function middleware(req: NextRequest) {
 // Apply to all pages except excluded above
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|images|public|api).*)',
+    '/((?!api|_next/static|_next/image|_next/data|favicon.ico|robots.txt|sitemap.xml|manifest.json|site.webmanifest|sw.js|sw-push.js|sw-sync.js|assets|images|public|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml|json)$).*)',
   ],
 };

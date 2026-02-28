@@ -1,6 +1,8 @@
+import type { GetServerSideProps } from 'next';
 import * as React from 'react';
 import Head from 'next/head';
 import type { NextPage } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 
 import { Container } from '@/components/design-system/Container';
 import ReferralCard from '@/components/account/ReferralCard';
@@ -29,3 +31,6 @@ const ReferralsPage: NextPage = () => (
 );
 
 export default ReferralsPage;
+
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});

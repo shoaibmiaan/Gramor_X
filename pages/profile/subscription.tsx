@@ -1,5 +1,8 @@
 'use client';
 
+import type { GetServerSideProps } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
+
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -227,3 +230,6 @@ export default function SubscriptionPage() {
     </GlobalPlanGuard>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});

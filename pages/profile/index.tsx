@@ -1,5 +1,8 @@
 'use client';
 
+import type { GetServerSideProps } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
+
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
@@ -442,3 +445,6 @@ export default function ProfilePage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});

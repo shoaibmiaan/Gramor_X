@@ -1,3 +1,5 @@
+import type { GetServerSideProps } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
@@ -189,3 +191,6 @@ export default function BillingPage() {
     </main>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});

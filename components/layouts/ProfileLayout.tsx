@@ -1,59 +1,53 @@
-// components/layouts/ProfileLayout.tsx
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { Button } from '@/components/design-system/Button';
 
-interface ProfileLayoutProps {
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+
+type ProfileLayoutProps = {
+  title: string;
+  description?: string;
   children: ReactNode;
-  userRole?: string;
-}
+};
 
-function NavItem({
-  href,
-  label,
-  active,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-}) {
+const profileNav = [
+  { href: '/profile', label: 'Dashboard' },
+  { href: '/profile/account', label: 'Account' },
+  { href: '/profile/subscription', label: 'Subscription' },
+  { href: '/profile/streak', label: 'Streak' },
+  { href: '/notifications', label: 'Notifications' },
+];
+
+export function ProfileLayout({ title, description, children }: ProfileLayoutProps) {
   return (
-    <Button
-      asChild
-      variant={active ? 'secondary' : 'ghost'}
-      className="shrink-0 justify-start whitespace-nowrap md:w-full"
-      size="sm"
-    >
-      <Link href={href}>{label}</Link>
-    </Button>
-  );
-}
-
-export function ProfileLayout({ children }: ProfileLayoutProps) {
-  const router = useRouter();
-  const path = router.pathname;
-
-  const isActive = (p: string) => path === p || path.startsWith(`${p}/`);
-
-  return (
-    <div className="flex min-h-screen flex-col bg-background md:flex-row">
-      <aside className="w-full border-b bg-card md:w-64 md:shrink-0 md:border-b-0 md:border-r">
-        <div className="p-4">
-          <div className="px-2 pb-3 text-sm font-medium text-muted-foreground">
-            Profile
-          </div>
-          <nav className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:block md:space-y-1 md:overflow-visible md:px-0 md:pb-0">
-            <NavItem href="/profile" label="Overview" active={isActive('/profile')} />
-            <NavItem href="/account" label="Account" active={isActive('/profile/account')} />
-            <NavItem href="/profile/security" label="Security" active={isActive('/profile/security')} />
-            <NavItem href="/profile/notifications" label="Notifications" active={isActive('/profile/notifications')} />
-            <NavItem href="/profile/preferences" label="Preferences" active={isActive('/profile/preferences')} />
-          </nav>
-        </div>
-      </aside>
-      <main className="flex-1 p-4 sm:p-6">{children}</main>
-    </div>
+    <>
+      <Head>
+        <title>{title} · GramorX</title>
+      </Head>
+      <main className="bg-background py-8 text-foreground">
+        <Container className="max-w-6xl space-y-6">
+          <header className="space-y-2">
+            <h1 className="text-h2 font-bold">{title}</h1>
+            {description ? <p className="text-small text-muted-foreground">{description}</p> : null}
+          </header>
+          <Card className="border border-border/60 bg-card/60 p-3">
+            <nav className="flex flex-wrap gap-2">
+              {profileNav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-md px-3 py-1 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </Card>
+          {children}
+        </Container>
+      </main>
+    </>
   );
 }
 

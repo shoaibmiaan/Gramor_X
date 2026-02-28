@@ -3,8 +3,8 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 
-import { getServerClient } from '@/lib/supabaseServer';
 
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
@@ -52,22 +52,8 @@ type Due = {
   cycle: 'monthly' | 'annual';
 };
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const { req, res, resolvedUrl } = ctx;
-  const supabase = getServerClient(req, res);
-  const { data, error } = await supabase.auth.getUser();
-
-  if (error || !data?.user) {
-    return {
-      redirect: {
-        destination: `/login?next=${encodeURIComponent(resolvedUrl)}`,
-        permanent: false,
-      },
-    };
-  }
-
-  return { props: {} };
-};
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});
 
 const toTitleCase = (value: string) =>
   value

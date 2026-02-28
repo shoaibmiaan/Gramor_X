@@ -1,13 +1,14 @@
 'use client';
 
+import type { GetServerSideProps } from 'next';
 import * as React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
-import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
-import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
+import { Button } from '@/components/design-system/Button';
+import { requireAuthenticatedPage } from '@/lib/ssr/requireAuthenticatedPage';
 
 type SettingsSection = {
   href: string;
@@ -20,7 +21,7 @@ type SettingsSection = {
 const sections: SettingsSection[] = [
   // Account group – always route via /account
   {
-    href: '/account',
+    href: '/profile/account',
     label: 'Account overview',
     description:
       'See your plan, activity, and access all account tools from one place.',
@@ -28,7 +29,7 @@ const sections: SettingsSection[] = [
     group: 'account',
   },
   {
-    href: '/account/billing',
+    href: '/profile/account/billing',
     label: 'Billing & plan',
     description:
       'View your current plan, renewal date, invoices, and local dues.',
@@ -36,7 +37,7 @@ const sections: SettingsSection[] = [
     group: 'account',
   },
   {
-    href: '/account/activity',
+    href: '/profile/account/activity',
     label: 'Activity log',
     description:
       'Timeline of mocks, practices, streak updates, and other account events.',
@@ -90,7 +91,7 @@ export default function SettingsHomePage() {
       </Head>
 
       <main className="bg-background py-8 text-foreground">
-        <Container className="space-y-8 max-w-5xl">
+        <div className="mx-auto max-w-5xl space-y-8 px-4">
           {/* Header */}
           <header className="space-y-2">
             <h1 className="text-h2 font-bold">Settings</h1>
@@ -100,7 +101,7 @@ export default function SettingsHomePage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="sm" variant="soft">
-                <Link href="/account">Open account hub</Link>
+                <Link href="/profile/account">Open account hub</Link>
               </Button>
             </div>
           </header>
@@ -155,8 +156,12 @@ export default function SettingsHomePage() {
               );
             })}
           </div>
-        </Container>
+        </div>
       </main>
     </>
   );
 }
+
+
+export const getServerSideProps: GetServerSideProps = async (ctx) =>
+  requireAuthenticatedPage(ctx, {});
