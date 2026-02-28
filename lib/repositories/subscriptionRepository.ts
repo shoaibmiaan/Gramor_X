@@ -81,3 +81,27 @@ export async function getSubscriptionSummary(client: RepoClient, userId: string)
     customerId: typeof metadata.stripe_customer_id === 'string' ? metadata.stripe_customer_id : undefined,
   };
 }
+
+
+export async function getPlanFeatureFlags(client: RepoClient, planId: PlanId) {
+  return client
+    .from('plans')
+    .select('id, feature_flags')
+    .eq('id', planId)
+    .eq('is_active', true)
+    .maybeSingle<{ id: string; feature_flags: Record<string, boolean> | null }>();
+}
+
+export async function getEntitlementSnapshot(client: RepoClient, userId: string) {
+  const summary = await getSubscriptionSummary(client, userId);
+  const tier = planToTier(summary.plan);
+  const { data: planData, error } = await getPlanFeatureFlags(client, summary.plan);
+
+  return {
+    plan: summary.plan,
+    tier,
+    status: summary.status,
+    featureFlags: (planData?.feature_flags ?? {}) as Record<string, boolean>,
+    error,
+  };
+}

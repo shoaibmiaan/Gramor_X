@@ -1,24 +1,27 @@
 import { useState } from 'react';
 import type { PropsWithChildren } from 'react';
-import { hasFeatureAccess, tierRank } from '@/lib/dashboard/featureFlags';
-import type { DashboardFeatureKey, SubscriptionTier } from '@/types/dashboard';
+import type { EntitlementFeatureKey } from '@/lib/config/featureFlags';
+import type { SubscriptionTier } from '@/lib/navigation/types';
+import useEntitlement from '@/hooks/useEntitlement';
 import { Button } from '@/components/ui/Button';
 import { UpgradeModal } from '@/components/dashboard/UpgradeModal';
 
 type TierGuardProps = PropsWithChildren<{
   tier: SubscriptionTier;
-  feature: DashboardFeatureKey;
+  feature: EntitlementFeatureKey;
   minimumTier?: SubscriptionTier;
 }>;
 
-export function TierGuard({ children, tier, feature, minimumTier = 'rocket' }: TierGuardProps) {
+export function TierGuard({ children, tier, feature, minimumTier }: TierGuardProps) {
   const [open, setOpen] = useState(false);
+  const entitlement = useEntitlement(tier);
 
-  if (hasFeatureAccess(tier, feature)) {
+  if (entitlement.canAccessFeature(feature)) {
     return <>{children}</>;
   }
 
-  const canUpgrade = tierRank[tier] < tierRank[minimumTier];
+  const requiredTier = minimumTier ?? entitlement.minTierForFeature(feature);
+  const canUpgrade = entitlement.hasTier(requiredTier) === false;
 
   return (
     <div className="rounded-2xl border border-dashed border-slate-300 p-5 text-center dark:border-slate-700">
@@ -28,7 +31,7 @@ export function TierGuard({ children, tier, feature, minimumTier = 'rocket' }: T
           Upgrade plan
         </Button>
       </div>
-      <UpgradeModal open={open} onClose={() => setOpen(false)} requiredTier={minimumTier} />
+      <UpgradeModal open={open} onClose={() => setOpen(false)} requiredTier={requiredTier} />
     </div>
   );
 }

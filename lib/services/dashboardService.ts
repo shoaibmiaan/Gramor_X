@@ -1,62 +1,60 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getLatestUserScore, getLatestStreakLog } from '@/lib/repositories/analyticsRepository';
+import { getActiveAiRecommendations } from '@/lib/repositories/aiRepository';
+import { getSubscriptionSummary } from '@/lib/repositories/subscriptionRepository';
 
 export type DashboardAggregate = {
-  score: { band: number | null; score: number | null; occurredAt: string | null };
-  streak: { streakDays: number; activityDate: string | null };
-  recommendations: Array<Record<string, unknown>>;
+  currentBand: number | null;
+  currentScore: number | null;
+  lastScoreAt: string | null;
+  streakDays: number;
+  lastActivityDate: string | null;
+  recommendations: Array<{ id: string; type: string; priority: number; content: Record<string, unknown> }>;
   subscription: { planId: string; status: string | null };
+  progress: {
+    recommendationsCount: number;
+    activeStreak: boolean;
+    scoreConfidence: 'low' | 'medium' | 'high';
+  };
 };
 
 export async function getDashboardAggregate(
   client: SupabaseClient<any, 'public', any>,
   userId: string,
 ): Promise<DashboardAggregate> {
-  const [scoreRes, streakRes, recsRes, subRes] = await Promise.all([
-    client
-      .from('score_history')
-      .select('band, score, occurred_at')
-      .eq('user_id', userId)
-      .order('occurred_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    client
-      .from('streak_logs')
-      .select('streak_days, activity_date')
-      .eq('user_id', userId)
-      .order('activity_date', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    client
-      .from('ai_recommendations')
-      .select('id, type, priority, content, created_at')
-      .eq('user_id', userId)
-      .eq('active', true)
-      .order('priority', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(5),
-    client
-      .from('subscriptions')
-      .select('plan_id, status, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const [scoreRes, streakRes, recsRes, subscription] = await Promise.all([
+    getLatestUserScore(client as any, userId),
+    getLatestStreakLog(client as any, userId),
+    getActiveAiRecommendations(client as any, userId),
+    getSubscriptionSummary(client as any, userId),
   ]);
 
+  const recs = (recsRes.data ?? []).map((row: any) => ({
+    id: String(row.id),
+    type: String(row.type ?? 'study_plan'),
+    priority: Number(row.priority ?? 1),
+    content: (row.content ?? {}) as Record<string, unknown>,
+  }));
+
+  const currentBand = scoreRes.data?.band == null ? null : Number(scoreRes.data.band);
+  const confidence: DashboardAggregate['progress']['scoreConfidence'] =
+    currentBand == null ? 'low' : currentBand >= 7 ? 'high' : 'medium';
+
   return {
-    score: {
-      band: scoreRes.data?.band ?? null,
-      score: scoreRes.data?.score ?? null,
-      occurredAt: scoreRes.data?.occurred_at ?? null,
-    },
-    streak: {
-      streakDays: Number(streakRes.data?.streak_days ?? 0),
-      activityDate: streakRes.data?.activity_date ?? null,
-    },
-    recommendations: (recsRes.data ?? []) as Array<Record<string, unknown>>,
+    currentBand,
+    currentScore: scoreRes.data?.score == null ? null : Number(scoreRes.data.score),
+    lastScoreAt: scoreRes.data?.occurred_at ?? null,
+    streakDays: Number(streakRes.data?.streak_days ?? 0),
+    lastActivityDate: streakRes.data?.activity_date ?? null,
+    recommendations: recs,
     subscription: {
-      planId: (subRes.data?.plan_id as string | null) ?? 'free',
-      status: (subRes.data?.status as string | null) ?? null,
+      planId: subscription.plan,
+      status: subscription.status,
+    },
+    progress: {
+      recommendationsCount: recs.length,
+      activeStreak: Number(streakRes.data?.streak_days ?? 0) > 0,
+      scoreConfidence: confidence,
     },
   };
 }

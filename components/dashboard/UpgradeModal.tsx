@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import type { SubscriptionTier } from '@/types/dashboard';
+import type { SubscriptionTier } from '@/lib/navigation/types';
 
 type UpgradeModalProps = {
   open: boolean;
