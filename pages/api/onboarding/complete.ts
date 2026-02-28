@@ -83,16 +83,33 @@ export default async function handler(
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  const completedAt = new Date().toISOString();
+
   const { error: sessionError } = await upsertOnboardingSession(supabase as any, user.id, {
     current_step: step,
     status: 'completed',
-    completed_at: new Date().toISOString(),
+    completed_at: completedAt,
     payload: { completed_via: 'api/onboarding/complete' },
   });
 
   if (sessionError) {
     console.error('onboarding/complete onboarding session error:', sessionError);
     return res.status(500).json({ error: 'Failed to update onboarding session' });
+  }
+
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({
+      onboarding_completed_at: completedAt,
+      onboarding_complete: true,
+      onboarding_step: Math.max(step, 5),
+    })
+    .eq('id', user.id);
+
+  if (profileError) {
+    console.error('onboarding/complete profile update error:', profileError);
+    return res.status(500).json({ error: 'Failed to finalize onboarding profile' });
   }
 
   if (channels && channels.length > 0) {

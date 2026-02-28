@@ -123,6 +123,18 @@ function useAuthBridge() {
     if (IS_CI) return;
 
     if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const hasAuthCallbackParams =
+        url.searchParams.has('code') ||
+        (url.searchParams.has('token_hash') && url.searchParams.has('type'));
+
+      if (hasAuthCallbackParams && !/^\/auth\/(callback|verify|confirm)(\/|$)/.test(router.pathname)) {
+        void router.replace(`/auth/callback${url.search}`);
+        return;
+      }
+    }
+
+    if (typeof window !== 'undefined') {
       if ((window as any).__GX_AUTH_BRIDGE_ACTIVE) return;
       (window as any).__GX_AUTH_BRIDGE_ACTIVE = true;
     }
