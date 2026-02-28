@@ -100,9 +100,10 @@ For v2 (identity-only `profiles`), keep:
 - `created_at`
 - `updated_at`
 
-### Transitional compatibility fields (short-term only)
-- `full_name` (derive `first_name`/`last_name` during migration)
-- Optionally keep `phone` + `phone_verified` temporarily if lifecycle/auth paths still read these directly.
+### Legacy identity-adjacent fields to deprecate
+- `full_name` (split into `first_name` + `last_name` during migration, then remove)
+- `phone` (move to `user_preferences` or future `user_contacts` table)
+- `settings` (JSON blob; decompose into structured preference tables)
 
 ---
 

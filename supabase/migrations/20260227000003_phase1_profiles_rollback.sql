@@ -42,7 +42,13 @@ ALTER TABLE IF EXISTS public.profiles
   ADD COLUMN IF NOT EXISTS teacher_experience_years integer,
   ADD COLUMN IF NOT EXISTS teacher_cv_url text,
   ADD COLUMN IF NOT EXISTS buddy_seats integer,
-  ADD COLUMN IF NOT EXISTS buddy_seats_used integer;
+  ADD COLUMN IF NOT EXISTS buddy_seats_used integer,
+  ADD COLUMN IF NOT EXISTS full_name text,
+  ADD COLUMN IF NOT EXISTS settings jsonb DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS phone text,
+  ADD COLUMN IF NOT EXISTS pending_deletion boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS deletion_requested_at timestamptz,
+  ADD COLUMN IF NOT EXISTS deletion_confirmed_at timestamptz;
 
 UPDATE public.profiles p
 SET
@@ -81,6 +87,12 @@ SET
   teacher_cv_url = b.teacher_cv_url,
   buddy_seats = b.buddy_seats,
   buddy_seats_used = b.buddy_seats_used,
+  full_name = b.full_name,
+  settings = COALESCE(b.settings, '{}'::jsonb),
+  phone = b.phone,
+  pending_deletion = COALESCE(b.pending_deletion, false),
+  deletion_requested_at = b.deletion_requested_at,
+  deletion_confirmed_at = b.deletion_confirmed_at,
   updated_at = now()
 FROM public.profile_phase1_backup b
 WHERE b.id = p.id;

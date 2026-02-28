@@ -328,7 +328,13 @@ ALTER TABLE IF EXISTS public.profiles
   DROP COLUMN IF EXISTS teacher_experience_years,
   DROP COLUMN IF EXISTS teacher_cv_url,
   DROP COLUMN IF EXISTS buddy_seats,
-  DROP COLUMN IF EXISTS buddy_seats_used;
+  DROP COLUMN IF EXISTS buddy_seats_used,
+  DROP COLUMN IF EXISTS full_name,
+  DROP COLUMN IF EXISTS settings,
+  DROP COLUMN IF EXISTS phone,
+  DROP COLUMN IF EXISTS pending_deletion,
+  DROP COLUMN IF EXISTS deletion_requested_at,
+  DROP COLUMN IF EXISTS deletion_confirmed_at;
 
 COMMIT;
 
