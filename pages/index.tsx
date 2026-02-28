@@ -3,7 +3,7 @@ import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
-import Layout from '@/layouts/Layout';
+import Layout from '@/components/Layout';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
