@@ -33,6 +33,10 @@ export function useRouteGuard() {
   useEffect(() => {
     if (!router.isReady) return;
 
+    // Reset per-navigation so a previous redirect (e.g. to /login)
+    // doesn't block the next legitimate redirect on the new route.
+    hasRedirected.current = false;
+
     // ⭐ SPECIAL CASE: password reset page – allow without session (the token is in the hash)
     if (pathname === '/update-password') {
       setIsChecking(false);
