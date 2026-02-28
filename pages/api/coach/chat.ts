@@ -7,6 +7,7 @@ import { flags } from '@/lib/flags';
 import { getServerClient } from '@/lib/supabaseServer';
 import { redis } from '@/lib/redis';
 import type { SubscriptionTier } from '@/lib/navigation/types';
+import { getUserTier } from '@/lib/repositories/subscriptionRepository';
 import {
   detectPromptInjection,
   sanitizeCoachMessages,
@@ -81,13 +82,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const userId = session.user.id;
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('tier')
-    .eq('id', userId)
-    .maybeSingle<{ tier: SubscriptionTier | null }>();
-
-  const tier = (profile?.tier ?? 'free') as SubscriptionTier;
+  const tierResult = await getUserTier(supabase as any, userId);
+  const tier = tierResult.tier as SubscriptionTier;
   const quota = DAILY_QUOTA[tier] ?? DAILY_QUOTA.free;
   const todayKey = new Date().toISOString().slice(0, 10);
   const quotaKey = `coach:quota:${userId}:${todayKey}`;

@@ -1,6 +1,8 @@
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import type { PlanId } from '@/types/pricing';
+import { getProfileRole } from '@/lib/repositories/profileRepository';
+import { getUserTier, tierToPlan } from '@/lib/repositories/subscriptionRepository';
 
 type WaitOptions = {
   attempts?: number;
@@ -11,13 +13,6 @@ type UpgradeResult = {
   tier: SubscriptionTier;
   role: string | null;
   planId: PlanId;
-};
-
-const tierToPlan: Record<SubscriptionTier, PlanId> = {
-  free: 'free',
-  seedling: 'starter',
-  rocket: 'booster',
-  owl: 'master',
 };
 
 function delay(ms: number) {
@@ -82,22 +77,20 @@ export async function waitForSubscriptionUpgrade({
     }
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('tier, role')
-        .eq('id', userId)
-        .maybeSingle();
+      const [{ tier }, roleRes] = await Promise.all([
+        getUserTier(supabase as any, userId),
+        getProfileRole(supabase as any, userId),
+      ]);
 
-      if (error) {
-        console.warn('Failed to load profile while checking upgrade status:', error);
+      if (roleRes.error) {
+        console.warn('Failed to load profile role while checking upgrade status:', roleRes.error);
         continue;
       }
 
-      const tier = (data?.tier as SubscriptionTier | undefined) ?? 'free';
-      const role = typeof data?.role === 'string' ? data.role : null;
+      const role = typeof roleRes.data?.role === 'string' ? roleRes.data.role : null;
 
       if (tier !== 'free') {
-        const planId = tierToPlan[tier];
+        const planId = tierToPlan(tier);
         const detail: UpgradeResult = { tier, role, planId };
         window.dispatchEvent(new CustomEvent('subscription:tier-updated', { detail }));
         return detail;

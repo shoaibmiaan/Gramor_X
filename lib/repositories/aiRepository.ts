@@ -12,6 +12,17 @@ export async function getActiveAiRecommendations(client: RepoClient, userId: str
     .order('created_at', { ascending: false });
 }
 
+export async function getLatestAiRecommendation(client: RepoClient, userId: string) {
+  return client
+    .from('ai_recommendations')
+    .select('id, type, content, created_at')
+    .eq('user_id', userId)
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: string; type: string; content: { sequence?: string[] } | null }>();
+}
+
 export async function createAiDiagnostic(
   client: RepoClient,
   userId: string,

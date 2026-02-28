@@ -2,6 +2,7 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
+import { getSubscriptionSummary } from '@/lib/repositories/subscriptionRepository';
 
 type Invoice = Readonly<{
   id: string;
@@ -38,14 +39,8 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   const userId = userResp.user?.id;
   if (!userId) return res.status(401).json({ ok: false, error: 'Unauthorized' });
 
-  // Look up Stripe customer id from your profiles table
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('stripe_customer_id, membership, subscription_status, subscription_renews_at, trial_ends_at')
-    .eq('id', userId)
-    .maybeSingle();
-
-  const customerId = profile?.stripe_customer_id as string | undefined;
+  const dbSummary = await getSubscriptionSummary(supabase as any, userId);
+  const customerId = dbSummary.customerId;
 
   // If the request is a form POST (no JSON) we assume "Open customer portal" and redirect.
   // You can also set a header `x-open-portal: 1` to force redirect mode.
@@ -78,10 +73,10 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   if (!stripe || !customerId) {
     const fallback: SummaryResponse = {
       subscription: {
-        plan: (profile?.membership as any) || 'free',
-        status: (profile?.subscription_status as any) || 'canceled',
-        renewsAt: profile?.subscription_renews_at || undefined,
-        trialEndsAt: profile?.trial_ends_at || undefined,
+        plan: dbSummary.plan,
+        status: dbSummary.status,
+        renewsAt: dbSummary.renewsAt,
+        trialEndsAt: dbSummary.trialEndsAt,
       },
       invoices: [],
     };
@@ -93,7 +88,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   const sub = subs.data[0];
   const priceNickname =
     (sub?.items?.data?.[0]?.price?.nickname?.toLowerCase() as SubscriptionSummary['plan']) ||
-    (profile?.membership as any) ||
+    dbSummary.plan ||
     'free';
 
   const summary: SubscriptionSummary = {
