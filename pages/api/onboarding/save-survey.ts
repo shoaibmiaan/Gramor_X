@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { getServerClient } from '@/lib/supabaseServer';
+import { upsertOnboardingSession, upsertUserPreferences } from '@/lib/repositories/profileRepository';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const SurveySchema = z.object({
   targetBand: z.number().min(4).max(9),
@@ -22,6 +24,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const log = createDomainLogger('/api/onboarding/save-survey');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -39,21 +42,32 @@ export default async function handler(
 
   const { targetBand, examDate, baselineScores, learningStyle } = parse.data;
 
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({
-      target_band: targetBand,
-      exam_date: examDate,
+  const { error: preferenceError } = await upsertUserPreferences(supabase as any, user.id, {
+    goal_band: targetBand,
+    exam_date: examDate,
+    learning_style: learningStyle,
+  });
+
+  if (preferenceError) {
+    console.error('Error saving survey preferences:', preferenceError);
+    return res.status(500).json({ error: 'Failed to save survey preferences' });
+  }
+
+  const { error: onboardingError } = await upsertOnboardingSession(supabase as any, user.id, {
+    current_step: 4,
+    payload: {
       baseline_scores: baselineScores,
       learning_style: learningStyle,
-      onboarding_step: 4, // assuming we're at the last step
-    })
-    .eq('user_id', user.id);
+      target_band: targetBand,
+      exam_date: examDate,
+    },
+  });
 
-  if (updateError) {
-    console.error('Error saving survey:', updateError);
+  if (onboardingError) {
+    console.error('Error saving onboarding session:', onboardingError);
     return res.status(500).json({ error: 'Failed to save survey data' });
   }
 
+  log.info('onboarding.survey_saved', { userId: user.id, targetBand, learningStyle });
   return res.status(200).json({ success: true });
 }

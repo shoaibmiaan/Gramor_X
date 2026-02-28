@@ -3,6 +3,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { upsertNotificationSettings, upsertOnboardingSession } from '@/lib/repositories/profileRepository';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const Body = z.object({
   step: z
@@ -66,6 +68,7 @@ export default async function handler(
     );
   }
 
+  const log = createDomainLogger('/api/onboarding/complete');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -80,24 +83,24 @@ export default async function handler(
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const patch: Record<string, any> = {
-    onboarding_step: step,
-    onboarding_complete: true,
-    draft: false,
-  };
+  const { error: sessionError } = await upsertOnboardingSession(supabase as any, user.id, {
+    current_step: step,
+    status: 'completed',
+    completed_at: new Date().toISOString(),
+    payload: { completed_via: 'api/onboarding/complete' },
+  });
 
-  if (channels && channels.length > 0) {
-    patch.notification_channels = channels;
+  if (sessionError) {
+    console.error('onboarding/complete onboarding session error:', sessionError);
+    return res.status(500).json({ error: 'Failed to update onboarding session' });
   }
 
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update(patch)
-    .eq('user_id', user.id);
-
-  if (updateError) {
-    console.error('onboarding/complete update error:', updateError);
-    return res.status(500).json({ error: 'Failed to update profile' });
+  if (channels && channels.length > 0) {
+    const { error: notificationError } = await upsertNotificationSettings(supabase as any, user.id, channels);
+    if (notificationError) {
+      console.error('onboarding/complete notification settings error:', notificationError);
+      return res.status(500).json({ error: 'Failed to update notification settings' });
+    }
   }
 
   // 🔁 Sync the onboarding_complete flag to the user's metadata
@@ -111,5 +114,6 @@ export default async function handler(
     // The client can refresh the session manually.
   }
 
+  log.info('onboarding.completed', { userId: user.id, step, channels: channels ?? [] });
   return res.status(200).json({ ok: true });
 }

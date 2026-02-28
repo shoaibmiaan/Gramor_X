@@ -6,6 +6,7 @@ import { env } from '@/lib/env';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
 import { getBaseUrl } from '@/lib/url';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 // Important: disable body parsing so we can verify Stripe signatures
 export const config = { api: { bodyParser: false } };
@@ -21,6 +22,7 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
   const secretKey = env.STRIPE_SECRET_KEY;
   const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
 
+  const log = createDomainLogger('/api/webhooks/payment');
   const supabase = createSupabaseServerClient({ serviceRole: true });
   const baseUrl = getBaseUrl();
 
@@ -274,6 +276,8 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
                 .from('profiles')
                 .update(updates)
                 .eq('id', prof.id);
+
+              log.info('subscription.changed', { userId: prof.id, status, eventType: event.type, customerId });
             }
           }
         } catch {

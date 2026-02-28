@@ -5,6 +5,8 @@ import { env } from '@/lib/env';
 import { flags } from '@/lib/flags';
 import { touchRateLimit } from '@/lib/rate-limit';
 import { getServerClient, supabaseService } from '@/lib/supabaseServer';
+import { insertAiAssistLog } from '@/lib/repositories/aiAssistRepository';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const Body = z.object({
   keyword: z
@@ -170,12 +172,12 @@ async function logInteraction(params: {
 }) {
   try {
     const service = supabaseService();
-    await service.from('ai_assist_logs').insert({
-      user_id: params.userId,
+    await insertAiAssistLog(service as any, {
+      userId: params.userId,
       feature: 'speaking_hint',
-      input: JSON.stringify({ keyword: params.keyword, cue: params.cue }),
-      output: { sentences: params.sentences, tip: params.tip, source: params.source },
-      tokens_used: params.tokens ?? null,
+      payload: { keyword: params.keyword, cue: params.cue },
+      result: { sentences: params.sentences, tip: params.tip, source: params.source },
+      tokensUsed: params.tokens ?? null,
     });
   } catch (error) {
     console.error('ai_assist_log_failed', error);
@@ -192,6 +194,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
+  const log = createDomainLogger('/api/ai/speaking/hints');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -211,6 +214,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (rate.limited) {
     const retryAfter = Math.max(Math.ceil((rate.resetAt - Date.now()) / 1000), 1);
     res.setHeader('Retry-After', String(retryAfter));
+    log.warn('ai.assist.generated', { userId: user.id, feature: 'speaking_hint', reason: 'rate_limited' });
     return res.status(429).json({ ok: false, error: 'Please try again later.', code: 'rate_limited' });
   }
 
@@ -237,6 +241,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     tip = heuristic.tip;
     source = 'heuristic';
   }
+
+  log.info('ai.assist.generated', { userId: user.id, feature: 'speaking_hint', source, sentenceCount: sentences.length });
 
   logInteraction({
     userId: user.id,

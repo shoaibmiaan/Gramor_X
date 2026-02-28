@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { getLatestAiRecommendation } from '@/lib/repositories/aiRepository';
 
 // Simple placeholder drills for each skill
 const DRILLS: Record<string, string> = {
@@ -31,13 +32,8 @@ export default async function handler(
   let { skill } = req.query as { skill?: string };
 
   if (!skill) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('ai_recommendation')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const seq: string[] =
-      (profile?.ai_recommendation as any)?.sequence ?? [];
+    const { data: recommendation } = await getLatestAiRecommendation(supabase as any, user.id);
+    const seq = Array.isArray(recommendation?.content?.sequence) ? recommendation.content.sequence : [];
     skill = seq[0] || 'reading';
   }
 

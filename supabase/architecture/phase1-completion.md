@@ -39,3 +39,10 @@
 4. Identity normalization in `profiles`.
 5. Legacy domain columns dropped from `profiles`.
 6. Rollback file available to restore legacy columns and values from backup.
+
+## Profiles reduction scope
+
+`profiles` is reduced to identity-only fields for v2:
+- `id`, `email`, `first_name`, `last_name`, `avatar_url`, `role`, `locale`, `timezone`, `created_at`, `updated_at`
+
+Legacy overloaded columns are migrated to domain tables and then removed, including onboarding/subscription/AI/teacher/preferences fields plus legacy `full_name`, `settings`, `phone`, and deletion lifecycle flags.

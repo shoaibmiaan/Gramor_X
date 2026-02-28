@@ -1,6 +1,7 @@
 // pages/api/mock/reading/submit-final.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerClient } from '@/lib/supabaseServer';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 // XP logic – tweak numbers however you like
 function calculateXpForReadingAttempt(correctCount: number, totalQuestions: number, bandScore: number | null) {
@@ -23,6 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const log = createDomainLogger('/api/mock/reading/submit-final');
   const supabase = getServerClient({ req, res });
 
   const {
@@ -223,6 +225,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('reading submit-final: stats upsert error', upsertError);
     // We still return success for the attempt; leaderboard can lag if needed
   }
+
+  log.info('score.updated', { userId: user.id, skill: 'reading', attemptId, bandScore, gainedXp, totalXp: newTotalXp });
 
   return res.status(200).json({
     status: 'submitted',
