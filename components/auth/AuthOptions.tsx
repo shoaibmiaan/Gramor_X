@@ -46,9 +46,20 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
 
   useEffect(() => {
     let mounted = true;
-    const checkSession = async () => {
-      let shouldShowAuthOptions = true;
 
+    const redirectWithTimeout = async (safePath: string) => {
+      const navigation = router.replace(safePath).then(() => 'done').catch(() => 'failed');
+      const timeout = new Promise<'timeout'>((resolve) => {
+        setTimeout(() => resolve('timeout'), 2000);
+      });
+      const result = await Promise.race([navigation, timeout]);
+
+      if (result !== 'done' && typeof window !== 'undefined') {
+        window.location.replace(safePath);
+      }
+    };
+
+    const checkSession = async () => {
       try {
         const {
           data: { session },
@@ -63,7 +74,6 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
         }
 
         if (session) {
-          shouldShowAuthOptions = false;
           const blockedPath = mode === 'login' ? '/login' : '/signup';
           const safe =
             next && next !== blockedPath
@@ -72,17 +82,17 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
 
           if (router.asPath !== safe) {
             try {
-              await router.replace(safe);
+              await redirectWithTimeout(safe);
+              return;
             } catch (navigationError) {
               console.error('Failed to redirect after session detection:', navigationError);
-              shouldShowAuthOptions = true;
             }
           }
         }
       } catch (err) {
         if (mounted) console.error('Error checking session:', err);
       } finally {
-        if (mounted && shouldShowAuthOptions) setReady(true);
+        if (mounted) setReady(true);
       }
     };
     void checkSession();
