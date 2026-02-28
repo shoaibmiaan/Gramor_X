@@ -145,16 +145,11 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const authState = await loadAuthState(req, res);
 
-  // Use the resolved request hostname to avoid redirect loops caused by
-  // upstream/proxy forwarding headers that may preserve the original host.
-  const host = req.nextUrl.hostname.trim().toLowerCase();
-
-  if (host.startsWith('www.')) {
-    const canonicalUrl = req.nextUrl.clone();
-    canonicalUrl.hostname = host.slice(4);
-    canonicalUrl.protocol = 'https:';
-    return redirectWithCookies(res, canonicalUrl, 308);
-  }
+  // NOTE:
+  // Hostname canonicalization (www <-> apex) is handled at the edge/domain layer.
+  // Enforcing it here can create redirect loops when a provider-level redirect points
+  // in the opposite direction (for example apex -> www in Vercel project settings).
+  // Keep middleware host-agnostic and only enforce route/auth redirects below.
 
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
