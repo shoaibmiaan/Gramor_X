@@ -13,7 +13,7 @@ import { Input } from '@/components/design-system/Input';
 import Icon, { type IconName } from '@/components/design-system/Icon';
 
 // ────────────────────────────────────────────────
-// Data (kept exactly as in your current version)
+// Data (unchanged from your original)
 // ────────────────────────────────────────────────
 
 const modules = [
@@ -217,7 +217,7 @@ export default function LandingPage() {
         />
       </Head>
 
-      <main className="bg-surface dark:bg-darker">
+      <main className="bg-background dark:bg-darker">
         {/* HERO */}
         <section className="py-16">
           <Container>
@@ -235,8 +235,10 @@ export default function LandingPage() {
                   <h1 className="font-slab text-display text-primary">
                     IELTS Mission Control, not just another question bank.
                   </h1>
-                  <p className="max-w-xl text-body text-muted">
-                    Listening, Reading, Writing, Speaking — stitched together with AI-first feedback, a streak system that actually matters, and a dashboard that tells you what to do next.
+                  <p className="max-w-xl text-body text-foreground">
+                    Listening, Reading, Writing, Speaking — stitched together with AI-first
+                    feedback, a streak system that actually matters, and a dashboard that
+                    tells you what to do next.
                   </p>
                 </div>
 
@@ -299,7 +301,7 @@ export default function LandingPage() {
                         <p className="text-2xl font-semibold text-foreground">serendipity</p>
                         <span className="text-xs text-muted">/ˌser.ənˈdɪp.ə.ti/</span>
                       </div>
-                      <p className="mt-1 text-small text-muted">
+                      <p className="mt-1 text-small text-foreground">
                         the occurrence of events by chance in a happy or beneficial way
                       </p>
                     </div>
@@ -334,7 +336,7 @@ export default function LandingPage() {
           <Container>
             <div className="mb-8">
               <h2 className="font-slab text-h2">Portal hub</h2>
-              <p className="mt-2 text-body text-muted">
+              <p className="mt-2 text-body text-foreground">
                 Jump to dashboard, modules, AI Lab, billing or onboarding from here.
               </p>
             </div>
@@ -377,7 +379,7 @@ export default function LandingPage() {
               <h2 className="mt-2 font-slab text-h2">
                 From stuck to exam-ready
               </h2>
-              <p className="mt-3 text-body text-muted max-w-3xl mx-auto">
+              <p className="mt-3 text-body text-foreground max-w-3xl mx-auto">
                 Onboarding → learning → practice → mocks → AI feedback → analytics → streaks — all tied to your goal band.
               </p>
             </div>
@@ -411,7 +413,7 @@ export default function LandingPage() {
                       </Badge>
                     </div>
 
-                    <ul className="space-y-2 text-sm text-muted">
+                    <ul className="space-y-2 text-sm text-foreground">
                       {mod.bullets.map((b) => (
                         <li key={b} className="flex items-start gap-2">
                           <Icon name="Check" size={16} className="mt-0.5 text-primary flex-shrink-0" />
@@ -440,7 +442,7 @@ export default function LandingPage() {
                 Real prep, real constraints
               </p>
               <h2 className="mt-2 font-slab text-h2">Built for people with limited time.</h2>
-              <p className="mt-3 text-body text-muted md:mx-auto md:max-w-2xl">
+              <p className="mt-3 text-body text-foreground md:mx-auto md:max-w-2xl">
                 Evening learners, working professionals, undergrads — we optimize around your bandwidth.
               </p>
             </div>
@@ -461,7 +463,7 @@ export default function LandingPage() {
                         <p className="text-xs text-primary/80">{t.meta}</p>
                       </div>
                     </div>
-                    <p className="text-sm text-muted">“{t.quote}”</p>
+                    <p className="text-sm text-foreground">“{t.quote}”</p>
                   </div>
                   <div className="mt-4 flex items-center gap-2 text-xs font-medium text-success">
                     <Icon name="Medal" size={16} />
@@ -484,7 +486,7 @@ export default function LandingPage() {
                 <h2 className="mt-1 font-slab text-h2">
                   Start free. Upgrade when serious.
                 </h2>
-                <p className="mt-2 text-body text-muted md:max-w-xl">
+                <p className="mt-2 text-body text-foreground md:max-w-xl">
                   Free gives basic access. Rocket unlocks deep AI + more mocks. Institutional for schools.
                 </p>
               </div>
@@ -511,7 +513,7 @@ export default function LandingPage() {
                         {plan.tag}
                       </Badge>
                     </div>
-                    <ul className="space-y-2 text-sm text-muted">
+                    <ul className="space-y-2 text-sm text-foreground">
                       {plan.bullets.map((b) => (
                         <li key={b} className="flex items-start gap-2">
                           <Icon name="Check" size={16} className="mt-0.5 text-primary flex-shrink-0" />
@@ -539,7 +541,7 @@ export default function LandingPage() {
           </Container>
         </section>
 
-        {/* WAITLIST / FINAL CTA */}
+        {/* WAITLIST CTA */}
         <section className="py-16 bg-muted/30">
           <Container>
             <Card className="mx-auto max-w-4xl rounded-2xl border border-border/60 bg-card p-8 shadow-sm">
@@ -551,10 +553,10 @@ export default function LandingPage() {
                   <h2 className="font-slab text-h2">
                     Join early — lock better pricing.
                   </h2>
-                  <p className="text-body text-muted">
+                  <p className="text-body text-foreground">
                     We onboard in small waves to keep support personal. Add email + target band — we’ll notify when your batch opens.
                   </p>
-                  <ul className="mt-3 space-y-1.5 text-sm text-muted">
+                  <ul className="mt-3 space-y-1.5 text-sm text-foreground">
                     <li>• First wave = discounted Rocket</li>
                     <li>• Teachers / academies → separate call</li>
                   </ul>
@@ -562,26 +564,17 @@ export default function LandingPage() {
 
                 <form className="space-y-5">
                   <div className="space-y-2">
-                    <label htmlFor="waitlist-email" className="block text-sm font-medium text-foreground">
+                    <label htmlFor="email" className="block text-sm font-medium text-foreground">
                       Email
                     </label>
-                    <Input
-                      id="waitlist-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      required
-                    />
+                    <Input id="email" type="email" placeholder="you@example.com" required />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="waitlist-band" className="block text-sm font-medium text-foreground">
+                    <label htmlFor="band" className="block text-sm font-medium text-foreground">
                       Target band
                     </label>
-                    <Input
-                      id="waitlist-band"
-                      type="text"
-                      placeholder="e.g. 7.0, 7.5, 8.0"
-                    />
+                    <Input id="band" type="text" placeholder="e.g. 7.0, 7.5, 8.0" />
                   </div>
 
                   <Button type="submit" variant="primary" className="w-full rounded-2xl">
