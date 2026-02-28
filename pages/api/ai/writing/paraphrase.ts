@@ -5,6 +5,8 @@ import { env } from '@/lib/env';
 import { flags } from '@/lib/flags';
 import { touchRateLimit } from '@/lib/rate-limit';
 import { getServerClient, supabaseService } from '@/lib/supabaseServer';
+import { insertAiAssistLog } from '@/lib/repositories/aiAssistRepository';
+import { createDomainLogger } from '@/lib/obs/domainLogger';
 
 const Body = z.object({
   sentence: z
@@ -288,12 +290,12 @@ async function logInteraction(params: {
 }) {
   try {
     const service = supabaseService();
-    await service.from('ai_assist_logs').insert({
-      user_id: params.userId,
+    await insertAiAssistLog(service as any, {
+      userId: params.userId,
       feature: 'paraphrase',
-      input: JSON.stringify({ sentence: params.sentence, context: params.context }),
-      output: { suggestions: params.suggestions, source: params.source },
-      tokens_used: params.tokens ?? null,
+      payload: { sentence: params.sentence, context: params.context },
+      result: { suggestions: params.suggestions, source: params.source },
+      tokensUsed: params.tokens ?? null,
     });
   } catch (error) {
     console.error('ai_assist_log_failed', error);
@@ -310,6 +312,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   }
 
+  const log = createDomainLogger('/api/ai/writing/paraphrase');
   const supabase = getServerClient(req, res);
   const {
     data: { user },
@@ -329,6 +332,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (rate.limited) {
     const retryAfter = Math.max(Math.ceil((rate.resetAt - Date.now()) / 1000), 1);
     res.setHeader('Retry-After', String(retryAfter));
+    log.warn('ai.assist.generated', { userId: user.id, feature: 'paraphrase', reason: 'rate_limited' });
     return res.status(429).json({ ok: false, error: 'Please try again later.', code: 'rate_limited' });
   }
 
@@ -351,6 +355,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     suggestions = buildHeuristicSuggestions(sentence, context);
     source = 'heuristic';
   }
+
+  log.info('ai.assist.generated', { userId: user.id, feature: 'paraphrase', source, suggestionCount: suggestions.length });
 
   logInteraction({
     userId: user.id,

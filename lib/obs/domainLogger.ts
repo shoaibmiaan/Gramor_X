@@ -3,6 +3,7 @@ import { createRequestLogger } from '@/lib/obs/logger';
 export type DomainEventName =
   | 'ai.recommendation.generated'
   | 'ai.recommendation.regenerated'
+  | 'ai.assist.generated'
   | 'subscription.changed'
   | 'onboarding.completed'
   | 'onboarding.survey_saved'
