@@ -331,8 +331,8 @@ export const DesktopNav: React.FC<DesktopNavProps> = ({
 
       {/* RIGHT CLUSTER: streak, notifications, theme, user */}
       <div className="flex items-center gap-3">
-        {/* Streak chip: always show when ready + logged in */}
-        {ready && uid && (
+        {/* Streak chip: show for authenticated users */}
+        {uid && (
           <StreakChip
             value={streak ?? 0}
             href="/profile/streak"
@@ -348,34 +348,32 @@ export const DesktopNav: React.FC<DesktopNavProps> = ({
 
         {/* User menu / Sign-in */}
         <div className="ml-1">
-          {ready ? (
-            uid ? (
-              <UserMenu
-                userId={uid}
-                email={user?.email ?? undefined}
-                name={user?.name ?? undefined}
-                role={role ?? undefined}
-                avatarUrl={user?.avatarUrl ?? undefined}
-                onSignOut={async () => {
-                  await signOut?.();
-                }}
-                isAdmin={role === 'admin'}
-                items={profileMenu.map((link) => ({
-                  id: link.id,
-                  label: link.label,
-                  href: link.href,
-                }))}
-              />
-            ) : (
-              <Button
-                href="/login"
-                variant="outline"
-                size="sm"
-                className="w-full sm:w-auto rounded-full"
-              >
-                Sign in
-              </Button>
-            )
+          {uid ? (
+            <UserMenu
+              userId={uid}
+              email={user?.email ?? undefined}
+              name={user?.name ?? undefined}
+              role={role ?? undefined}
+              avatarUrl={user?.avatarUrl ?? undefined}
+              onSignOut={async () => {
+                await signOut?.();
+              }}
+              isAdmin={role === 'admin'}
+              items={profileMenu.map((link) => ({
+                id: link.id,
+                label: link.label,
+                href: link.href,
+              }))}
+            />
+          ) : ready ? (
+            <Button
+              href="/login"
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto rounded-full"
+            >
+              Sign in
+            </Button>
           ) : (
             <div className="h-9 w-24 animate-pulse rounded-full bg-surface-muted dark:bg-surface-muted-dark" />
           )}
