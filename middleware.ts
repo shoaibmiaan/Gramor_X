@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
-
-const AUTH_PAGES = ['/login', '/signup', '/register', '/forgot-password', '/auth/callback'];
+import { createLoginDestination, isAuthRoute, isSafePostAuthRedirect } from '@/lib/authRedirect';
 
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
+  '/profile',
   '/settings',
   '/notifications',
   '/study-plan',
@@ -28,12 +28,6 @@ const PROTECTED_PREFIXES = [
 
 function pathStartsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
-
-function isSafePostAuthRedirect(path: string | null) {
-  if (!path || !path.startsWith('/') || path.startsWith('//')) return false;
-  if (pathStartsWithAny(path, AUTH_PAGES)) return false;
-  return true;
 }
 
 function hasAuthCookie(req: NextRequest) {
@@ -69,13 +63,15 @@ export async function middleware(req: NextRequest) {
   }
 
   const authed = hasAuthCookie(req);
-  const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
+  const isAuthPage = isAuthRoute(pathname);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
 
   if (!authed && isProtected) {
     const url = req.nextUrl.clone();
-    url.pathname = '/login';
-    url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
+    const destination = createLoginDestination(pathname + (search || ''));
+    const [targetPath, query = ''] = destination.split('?');
+    url.pathname = targetPath;
+    url.search = query ? `?${query}` : '';
     return NextResponse.redirect(url);
   }
 
@@ -91,5 +87,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|images|public|api).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|images|public|api).*)',
+  ],
 };

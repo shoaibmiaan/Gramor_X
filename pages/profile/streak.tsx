@@ -7,6 +7,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { StreakChip } from '@/components/user/StreakChip';
 import { getServerClient } from '@/lib/supabaseServer';
+import { createAuthRedirect } from '@/lib/requirePageAuth';
 import { buildCompletionHistory } from '@/utils/streak';
 
 const Heatmap = dynamic(
@@ -51,7 +52,8 @@ const StreakPage: NextPage<Props> = ({ streak, history }) => {
           <div>
             <h1 className="font-slab text-h2 sm:text-display">Your streak</h1>
             <p className="max-w-2xl text-body text-muted-foreground">
-              Keep learning every day—complete a study task before midnight Pakistan time to maintain the streak.
+              Keep learning every day—complete a study task before midnight Pakistan time to
+              maintain the streak.
             </p>
           </div>
           <StreakChip value={streak.current} href="/profile/streak" />
@@ -92,9 +94,17 @@ const StreakPage: NextPage<Props> = ({ streak, history }) => {
             <div className="rounded-xl bg-muted/60 px-4 py-3 text-small text-muted-foreground">
               <h3 className="font-semibold text-foreground">How your streak works</h3>
               <ul className="mt-2 list-disc space-y-2 pl-4">
-                <li>Complete at least one scheduled study task before midnight Pakistan time (PKT) each day.</li>
-                <li>Every productive day extends your streak and fills the heatmap for that date.</li>
-                <li>Missing a day resets your current streak, but your longest streak stays recorded for motivation.</li>
+                <li>
+                  Complete at least one scheduled study task before midnight Pakistan time (PKT)
+                  each day.
+                </li>
+                <li>
+                  Every productive day extends your streak and fills the heatmap for that date.
+                </li>
+                <li>
+                  Missing a day resets your current streak, but your longest streak stays recorded
+                  for motivation.
+                </li>
               </ul>
             </div>
             <div className="pt-4">
@@ -116,12 +126,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   } = await supabase.auth.getUser();
 
   if (!user?.id) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
+    return createAuthRedirect(ctx.resolvedUrl);
   }
 
   const DAYS_BACK = 84;

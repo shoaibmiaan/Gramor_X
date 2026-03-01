@@ -24,6 +24,7 @@ import { LocaleProvider, useLocale } from '@/lib/locale';
 import { initIdleTimeout } from '@/utils/idleTimeout';
 import useRouteGuard from '@/hooks/useRouteGuard';
 import { destinationByRole, isSafePostAuthRedirect } from '@/lib/routeAccess';
+import { isAuthRoute } from '@/lib/authRedirect';
 import { refreshClientFlags, flagsHydratedRef } from '@/lib/flags/refresh';
 import { InstalledAppProvider } from '@/hooks/useInstalledApp';
 
@@ -41,10 +42,9 @@ import { getRouteConfig, isAttemptPath } from '@/lib/routes/routeLayoutMap';
 
 import LoadingProvider from '@/components/loading/LoadingProvider';
 
-const PricingReasonBanner = dynamic(
-  () => import('@/components/paywall/PricingReasonBanner'),
-  { ssr: false }
-);
+const PricingReasonBanner = dynamic(() => import('@/components/paywall/PricingReasonBanner'), {
+  ssr: false,
+});
 
 // ---- Safe Supabase getter (works for both factory or instance exports)
 function getSupa() {
@@ -77,11 +77,7 @@ function GuardSkeleton() {
 }
 
 // ---------- Route type helpers ----------
-const isAuthPage = (pathname: string) =>
-  /^\/(login|signup|register)(\/|$)/.test(pathname) ||
-  /^\/auth\/(login|signup|register|mfa|forgot|reset|callback)(\/|$)/.test(pathname) ||
-  pathname === '/forgot-password' ||
-  pathname === '/update-password';
+const isAuthPage = (pathname: string) => isAuthRoute(pathname) || pathname === '/update-password';
 
 const isPremiumRoomRoute = (pathname: string) =>
   pathname.startsWith('/premium/') && !pathname.startsWith('/premium-pin');
@@ -133,13 +129,11 @@ function useRouteConfiguration(pathname: string) {
         routeConfig.layout === 'billing' ||
         routeConfig.layout === 'analytics',
       isMarketplaceRoute: routeConfig.layout === 'marketplace',
-      isLearningRoute:
-        routeConfig.layout === 'learning' || routeConfig.layout === 'resources',
+      isLearningRoute: routeConfig.layout === 'learning' || routeConfig.layout === 'resources',
       isCommunityRoute:
         routeConfig.layout === 'community' || routeConfig.layout === 'communication',
       isReportsRoute: routeConfig.layout === 'reports',
-      isMarketingRoute:
-        routeConfig.layout === 'marketing' || routeConfig.layout === 'support',
+      isMarketingRoute: routeConfig.layout === 'marketing' || routeConfig.layout === 'support',
       needPremium: pathname.startsWith('/premium'),
       isPremiumRoute: isPremiumRoomRoute(pathname),
       routeConfig,
@@ -221,8 +215,7 @@ function InnerApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     if (!role) return;
     if (role === 'teacher') {
-      const onTeacherArea =
-        pathname.startsWith('/teacher') || routeConfiguration.isAuthPage;
+      const onTeacherArea = pathname.startsWith('/teacher') || routeConfiguration.isAuthPage;
       if (!onTeacherArea) router.replace('/teacher');
     }
   }, [role, pathname, routeConfiguration.isAuthPage, router]);
@@ -295,12 +288,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
                 role={role}
                 isTeacherApproved={isTeacherApproved}
                 guardFallback={() => <GuardSkeleton />}
-
                 // ⭐ SEND TO LAYOUT MANAGER
                 showBreadcrumbs={showBreadcrumbs}
               >
-                {(router.pathname === '/pricing' ||
-                  router.pathname === '/pricing/overview') && (
+                {(router.pathname === '/pricing' || router.pathname === '/pricing/overview') && (
                   <PricingReasonBanner />
                 )}
 

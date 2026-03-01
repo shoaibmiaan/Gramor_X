@@ -2,12 +2,14 @@
 
 import * as React from 'react';
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
+import { withPageAuth } from '@/lib/requirePageAuth';
 
 type SettingsSection = {
   href: string;
@@ -22,24 +24,21 @@ const sections: SettingsSection[] = [
   {
     href: '/account',
     label: 'Account overview',
-    description:
-      'See your plan, activity, and access all account tools from one place.',
+    description: 'See your plan, activity, and access all account tools from one place.',
     badge: 'Hub',
     group: 'account',
   },
   {
     href: '/account/billing',
     label: 'Billing & plan',
-    description:
-      'View your current plan, renewal date, invoices, and local dues.',
+    description: 'View your current plan, renewal date, invoices, and local dues.',
     badge: 'Plan',
     group: 'account',
   },
   {
     href: '/account/activity',
     label: 'Activity log',
-    description:
-      'Timeline of mocks, practices, streak updates, and other account events.',
+    description: 'Timeline of mocks, practices, streak updates, and other account events.',
     group: 'account',
   },
 
@@ -95,8 +94,8 @@ export default function SettingsHomePage() {
           <header className="space-y-2">
             <h1 className="text-h2 font-bold">Settings</h1>
             <p className="max-w-2xl text-small text-muted-foreground">
-              Use the account hub for the full picture, or jump straight into a
-              specific settings area from here.
+              Use the account hub for the full picture, or jump straight into a specific settings
+              area from here.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="sm" variant="soft">
@@ -118,19 +117,13 @@ export default function SettingsHomePage() {
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {items.map((section) => (
-                      <Link
-                        key={section.href}
-                        href={section.href}
-                        className="group block"
-                      >
+                      <Link key={section.href} href={section.href} className="group block">
                         <Card
                           as="article"
                           className="h-full cursor-pointer rounded-ds-2xl border border-border bg-card p-5 text-card-foreground transition-colors group-hover:border-primary/60"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <h3 className="text-body font-semibold">
-                              {section.label}
-                            </h3>
+                            <h3 className="text-body font-semibold">{section.label}</h3>
                             {section.badge ? (
                               <Badge size="sm" variant="info">
                                 {section.badge}
@@ -160,3 +153,5 @@ export default function SettingsHomePage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();
