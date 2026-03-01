@@ -1,12 +1,12 @@
 import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next';
 
+import { createLoginDestination } from '@/lib/authRedirect';
 import { getServerClient } from '@/lib/supabaseServer';
 
 export function createAuthRedirect(resolvedUrl?: string) {
-  const next = resolvedUrl && resolvedUrl !== '/' ? `?next=${encodeURIComponent(resolvedUrl)}` : '';
   return {
     redirect: {
-      destination: `/login${next}`,
+      destination: createLoginDestination(resolvedUrl),
       permanent: false,
     },
   };
