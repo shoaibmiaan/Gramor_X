@@ -39,8 +39,7 @@ import type { SupportedLocale } from '@/lib/i18n/config';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { getRouteConfig, isAttemptPath } from '@/lib/routes/routeLayoutMap';
 
-// ⭐ NEW BreadcrumbBar V2
-import { BreadcrumbBar } from '@/components/navigation/BreadcrumbBar';
+import LoadingProvider from '@/components/loading/LoadingProvider';
 
 const PricingReasonBanner = dynamic(
   () => import('@/components/paywall/PricingReasonBanner'),
@@ -272,43 +271,45 @@ function InnerApp({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <HighContrastProvider>
-        <div
-          className={`${poppins.className} ${slab.className}
+      <LoadingProvider>
+        <HighContrastProvider>
+          <div
+            className={`${poppins.className} ${slab.className}
           min-h-screen min-h-[100dvh] bg-background text-foreground antialiased`}
-        >
-          <AnimationProvider>
-            <AppLayoutManager
-              isAuthPage={routeConfiguration.isAuthPage}
-              isProctoringRoute={routeConfiguration.isProctoringRoute}
-              showLayout={routeConfiguration.showLayout}
-              forceLayoutOnAuthPage={forceLayoutOnAuthPage}
-              isAdminRoute={routeConfiguration.isAdminRoute}
-              isInstitutionsRoute={routeConfiguration.isInstitutionsRoute}
-              isDashboardRoute={routeConfiguration.isDashboardRoute}
-              isMarketplaceRoute={routeConfiguration.isMarketplaceRoute}
-              isLearningRoute={routeConfiguration.isLearningRoute}
-              isCommunityRoute={routeConfiguration.isCommunityRoute}
-              isReportsRoute={routeConfiguration.isReportsRoute}
-              isMarketingRoute={routeConfiguration.isMarketingRoute}
-              subscriptionTier={subscriptionTier}
-              role={role}
-              isTeacherApproved={isTeacherApproved}
-              guardFallback={() => <GuardSkeleton />}
+          >
+            <AnimationProvider>
+              <AppLayoutManager
+                isAuthPage={routeConfiguration.isAuthPage}
+                isProctoringRoute={routeConfiguration.isProctoringRoute}
+                showLayout={routeConfiguration.showLayout}
+                forceLayoutOnAuthPage={forceLayoutOnAuthPage}
+                isAdminRoute={routeConfiguration.isAdminRoute}
+                isInstitutionsRoute={routeConfiguration.isInstitutionsRoute}
+                isDashboardRoute={routeConfiguration.isDashboardRoute}
+                isMarketplaceRoute={routeConfiguration.isMarketplaceRoute}
+                isLearningRoute={routeConfiguration.isLearningRoute}
+                isCommunityRoute={routeConfiguration.isCommunityRoute}
+                isReportsRoute={routeConfiguration.isReportsRoute}
+                isMarketingRoute={routeConfiguration.isMarketingRoute}
+                subscriptionTier={subscriptionTier}
+                role={role}
+                isTeacherApproved={isTeacherApproved}
+                guardFallback={() => <GuardSkeleton />}
 
-              // ⭐ SEND TO LAYOUT MANAGER
-              showBreadcrumbs={showBreadcrumbs}
-            >
-              {(router.pathname === '/pricing' ||
-                router.pathname === '/pricing/overview') && (
-                <PricingReasonBanner />
-              )}
+                // ⭐ SEND TO LAYOUT MANAGER
+                showBreadcrumbs={showBreadcrumbs}
+              >
+                {(router.pathname === '/pricing' ||
+                  router.pathname === '/pricing/overview') && (
+                  <PricingReasonBanner />
+                )}
 
-              {basePage}
-            </AppLayoutManager>
-          </AnimationProvider>
-        </div>
-      </HighContrastProvider>
+                {basePage}
+              </AppLayoutManager>
+            </AnimationProvider>
+          </div>
+        </HighContrastProvider>
+      </LoadingProvider>
     </ThemeProvider>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2 } from 'lucide-react'; // or your icon library
+import { Skeleton } from '@/components/design-system/Skeleton';
 
 const cx = (...xs: Array<string | false | null | undefined>) => xs.filter(Boolean).join(' ');
 
@@ -123,7 +123,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           {isLoading && (
             <span className="absolute inset-y-0 right-0 flex items-center pr-3">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <Skeleton shape="circle" className="h-4 w-4" />
             </span>
           )}
 
