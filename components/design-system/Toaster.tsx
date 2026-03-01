@@ -193,3 +193,11 @@ export function Toaster({ children }: { children?: React.ReactNode }) {
 export function useToast() {
   return useContext(ToastCtx);
 }
+
+
+export const toast: ToastApi = ((opts: ToastOptions) => activeApi(opts)) as ToastApi;
+toast.push = (input) => activeApi.push(input);
+toast.success = (title, detail) => activeApi.success(title, detail);
+toast.error = (title, detail) => activeApi.error(title, detail);
+toast.warn = (title, detail) => activeApi.warn(title, detail);
+toast.info = (title, detail) => activeApi.info(title, detail);
