@@ -118,7 +118,7 @@ export default withPWA({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-  buildExcludes: [/.*\.map$/, /middleware-manifest\.json$/, /server\/middleware-manifest\.json$/],
+  buildExcludes: [/.*\.map$/, /middleware-manifest\.json$/, /server\/middleware-manifest\.json$/, /app-build-manifest\.json$/],
   publicExcludes: ['**/*.map'],
   importScripts: ['sw-sync.js', 'sw-patches/push-handler.js'],
 })(baseConfig);
