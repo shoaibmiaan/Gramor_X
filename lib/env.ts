@@ -45,6 +45,7 @@ const envSchema = z.object({
 
   REVIEW_SHARE_SECRET: z.string().optional(),
   REVIEW_SHARE_TTL_HOURS: z.coerce.number().optional(),
+  PROGRESS_SHARE_TTL_HOURS: z.coerce.number().optional(),
 
   ADMIN_EMAILS: z.string().optional(),
 
@@ -100,7 +101,9 @@ const envSchema = z.object({
   LOCAL_ADMIN_TOKEN: z.string().optional(),
   ADMIN_API_TOKEN: z.string().optional(),
   SITE_URL: z.string().url().optional(),
-  PAYMENTS_PROVIDER: z.enum(['none', 'stripe', 'easypaisa', 'jazzcash', 'safepay', 'crypto']).optional(),
+  PAYMENTS_PROVIDER: z
+    .enum(['none', 'stripe', 'easypaisa', 'jazzcash', 'safepay', 'crypto'])
+    .optional(),
   PORT: z.coerce.number().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
@@ -143,6 +146,7 @@ const raw = {
 
   REVIEW_SHARE_SECRET: process.env.REVIEW_SHARE_SECRET,
   REVIEW_SHARE_TTL_HOURS: process.env.REVIEW_SHARE_TTL_HOURS,
+  PROGRESS_SHARE_TTL_HOURS: process.env.PROGRESS_SHARE_TTL_HOURS,
 
   ADMIN_EMAILS: process.env.ADMIN_EMAILS,
 
@@ -203,12 +207,10 @@ const raw = {
   NODE_ENV: process.env.NODE_ENV as any,
 };
 
-const skipValidation =
-  process.env.SKIP_ENV_VALIDATION === 'true' || raw.NODE_ENV === 'test';
+const skipValidation = process.env.SKIP_ENV_VALIDATION === 'true' || raw.NODE_ENV === 'test';
 
 // Vercel sets VERCEL_ENV to 'development' | 'preview' | 'production'
-const isProdBuild =
-  raw.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production';
+const isProdBuild = raw.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production';
 
 const parsed = envSchema.safeParse(raw);
 
@@ -216,9 +218,7 @@ const globalEnv = globalThis as typeof globalThis & { __envWarnings?: Set<string
 
 if (!parsed.success && typeof window === 'undefined') {
   if (skipValidation || !isProdBuild) {
-    const warnings = parsed.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('\n');
+    const warnings = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('\n');
 
     const message =
       'Skipping strict environment validation (non-prod or SKIP_ENV_VALIDATION=true). Falling back to safe defaults:\n' +
@@ -233,9 +233,7 @@ if (!parsed.success && typeof window === 'undefined') {
       console.warn(message);
     }
   } else {
-    const errors = parsed.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join('\n');
+    const errors = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('\n');
     console.error('Invalid environment variables:\n' + errors);
     throw new Error('Invalid environment variables');
   }
@@ -249,6 +247,7 @@ const defaults = {
   SUPABASE_SERVICE_ROLE_KEY: 'service_role_key',
   REVIEW_SHARE_SECRET: 'review_share_secret',
   REVIEW_SHARE_TTL_HOURS: 72,
+  PROGRESS_SHARE_TTL_HOURS: 168,
   TWILIO_ACCOUNT_SID: 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
   TWILIO_AUTH_TOKEN: 'auth_token',
   TWILIO_VERIFY_SERVICE_SID: 'VAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -271,6 +270,9 @@ export const env = parsed.success
       REVIEW_SHARE_TTL_HOURS: Number(
         raw.REVIEW_SHARE_TTL_HOURS ?? defaults.REVIEW_SHARE_TTL_HOURS ?? 72,
       ),
+      PROGRESS_SHARE_TTL_HOURS: Number(
+        raw.PROGRESS_SHARE_TTL_HOURS ?? defaults.PROGRESS_SHARE_TTL_HOURS ?? 168,
+      ),
     };
 
 export const isBrowser = typeof window !== 'undefined';
@@ -279,7 +281,7 @@ export const isServer = !isBrowser;
 const hasSupabaseUrlEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL);
 const hasSupabaseAnonKeyEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 const hasSupabaseServiceKeyEnv = Boolean(
-  (process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY) ?? '',
+  process.env.SUPABASE_SERVICE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
 );
 
 export const supabaseEnvState = {
