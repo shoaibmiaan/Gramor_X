@@ -19,32 +19,8 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function syncSessionCookie(session?: {
-  access_token: string;
-  refresh_token?: string | null;
-  expires_in?: number | null;
-  expires_at?: number | null;
-}) {
-  if (!session) return;
-
-  try {
-    await fetch('/api/auth/set-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({
-        event: 'TOKEN_REFRESHED',
-        session: {
-          access_token: session.access_token,
-          refresh_token: session.refresh_token ?? undefined,
-          expires_in: session.expires_in ?? undefined,
-          expires_at: session.expires_at ?? undefined,
-        },
-      }),
-    });
-  } catch (error) {
-    console.warn('Failed to sync session cookie after refresh:', error);
-  }
+async function syncSessionCookie() {
+  // server session cookie sync removed; auth cookies are server-owned.
 }
 
 export async function waitForSubscriptionUpgrade({

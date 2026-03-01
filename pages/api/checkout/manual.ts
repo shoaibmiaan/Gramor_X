@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerClient } from '@supabase/ssr';
 import { createPendingPayment } from '@/lib/billing/manual';
 import { type PlanKey, type Cycle, PLANS } from '@/lib/pricing';
+import { enforceSameOrigin } from '@/lib/security/csrf';
 
 type Resp =
   | { ok: true; message: string }
@@ -9,6 +10,7 @@ type Resp =
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Resp>) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'method_not_allowed' });
+  if (!enforceSameOrigin(req, res)) return;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

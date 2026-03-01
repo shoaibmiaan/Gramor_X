@@ -6,10 +6,12 @@ interface Props {
   fallback?: React.ReactNode;
 }
 
-export default function DashboardErrorBoundary({ children, fallback }: Props) {
+export function DashboardErrorBoundary({ children, fallback }: Props) {
   try {
     return <>{children}</>;
   } catch (error) {
     return fallback ? <>{fallback}</> : <div>Something went wrong</div>;
   }
 }
+
+export default DashboardErrorBoundary;

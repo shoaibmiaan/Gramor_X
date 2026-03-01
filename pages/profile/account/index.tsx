@@ -13,7 +13,6 @@ import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { getPlan, isPaidPlan, type PlanId } from '@/types/pricing';
 
 import {
-  Timeline,
   CheckCircle,
   History,
   Settings as SettingsIcon,
@@ -405,7 +404,7 @@ export default function AccountHubPage() {
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-primary/10 p-2 text-primary">
-                    <Timeline className="h-5 w-5" />
+                    <History className="h-5 w-5" />
                   </div>
                   <div>
                     <h2 className="text-small font-medium text-foreground">
@@ -458,7 +457,7 @@ export default function AccountHubPage() {
                       className="min-w-[120px] flex-1"
                     >
                       <Link href="/account/activity">
-                        <Timeline className="mr-2 h-3 w-3" />
+                        <History className="mr-2 h-3 w-3" />
                         View timeline
                       </Link>
                     </Button>

@@ -105,3 +105,21 @@ export async function getEntitlementSnapshot(client: RepoClient, userId: string)
     error,
   };
 }
+
+
+export async function getUserEffectivePlan(client: RepoClient, userId: string) {
+  const { data: profile } = await client
+    .from('profiles')
+    .select('membership, plan, role')
+    .eq('id', userId)
+    .maybeSingle<{ membership?: string | null; plan?: string | null; role?: string | null }>();
+
+  const sub = await getSubscriptionSummary(client, userId);
+  const fallback = normalizePlan(profile?.plan ?? profile?.membership ?? null);
+
+  return {
+    plan: sub.plan || fallback,
+    role: profile?.role ?? null,
+    status: sub.status,
+  };
+}

@@ -10,6 +10,7 @@ export const languageOptions = [
 const LanguageEnum = z.enum(supportedLanguageCodes);
 const StudyDayEnum = z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const);
 const PhoneSchema = z.union([z.string().min(6).max(32), z.literal('')]);
+const NotificationChannelEnum = z.enum(['email', 'whatsapp', 'push'] as const);
 
 export const onboardingStateSchema = z.object({
   preferredLanguage: LanguageEnum.nullable(),
@@ -76,3 +77,12 @@ export const TOTAL_ONBOARDING_STEPS = 5;
 
 export const languageOptionsEnum = LanguageEnum;
 export const studyDayOptionsEnum = StudyDayEnum;
+
+
+// Backward-compatible API schema exports
+export const ExamDateBody = z.object({ examDate: z.union([z.string(), z.null()]).optional().nullable() });
+export const LanguageBody = z.object({ preferredLanguage: LanguageEnum });
+export const NotificationsBody = z.object({ notifications: z.boolean().optional(), channels: z.array(NotificationChannelEnum).optional() });
+export const StudyRhythmBody = z.object({ studyDays: z.array(StudyDayEnum).min(1), minutesPerDay: z.number().int().min(10).max(360) });
+export const TargetBandBody = z.object({ goalBand: z.number().min(4).max(9) });
+export { NotificationChannelEnum };

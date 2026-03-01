@@ -72,9 +72,8 @@ export default function SignUpWithEmail() {
       verificationParams.set('email', trimmedEmail);
       if (role) verificationParams.set('role', role);
       if (ref) verificationParams.set('ref', ref);
-      if (pkcePair.verifier) verificationParams.set('code_verifier', pkcePair.verifier);
 
-      const redirectTarget = `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`;
+      const redirectTarget = `${origin}/auth/callback?${verificationParams.toString()}`;
 
       try {
         await submitPkceSignup({
@@ -101,7 +100,6 @@ export default function SignUpWithEmail() {
           if (role) verifyParams.set('role', role);
           if (ref) verifyParams.set('ref', ref);
           if (nextPath) verifyParams.set('next', nextPath);
-          if (pkcePair.verifier) verifyParams.set('code_verifier', pkcePair.verifier);
           await router.replace(`/signup/verify?${verifyParams.toString()}`);
           return;
         }
@@ -116,7 +114,6 @@ export default function SignUpWithEmail() {
       if (role) verifyParams.set('role', role);
       if (ref) verifyParams.set('ref', ref);
       if (nextPath) verifyParams.set('next', nextPath);
-      if (pkcePair.verifier) verifyParams.set('code_verifier', pkcePair.verifier);
       await router.replace(`/signup/verify?${verifyParams.toString()}`);
     } catch (_e: any) {
       setErr('Unable to sign up. Please try again.');

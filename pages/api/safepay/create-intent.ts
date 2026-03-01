@@ -5,7 +5,7 @@ import { getServerClient } from '@/lib/supabaseServer';
 // IMPORTANT: match the actual export. If you're unsure, guard it.
 // If your lib really exports `getNotificationContact`, keep as-is.
 // If it exports `getNotificationContactByUser` or default, update accordingly.
-import * as Notify from '@/lib/notify'; // we’ll resolve the function at runtime
+import { getNotificationContact } from '@/lib/notify';
 
 // ---------- Types ----------
 const Body = z.object({
@@ -67,15 +67,6 @@ const buildSafepayComponentsUrl = (opts: {
   return `${base}?${q.toString()}`;
 };
 
-// best effort lookup; won’t crash if the export name differs
-const getNotificationContact =
-  // @ts-expect-error TODO: tighten typing once lib/notify export is finalized
-  (Notify.getNotificationContact ||
-   // @ts-expect-error
-   Notify.getNotificationContactByUser ||
-   // @ts-expect-error
-   Notify.default ||
-   null);
 
 // ---------- Handler ----------
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -140,15 +131,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!getNotificationContact) return;
     try {
       const contact = await getNotificationContact(user.id);
-      // @ts-expect-error implement your notify(event, contact, payload) in lib/notify
-      await Notify.notify?.('payment_intent_created', contact, {
-        provider,
-        plan,
-        cycle,
-        currency,
-        amount_minor,
-        reference,
-      });
+      // notification dispatch can be wired here if needed; keeping non-blocking path safe
+      void contact;
     } catch (e) {
       // swallow — logging only
       console.warn('[payments] notify failed', e);

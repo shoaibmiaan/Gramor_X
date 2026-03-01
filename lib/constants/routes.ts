@@ -9,7 +9,7 @@ export const LOGIN = '/login';
 export const SIGNUP = '/signup';
 export const FORGOT_PASSWORD = '/auth/forgot';
 export const RESET_PASSWORD = '/auth/reset';
-export const VERIFY_EMAIL = '/auth/verify';
+export const VERIFY_EMAIL = '/auth/callback';
 export const CALLBACK = '/auth/callback';
 export const MFA = '/auth/mfa';
 

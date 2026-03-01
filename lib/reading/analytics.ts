@@ -60,3 +60,19 @@ export function computeAccuracyByQuestionType(
     return { questionTypeId, correct, total, accuracy };
   });
 }
+
+
+export function computeAttemptsTimeline(attempts: Array<{ created_at?: string | null; score?: number | null }>) {
+  return attempts.map((a, i) => ({
+    index: i,
+    createdAt: a.created_at ?? null,
+    score: typeof a.score === 'number' ? a.score : null,
+  }));
+}
+
+export function computeTimePerQuestionStats(items: Array<{ ms?: number | null }>) {
+  const values = items.map((x) => Number(x.ms ?? 0)).filter((n) => Number.isFinite(n) && n >= 0);
+  if (!values.length) return { avgMs: 0, minMs: 0, maxMs: 0 };
+  const sum = values.reduce((a, b) => a + b, 0);
+  return { avgMs: Math.round(sum / values.length), minMs: Math.min(...values), maxMs: Math.max(...values) };
+}
