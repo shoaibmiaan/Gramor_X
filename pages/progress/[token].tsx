@@ -1,7 +1,9 @@
 import { GetServerSideProps } from 'next';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { Container } from '@/components/design-system/Container';
+
 import { Card } from '@/components/design-system/Card';
+import { Container } from '@/components/design-system/Container';
+import { verifyProgressShareToken } from '@/lib/review/shareToken';
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 interface Props {
   reading: {
@@ -14,24 +16,35 @@ interface Props {
   } | null;
 }
 
+async function resolveUserFromToken(token: string): Promise<string | null> {
+  try {
+    const payload = verifyProgressShareToken(token);
+    return payload.userId;
+  } catch {
+    const { data: link } = await supabaseAdmin
+      .from('progress_share_links')
+      .select('user_id')
+      .eq('token', token)
+      .maybeSingle();
+
+    return link?.user_id ?? null;
+  }
+}
+
 export const getServerSideProps: GetServerSideProps<Props> = async ({ params }) => {
   const token = params?.token;
   if (typeof token !== 'string') return { notFound: true };
 
-  const { data: link } = await supabaseAdmin
-    .from('progress_share_links')
-    .select('user_id')
-    .eq('token', token)
-    .maybeSingle();
+  const userId = await resolveUserFromToken(token);
 
-  if (!link) {
+  if (!userId) {
     return { notFound: true };
   }
 
   const { data: reading } = await supabaseAdmin
     .from('reading_user_stats')
     .select('attempts,total_score,total_max,accuracy_pct,avg_duration_ms,last_attempt_at')
-    .eq('user_id', link.user_id)
+    .eq('user_id', userId)
     .maybeSingle();
 
   return {
@@ -45,17 +58,19 @@ export default function PublicProgress({ reading }: Props) {
   return (
     <section className="py-10">
       <Container>
-        <Card className="p-6 rounded-ds-2xl">
-          <h1 className="font-slab text-h2 mb-4">Reading progress</h1>
+        <Card className="rounded-ds-2xl p-6">
+          <h1 className="mb-4 font-slab text-h2">Reading progress</h1>
           {reading ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div>
                 <div className="text-small text-grayish dark:text-grayish">Attempts</div>
                 <div className="text-h3 font-semibold">{reading.attempts}</div>
               </div>
               <div>
                 <div className="text-small text-grayish dark:text-grayish">Points</div>
-                <div className="text-h3 font-semibold">{reading.total_score}/{reading.total_max}</div>
+                <div className="text-h3 font-semibold">
+                  {reading.total_score}/{reading.total_max}
+                </div>
               </div>
               <div>
                 <div className="text-small text-grayish dark:text-grayish">Accuracy</div>
@@ -64,7 +79,9 @@ export default function PublicProgress({ reading }: Props) {
               <div>
                 <div className="text-small text-grayish dark:text-grayish">Last attempt</div>
                 <div className="text-h3 font-semibold">
-                  {reading.last_attempt_at ? new Date(reading.last_attempt_at).toLocaleDateString() : '—'}
+                  {reading.last_attempt_at
+                    ? new Date(reading.last_attempt_at).toLocaleDateString()
+                    : '—'}
                 </div>
               </div>
             </div>
