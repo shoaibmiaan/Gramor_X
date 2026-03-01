@@ -17,7 +17,6 @@ import { fetchProfile, upsertProfile } from '@/lib/profile';
 import type { Profile } from '@/types/profile';
 import { languageOptions as onboardingLanguages } from '@/lib/onboarding/schema';
 import { useLocale } from '@/lib/locale';
-import { VocabInsightsCards } from '@/components/quiz/VocabInsightsCards';
 
 type FieldErrors = {
   fullName?: string;
@@ -346,8 +345,6 @@ export default function ProfilePage() {
                 </Button>
               </div>
             </Card>
-
-            <VocabInsightsCards />
 
             {error && (
               <Alert variant="error" role="alert" className="rounded-ds-2xl">

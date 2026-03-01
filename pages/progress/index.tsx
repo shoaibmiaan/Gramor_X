@@ -10,7 +10,6 @@ import { Container } from '@/components/design-system/Container';
 import { EmptyState } from '@/components/design-system/EmptyState';
 import { Badge } from '@/components/design-system/Badge';
 import type { ProgressTrendPayload, SkillAverage, LexicalEstimate } from '@/lib/analytics/progress';
-import { VocabInsightsCards } from '@/components/quiz/VocabInsightsCards';
 
 const TrendLineChart = dynamic(
   () => import('@/components/progress/TrendCharts').then((mod) => mod.TrendLineChart),
@@ -141,7 +140,6 @@ export default function ProgressPage() {
               </section>
 
               {lexicalEstimate && <LexicalResourcePanel estimate={lexicalEstimate} />}
-              <VocabInsightsCards />
             </div>
           )}
         </Card>
