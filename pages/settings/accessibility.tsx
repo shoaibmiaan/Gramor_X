@@ -1,9 +1,11 @@
 'use client';
 
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import React from 'react';
 
 import { Container } from '@/components/design-system/Container';
+import { withPageAuth } from '@/lib/requirePageAuth';
 import AccessibilitySettingsCard from '@/components/settings/Accessibility';
 
 export default function AccessibilitySettingsPage() {
@@ -32,3 +34,5 @@ export default function AccessibilitySettingsPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();

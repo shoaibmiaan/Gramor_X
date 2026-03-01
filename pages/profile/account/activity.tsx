@@ -3,6 +3,7 @@ import Head from 'next/head';
 import type { GetServerSideProps, NextPage } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { createAuthRedirect } from '@/lib/requirePageAuth';
 import type { Database } from '@/lib/database.types';
 
 import { Container } from '@/components/design-system/Container';
@@ -63,9 +64,7 @@ function describeActivity(row: ActivityRow): string {
 
   switch (activity_type) {
     case 'mock_attempt_started':
-      return testTitle
-        ? `Started mock test: ${testTitle}`
-        : 'Started a mock test';
+      return testTitle ? `Started mock test: ${testTitle}` : 'Started a mock test';
 
     case 'mock_attempt_submitted':
       if (testTitle && band != null) {
@@ -81,9 +80,7 @@ function describeActivity(row: ActivityRow): string {
       return `Completed a ${moduleLabel[module] ?? module} practice session`;
 
     case 'lesson_completed':
-      return testTitle
-        ? `Completed lesson: ${testTitle}`
-        : 'Completed a lesson';
+      return testTitle ? `Completed lesson: ${testTitle}` : 'Completed a lesson';
 
     case 'streak_day_recorded':
       return 'Daily streak updated';
@@ -133,21 +130,15 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
           {/* Header */}
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-h2 font-semibold tracking-tight">
-                Activity log
-              </h1>
+              <h1 className="text-h2 font-semibold tracking-tight">Activity log</h1>
               <p className="mt-1 max-w-xl text-small text-muted-foreground">
-                A unified timeline of your mocks, practice, lessons, and streak
-                updates – only visible to you (and admins for support).
+                A unified timeline of your mocks, practice, lessons, and streak updates – only
+                visible to you (and admins for support).
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="border border-border/60"
-              >
+              <Button variant="ghost" size="sm" className="border border-border/60">
                 <Icon name="filter" className="mr-2 h-4 w-4" />
                 Filters (coming soon)
               </Button>
@@ -162,10 +153,7 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
           <Card className="border border-border/60 bg-muted/40">
             <div className="flex flex-wrap items-center gap-4 px-4 py-3 text-small">
               <div className="flex items-center gap-2">
-                <Icon
-                  name="history"
-                  className="h-4 w-4 text-muted-foreground"
-                />
+                <Icon name="history" className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">
                   {activities.length > 0
                     ? `${activities.length} activities tracked`
@@ -174,8 +162,7 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
               </div>
               <div className="hidden h-4 w-px bg-border/60 sm:block" />
               <p className="text-muted-foreground">
-                This log is personal to you. Only you and admins (for support)
-                can see it.
+                This log is personal to you. Only you and admins (for support) can see it.
               </p>
             </div>
           </Card>
@@ -183,14 +170,10 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
           {/* Timeline */}
           {activities.length === 0 ? (
             <Card className="py-10 text-center">
-              <Icon
-                name="inbox"
-                className="mx-auto mb-3 h-8 w-8 text-muted-foreground"
-              />
+              <Icon name="inbox" className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
               <p className="font-medium">No activity yet</p>
               <p className="mt-1 text-small text-muted-foreground">
-                Start a mock test or practice session and your timeline will
-                show up here.
+                Start a mock test or practice session and your timeline will show up here.
               </p>
             </Card>
           ) : (
@@ -209,21 +192,14 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
                     <ul className="divide-y divide-border/60">
                       {rows.map((row) => {
                         const label = moduleLabel[row.module] ?? row.module;
-                        const iconName =
-                          moduleIcon[row.module] ?? 'activity';
+                        const iconName = moduleIcon[row.module] ?? 'activity';
 
                         return (
-                          <li
-                            key={row.id}
-                            className="flex items-start gap-4 px-4 py-3"
-                          >
+                          <li key={row.id} className="flex items-start gap-4 px-4 py-3">
                             {/* Left: icon + vertical line */}
                             <div className="flex flex-col items-center">
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                <Icon
-                                  name={iconName}
-                                  className="h-4 w-4"
-                                />
+                                <Icon name={iconName} className="h-4 w-4" />
                               </div>
                               <div className="mt-1 h-full w-px flex-1 bg-border/40" />
                             </div>
@@ -231,9 +207,7 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
                             {/* Content */}
                             <div className="flex-1 space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-small font-medium">
-                                  {describeActivity(row)}
-                                </p>
+                                <p className="text-small font-medium">{describeActivity(row)}</p>
                                 <Badge size="sm" variant="soft">
                                   {label}
                                 </Badge>
@@ -246,17 +220,14 @@ const ActivityPage: NextPage<Props> = ({ activities }) => {
                                 </span>
                               </p>
 
-                              {row.meta &&
-                                Object.keys(row.meta).length > 0 && (
-                                  <div className="mt-1 rounded-md bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
-                                    <span className="font-medium">
-                                      Extra details:
-                                    </span>{' '}
-                                    <code className="font-mono text-[11px]">
-                                      {JSON.stringify(row.meta)}
-                                    </code>
-                                  </div>
-                                )}
+                              {row.meta && Object.keys(row.meta).length > 0 && (
+                                <div className="mt-1 rounded-md bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
+                                  <span className="font-medium">Extra details:</span>{' '}
+                                  <code className="font-mono text-[11px]">
+                                    {JSON.stringify(row.meta)}
+                                  </code>
+                                </div>
+                              )}
                             </div>
                           </li>
                         );
@@ -281,12 +252,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return {
-      redirect: {
-        destination: '/auth/login?next=/account/activity',
-        permanent: false,
-      },
-    };
+    return createAuthRedirect(ctx.resolvedUrl);
   }
 
   const { data, error } = await supabase

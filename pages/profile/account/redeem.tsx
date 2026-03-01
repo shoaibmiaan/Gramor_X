@@ -1,9 +1,11 @@
 import * as React from 'react';
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
+import { withPageAuth } from '@/lib/requirePageAuth';
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
 import { Container } from '@/components/design-system/Container';
@@ -65,19 +67,13 @@ export default function RedeemPinPage() {
         setMessage({
           kind: 'success',
           text: `Welcome to ${
-            data.plan === 'master'
-              ? 'Master'
-              : data.plan === 'booster'
-              ? 'Booster'
-              : 'Starter'
+            data.plan === 'master' ? 'Master' : data.plan === 'booster' ? 'Booster' : 'Starter'
           }!${formatted}`,
         });
         setPin('');
         setRemaining(null);
       } else {
-        const err = data.ok
-          ? 'Unable to redeem PIN.'
-          : data.error || 'Unable to redeem PIN.';
+        const err = data.ok ? 'Unable to redeem PIN.' : data.error || 'Unable to redeem PIN.';
         setMessage({ kind: 'error', text: err });
         if (!data.ok && typeof data.remainingAttempts === 'number') {
           setRemaining(Math.max(data.remainingAttempts, 0));
@@ -108,12 +104,9 @@ export default function RedeemPinPage() {
       <main className="min-h-screen bg-background py-8 text-foreground sm:py-10">
         <Container className="max-w-2xl space-y-5 sm:space-y-6">
           <header className="space-y-1">
-            <h1 className="text-h2 font-semibold text-foreground">
-              Redeem Premium PIN
-            </h1>
+            <h1 className="text-h2 font-semibold text-foreground">Redeem Premium PIN</h1>
             <p className="text-small text-muted-foreground">
-              Enter the one-time PIN shared by our team to instantly unlock
-              premium access.
+              Enter the one-time PIN shared by our team to instantly unlock premium access.
             </p>
           </header>
 
@@ -126,50 +119,32 @@ export default function RedeemPinPage() {
                   inputMode="numeric"
                   pattern="[0-9]*"
                   value={pin}
-                  onChange={(event) =>
-                    setPin(event.target.value.replace(/\D/g, '').slice(0, 6))
-                  }
+                  onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 6))}
                   autoComplete="one-time-code"
                   required
                 />
                 <p className="text-caption text-muted-foreground">
-                  PINs expire after use. Each code can be redeemed once per
-                  account.
+                  PINs expire after use. Each code can be redeemed once per account.
                 </p>
               </div>
 
               {message && (
                 <Alert
-                  variant={
-                    message.kind === 'success' ? 'success' : 'error'
-                  }
+                  variant={message.kind === 'success' ? 'success' : 'error'}
                   appearance="soft"
-                  title={
-                    message.kind === 'success'
-                      ? 'Success'
-                      : 'We couldn’t verify that PIN'
-                  }
+                  title={message.kind === 'success' ? 'Success' : 'We couldn’t verify that PIN'}
                 >
-                  <p className="mt-1 text-small text-muted-foreground">
-                    {message.text}
-                  </p>
-                  {remaining !== null &&
-                    remaining >= 0 &&
-                    message.kind === 'error' && (
-                      <p className="mt-2 text-caption text-muted-foreground">
-                        Attempts left before lockout:{' '}
-                        <span className="font-medium">{remaining}</span>
-                      </p>
-                    )}
+                  <p className="mt-1 text-small text-muted-foreground">{message.text}</p>
+                  {remaining !== null && remaining >= 0 && message.kind === 'error' && (
+                    <p className="mt-2 text-caption text-muted-foreground">
+                      Attempts left before lockout: <span className="font-medium">{remaining}</span>
+                    </p>
+                  )}
                 </Alert>
               )}
 
               <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  type="submit"
-                  loading={loading}
-                  disabled={loading || pin.length < 4}
-                >
+                <Button type="submit" loading={loading} disabled={loading || pin.length < 4}>
                   {loading ? 'Checking…' : 'Redeem PIN'}
                 </Button>
                 <Badge variant="secondary">One-time use</Badge>
@@ -178,12 +153,10 @@ export default function RedeemPinPage() {
           </Card>
 
           <Card padding="lg" className="space-y-3 bg-muted/30">
-            <h2 className="text-h5 font-semibold text-foreground">
-              Need a PIN?
-            </h2>
+            <h2 className="text-h5 font-semibold text-foreground">Need a PIN?</h2>
             <p className="text-small text-muted-foreground">
-              Premium PINs are issued during onboarding and private offers. If
-              you believe you should have one, contact our success team.
+              Premium PINs are issued during onboarding and private offers. If you believe you
+              should have one, contact our success team.
             </p>
             <div>
               <Button asChild variant="link" size="sm">
@@ -196,3 +169,5 @@ export default function RedeemPinPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();
