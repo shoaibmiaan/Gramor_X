@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { createServerSupabaseClient } from '@/lib/auth/server';
 import { redis } from '@/lib/redis';
 import { evaluateRisk, riskThreshold } from '@/lib/risk';
 import { incrementFlaggedLogin } from '@/lib/metrics';
+import { enforceSameOrigin } from '@/lib/security/csrf';
 
 const MAX_ATTEMPTS = 5;
 const BLOCK_TIME_SEC = 60 * 15; // 15 minutes
@@ -12,6 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Allow', 'POST');
     return res.status(405).end('Method Not Allowed');
   }
+
+  if (!enforceSameOrigin(req, res)) return;
 
   const { email, password } = req.body as { email?: string; password?: string };
   if (!email || !password) {
@@ -39,7 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(429).json({ error: 'Too many failed login attempts. Please try again later.' });
   }
 
-  const { data, error } = await supabaseAdmin.auth.signInWithPassword({ email, password });
+  const supabase = createServerSupabaseClient(req, res);
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.session) {
     await redis.incr(key);
     await redis.expire(key, BLOCK_TIME_SEC);
@@ -47,5 +51,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   await redis.del(key);
-  return res.status(200).json({ session: data.session });
+  return res.status(200).json({ ok: true });
 }

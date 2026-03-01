@@ -84,10 +84,6 @@ export default function SignupWithPhone() {
     if (error) return setErr(getAuthErrorMessage(error));
 
     if (data.session) {
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
       try {
         await supabase.auth.updateUser({ data: { status: 'active' } });
       } catch {}

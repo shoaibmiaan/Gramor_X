@@ -35,11 +35,11 @@ test('redirectByRole sends unverified users to verification', () => {
     phone_confirmed_at: null,
     app_metadata: { role: 'student' },
   };
-  assert.strictEqual(redirectByRole(user), '/auth/verify');
+  assert.strictEqual(redirectByRole(user), '/signup/verify');
 });
 
 test('verification page is considered public', () => {
-  assert.strictEqual(isPublicRoute('/auth/verify'), true);
+  assert.strictEqual(isPublicRoute('/signup/verify'), true);
 });
 
 
@@ -47,6 +47,6 @@ test('isSafePostAuthRedirect blocks auth routes and allows app routes', () => {
   assert.strictEqual(isSafePostAuthRedirect('/dashboard'), true);
   assert.strictEqual(isSafePostAuthRedirect('/progress?tab=weekly'), true);
   assert.strictEqual(isSafePostAuthRedirect('/login/email?role=student'), false);
-  assert.strictEqual(isSafePostAuthRedirect('/auth/verify'), false);
+  assert.strictEqual(isSafePostAuthRedirect('/signup/verify'), false);
   assert.strictEqual(isSafePostAuthRedirect('//evil.com'), false);
 });

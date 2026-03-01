@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { env } from '@/lib/env';
+import { enforceSameOrigin } from '@/lib/security/csrf';
 
 const SITE_URL =
   env.NEXT_PUBLIC_SITE_URL ||
@@ -20,6 +21,8 @@ export default async function handler(
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (!enforceSameOrigin(req, res)) return;
 
   const result = BodySchema.safeParse(req.body);
   if (!result.success) {
