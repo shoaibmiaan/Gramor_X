@@ -43,9 +43,9 @@ const createSupabaseBrowserClient = () =>
   createClient<Database>(isConfigured ? url! : FALLBACK_URL, isConfigured ? anon! : FALLBACK_ANON_KEY, {
     auth: {
       flowType: 'pkce',
-      autoRefreshToken: false,      // ✅ disable auto-refresh – errors will stop
+      autoRefreshToken: true,
       detectSessionInUrl: true,
-      persistSession: false,
+      persistSession: true,
     },
     ...(isConfigured ? {} : { global: { fetch: noopFetch } }),
   });

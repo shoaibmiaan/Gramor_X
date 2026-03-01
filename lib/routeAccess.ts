@@ -113,7 +113,7 @@ export function destinationByRole(user: User | null | undefined): string {
 
   if (role === 'teacher') return '/teacher';
   if (role === 'admin') return '/admin';
-  return onboarded ? '/dashboard' : '/welcome';
+  return onboarded ? '/dashboard' : '/onboarding';
 }
 
 /** Backwards-compatible helper that *navigates* only on client */

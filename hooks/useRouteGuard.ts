@@ -10,6 +10,7 @@ import {
   canAccess,
   requiredRolesFor,
   getUserRole,
+  destinationByRole,
   type AppRole,
 } from '@/lib/routeAccess';
 
@@ -80,7 +81,7 @@ export function useRouteGuard() {
         if (guestOnlyR) {
           if (authed) {
             hasRedirected.current = true;
-            const target = safeNext(router.query.next) || '/welcome';
+            const target = safeNext(router.query.next) || destinationByRole(user);
             if (target && router.asPath !== target) {
               try {
                 await router.replace(target);
