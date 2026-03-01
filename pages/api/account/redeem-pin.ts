@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { env } from '@/lib/env';
 import { getServerClient } from '@/lib/supabaseServer';
 import { getAdminClient } from '@/lib/supabaseAdmin';
+import { enforceSameOrigin } from '@/lib/security/csrf';
 
 type Plan = 'starter' | 'booster' | 'master';
 
@@ -110,6 +111,8 @@ export default async function handler(
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'method_not_allowed' });
   }
+
+  if (!enforceSameOrigin(req, res)) return;
 
   // Auth (server-side supabase client tied to req/res cookies)
   const supabase = getServerClient(req, res);

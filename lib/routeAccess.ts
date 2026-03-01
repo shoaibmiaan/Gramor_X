@@ -15,7 +15,7 @@ const PUBLIC_ROUTES: RouteMatcher[] = [
   /^\/contact$/,
   /^\/roadmap$/,
   /^\/vocabulary(\/|$)/,
-  '/auth/verify',
+  '/auth/callback',
   '/403', // keep these public to avoid loops
   /^\/legal(\/|$)/,
   '/faq',
@@ -53,7 +53,7 @@ export const isGuestOnlyRoute = (path: string) => matchesRoute(path, GUEST_ONLY_
 export const isSafePostAuthRedirect = (path: string): boolean => {
   if (!path || !path.startsWith('/') || path.startsWith('//')) return false;
   if (isGuestOnlyRoute(path)) return false;
-  if (/^\/auth\/(login|signup|register|mfa|verify)(\/|$)/.test(path)) return false;
+  if (/^\/auth\/(login|signup|register|mfa|callback)(\/|$)/.test(path)) return false;
   return true;
 };
 
@@ -99,7 +99,7 @@ export function destinationByRole(user: User | null | undefined): string {
   const phoneVerified = !!user?.phone_confirmed_at;
 
   if (user && !emailVerified && !phoneVerified) {
-    return '/auth/verify';
+    return '/signup/verify';
   }
 
   // Handle pending teachers explicitly via metadata role (does not require changing AppRole)

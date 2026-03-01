@@ -1,108 +1,55 @@
-// pages/auth/callback.tsx
-'use client';
+import type { GetServerSideProps } from 'next';
+import { createServerSupabaseClient, exchangeAndSetSession } from '@/lib/auth/server';
+import { setAuthCookies } from '@/lib/auth/cookies';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import Head from 'next/head';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { LOGIN, HOME } from '@/lib/constants/routes';
+const HOME = '/dashboard';
 
-export default function AuthCallback() {
-  const router = useRouter();
-  const [err, setErr] = useState<string | null>(null);
+function safeNext(next: string | string[] | undefined) {
+  const value = typeof next === 'string' ? next : Array.isArray(next) ? next[0] : '';
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return HOME;
+  if (/^\/auth\//.test(value) || /^\/(login|signup)(\/|$)/.test(value)) return HOME;
+  return value;
+}
 
-  useEffect(() => {
-    if (!router.isReady) return;
+export const getServerSideProps: GetServerSideProps = async ({ req, res, query }) => {
+  const next = safeNext(query.next);
 
-    let cancelled = false;
+  const code = typeof query.code === 'string' ? query.code : '';
+  const tokenHash = typeof query.token_hash === 'string' ? query.token_hash : '';
+  const type = typeof query.type === 'string' ? query.type : '';
 
-    const run = async () => {
-      const url = new URL(window.location.href);
-      const code = url.searchParams.get('code');
-      const token_hash = url.searchParams.get('token_hash');
-      const type = (url.searchParams.get('type') || '').toLowerCase(); // signup, magiclink, recovery, etc.
-      const next = url.searchParams.get('next') || HOME;
-
-      try {
-        // 1) Handle "code" (OAuth / newer magic link) first
-        if (code) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-
-          if (data.session) {
-            await supabase.auth.setSession(data.session);
-          }
-
-          // Best-effort: notify server cookies
-          try {
-            await fetch('/api/auth/set-session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'same-origin',
-              body: JSON.stringify({ event: 'SIGNED_IN', session: data.session }),
-            });
-          } catch { /* ignore */ }
-
-          if (!cancelled) router.replace(next.startsWith('/') ? next : HOME);
-          return;
-        }
-
-        // 2) Handle "token_hash" (email confirm / recovery / invite / email_change)
-        if (token_hash && type) {
-          const { data, error } = await supabase.auth.verifyOtp({
-            type: type as any,
-            token_hash,
-          });
-          if (error) throw error;
-
-          if (data.session) {
-            await supabase.auth.setSession(data.session);
-          }
-
-          try {
-            await fetch('/api/auth/set-session', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'same-origin',
-              body: JSON.stringify({ event: 'SIGNED_IN', session: data.session }),
-            });
-          } catch { /* ignore */ }
-
-          if (!cancelled) router.replace(next.startsWith('/') ? next : HOME);
-          return;
-        }
-
-        // Nothing to verify — just go home
-        if (!cancelled) router.replace(HOME);
-      } catch (e: any) {
-        if (!cancelled) setErr(e?.message || 'Verification failed.');
+  try {
+    if (code) {
+      const exchanged = await exchangeAndSetSession(req as any, res as any, code);
+      if (!exchanged.ok) {
+        return { redirect: { destination: '/login?error=callback_exchange_failed', permanent: false } };
       }
-    };
+      return { redirect: { destination: next, permanent: false } };
+    }
 
-    void run();
+    if (tokenHash && type) {
+      const supabase = createServerSupabaseClient(req as any, res as any);
+      const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: type as any });
+      if (error || !data.session?.access_token || !data.session.refresh_token) {
+        return { redirect: { destination: '/login?error=callback_verify_failed', permanent: false } };
+      }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [router, router.isReady]);
+      setAuthCookies(res as any, {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+        expiresAt: data.session.expires_at,
+        expiresIn: data.session.expires_in,
+      });
 
-  return (
-    <>
-      <Head><title>Signing you in…</title></Head>
-      <div className="grid min-h-[100dvh] place-items-center">
-        {err ? (
-          <div className="rounded-ds-2xl border border-destructive/40 p-6 max-w-md">
-            <h1 className="text-lg font-semibold text-destructive">Couldn’t verify your email</h1>
-            <p className="mt-2 text-muted-foreground">{err}</p>
-            <button className="btn mt-4" onClick={() => router.replace(LOGIN)}>Back to login</button>
-          </div>
-        ) : (
-          <div className="text-center">
-            <div className="h-6 w-40 animate-pulse rounded bg-border mx-auto" />
-            <p className="mt-3 text-muted-foreground">Completing sign-in…</p>
-          </div>
-        )}
-      </div>
-    </>
-  );
+      return { redirect: { destination: next, permanent: false } };
+    }
+  } catch {
+    return { redirect: { destination: '/login?error=callback_failed', permanent: false } };
+  }
+
+  return { redirect: { destination: HOME, permanent: false } };
+};
+
+export default function AuthCallbackPage() {
+  return null;
 }

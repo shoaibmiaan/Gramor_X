@@ -1,5 +1,6 @@
 // pages/api/premium/verify-pin.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { enforceSameOrigin } from '@/lib/security/csrf';
 
 const THIRTY_DAYS = 60 * 60 * 24 * 30;
 const isProd = process.env.NODE_ENV === 'production';
@@ -9,7 +10,7 @@ function isValidPin(pin: unknown): pin is string {
 }
 function verify(pin: string): boolean {
   const envPin = process.env.PREMIUM_PIN?.trim();
-  return (envPin && pin === envPin) || pin === '000000'; // dev backdoor—remove in prod if desired
+  return Boolean(envPin && pin === envPin);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -17,6 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (!enforceSameOrigin(req, res)) return;
 
   const body = (req.body ?? {}) as { pin?: unknown };
   if (!isValidPin(body.pin)) return res.status(400).json({ error: 'Invalid payload' });

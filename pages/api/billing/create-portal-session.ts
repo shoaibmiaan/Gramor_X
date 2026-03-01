@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { stripe } from '@/lib/stripe';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { enforceSameOrigin } from '@/lib/security/csrf';
 
 type PortalResponse = { url: string } | { error: string };
 
@@ -25,6 +26,8 @@ export default async function handler(
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'method_not_allowed' });
   }
+
+  if (!enforceSameOrigin(req, res)) return;
 
   if (!stripe) return res.status(400).json({ error: 'stripe_not_configured' });
 

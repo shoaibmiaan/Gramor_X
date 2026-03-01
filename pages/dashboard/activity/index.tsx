@@ -19,8 +19,7 @@ import QuickActions from "@/components/activity/QuickActions";
 // Icons
 import {
   Activity,
-  Timeline,
-  Tasks,
+  History,
   BarChart3,
   Filter,
   Download,
@@ -563,7 +562,7 @@ export default function ActivityHomePage() {
                     onClick={() => setActiveTab('timeline')}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <Timeline className="h-4 w-4" />
+                      <History className="h-4 w-4" />
                       Activity Timeline
                     </div>
                   </button>
@@ -572,7 +571,7 @@ export default function ActivityHomePage() {
                     onClick={() => setActiveTab('tasks')}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      <Tasks className="h-4 w-4" />
+                      <CheckCircle className="h-4 w-4" />
                       Task Board ({tasks.length})
                     </div>
                   </button>
