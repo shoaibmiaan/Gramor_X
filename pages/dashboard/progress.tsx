@@ -1,5 +1,6 @@
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { Card } from '@/components/ui/Card';
+import { VocabInsightsCards } from '@/components/quiz/VocabInsightsCards';
 
 export default function progressPage() {
   return (
@@ -10,6 +11,7 @@ export default function progressPage() {
           This module is now aligned with the enterprise dashboard architecture.
         </p>
       </Card>
+      <VocabInsightsCards />
     </DashboardShell>
   );
 }

@@ -9,6 +9,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import Icon, { type IconName } from '@/components/design-system/Icon';
+import dynamic from 'next/dynamic';
 
 const modules = [
   {
@@ -162,6 +163,11 @@ const testimonials = [
     band: 'Overall 7.0',
   },
 ];
+
+
+const VocabQuizTrigger = dynamic(() => import('@/components/quiz/VocabQuizTrigger').then((mod) => mod.VocabQuizTrigger), {
+  ssr: false,
+});
 
 const plans = [
   {
@@ -317,14 +323,7 @@ const LandingPage: React.FC = () => {
                     </div>
 
                     <div className="pt-1">
-                      <Button
-                        asChild
-                        size="sm"
-                        variant="secondary"
-                        className="rounded-ds-xl"
-                      >
-                        <Link href="/vocabulary">Take 60-second vocab quiz</Link>
-                      </Button>
+                      <VocabQuizTrigger />
                     </div>
                   </div>
                 </Card>
