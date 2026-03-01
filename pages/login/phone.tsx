@@ -64,10 +64,6 @@ export default function LoginWithPhone() {
     if (error) return setErr(getAuthErrorMessage(error));
 
     if (data.session) {
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
       try { await supabase.auth.updateUser({ data: { status: 'active' } }); } catch {}
       try { await fetch('/api/auth/login-event', { method: 'POST' }); } catch {}
       redirectByRole(data.session.user);

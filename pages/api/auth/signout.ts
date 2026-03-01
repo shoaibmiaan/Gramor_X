@@ -1,5 +1,7 @@
 // pages/api/auth/signout.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { enforceSameOrigin } from '@/lib/security/csrf';
+import { clearSession } from '@/lib/auth/server';
 
 /**
  * Clears Supabase auth cookies set by the Next.js helpers (if used).
@@ -7,22 +9,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
+  if (!enforceSameOrigin(req, res)) return;
 
-  // Invalidate cookies by setting them expired (names used by supabase-auth-helpers)
-  // If your cookie names differ, add them here.
-  const cookies = [
-    'sb-access-token',
-    'sb-refresh-token',
-    'sb:token',
-    'supabase-auth-token', // legacy
-  ];
-
-  cookies.forEach((name) => {
-    res.setHeader('Set-Cookie', [
-      `${name}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`,
-      ...(Array.isArray(res.getHeader('Set-Cookie')) ? (res.getHeader('Set-Cookie') as string[]) : []),
-    ]);
-  });
+  clearSession(res);
 
   res.status(200).json({ ok: true });
 }

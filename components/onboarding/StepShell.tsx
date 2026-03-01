@@ -34,7 +34,7 @@ export type StepShellProps = {
   hint?: string;       // small tip ribbon below header
 };
 
-const StepShell: React.FC<StepShellProps> = ({
+export const StepShell: React.FC<StepShellProps> = ({
   step,
   total,
   title,

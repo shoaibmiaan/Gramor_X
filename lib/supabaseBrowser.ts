@@ -45,7 +45,7 @@ const createSupabaseBrowserClient = () =>
       flowType: 'pkce',
       autoRefreshToken: false,      // ✅ disable auto-refresh – errors will stop
       detectSessionInUrl: true,
-      persistSession: true,
+      persistSession: false,
     },
     ...(isConfigured ? {} : { global: { fetch: noopFetch } }),
   });

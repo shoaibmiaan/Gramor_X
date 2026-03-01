@@ -79,7 +79,7 @@ function GuardSkeleton() {
 // ---------- Route type helpers ----------
 const isAuthPage = (pathname: string) =>
   /^\/(login|signup|register)(\/|$)/.test(pathname) ||
-  /^\/auth\/(login|signup|register|mfa|verify|forgot|reset|confirm|callback)(\/|$)/.test(pathname) ||
+  /^\/auth\/(login|signup|register|mfa|forgot|reset|callback)(\/|$)/.test(pathname) ||
   pathname === '/forgot-password' ||
   pathname === '/update-password';
 
@@ -95,116 +95,8 @@ const isMockTestsFlowRoute = (pathname: string) => {
 
 // ---------- Auth bridge ----------
 function useAuthBridge() {
-  const router = useRouter();
-
-  const bridgeSession = useCallback(
-    async (event: AuthChangeEvent, sessionNow: Session | null) => {
-      const shouldPost =
-        event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED';
-      if (!shouldPost) return;
-
-      if (event !== 'SIGNED_OUT' && !sessionNow?.access_token) return;
-
-      try {
-        await fetch('/api/auth/set-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ event, session: sessionNow }),
-        });
-      } catch (err) {
-        console.error('Failed to bridge auth session:', err);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (IS_CI) return;
-
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      const hasAuthCallbackParams =
-        url.searchParams.has('code') ||
-        (url.searchParams.has('token_hash') && url.searchParams.has('type'));
-
-      if (hasAuthCallbackParams && !/^\/auth\/(callback|verify|confirm)(\/|$)/.test(router.pathname)) {
-        void router.replace(`/auth/callback${url.search}`);
-        return;
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      if ((window as any).__GX_AUTH_BRIDGE_ACTIVE) return;
-      (window as any).__GX_AUTH_BRIDGE_ACTIVE = true;
-    }
-
-    let cancelled = false;
-    const supa = getSupa();
-
-    // Initial sync
-    (async () => {
-      const {
-        data: { session },
-      } = await supa.auth.getSession();
-      if (cancelled) return;
-
-      if (session) {
-        await bridgeSession('SIGNED_IN', session);
-      } else {
-        await bridgeSession('SIGNED_OUT', null);
-      }
-
-      if (!flagsHydratedRef.current) {
-        void refreshClientFlags();
-      }
-
-      // Prevent logged-in user from seeing dashboard login/signup
-      if (session?.user && isAuthPage(router.pathname)) {
-        const url = new URL(window.location.href);
-        const next = url.searchParams.get('next');
-        const target =
-          isSafePostAuthRedirect(next)
-            ? next
-            : destinationByRole(session.user) ?? '/';
-        router.replace(target);
-      }
-    })();
-
-    // Subscribe to auth changes
-    const {
-      data: { subscription },
-    } = supa.auth.onAuthStateChange((event, sessionNow) => {
-      (async () => {
-        if (cancelled) return;
-        await bridgeSession(event, sessionNow);
-
-        if (event === 'SIGNED_IN' && sessionNow?.user) {
-          const url = new URL(window.location.href);
-          const next = url.searchParams.get('next');
-          if (isSafePostAuthRedirect(next)) {
-            router.replace(next);
-          } else if (isAuthPage(router.pathname)) {
-            router.replace(destinationByRole(sessionNow.user));
-          }
-        }
-
-        if (event === 'SIGNED_OUT') {
-          if (!['/login', '/signup', '/forgot-password'].includes(router.pathname)) {
-            router.replace('/login');
-          }
-        }
-      })();
-    });
-
-    return () => {
-      cancelled = true;
-      subscription?.unsubscribe?.();
-      if (typeof window !== 'undefined') {
-        (window as any).__GX_AUTH_BRIDGE_ACTIVE = false;
-      }
-    };
-  }, [router, bridgeSession]);
+  // Auth session lifecycle is now server-owned via /auth/callback and HttpOnly cookies.
+  // Keep _app free of client token exchange/bridge logic to avoid redirect races.
 }
 
 // ---------- Route config ----------

@@ -452,3 +452,6 @@ export async function upsertStudyPlan(sp: StudyPlan): Promise<{ ok: true } | { o
 function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+
+export const getStudyPlan = generateStudyPlan;

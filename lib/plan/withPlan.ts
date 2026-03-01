@@ -1,38 +1,22 @@
-// lib/plan/withPlan.ts
-import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
-import { getServerClient } from '@/lib/supabaseServer';
+import type {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  GetServerSidePropsResult,
+  NextApiHandler,
+  NextApiRequest,
+  NextApiResponse,
+} from 'next';
+import { withPlan as withUnifiedPlan } from '@/lib/apiGuard';
 import type { PlanId } from '@/types/pricing';
-import { evaluateQuota, upgradeAdvice, type QuotaKey } from '@/lib/plan/quotas';
+import { getServerClient } from '@/lib/supabaseServer';
 import { resolveUserPlan } from '@/lib/plan/resolveUserPlan';
 
-// --- Plan helpers ------------------------------------------------------------
-
-const PLAN_RANK: Record<PlanId, number> = { free: 0, starter: 1, booster: 2, master: 3 };
-
-function normalizePlan(input: unknown): PlanId {
-  const raw =
-    (typeof input === 'string' && input) ||
-    (input && typeof input === 'object' && ((input as any).plan_id || (input as any).plan || (input as any).id)) ||
-    null;
-
-  const v = typeof raw === 'string' ? raw.toLowerCase().trim() : 'free';
-
-  if (v === 'free' || v === 'starter' || v === 'booster' || v === 'master') return v as PlanId;
-  if (v === 'seedling') return 'free';   // legacy aliases
-  if (v === 'rocket')   return 'starter';
-  if (v === 'owl')      return 'booster';
-  return 'free';
-}
-
-function rank(plan: unknown): number {
-  return PLAN_RANK[normalizePlan(plan)];
-}
-
-function hasRequiredPlan(userPlan: unknown, required: PlanId) {
-  return rank(userPlan) >= PLAN_RANK[required];
-}
-
-// --- Types -------------------------------------------------------------------
+const PLAN_RANK: Record<PlanId, number> = {
+  free: 0,
+  starter: 1,
+  booster: 2,
+  master: 3,
+};
 
 export type PlanGuardContext = {
   supabase: ReturnType<typeof getServerClient>;
@@ -40,114 +24,105 @@ export type PlanGuardContext = {
   plan: PlanId;
 };
 
-type Handler2 = (req: NextApiRequest, res: NextApiResponse) => any;
-type Handler3 = (req: NextApiRequest, res: NextApiResponse, ctx: PlanGuardContext) => any;
+type ApiHandler2 = (req: NextApiRequest, res: NextApiResponse) => unknown | Promise<unknown>;
+type ApiHandler3 = (req: NextApiRequest, res: NextApiResponse, ctx: PlanGuardContext) => unknown | Promise<unknown>;
 
 type Options = {
-  allowRoles?: string[];     // e.g., ['admin', 'teacher'] bypass
-  killSwitchFlag?: string;   // reserved; no-op here
-  quota?: {
-    key: QuotaKey;
-    amount?: number; // default 1
-    getUsedToday?: (ctx: PlanGuardContext) => Promise<number>;
-  };
+  allowRoles?: Array<'admin' | 'teacher'>;
 };
 
-// --- Impl --------------------------------------------------------------------
+type GuardedGetServerSideProps<P> = (
+  handler: (ctx: GetServerSidePropsContext, guard: PlanGuardContext) => Promise<GetServerSidePropsResult<P>>
+) => GetServerSideProps<P>;
 
-export function withPlan(requiredPlan: PlanId, handler: Handler2 | Handler3, opts: Options = {}): NextApiHandler {
-  const allowRoles = (opts.allowRoles ?? []).map((r) => r.toLowerCase());
+function normalizePlan(plan: unknown): PlanId {
+  const value = String(plan ?? 'free').toLowerCase();
+  if (value === 'starter' || value === 'booster' || value === 'master') return value;
+  return 'free';
+}
 
-  return async function planWrapped(req: NextApiRequest, res: NextApiResponse) {
-    const supabase = getServerClient(req, res);
+function hasRequiredPlan(userPlan: PlanId, requiredPlan: PlanId) {
+  return PLAN_RANK[userPlan] >= PLAN_RANK[requiredPlan];
+}
 
-    // --- Authenticate user, catching refresh token errors ---
-    let user = null;
-    try {
-      const { data: auth, error: authErr } = await supabase.auth.getUser();
-      if (authErr || !auth?.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      user = auth.user;
-    } catch (err: any) {
-      // If the error is due to refresh token not found, treat as unauthenticated
-      if (err?.code === 'refresh_token_not_found' || err?.message?.includes('refresh_token_not_found')) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      console.error('[withPlan] auth error', err);
-      return res.status(500).json({ error: 'Authentication error' });
-    }
-
-    // --- Role bypass (admins/teachers can skip plan checks) ---
-    let role: string | undefined;
-    try {
-      const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-      role = (prof?.role as string | undefined)?.toLowerCase();
-    } catch { /* ignore */ }
-    if (!role) {
-      try {
-        const { data: roleRow } = await supabase.from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
-        role = (roleRow?.role as string | undefined)?.toLowerCase();
-      } catch { /* ignore */ }
-    }
-    if (role && allowRoles.includes(role)) {
-      const ctx: PlanGuardContext = {
-        supabase,
-        user: { id: user.id, email: user.email ?? null },
-        plan: normalizePlan(await safeResolvePlan(supabase, user.id)),
-      };
-      return (handler as any)(req, res, ctx);
-    }
-
-    // --- Plan resolution + enforcement ---
-    const userPlan = normalizePlan(await safeResolvePlan(supabase, user.id));
-    if (!hasRequiredPlan(userPlan, requiredPlan)) {
-      return res.status(403).json({ error: 'Plan required', need: requiredPlan, have: userPlan });
-    }
-
-    const ctx: PlanGuardContext = {
-      supabase,
-      user: { id: user.id, email: user.email ?? null },
-      plan: userPlan,
-    };
-
-    // --- Optional quota guard ---
-    if (opts.quota) {
-      const { key, amount = 1, getUsedToday } = opts.quota;
-      let used = 0;
-      try {
-        used = getUsedToday ? await getUsedToday(ctx) : 0;
-      } catch { used = 0; }
-
-      const snap = evaluateQuota(ctx.plan, key, used);
-      if (!snap.isUnlimited && snap.remaining < amount) {
-        const advice = upgradeAdvice(ctx.plan, key, used);
-        return res.status(402).json({
-          error: 'Quota exceeded',
-          quota: { key, limit: snap.limit, used: snap.used, remaining: snap.remaining },
-          advice,
-        });
-      }
-    }
-
-    // --- Call the handler with context ---
-    return (handler as any)(req, res, ctx);
+function buildUpgradeRedirect(ctx: GetServerSidePropsContext, requiredPlan: PlanId): GetServerSidePropsResult<never> {
+  const currentPath = ctx.resolvedUrl || '/';
+  const destination = `/pricing?required=${requiredPlan}&from=${encodeURIComponent(currentPath)}`;
+  return {
+    redirect: {
+      destination,
+      permanent: false,
+    },
   };
 }
 
-// Try resolveUserPlan first; fall back to user_profiles.plan_id
-async function safeResolvePlan(supabase: ReturnType<typeof getServerClient>, userId: string): Promise<PlanId> {
-  try {
-    const p = await resolveUserPlan(supabase, userId);
-    return normalizePlan(p);
-  } catch {
-    try {
-      const { data } = await supabase.from('user_profiles').select('plan_id').eq('user_id', userId).maybeSingle();
-      return normalizePlan(data?.plan_id ?? 'free');
-    } catch {
-      return 'free';
-    }
+async function resolveGuardContext(req: NextApiRequest, res: NextApiResponse): Promise<PlanGuardContext | null> {
+  const supabase = getServerClient(req, res);
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  if (!user) return null;
+
+  const resolved = await resolveUserPlan(req, res).catch(() => ({ plan: 'free' as PlanId }));
+  return {
+    supabase,
+    user: { id: user.id, email: user.email ?? null },
+    plan: normalizePlan(resolved.plan),
+  };
+}
+
+export function withPlan<P = Record<string, never>>(requiredPlan: PlanId): GuardedGetServerSideProps<P>;
+export function withPlan(requiredPlan: PlanId, handler: ApiHandler2 | ApiHandler3, opts?: Options): NextApiHandler;
+export function withPlan<P = Record<string, never>>(
+  requiredPlan: PlanId,
+  handler?: ApiHandler2 | ApiHandler3,
+  opts: Options = {},
+) {
+  if (handler) {
+    return withUnifiedPlan(
+      requiredPlan,
+      async (req, res) => {
+        const guard = await resolveGuardContext(req, res);
+        if (!guard) return;
+        return (handler as ApiHandler3)(req, res, guard);
+      },
+      { allowRoles: opts.allowRoles ?? [] },
+    );
   }
+
+  return function guardServerSideProps(
+    pageHandler: (ctx: GetServerSidePropsContext, guard: PlanGuardContext) => Promise<GetServerSidePropsResult<P>>,
+  ): GetServerSideProps<P> {
+    return async function guarded(ctx) {
+      const supabase = getServerClient(ctx.req as NextApiRequest, ctx.res as NextApiResponse);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        return pageHandler(ctx, {
+          supabase,
+          user: { id: '', email: null },
+          plan: 'free',
+        });
+      }
+
+      const resolved = await resolveUserPlan(ctx.req, ctx.res).catch(() => ({ plan: 'free' as PlanId, role: null as string | null }));
+      const normalizedPlan = normalizePlan(resolved.plan);
+      const role = String(resolved.role ?? '').toLowerCase();
+
+      const isRoleBypass = role !== '' && (opts.allowRoles ?? []).includes(role as 'admin' | 'teacher');
+
+      if (!isRoleBypass && !hasRequiredPlan(normalizedPlan, requiredPlan)) {
+        return buildUpgradeRedirect(ctx, requiredPlan) as GetServerSidePropsResult<P>;
+      }
+
+      return pageHandler(ctx, {
+        supabase,
+        user: { id: user.id, email: user.email ?? null },
+        plan: normalizedPlan,
+      });
+    };
+  };
 }
 
 export default withPlan;
