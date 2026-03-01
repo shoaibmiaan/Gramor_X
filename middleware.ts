@@ -37,7 +37,18 @@ function isSafePostAuthRedirect(path: string | null) {
 }
 
 function hasAuthCookie(req: NextRequest) {
-  return Boolean(req.cookies.get('sb-access-token')?.value && req.cookies.get('sb-refresh-token')?.value);
+  const hasDirectPair = Boolean(
+    req.cookies.get('sb-access-token')?.value && req.cookies.get('sb-refresh-token')?.value,
+  );
+  if (hasDirectPair) return true;
+
+  if (req.cookies.get('sb:token')?.value || req.cookies.get('supabase-auth-token')?.value) {
+    return true;
+  }
+
+  return req.cookies
+    .getAll()
+    .some((cookie) => /^sb-[a-z0-9-]+-auth-token(?:\.\d+)?$/i.test(cookie.name));
 }
 
 export async function middleware(req: NextRequest) {
