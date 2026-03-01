@@ -8,7 +8,6 @@ import React, {
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import clsx from 'clsx';
-import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
@@ -21,6 +20,7 @@ import { useAutoSaveDraft } from '@/lib/mock/useAutoSaveDraft';
 import { api } from '@/lib/http';
 import { writingExamSummaries } from '@/data/writing/exam-index';
 import { useUserContext } from '@/context/UserContext';
+import { SkeletonTextBlock } from '@/components/loading/Skeletons';
 import type {
   WritingExamPrompts,
   WritingScorePayload,
@@ -642,7 +642,10 @@ const WritingMockCBERunPage: React.FC = () => {
         {stage === 'submitting' ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
             <Card className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-xl">
-              <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" aria-hidden="true" />
+              <div className="mx-auto max-w-[220px]" role="status" aria-live="polite">
+                <span className="sr-only">Submitting your responses…</span>
+                <SkeletonTextBlock />
+              </div>
               <h3 className="mt-4 text-xl font-semibold text-slate-900">Time is up</h3>
               <p className="mt-2 text-sm text-slate-600">Your editor is locked while we save and submit your responses.</p>
               {submissionError ? (

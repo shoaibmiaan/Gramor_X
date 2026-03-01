@@ -1,16 +1,23 @@
 import React from 'react';
 import clsx from 'clsx';
+import { SkeletonTextBlock } from '@/components/loading/Skeletons';
+import { useDelayedVisibility } from '@/components/loading/useDelayedVisibility';
 
 interface LoaderProps {
   label?: string;
   className?: string;
+  active?: boolean;
 }
 
-export const Loader: React.FC<LoaderProps> = ({ label = 'Loading…', className }) => {
+export const Loader: React.FC<LoaderProps> = ({ label = 'Loading…', className, active = true }) => {
+  const showSkeleton = useDelayedVisibility(active, 600);
+
+  if (!showSkeleton) return null;
+
   return (
-    <div className={clsx('flex items-center gap-2 text-muted-foreground', className)} role="status" aria-live="polite">
-      <span className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-border border-t-transparent" aria-hidden="true" />
-      <span className="text-small font-medium">{label}</span>
+    <div className={clsx('space-y-2 text-muted-foreground', className)} role="status" aria-live="polite">
+      <span className="sr-only">{label}</span>
+      <SkeletonTextBlock className="max-w-sm" />
     </div>
   );
 };

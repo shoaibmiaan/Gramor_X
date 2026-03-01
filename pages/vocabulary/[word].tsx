@@ -2,7 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import * as React from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
@@ -12,6 +12,7 @@ import { Container } from '@/components/design-system/Container';
 import { EmptyState } from '@/components/design-system/EmptyState';
 import { Heading } from '@/components/design-system/Heading';
 import { Separator } from '@/components/design-system/Separator';
+import { SkeletonTextBlock } from '@/components/loading/Skeletons';
 import { PronunciationBar } from '@/components/vocab/PronunciationBar';
 import { SenseList } from '@/components/vocab/SenseList';
 import { WordCard } from '@/components/vocab/WordCard';
@@ -86,9 +87,9 @@ export default function WordDetailPage() {
 
           <Card className="space-y-6 p-6">
             {loading && (
-              <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
-                <Loader2 className="h-10 w-10 animate-spin" aria-hidden="true" />
-                Loading word details…
+              <div className="py-12" role="status" aria-live="polite">
+                <span className="sr-only">Loading word details…</span>
+                <SkeletonTextBlock className="mx-auto max-w-xl" />
               </div>
             )}
 
