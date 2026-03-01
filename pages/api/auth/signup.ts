@@ -4,6 +4,7 @@ import { env } from '@/lib/env';
 import { isValidEmail } from '@/utils/validation';
 import { evaluateRisk, riskThreshold } from '@/lib/risk';
 import { incrementFlaggedSignup } from '@/lib/metrics';
+import { enforceSameOrigin } from '@/lib/security/csrf';
 
 const SITE_URL = env.NEXT_PUBLIC_SITE_URL || env.SITE_URL || 'http://localhost:3000';
 const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d\S]{8,}$/;
@@ -16,6 +17,8 @@ export default async function handler(
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  if (!enforceSameOrigin(req, res)) return;
 
   const { email, password, referral } = req.body as {
     email?: string;
@@ -60,7 +63,7 @@ export default async function handler(
       email: trimmedEmail,
       password,
       options: {
-        emailRedirectTo: `${SITE_URL}/auth/verify`,
+        emailRedirectTo: `${SITE_URL}/auth/callback`,
         data: referral ? { referral_code: referral.trim() } : undefined,
       },
     });

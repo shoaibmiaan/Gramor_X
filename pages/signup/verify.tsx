@@ -8,7 +8,6 @@ import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { readStoredPkceVerifier } from '@/lib/auth/pkce';
 import { ONBOARDING, SIGNUP, LOGIN } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
 
@@ -52,10 +51,6 @@ export default function VerifyEmailPage() {
     return () => clearInterval(id);
   }, [cooldown]);
 
-  const codeVerifier =
-    typeof router.query.code_verifier === 'string' && router.query.code_verifier.length > 0
-      ? router.query.code_verifier
-      : readStoredPkceVerifier() || '';
 
   async function onResend() {
     setErr(null);
@@ -77,14 +72,13 @@ export default function VerifyEmailPage() {
       verificationParams.set('email', email);
       if (role) verificationParams.set('role', role);
       if (ref) verificationParams.set('ref', ref);
-      if (codeVerifier) verificationParams.set('code_verifier', codeVerifier);
 
       const { error } = await supabase.auth.resend({
         // @ts-expect-error supabase-js may not expose resend type yet
         type: 'signup',
         email,
         options: {
-          emailRedirectTo: `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`,
+          emailRedirectTo: `${origin}/auth/callback?${verificationParams.toString()}`,
         },
       });
 

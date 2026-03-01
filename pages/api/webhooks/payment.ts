@@ -76,6 +76,20 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
   }
 
   try {
+
+    const { data: existingEvent } = await supabase
+      .from('payment_events')
+      .select('id, external_id')
+      .eq('provider', 'stripe')
+      .eq('external_id', event.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (existingEvent?.external_id) {
+      log.info('webhook.duplicate', { eventId: event.id, type: event.type });
+      return res.status(200).json({ received: true });
+    }
+
     // Persist raw event for audit
     try {
       await supabase.from('payment_events').insert([
