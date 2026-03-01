@@ -28,8 +28,15 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const { user, role, loading } = useUserContext();
-  const { streak: streakState, ready, signOut, subscriptionTier } = useHeaderState(streak);
+  const { loading } = useUserContext();
+  const {
+    user,
+    role,
+    streak: streakState,
+    ready,
+    signOut,
+    subscriptionTier,
+  } = useHeaderState(streak);
 
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
@@ -401,22 +408,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
               {/* Mobile nav */}
               <MobileNav
-                user={
-                  user
-                    ? {
-                        id: user.id,
-                        email: user.email ?? null,
-                        name:
-                          (user.user_metadata as any)?.full_name ??
-                          (user.user_metadata as any)?.name ??
-                          null,
-                        avatarUrl:
-                          (user.user_metadata as any)?.avatar_url ??
-                          (user.user_metadata as any)?.avatar ??
-                          null,
-                      }
-                    : null
-                }
+                user={user}
                 role={role ?? 'guest'}
                 ready={ready}
                 streak={streakState ?? 0}
