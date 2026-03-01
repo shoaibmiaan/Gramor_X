@@ -64,7 +64,11 @@ export default async function handler(
       password,
       options: {
         emailRedirectTo: `${SITE_URL}/auth/callback`,
-        data: referral ? { referral_code: referral.trim() } : undefined,
+        data: {
+          ...(referral ? { referral_code: referral.trim() } : {}),
+          onboarding_required: true,
+          onboarding_complete: false,
+        },
       },
     });
 

@@ -52,7 +52,11 @@ export default function SignupWithPhone() {
     setPhoneErr(null);
     setLoading(true);
 
-    const data: Record<string, string> = { status: 'pending_verification' };
+    const data: Record<string, string> = {
+      status: 'pending_verification',
+      onboarding_required: 'true',
+      onboarding_complete: 'false',
+    };
     if (referral) data.referral_code = referral.trim();
 
     const { error } = await supabase.auth.signInWithOtp({
@@ -111,7 +115,11 @@ export default function SignupWithPhone() {
     setLoading(true);
     try {
       const trimmedPhone = phone.trim();
-      const data: Record<string, string> = { status: 'pending_verification' };
+      const data: Record<string, string> = {
+        status: 'pending_verification',
+        onboarding_required: 'true',
+        onboarding_complete: 'false',
+      };
       if (referral) data.referral_code = referral.trim();
       const { error } = await supabase.auth.signInWithOtp({
         phone: trimmedPhone,

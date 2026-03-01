@@ -122,7 +122,7 @@ export default async function handler(
 
   // 🔁 Sync the onboarding_complete flag to the user's metadata
   const { error: metadataError } = await supabase.auth.updateUser({
-    data: { onboarding_complete: true }
+    data: { onboarding_complete: true, onboarding_required: false }
   });
 
   if (metadataError) {

@@ -109,11 +109,14 @@ export function destinationByRole(user: User | null | undefined): string {
   }
 
   const role = getUserRole(user);
-  const onboarded = !!(user as unknown as { user_metadata?: { onboarding_complete?: boolean } })?.user_metadata?.onboarding_complete;
+  const metadata = (user as unknown as {
+    user_metadata?: { onboarding_complete?: boolean; onboarding_required?: boolean };
+  })?.user_metadata;
+  const onboardingRequired = metadata?.onboarding_required === true && metadata?.onboarding_complete !== true;
 
   if (role === 'teacher') return '/teacher';
   if (role === 'admin') return '/admin';
-  return onboarded ? '/dashboard' : '/onboarding';
+  return onboardingRequired ? '/onboarding' : '/dashboard';
 }
 
 /** Backwards-compatible helper that *navigates* only on client */

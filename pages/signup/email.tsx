@@ -80,7 +80,7 @@ export default function SignUpWithEmail() {
           email: trimmedEmail,
           password,
           redirectTo: redirectTarget,
-          data: { role: role || 'student' },
+          data: { role: role || 'student', onboarding_required: true, onboarding_complete: false },
           codeChallenge: pkcePair.challenge,
           codeChallengeMethod: pkcePair.method,
         });
