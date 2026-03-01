@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 
 import { Container } from '@/components/design-system/Container';
@@ -9,6 +10,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
+import { withPageAuth } from '@/lib/requirePageAuth';
 import { useToast } from '@/components/design-system/Toaster';
 import { fetchProfile } from '@/lib/profile';
 import type { Profile } from '@/types/profile';
@@ -65,10 +67,7 @@ export default function BillingHistoryPage() {
           return;
         }
         console.error('Failed to load billing history', err);
-        const message = t(
-          'billing.load.error',
-          'Unable to load billing history.',
-        );
+        const message = t('billing.load.error', 'Unable to load billing history.');
         setError(message);
         toastError(message);
       } finally {
@@ -81,9 +80,7 @@ export default function BillingHistoryPage() {
   }, [router, t, toastError]);
 
   const currentPlan: PlanId = profile?.tier ?? 'free';
-  const hasSubscription =
-    !!profile?.stripe_customer_id &&
-    profile.subscription_status === 'active';
+  const hasSubscription = !!profile?.stripe_customer_id && profile.subscription_status === 'active';
 
   if (loading) {
     return (
@@ -127,10 +124,7 @@ export default function BillingHistoryPage() {
 
               {!hasSubscription && (
                 <Alert variant="info" className="rounded-ds-2xl">
-                  {t(
-                    'billing.noHistory',
-                    'No billing history yet. Upgrade to see invoices.',
-                  )}
+                  {t('billing.noHistory', 'No billing history yet. Upgrade to see invoices.')}
                 </Alert>
               )}
 
@@ -145,10 +139,7 @@ export default function BillingHistoryPage() {
                       className="rounded-ds-xl"
                       onClick={() => router.push('/profile/account/billing')}
                     >
-                      {t(
-                        'billing.portal',
-                        'Open billing & subscription hub',
-                      )}
+                      {t('billing.portal', 'Open billing & subscription hub')}
                     </Button>
                   )}
                 </div>
@@ -162,18 +153,12 @@ export default function BillingHistoryPage() {
                     <table className="min-w-[640px] w-full text-small">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="py-3 text-left">
-                            {t('billing.table.date', 'Date')}
-                          </th>
+                          <th className="py-3 text-left">{t('billing.table.date', 'Date')}</th>
                           <th className="py-3 text-left">
                             {t('billing.table.desc', 'Description')}
                           </th>
-                          <th className="py-3 text-right">
-                            {t('billing.table.amount', 'Amount')}
-                          </th>
-                          <th className="py-3 text-left">
-                            {t('billing.table.status', 'Status')}
-                          </th>
+                          <th className="py-3 text-right">{t('billing.table.amount', 'Amount')}</th>
+                          <th className="py-3 text-left">{t('billing.table.status', 'Status')}</th>
                           <th className="py-3 text-left">
                             {t('billing.table.actions', 'Actions')}
                           </th>
@@ -181,25 +166,12 @@ export default function BillingHistoryPage() {
                       </thead>
                       <tbody>
                         {invoices.map((invoice) => (
-                          <tr
-                            key={invoice.id}
-                            className="border-b border-border last:border-b-0"
-                          >
-                            <td className="py-3">
-                              {formatDate(invoice.date)}
-                            </td>
+                          <tr key={invoice.id} className="border-b border-border last:border-b-0">
+                            <td className="py-3">{formatDate(invoice.date)}</td>
                             <td className="py-3">{invoice.description}</td>
-                            <td className="py-3 text-right">
-                              {formatAmount(invoice.amount)}
-                            </td>
+                            <td className="py-3 text-right">{formatAmount(invoice.amount)}</td>
                             <td className="py-3">
-                              <Badge
-                                variant={
-                                  invoice.status === 'paid'
-                                    ? 'success'
-                                    : 'secondary'
-                                }
-                              >
+                              <Badge variant={invoice.status === 'paid' ? 'success' : 'secondary'}>
                                 {invoice.status}
                               </Badge>
                             </td>
@@ -217,9 +189,7 @@ export default function BillingHistoryPage() {
                                   {t('billing.download', 'PDF')}
                                 </Button>
                               ) : (
-                                <span className="text-muted-foreground">
-                                  —
-                                </span>
+                                <span className="text-muted-foreground">—</span>
                               )}
                             </td>
                           </tr>
@@ -236,3 +206,5 @@ export default function BillingHistoryPage() {
     </GlobalPlanGuard>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();

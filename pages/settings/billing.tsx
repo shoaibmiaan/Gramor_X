@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import type { GetServerSideProps } from 'next';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -8,6 +9,7 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { withPageAuth } from '@/lib/requirePageAuth';
 
 type BillingState = {
   plan?: 'free' | 'starter' | 'booster' | 'master';
@@ -60,11 +62,21 @@ export default function BillingPage() {
           return;
         }
 
-        let current: BillingState = { plan: 'free', status: 'none', paymentMethod: 'none', renewal: null };
+        let current: BillingState = {
+          plan: 'free',
+          status: 'none',
+          paymentMethod: 'none',
+          renewal: null,
+        };
 
         try {
-          const { data: profile } = await supabase.from('profiles').select('membership_plan').eq('id', user.id).single();
-          if (profile?.membership_plan) current.plan = profile.membership_plan as BillingState['plan'];
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('membership_plan')
+            .eq('id', user.id)
+            .single();
+          if (profile?.membership_plan)
+            current.plan = profile.membership_plan as BillingState['plan'];
         } catch {
           /* ignore */
         }
@@ -110,7 +122,9 @@ export default function BillingPage() {
       <Container className="max-w-3xl space-y-6">
         <header className="space-y-2">
           <h1 className="text-h2 font-semibold">Billing</h1>
-          <p className="text-small text-muted-foreground">Review your plan, payment method, and next steps.</p>
+          <p className="text-small text-muted-foreground">
+            Review your plan, payment method, and next steps.
+          </p>
         </header>
 
         {activated ? (
@@ -132,15 +146,21 @@ export default function BillingPage() {
             <Card padding="lg" insetBorder as="section" aria-labelledby="current-plan-heading">
               <div className="space-y-3">
                 <div>
-                  <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">Current plan</p>
+                  <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">
+                    Current plan
+                  </p>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
                     <h2 id="current-plan-heading" className="text-h3 font-semibold capitalize">
                       {formatPlan(billing.plan)}
                     </h2>
-                    <Badge variant={statusVariant(billing.status)}>{formatStatus(billing.status)}</Badge>
+                    <Badge variant={statusVariant(billing.status)}>
+                      {formatStatus(billing.status)}
+                    </Badge>
                   </div>
                   {renewalLabel ? (
-                    <p className="mt-2 text-small text-muted-foreground">Renews on {renewalLabel}</p>
+                    <p className="mt-2 text-small text-muted-foreground">
+                      Renews on {renewalLabel}
+                    </p>
                   ) : (
                     <p className="mt-2 text-small text-muted-foreground">No renewal scheduled</p>
                   )}
@@ -189,3 +209,5 @@ export default function BillingPage() {
     </main>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();

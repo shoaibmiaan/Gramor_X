@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import type { GetServerSideProps } from 'next';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { withPageAuth } from '@/lib/requirePageAuth';
 
 interface SessionInfo {
   id: string;
@@ -96,7 +98,10 @@ export default function SecuritySettings() {
                 <ul className="space-y-2">
                   {sessions.map((s) => (
                     <li key={s.id} className="flex items-center justify-between text-body">
-                      <span>{s.user_agent || 'Unknown'}{s.ip ? ` • ${s.ip}` : ''}</span>
+                      <span>
+                        {s.user_agent || 'Unknown'}
+                        {s.ip ? ` • ${s.ip}` : ''}
+                      </span>
                       <Button size="sm" variant="secondary" onClick={() => revoke(s.id)}>
                         Revoke
                       </Button>
@@ -126,3 +131,5 @@ export default function SecuritySettings() {
     </section>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();

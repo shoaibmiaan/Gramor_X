@@ -5,15 +5,12 @@ import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { createAuthRedirect } from '@/lib/requirePageAuth';
 
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '@/components/design-system/Card';
+import { Card, CardContent, CardHeader } from '@/components/design-system/Card';
 import { Heading } from '@/components/design-system/Heading';
 import { Section } from '@/components/design-system/Section';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
@@ -30,14 +27,7 @@ type Invoice = {
 
 type Summary = {
   plan: 'free' | 'starter' | 'booster' | 'master';
-  status:
-    | 'active'
-    | 'trialing'
-    | 'canceled'
-    | 'incomplete'
-    | 'past_due'
-    | 'unpaid'
-    | 'paused';
+  status: 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due' | 'unpaid' | 'paused';
   renewsAt?: string;
   trialEndsAt?: string;
 };
@@ -58,21 +48,14 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data?.user) {
-    return {
-      redirect: {
-        destination: `/login?next=${encodeURIComponent(resolvedUrl)}`,
-        permanent: false,
-      },
-    };
+    return createAuthRedirect(resolvedUrl);
   }
 
   return { props: {} };
 };
 
 const toTitleCase = (value: string) =>
-  value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
 const getStatusVariant = (status: Summary['status']) => {
   switch (status) {
@@ -135,40 +118,38 @@ export default function BillingPage() {
 
   const providerValue = router.query['provider'];
   const providerParam = Array.isArray(providerValue)
-    ? providerValue[0] ?? null
+    ? (providerValue[0] ?? null)
     : typeof providerValue === 'string'
-    ? providerValue
-    : null;
+      ? providerValue
+      : null;
 
   const statusValue = router.query['status'];
   const statusParam = Array.isArray(statusValue)
-    ? statusValue[0] ?? null
+    ? (statusValue[0] ?? null)
     : typeof statusValue === 'string'
-    ? statusValue
-    : null;
+      ? statusValue
+      : null;
 
   const reasonValue = router.query['reason'];
   const reasonParam = Array.isArray(reasonValue)
-    ? reasonValue[0] ?? null
+    ? (reasonValue[0] ?? null)
     : typeof reasonValue === 'string'
-    ? reasonValue
-    : null;
+      ? reasonValue
+      : null;
 
   const setupValue = router.query['setup'];
   const setupParam = Array.isArray(setupValue)
-    ? setupValue[0] ?? null
+    ? (setupValue[0] ?? null)
     : typeof setupValue === 'string'
-    ? setupValue
-    : null;
+      ? setupValue
+      : null;
 
   const safepayStatus = providerParam === 'safepay' ? statusParam : null;
   const safepayReason = providerParam === 'safepay' ? reasonParam : null;
   const showSafepaySetup =
-    providerParam === 'safepay' &&
-    (setupParam === '1' || setupParam === 'true');
+    providerParam === 'safepay' && (setupParam === '1' || setupParam === 'true');
   const showSafepayPending = safepayStatus === 'pending';
-  const showSafepayCancelled =
-    safepayStatus === 'cancelled' || safepayStatus === 'canceled';
+  const showSafepayCancelled = safepayStatus === 'cancelled' || safepayStatus === 'canceled';
   const showSafepayFailed = safepayStatus === 'failed';
   const showSafepayError = safepayStatus === 'error';
 
@@ -194,8 +175,7 @@ export default function BillingPage() {
   );
 
   const formatDate = React.useCallback(
-    (value?: string | null) =>
-      value ? dateFormatter.format(new Date(value)) : null,
+    (value?: string | null) => (value ? dateFormatter.format(new Date(value)) : null),
     [dateFormatter],
   );
   const formatDateTime = React.useCallback(
@@ -265,11 +245,7 @@ export default function BillingPage() {
       </Head>
 
       <main className="min-h-screen bg-background text-foreground">
-        <Section
-          className="bg-background"
-          Container
-          containerClassName="max-w-5xl space-y-8 py-10"
-        >
+        <Section className="bg-background" Container containerClassName="max-w-5xl space-y-8 py-10">
           <header className="space-y-2">
             <Heading as="h1" size="lg" className="text-foreground">
               Billing
@@ -287,27 +263,21 @@ export default function BillingPage() {
               role="alert"
             >
               <p className="mt-2 text-small text-muted-foreground">
-                Safepay is running in developer mode. Add your Safepay public
-                and secret keys to enable the live checkout experience.
+                Safepay is running in developer mode. Add your Safepay public and secret keys to
+                enable the live checkout experience.
               </p>
               <p className="mt-2 text-caption text-muted-foreground">
-                Update <code>SAFEPAY_PUBLIC_KEY</code> and{' '}
-                <code>SAFEPAY_SECRET_KEY</code> in your environment, then
-                restart the app.
+                Update <code>SAFEPAY_PUBLIC_KEY</code> and <code>SAFEPAY_SECRET_KEY</code> in your
+                environment, then restart the app.
               </p>
             </Alert>
           )}
 
           {showSafepayPending && (
-            <Alert
-              variant="info"
-              appearance="soft"
-              title="Safepay payment pending"
-              role="status"
-            >
+            <Alert variant="info" appearance="soft" title="Safepay payment pending" role="status">
               <p className="mt-2 text-small text-muted-foreground">
-                We have not received confirmation from Safepay yet. You will
-                get an email once the payment completes.
+                We have not received confirmation from Safepay yet. You will get an email once the
+                payment completes.
               </p>
             </Alert>
           )}
@@ -320,19 +290,14 @@ export default function BillingPage() {
               role="alert"
             >
               <p className="mt-2 text-small text-muted-foreground">
-                Your Safepay session was cancelled before payment was
-                completed. Start a new checkout to try again.
+                Your Safepay session was cancelled before payment was completed. Start a new
+                checkout to try again.
               </p>
             </Alert>
           )}
 
           {showSafepayFailed && (
-            <Alert
-              variant="error"
-              appearance="soft"
-              title="Safepay payment failed"
-              role="alert"
-            >
+            <Alert variant="error" appearance="soft" title="Safepay payment failed" role="alert">
               <p className="mt-2 text-small text-muted-foreground">
                 {safepayReason
                   ? safepayReason
@@ -349,8 +314,8 @@ export default function BillingPage() {
               role="alert"
             >
               <p className="mt-2 text-small text-muted-foreground">
-                We could not verify the Safepay callback. If you completed the
-                payment, contact support with your receipt.
+                We could not verify the Safepay callback. If you completed the payment, contact
+                support with your receipt.
               </p>
             </Alert>
           )}
@@ -366,12 +331,7 @@ export default function BillingPage() {
           )}
 
           {!loading && error && (
-            <Alert
-              variant="error"
-              appearance="soft"
-              title="Couldn’t load billing"
-              role="alert"
-            >
+            <Alert variant="error" appearance="soft" title="Couldn’t load billing" role="alert">
               <p className="mt-2 text-small text-muted-foreground">{error}</p>
               <div className="mt-3">
                 <Button asChild variant="link" size="sm">
@@ -383,12 +343,7 @@ export default function BillingPage() {
 
           {!loading && !error && summary && (
             <div className="space-y-6">
-              <Card
-                as="section"
-                padding="none"
-                insetBorder
-                aria-labelledby="current-plan-heading"
-              >
+              <Card as="section" padding="none" insetBorder aria-labelledby="current-plan-heading">
                 <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-2">
                     <SectionLabel>Current plan</SectionLabel>
@@ -409,11 +364,7 @@ export default function BillingPage() {
                   </div>
 
                   {portalAvailable ? (
-                    <Button
-                      onClick={openPortal}
-                      loading={portalLoading}
-                      size="lg"
-                    >
+                    <Button onClick={openPortal} loading={portalLoading} size="lg">
                       {portalLoading ? 'Opening…' : 'Manage billing'}
                     </Button>
                   ) : (
@@ -426,17 +377,10 @@ export default function BillingPage() {
                 {(justVaulted || !portalAvailable) && (
                   <CardContent className="space-y-3 pt-0">
                     {!portalAvailable && (
-                      <Alert
-                        variant="info"
-                        appearance="soft"
-                        title="Billing portal unavailable"
-                      >
+                      <Alert variant="info" appearance="soft" title="Billing portal unavailable">
                         <p className="mt-1 text-small text-muted-foreground">
                           The hosted Stripe portal is temporarily offline. Email{' '}
-                          <a
-                            className="underline"
-                            href="mailto:support@gramorx.com"
-                          >
+                          <a className="underline" href="mailto:support@gramorx.com">
                             support@gramorx.com
                           </a>{' '}
                           to update or cancel your subscription.
@@ -451,12 +395,10 @@ export default function BillingPage() {
                         title="Card saved — payment due later"
                       >
                         <p className="mt-1 text-small text-muted-foreground">
-                          Payments are temporarily unavailable. If you recently
-                          subscribed, your card was{' '}
-                          <span className="font-medium">not charged</span> and
-                          the amount is marked as{' '}
-                          <span className="font-medium">due</span>. We’ll
-                          notify you before retrying payment.
+                          Payments are temporarily unavailable. If you recently subscribed, your
+                          card was <span className="font-medium">not charged</span> and the amount
+                          is marked as <span className="font-medium">due</span>. We’ll notify you
+                          before retrying payment.
                         </p>
                       </Alert>
                     )}
@@ -465,21 +407,11 @@ export default function BillingPage() {
               </Card>
 
               {dues.length > 0 && (
-                <Card
-                  as="section"
-                  padding="none"
-                  insetBorder
-                  aria-labelledby="pending-dues"
-                >
+                <Card as="section" padding="none" insetBorder aria-labelledby="pending-dues">
                   <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <SectionLabel>Local payments</SectionLabel>
-                      <Heading
-                        as="h2"
-                        size="xs"
-                        id="pending-dues"
-                        className="text-foreground"
-                      >
+                      <Heading as="h2" size="xs" id="pending-dues" className="text-foreground">
                         Pending dues
                       </Heading>
                     </div>
@@ -511,8 +443,7 @@ export default function BillingPage() {
                                 {toTitleCase(d.status)}
                               </Badge>
                               <div className="text-small text-muted-foreground">
-                                {toTitleCase(d.plan_key)} ·{' '}
-                                {toTitleCase(d.cycle)}
+                                {toTitleCase(d.plan_key)} · {toTitleCase(d.cycle)}
                               </div>
                               <div className="text-caption text-muted-foreground">
                                 {formatDateTime(d.created_at)}
@@ -520,14 +451,9 @@ export default function BillingPage() {
                             </div>
                             <div className="space-y-1 text-right">
                               <p className="text-h4 font-semibold text-foreground">
-                                {currencyFormatter(
-                                  d.amount_cents / 100,
-                                  d.currency,
-                                )}
+                                {currencyFormatter(d.amount_cents / 100, d.currency)}
                               </p>
-                              <p className="text-caption text-muted-foreground">
-                                Not charged yet
-                              </p>
+                              <p className="text-caption text-muted-foreground">Not charged yet</p>
                             </div>
                           </div>
                         </li>
@@ -537,30 +463,18 @@ export default function BillingPage() {
                 </Card>
               )}
 
-              <Card
-                as="section"
-                padding="none"
-                insetBorder
-                aria-labelledby="invoices-heading"
-              >
+              <Card as="section" padding="none" insetBorder aria-labelledby="invoices-heading">
                 <CardHeader>
                   <div>
                     <SectionLabel>History</SectionLabel>
-                    <Heading
-                      as="h2"
-                      size="xs"
-                      id="invoices-heading"
-                      className="text-foreground"
-                    >
+                    <Heading as="h2" size="xs" id="invoices-heading" className="text-foreground">
                       Invoices
                     </Heading>
                   </div>
                 </CardHeader>
                 <CardContent>
                   {invoices.length === 0 ? (
-                    <p className="text-small text-muted-foreground">
-                      No invoices yet.
-                    </p>
+                    <p className="text-small text-muted-foreground">No invoices yet.</p>
                   ) : (
                     <ul className="space-y-3">
                       {invoices.map((inv) => (
@@ -570,9 +484,7 @@ export default function BillingPage() {
                         >
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-2">
-                              <Badge
-                                variant={getInvoiceVariant(inv.status)}
-                              >
+                              <Badge variant={getInvoiceVariant(inv.status)}>
                                 {toTitleCase(inv.status)}
                               </Badge>
                               <p className="text-caption text-muted-foreground">
@@ -581,29 +493,16 @@ export default function BillingPage() {
                             </div>
                             <div className="space-y-2 text-right">
                               <p className="text-h4 font-semibold text-foreground">
-                                {currencyFormatter(
-                                  inv.amount / 100,
-                                  inv.currency,
-                                )}
+                                {currencyFormatter(inv.amount / 100, inv.currency)}
                               </p>
                               {inv.hostedInvoiceUrl ? (
-                                <Button
-                                  asChild
-                                  variant="link"
-                                  size="sm"
-                                >
-                                  <a
-                                    href={inv.hostedInvoiceUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
+                                <Button asChild variant="link" size="sm">
+                                  <a href={inv.hostedInvoiceUrl} target="_blank" rel="noreferrer">
                                     View invoice
                                   </a>
                                 </Button>
                               ) : (
-                                <span className="text-caption text-muted-foreground">
-                                  No PDF
-                                </span>
+                                <span className="text-caption text-muted-foreground">No PDF</span>
                               )}
                             </div>
                           </div>
@@ -617,13 +516,9 @@ export default function BillingPage() {
           )}
 
           {!loading && !error && !summary && (
-            <Alert
-              variant="info"
-              appearance="soft"
-              title="No subscription data"
-            >
-              We couldn’t find an active subscription yet. Start a plan from
-              the pricing page when you’re ready.
+            <Alert variant="info" appearance="soft" title="No subscription data">
+              We couldn’t find an active subscription yet. Start a plan from the pricing page when
+              you’re ready.
             </Alert>
           )}
         </Section>

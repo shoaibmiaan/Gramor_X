@@ -1,8 +1,10 @@
 import * as React from 'react';
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import type { NextPage } from 'next';
 
 import { Container } from '@/components/design-system/Container';
+import { withPageAuth } from '@/lib/requirePageAuth';
 import ReferralCard from '@/components/account/ReferralCard';
 
 const ReferralsPage: NextPage = () => (
@@ -18,8 +20,8 @@ const ReferralsPage: NextPage = () => (
       <Container className="max-w-3xl space-y-4 sm:space-y-6">
         <h1 className="text-h2 font-semibold">Referrals</h1>
         <p className="mt-1 text-small text-muted-foreground">
-          Share your code with friends and both of you receive premium credits
-          when they join GramorX.
+          Share your code with friends and both of you receive premium credits when they join
+          GramorX.
         </p>
 
         <ReferralCard className="mt-6" />
@@ -29,3 +31,5 @@ const ReferralsPage: NextPage = () => (
 );
 
 export default ReferralsPage;
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();

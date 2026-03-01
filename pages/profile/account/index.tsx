@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
@@ -10,6 +11,7 @@ import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Card } from '@/components/design-system/Card';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { withPageAuth } from '@/lib/requirePageAuth';
 import { getPlan, isPaidPlan, type PlanId } from '@/types/pricing';
 
 import {
@@ -28,14 +30,7 @@ import {
 
 type BillingSummary = {
   plan: PlanId;
-  status:
-    | 'active'
-    | 'trialing'
-    | 'canceled'
-    | 'incomplete'
-    | 'past_due'
-    | 'unpaid'
-    | 'paused';
+  status: 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due' | 'unpaid' | 'paused';
   renewsAt?: string;
   trialEndsAt?: string;
 };
@@ -69,9 +64,7 @@ export default function AccountHubPage() {
   });
 
   const statusVariant = React.useCallback(
-    (status: BillingSummary['status']): React.ComponentProps<
-      typeof Badge
-    >['variant'] => {
+    (status: BillingSummary['status']): React.ComponentProps<typeof Badge>['variant'] => {
       switch (status) {
         case 'active':
           return 'success';
@@ -94,9 +87,7 @@ export default function AccountHubPage() {
 
   const formatStatus = React.useCallback(
     (status: BillingSummary['status']) =>
-      status
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (char) => char.toUpperCase()),
+      status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
     [],
   );
 
@@ -124,14 +115,11 @@ export default function AccountHubPage() {
         if (cancelled) return;
 
         setSummary(data.summary);
-        const canOpenPortal =
-          Boolean(data.customerId) && !data.needsStripeSetup;
+        const canOpenPortal = Boolean(data.customerId) && !data.needsStripeSetup;
         setPortalAvailable(canOpenPortal);
       } catch (error) {
         if (cancelled) return;
-        setBillingError(
-          (error as Error).message || 'Failed to load billing',
-        );
+        setBillingError((error as Error).message || 'Failed to load billing');
         setSummary(null);
         setPortalAvailable(false);
       } finally {
@@ -163,10 +151,7 @@ export default function AccountHubPage() {
 
       if (profile) {
         setIsAdmin(profile.role === 'admin');
-        setIsTeacher(
-          profile.teacher_approved === true ||
-            profile.role === 'teacher',
-        );
+        setIsTeacher(profile.teacher_approved === true || profile.role === 'teacher');
       }
 
       if (sessionData.session?.user?.id) {
@@ -227,31 +212,23 @@ export default function AccountHubPage() {
 
       if (!response.ok) {
         throw new Error(
-          (payload && payload.error) ||
-            response.statusText ||
-            'Failed to open billing portal',
+          (payload && payload.error) || response.statusText || 'Failed to open billing portal',
         );
       }
 
-      const url =
-        typeof payload?.url === 'string' ? payload.url : null;
+      const url = typeof payload?.url === 'string' ? payload.url : null;
       if (!url) {
         throw new Error('Failed to open billing portal');
       }
 
       window.location.href = url;
     } catch (error) {
-      setBillingError(
-        (error as Error).message || 'Failed to open billing portal',
-      );
+      setBillingError((error as Error).message || 'Failed to open billing portal');
       setPortalLoading(false);
     }
   }, []);
 
-  const planDefinition = React.useMemo(
-    () => (summary ? getPlan(summary.plan) : null),
-    [summary],
-  );
+  const planDefinition = React.useMemo(() => (summary ? getPlan(summary.plan) : null), [summary]);
   const isPremiumPlan = React.useMemo(
     () => (summary ? isPaidPlan(summary.plan) : false),
     [summary],
@@ -264,16 +241,10 @@ export default function AccountHubPage() {
     if (!summary) return null;
     const parts: string[] = [];
     if (summary.renewsAt) {
-      parts.push(
-        `Renews ${dateFormatter.format(new Date(summary.renewsAt))}`,
-      );
+      parts.push(`Renews ${dateFormatter.format(new Date(summary.renewsAt))}`);
     }
     if (summary.trialEndsAt) {
-      parts.push(
-        `Trial ends ${dateFormatter.format(
-          new Date(summary.trialEndsAt),
-        )}`,
-      );
+      parts.push(`Trial ends ${dateFormatter.format(new Date(summary.trialEndsAt))}`);
     }
     return parts;
   }, [summary, dateFormatter]);
@@ -290,12 +261,9 @@ export default function AccountHubPage() {
         typeof window !== 'undefined'
           ? window.location.origin
           : process.env.NEXT_PUBLIC_SITE_URL || '';
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        email,
-        {
-          redirectTo: `${origin}/login/reset`,
-        },
-      );
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/login/reset`,
+      });
       if (error) {
         alert(error.message);
       } else {
@@ -324,8 +292,8 @@ export default function AccountHubPage() {
               Account &amp; Settings
             </h1>
             <p className="mt-2 text-small text-muted-foreground">
-              This is your home for anything related to your account — plan,
-              activity, security, and shortcuts into all settings pages.
+              This is your home for anything related to your account — plan, activity, security, and
+              shortcuts into all settings pages.
             </p>
           </header>
 
@@ -337,12 +305,8 @@ export default function AccountHubPage() {
                   <Activity className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-small text-muted-foreground">
-                    Total Activities
-                  </p>
-                  <p className="text-h3 font-bold">
-                    {activityStats.totalActivities}
-                  </p>
+                  <p className="text-small text-muted-foreground">Total Activities</p>
+                  <p className="text-h3 font-bold">{activityStats.totalActivities}</p>
                 </div>
               </div>
             </div>
@@ -353,12 +317,8 @@ export default function AccountHubPage() {
                   <History className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-small text-muted-foreground">
-                    Recent (7d)
-                  </p>
-                  <p className="text-h3 font-bold">
-                    {activityStats.recentActivities}
-                  </p>
+                  <p className="text-small text-muted-foreground">Recent (7d)</p>
+                  <p className="text-h3 font-bold">{activityStats.recentActivities}</p>
                 </div>
               </div>
             </div>
@@ -370,12 +330,8 @@ export default function AccountHubPage() {
                   <CheckCircle className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-small text-muted-foreground">
-                    Pending Tasks
-                  </p>
-                  <p className="text-h3 font-bold">
-                    {activityStats.pendingTasks}
-                  </p>
+                  <p className="text-small text-muted-foreground">Pending Tasks</p>
+                  <p className="text-h3 font-bold">{activityStats.pendingTasks}</p>
                 </div>
               </div>
             </div>
@@ -386,12 +342,8 @@ export default function AccountHubPage() {
                   <CheckCircle className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-small text-muted-foreground">
-                    Completed
-                  </p>
-                  <p className="text-h3 font-bold">
-                    {activityStats.completedTasks}
-                  </p>
+                  <p className="text-small text-muted-foreground">Completed</p>
+                  <p className="text-h3 font-bold">{activityStats.completedTasks}</p>
                 </div>
               </div>
             </div>
@@ -407,42 +359,25 @@ export default function AccountHubPage() {
                     <History className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-small font-medium text-foreground">
-                      Activity log
-                    </h2>
+                    <h2 className="text-small font-medium text-foreground">Activity log</h2>
                     <p className="mt-1 text-small text-muted-foreground">
-                      Unified timeline of your mocks, practice, and streak
-                      events.
+                      Unified timeline of your mocks, practice, and streak events.
                     </p>
                   </div>
                 </div>
-                <Badge
-                  variant={
-                    activityStats.recentActivities > 0
-                      ? 'info'
-                      : 'neutral'
-                  }
-                >
+                <Badge variant={activityStats.recentActivities > 0 ? 'info' : 'neutral'}>
                   {activityStats.recentActivities} new
                 </Badge>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-small">
-                  <span className="text-muted-foreground">
-                    Recent activities:
-                  </span>
-                  <span className="font-medium">
-                    {activityStats.recentActivities}
-                  </span>
+                  <span className="text-muted-foreground">Recent activities:</span>
+                  <span className="font-medium">{activityStats.recentActivities}</span>
                 </div>
                 <div className="flex items-center justify-between text-small">
-                  <span className="text-muted-foreground">
-                    Total logged:
-                  </span>
-                  <span className="font-medium">
-                    {activityStats.totalActivities}
-                  </span>
+                  <span className="text-muted-foreground">Total logged:</span>
+                  <span className="font-medium">{activityStats.totalActivities}</span>
                 </div>
 
                 <div className="mt-4 border-t border-border pt-4">
@@ -450,23 +385,13 @@ export default function AccountHubPage() {
                     Quick actions
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      asChild
-                      variant="soft"
-                      size="sm"
-                      className="min-w-[120px] flex-1"
-                    >
+                    <Button asChild variant="soft" size="sm" className="min-w-[120px] flex-1">
                       <Link href="/account/activity">
                         <History className="mr-2 h-3 w-3" />
                         View timeline
                       </Link>
                     </Button>
-                    <Button
-                      asChild
-                      variant="soft"
-                      size="sm"
-                      className="min-w-[120px] flex-1"
-                    >
+                    <Button asChild variant="soft" size="sm" className="min-w-[120px] flex-1">
                       <Link href="/mock">
                         <History className="mr-2 h-3 w-3" />
                         Open mocks
@@ -485,12 +410,9 @@ export default function AccountHubPage() {
                     <Crown className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-small font-medium text-foreground">
-                      Plan &amp; billing
-                    </h2>
+                    <h2 className="text-small font-medium text-foreground">Plan &amp; billing</h2>
                     <p className="mt-1 text-small text-muted-foreground">
-                      Check subscription status and manage payments from one
-                      place.
+                      Check subscription status and manage payments from one place.
                     </p>
                   </div>
                 </div>
@@ -522,9 +444,7 @@ export default function AccountHubPage() {
                       <p className="text-caption text-muted-foreground">
                         {planMeta.map((part, index) => (
                           <React.Fragment key={`${part}-${index}`}>
-                            {index > 0 && (
-                              <span aria-hidden="true"> · </span>
-                            )}
+                            {index > 0 && <span aria-hidden="true"> · </span>}
                             <span>{part}</span>
                           </React.Fragment>
                         ))}
@@ -541,46 +461,28 @@ export default function AccountHubPage() {
                             tone="accent"
                             className="flex-1"
                           >
-                            {portalLoading
-                              ? 'Opening…'
-                              : 'Manage billing'}
+                            {portalLoading ? 'Opening…' : 'Manage billing'}
                           </Button>
                         ) : (
-                          <Button
-                            asChild
-                            variant="soft"
-                            className="flex-1"
-                          >
-                            <Link href="/profile/account/billing">
-                              Open billing hub
-                            </Link>
+                          <Button asChild variant="soft" className="flex-1">
+                            <Link href="/profile/account/billing">Open billing hub</Link>
                           </Button>
                         )
                       ) : (
-                        <Button
-                          asChild
-                          variant="soft"
-                          tone="accent"
-                          className="flex-1"
-                        >
-                          <Link href="/pricing">
-                            Upgrade to Premium
-                          </Link>
+                        <Button asChild variant="soft" tone="accent" className="flex-1">
+                          <Link href="/pricing">Upgrade to Premium</Link>
                         </Button>
                       )}
                     </div>
 
                     {!isPremiumPlan && (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Unlock unlimited mocks, full AI feedback, and advanced
-                        analytics.
+                        Unlock unlimited mocks, full AI feedback, and advanced analytics.
                       </p>
                     )}
                   </>
                 ) : (
-                  <p className="text-small text-muted-foreground">
-                    No active subscription found.
-                  </p>
+                  <p className="text-small text-muted-foreground">No active subscription found.</p>
                 )}
               </div>
             </div>
@@ -592,9 +494,7 @@ export default function AccountHubPage() {
                   <Globe className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-small font-medium text-foreground">
-                    Language
-                  </h2>
+                  <h2 className="text-small font-medium text-foreground">Language</h2>
                   <p className="mt-1 text-small text-muted-foreground">
                     Switch between English and Urdu interface.
                   </p>
@@ -619,9 +519,7 @@ export default function AccountHubPage() {
                   <Bell className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-small font-medium text-foreground">
-                    Notifications
-                  </h2>
+                  <h2 className="text-small font-medium text-foreground">Notifications</h2>
                   <p className="mt-1 text-small text-muted-foreground">
                     Daily reminders and nudges for your study rhythm.
                   </p>
@@ -654,9 +552,7 @@ export default function AccountHubPage() {
                   <SettingsIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-small font-medium text-foreground">
-                    Accessibility
-                  </h2>
+                  <h2 className="text-small font-medium text-foreground">Accessibility</h2>
                   <p className="mt-1 text-small text-muted-foreground">
                     High contrast, focus ring tuning, and reduced motion.
                   </p>
@@ -679,9 +575,7 @@ export default function AccountHubPage() {
                   <Shield className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-small font-medium text-foreground">
-                    Security
-                  </h2>
+                  <h2 className="text-small font-medium text-foreground">Security</h2>
                   <p className="mt-1 text-small text-muted-foreground">
                     MFA, active sessions, and login history.
                   </p>
@@ -689,9 +583,7 @@ export default function AccountHubPage() {
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-small">
-                  <span className="text-muted-foreground">
-                    Email on file:
-                  </span>
+                  <span className="text-muted-foreground">Email on file:</span>
                   <span
                     className="max-w-[140px] truncate font-medium sm:max-w-[220px]"
                     title={email || ''}
@@ -728,9 +620,7 @@ export default function AccountHubPage() {
                   <Key className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-small font-medium text-foreground">
-                    Premium PIN
-                  </h2>
+                  <h2 className="text-small font-medium text-foreground">Premium PIN</h2>
                   <p className="mt-1 text-small text-muted-foreground">
                     Redeem a PIN to unlock premium without adding a card.
                   </p>
@@ -752,9 +642,7 @@ export default function AccountHubPage() {
                     <Users className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-small font-medium text-foreground">
-                      Teacher panel
-                    </h2>
+                    <h2 className="text-small font-medium text-foreground">Teacher panel</h2>
                     <p className="mt-1 text-small text-muted-foreground">
                       Manage students, assignments, and feedback.
                     </p>
@@ -776,32 +664,20 @@ export default function AccountHubPage() {
                   <MessageSquare className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-small font-medium text-foreground">
-                    Help &amp; support
-                  </h2>
+                  <h2 className="text-small font-medium text-foreground">Help &amp; support</h2>
                   <p className="mt-1 text-small text-muted-foreground">
                     Get help, send feedback, or report an issue.
                   </p>
                 </div>
               </div>
               <div className="space-y-2">
-                <Button
-                  asChild
-                  variant="soft"
-                  className="w-full"
-                  size="sm"
-                >
+                <Button asChild variant="soft" className="w-full" size="sm">
                   <Link href="/support">
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Contact support
                   </Link>
                 </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="w-full"
-                  size="sm"
-                >
+                <Button asChild variant="outline" className="w-full" size="sm">
                   <Link href="/feedback">Send feedback</Link>
                 </Button>
               </div>
@@ -830,22 +706,14 @@ export default function AccountHubPage() {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant="outline">
-                      Activities: {activityStats.totalActivities}
-                    </Badge>
-                    <Badge variant="outline">
-                      Pending tasks: {activityStats.pendingTasks}
-                    </Badge>
+                    <Badge variant="outline">Activities: {activityStats.totalActivities}</Badge>
+                    <Badge variant="outline">Pending tasks: {activityStats.pendingTasks}</Badge>
                     <Badge variant="outline">Reports: 12</Badge>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Link href="/admin" className="flex-1">
-                    <Button
-                      variant="solid"
-                      tone="primary"
-                      className="w-full"
-                    >
+                    <Button variant="solid" tone="primary" className="w-full">
                       <Shield className="mr-2 h-4 w-4" />
                       Admin dashboard
                     </Button>
@@ -884,3 +752,5 @@ export default function AccountHubPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();

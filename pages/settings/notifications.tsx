@@ -1,9 +1,11 @@
 import * as React from 'react';
 import Head from 'next/head';
+import type { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 import { Container } from '@/components/design-system/Container';
+import { withPageAuth } from '@/lib/requirePageAuth';
 import { Toggle } from '@/components/design-system/Toggle';
 import { Input } from '@/components/design-system/Input';
 import { Select } from '@/components/design-system/Select';
@@ -58,7 +60,10 @@ function toTimeInput(value: string | null): string | null {
   return null;
 }
 
-function normalizePayload(preferences: ServerPreferences): { form: FormState; contact: ContactState } {
+function normalizePayload(preferences: ServerPreferences): {
+  form: FormState;
+  contact: ContactState;
+} {
   return {
     form: {
       channels: {
@@ -347,7 +352,9 @@ export default function NotificationsSettingsPage() {
                   <ul className="mt-2 space-y-2 text-small text-mutedText">
                     <li>
                       <span className="font-medium text-foreground">Email:</span>{' '}
-                      {contact.email ? contact.email : 'Add an email in your profile to receive emails.'}
+                      {contact.email
+                        ? contact.email
+                        : 'Add an email in your profile to receive emails.'}
                     </li>
                     <li>
                       <span className="font-medium text-foreground">WhatsApp:</span>{' '}
@@ -409,3 +416,5 @@ export default function NotificationsSettingsPage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = withPageAuth();
