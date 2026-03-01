@@ -125,28 +125,46 @@ export function useHeaderState(initialStreak?: number) {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Failed to get session:', error);
-          return;
         }
-        const s = session?.user ?? null;
-        const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
+
+        let currentUser = session?.user ?? null;
+
+        // Fallback: in some auth flows, getSession may briefly lag while getUser already resolves.
+        if (!currentUser) {
+          const {
+            data: { user: fetchedUser },
+            error: userError,
+          } = await supabase.auth.getUser();
+
+          if (userError) {
+            console.error('Failed to get authenticated user:', userError);
+          }
+
+          currentUser = fetchedUser ?? null;
+        }
+
+        const userMeta = (currentUser?.user_metadata ?? {}) as Record<string, unknown>;
         if (!cancelled) {
           const avatar = await resolveAvatar(userMeta);
           setUser({
-            id: s?.id ?? null,
-            email: s?.email ?? null,
+            id: currentUser?.id ?? null,
+            email: currentUser?.email ?? null,
             name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
             avatarUrl: avatar.url,
             avatarPath: avatar.path,
           });
-          const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
+          const identity = await computeIdentity(currentUser?.id ?? null, currentUser?.app_metadata, userMeta);
           if (!cancelled) {
             setRole(identity.role);
             setSubscriptionTier(identity.tier ?? defaultTier);
           }
-          setReady(true);
         }
       } catch (err) {
         console.error('Unexpected auth error:', err);
+      } finally {
+        if (!cancelled) {
+          setReady(true);
+        }
       }
     };
     sync();

@@ -478,7 +478,7 @@ export function MobileNav({
             </div>
           )}
 
-          {!ready && (
+          {!ready && !user?.id && (
             <div className="mt-6 space-y-2">
               <div className="h-12 w-full animate-pulse rounded-xl bg-muted dark:bg-muted-dark" />
               <div className="h-12 w-full animate-pulse rounded-xl bg-muted dark:bg-muted-dark" />

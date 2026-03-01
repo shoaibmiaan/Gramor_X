@@ -28,15 +28,36 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const { loading } = useUserContext();
+  const { loading, user: contextUser } = useUserContext();
   const {
-    user,
+    user: headerUser,
     role,
     streak: streakState,
     ready,
     signOut,
     subscriptionTier,
   } = useHeaderState(streak);
+
+  const user = React.useMemo(
+    () => ({
+      id: headerUser?.id ?? contextUser?.id ?? null,
+      email: headerUser?.email ?? contextUser?.email ?? null,
+      name:
+        headerUser?.name ??
+        (typeof contextUser?.user_metadata?.full_name === 'string'
+          ? contextUser.user_metadata.full_name
+          : null),
+      avatarUrl:
+        headerUser?.avatarUrl ??
+        (typeof contextUser?.user_metadata?.avatar_url === 'string'
+          ? contextUser.user_metadata.avatar_url
+          : null),
+      avatarPath: headerUser?.avatarPath ?? null,
+    }),
+    [contextUser, headerUser]
+  );
+
+  const isHeaderReady = ready || !!contextUser?.id;
 
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
@@ -193,7 +214,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const solidHeader = scrolled || openDesktopModules || mobileOpen;
 
   // Loading skeleton
-  if (loading && !user) {
+  if (loading && !user?.id) {
     return (
       <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/90 backdrop-blur-lg">
         <Container>
@@ -392,7 +413,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               <DesktopNav
                 user={user}
                 role={role ?? 'guest'}
-                ready={ready}
+                ready={isHeaderReady}
                 streak={streakState}
                 openModules={openDesktopModules}
                 setOpenModules={setOpenDesktopModules}
@@ -410,7 +431,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               <MobileNav
                 user={user}
                 role={role ?? 'guest'}
-                ready={ready}
+                ready={isHeaderReady}
                 streak={streakState ?? 0}
                 mobileOpen={mobileOpen}
                 setMobileOpen={setMobileOpen}
