@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { Poppins, Roboto_Slab } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import '@/styles/tokens.css';
 import '@/styles/semantic.css';
@@ -327,6 +328,7 @@ export default function App(props: AppProps) {
           </UserProvider>
         </NotificationProvider>
       </ToastProvider>
+      <SpeedInsights />
     </LocaleProvider>
   );
 }
