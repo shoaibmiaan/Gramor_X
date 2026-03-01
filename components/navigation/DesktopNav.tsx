@@ -3,7 +3,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
@@ -22,7 +21,12 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 
 type DesktopNavProps = {
-  user: SupabaseUser | null;
+  user: {
+    id: string | null;
+    email: string | null;
+    name: string | null;
+    avatarUrl: string | null;
+  } | null;
   role: string;
   ready: boolean;
   streak?: number | null;
@@ -349,17 +353,9 @@ export const DesktopNav: React.FC<DesktopNavProps> = ({
               <UserMenu
                 userId={uid}
                 email={user?.email ?? undefined}
-                name={
-                  (user?.user_metadata as any)?.full_name ??
-                  (user?.user_metadata as any)?.name ??
-                  undefined
-                }
+                name={user?.name ?? undefined}
                 role={role ?? undefined}
-                avatarUrl={
-                  (user?.user_metadata as any)?.avatar_url ??
-                  (user?.user_metadata as any)?.avatar ??
-                  undefined
-                }
+                avatarUrl={user?.avatarUrl ?? undefined}
                 onSignOut={async () => {
                   await signOut?.();
                 }}
