@@ -95,3 +95,8 @@ If the rebase introduces conflicts, resolve them locally, run the checks in step
 ## 10. Ready to contribute
 
 When your changes pass local checks, commit them with a clear message and open a PR. Include a summary of the feature, how to test it, and any environment variables required.
+
+## Client auth data access
+
+- `useUser()` is the canonical client-side user fetch path.
+- Do not call `supabase.auth.getUser()` directly in UI components/pages; consume `useUser()` instead.

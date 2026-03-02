@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { useUser } from '@/hooks/useUser';
 import { autosaveStorageKey } from '@/lib/autosave';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -42,7 +43,8 @@ const AUTOSAVE_PREFIX = autosaveStorageKey('listening', '');
 const LEGACY_PREFIX = 'listen:';
 
 export default function ListeningIndexPage() {
-  const [userId, setUserId] = useState<string | null>(null);
+  const { user } = useUser();
+  const userId = user?.id ?? null;
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [items, setItems] = useState<ListItem[]>([]);
@@ -55,16 +57,6 @@ export default function ListeningIndexPage() {
     } catch {
       return false;
     }
-  }, []);
-
-  // auth (client only)
-  useEffect(() => {
-    const mounted = true;
-    supabase.auth.getUser().then(({ data }) => mounted && setUserId(data.user?.id ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
-    return () => sub?.subscription.unsubscribe();
   }, []);
 
   // load tests + sections (+ attempts if logged in)
