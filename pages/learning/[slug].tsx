@@ -2,7 +2,8 @@ import { env } from "@/lib/env";
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { supabase } from '@/lib/supabaseClient'; // Centralized browser client
+import { supabase } from '@/lib/supabaseClient';
+import { upsertUserCourseProgress } from '@/lib/data/componentData'; // Centralized browser client
 import Image from "next/image";
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -133,16 +134,13 @@ export default function CourseDetailPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user && course) {
-      const { error } = await supabase.from('user_course_progress').upsert(
-        {
+      try {
+        await upsertUserCourseProgress(supabase as any, {
           user_id: user.id,
           course_id: course.id,
           last_lesson_id: lessonId,
-        },
-        { onConflict: 'user_id,course_id' }
-      );
-
-      if (error) {
+        });
+      } catch (error) {
         console.error('Progress update error:', error);
         return;
       }

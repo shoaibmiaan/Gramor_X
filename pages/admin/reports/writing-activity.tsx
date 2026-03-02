@@ -9,6 +9,7 @@ import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { getServerClient } from '@/lib/supabaseServer';
+import { fetchUserRole } from '@/lib/data/componentData';
 
 type Row = {
   user_id: string;
@@ -129,8 +130,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   }
 
   // Check role
-  const { data: prof } = await supabase.from('profiles').select('role').eq('id', auth.user.id).maybeSingle();
-  const role = (prof?.role as string) ?? null;
+  const role = await fetchUserRole(supabase as any, auth.user.id);
   const allowed = role === 'admin' || role === 'teacher';
   if (!allowed) {
     return { redirect: { destination: '/', permanent: false }, props: { ok: false } };

@@ -12,6 +12,7 @@ import { Textarea } from '@/components/design-system/Textarea';
 import Icon from '@/components/design-system/Icon';
 
 import { supabase } from '@/lib/supabaseClient';
+import { createReadingNote } from '@/lib/data/componentData';
 
 type PageProps = {
   attemptId: string | null;
@@ -57,18 +58,16 @@ const ReadingFeedbackPage: NextPage<PageProps> = ({ attemptId, allowed }) => {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from('reading_notes').insert({
-      user_id: user.id,
-      attempt_id: attemptId,
-      note,
-    });
-    setSubmitting(false);
-    if (error) {
+    try {
+      await createReadingNote(supabase as any, { user_id: user.id, attempt_id: attemptId, note });
+    } catch (error) {
+      setSubmitting(false);
       // eslint-disable-next-line no-console
       console.error('note insert error', error);
       alert('Could not save feedback. Please try again.');
       return;
     }
+    setSubmitting(false);
     setNote('');
     alert('Feedback saved. Your coach can see this on your Reading report.');
     router.push(`/mock/reading/result/${attemptId}`);

@@ -7,6 +7,7 @@ import { Button } from '@/components/design-system/Button';
 import { useToast } from '@/components/design-system/Toaster';
 import { Section } from '@/components/design-system/Section';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { createCommunityThread, updateCommunityThreadFlag } from '@/lib/data/componentData';
 
 interface Thread {
   id: number;
@@ -37,8 +38,11 @@ export default function CommunityThreadsPage() {
 
   async function createThread() {
     if (!title) return;
-    const { error } = await supabase.from('community_threads').insert({ title, content });
-    if (error) return toastError('Could not create thread');
+    try {
+      await createCommunityThread(supabase as any, { title, content });
+    } catch {
+      return toastError('Could not create thread');
+    }
     setTitle('');
     setContent('');
     toastSuccess('Thread created');
@@ -46,7 +50,7 @@ export default function CommunityThreadsPage() {
   }
 
   async function moderateThread(id: number, flagged: boolean) {
-    await supabase.from('community_threads').update({ flagged: !flagged }).eq('id', id);
+    await updateCommunityThreadFlag(supabase as any, String(id), !flagged);
     fetchThreads();
   }
 

@@ -67,7 +67,7 @@ export default function ListeningReviewPage() {
     if (!attempt) return;
     (async () => {
       try {
-        const { data } = await supabase.from('attempts_listening').select('*').eq('id', attempt).single();
+        const data = await fetchListeningAttempt(supabase as any, attempt);
         if (data) { setAtt(data as Attempt); return; }
       } catch {}
       try {

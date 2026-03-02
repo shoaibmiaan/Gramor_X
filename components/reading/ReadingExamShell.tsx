@@ -15,6 +15,7 @@ import type {
 } from '@/lib/reading/types';
 
 import { supabase } from '@/lib/supabaseClient';
+import { createReadingAttempt } from '@/lib/data/componentData';
 import { readingBandFromRaw } from '@/lib/reading/band';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/design-system/Toaster';
@@ -413,7 +414,7 @@ const ReadingExamShellInner: React.FC<Props> = ({
       const startedAt = startTimeRef.current ?? Date.now();
       const durationSec = Math.floor((Date.now() - startedAt) / 1000);
 
-      await supabase.from('reading_attempts').insert({
+      await createReadingAttempt(supabase as any, {
         user_id: user.id,
         test_id: test.id,
         status: 'submitted',

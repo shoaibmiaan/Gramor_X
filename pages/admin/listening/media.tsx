@@ -2,6 +2,7 @@
 import * as React from 'react';
 import type { GetServerSideProps } from 'next';
 import { getServerClient } from '@/lib/supabaseServer';
+import { fetchUserRole } from '@/lib/data/componentData';
 
 import { Container } from '@/components/design-system/Container';
 import { Section } from '@/components/design-system/Section';
@@ -16,8 +17,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { redirect: { destination: '/auth/signin?next=/admin/listening/media', permanent: false }, props: {} as any };
 
-  const prof = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-  const role = prof.data?.role ?? 'student';
+  const role = (await fetchUserRole(supabase as any, user.id)) ?? 'student';
   if (role !== 'admin' && role !== 'teacher') {
     return { redirect: { destination: '/403', permanent: false }, props: {} as any };
   }

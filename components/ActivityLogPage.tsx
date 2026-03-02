@@ -275,7 +275,7 @@ const ActivityLogPage: React.FC = () => {
       if (error) throw error
 
       if (comment) {
-        await supabase.from('task_comments').insert({
+        await createTaskComment(supabase as any, {
           task_id: taskId,
           user_id: user.id,
           comment,
@@ -296,13 +296,11 @@ const ActivityLogPage: React.FC = () => {
     if (!comment?.trim()) return
 
     try {
-      const { error } = await supabase.from('task_comments').insert({
+      await createTaskComment(supabase as any, {
         task_id: taskId,
         user_id: user.id,
         comment,
       })
-
-      if (error) throw error
 
       setNewComment(prev => ({ ...prev, [taskId]: '' }))
       fetchUserTasks()
