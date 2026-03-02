@@ -1,10 +1,10 @@
-import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { VocabInsightsCards } from '@/components/quiz/VocabInsightsCards';
 
 export default function progressPage() {
   return (
-    <DashboardShell>
+    <DashboardLayout>
       <h1 className="text-2xl font-semibold">Progress</h1>
       <Card>
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -12,6 +12,6 @@ export default function progressPage() {
         </p>
       </Card>
       <VocabInsightsCards />
-    </DashboardShell>
+    </DashboardLayout>
   );
 }

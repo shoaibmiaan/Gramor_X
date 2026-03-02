@@ -1,12 +1,11 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
+import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import useDashboardData from '@/hooks/useDashboardData';
 import useAIInsights from '@/hooks/useAIInsights';
 import useUsageLimits from '@/hooks/useUsageLimits';
-import Header from '@/pages/dashboard/components/shared/Header';
-import Sidebar from '@/pages/dashboard/components/shared/Sidebar';
 import NotificationCenter from '@/pages/dashboard/components/shared/NotificationCenter';
 import KpiCards from '@/pages/dashboard/components/widgets/KpiCards';
 import BandProgress from '@/pages/dashboard/components/widgets/BandProgress';
@@ -41,12 +40,14 @@ const SeedlingView = ({ userId, targetBand }: SeedlingViewProps) => {
       <Head>
         <title>Dashboard — Seedling — Gramor_X</title>
       </Head>
-      <Header tier={tier} />
-      <div className="mx-auto grid w-full max-w-[1400px] gap-4 px-4 py-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6 lg:px-8">
-        <Sidebar />
+      <DashboardLayout>
         <main className="space-y-4" id="content-grid">
           {loading ? <KpiCardsSkeleton /> : <KpiCards tier={tier} />}
-          {loading ? <ChartSkeleton /> : <BandProgress points={data.bandHistory} targetBand={targetBand} tier={tier} />}
+          {loading ? (
+            <ChartSkeleton />
+          ) : (
+            <BandProgress points={data.bandHistory} targetBand={targetBand} tier={tier} />
+          )}
           {loading ? (
             <InsightsSkeleton />
           ) : (
@@ -73,7 +74,7 @@ const SeedlingView = ({ userId, targetBand }: SeedlingViewProps) => {
             <NotificationCenter />
           </div>
         </main>
-      </div>
+      </DashboardLayout>
     </>
   );
 };

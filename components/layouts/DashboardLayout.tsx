@@ -1,61 +1,51 @@
-// components/layouts/DashboardLayout.tsx
-import * as React from 'react';
+import { useState } from 'react';
+import type { PropsWithChildren } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { Container } from '@/components/design-system/Container';
+import clsx from 'clsx';
+import { Sidebar, DASHBOARD_NAV_ITEMS } from '@/components/dashboard/Sidebar';
+import { TopNavbar } from '@/components/dashboard/TopNavbar';
 
-const QUICK_LINKS = [
-  { href: '/study-plan', label: 'Study Plan' },
-  { href: '/progress', label: 'Analytics' },
-  { href: '/listening', label: 'Listening' },
-  { href: '/reading', label: 'Reading' },
-  { href: '/writing', label: 'Writing' },
-  { href: '/speaking/simulator', label: 'Speaking' },
-  { href: '/pricing', label: 'Upgrade' },
-] as const;
-
-const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { pathname } = useRouter();
+export function DashboardLayout({ children }: PropsWithChildren) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
-      <header className="border-b border-border bg-card/30">
-        <Container className="space-y-4 py-6 pt-safe">
-          <div className="space-y-1">
-            <h1 className="font-slab text-h3 sm:text-h2">Your Dashboard</h1>
-            <p className="text-small text-mutedText">
-              Track progress, follow your plan, and jump back into modules.
-            </p>
-          </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+      <div className="flex min-h-screen">
+        <Sidebar collapsed={collapsed} />
 
-          <nav
-            aria-label="Dashboard quick links"
-            className="flex flex-wrap gap-3 text-sm text-muted-foreground"
-          >
-            {QUICK_LINKS.map(({ href, label }) => {
-              const active = pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`rounded-md px-2 py-1 transition hover:text-foreground ${
-                    active ? 'bg-muted text-foreground' : ''
-                  }`}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
-        </Container>
-      </header>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopNavbar
+            onToggleSidebar={() => setCollapsed((prev) => !prev)}
+            onToggleMobileNav={() => setMobileNavOpen((prev) => !prev)}
+            sidebarCollapsed={collapsed}
+          />
 
-      <main>
-        <Container className="py-8 sm:py-10">{children}</Container>
-      </main>
+          {mobileNavOpen ? (
+            <nav className="border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 md:hidden">
+              <ul className="grid gap-2">
+                {DASHBOARD_NAV_ITEMS.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={clsx(
+                        'block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
+                      )}
+                      onClick={() => setMobileNavOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
+
+          <main className="space-y-6 p-4 md:p-8">{children}</main>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default DashboardLayout;
-export { DashboardLayout };
