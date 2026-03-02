@@ -14,8 +14,8 @@ const args = ['dev'];
 
 // Windows file watching can emit unstable events in webpack dev mode on some setups.
 // Turbopack avoids the crashing Watchpack code path seen in setup-dev-bundler.js.
-if (isWindows && !process.env.NEXT_DISABLE_TURBO_DEV) {
-  args.push('--turbo');
+// if (isWindows && !process.env.NEXT_DISABLE_TURBO_DEV) {
+// args.push('--turbo');
 }
 
 let command = 'next';
