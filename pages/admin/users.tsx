@@ -18,7 +18,7 @@ interface Row {
   last_sign_in_at: string | null;
 }
 
-const ROLES: Profile['role'][] = ['student','teacher','admin'];
+const ROLES: Profile['role'][] = ['student', 'teacher', 'admin'];
 
 function AdminUsers() {
   const [loading, setLoading] = useState(true);
@@ -30,14 +30,17 @@ function AdminUsers() {
   const [pinBusy, setPinBusy] = useState(false);
   const [pinMsg, setPinMsg] = useState<string | null>(null);
 
+  const getAuthHeaders = async (base: HeadersInit = {}) => {
+    const { data } = await supabaseBrowser.auth.getSession();
+    const token = data.session?.access_token;
+    return token ? { ...base, Authorization: `Bearer ${token}` } : base;
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const tok = data?.session?.access_token;
-      if (!tok) throw new Error('No session');
       const r = await fetch('/api/admin/users/list', {
-        headers: { Authorization: `Bearer ${tok}` },
+        headers: await getAuthHeaders(),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j?.error || 'Failed');
@@ -56,11 +59,12 @@ function AdminUsers() {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return rows;
-    return rows.filter(r =>
-      (r.full_name ?? '').toLowerCase().includes(needle) ||
-      (r.email ?? '').toLowerCase().includes(needle) ||
-      r.id.toLowerCase().includes(needle) ||
-      r.role.toLowerCase().includes(needle)
+    return rows.filter(
+      (r) =>
+        (r.full_name ?? '').toLowerCase().includes(needle) ||
+        (r.email ?? '').toLowerCase().includes(needle) ||
+        r.id.toLowerCase().includes(needle) ||
+        r.role.toLowerCase().includes(needle),
     );
   }, [rows, q]);
 
@@ -73,7 +77,7 @@ function AdminUsers() {
       });
       if (error) throw error;
       // Optimistic update
-      setRows(prev => prev.map(p => (p.id === id ? { ...p, role: newRole } : p)));
+      setRows((prev) => prev.map((p) => (p.id === id ? { ...p, role: newRole } : p)));
     } catch (e) {
       console.error(e);
       alert('Failed to change role. Ensure you are admin and RPC/RLS are set.');
@@ -98,11 +102,8 @@ function AdminUsers() {
     setPinBusy(true);
     setPinMsg(null);
     try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const tok = data?.session?.access_token;
-      if (!tok) throw new Error('No session');
       const r = await fetch('/api/admin/premium/generate-pin', {
-        headers: { Authorization: `Bearer ${tok}` },
+        headers: await getAuthHeaders(),
       });
       const j = await r.json();
       if (!r.ok || !j?.pin) throw new Error(j?.error || 'Failed');
@@ -119,18 +120,11 @@ function AdminUsers() {
     setPinBusy(true);
     setPinMsg(null);
     try {
-      const { data } = await supabaseBrowser.auth.getSession();
-      const tok = data?.session?.access_token;
-      if (!tok) {
-        setPinMsg('No session');
-        return;
-      }
       const r = await fetch(path, {
         method: 'POST',
-        headers: {
+        headers: await getAuthHeaders({
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${tok}`,
-        },
+        }),
         body: JSON.stringify(body),
       });
       const j = await r.json();
@@ -163,10 +157,12 @@ function AdminUsers() {
             <div className="flex gap-3">
               <Input
                 value={q}
-                onChange={e => setQ(e.target.value)}
+                onChange={(e) => setQ(e.target.value)}
                 placeholder="Search by name, email, id, or role"
               />
-              <Button onClick={fetchUsers} variant="secondary">Refresh</Button>
+              <Button onClick={fetchUsers} variant="secondary">
+                Refresh
+              </Button>
             </div>
           </div>
         </Card>
@@ -181,7 +177,9 @@ function AdminUsers() {
                   <th className="px-5 py-3 text-caption uppercase tracking-wider">User ID</th>
                   <th className="px-5 py-3 text-caption uppercase tracking-wider">Role</th>
                   <th className="px-5 py-3 text-caption uppercase tracking-wider">Last Login</th>
-                  <th className="px-5 py-3 text-caption uppercase tracking-wider">Account Created</th>
+                  <th className="px-5 py-3 text-caption uppercase tracking-wider">
+                    Account Created
+                  </th>
                   <th className="px-5 py-3 text-caption uppercase tracking-wider">Premium PIN</th>
                   <th className="px-5 py-3 text-caption uppercase tracking-wider">Actions</th>
                 </tr>
@@ -195,16 +193,26 @@ function AdminUsers() {
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td className="px-5 py-6 text-grayish" colSpan={8}>No users found.</td>
+                    <td className="px-5 py-6 text-grayish" colSpan={8}>
+                      No users found.
+                    </td>
                   </tr>
                 ) : (
-                  filtered.map(u => (
+                  filtered.map((u) => (
                     <tr key={u.id} className="border-t border-black/5 dark:border-white/10">
                       <td className="px-5 py-4 font-medium">{u.full_name ?? '–'}</td>
                       <td className="px-5 py-4 text-small text-grayish">{u.email ?? '–'}</td>
                       <td className="px-5 py-4 text-small text-grayish">{u.id}</td>
                       <td className="px-5 py-4">
-                        <Badge variant={u.role === 'admin' ? 'warning' : u.role === 'teacher' ? 'info' : 'secondary'}>
+                        <Badge
+                          variant={
+                            u.role === 'admin'
+                              ? 'warning'
+                              : u.role === 'teacher'
+                                ? 'info'
+                                : 'secondary'
+                          }
+                        >
                           {u.role}
                         </Badge>
                       </td>
@@ -228,11 +236,13 @@ function AdminUsers() {
                           <select
                             className="px-3 py-2 rounded-ds border border-black/10 dark:border-white/10 bg-white dark:bg-dark"
                             value={u.role}
-                            onChange={e => changeRole(u.id, e.target.value as Profile['role'])}
+                            onChange={(e) => changeRole(u.id, e.target.value as Profile['role'])}
                             disabled={changingId === u.id}
                           >
-                            {ROLES.map(r => (
-                              <option key={r} value={r}>{r}</option>
+                            {ROLES.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
                             ))}
                           </select>
                           <Button
@@ -257,10 +267,20 @@ function AdminUsers() {
           title="Manage Premium PIN"
           footer={
             <div className="flex justify-between items-center gap-2">
-              <Button variant="ghost" onClick={clearPin} disabled={pinBusy}>Clear PIN</Button>
+              <Button variant="ghost" onClick={clearPin} disabled={pinBusy}>
+                Clear PIN
+              </Button>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={generatePin} disabled={pinBusy}>Generate</Button>
-                <Button onClick={savePin} disabled={!/^\d{4,6}$/.test(pin) || pinBusy} loading={pinBusy}>Save</Button>
+                <Button variant="secondary" onClick={generatePin} disabled={pinBusy}>
+                  Generate
+                </Button>
+                <Button
+                  onClick={savePin}
+                  disabled={!/^\d{4,6}$/.test(pin) || pinBusy}
+                  loading={pinBusy}
+                >
+                  Save
+                </Button>
               </div>
             </div>
           }
@@ -268,7 +288,7 @@ function AdminUsers() {
           <Input
             label="New PIN"
             value={pin}
-            onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
             inputMode="numeric"
             type="password"
             placeholder="4-6 digits"
