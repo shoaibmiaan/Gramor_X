@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient'; // Use supabaseClient as the single source of truth
 import { redirectByRole } from '@/lib/routeAccess';
 import { getAuthErrorMessage } from '@/lib/authErrors';
+import { fetchCurrentUser } from '@/lib/currentUser';
 
 // Helper to initiate an MFA challenge for a given user
 export async function createMfaChallengeForUser(user: any) {
@@ -22,7 +23,7 @@ export async function verifyMfaOtp(factorId: string, challengeId: string, code: 
     return { error: getAuthErrorMessage(error) };
   }
   try { await fetch('/api/auth/login-event', { method: 'POST' }); } catch {}
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user } = await fetchCurrentUser();
   if (user) redirectByRole(user);
   return { error: null };
 }

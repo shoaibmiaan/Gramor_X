@@ -1,6 +1,7 @@
 // components/admin/ImpersonationBanner.tsx
 import React, { useEffect, useState } from 'react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { fetchCurrentUser } from '@/lib/currentUser';
 
 type Who = { id?: string; email?: string };
 
@@ -19,9 +20,7 @@ export function ImpersonationBanner() {
       if (!isImpersonating) return;
 
       try {
-        const {
-          data: { user },
-        } = await supabaseBrowser.auth.getUser();
+        const { user } = await fetchCurrentUser();
 
         if (!alive) return;
 

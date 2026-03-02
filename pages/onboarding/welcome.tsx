@@ -5,7 +5,6 @@ import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { useUser } from '@/hooks/useUser';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { cn } from '@/lib/utils';
 
 type Language = 'en' | 'ur';
@@ -27,8 +26,7 @@ const WELCOME_MESSAGES = {
 
 const WelcomePage: NextPage = () => {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
-  const [profile, setProfile] = useState<{ full_name?: string | null } | null>(null);
+  const { user, profile, isLoading: userLoading } = useUser({ includeProfile: true });
   const [language, setLanguage] = useState<Language | null>(null);
   const [saving, setSaving] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
@@ -41,19 +39,6 @@ const WelcomePage: NextPage = () => {
     }, 2000);
     return () => clearInterval(interval);
   }, [showLoading]);
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchProfile = async () => {
-      const { data } = await supabaseBrowser
-        .from('profiles')
-        .select('full_name')
-        .eq('user_id', user.id)
-        .single();
-      if (data) setProfile(data);
-    };
-    fetchProfile();
-  }, [user]);
 
   useEffect(() => {
     if (!showLoading) return;

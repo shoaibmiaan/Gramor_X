@@ -1,31 +1,45 @@
-// hooks/useUser.ts
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import type { User } from '@supabase/supabase-js';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import {
+  CURRENT_USER_CACHE_KEY,
+  fetchCurrentUser,
+  type CurrentUserProfile,
+  type CurrentUserResult,
+} from '@/lib/currentUser';
 
-/**
- * Client-only: reads the current user once on mount.
- * (Auth event bridging is handled in _app.tsx per your rules.)
- */
-export function useUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+type UseUserOptions = {
+  includeProfile?: boolean;
+  initialData?: CurrentUserResult;
+};
 
-  useEffect(() => {
-    const supabase = supabaseBrowser();
-    let cancelled = false;
+export function useUser(options: UseUserOptions = {}) {
+  const includeProfile = options.includeProfile ?? false;
+  const cacheKey = includeProfile
+    ? [CURRENT_USER_CACHE_KEY, 'with-profile']
+    : [CURRENT_USER_CACHE_KEY, 'user-only'];
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!cancelled) {
-        setUser(user ?? null);
-        setLoading(false);
-      }
-    });
+  const { data, error, isLoading, mutate } = useSWR<CurrentUserResult>(
+    cacheKey,
+    () => fetchCurrentUser({ includeProfile }),
+    {
+      fallbackData: options.initialData,
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    },
+  );
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const user: User | null = data?.user ?? null;
+  const profile: CurrentUserProfile | null = data?.profile ?? null;
 
-  return { user, loading, isAuthed: !!user, userId: user?.id ?? null };
+  return {
+    user,
+    profile,
+    isLoading,
+    loading: isLoading,
+    error,
+    mutate,
+    refetch: mutate,
+    isAuthed: !!user,
+    userId: user?.id ?? null,
+  };
 }
