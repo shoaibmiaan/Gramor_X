@@ -60,6 +60,19 @@ If your work touches Supabase/Postgres data, start a local database using the in
 2. Update your `.env` with the matching `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` values.
 3. Run migrations from `supabase/migrations/` as needed for your feature work.
 
+
+## Client auth data convention
+
+Use `hooks/useUser.ts` as the canonical client-side source for authenticated-user state. The hook is backed by `lib/currentUser.ts` and SWR cache key `current-user`, and returns a stable contract:
+
+- `user`
+- `profile` (when `includeProfile: true`)
+- `isLoading` / `loading`
+- `error`
+- `mutate` / `refetch`
+
+Do not call `supabase.auth.getUser()` directly inside page/component code for client rendering state. Route those flows through `useUser()` (or `fetchCurrentUser` for non-React helpers) so loading/error behavior remains consistent.
+
 ## 7. Validate your changes
 
 Common checks before opening a PR:
