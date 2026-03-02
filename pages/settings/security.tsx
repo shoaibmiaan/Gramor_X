@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import type { GetServerSideProps } from 'next';
-import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Input } from '@/components/design-system/Input';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { withPageAuth } from '@/lib/requirePageAuth';
+import SettingsLayout from '@/components/settings/SettingsLayout';
 
 interface SessionInfo {
   id: string;
@@ -70,65 +70,63 @@ export default function SecuritySettings() {
   }
 
   return (
-    <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-      <Container>
-        <div className="max-w-2xl mx-auto space-y-6">
-          <Card className="p-6 rounded-ds-2xl space-y-8">
-            <h1 className="font-slab text-display">Security</h1>
-
-            <div>
-              <h2 className="font-slab text-h3 mb-2">Multi-Factor Auth</h2>
-              {mfaEnabled ? (
-                <p className="text-body">Email OTP is enabled.</p>
-              ) : otpSent ? (
-                <div className="space-y-2 max-w-xs">
-                  <Input label="Enter code" value={otp} onChange={(e) => setOtp(e.target.value)} />
-                  <Button onClick={verifyMfa}>Verify</Button>
-                </div>
-              ) : (
-                <Button onClick={enableMfa}>Enable Email OTP</Button>
-              )}
+    <SettingsLayout
+      activeTab="security"
+      title="Security"
+      description="Control MFA, active sessions, and login history."
+    >
+      <Card className="mx-auto max-w-2xl space-y-8 rounded-ds-2xl p-6">
+        <div>
+          <h2 className="font-slab text-h3 mb-2">Multi-Factor Auth</h2>
+          {mfaEnabled ? (
+            <p className="text-body">Email OTP is enabled.</p>
+          ) : otpSent ? (
+            <div className="space-y-2 max-w-xs">
+              <Input label="Enter code" value={otp} onChange={(e) => setOtp(e.target.value)} />
+              <Button onClick={verifyMfa}>Verify</Button>
             </div>
-
-            <div>
-              <h2 className="font-slab text-h3 mb-2">Active Sessions</h2>
-              {sessions.length === 0 ? (
-                <p className="text-body">No other sessions.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {sessions.map((s) => (
-                    <li key={s.id} className="flex items-center justify-between text-body">
-                      <span>
-                        {s.user_agent || 'Unknown'}
-                        {s.ip ? ` • ${s.ip}` : ''}
-                      </span>
-                      <Button size="sm" variant="secondary" onClick={() => revoke(s.id)}>
-                        Revoke
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div>
-              <h2 className="font-slab text-h3 mb-2">Login History</h2>
-              {logins.length === 0 ? (
-                <p className="text-body">No logins recorded.</p>
-              ) : (
-                <ul className="space-y-1 text-small">
-                  {logins.map((l) => (
-                    <li key={l.id}>
-                      {new Date(l.created_at).toLocaleString()} – {l.ip_address || ''}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </Card>
+          ) : (
+            <Button onClick={enableMfa}>Enable Email OTP</Button>
+          )}
         </div>
-      </Container>
-    </section>
+
+        <div>
+          <h2 className="font-slab text-h3 mb-2">Active Sessions</h2>
+          {sessions.length === 0 ? (
+            <p className="text-body">No other sessions.</p>
+          ) : (
+            <ul className="space-y-2">
+              {sessions.map((s) => (
+                <li key={s.id} className="flex items-center justify-between text-body">
+                  <span>
+                    {s.user_agent || 'Unknown'}
+                    {s.ip ? ` • ${s.ip}` : ''}
+                  </span>
+                  <Button size="sm" variant="secondary" onClick={() => revoke(s.id)}>
+                    Revoke
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <h2 className="font-slab text-h3 mb-2">Login History</h2>
+          {logins.length === 0 ? (
+            <p className="text-body">No logins recorded.</p>
+          ) : (
+            <ul className="space-y-1 text-small">
+              {logins.map((l) => (
+                <li key={l.id}>
+                  {new Date(l.created_at).toLocaleString()} – {l.ip_address || ''}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Card>
+    </SettingsLayout>
   );
 }
 
