@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient'; // Centralized browser client
+import { fetchStrategiesTips, fetchStrategyEngagement, setStrategyHelpful, setStrategySaved } from '@/lib/data/componentData';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
@@ -104,11 +105,7 @@ export default function Strategies() {
       try {
         setLoading(true);
         setErr(null);
-        const { data, error } = await supabase
-          .from('strategies_tips')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (error) throw error;
+        const data = await fetchStrategiesTips(supabase as any);
         if (!cancelled) setTips((data ?? []) as StrategyTip[]);
       } catch (e: any) {
         if (!cancelled) setErr(e.message ?? 'Failed to load tips');
@@ -133,10 +130,7 @@ export default function Strategies() {
         setHelpfulSet(new Set());
         return;
       }
-      const [{ data: saves }, { data: votes }] = await Promise.all([
-        supabase.from('strategies_tip_saves').select('tip_id'),
-        supabase.from('strategies_tip_votes').select('tip_id'),
-      ]);
+      const { saves, votes } = await fetchStrategyEngagement(supabase as any);
       if (cancelled) return;
       setSavedSet(new Set((saves ?? []).map((r: any) => r.tip_id)));
       setHelpfulSet(new Set((votes ?? []).map((r: any) => r.tip_id)));
@@ -175,23 +169,10 @@ export default function Strategies() {
     isSaved ? next.delete(tipId) : next.add(tipId);
     setSavedSet(next);
 
-    const { error: deleteError } = isSaved ? await supabase
-      .from('strategies_tip_saves')
-      .delete()
-      .eq('user_id', userId)
-      .eq('tip_id', tipId) : { error: null };
-
-    if (deleteError) {
-      setSavedSet(prev => new Set([...prev, tipId])); // rollback
-      return;
-    }
-
-    const { error: insertError } = !isSaved ? await supabase
-      .from('strategies_tip_saves')
-      .insert({ user_id: userId, tip_id: tipId }) : { error: null };
-
-    if (insertError) {
-      setSavedSet(prev => { const s = new Set(prev); s.delete(tipId); return s; });
+    try {
+      await setStrategySaved(supabase as any, userId, tipId, !isSaved);
+    } catch {
+      setSavedSet(prev => { const s = new Set(prev); isSaved ? s.add(tipId) : s.delete(tipId); return s; });
     }
   };
 
@@ -210,23 +191,10 @@ export default function Strategies() {
     isHelpful ? next.delete(tipId) : next.add(tipId);
     setHelpfulSet(next);
 
-    const { error: deleteError } = isHelpful ? await supabase
-      .from('strategies_tip_votes')
-      .delete()
-      .eq('user_id', userId)
-      .eq('tip_id', tipId) : { error: null };
-
-    if (deleteError) {
-      setHelpfulSet(prev => new Set([...prev, tipId])); // rollback
-      return;
-    }
-
-    const { error: insertError } = !isHelpful ? await supabase
-      .from('strategies_tip_votes')
-      .insert({ user_id: userId, tip_id: tipId, helpful: true }) : { error: null };
-
-    if (insertError) {
-      setHelpfulSet(prev => { const s = new Set(prev); s.delete(tipId); return s; });
+    try {
+      await setStrategyHelpful(supabase as any, userId, tipId, !isHelpful);
+    } catch {
+      setHelpfulSet(prev => { const s = new Set(prev); isHelpful ? s.add(tipId) : s.delete(tipId); return s; });
     }
   };
 

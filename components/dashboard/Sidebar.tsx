@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import clsx from 'clsx';
 
-const items = [
+export const DASHBOARD_NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Reading', href: '/dashboard/reading' },
   { label: 'Writing', href: '/dashboard/writing' },
@@ -27,7 +27,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         GramorX AI
       </div>
       <nav className="space-y-1">
-        {items.map((item) => (
+        {DASHBOARD_NAV_ITEMS.map((item) => (
           <Link
             key={item.href}
             href={item.href}

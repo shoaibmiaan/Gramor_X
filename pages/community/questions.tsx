@@ -5,6 +5,7 @@ import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
 import { Section } from '@/components/design-system/Section';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { createCommunityQuestion, updateCommunityQuestionVotes } from '@/lib/data/componentData';
 
 interface QA {
   id: number;
@@ -33,17 +34,17 @@ export default function QuestionsPage() {
   async function ask() {
     if (!question) return;
     const aiAnswer = 'This is an AI-generated reply.';
-    const { error } = await supabase.from('community_questions').insert({ question, answer: aiAnswer, votes: 0 });
-    if (!error) {
+    try {
+      await createCommunityQuestion(supabase as any, { question, answer: aiAnswer, votes: 0 });
       setQuestion('');
       fetchQas();
-    }
+    } catch {}
   }
 
   async function vote(id: number, delta: number) {
     const current = qas.find((q) => q.id === id);
     if (!current) return;
-    await supabase.from('community_questions').update({ votes: current.votes + delta }).eq('id', id);
+    await updateCommunityQuestionVotes(supabase as any, String(id), current.votes + delta);
     fetchQas();
   }
 

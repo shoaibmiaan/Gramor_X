@@ -6,6 +6,7 @@ import type { GetServerSideProps } from 'next'
 import { Button } from '@/components/design-system/Button'
 import { Skeleton } from '@/components/design-system/Skeleton'
 import { supabaseServer } from '@/lib/supabaseServer'
+import { fetchInstitutionKpi, fetchInstitutionOrg } from '@/lib/data/componentData'
 
 // ---------- Types ----------
 export type OrgHomeProps = {
@@ -20,10 +21,10 @@ export const getServerSideProps: GetServerSideProps<OrgHomeProps> = async (ctx) 
   const supabase = supabaseServer(req as any, res as any)
   const orgId = String(params?.orgId)
 
-  const { data: org } = await supabase.from('institutions').select('id, name, code').eq('id', orgId).maybeSingle()
+  const org = await fetchInstitutionOrg(supabase as any, orgId, true)
   if (!org) return { props: { ok: false, error: 'Organization not found' } }
 
-  const { data: kpi } = await supabase.from('institution_reports_kpi').select('students, active_week, avg_band, mocks_week').eq('org_id', orgId).maybeSingle()
+  const kpi = await fetchInstitutionKpi(supabase as any, orgId)
 
   return { props: { ok: true, org, kpi: kpi ? { students: kpi.students, active_week: kpi.active_week, avg_band: kpi.avg_band, mocks_week: kpi.mocks_week } : { students: 0, active_week: 0, avg_band: null, mocks_week: 0 } } }
 }

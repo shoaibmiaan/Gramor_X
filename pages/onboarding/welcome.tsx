@@ -26,7 +26,8 @@ const WELCOME_MESSAGES = {
 
 const WelcomePage: NextPage = () => {
   const router = useRouter();
-  const { user, profile, isLoading: userLoading } = useUser({ includeProfile: true });
+  const { user, isLoading: userLoading } = useUser();
+  const [profile, setProfile] = useState<{ full_name?: string | null } | null>(null);
   const [language, setLanguage] = useState<Language | null>(null);
   const [saving, setSaving] = useState(false);
   const [showLoading, setShowLoading] = useState(false);

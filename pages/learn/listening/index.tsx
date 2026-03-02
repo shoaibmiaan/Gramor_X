@@ -23,6 +23,7 @@ import { fetchListeningResourcesServer } from '@/lib/listening/repo';
 import { fetchListeningResourcesClient } from '@/lib/listening/client';
 import { fromQuery, toQuery } from '@/lib/listening/filterQuery';
 import { useDebouncedEffect } from '@/lib/hooks/useDebouncedEffect';
+import { fetchUserRole } from '@/lib/data/componentData';
 
 type Props = {
   __userId: string;
@@ -52,8 +53,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   } catch { plan = 'free'; }
 
   let role: string | null = null;
-  const prof = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-  role = prof.data?.role ?? null;
+  role = await fetchUserRole(supabase as any, user.id);
 
   // Parse incoming query -> filter
   const f = fromQuery(ctx.query as Record<string, any>);

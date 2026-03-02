@@ -176,13 +176,12 @@ export default function SpeakingMockPage() {
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user?.id) throw new Error('Not authenticated');
-      const { data: att, error } = await supabase.from('attempts_speaking').insert({ user_id: u.user.id, script_id: script?.id ?? id, created_at: new Date().toISOString() }).select('id').single();
-      if (error) throw error;
+      const att = await createSpeakingAttempt(supabase as any, { user_id: u.user.id, script_id: script?.id ?? id, created_at: new Date().toISOString() });
       idOut = att.id as unknown as string;
       const path = `${u.user.id}/${idOut}.webm`;
       const { error: errUp } = await supabase.storage.from('speaking-recordings').upload(path, blob, { contentType: 'audio/webm', upsert: true });
       if (errUp) throw errUp;
-      await supabase.from('attempts_speaking').update({ recording_path: path }).eq('id', idOut);
+      await updateSpeakingAttemptRecording(supabase as any, idOut, path);
     } catch {
       idOut = `local-${Date.now()}`;
       try { const url = URL.createObjectURL(blob); localStorage.setItem(`speak:rec:${idOut}`, url); } catch {}
