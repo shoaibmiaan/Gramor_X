@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { createClient } from '@supabase/supabase-js'; // ✅ keep for server‑side only
 import { supabase } from '@/lib/supabaseClient'; // ✅ client‑side singleton (already uses createBrowserClient)
+import { fetchStrategiesTips, fetchTipEngagementState, setStrategyHelpful, setStrategySaved } from '@/lib/data/componentData';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
@@ -92,13 +93,10 @@ export default function TipDetail({
         setHelpful(false);
         return;
       }
-      const [{ data: s }, { data: v }] = await Promise.all([
-        supabase.from('strategies_tip_saves').select('tip_id').eq('tip_id', tip.id).maybeSingle(),
-        supabase.from('strategies_tip_votes').select('tip_id').eq('tip_id', tip.id).maybeSingle(),
-      ]);
+      const state = await fetchTipEngagementState(supabase as any, tip.id);
       if (cancel) return;
-      setSaved(!!s);
-      setHelpful(!!v);
+      setSaved(state.saved);
+      setHelpful(state.helpful);
     })();
     return () => {
       cancel = true;
@@ -180,15 +178,9 @@ export default function TipDetail({
     setSaved(optimistic);
     try {
       if (optimistic) {
-        const { error } = await supabase.from('strategies_tip_saves').insert({ user_id: userId, tip_id: tip.id });
-        if (error) setSaved(!optimistic);
+        await setStrategySaved(supabase as any, userId, tip.id, true);
       } else {
-        const { error } = await supabase
-          .from('strategies_tip_saves')
-          .delete()
-          .eq('user_id', userId)
-          .eq('tip_id', tip.id);
-        if (error) setSaved(!optimistic);
+        await setStrategySaved(supabase as any, userId, tip.id, false);
       }
     } finally {
       setLoadingToggles(false);
@@ -202,15 +194,9 @@ export default function TipDetail({
     setHelpful(optimistic);
     try {
       if (optimistic) {
-        const { error } = await supabase.from('strategies_tip_votes').insert({ user_id: userId, tip_id: tip.id, helpful: true });
-        if (error) setHelpful(!optimistic);
+        await setStrategyHelpful(supabase as any, userId, tip.id, true);
       } else {
-        const { error } = await supabase
-          .from('strategies_tip_votes')
-          .delete()
-          .eq('user_id', userId)
-          .eq('tip_id', tip.id);
-        if (error) setHelpful(!optimistic);
+        await setStrategyHelpful(supabase as any, userId, tip.id, false);
       }
     } finally {
       setLoadingToggles(false);

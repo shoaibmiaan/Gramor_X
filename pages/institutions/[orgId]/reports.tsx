@@ -6,6 +6,7 @@ import type { GetServerSideProps } from 'next'
 import { Button } from '@/components/design-system/Button'
 import { Skeleton } from '@/components/design-system/Skeleton'
 import { supabaseServer } from '@/lib/supabaseServer'
+import { fetchInstitutionKpi, fetchInstitutionModules, fetchInstitutionOrg } from '@/lib/data/componentData'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend, BarChart, Bar } from 'recharts'
 
 // ---------- Types ----------
@@ -22,11 +23,11 @@ export const getServerSideProps: GetServerSideProps<ReportsPageProps> = async (c
   const orgId = String(params?.orgId)
   const supabase = supabaseServer(req as any, res as any)
 
-  const { data: org } = await supabase.from('institutions').select('id, name').eq('id', orgId).maybeSingle()
+  const org = await fetchInstitutionOrg(supabase as any, orgId)
   if (!org) return { props: { ok: false, error: 'Organization not found' } }
 
-  const { data: kpi } = await supabase.from('institution_reports_kpi').select('students, active_week, avg_band, mocks_week').eq('org_id', orgId).maybeSingle()
-  const { data: modules } = await supabase.from('institution_reports_modules').select('module, bucket_start_utc, attempts, avg_score').eq('org_id', orgId).order('bucket_start_utc', { ascending: true })
+  const kpi = await fetchInstitutionKpi(supabase as any, orgId)
+  const modules = await fetchInstitutionModules(supabase as any, orgId)
 
   const seedData = (modules || []).map((m) => ({ module: m.module, bucket_start_utc: m.bucket_start_utc as any, attempts: m.attempts as any, avg_score: (m.avg_score as any) ?? null }))
   const baseline = kpi ? { students: kpi.students, active_week: kpi.active_week, avg_band: kpi.avg_band, mocks_week: kpi.mocks_week } : { students: 0, active_week: 0, avg_band: null, mocks_week: 0 }

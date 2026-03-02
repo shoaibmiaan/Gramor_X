@@ -9,6 +9,7 @@ import { Button } from '@/components/design-system/Button'
 import { Input } from '@/components/design-system/Input'
 import { Skeleton } from '@/components/design-system/Skeleton'
 import { supabaseServer } from '@/lib/supabaseServer'
+import { fetchInstitutionOrg } from '@/lib/data/componentData'
 
 // ---------- Types ----------
 export type StudentsPageProps = {
@@ -21,7 +22,7 @@ export const getServerSideProps: GetServerSideProps<StudentsPageProps> = async (
   const { req, res, params } = ctx
   const orgId = String(params?.orgId)
   const supabase = supabaseServer(req as any, res as any)
-  const { data: org } = await supabase.from('institutions').select('id, name').eq('id', orgId).maybeSingle()
+  const org = await fetchInstitutionOrg(supabase as any, orgId)
   if (!org) return { props: { ok: false, error: 'Organization not found' } }
   return { props: { ok: true, org } }
 }

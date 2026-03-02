@@ -7,6 +7,7 @@ import { Button } from '@/components/design-system/Button';
 import { useToast } from '@/components/design-system/Toaster';
 import { Section } from '@/components/design-system/Section';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { createPeerReview, createPeerReviewComment } from '@/lib/data/componentData';
 import { useUserContext } from '@/context/UserContext';
 
 interface Review {
@@ -45,8 +46,11 @@ export default function PeerReviewPage() {
       return toastError('Please sign in to share a review.');
     }
 
-    const { error } = await supabase.from('peer_reviews').insert({ content });
-    if (error) return toastError('Could not submit review');
+    try {
+      await createPeerReview(supabase as any, { content });
+    } catch {
+      return toastError('Could not submit review');
+    }
     setNewReview('');
     toastSuccess('Review shared');
     fetchReviews();
@@ -60,7 +64,7 @@ export default function PeerReviewPage() {
       return toastError('Please sign in to comment.');
     }
 
-    await supabase.from('peer_review_comments').insert({ review_id: reviewId, content: text });
+    await createPeerReviewComment(supabase as any, { review_id: reviewId, content: text });
     setComment((c) => ({ ...c, [reviewId]: '' }));
     fetchReviews();
   }
