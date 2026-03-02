@@ -38,9 +38,24 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     subscriptionTier,
   } = useHeaderState(streak);
 
+  const [stableUserId, setStableUserId] = useState<string | null>(null);
+  const latestUserId = contextUser?.id ?? headerUser?.id ?? null;
+
+  useEffect(() => {
+    if (latestUserId) {
+      setStableUserId(latestUserId);
+      return;
+    }
+
+    // Allow clearing only after both auth sources settle to avoid post-login flicker.
+    if (!loading && ready) {
+      setStableUserId(null);
+    }
+  }, [latestUserId, loading, ready]);
+
   const user = React.useMemo(
     () => ({
-      id: headerUser?.id ?? contextUser?.id ?? null,
+      id: stableUserId,
       email: headerUser?.email ?? contextUser?.email ?? null,
       name:
         headerUser?.name ??
@@ -54,10 +69,11 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
           : null),
       avatarPath: headerUser?.avatarPath ?? null,
     }),
-    [contextUser, headerUser]
+    [contextUser, headerUser, stableUserId]
   );
 
-  const isHeaderReady = ready || !!contextUser?.id;
+  const isAuthHydrating = loading && !stableUserId;
+  const isHeaderReady = (ready || !!stableUserId) && !isAuthHydrating;
 
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
@@ -214,7 +230,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const solidHeader = scrolled || openDesktopModules || mobileOpen;
 
   // Loading skeleton
-  if (loading && !user?.id) {
+  if (isAuthHydrating) {
     return (
       <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/90 backdrop-blur-lg">
         <Container>
