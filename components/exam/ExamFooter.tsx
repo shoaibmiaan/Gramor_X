@@ -27,7 +27,7 @@ export const ExamFooter: React.FC<ExamFooterProps> = ({
     <footer
       className={cn(
         "w-full h-[44px]",
-        "bg-[#1A1A1A] border-t border-[#2B2B2B]",
+        "bg-darker border-t border-border",
         "flex items-center justify-between px-4",
         "text-white font-[Arial,'Segoe UI',system-ui,sans-serif]",
         className
@@ -41,11 +41,11 @@ export const ExamFooter: React.FC<ExamFooterProps> = ({
             className="
               h-[28px] px-[14px]
               text-[12px] font-semibold uppercase tracking-[0.04em]
-              bg-[#2A2A2A]
-              border border-[#3A3A3A]
+              bg-dark
+              border border-border
               rounded-[2px]
-              hover:bg-[#333]
-              active:bg-[#444]
+              hover:bg-muted
+              active:bg-card
               transition-none
             "
           >
@@ -60,11 +60,11 @@ export const ExamFooter: React.FC<ExamFooterProps> = ({
             `
             h-[28px] px-[14px]
             text-[12px] font-semibold uppercase tracking-[0.04em]
-            bg-[#2A2A2A]
-            border border-[#3A3A3A]
+            bg-dark
+            border border-border
             rounded-[2px]
-            hover:bg-[#333]
-            active:bg-[#444]
+            hover:bg-muted
+            active:bg-card
             transition-none
           `,
             primaryDisabled && "opacity-50 pointer-events-none"
@@ -76,7 +76,7 @@ export const ExamFooter: React.FC<ExamFooterProps> = ({
 
       {/* RIGHT: QUESTION TEXT */}
       <div className="text-[12px] tracking-wide">
-        <span className="text-[#F2F2F2]">
+        <span className="text-foreground/90">
           Question{" "}
           <span className="font-bold text-white">{currentQuestion}</span>
           {" of "}
