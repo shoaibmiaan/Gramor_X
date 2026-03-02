@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import type { ReadingQuestion } from "@/lib/reading/types";
+import styles from "./ExamChrome.module.css";
 
 type AnswerValue = string | string[] | Record<string, any> | null;
 type FilterStatus = "all" | "flagged" | "unanswered";
@@ -66,21 +67,21 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
   };
 
   return (
-    <div className="w-full border-b border-border bg-darker text-white font-[Arial,'Segoe UI',system-ui,sans-serif]">
+    <div className={cn("w-full text-white font-[Arial,'Segoe UI',system-ui,sans-serif]", styles.navShell)}>
       {/* TOP BAR: FILTERS + COUNTS */}
       <div className="flex items-center justify-between px-3 py-1.5 text-[11px] leading-none">
         {/* LEFT: FILTERS */}
         <div className="flex items-center gap-2">
           {/* Status filter */}
-          <div className="flex items-center gap-[2px] bg-dark border border-border rounded-[2px] px-[4px] py-[2px]">
+          <div className={cn("flex items-center gap-[2px] rounded-[2px] px-[4px] py-[2px]", styles.navFilterGroup)}>
             <button
               type="button"
               onClick={() => setStatusFilter("all")}
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 statusFilter === "all"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               All
@@ -91,8 +92,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 statusFilter === "flagged"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               Flagged
@@ -103,8 +104,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 statusFilter === "unanswered"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               Unanswered
@@ -112,8 +113,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
           </div>
 
           {/* Type filter */}
-          <div className="flex items-center gap-[2px] bg-dark border border-border rounded-[2px] px-[4px] py-[2px]">
-            <span className="text-[10px] uppercase tracking-[0.04em] text-muted-foreground/80 mr-1">
+          <div className={cn("flex items-center gap-[2px] rounded-[2px] px-[4px] py-[2px]", styles.navFilterGroup)}>
+            <span className={cn("text-[10px] uppercase tracking-[0.04em] mr-1", styles.navTypeLabel)}>
               Type
             </span>
             <button
@@ -122,8 +123,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 typeFilter === "all"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               All
@@ -134,8 +135,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 typeFilter === "tfng"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               TFNG
@@ -146,8 +147,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 typeFilter === "mcq"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               MCQ
@@ -158,8 +159,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 typeFilter === "gap"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               Gap
@@ -170,8 +171,8 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
               className={cn(
                 "px-1.5 py-[1px] text-[10px] uppercase tracking-[0.04em]",
                 typeFilter === "match"
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground"
+                  ? styles.navFilterActive
+                  : styles.navFilterInactive
               )}
             >
               Match
@@ -180,10 +181,10 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
         </div>
 
         {/* RIGHT: META TEXT */}
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <div className={cn("flex items-center gap-3 text-[10px]", styles.navMetaMuted)}>
           <span>
             Total questions:{" "}
-            <span className="text-foreground font-semibold">
+            <span className={cn("font-semibold", styles.navMetaStrong)}>
               {questions.length}
             </span>
           </span>
@@ -191,7 +192,7 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
       </div>
 
       {/* QUESTION MAP GRID */}
-      <div className="px-3 pb-2 pt-1 bg-darker border-t border-border">
+      <div className={cn("px-3 pb-2 pt-1", styles.gridShell)}>
         <div className="grid grid-cols-10 gap-[4px] text-[11px] leading-none">
           {questions.map((q, idx) => {
             const qNum = idx + 1;
@@ -205,22 +206,22 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
             // Dim if filter doesn't match
             const dimmed = !(passesStatus && passesType);
 
-            let toneClass = "bg-dark border-border text-foreground/90";
+            let toneClass = styles.tileDefault;
 
             if (!answered && !flagged) {
-              toneClass = "bg-darker border-border text-muted-foreground/80";
+              toneClass = styles.tileUnanswered;
             }
 
             if (answered && !flagged) {
-              toneClass = "bg-foreground border-muted text-darker";
+              toneClass = styles.tileAnswered;
             }
 
             if (flagged) {
-              toneClass = "bg-warning/20 border-warning text-warning";
+              toneClass = styles.tileFlagged;
             }
 
             if (isCurrent) {
-              toneClass = "bg-primary border-primaryDark text-white";
+              toneClass = styles.tileCurrent;
             }
 
             return (
@@ -243,24 +244,24 @@ export const QuestionNav: React.FC<QuestionNavProps> = ({
         </div>
 
         {/* LEGEND */}
-        <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground/80">
+        <div className={cn("mt-2 flex flex-wrap items-center gap-3 text-[10px]", styles.legendText)}>
           <LegendSwatch
             label="Current"
-            swatchClassName="bg-primary border-primaryDark"
+            swatchClassName={styles.legendCurrent}
           />
           <LegendSwatch
             label="Answered"
-            swatchClassName="bg-foreground border-muted"
-            labelClassName="text-darker"
+            swatchClassName={styles.legendAnswered}
+            labelClassName={styles.legendLabelDark}
           />
           <LegendSwatch
             label="Unanswered"
-            swatchClassName="bg-darker border-border"
+            swatchClassName={styles.legendUnanswered}
           />
           <LegendSwatch
             label="Flagged"
-            swatchClassName="bg-warning/20 border-warning"
-            labelClassName="text-warning"
+            swatchClassName={styles.legendFlagged}
+            labelClassName={styles.legendLabelFlagged}
           />
         </div>
       </div>
@@ -281,7 +282,7 @@ const LegendSwatch: React.FC<{
           swatchClassName
         )}
       />
-      <span className={cn("text-[10px] text-muted-foreground", labelClassName)}>
+      <span className={cn("text-[10px]", styles.legendLabel, labelClassName)}>
         {label}
       </span>
     </div>
