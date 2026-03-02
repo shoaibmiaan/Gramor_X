@@ -40,7 +40,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
 
   const user = React.useMemo(
     () => ({
-      id: headerUser?.id ?? contextUser?.id ?? null,
+      id: contextUser?.id ?? headerUser?.id ?? null,
       email: headerUser?.email ?? contextUser?.email ?? null,
       name:
         headerUser?.name ??
@@ -57,7 +57,8 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     [contextUser, headerUser]
   );
 
-  const isHeaderReady = ready || !!contextUser?.id;
+  const isAuthHydrating = loading && !contextUser?.id && !headerUser?.id;
+  const isHeaderReady = (ready || !!contextUser?.id || !!headerUser?.id) && !isAuthHydrating;
 
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
@@ -214,7 +215,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const solidHeader = scrolled || openDesktopModules || mobileOpen;
 
   // Loading skeleton
-  if (loading && !user?.id) {
+  if (isAuthHydrating) {
     return (
       <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/90 backdrop-blur-lg">
         <Container>
