@@ -1,8 +1,9 @@
 import type { NextApiResponse } from 'next';
-import type { SupabaseClient, User } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { resolveUserRole } from '@/lib/serverRole';
 import type { AppRole } from '@/lib/roles';
 import type { AuthErrorCode, AuthErrorResponse } from '@/types/auth';
+import type { User } from '@/types/user';
 
 export class AuthError extends Error {
   code: AuthErrorCode;

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 
-export type RepoClient = SupabaseClient<any, 'public', any>;
+export type RepoClient = SupabaseClient;
 export type PlanId = 'free' | 'starter' | 'booster' | 'master';
 
 type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due' | 'unpaid' | null;

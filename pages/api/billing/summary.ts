@@ -2,29 +2,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '@/lib/stripe';
 import { summarizeFromStripe, mapStripeInvoice, type SubscriptionSummary } from '@/lib/subscriptions';
+import type { BillingSummaryResponse, DueRow } from '@/types/subscription';
 import { getActiveSubscription } from '@/lib/subscription';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-
-type DueRow = Readonly<{
-  id: string;
-  amount_cents: number;
-  currency: string;
-  created_at: string;
-  status: 'due' | 'collected' | 'canceled';
-  plan_key: 'starter' | 'booster' | 'master';
-  cycle: 'monthly' | 'annual';
-}>;
-
-type BillingSummaryResponse =
-  | {
-      ok: true;
-      summary: SubscriptionSummary;
-      invoices: ReturnType<typeof mapStripeInvoice>[];
-      dues: DueRow[];
-      customerId?: string;
-      needsStripeSetup?: boolean;
-    }
-  | { ok: false; error: string };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<BillingSummaryResponse>) {
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'method_not_allowed' });
