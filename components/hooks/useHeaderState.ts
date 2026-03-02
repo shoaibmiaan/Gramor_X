@@ -19,7 +19,6 @@ interface UserInfo {
 
 export function useHeaderState(initialStreak?: number) {
   const router = useRouter();
-  const INITIAL_AUTH_RECHECK_DELAY_MS = 140;
 
   const [ready, setReady] = useState(false);
   const [role, setRole] = useState<string | null>(null);
@@ -121,28 +120,6 @@ export function useHeaderState(initialStreak?: number) {
       return { url: raw, path: null } as const;
     };
 
-    const applyAuthUser = async (authUser: Session['user'] | null) => {
-      const userMeta = (authUser?.user_metadata ?? {}) as Record<string, unknown>;
-      const avatar = await resolveAvatar(userMeta);
-
-      if (cancelled) return;
-
-      setUser({
-        id: authUser?.id ?? null,
-        email: authUser?.email ?? null,
-        name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
-        avatarUrl: avatar.url,
-        avatarPath: avatar.path,
-      });
-
-      const identity = await computeIdentity(authUser?.id ?? null, authUser?.app_metadata, userMeta);
-      if (cancelled) return;
-
-      setRole(identity.role);
-      setSubscriptionTier(identity.tier ?? defaultTier);
-      if (!authUser) setStreak(0);
-    };
-
     const sync = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -166,26 +143,22 @@ export function useHeaderState(initialStreak?: number) {
           currentUser = fetchedUser ?? null;
         }
 
-        // One delayed retry for initialization races where both calls can briefly return null.
-        if (!currentUser) {
-          await new Promise((resolve) => setTimeout(resolve, INITIAL_AUTH_RECHECK_DELAY_MS));
+        const userMeta = (currentUser?.user_metadata ?? {}) as Record<string, unknown>;
+        if (!cancelled) {
+          const avatar = await resolveAvatar(userMeta);
+          setUser({
+            id: currentUser?.id ?? null,
+            email: currentUser?.email ?? null,
+            name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
+            avatarUrl: avatar.url,
+            avatarPath: avatar.path,
+          });
+          const identity = await computeIdentity(currentUser?.id ?? null, currentUser?.app_metadata, userMeta);
           if (!cancelled) {
-            const {
-              data: { session: retrySession },
-            } = await supabase.auth.getSession();
-
-            currentUser = retrySession?.user ?? null;
-
-            if (!currentUser) {
-              const {
-                data: { user: retryUser },
-              } = await supabase.auth.getUser();
-              currentUser = retryUser ?? null;
-            }
+            setRole(identity.role);
+            setSubscriptionTier(identity.tier ?? defaultTier);
           }
         }
-
-        await applyAuthUser(currentUser);
       } catch (err) {
         console.error('Unexpected auth error:', err);
       } finally {
@@ -199,10 +172,20 @@ export function useHeaderState(initialStreak?: number) {
     const { data: sub } = supabase.auth.onAuthStateChange(
       async (_e: AuthChangeEvent, session: Session | null) => {
         try {
-          await applyAuthUser(session?.user ?? null);
-          if (!cancelled) {
-            setReady(true);
-          }
+          const s = session?.user ?? null;
+          const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
+          const avatar = await resolveAvatar(userMeta);
+          setUser({
+            id: s?.id ?? null,
+            email: s?.email ?? null,
+            name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
+            avatarUrl: avatar.url,
+            avatarPath: avatar.path,
+          });
+          const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
+          setRole(identity.role);
+          setSubscriptionTier(identity.tier ?? defaultTier);
+          if (!s) setStreak(0);
         } catch (err) {
           console.error('Auth state change error:', err);
         }
