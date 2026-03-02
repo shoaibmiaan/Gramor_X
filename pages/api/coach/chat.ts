@@ -5,7 +5,6 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat/completio
 import { env } from '@/lib/env';
 import { flags } from '@/lib/flags';
 import { getServerClient } from '@/lib/supabaseServer';
-import { redis } from '@/lib/redis';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { getUserTier } from '@/lib/repositories/subscriptionRepository';
 import {
@@ -14,6 +13,7 @@ import {
   truncateForModel,
   type CoachMessage,
 } from '@/lib/ai/guardrails';
+import { checkLimit, limitExceeded } from '@/lib/usage';
 
 export const config = {
   api: {
@@ -85,20 +85,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const tierResult = await getUserTier(supabase as any, userId);
   const tier = tierResult.tier as SubscriptionTier;
   const quota = DAILY_QUOTA[tier] ?? DAILY_QUOTA.free;
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const quotaKey = `coach:quota:${userId}:${todayKey}`;
-
   try {
-    const count = await redis.incr(quotaKey);
-    if (count === 1) {
-      await redis.expire(quotaKey, 60 * 60 * 24);
-    }
-    if (count > quota) {
-      res.status(429).json({ error: 'quota_exceeded', limit: quota });
+    const quotaCheck = await checkLimit({
+      userId,
+      key: 'coach:quota',
+      limit: quota,
+      increment: true,
+    });
+
+    if (!quotaCheck.allowed) {
+      res.status(429).json(limitExceeded('quota_exceeded', quota));
       return;
     }
   } catch (error) {
-    console.warn('[coach.quota] redis error', error);
+    console.warn('[coach.quota] usage check failed', error);
   }
 
   const history = truncateForModel(messages);

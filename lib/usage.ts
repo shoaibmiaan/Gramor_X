@@ -26,6 +26,62 @@ export function todayISO(d = new Date()) {
   return d.toISOString().slice(0, 10);
 }
 
+const DAILY_EXPIRY_SECONDS = 60 * 60 * 24;
+
+export type LimitExceededPayload = { error: string; limit: number };
+
+function usageKey(userId: string, key: string, dateISO = todayISO()) {
+  return `${key}:${userId}:${dateISO}`;
+}
+
+export async function getTodayUsage(userId: string, key: string, dateISO = todayISO()): Promise<number> {
+  try {
+    const { redis } = await import('@/lib/redis');
+    const raw = await redis.get(usageKey(userId, key, dateISO));
+    const value = raw ? Number.parseInt(raw, 10) : 0;
+    if (Number.isNaN(value)) {
+      await redis.del(usageKey(userId, key, dateISO));
+      return 0;
+    }
+    return value;
+  } catch {
+    return 0;
+  }
+}
+
+export async function incrementUsage(userId: string, key: string, dateISO = todayISO()): Promise<number> {
+  const { redis } = await import('@/lib/redis');
+  const scopedKey = usageKey(userId, key, dateISO);
+  const next = await redis.incr(scopedKey);
+  if (next === 1) {
+    await redis.expire(scopedKey, DAILY_EXPIRY_SECONDS);
+  }
+  return next;
+}
+
+export async function checkLimit(input: {
+  userId: string;
+  key: string;
+  limit: number;
+  increment?: boolean;
+  dateISO?: string;
+}): Promise<{ allowed: boolean; current: number; limit: number }> {
+  const { userId, key, limit, increment = false, dateISO = todayISO() } = input;
+  const current = increment
+    ? await incrementUsage(userId, key, dateISO)
+    : await getTodayUsage(userId, key, dateISO);
+
+  return {
+    allowed: increment ? current <= limit : current < limit,
+    current,
+    limit,
+  };
+}
+
+export function limitExceeded(error: string, limit: number): LimitExceededPayload {
+  return { error, limit };
+}
+
 async function authHeader(): Promise<Record<string, string>> {
   try {
     const { supabaseBrowser } = await import('@/lib/supabaseBrowser');
