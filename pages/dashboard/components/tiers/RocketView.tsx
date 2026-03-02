@@ -7,8 +7,6 @@ import useDashboardData from '@/hooks/useDashboardData';
 import useAIInsights from '@/hooks/useAIInsights';
 import useUsageLimits from '@/hooks/useUsageLimits';
 import predictiveEngine from '@/utils/predictiveEngine';
-import Header from '@/pages/dashboard/components/shared/Header';
-import Sidebar from '@/pages/dashboard/components/shared/Sidebar';
 import NotificationCenter from '@/pages/dashboard/components/shared/NotificationCenter';
 import KpiCards from '@/pages/dashboard/components/widgets/KpiCards';
 import BandProgress from '@/pages/dashboard/components/widgets/BandProgress';
@@ -17,6 +15,7 @@ import AIInsights from '@/pages/dashboard/components/widgets/AIInsights';
 import UsageMeters from '@/pages/dashboard/components/widgets/UsageMeters';
 import ExportReports from '@/pages/dashboard/components/widgets/ExportReports';
 
+import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 type RocketViewProps = {
   userId: string | null;
   targetBand: number;
@@ -44,9 +43,7 @@ const RocketView = ({ userId, targetBand }: RocketViewProps) => {
       <Head>
         <title>Dashboard — Rocket — Gramor_X</title>
       </Head>
-      <Header tier={tier} />
-      <div className="mx-auto grid w-full max-w-[1400px] gap-4 px-4 py-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6 lg:px-8">
-        <Sidebar />
+      <DashboardLayout>
         <main className="space-y-4" id="content-grid">
           <KpiCards tier={tier} />
           <BandProgress points={data.bandHistory} targetBand={targetBand} tier={tier} />
@@ -88,7 +85,7 @@ const RocketView = ({ userId, targetBand }: RocketViewProps) => {
             <NotificationCenter />
           </div>
         </main>
-      </div>
+      </DashboardLayout>
     </>
   );
 };
