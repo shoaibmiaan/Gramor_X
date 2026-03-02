@@ -216,8 +216,8 @@ export function MobileNav({
           >
             <Icon name="X" size={20} />
           </motion.button>
-          {typeof streak === 'number' && streak > 0 && (
-            <StreakChip value={streak} href="/profile/streak" className="shrink-0" />
+          {Boolean(user?.id) && (
+            <StreakChip value={streak ?? 0} href="/profile/streak" className="shrink-0" />
           )}
         </div>
 
