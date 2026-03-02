@@ -38,9 +38,24 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     subscriptionTier,
   } = useHeaderState(streak);
 
+  const [stableUserId, setStableUserId] = useState<string | null>(null);
+  const latestUserId = contextUser?.id ?? headerUser?.id ?? null;
+
+  useEffect(() => {
+    if (latestUserId) {
+      setStableUserId(latestUserId);
+      return;
+    }
+
+    // Allow clearing only after both auth sources settle to avoid post-login flicker.
+    if (!loading && ready) {
+      setStableUserId(null);
+    }
+  }, [latestUserId, loading, ready]);
+
   const user = React.useMemo(
     () => ({
-      id: contextUser?.id ?? headerUser?.id ?? null,
+      id: stableUserId,
       email: headerUser?.email ?? contextUser?.email ?? null,
       name:
         headerUser?.name ??
@@ -54,11 +69,11 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
           : null),
       avatarPath: headerUser?.avatarPath ?? null,
     }),
-    [contextUser, headerUser]
+    [contextUser, headerUser, stableUserId]
   );
 
-  const isAuthHydrating = loading && !contextUser?.id && !headerUser?.id;
-  const isHeaderReady = (ready || !!contextUser?.id || !!headerUser?.id) && !isAuthHydrating;
+  const isAuthHydrating = loading && !stableUserId;
+  const isHeaderReady = (ready || !!stableUserId) && !isAuthHydrating;
 
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
