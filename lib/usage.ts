@@ -13,6 +13,14 @@ export type IncrementRes =
   | { ok: true; key: UsageKey; dateISO: string; count: number }
   | { ok: false; error: string };
 
+export type UsageDecision = {
+  allowed: boolean;
+  count: number;
+  limit: number;
+  remaining: number;
+  reason?: 'limit_reached' | 'counter_unavailable';
+};
+
 export function todayISO(d = new Date()) {
   // YYYY-MM-DD in UTC (server groups by calendar day)
   return d.toISOString().slice(0, 10);
@@ -29,10 +37,7 @@ async function authHeader(): Promise<Record<string, string>> {
   }
 }
 
-const base =
-  typeof window === 'undefined'
-    ? env.SITE_URL || env.NEXT_PUBLIC_BASE_URL || ''
-    : '';
+const base = typeof window === 'undefined' ? env.SITE_URL || env.NEXT_PUBLIC_BASE_URL || '' : '';
 
 export async function increment(
   key: UsageKey,
@@ -63,12 +68,39 @@ export async function getCount(key: UsageKey, dateISO = todayISO()): Promise<num
 }
 
 /** Quick “can I use this?” guard. */
-export async function canUse(
-  key: UsageKey,
-  limit: number,
-): Promise<{ allowed: boolean; count: number; limit: number }> {
+export async function canUse(key: UsageKey, limit: number): Promise<UsageDecision> {
   // Step=0 returns current count without increment (API supports it).
   const res = await increment(key, 0);
   const count = res.ok ? res.count : 0;
-  return { allowed: count < limit, count, limit };
+  const remaining = Math.max(0, limit - count);
+  if (!res.ok) {
+    return { allowed: false, count, limit, remaining, reason: 'counter_unavailable' };
+  }
+
+  const allowed = count < limit;
+  return {
+    allowed,
+    count,
+    limit,
+    remaining,
+    reason: allowed ? undefined : 'limit_reached',
+  };
+}
+
+export async function ensureUsageAllowed(key: UsageKey, limit: number): Promise<UsageDecision> {
+  const decision = await canUse(key, limit);
+  if (!decision.allowed) {
+    throw new Error(
+      decision.reason === 'limit_reached' ? 'usage_limit_reached' : 'usage_unavailable',
+    );
+  }
+  return decision;
+}
+
+export async function incrementUsage(key: UsageKey, step = 1): Promise<number> {
+  const res = await increment(key, step);
+  if (!res.ok) {
+    throw new Error(res.error || 'usage_increment_failed');
+  }
+  return res.count;
 }
