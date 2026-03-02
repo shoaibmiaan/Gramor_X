@@ -1,5 +1,6 @@
 // lib/subscriptions.ts
 import type Stripe from 'stripe';
+import { summarizeStripeSubscription } from '@/lib/subscription';
 
 export type SubscriptionPlan = 'starter' | 'booster' | 'master' | 'free';
 export type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
@@ -24,15 +25,12 @@ export function summarizeFromStripe(
   sub: Stripe.Subscription | null | undefined,
   fallbackPlan: SubscriptionPlan = 'free'
 ): SubscriptionSummary {
-  const nickname = (sub?.items?.data?.[0]?.price?.nickname ?? '').toString().toLowerCase();
-  const plan: SubscriptionPlan =
-    nickname === 'starter' || nickname === 'booster' || nickname === 'master' ? (nickname as SubscriptionPlan) : fallbackPlan;
-
+  const summary = summarizeStripeSubscription(sub, fallbackPlan);
   return {
-    plan,
-    status: ((sub?.status as SubscriptionStatus) ?? 'canceled'),
-    renewsAt: sub?.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined,
-    trialEndsAt: sub?.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined,
+    plan: summary.plan,
+    status: summary.status === 'inactive' ? 'canceled' : summary.status,
+    renewsAt: summary.renewsAt,
+    trialEndsAt: summary.trialEndsAt,
   };
 }
 

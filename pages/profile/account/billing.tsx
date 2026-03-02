@@ -15,6 +15,7 @@ import { Heading } from '@/components/design-system/Heading';
 import { Section } from '@/components/design-system/Section';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Skeleton } from '@/components/design-system/Skeleton';
+import { formatSubscriptionStatus, mapSubscriptionStatusToVariant, type SubscriptionStatus } from '@/lib/subscription';
 
 type Invoice = {
   id: string;
@@ -27,7 +28,7 @@ type Invoice = {
 
 type Summary = {
   plan: 'free' | 'starter' | 'booster' | 'master';
-  status: 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due' | 'unpaid' | 'paused';
+  status: Exclude<SubscriptionStatus, 'inactive'>;
   renewsAt?: string;
   trialEndsAt?: string;
 };
@@ -54,28 +55,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   return { props: {} };
 };
 
+
 const toTitleCase = (value: string) =>
   value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-
-const getStatusVariant = (status: Summary['status']) => {
-  switch (status) {
-    case 'active':
-      return 'success';
-    case 'trialing':
-      return 'info';
-    case 'past_due':
-    case 'incomplete':
-      return 'warning';
-    case 'unpaid':
-      return 'danger';
-    case 'paused':
-      return 'secondary';
-    case 'canceled':
-    default:
-      return 'neutral';
-  }
-};
-
 const getInvoiceVariant = (status: Invoice['status']) => {
   switch (status) {
     case 'paid':
@@ -356,8 +338,8 @@ export default function BillingPage() {
                       >
                         {toTitleCase(summary.plan)}
                       </Heading>
-                      <Badge variant={getStatusVariant(summary.status)}>
-                        {toTitleCase(summary.status)}
+                      <Badge variant={mapSubscriptionStatusToVariant(summary.status)}>
+                        {formatSubscriptionStatus(summary.status)}
                       </Badge>
                     </div>
                     {renderPlanMeta()}

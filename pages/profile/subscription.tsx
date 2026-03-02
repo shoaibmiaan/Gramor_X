@@ -13,17 +13,7 @@ import type { Profile } from '@/types/profile';
 import { GlobalPlanGuard } from '@/components/GlobalPlanGuard';
 import { useLocale } from '@/lib/locale';
 import type { PlanId } from '@/types/pricing';
-
-type SubscriptionStatus =
-  | 'active'
-  | 'trialing'
-  | 'canceled'
-  | 'incomplete'
-  | 'past_due'
-  | 'unpaid'
-  | 'paused'
-  | 'inactive'
-  | 'expired';
+import { isSubscriptionActive, normalizeSubscriptionStatus, type SubscriptionStatus } from '@/lib/subscription';
 
 type SubscriptionPlanKey = 'free' | 'starter' | 'booster' | 'master';
 
@@ -102,8 +92,7 @@ export default function SubscriptionPage() {
   const planKey: SubscriptionPlanKey =
     (currentPlan as SubscriptionPlanKey) ?? 'free';
 
-  const status: SubscriptionStatus =
-    (profile?.subscription_status as SubscriptionStatus) ?? 'inactive';
+  const status: SubscriptionStatus = normalizeSubscriptionStatus(profile?.subscription_status);
 
   const expiresAt =
     profile?.subscription_expires_at ?? profile?.premium_until ?? null;
@@ -112,7 +101,7 @@ export default function SubscriptionPage() {
       ? new Date(expiresAt).toLocaleDateString()
       : null;
 
-  const isPremium = currentPlan !== 'free' && status === 'active';
+  const isPremium = currentPlan !== 'free' && isSubscriptionActive(status);
   const isTrial =
     !!profile?.premium_until &&
     new Date(profile.premium_until) > new Date();
@@ -209,7 +198,7 @@ export default function SubscriptionPage() {
                     </Button>
                   )}
 
-                  {profile?.stripe_customer_id && status === 'active' && (
+                  {profile?.stripe_customer_id && isSubscriptionActive(status) && (
                     <Button
                       variant="ghost"
                       className="rounded-ds-xl"

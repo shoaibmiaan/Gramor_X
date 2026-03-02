@@ -17,6 +17,7 @@ import type { Profile } from '@/types/profile';
 import { GlobalPlanGuard } from '@/components/GlobalPlanGuard';
 import { useLocale } from '@/lib/locale';
 import type { PlanId } from '@/types/pricing';
+import { isSubscriptionActive } from '@/lib/subscription';
 
 type Invoice = {
   id: string;
@@ -80,7 +81,7 @@ export default function BillingHistoryPage() {
   }, [router, t, toastError]);
 
   const currentPlan: PlanId = profile?.tier ?? 'free';
-  const hasSubscription = !!profile?.stripe_customer_id && profile.subscription_status === 'active';
+  const hasSubscription = !!profile?.stripe_customer_id && isSubscriptionActive(profile?.subscription_status);
 
   if (loading) {
     return (

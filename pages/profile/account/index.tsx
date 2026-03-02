@@ -13,6 +13,7 @@ import { Card } from '@/components/design-system/Card';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { withPageAuth } from '@/lib/requirePageAuth';
 import { getPlan, isPaidPlan, type PlanId } from '@/types/pricing';
+import { formatSubscriptionStatus, mapSubscriptionStatusToVariant, type SubscriptionStatus } from '@/lib/subscription';
 
 import {
   CheckCircle,
@@ -30,7 +31,7 @@ import {
 
 type BillingSummary = {
   plan: PlanId;
-  status: 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due' | 'unpaid' | 'paused';
+  status: Exclude<SubscriptionStatus, 'inactive'>;
   renewsAt?: string;
   trialEndsAt?: string;
 };
@@ -63,33 +64,6 @@ export default function AccountHubPage() {
     completedTasks: 0,
   });
 
-  const statusVariant = React.useCallback(
-    (status: BillingSummary['status']): React.ComponentProps<typeof Badge>['variant'] => {
-      switch (status) {
-        case 'active':
-          return 'success';
-        case 'trialing':
-          return 'info';
-        case 'past_due':
-        case 'incomplete':
-          return 'warning';
-        case 'unpaid':
-          return 'danger';
-        case 'paused':
-          return 'secondary';
-        case 'canceled':
-        default:
-          return 'neutral';
-      }
-    },
-    [],
-  );
-
-  const formatStatus = React.useCallback(
-    (status: BillingSummary['status']) =>
-      status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
-    [],
-  );
 
   React.useEffect(() => {
     let cancelled = false;
@@ -430,8 +404,8 @@ export default function AccountHubPage() {
                 ) : summary ? (
                   <>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={statusVariant(summary.status)}>
-                        {formatStatus(summary.status)}
+                      <Badge variant={mapSubscriptionStatusToVariant(summary.status)}>
+                        {formatSubscriptionStatus(summary.status)}
                       </Badge>
                       {planDefinition && (
                         <span className="text-small text-muted-foreground">

@@ -3,6 +3,8 @@ import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
 import { getSubscriptionSummary } from '@/lib/repositories/subscriptionRepository';
+import { getActiveSubscription, summarizeStripeSubscription } from '@/lib/subscription';
+import { mapStripeInvoice } from '@/lib/subscriptions';
 
 type Invoice = Readonly<{
   id: string;
@@ -84,29 +86,17 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   }
 
   // Pull latest subscription + last few invoices
-  const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 1 });
-  const sub = subs.data[0];
-  const priceNickname =
-    (sub?.items?.data?.[0]?.price?.nickname?.toLowerCase() as SubscriptionSummary['plan']) ||
-    dbSummary.plan ||
-    'free';
+  const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 3 });
+  const sub = getActiveSubscription(subs.data) ?? subs.data[0];
 
+  const nextSummary = summarizeStripeSubscription(sub, dbSummary.plan);
   const summary: SubscriptionSummary = {
-    plan: ['starter', 'booster', 'master'].includes(priceNickname) ? priceNickname : 'free',
-    status: ((sub?.status as SubscriptionSummary['status']) || 'canceled'),
-    renewsAt: sub?.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined,
-    trialEndsAt: sub?.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined,
+    ...nextSummary,
+    status: nextSummary.status === 'inactive' ? 'canceled' : nextSummary.status,
   };
 
   const invs = await stripe.invoices.list({ customer: customerId, limit: 12 });
-  const invoices: Invoice[] = invs.data.map((i) => ({
-    id: i.id,
-    amount: i.amount_paid ?? i.amount_due ?? 0,
-    currency: i.currency?.toUpperCase() || 'USD',
-    createdAt: new Date((i.status_transitions?.finalized_at || i.created) * 1000).toISOString(),
-    hostedInvoiceUrl: i.hosted_invoice_url || undefined,
-    status: ((i.status as Invoice['status']) || 'open'),
-  }));
+  const invoices: Invoice[] = invs.data.map(mapStripeInvoice);
 
   return res.status(200).json({ subscription: summary, invoices });
 };
