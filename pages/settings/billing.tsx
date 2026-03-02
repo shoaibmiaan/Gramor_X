@@ -10,6 +10,12 @@ import { Alert } from '@/components/design-system/Alert';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { withPageAuth } from '@/lib/requirePageAuth';
+import {
+  formatSubscriptionLabel,
+  getSubscriptionStatusVariant,
+  normalizePlan,
+  normalizeStatus,
+} from '@/lib/subscription';
 
 type BillingState = {
   plan?: 'free' | 'starter' | 'booster' | 'master';
@@ -18,25 +24,6 @@ type BillingState = {
   paymentMethod?: 'card' | 'none';
 };
 
-const statusVariant = (status: BillingState['status']) => {
-  switch (status) {
-    case 'active':
-      return 'success' as const;
-    case 'past_due':
-      return 'warning' as const;
-    case 'canceled':
-      return 'neutral' as const;
-    case 'none':
-    default:
-      return 'secondary' as const;
-  }
-};
-
-const formatStatus = (status: BillingState['status']) =>
-  status ? status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'None';
-
-const formatPlan = (plan: BillingState['plan']) =>
-  plan ? plan.replace(/\b\w/g, (char) => char.toUpperCase()) : 'Free';
 
 const formatPaymentMethod = (method: BillingState['paymentMethod']) =>
   method === 'card' ? 'Card on file' : 'No payment method';
@@ -151,10 +138,10 @@ export default function BillingPage() {
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
                     <h2 id="current-plan-heading" className="text-h3 font-semibold capitalize">
-                      {formatPlan(billing.plan)}
+                      {formatSubscriptionLabel(normalizePlan(billing.plan))}
                     </h2>
-                    <Badge variant={statusVariant(billing.status)}>
-                      {formatStatus(billing.status)}
+                    <Badge variant={getSubscriptionStatusVariant(normalizeStatus(billing.status))}>
+                      {formatSubscriptionLabel(billing.status)}
                     </Badge>
                   </div>
                   {renewalLabel ? (
