@@ -1,31 +1,45 @@
-// hooks/useUser.ts
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import useSWR from 'swr';
 import type { User } from '@supabase/supabase-js';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
-/**
- * Client-only: reads the current user once on mount.
- * (Auth event bridging is handled in _app.tsx per your rules.)
- */
-export function useUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { CURRENT_USER_CACHE_KEY, fetchCurrentUser } from '@/lib/user/fetchCurrentUser';
+
+type UseUserResult = {
+  user: User | null;
+  isLoading: boolean;
+  error: Error | null;
+  mutate: () => Promise<User | null | undefined>;
+  refetch: () => Promise<User | null | undefined>;
+};
+
+export function useUser(): UseUserResult {
+  const { data, error, isLoading, mutate } = useSWR<User | null>(
+    CURRENT_USER_CACHE_KEY,
+    fetchCurrentUser,
+    {
+      revalidateOnMount: true,
+    },
+  );
 
   useEffect(() => {
     const supabase = supabaseBrowser();
-    let cancelled = false;
-
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!cancelled) {
-        setUser(user ?? null);
-        setLoading(false);
-      }
+    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
+      void mutate();
     });
 
     return () => {
-      cancelled = true;
+      subscription?.subscription.unsubscribe();
     };
-  }, []);
+  }, [mutate]);
 
-  return { user, loading, isAuthed: !!user, userId: user?.id ?? null };
+  const refetch = () => mutate();
+
+  return {
+    user: data ?? null,
+    isLoading,
+    error: (error as Error | undefined) ?? null,
+    mutate,
+    refetch,
+  };
 }
