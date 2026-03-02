@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { runCoach as runCoachRequest, trackCoachAction } from '@/services/aiService';
 
 type Profile = {
   user_id?: string;
@@ -19,7 +20,11 @@ type AICoachResponse = {
   reasoning?: string;
 };
 
-export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
+export default function AICoachPanel({
+  profile,
+  onClose,
+  onOpenStudyBuddy,
+}: {
   profile?: Profile | null;
   onClose: () => void;
   onOpenStudyBuddy?: () => void;
@@ -27,7 +32,9 @@ export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<AICoachResponse | null>(null);
-  const [context, setContext] = useState('Show me five things I should focus on to improve my IELTS writing band by 0.5');
+  const [context, setContext] = useState(
+    'Show me five things I should focus on to improve my IELTS writing band by 0.5',
+  );
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
@@ -46,18 +53,7 @@ export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
         goal: 'Improve writing by 0.5 band',
       };
 
-      const res = await fetch('/api/ai/coach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || 'AI coach failed');
-      }
-
-      const json = (await res.json()) as AICoachResponse;
+      const json = await runCoachRequest<AICoachResponse>(payload);
       setResponse(json);
     } catch (e: any) {
       setError(e?.message ?? 'Unexpected error');
@@ -75,11 +71,7 @@ export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
   const handleDoSuggestion = async (id: string) => {
     // Simple action: send an event and optionally open Study Buddy for that suggestion
     try {
-      await fetch('/api/ai/coach/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ suggestionId: id, userId: profile?.user_id ?? null }),
-      });
+      await trackCoachAction({ suggestionId: id, userId: profile?.user_id ?? null });
       if (onOpenStudyBuddy) onOpenStudyBuddy();
     } catch (_) {
       // ignore
@@ -91,7 +83,9 @@ export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>
           <h3 className="font-slab text-h3">AI Coach</h3>
-          <div className="text-sm text-muted-foreground">Personalized feedback & next-step micro-actions</div>
+          <div className="text-sm text-muted-foreground">
+            Personalized feedback & next-step micro-actions
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -121,7 +115,13 @@ export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
           <button className="btn-primary" onClick={handleRun} disabled={loading || running}>
             {loading ? 'Thinking…' : 'Ask Coach'}
           </button>
-          <button className="btn-ghost" onClick={() => { setResponse(null); setError(null); }}>
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              setResponse(null);
+              setError(null);
+            }}
+          >
             Clear
           </button>
         </div>
@@ -141,16 +141,23 @@ export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="font-medium">{s.title}</div>
-                        {s.detail && <div className="text-sm text-muted-foreground mt-1">{s.detail}</div>}
+                        {s.detail && (
+                          <div className="text-sm text-muted-foreground mt-1">{s.detail}</div>
+                        )}
                         {s.estimatedMinutes && (
-                          <div className="text-xs text-muted-foreground mt-1">~{s.estimatedMinutes} mins</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            ~{s.estimatedMinutes} mins
+                          </div>
                         )}
                       </div>
                       <div className="flex flex-col gap-2">
                         <button className="btn" onClick={() => handleDoSuggestion(s.id)}>
                           Do it
                         </button>
-                        <button className="btn-ghost" onClick={() => navigator.clipboard?.writeText(s.title)}>
+                        <button
+                          className="btn-ghost"
+                          onClick={() => navigator.clipboard?.writeText(s.title)}
+                        >
                           Copy
                         </button>
                       </div>
@@ -163,7 +170,9 @@ export default function AICoachPanel({ profile, onClose, onOpenStudyBuddy }: {
             {response.reasoning && (
               <div className="mt-4">
                 <div className="text-small text-muted-foreground">How the coach thought</div>
-                <pre className="mt-2 p-3 rounded bg-muted/20 text-xs overflow-auto">{response.reasoning}</pre>
+                <pre className="mt-2 p-3 rounded bg-muted/20 text-xs overflow-auto">
+                  {response.reasoning}
+                </pre>
               </div>
             )}
           </div>

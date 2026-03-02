@@ -5,13 +5,11 @@ import { z } from 'zod';
 import { loadWritingAttemptContext, deserializeConversationState, serializeConversationState } from '@/lib/coach/writing-context';
 import { track } from '@/lib/analytics/track';
 import { flags } from '@/lib/flags';
-import { redis } from '@/lib/redis';
 import { getServerClient } from '@/lib/supabaseServer';
+import { checkLimit, limitExceeded } from '@/lib/usage';
 import type { WritingCoachAttemptState, WritingCoachSession, WritingCoachSessionResult } from '@/types/coach';
 
 const SESSION_CREATE_LIMIT = 16;
-const SESSION_WINDOW_SECONDS = 60 * 60 * 24;
-
 type SessionRow = {
   id: string;
   user_id: string;
@@ -76,16 +74,13 @@ async function getSessionByAttempt(client: SupabaseClient<Database>, userId: str
 }
 
 async function ensureSessionQuota(userId: string) {
-  const today = new Date().toISOString().slice(0, 10);
-  const key = `coach:writing:sessions:${userId}:${today}`;
-  const count = await redis.incr(key);
-  if (count === 1) {
-    await redis.expire(key, SESSION_WINDOW_SECONDS);
-  }
-  if (count > SESSION_CREATE_LIMIT) {
-    return false;
-  }
-  return true;
+  const result = await checkLimit({
+    userId,
+    key: 'coach:writing:sessions',
+    limit: SESSION_CREATE_LIMIT,
+    increment: true,
+  });
+  return result.allowed;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<WritingCoachSessionResult | { error: string; details?: unknown }>) {
@@ -193,7 +188,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       const allowed = await ensureSessionQuota(userId);
       if (!allowed) {
-        res.status(429).json({ error: 'session_limit_reached' });
+        res.status(429).json(limitExceeded('session_limit_reached', SESSION_CREATE_LIMIT));
         return;
       }
 

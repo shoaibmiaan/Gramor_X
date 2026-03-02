@@ -12,12 +12,9 @@ import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
 import { withPageAuth } from '@/lib/requirePageAuth';
 import { useToast } from '@/components/design-system/Toaster';
-import { fetchProfile } from '@/lib/profile';
-import type { Profile } from '@/types/profile';
+import { useSubscription } from '@/hooks/useSubscription';
 import { GlobalPlanGuard } from '@/components/GlobalPlanGuard';
 import { useLocale } from '@/lib/locale';
-import type { PlanId } from '@/types/pricing';
-import { isSubscriptionActive } from '@/lib/subscription';
 
 type Invoice = {
   id: string;
@@ -33,23 +30,17 @@ export default function BillingHistoryPage() {
   const router = useRouter();
   const { t } = useLocale();
   const { error: toastError } = useToast();
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { plan, hasBillingHistory, error: subscriptionError } = useSubscription();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const fetchedProfile = await fetchProfile();
-        if (cancelled) return;
-        if (!fetchedProfile) {
-          throw new Error('Profile not found');
-        }
-        setProfile(fetchedProfile);
-
         // Fetch billing history via API route (server-side Stripe call)
         const response = await fetch('/api/billing/history', {
           headers: { 'Content-Type': 'application/json' },
@@ -80,8 +71,14 @@ export default function BillingHistoryPage() {
     };
   }, [router, t, toastError]);
 
-  const currentPlan: PlanId = profile?.tier ?? 'free';
-  const hasSubscription = !!profile?.stripe_customer_id && isSubscriptionActive(profile?.subscription_status);
+  const currentPlan = plan;
+  const hasSubscription = hasBillingHistory;
+
+  useEffect(() => {
+    if (subscriptionError === 'Not authenticated') {
+      void router.replace('/login');
+    }
+  }, [subscriptionError, router]);
 
   if (loading) {
     return (

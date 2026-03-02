@@ -15,7 +15,11 @@ import { Heading } from '@/components/design-system/Heading';
 import { Section } from '@/components/design-system/Section';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Skeleton } from '@/components/design-system/Skeleton';
-import { formatSubscriptionStatus, mapSubscriptionStatusToVariant, type SubscriptionStatus } from '@/lib/subscription';
+import {
+  formatDateLabel,
+  formatSubscriptionLabel,
+  getSubscriptionStatusVariant,
+} from '@/lib/subscription';
 
 type Invoice = {
   id: string;
@@ -55,9 +59,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   return { props: {} };
 };
 
-
-const toTitleCase = (value: string) =>
-  value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 const getInvoiceVariant = (status: Invoice['status']) => {
   switch (status) {
     case 'paid':
@@ -135,10 +136,6 @@ export default function BillingPage() {
   const showSafepayFailed = safepayStatus === 'failed';
   const showSafepayError = safepayStatus === 'error';
 
-  const dateFormatter = React.useMemo(
-    () => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }),
-    [],
-  );
   const dateTimeFormatter = React.useMemo(
     () =>
       new Intl.DateTimeFormat(undefined, {
@@ -156,10 +153,6 @@ export default function BillingPage() {
     [],
   );
 
-  const formatDate = React.useCallback(
-    (value?: string | null) => (value ? dateFormatter.format(new Date(value)) : null),
-    [dateFormatter],
-  );
   const formatDateTime = React.useCallback(
     (value: string) => dateTimeFormatter.format(new Date(value)),
     [dateTimeFormatter],
@@ -204,8 +197,8 @@ export default function BillingPage() {
   }
 
   const renderPlanMeta = () => {
-    const renews = formatDate(summary?.renewsAt);
-    const trialEnds = formatDate(summary?.trialEndsAt);
+    const renews = formatDateLabel(summary?.renewsAt);
+    const trialEnds = formatDateLabel(summary?.trialEndsAt);
     if (!renews && !trialEnds) return null;
     return (
       <p className="text-small text-muted-foreground">
@@ -336,10 +329,10 @@ export default function BillingPage() {
                         id="current-plan-heading"
                         className="capitalize text-foreground"
                       >
-                        {toTitleCase(summary.plan)}
+                        {formatSubscriptionLabel(summary.plan)}
                       </Heading>
-                      <Badge variant={mapSubscriptionStatusToVariant(summary.status)}>
-                        {formatSubscriptionStatus(summary.status)}
+                      <Badge variant={getSubscriptionStatusVariant(summary.status)}>
+                        {formatSubscriptionLabel(summary.status)}
                       </Badge>
                     </div>
                     {renderPlanMeta()}
@@ -422,10 +415,10 @@ export default function BillingPage() {
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-2">
                               <Badge variant={getDueVariant(d.status)}>
-                                {toTitleCase(d.status)}
+                                {formatSubscriptionLabel(d.status)}
                               </Badge>
                               <div className="text-small text-muted-foreground">
-                                {toTitleCase(d.plan_key)} · {toTitleCase(d.cycle)}
+                                {formatSubscriptionLabel(d.plan_key)} · {formatSubscriptionLabel(d.cycle)}
                               </div>
                               <div className="text-caption text-muted-foreground">
                                 {formatDateTime(d.created_at)}
@@ -467,7 +460,7 @@ export default function BillingPage() {
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-2">
                               <Badge variant={getInvoiceVariant(inv.status)}>
-                                {toTitleCase(inv.status)}
+                                {formatSubscriptionLabel(inv.status)}
                               </Badge>
                               <p className="text-caption text-muted-foreground">
                                 {formatDateTime(inv.createdAt)}

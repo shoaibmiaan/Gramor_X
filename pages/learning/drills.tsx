@@ -2,52 +2,7 @@ import { useEffect, useState } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
-
-type Drill = { question: string; options: string[]; answer: number; explanation: string };
-
-async function generateDrill(): Promise<Drill | null> {
-  try {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Return a JSON object with keys question, options (array), answer (index), explanation. Create a short English grammar multiple-choice drill.',
-          },
-          { role: 'user', content: 'Create a drill.' },
-        ],
-      }),
-    });
-    if (!res.body) return null;
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let text = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
-      for (const line of chunk.split('\n\n')) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-          try {
-            const json = JSON.parse(data);
-            const delta = json?.choices?.[0]?.delta?.content;
-            if (delta) text += delta;
-          } catch {
-            /* ignore */
-          }
-        }
-      }
-    }
-    return JSON.parse(text) as Drill;
-  } catch {
-    return null;
-  }
-}
+import { generateDrill, type Drill } from '@/services/aiService';
 
 export default function DrillsPage() {
   const [drill, setDrill] = useState<Drill | null>(null);

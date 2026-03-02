@@ -1,6 +1,6 @@
-import type Stripe from 'stripe';
+import type { PlanId } from '@/types/pricing';
 
-export const SUBSCRIPTION_ACTIVE_STATUSES = ['active', 'trialing'] as const;
+export type SubscriptionPlan = PlanId;
 
 export type SubscriptionStatus =
   | 'active'
@@ -10,115 +10,105 @@ export type SubscriptionStatus =
   | 'past_due'
   | 'unpaid'
   | 'paused'
-  | 'inactive';
+  | 'inactive'
+  | 'expired'
+  | 'none';
 
-export type SubscriptionPlan = 'starter' | 'booster' | 'master' | 'free';
+export type SubscriptionPlanKey = 'free' | 'starter' | 'booster' | 'master';
 
-export type SubscriptionSummary = Readonly<{
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  renewsAt?: string;
-  trialEndsAt?: string;
-}>;
+export type PlanDisplay = {
+  name: string;
+  features: string[];
+  price?: string;
+};
 
-export function normalizeSubscriptionStatus(status: unknown): SubscriptionStatus {
-  const value = typeof status === 'string' ? status.toLowerCase() : '';
-  switch (value) {
-    case 'active':
-    case 'trialing':
-    case 'canceled':
-    case 'incomplete':
-    case 'past_due':
-    case 'unpaid':
-    case 'paused':
-      return value;
-    default:
-      return 'inactive';
+export const PLAN_DISPLAY: Record<SubscriptionPlanKey, PlanDisplay> = {
+  free: {
+    name: 'Free',
+    features: ['Basic access', 'Limited mocks', 'Community support'],
+    price: '$0',
+  },
+  starter: {
+    name: 'Starter',
+    features: ['More mocks', 'Basic analytics', 'Email reminders'],
+    price: '$5.99/month',
+  },
+  booster: {
+    name: 'Booster',
+    features: ['Full mocks', 'Band analytics', 'AI feedback'],
+    price: '$9.99/month',
+  },
+  master: {
+    name: 'Master',
+    features: ['Everything in Booster', 'Teacher tools', 'Priority support'],
+    price: '$14.99/month',
+  },
+};
+
+export function normalizePlan(plan?: string | null): SubscriptionPlanKey {
+  if (plan === 'starter' || plan === 'booster' || plan === 'master') return plan;
+  return 'free';
+}
+
+export function normalizeStatus(status?: string | null): SubscriptionStatus {
+  if (!status) return 'inactive';
+  if (
+    status === 'active' ||
+    status === 'trialing' ||
+    status === 'canceled' ||
+    status === 'incomplete' ||
+    status === 'past_due' ||
+    status === 'unpaid' ||
+    status === 'paused' ||
+    status === 'inactive' ||
+    status === 'expired' ||
+    status === 'none'
+  ) {
+    return status;
   }
+  return 'inactive';
 }
 
-export function isSubscriptionActive(subscriptionOrStatus: { status?: unknown } | unknown): boolean {
-  const status =
-    typeof subscriptionOrStatus === 'object' && subscriptionOrStatus !== null && 'status' in subscriptionOrStatus
-      ? normalizeSubscriptionStatus(subscriptionOrStatus.status)
-      : normalizeSubscriptionStatus(subscriptionOrStatus);
-
-  return SUBSCRIPTION_ACTIVE_STATUSES.includes(status as (typeof SUBSCRIPTION_ACTIVE_STATUSES)[number]);
+export function hasActiveSubscription(plan: SubscriptionPlanKey, status: SubscriptionStatus): boolean {
+  return plan !== 'free' && (status === 'active' || status === 'trialing');
 }
 
-export function getActiveSubscription<T extends { status?: unknown }>(subscriptions: readonly T[] | null | undefined): T | null {
-  if (!subscriptions?.length) return null;
-
-  const prioritized = subscriptions.find((subscription) => normalizeSubscriptionStatus(subscription.status) === 'active');
-  if (prioritized) return prioritized;
-
-  const trialing = subscriptions.find((subscription) => normalizeSubscriptionStatus(subscription.status) === 'trialing');
-  return trialing ?? null;
+export function isTrialActive(trialEndsAt?: string | null): boolean {
+  if (!trialEndsAt) return false;
+  const date = new Date(trialEndsAt);
+  return !Number.isNaN(date.getTime()) && date > new Date();
 }
 
-export class SubscriptionRequiredError extends Error {
-  readonly code = 'SUBSCRIPTION_INACTIVE';
-  readonly statusCode = 402;
-
-  constructor(message = 'Active subscription required') {
-    super(message);
-    this.name = 'SubscriptionRequiredError';
-  }
+export function formatSubscriptionLabel(value?: string | null): string {
+  if (!value) return 'None';
+  return value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export function requireActiveSubscription<T extends { status?: unknown }>(
-  subscription: T | null | undefined,
-  message?: string,
-): T {
-  if (!subscription || !isSubscriptionActive(subscription)) {
-    throw new SubscriptionRequiredError(message);
-  }
-
-  return subscription;
-}
-
-export function summarizeStripeSubscription(
-  sub: Stripe.Subscription | null | undefined,
-  fallbackPlan: SubscriptionPlan = 'free',
-): SubscriptionSummary {
-  const nickname = (sub?.items?.data?.[0]?.price?.nickname ?? '').toString().toLowerCase();
-  const plan: SubscriptionPlan =
-    nickname === 'starter' || nickname === 'booster' || nickname === 'master' ? (nickname as SubscriptionPlan) : fallbackPlan;
-
-  return {
-    plan,
-    status: normalizeSubscriptionStatus(sub?.status),
-    renewsAt: sub?.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined,
-    trialEndsAt: sub?.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined,
-  };
-}
-
-export function mapSubscriptionStatusToVariant(status: SubscriptionStatus):
-  | 'success'
-  | 'info'
-  | 'warning'
-  | 'danger'
-  | 'secondary'
-  | 'neutral' {
+export function getSubscriptionStatusVariant(status: SubscriptionStatus) {
   switch (status) {
     case 'active':
-      return 'success';
+      return 'success' as const;
     case 'trialing':
-      return 'info';
+      return 'info' as const;
     case 'past_due':
     case 'incomplete':
-      return 'warning';
+      return 'warning' as const;
     case 'unpaid':
-      return 'danger';
+      return 'danger' as const;
     case 'paused':
-      return 'secondary';
+      return 'secondary' as const;
     case 'canceled':
+    case 'expired':
+    case 'none':
     case 'inactive':
     default:
-      return 'neutral';
+      return 'neutral' as const;
   }
 }
 
-export function formatSubscriptionStatus(status: SubscriptionStatus): string {
-  return status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+export function formatDateLabel(value?: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString();
 }
