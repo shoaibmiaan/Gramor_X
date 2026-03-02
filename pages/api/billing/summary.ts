@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '@/lib/stripe';
 import { summarizeFromStripe, mapStripeInvoice, type SubscriptionSummary } from '@/lib/subscriptions';
+import { getActiveSubscription } from '@/lib/subscription';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 type DueRow = Readonly<{
@@ -121,7 +122,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   const sub =
-    subs.data.find(s => s.status === 'active' || s.status === 'trialing') ??
+    getActiveSubscription(subs.data) ??
     subs.data.sort((a, b) => (b.created ?? 0) - (a.created ?? 0))[0];
 
   const summary = summarizeFromStripe(sub, (profile?.plan_id as SubscriptionSummary['plan']) ?? 'free');
