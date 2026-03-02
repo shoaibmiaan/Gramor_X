@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { assertRole } from '@/lib/requireRole';
+import { AuthError, requireRole, writeAuthError } from '@/lib/auth';
+import { supabaseServer } from '@/lib/supabaseServer';
 
 type SectionInput = {
   order?: number;
@@ -59,7 +60,9 @@ function coerceNumber(value: unknown): number | null {
   return null;
 }
 
-function safeJson(value: unknown): Record<string, unknown> | unknown[] | string | number | boolean | null {
+function safeJson(
+  value: unknown,
+): Record<string, unknown> | unknown[] | string | number | boolean | null {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string') {
     try {
@@ -80,14 +83,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let userId: string | null = null;
+  const authSupabase = supabaseServer(req);
+
+  let userId: string;
   try {
-    const { user } = await assertRole(req, ['admin', 'teacher']);
+    const { user } = await requireRole(authSupabase, ['admin', 'teacher']);
     userId = user.id;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'unauthorized';
-    const status = message === 'unauthorized' ? 401 : 403;
-    return res.status(status).json({ error: message });
+    if (error instanceof AuthError) {
+      return writeAuthError(res, error.code, error.message);
+    }
+    throw error;
   }
 
   const body = req.body as CreateListeningBody;
@@ -134,13 +140,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         transcript: section.transcript ?? null,
       };
     })
-    .filter((row): row is {
-      test_slug: string;
-      order_no: number;
-      start_ms: number;
-      end_ms: number;
-      transcript: string | null;
-    } => row !== null)
+    .filter(
+      (
+        row,
+      ): row is {
+        test_slug: string;
+        order_no: number;
+        start_ms: number;
+        end_ms: number;
+        transcript: string | null;
+      } => row !== null,
+    )
     .sort((a, b) => a.order_no - b.order_no);
 
   if (sectionRows.length === 0) {
@@ -170,17 +180,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         explanation: question.explanation ?? null,
       };
     })
-    .filter((row): row is {
-      test_slug: string;
-      qno: number;
-      type: string;
-      prompt: string;
-      options: ReturnType<typeof safeJson>;
-      answer_key: ReturnType<typeof safeJson>;
-      match_left: ReturnType<typeof safeJson>;
-      match_right: ReturnType<typeof safeJson>;
-      explanation: string | null;
-    } => row !== null)
+    .filter(
+      (
+        row,
+      ): row is {
+        test_slug: string;
+        qno: number;
+        type: string;
+        prompt: string;
+        options: ReturnType<typeof safeJson>;
+        answer_key: ReturnType<typeof safeJson>;
+        match_left: ReturnType<typeof safeJson>;
+        match_right: ReturnType<typeof safeJson>;
+        explanation: string | null;
+      } => row !== null,
+    )
     .sort((a, b) => a.qno - b.qno);
 
   if (questionRows.length === 0) {
