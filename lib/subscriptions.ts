@@ -1,29 +1,16 @@
-// lib/subscriptions.ts
 import type Stripe from 'stripe';
 import { summarizeStripeSubscription } from '@/lib/subscription';
+import type {
+  BillingInvoice as Invoice,
+  SubscriptionPlan,
+  SubscriptionSummary,
+} from '@/types/subscription';
 
-export type SubscriptionPlan = 'starter' | 'booster' | 'master' | 'free';
-export type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
-
-export type Invoice = Readonly<{
-  id: string;
-  amount: number;
-  currency: string;
-  createdAt: string;
-  hostedInvoiceUrl?: string;
-  status: 'paid' | 'open' | 'void' | 'uncollectible';
-}>;
-
-export type SubscriptionSummary = Readonly<{
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  renewsAt?: string;
-  trialEndsAt?: string;
-}>;
+export type { Invoice, SubscriptionPlan, SubscriptionSummary };
 
 export function summarizeFromStripe(
   sub: Stripe.Subscription | null | undefined,
-  fallbackPlan: SubscriptionPlan = 'free'
+  fallbackPlan: SubscriptionPlan = 'free',
 ): SubscriptionSummary {
   const summary = summarizeStripeSubscription(sub, fallbackPlan);
   return {

@@ -1,37 +1,18 @@
 // lib/usage.ts
 import { env } from './env';
+import type {
+  IncrementReq,
+  IncrementRes,
+  LimitExceededPayload,
+  UsageDecision,
+  UsageKey,
+} from '@/types/usage';
 
-export type UsageKey =
-  | 'ai.writing.grade'
-  | 'ai.speaking.grade'
-  | 'ai.explain'
-  | 'mock.start'
-  | 'mock.submit';
-
-export type IncrementReq = { key: UsageKey; step?: number; dateISO?: string };
-
-export type IncrementRes =
-  | { ok: true; key: UsageKey; dateISO: string; count: number }
-  | { ok: false; error: string };
-
-export type UsageDecision = {
-  allowed: boolean;
-  count: number;
-  limit: number;
-  remaining: number;
-  reason?: 'limit_reached' | 'counter_unavailable';
-};
-
-export type LimitExceededPayload = { error: string; limit: number };
+export type { IncrementReq, IncrementRes, LimitExceededPayload, UsageDecision, UsageKey };
 
 export function todayISO(d = new Date()) {
-  // YYYY-MM-DD in UTC
   return d.toISOString().slice(0, 10);
 }
-
-/* --------------------------------------------------------
-   Auth Helper
--------------------------------------------------------- */
 
 async function authHeader(): Promise<Record<string, string>> {
   try {
@@ -44,24 +25,9 @@ async function authHeader(): Promise<Record<string, string>> {
   }
 }
 
-/* --------------------------------------------------------
-   API Base URL
--------------------------------------------------------- */
+const base = typeof window === 'undefined' ? env.SITE_URL || env.NEXT_PUBLIC_BASE_URL || '' : '';
 
-const base =
-  typeof window === 'undefined'
-    ? env.SITE_URL || env.NEXT_PUBLIC_BASE_URL || ''
-    : '';
-
-/* --------------------------------------------------------
-   Core API Call
--------------------------------------------------------- */
-
-export async function increment(
-  key: UsageKey,
-  step = 1,
-  dateISO = todayISO(),
-): Promise<IncrementRes> {
+export async function increment(key: UsageKey, step = 1, dateISO = todayISO()): Promise<IncrementRes> {
   try {
     const headers = {
       'Content-Type': 'application/json',
@@ -74,33 +40,19 @@ export async function increment(
       body: JSON.stringify({ key, step, dateISO } satisfies IncrementReq),
     });
 
-    const j = (await r.json()) as IncrementRes;
-    return j;
-  } catch (e: any) {
-    return { ok: false, error: e?.message || 'network_error' };
+    return (await r.json()) as IncrementRes;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'network_error';
+    return { ok: false, error: message };
   }
 }
 
-/* --------------------------------------------------------
-   Read-only count (step=0)
--------------------------------------------------------- */
-
-export async function getCount(
-  key: UsageKey,
-  dateISO = todayISO(),
-): Promise<number> {
+export async function getCount(key: UsageKey, dateISO = todayISO()): Promise<number> {
   const res = await increment(key, 0, dateISO);
   return res.ok ? res.count : 0;
 }
 
-/* --------------------------------------------------------
-   Guard: can I use?
--------------------------------------------------------- */
-
-export async function canUse(
-  key: UsageKey,
-  limit: number,
-): Promise<UsageDecision> {
+export async function canUse(key: UsageKey, limit: number): Promise<UsageDecision> {
   const res = await increment(key, 0);
 
   const count = res.ok ? res.count : 0;
@@ -127,35 +79,17 @@ export async function canUse(
   };
 }
 
-/* --------------------------------------------------------
-   Strict guard (throws)
--------------------------------------------------------- */
-
-export async function ensureUsageAllowed(
-  key: UsageKey,
-  limit: number,
-): Promise<UsageDecision> {
+export async function ensureUsageAllowed(key: UsageKey, limit: number): Promise<UsageDecision> {
   const decision = await canUse(key, limit);
 
   if (!decision.allowed) {
-    throw new Error(
-      decision.reason === 'limit_reached'
-        ? 'usage_limit_reached'
-        : 'usage_unavailable',
-    );
+    throw new Error(decision.reason === 'limit_reached' ? 'usage_limit_reached' : 'usage_unavailable');
   }
 
   return decision;
 }
 
-/* --------------------------------------------------------
-   Increment wrapper (public)
--------------------------------------------------------- */
-
-export async function incrementUsage(
-  key: UsageKey,
-  step = 1,
-): Promise<number> {
+export async function incrementUsage(key: UsageKey, step = 1): Promise<number> {
   const res = await increment(key, step);
 
   if (!res.ok) {
@@ -165,13 +99,11 @@ export async function incrementUsage(
   return res.count;
 }
 
-/* --------------------------------------------------------
-   Error helper
--------------------------------------------------------- */
-
-export function limitExceeded(
-  error: string,
-  limit: number,
-): LimitExceededPayload {
+export function limitExceeded(error: string, limit: number): LimitExceededPayload {
   return { error, limit };
+}
+
+export async function checkLimit(key: UsageKey, limit: number): Promise<boolean> {
+  const decision = await canUse(key, limit);
+  return decision.allowed;
 }

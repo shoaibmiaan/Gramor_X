@@ -1,33 +1,11 @@
 // pages/api/subscriptions/portal.ts
-import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiHandler, NextApiRequest } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
 import { getSubscriptionSummary } from '@/lib/repositories/subscriptionRepository';
 import { getActiveSubscription, summarizeStripeSubscription } from '@/lib/subscription';
 import { mapStripeInvoice } from '@/lib/subscriptions';
-
-type Invoice = Readonly<{
-  id: string;
-  amount: number;
-  currency: string;
-  createdAt: string;
-  hostedInvoiceUrl?: string;
-  status: 'paid' | 'open' | 'void' | 'uncollectible';
-}>;
-
-type SubscriptionSummary = Readonly<{
-  plan: 'starter' | 'booster' | 'master' | 'free';
-  status: 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
-  renewsAt?: string;
-  trialEndsAt?: string;
-}>;
-
-type SummaryResponse = Readonly<{
-  subscription: SubscriptionSummary;
-  invoices: Invoice[];
-}>;
-
-type ResBody = SummaryResponse | Readonly<{ ok: false; error: string }>;
+import type { BillingInvoice as Invoice, SubscriptionApiResponse, PortalSummaryResponse, SubscriptionSummary } from '@/types/subscription';
 
 const getOrigin = (req: NextApiRequest) => {
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
@@ -35,13 +13,13 @@ const getOrigin = (req: NextApiRequest) => {
   return `${proto}://${host}`;
 };
 
-const handler: NextApiHandler<ResBody> = async (req, res) => {
+const handler: NextApiHandler<SubscriptionApiResponse> = async (req, res) => {
   const supabase = createSupabaseServerClient({ req });
   const { data: userResp } = await supabase.auth.getUser();
   const userId = userResp.user?.id;
   if (!userId) return res.status(401).json({ ok: false, error: 'Unauthorized' });
 
-  const dbSummary = await getSubscriptionSummary(supabase as any, userId);
+  const dbSummary = await getSubscriptionSummary(supabase, userId);
   const customerId = dbSummary.customerId;
 
   // If the request is a form POST (no JSON) we assume "Open customer portal" and redirect.
@@ -73,7 +51,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
 
   // JSON summary mode (used by pages/account/billing.tsx)
   if (!stripe || !customerId) {
-    const fallback: SummaryResponse = {
+    const fallback: PortalSummaryResponse = {
       subscription: {
         plan: dbSummary.plan,
         status: dbSummary.status,

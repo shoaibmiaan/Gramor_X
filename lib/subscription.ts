@@ -1,26 +1,6 @@
-import type { PlanId } from '@/types/pricing';
+import type { SubscriptionPlan, SubscriptionPlanKey, SubscriptionStatus, PlanDisplay, SubscriptionSummary, StripeSubscriptionLike } from '@/types/subscription';
 
-export type SubscriptionPlan = PlanId;
-
-export type SubscriptionStatus =
-  | 'active'
-  | 'trialing'
-  | 'canceled'
-  | 'incomplete'
-  | 'past_due'
-  | 'unpaid'
-  | 'paused'
-  | 'inactive'
-  | 'expired'
-  | 'none';
-
-export type SubscriptionPlanKey = 'free' | 'starter' | 'booster' | 'master';
-
-export type PlanDisplay = {
-  name: string;
-  features: string[];
-  price?: string;
-};
+export type { SubscriptionPlan, SubscriptionPlanKey, SubscriptionStatus, PlanDisplay, SubscriptionSummary };
 
 export const PLAN_DISPLAY: Record<SubscriptionPlanKey, PlanDisplay> = {
   free: {
@@ -111,4 +91,56 @@ export function formatDateLabel(value?: string | null): string | null {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString();
+}
+
+export function getActiveSubscription<T extends { status?: string | null }>(subscriptions: T[]): T | null {
+  if (!subscriptions.length) return null;
+  return (
+    subscriptions.find((sub) => {
+      const status = normalizeStatus(sub.status);
+      return status === 'active' || status === 'trialing' || status === 'past_due';
+    }) ?? null
+  );
+}
+
+export function summarizeStripeSubscription(
+  subscription: StripeSubscriptionLike,
+  fallbackPlan: SubscriptionPlan = 'free',
+): Readonly<{
+  plan: SubscriptionPlanKey;
+  status: SubscriptionStatus;
+  renewsAt?: string;
+  trialEndsAt?: string;
+}> {
+  if (!subscription) {
+    return {
+      plan: normalizePlan(fallbackPlan),
+      status: 'inactive',
+    };
+  }
+
+  const priceId = subscription.items?.data?.[0]?.price?.id;
+  const mappedPlan =
+    typeof priceId === 'string' && priceId.includes('starter')
+      ? 'starter'
+      : typeof priceId === 'string' && priceId.includes('booster')
+      ? 'booster'
+      : typeof priceId === 'string' && priceId.includes('master')
+      ? 'master'
+      : normalizePlan(fallbackPlan);
+
+  const status = normalizeStatus(subscription.status);
+  const renewsAt = subscription.current_period_end
+    ? new Date(subscription.current_period_end * 1000).toISOString()
+    : undefined;
+  const trialEndsAt = subscription.trial_end
+    ? new Date(subscription.trial_end * 1000).toISOString()
+    : undefined;
+
+  return {
+    plan: mappedPlan,
+    status,
+    renewsAt,
+    trialEndsAt,
+  };
 }
