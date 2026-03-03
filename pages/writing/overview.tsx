@@ -8,7 +8,6 @@ import { Card } from '@/components/design-system/Card';
 import { EmptyState } from '@/components/design-system/EmptyState';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
 import { Separator } from '@/components/design-system/Separator';
-import { WritingLayout } from '@/layouts/WritingLayout';
 import { withPlan } from '@/lib/plan/withPlan';
 import { getServerClient } from '@/lib/supabaseServer';
 import type { Database } from '@/types/supabase';
@@ -51,9 +50,10 @@ export const ActionButton = ({ to, children, ...rest }: ActionButtonProps) =>
   );
 
 // OverviewCard provides a single place to change card surface for overview pages.
-export const OverviewCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = '' }) => (
-  <Card className={`card-surface p-6 sm:p-8 ${className}`}>{children}</Card>
-);
+export const OverviewCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({
+  children,
+  className = '',
+}) => <Card className={`card-surface p-6 sm:p-8 ${className}`}>{children}</Card>;
 
 export const StatItem: React.FC<{
   label: string;
@@ -67,27 +67,49 @@ export const StatItem: React.FC<{
         <span>{label}</span>
         <span className="font-semibold text-foreground">{value}</span>
       </div>
-      {typeof progress === 'number' && <ProgressBar value={progress} tone="info" ariaLabel={`${label} progress`} />}
+      {typeof progress === 'number' && (
+        <ProgressBar value={progress} tone="info" ariaLabel={`${label} progress`} />
+      )}
       {meta && <div className="text-xs text-muted-foreground">{meta}</div>}
     </div>
   );
 };
 
-export const AttemptCard: React.FC<{ attempt: AttemptSummary; compact?: boolean }> = ({ attempt, compact = false }) => {
+export const AttemptCard: React.FC<{ attempt: AttemptSummary; compact?: boolean }> = ({
+  attempt,
+  compact = false,
+}) => {
   return (
-    <li className={`flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition-transform ${compact ? 'sm:flex-row sm:items-center' : ''}`}>
+    <li
+      className={`flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition-transform ${compact ? 'sm:flex-row sm:items-center' : ''}`}
+    >
       <div className="flex-1">
         <p className="text-sm font-medium text-foreground">{attempt.promptTopic}</p>
-        <p className="text-xs text-muted-foreground">Updated {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(attempt.updatedAt))}</p>
+        <p className="text-xs text-muted-foreground">
+          Updated{' '}
+          {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(
+            new Date(attempt.updatedAt),
+          )}
+        </p>
       </div>
 
       <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground sm:mt-0 sm:flex-col sm:items-end">
         <span>{attempt.wordCount} words</span>
-        {attempt.overallBand ? <span className="font-semibold text-foreground">Band {attempt.overallBand.toFixed(1)}</span> : <span>Awaiting score</span>}
+        {attempt.overallBand ? (
+          <span className="font-semibold text-foreground">
+            Band {attempt.overallBand.toFixed(1)}
+          </span>
+        ) : (
+          <span>Awaiting score</span>
+        )}
       </div>
 
       <div className="mt-3 flex gap-2 sm:mt-0">
-        <ActionButton size="sm" variant="outline" to={`/writing/${attempt.promptSlug}?attemptId=${attempt.id}`}>
+        <ActionButton
+          size="sm"
+          variant="outline"
+          to={`/writing/${attempt.promptSlug}?attemptId=${attempt.id}`}
+        >
           View
         </ActionButton>
         {attempt.hasFeedback && (
@@ -109,9 +131,12 @@ const progressPercentage = (value: number, target: number) => {
   return Math.max(0, Math.min(100, Math.round((value / target) * 100)));
 };
 
-const formatDate = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(value));
 const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+  new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(
+    new Date(value),
+  );
 
 const statusLabel: Record<AttemptSummary['status'], string> = {
   draft: 'Draft in progress',
@@ -122,11 +147,13 @@ const statusLabel: Record<AttemptSummary['status'], string> = {
 const planLimitCopy: Record<PlanId, { label: string; description: string }> = {
   free: {
     label: 'Explorer preview',
-    description: 'Upgrade to Seedling to unlock the full library with filters and drill recommendations.',
+    description:
+      'Upgrade to Seedling to unlock the full library with filters and drill recommendations.',
   },
   starter: {
     label: '100 prompts unlocked',
-    description: 'Browse the 100 most recent prompts curated for Seedling plans with smart filters.',
+    description:
+      'Browse the 100 most recent prompts curated for Seedling plans with smart filters.',
   },
   booster: {
     label: '500 detailed prompts',
@@ -166,7 +193,13 @@ interface OverviewPageProps {
   __plan: PlanId;
 }
 
-const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }: OverviewPageProps) => {
+const WritingOverview = ({
+  readiness,
+  planSummary,
+  microPrompt,
+  stats,
+  __plan,
+}: OverviewPageProps) => {
   const [microPromptState, setMicroPromptState] = useState(microPrompt);
   const [microPromptLoading, setMicroPromptLoading] = useState(false);
   const [microPromptError, setMicroPromptError] = useState<string | null>(null);
@@ -178,23 +211,55 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
   const planTargets = RETAKE_PLAN_TARGETS;
 
   const planProgressItems = useMemo(
-    () => [
-      { key: 'redrafts', label: 'Redrafts completed', value: planSummary.redraftsCompleted, target: planTargets.redrafts },
-      { key: 'drills', label: 'Micro-drills logged', value: planSummary.drillsCompleted, target: planTargets.drills },
-      { key: 'mocks', label: 'Mock attempts reviewed', value: planSummary.mocksCompleted, target: planTargets.mocks },
-    ] as const,
-    [planSummary.drillsCompleted, planSummary.mocksCompleted, planSummary.redraftsCompleted, planTargets.drills, planTargets.mocks, planTargets.redrafts],
+    () =>
+      [
+        {
+          key: 'redrafts',
+          label: 'Redrafts completed',
+          value: planSummary.redraftsCompleted,
+          target: planTargets.redrafts,
+        },
+        {
+          key: 'drills',
+          label: 'Micro-drills logged',
+          value: planSummary.drillsCompleted,
+          target: planTargets.drills,
+        },
+        {
+          key: 'mocks',
+          label: 'Mock attempts reviewed',
+          value: planSummary.mocksCompleted,
+          target: planTargets.mocks,
+        },
+      ] as const,
+    [
+      planSummary.drillsCompleted,
+      planSummary.mocksCompleted,
+      planSummary.redraftsCompleted,
+      planTargets.drills,
+      planTargets.mocks,
+      planTargets.redrafts,
+    ],
   );
 
   const refreshMicroPrompt = useCallback(async () => {
     try {
       const response = await fetch('/api/writing/notifications/micro-prompt');
       const payload = (await response.json()) as
-        | ({ ok: true; message: string; lastSentAt: string | null; channels: string[]; canSendWhatsApp: boolean; alreadySentToday: boolean; retakeReminder: OverviewPageProps['microPrompt']['retakeReminder'] })
-        | ({ ok: false; error: string });
+        | {
+            ok: true;
+            message: string;
+            lastSentAt: string | null;
+            channels: string[];
+            canSendWhatsApp: boolean;
+            alreadySentToday: boolean;
+            retakeReminder: OverviewPageProps['microPrompt']['retakeReminder'];
+          }
+        | { ok: false; error: string };
 
       if (!response.ok || !payload || !('ok' in payload) || !payload.ok) {
-        const reason = !payload || !('error' in payload) ? 'Unable to refresh micro prompt' : payload.error;
+        const reason =
+          !payload || !('error' in payload) ? 'Unable to refresh micro prompt' : payload.error;
         throw new Error(reason);
       }
 
@@ -241,7 +306,7 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
   const currentPlanCopy = planLimitCopy[__plan];
 
   return (
-    <WritingLayout plan={__plan} current="overview">
+    <>
       <div aria-live="polite" role="status" className="sr-only">
         {announcement}
       </div>
@@ -255,9 +320,12 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
             </Badge>
 
             <div className="space-y-3">
-              <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">Your writing overview</h2>
+              <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">
+                Your writing overview
+              </h2>
               <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Track readiness, review reminders, and hop into focused drills. Use the navigation above to explore the full prompt library and analyze your history.
+                Track readiness, review reminders, and hop into focused drills. Use the navigation
+                above to explore the full prompt library and analyze your history.
               </p>
             </div>
 
@@ -274,7 +342,9 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
             </div>
 
             {!passReadiness && missingSummary.length > 0 && (
-              <p className="text-sm text-muted-foreground">Unlock redrafts by completing: {missingSummary.join(', ')}</p>
+              <p className="text-sm text-muted-foreground">
+                Unlock redrafts by completing: {missingSummary.join(', ')}
+              </p>
             )}
           </div>
 
@@ -282,7 +352,8 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
             <div className="flex items-center justify-between">
               <span className="font-medium text-foreground">Study window</span>
               <Badge variant="default" tone="info" size="sm">
-                {formatDate(planSummary.windowStart)} &ndash; {planSummary.windowEnd ? formatDate(planSummary.windowEnd) : 'TBD'}
+                {formatDate(planSummary.windowStart)} &ndash;{' '}
+                {planSummary.windowEnd ? formatDate(planSummary.windowEnd) : 'TBD'}
               </Badge>
             </div>
 
@@ -291,7 +362,11 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
             <ul className="space-y-3">
               {planProgressItems.map((item) => (
                 <li key={item.key} className="space-y-2">
-                  <StatItem label={item.label} value={`${item.value}/${item.target}`} progress={progressPercentage(item.value, item.target)} />
+                  <StatItem
+                    label={item.label}
+                    value={`${item.value}/${item.target}`}
+                    progress={progressPercentage(item.value, item.target)}
+                  />
                 </li>
               ))}
             </ul>
@@ -317,8 +392,12 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
           </div>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <ActionButton variant="primary" to="/writing/library">Open prompt library</ActionButton>
-            <ActionButton variant="ghost" to="/pricing?need=starter">Upgrade plans</ActionButton>
+            <ActionButton variant="primary" to="/writing/library">
+              Open prompt library
+            </ActionButton>
+            <ActionButton variant="ghost" to="/pricing?need=starter">
+              Upgrade plans
+            </ActionButton>
           </div>
         </OverviewCard>
 
@@ -326,21 +405,33 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-xl font-semibold text-foreground">Daily micro prompt</h3>
-              <p className="text-sm text-muted-foreground">A quick nudge to sharpen today&apos;s session.</p>
+              <p className="text-sm text-muted-foreground">
+                A quick nudge to sharpen today&apos;s session.
+              </p>
             </div>
-            <Badge variant="default" tone="info" size="sm">Updated daily</Badge>
+            <Badge variant="default" tone="info" size="sm">
+              Updated daily
+            </Badge>
           </div>
 
-          <div className="mt-3 rounded-2xl border border-dashed border-border/50 bg-muted/50 p-3 text-sm text-foreground">{microPromptState.message}</div>
+          <div className="mt-3 rounded-2xl border border-dashed border-border/50 bg-muted/50 p-3 text-sm text-foreground">
+            {microPromptState.message}
+          </div>
 
           {microPromptState.retakeReminder && (
-            <div className="mt-3 rounded-2xl border border-dashed border-border/40 bg-card/60 p-3 text-xs text-muted-foreground">{microPromptState.retakeReminder.message}</div>
+            <div className="mt-3 rounded-2xl border border-dashed border-border/40 bg-card/60 p-3 text-xs text-muted-foreground">
+              {microPromptState.retakeReminder.message}
+            </div>
           )}
 
           {microPromptError && <p className="mt-2 text-sm text-danger">{microPromptError}</p>}
 
           <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-            <span>{microPromptState.lastSentAt ? `Last nudged ${formatDateTime(microPromptState.lastSentAt)}` : 'Not delivered yet today'}</span>
+            <span>
+              {microPromptState.lastSentAt
+                ? `Last nudged ${formatDateTime(microPromptState.lastSentAt)}`
+                : 'Not delivered yet today'}
+            </span>
             {!microPromptState.canSendWhatsApp && (
               <span>
                 WhatsApp nudges require opt-in &mdash; manage in{' '}
@@ -353,13 +444,25 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <ActionButton size="sm" variant="primary" onClick={handleSendMicroPrompt} disabled={microPromptState.alreadySentToday && !microPromptLoading} loading={microPromptLoading}>
+            <ActionButton
+              size="sm"
+              variant="primary"
+              onClick={handleSendMicroPrompt}
+              disabled={microPromptState.alreadySentToday && !microPromptLoading}
+              loading={microPromptLoading}
+            >
               {microPromptState.alreadySentToday ? 'Sent for today' : 'Send reminder now'}
             </ActionButton>
-            <ActionButton size="sm" variant="ghost" onClick={refreshMicroPrompt}>Refresh tip</ActionButton>
+            <ActionButton size="sm" variant="ghost" onClick={refreshMicroPrompt}>
+              Refresh tip
+            </ActionButton>
           </div>
 
-          {microPromptState.alreadySentToday && <p className="mt-2 text-xs text-muted-foreground">Tip already delivered today &mdash; check back tomorrow for a fresh cue.</p>}
+          {microPromptState.alreadySentToday && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Tip already delivered today &mdash; check back tomorrow for a fresh cue.
+            </p>
+          )}
         </OverviewCard>
       </section>
 
@@ -369,25 +472,37 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-xl font-semibold text-foreground">Active drafts</h3>
-              <p className="text-sm text-muted-foreground">Pick up where you left off with autosaved work.</p>
+              <p className="text-sm text-muted-foreground">
+                Pick up where you left off with autosaved work.
+              </p>
             </div>
-            <Badge variant="default" tone="default" size="sm">{stats.activeDrafts} active</Badge>
+            <Badge variant="default" tone="default" size="sm">
+              {stats.activeDrafts} active
+            </Badge>
           </div>
 
           <div className="mt-4">
             {stats.recentAttempts.filter((a) => a.status !== 'scored').length === 0 ? (
-              <EmptyState title="No active drafts" description="Start a new attempt or revisit a scored attempt to launch a redraft." />
+              <EmptyState
+                title="No active drafts"
+                description="Start a new attempt or revisit a scored attempt to launch a redraft."
+              />
             ) : (
               <ul className="space-y-4">
-                {stats.recentAttempts.filter((a) => a.status !== 'scored').slice(0, 3).map((attempt) => (
-                  <AttemptCard key={attempt.id} attempt={attempt} />
-                ))}
+                {stats.recentAttempts
+                  .filter((a) => a.status !== 'scored')
+                  .slice(0, 3)
+                  .map((attempt) => (
+                    <AttemptCard key={attempt.id} attempt={attempt} />
+                  ))}
               </ul>
             )}
           </div>
 
           <div className="mt-4">
-            <ActionButton variant="ghost" to="/writing/progress">View full progress</ActionButton>
+            <ActionButton variant="ghost" to="/writing/progress">
+              View full progress
+            </ActionButton>
           </div>
         </OverviewCard>
 
@@ -395,21 +510,34 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-xl font-semibold text-foreground">Recent submissions</h3>
-              <p className="text-sm text-muted-foreground">See what you submitted recently and track your scores.</p>
+              <p className="text-sm text-muted-foreground">
+                See what you submitted recently and track your scores.
+              </p>
             </div>
-            <Badge variant="default" tone="default" size="sm">Last {Math.min(stats.recentAttempts.length, 6)}</Badge>
+            <Badge variant="default" tone="default" size="sm">
+              Last {Math.min(stats.recentAttempts.length, 6)}
+            </Badge>
           </div>
 
           <div className="mt-4">
             {stats.recentAttempts.length === 0 ? (
-              <EmptyState title="No attempts yet" description="Submit an essay to unlock AI feedback and trend tracking." />
+              <EmptyState
+                title="No attempts yet"
+                description="Submit an essay to unlock AI feedback and trend tracking."
+              />
             ) : (
-              <ul className="space-y-4">{stats.recentAttempts.slice(0, 6).map((attempt) => <AttemptCard key={attempt.id} attempt={attempt} />)}</ul>
+              <ul className="space-y-4">
+                {stats.recentAttempts.slice(0, 6).map((attempt) => (
+                  <AttemptCard key={attempt.id} attempt={attempt} />
+                ))}
+              </ul>
             )}
           </div>
 
           <div className="mt-4">
-            <ActionButton variant="ghost" to="/writing/progress">View all attempts</ActionButton>
+            <ActionButton variant="ghost" to="/writing/progress">
+              View all attempts
+            </ActionButton>
           </div>
         </OverviewCard>
       </section>
@@ -419,42 +547,69 @@ const WritingOverview = ({ readiness, planSummary, microPrompt, stats, __plan }:
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-xl font-semibold text-foreground">Boost your next attempt</h3>
-            <p className="text-sm text-muted-foreground">Layer drills, reviews, and mock feedback to sharpen your routine.</p>
+            <p className="text-sm text-muted-foreground">
+              Layer drills, reviews, and mock feedback to sharpen your routine.
+            </p>
           </div>
-          <Badge variant="default" tone="info" size="sm">Curated resources</Badge>
+          <Badge variant="default" tone="info" size="sm">
+            Curated resources
+          </Badge>
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <Link href="/writing/drills" className="group block rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card">
+          <Link
+            href="/writing/drills"
+            className="group block rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card"
+          >
             <div className="flex flex-col h-full">
               <span className="text-sm font-semibold text-foreground">Skill drills</span>
-              <span className="mt-2 text-sm text-muted-foreground">Target coherence, task achievement, and grammar with 10-minute micro drills.</span>
-              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">Visit drills</span>
+              <span className="mt-2 text-sm text-muted-foreground">
+                Target coherence, task achievement, and grammar with 10-minute micro drills.
+              </span>
+              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">
+                Visit drills
+              </span>
             </div>
           </Link>
 
-          <Link href="/writing/reviews" className="group block rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card">
+          <Link
+            href="/writing/reviews"
+            className="group block rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card"
+          >
             <div className="flex flex-col h-full">
               <span className="text-sm font-semibold text-foreground">AI reviews</span>
-              <span className="mt-2 text-sm text-muted-foreground">Compare attempts, highlight improvements, and plan your next rewrite.</span>
-              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">Open reviews</span>
+              <span className="mt-2 text-sm text-muted-foreground">
+                Compare attempts, highlight improvements, and plan your next rewrite.
+              </span>
+              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">
+                Open reviews
+              </span>
             </div>
           </Link>
 
-          <Link href="/writing/drills?tab=mocks" className="group block rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card">
+          <Link
+            href="/writing/drills?tab=mocks"
+            className="group block rounded-2xl border border-border/60 bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card"
+          >
             <div className="flex flex-col h-full">
               <span className="text-sm font-semibold text-foreground">Mock library</span>
-              <span className="mt-2 text-sm text-muted-foreground">Revisit scored mocks, analyse feedback themes, and schedule your next redraft.</span>
-              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">Browse mocks</span>
+              <span className="mt-2 text-sm text-muted-foreground">
+                Revisit scored mocks, analyse feedback themes, and schedule your next redraft.
+              </span>
+              <span className="mt-auto text-sm font-medium text-primary group-hover:underline">
+                Browse mocks
+              </span>
             </div>
           </Link>
         </div>
       </OverviewCard>
-    </WritingLayout>
+    </>
   );
 };
 
-export const getServerSideProps: GetServerSideProps<OverviewPageProps> = withPlan('starter')(async (ctx) => {
+export const getServerSideProps: GetServerSideProps<OverviewPageProps> = withPlan('starter')(async (
+  ctx,
+) => {
   const supabase = getServerClient(ctx.req as any, ctx.res as any);
   const {
     data: { user },
@@ -472,7 +627,9 @@ export const getServerSideProps: GetServerSideProps<OverviewPageProps> = withPla
   const [{ data: attemptRows }, { data: readinessRow }] = await Promise.all([
     supabase
       .from('writing_attempts')
-      .select('id, prompt_id, status, updated_at, word_count, overall_band, task_type, feedback_json, writing_prompts (slug, topic)')
+      .select(
+        'id, prompt_id, status, updated_at, word_count, overall_band, task_type, feedback_json, writing_prompts (slug, topic)',
+      )
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
       .limit(12),
@@ -488,7 +645,10 @@ export const getServerSideProps: GetServerSideProps<OverviewPageProps> = withPla
   const attempts = (attemptRows ?? []).map((row) =>
     mapAttemptRow({
       ...row,
-      prompt: row.writing_prompts as Pick<Database['public']['Tables']['writing_prompts']['Row'], 'slug' | 'topic'> | null,
+      prompt: row.writing_prompts as Pick<
+        Database['public']['Tables']['writing_prompts']['Row'],
+        'slug' | 'topic'
+      > | null,
     }),
   );
 
@@ -502,34 +662,36 @@ export const getServerSideProps: GetServerSideProps<OverviewPageProps> = withPla
           readinessRow.status === 'pass'
             ? []
             : Array.isArray(gates?.missing)
-            ? ((gates?.missing as string[]) ?? [])
-            : [],
+              ? ((gates?.missing as string[]) ?? [])
+              : [],
       }
     : null;
 
-  const planWindowStart = readinessRow?.window_start ?? new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const planWindowStart =
+    readinessRow?.window_start ?? new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const planWindowEnd = readinessRow?.window_end ?? null;
 
-  const [{ count: planDrillsCount }, { count: redraftCount }, { count: mockCount }] = await Promise.all([
-    supabase
-      .from('writing_drill_events')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('completed_at', planWindowStart),
-    supabase
-      .from('writing_attempts')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .not('version_of', 'is', null)
-      .gte('created_at', planWindowStart),
-    supabase
-      .from('writing_attempts')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .is('version_of', null)
-      .eq('status', 'scored')
-      .gte('created_at', planWindowStart),
-  ]);
+  const [{ count: planDrillsCount }, { count: redraftCount }, { count: mockCount }] =
+    await Promise.all([
+      supabase
+        .from('writing_drill_events')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('completed_at', planWindowStart),
+      supabase
+        .from('writing_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .not('version_of', 'is', null)
+        .gte('created_at', planWindowStart),
+      supabase
+        .from('writing_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .is('version_of', null)
+        .eq('status', 'scored')
+        .gte('created_at', planWindowStart),
+    ]);
 
   const [{ data: profileRow }, { data: lastMicroPrompt }] = await Promise.all([
     supabase
