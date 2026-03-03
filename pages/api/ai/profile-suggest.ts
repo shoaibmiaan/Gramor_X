@@ -1,6 +1,9 @@
 import { env } from "@/lib/env";
 // pages/api/ai/profile-suggest.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
+import { guardAIRequest } from '@/lib/usage';
 import { LEVELS, PREFS, TIME } from '@/lib/profile-options';
 
 type EnglishLevel = typeof LEVELS[number];
@@ -59,6 +62,22 @@ const localHeuristic = (p: Payload) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const supabase = createSupabaseServerClient({ req, res });
+  let user;
+  try {
+    user = await requireAuth(supabase);
+  } catch (error) {
+    if (error instanceof AuthError) return writeAuthError(res, error.code);
+    throw error;
+  }
+
+  try {
+    await guardAIRequest(supabase, user.id, 'ai.profile_suggest');
+  } catch (error) {
+    if ((error as Error & { status?: number }).status === 429) return res.status(429).json({ error: 'usage_limit_reached' });
+    throw error;
+  }
 
   const payload: Payload = req.body;
   if (!payload?.english_level) {
