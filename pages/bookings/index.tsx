@@ -8,6 +8,7 @@ import { useRouter } from 'next/router'
 import { Button } from '@/components/design-system/Button'
 import { Input } from '@/components/design-system/Input'
 import { Skeleton } from '@/components/design-system/Skeleton'
+import { Pagination } from '@/components/common/Pagination'
 
 // ---------- Types ----------
 type BookingItem = {
@@ -174,18 +175,6 @@ function EmptyState({ title, subtitle, action }: { title: string; subtitle?: str
       <h3 className="font-slab text-h3">{title}</h3>
       {subtitle && <p className="mt-2 text-mutedText">{subtitle}</p>}
       {action && <div className="mt-4">{action}</div>}
-    </div>
-  )
-}
-
-function Pagination({ page, max, onPage }: { page: number; max: number; onPage: (p:number)=>void }){
-  if (max <= 1) return null
-  const pages = Array.from({length:max}).map((_,i)=> i+1)
-  return (
-    <div className="mt-4 flex flex-wrap items-center gap-2">
-      {pages.map((p)=> (
-        <button key={p} onClick={()=>onPage(p)} className={cls('rounded-lg border border-border px-3 py-1', p===page? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-lightBg')}>{p}</button>
-      ))}
     </div>
   )
 }

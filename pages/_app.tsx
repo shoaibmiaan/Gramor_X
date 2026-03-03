@@ -7,6 +7,7 @@ import { ThemeProvider } from 'next-themes';
 import type { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { Poppins, Roboto_Slab } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { SWRConfig } from 'swr';
 
 import '@/styles/tokens.css';
 import '@/styles/semantic.css';
@@ -311,16 +312,50 @@ export default function App(props: AppProps) {
     <LocaleProvider initialLocale="en">
       <ToastProvider>
         <NotificationProvider>
-          <UserProvider>
-            <OrgProvider>
-              <InstalledAppProvider>
-                <InnerApp {...props} />
-              </InstalledAppProvider>
-            </OrgProvider>
-          </UserProvider>
+          <SWRConfig
+            value={{
+              dedupingInterval: 3000,
+              focusThrottleInterval: 5000,
+              revalidateOnFocus: false,
+              shouldRetryOnError: false,
+            }}
+          >
+            <UserProvider>
+              <OrgProvider>
+                <InstalledAppProvider>
+                  <InnerApp {...props} />
+                </InstalledAppProvider>
+              </OrgProvider>
+            </UserProvider>
+          </SWRConfig>
         </NotificationProvider>
       </ToastProvider>
       <SpeedInsights />
     </LocaleProvider>
   );
+}
+
+
+export function reportWebVitals(metric: { id: string; name: string; value: number; label: string }) {
+  if (typeof window === 'undefined') return;
+
+  const payload = JSON.stringify({
+    id: metric.id,
+    name: metric.name,
+    value: metric.value,
+    label: metric.label,
+    path: window.location.pathname,
+  });
+
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon('/api/monitoring/web-vitals', payload);
+    return;
+  }
+
+  void fetch('/api/monitoring/web-vitals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+    keepalive: true,
+  });
 }

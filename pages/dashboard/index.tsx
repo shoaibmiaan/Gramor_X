@@ -1,8 +1,7 @@
 import type { NextPage } from 'next';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { AICommandCenter } from '@/components/dashboard/AICommandCenter';
-import { TrendChart } from '@/components/charts/TrendChart';
 import useDashboard, {
   useEstimatedBandScore,
   useImprovementGraph,
@@ -10,6 +9,20 @@ import useDashboard, {
   useStrengthsWeaknesses,
   useStudyStreak,
 } from '@/hooks/useDashboard';
+
+const AICommandCenter = dynamic(
+  () => import('@/components/dashboard/AICommandCenter').then((mod) => mod.AICommandCenter),
+  {
+    loading: () => <p className="text-xs text-muted-foreground">Loading AI command center…</p>,
+  },
+);
+
+const TrendChart = dynamic(
+  () => import('@/components/charts/TrendChart').then((mod) => mod.TrendChart),
+  {
+    loading: () => <p className="text-xs text-muted-foreground">Loading chart…</p>,
+  },
+);
 
 const DashboardPage: NextPage = () => {
   const { isLoading, error } = useDashboard();
