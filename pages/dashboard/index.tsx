@@ -1,6 +1,8 @@
 import type { NextPage } from 'next';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useMemo, useState } from 'react';
+import useSWR from 'swr';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import useDashboard, {
   useEstimatedBandScore,
@@ -25,12 +27,32 @@ const TrendChart = dynamic(
 );
 
 const DashboardPage: NextPage = () => {
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, { credentials: 'include' });
+    if (!res.ok) throw new Error('fetch_failed');
+    return res.json();
+  };
+
   const { isLoading, error } = useDashboard();
   const { score } = useEstimatedBandScore();
   const { heatmap } = useSkillHeatmap();
   const { strengths, weaknesses } = useStrengthsWeaknesses();
   const { streak } = useStudyStreak();
   const { points } = useImprovementGraph();
+  const { data: recommendations } = useSWR('/api/recommendations', fetcher);
+  const { data: prediction } = useSWR('/api/prediction', fetcher);
+  const [whatIfWriting, setWhatIfWriting] = useState(7);
+  const whatIfPayload = useMemo(() => ({ writing: whatIfWriting }), [whatIfWriting]);
+  const { data: whatIf } = useSWR(['/api/prediction/what-if', whatIfPayload], async ([url, payload]) => {
+    const res = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('what_if_failed');
+    return res.json();
+  });
 
   return (
     <DashboardLayout>
@@ -50,9 +72,11 @@ const DashboardPage: NextPage = () => {
 
         <div className="grid gap-4 md:grid-cols-3">
           <article className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Estimated Band Score</p>
-            <p className="mt-2 text-3xl font-semibold">{typeof score === 'number' ? score.toFixed(1) : '—'}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Trend-aware estimate from your latest attempts.</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Predicted Band Score</p>
+            <p className="mt-2 text-3xl font-semibold">{typeof prediction?.predictedBand === 'number' ? prediction.predictedBand.toFixed(1) : typeof score === 'number' ? score.toFixed(1) : '—'}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Confidence ±{typeof prediction?.confidenceInterval === 'number' ? prediction.confidenceInterval : 0.5} · Trend: {prediction?.trend ?? 'stable'}
+            </p>
           </article>
 
           <article className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
@@ -116,6 +140,39 @@ const DashboardPage: NextPage = () => {
             title="Improvement Graph"
             points={(points.length ? points : [{ label: 'No data', band: 0 }]).map((p) => ({ label: p.label, value: p.band }))}
           />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-3">
+          <article className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm lg:col-span-2">
+            <h2 className="text-base font-semibold">Recommended for You</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Today&apos;s recommendations based on your latest skill profile.</p>
+            <div className="mt-3 space-y-2">
+              {(recommendations?.nextExercises ?? []).slice(0, 5).map((item: any) => (
+                <div key={item.taskId} className="rounded-lg border border-border/60 p-2 text-sm">
+                  <p className="font-medium">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">{item.module} · {item.type} · {item.reason}</p>
+                </div>
+              ))}
+              {!(recommendations?.nextExercises ?? []).length ? <p className="text-xs text-muted-foreground">No personalized exercises yet.</p> : null}
+            </div>
+          </article>
+
+          <article className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
+            <h2 className="text-base font-semibold">What-if simulator</h2>
+            <p className="mt-1 text-xs text-muted-foreground">If Writing improves to:</p>
+            <input
+              type="range"
+              min={4}
+              max={9}
+              step={0.5}
+              value={whatIfWriting}
+              onChange={(event) => setWhatIfWriting(Number(event.target.value))}
+              className="mt-3 w-full"
+            />
+            <p className="mt-2 text-sm">Writing target: <span className="font-semibold">{whatIfWriting.toFixed(1)}</span></p>
+            <p className="mt-1 text-sm">Predicted: <span className="font-semibold">{typeof whatIf?.predictedBand === 'number' ? whatIf.predictedBand.toFixed(1) : '—'}</span></p>
+            <p className="mt-1 text-xs text-emerald-600">Potential uplift: {typeof whatIf?.uplift === 'number' ? `${whatIf.uplift >= 0 ? '+' : ''}${whatIf.uplift.toFixed(2)}` : '—'}</p>
+          </article>
         </section>
 
         {isLoading ? <p className="text-xs text-muted-foreground">Loading dashboard analytics…</p> : null}
