@@ -193,16 +193,41 @@ export default async function handler(
   const premiumUntil = new Date();
   premiumUntil.setUTCDate(premiumUntil.getUTCDate() + grantDays);
 
-  // Update user profile (uses admin client to avoid RLS snags)
-  await admin
-    .from('user_profiles') // NOTE: your schema predominantly references `user_profiles`
-    .update({
-      membership: plan,
-      premium_until: premiumUntil.toISOString(),
-      subscription_status: 'active',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', user.id);
+  // Persist subscription entitlement in subscriptions source-of-truth
+  const nowIso = new Date().toISOString();
+  const { data: existingSubscription } = await admin
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingSubscription?.id) {
+    await admin
+      .from('subscriptions')
+      .update({
+        plan_id: plan,
+        status: 'active',
+        current_period_end: premiumUntil.toISOString(),
+        renews_at: premiumUntil.toISOString(),
+        updated_at: nowIso,
+      })
+      .eq('id', existingSubscription.id);
+  } else {
+    await admin
+      .from('subscriptions')
+      .insert({
+        user_id: user.id,
+        plan_id: plan,
+        status: 'active',
+        current_period_end: premiumUntil.toISOString(),
+        renews_at: premiumUntil.toISOString(),
+        created_at: nowIso,
+        updated_at: nowIso,
+      });
+  }
 
   // Invalidate the PIN so it can't be reused
   await admin.from('premium_pins').delete().eq('user_id', user.id);

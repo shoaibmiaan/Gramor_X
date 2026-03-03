@@ -14,7 +14,7 @@ import { supabaseBrowser } from '@/lib/supabaseBrowser';
 type SubscriptionState = {
   plan: ReturnType<typeof normalizePlan>;
   status: ReturnType<typeof normalizeStatus>;
-  renewsAt: string | null;
+  currentPeriodEnd: string | null;
   trialEndsAt: string | null;
 };
 
@@ -43,7 +43,7 @@ export function useSubscription() {
       const next: SubscriptionState = {
         plan: normalizePlan(subscription.plan),
         status: normalizeStatus(subscription.status),
-        renewsAt: subscription.renewsAt ?? null,
+        currentPeriodEnd: subscription.renewsAt ?? null,
         trialEndsAt: subscription.trialEndsAt ?? null,
       };
 
@@ -64,20 +64,21 @@ export function useSubscription() {
 
   const plan = summary?.plan ?? 'free';
   const status = summary?.status ?? 'inactive';
-  const renewsAt = summary?.renewsAt ?? null;
+  const currentPeriodEnd = summary?.currentPeriodEnd ?? null;
 
   return {
     plan,
     status,
     displayPlan: PLAN_DISPLAY[plan],
     statusLabel: formatSubscriptionLabel(status),
-    renewsAt,
-    renewsAtLabel: formatDateLabel(renewsAt),
-    expiresAt: renewsAt,
-    expiresAtLabel: formatDateLabel(renewsAt),
+    currentPeriodEnd,
+    currentPeriodEndLabel: formatDateLabel(currentPeriodEnd),
+    expiresAt: currentPeriodEnd,
+    expiresAtLabel: formatDateLabel(currentPeriodEnd),
     trialEndsAt: summary?.trialEndsAt ?? null,
     trialEndsAtLabel: formatDateLabel(summary?.trialEndsAt ?? null),
     isPremium: hasActiveSubscription(plan, status),
+    isTrial: status === 'trialing',
     hasBillingHistory: plan !== 'free' && status === 'active',
     loading,
     error,

@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { getActiveSubscription, requireActiveSubscription } from '@/lib/subscription/getActiveSubscription';
 
 const BodySchema = z.object({
   counter: z.enum([
@@ -58,16 +59,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (userErr || !userRes.user?.id) return res.status(401).json({ ok: false, error: 'Unauthorized' });
   const userId = userRes.user.id;
 
+  try {
+    await requireActiveSubscription(userId, supabase);
+  } catch {
+    return res.status(402).json({ ok: false, error: 'subscription_required' });
+  }
+
   const { counter, delta } = parse.data;
 
-  let plan: 'free'|'starter'|'booster'|'master' = 'free';
-  try {
-    const { data: profile } = await supabase.from('profiles').select('membership_plan').eq('id', userId).single();
-    if (profile?.membership_plan) plan = profile.membership_plan as typeof plan;
-  } catch { /* ignore */ }
+  const subscription = await getActiveSubscription(userId, supabase);
+  const plan = subscription.plan;
 
-  const limit = plan === 'master' ? MASTER_LIMITS[counter]
-    : plan === 'booster' || plan === 'starter' ? BOOSTER_LIMITS[counter]
+  const limit = plan === 'pro' ? MASTER_LIMITS[counter]
+    : plan === 'premium' ? BOOSTER_LIMITS[counter]
     : FREE_LIMITS[counter];
 
   const today = new Date().toISOString().slice(0, 10);
