@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { Card } from '@/components/design-system/Card';
 import { cn } from '@/lib/utils';
 
 interface DashboardCardProps {
@@ -18,28 +19,22 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   children,
 }) => {
   return (
-    <section
+    <Card
+      interactive
       className={cn(
-        'rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur-sm',
-        'dark:border-slate-800 dark:bg-slate-900/70',
+        'rounded-ds-2xl border-border/70 bg-card/90 p-6 shadow-sm transition-shadow hover:shadow-md',
         className,
       )}
     >
       {(title || subtitle) && (
-        <header className="mb-3 flex flex-col gap-1">
+        <header className="mb-4 flex flex-col gap-1">
           {title && (
-            <h2 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-              {title}
-            </h2>
+            <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
           )}
-          {subtitle && (
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {subtitle}
-            </p>
-          )}
+          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
         </header>
       )}
       {children}
-    </section>
+    </Card>
   );
 };

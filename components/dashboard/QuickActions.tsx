@@ -2,9 +2,10 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { DashboardCard } from './DashboardCard';
 import type { QuickAction } from '@/lib/dashboard/getDashboardData';
-import { ArrowRight } from 'lucide-react';
+import Icon from '@/components/design-system/Icon';
 
 interface QuickActionsProps {
   actions: QuickAction[];
@@ -17,28 +18,24 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions }) => {
       subtitle="Shortcuts to the places you visit most."
       className="col-span-1 lg:col-span-2"
     >
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {actions.map((action) => (
-          <a
+          <Link
             key={action.id}
             href={action.href}
-            className="group flex flex-col justify-between rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-left text-sm shadow-xs transition hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-slate-700"
+            className="group flex min-h-[136px] flex-col justify-between rounded-xl border border-border/70 bg-background/50 p-6 text-left text-sm shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
           >
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                {action.label}
-              </h3>
+              <h3 className="text-sm font-semibold text-foreground">{action.label}</h3>
               {action.description && (
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                  {action.description}
-                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{action.description}</p>
               )}
             </div>
-            <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 group-hover:text-slate-900 dark:text-slate-300">
-              Go
-              <ArrowRight className="h-3 w-3" />
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground group-hover:text-foreground">
+              Start
+              <Icon name="ArrowRight" size={14} />
             </span>
-          </a>
+          </Link>
         ))}
       </div>
     </DashboardCard>

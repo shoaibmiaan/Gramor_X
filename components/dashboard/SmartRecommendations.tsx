@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/Card';
+import { Card } from '@/components/design-system/Card';
 
 export function SmartRecommendations({ items }: { items: string[] }) {
   return (

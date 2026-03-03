@@ -41,7 +41,7 @@ export function DashboardLayout({ children }: PropsWithChildren) {
             </nav>
           ) : null}
 
-          <main className="space-y-6 p-4 md:p-8">{children}</main>
+          <main className="space-y-12 p-6 md:p-8">{children}</main>
         </div>
       </div>
     </div>
