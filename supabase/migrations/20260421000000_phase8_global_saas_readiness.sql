@@ -17,6 +17,19 @@ create table if not exists public.plans (
   updated_at timestamptz not null default now()
 );
 
+alter table public.plans add column if not exists description text;
+alter table public.plans add column if not exists price_monthly numeric(10,2);
+alter table public.plans add column if not exists price_yearly numeric(10,2);
+alter table public.plans add column if not exists lifetime_price numeric(10,2);
+alter table public.plans add column if not exists features jsonb not null default '[]'::jsonb;
+alter table public.plans add column if not exists stripe_price_monthly_id text;
+alter table public.plans add column if not exists stripe_price_yearly_id text;
+alter table public.plans add column if not exists stripe_price_lifetime_id text;
+alter table public.plans add column if not exists sort_order integer not null default 0;
+alter table public.plans add column if not exists is_active boolean not null default true;
+alter table public.plans add column if not exists created_at timestamptz not null default now();
+alter table public.plans add column if not exists updated_at timestamptz not null default now();
+
 insert into public.plans (
   id,name,description,price_monthly,price_yearly,lifetime_price,features,sort_order,is_active
 )
