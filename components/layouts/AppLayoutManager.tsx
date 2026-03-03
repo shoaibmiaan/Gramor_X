@@ -267,7 +267,15 @@ export function AppLayoutManager({
       { type: 'community', component: CommunityLayout, guard: () => isCommunityRoute },
       { type: 'reports', component: ReportsLayout, guard: () => isReportsRoute },
       { type: 'marketing', component: PublicMarketingLayout, guard: () => isMarketingRoute },
-      { type: 'profile', component: ProfileLayout, guard: () => pathname.startsWith('/profile') || pathname.startsWith('/user') },
+      {
+        type: 'profile',
+        component: ProfileLayout,
+        guard: () =>
+          pathname.startsWith('/profile') ||
+          pathname.startsWith('/user') ||
+          pathname.startsWith('/settings') ||
+          pathname.startsWith('/me/'),
+      },
       { type: 'communication', component: CommunicationLayout, guard: () => pathname.startsWith('/messages') || pathname.startsWith('/chat') || pathname.startsWith('/inbox') },
       { type: 'billing', component: BillingLayout, guard: () => pathname.startsWith('/billing') || pathname.startsWith('/payment') || pathname.startsWith('/subscription') },
       { type: 'resources', component: ResourcesLayout, guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library') },
