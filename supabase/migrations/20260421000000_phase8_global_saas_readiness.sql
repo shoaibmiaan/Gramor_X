@@ -29,6 +29,8 @@ alter table public.plans add column if not exists sort_order integer not null de
 alter table public.plans add column if not exists is_active boolean not null default true;
 alter table public.plans add column if not exists created_at timestamptz not null default now();
 alter table public.plans add column if not exists updated_at timestamptz not null default now();
+alter table public.plans add column if not exists rank integer not null default 0;
+alter table public.plans alter column rank set default 0;
 
 insert into public.plans (
   id,name,description,price_monthly,price_yearly,lifetime_price,features,sort_order,is_active
