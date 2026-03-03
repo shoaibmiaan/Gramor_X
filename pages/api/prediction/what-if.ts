@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const supabase = createSupabaseServerClient({ req, res });
   try {
-    const user = await requirePremiumUser(req, res);
+    const user = await requirePremiumUser(req);
     const prediction = await predictBandWhatIf(user.id, parsed.data, supabase as any);
     return res.status(200).json(prediction);
   } catch (error) {

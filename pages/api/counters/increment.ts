@@ -2,7 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
-import { getActiveSubscription, requireActiveSubscription } from '@/lib/subscription/getActiveSubscription';
+import { getUserPlan } from '@/lib/subscription';
+import { requirePremiumUser } from '@/lib/premiumRoute';
 
 const BodySchema = z.object({
   counter: z.enum([
@@ -55,23 +56,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (!token) return res.status(401).json({ ok: false, error: 'Missing Authorization bearer token' });
 
   const supabase = createClient(supabaseUrl, supabaseKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
-  const { data: userRes, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userRes.user?.id) return res.status(401).json({ ok: false, error: 'Unauthorized' });
-  const userId = userRes.user.id;
 
+  let userId: string;
   try {
-    await requireActiveSubscription(userId, supabase);
+    const user = await requirePremiumUser(req);
+    userId = user.id;
   } catch {
     return res.status(402).json({ ok: false, error: 'subscription_required' });
   }
 
   const { counter, delta } = parse.data;
 
-  const subscription = await getActiveSubscription(userId, supabase);
-  const plan = subscription.plan;
+  const plan = await getUserPlan(supabase as any, userId);
 
-  const limit = plan === 'pro' ? MASTER_LIMITS[counter]
-    : plan === 'premium' ? BOOSTER_LIMITS[counter]
+  const limit = plan === 'master' ? MASTER_LIMITS[counter]
+    : plan === 'booster' || plan === 'starter' ? BOOSTER_LIMITS[counter]
     : FREE_LIMITS[counter];
 
   const today = new Date().toISOString().slice(0, 10);

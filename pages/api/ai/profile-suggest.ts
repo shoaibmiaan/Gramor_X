@@ -67,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabase = createSupabaseServerClient({ req, res });
   let user;
   try {
-    user = await requirePremiumUser(req, res);
+    user = await requirePremiumUser(req);
   } catch (error) {
     if (error instanceof AuthError) return writeAuthError(res, error.code);
     throw error;
