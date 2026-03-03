@@ -283,21 +283,24 @@ END $$;
 -- Account audit log policies (owner + admin)
 -- ---------------------------------------------------------------------------
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='account_audit_log' AND policyname='phase4_account_audit_select_own') THEN
+  IF to_regclass('public.account_audit_log') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='account_audit_log' AND policyname='phase4_account_audit_select_own') THEN
     CREATE POLICY "phase4_account_audit_select_own" ON public.account_audit_log
       FOR SELECT USING (auth.uid() = user_id);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='account_audit_log' AND policyname='phase4_account_audit_insert_own') THEN
+  IF to_regclass('public.account_audit_log') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='account_audit_log' AND policyname='phase4_account_audit_insert_own') THEN
     CREATE POLICY "phase4_account_audit_insert_own" ON public.account_audit_log
       FOR INSERT WITH CHECK (auth.uid() = user_id);
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='account_audit_log' AND policyname='phase4_account_audit_admin_select_all') THEN
+  IF to_regclass('public.account_audit_log') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='account_audit_log' AND policyname='phase4_account_audit_admin_select_all') THEN
     CREATE POLICY "phase4_account_audit_admin_select_all" ON public.account_audit_log
       FOR SELECT USING (public.is_admin());
   END IF;
