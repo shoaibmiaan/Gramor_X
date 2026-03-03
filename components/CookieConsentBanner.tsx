@@ -30,17 +30,33 @@ export default function CookieConsentBanner() {
   if (consent) return null;
 
   return (
-    <aside className="fixed inset-x-4 bottom-4 z-[100] rounded-xl border border-border bg-card p-4 shadow-lg">
-      <p className="text-sm text-foreground">
-        We use essential cookies to keep GramorX secure and functional. Optional analytics cookies help us improve the platform.
-      </p>
-      <div className="mt-3 flex gap-2">
-        <button onClick={() => save('rejected')} className="rounded border border-border px-3 py-1 text-sm">
-          Reject optional
-        </button>
-        <button onClick={() => save('accepted')} className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground">
-          Accept all
-        </button>
+    <aside className="fixed inset-x-3 bottom-3 z-[100] sm:inset-x-6 sm:bottom-6">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-border/70 bg-card/95 p-4 shadow-2xl backdrop-blur md:p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Cookie preferences</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              We use essential cookies for sign-in and security. Optional analytics cookies help us improve the experience.
+            </p>
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => save('rejected')}
+              className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Reject optional
+            </button>
+            <button
+              type="button"
+              onClick={() => save('accepted')}
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              Accept all cookies
+            </button>
+          </div>
+        </div>
       </div>
     </aside>
   );
