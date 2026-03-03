@@ -226,8 +226,6 @@ export function AppLayoutManager({
       isInstitutionsRoute: startsWithAny(['/institutions']),
       isDashboardRoute: startsWithAny([
         '/dashboard',
-        '/profile',
-        '/settings',
         '/bookings',
         '/classes',
         '/writing',
@@ -293,18 +291,34 @@ export function AppLayoutManager({
       { type: 'admin', component: AdminLayout, guard: () => routeFlags.isAdminRoute },
       { type: 'teacher', component: TeacherLayout, guard: () => isTeacherRoute, getContent: () => getTeacherContent() },
       { type: 'institutions', component: InstitutionsLayout, guard: () => routeFlags.isInstitutionsRoute },
-      { type: 'dashboard', component: DashboardLayout, guard: () => routeFlags.isDashboardRoute },
+      {
+        type: 'billing',
+        component: BillingLayout,
+        guard: () =>
+          pathname.startsWith('/billing') ||
+          pathname.startsWith('/payment') ||
+          pathname.startsWith('/subscription') ||
+          pathname.startsWith('/settings/billing') ||
+          pathname.startsWith('/dashboard/billing') ||
+          pathname.startsWith('/profile/billing') ||
+          pathname.startsWith('/profile/subscription') ||
+          pathname.startsWith('/profile/account/billing'),
+      },
+      {
+        type: 'profile',
+        component: ProfileLayout,
+        guard: () => pathname.startsWith('/profile') || pathname.startsWith('/user') || pathname.startsWith('/settings'),
+      },
+      { type: 'communication', component: CommunicationLayout, guard: () => pathname.startsWith('/messages') || pathname.startsWith('/chat') || pathname.startsWith('/inbox') },
+      { type: 'resources', component: ResourcesLayout, guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library') },
+      { type: 'analytics', component: AnalyticsLayout, guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats') },
+      { type: 'support', component: SupportLayout, guard: () => pathname.startsWith('/support') || pathname.startsWith('/help') },
       { type: 'marketplace', component: MarketplaceLayout, guard: () => routeFlags.isMarketplaceRoute },
       { type: 'learning', component: LearningLayout, guard: () => routeFlags.isLearningRoute },
       { type: 'community', component: CommunityLayout, guard: () => routeFlags.isCommunityRoute },
       { type: 'reports', component: ReportsLayout, guard: () => routeFlags.isReportsRoute },
+      { type: 'dashboard', component: DashboardLayout, guard: () => routeFlags.isDashboardRoute },
       { type: 'marketing', component: PublicMarketingLayout, guard: () => routeFlags.isMarketingRoute },
-      { type: 'profile', component: ProfileLayout, guard: () => pathname.startsWith('/profile') || pathname.startsWith('/user') },
-      { type: 'communication', component: CommunicationLayout, guard: () => pathname.startsWith('/messages') || pathname.startsWith('/chat') || pathname.startsWith('/inbox') },
-      { type: 'billing', component: BillingLayout, guard: () => pathname.startsWith('/billing') || pathname.startsWith('/payment') || pathname.startsWith('/subscription') },
-      { type: 'resources', component: ResourcesLayout, guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library') },
-      { type: 'analytics', component: AnalyticsLayout, guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats') },
-      { type: 'support', component: SupportLayout, guard: () => pathname.startsWith('/support') || pathname.startsWith('/help') },
     ],
     [isTeacherRoute, pathname, routeFlags, getTeacherContent]
   );
