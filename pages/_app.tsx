@@ -164,6 +164,7 @@ function useRouteAccessCheck(pathname: string, role?: string | null) {
 
 // ---------- Inner app ----------
 function InnerApp({ Component, pageProps }: AppProps) {
+  // Architecture note: Pages must not self-wrap with app shell layouts.
   const router = useRouter();
   const pathname = router.pathname;
   const { locale: activeLocale } = useLocale();
@@ -332,15 +333,21 @@ export default function App(props: AppProps) {
           </SWRConfig>
         </NotificationProvider>
       </ToastProvider>
-      <div className="fixed right-4 top-4 z-[90]"><LanguageSwitcher /></div>
+      <div className="fixed right-4 top-4 z-[90]">
+        <LanguageSwitcher />
+      </div>
       <CookieConsentBanner />
       <SpeedInsights />
     </LocaleProvider>
   );
 }
 
-
-export function reportWebVitals(metric: { id: string; name: string; value: number; label: string }) {
+export function reportWebVitals(metric: {
+  id: string;
+  name: string;
+  value: number;
+  label: string;
+}) {
   if (typeof window === 'undefined') return;
 
   const payload = JSON.stringify({
