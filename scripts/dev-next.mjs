@@ -16,7 +16,7 @@ const args = ['dev'];
 // Turbopack avoids the crashing Watchpack code path seen in setup-dev-bundler.js.
 // if (isWindows && !process.env.NEXT_DISABLE_TURBO_DEV) {
 // args.push('--turbo');
-}
+// }
 
 let command = 'next';
 let commandArgs = args;
