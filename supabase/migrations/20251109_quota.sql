@@ -51,14 +51,18 @@ LANGUAGE sql IMMUTABLE AS $$
   SELECT date_trunc('month', ts)::date;
 $$;
 
--- 6) Get current plan for user. Replace this logic if you store plan elsewhere.
--- Expect a profiles table or subscriptions table; here is a safe placeholder:
+-- 6) Get current plan for user from subscriptions table.
 CREATE OR REPLACE FUNCTION get_user_plan(p_user_id uuid)
 RETURNS text
 LANGUAGE sql STABLE AS $$
-  -- Try from profiles.plan; fallback to 'free'
   SELECT COALESCE(
-    (SELECT lower(btrim(p.plan)) FROM public.profiles p WHERE p.id = p_user_id),
+    (
+      SELECT lower(btrim(COALESCE(to_jsonb(s)->>'plan_id', s.plan, 'free')))
+      FROM public.subscriptions s
+      WHERE s.user_id = p_user_id
+      ORDER BY s.updated_at DESC NULLS LAST, s.created_at DESC NULLS LAST
+      LIMIT 1
+    ),
     'free'
   );
 $$;

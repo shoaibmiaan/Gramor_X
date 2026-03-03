@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
+import { AuthError, writeAuthError } from '@/lib/auth';
 import { predictBandWhatIf } from '@/lib/prediction';
+import { requirePremiumUser } from '@/lib/premiumRoute';
 
 const schema = z.object({
   reading: z.number().min(0).max(9).optional(),
@@ -19,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const supabase = createSupabaseServerClient({ req, res });
   try {
-    const user = await requireAuth(supabase);
+    const user = await requirePremiumUser(req, res);
     const prediction = await predictBandWhatIf(user.id, parsed.data, supabase as any);
     return res.status(200).json(prediction);
   } catch (error) {

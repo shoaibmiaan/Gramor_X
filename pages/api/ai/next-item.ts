@@ -1,8 +1,9 @@
 // pages/api/ai/next-item.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
+import { AuthError, writeAuthError } from '@/lib/auth';
 import { guardAIRequest } from '@/lib/usage';
+import { requirePremiumUser } from '@/lib/premiumRoute';
 
 type Out = {
   difficulty: 'Easy' | 'Medium' | 'Hard';
@@ -19,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const supabase = createSupabaseServerClient({ req, res });
     let user;
     try {
-      user = await requireAuth(supabase);
+      user = await requirePremiumUser(req, res);
     } catch (error) {
       if (error instanceof AuthError) return writeAuthError(res, error.code);
       throw error;
