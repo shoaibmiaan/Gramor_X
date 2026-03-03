@@ -1,8 +1,7 @@
 import * as React from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
 
 import { getServerClient } from '@/lib/supabaseServer';
 import { createAuthRedirect } from '@/lib/requirePageAuth';
@@ -89,6 +88,20 @@ const getDueVariant = (status: Due['status']) => {
   }
 };
 
+const formatCurrency = (amount: number, currency = 'USD') => {
+  const normalized = (currency || 'USD').toUpperCase();
+  const value = amount > 999 ? amount / 100 : amount;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: normalized,
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${normalized}`;
+  }
+};
+
 export default function BillingPage() {
   const router = useRouter();
   const [loading, setLoading] = React.useState(true);
@@ -98,8 +111,6 @@ export default function BillingPage() {
   const [dues, setDues] = React.useState<Due[]>([]);
   const [portalLoading, setPortalLoading] = React.useState(false);
   const [portalAvailable, setPortalAvailable] = React.useState(true);
-
-  const justVaulted = router.query.vaulted === '1';
 
   React.useEffect(() => {
     (async () => {
@@ -142,20 +153,6 @@ export default function BillingPage() {
     }
   }
 
-  const renderPlanMeta = () => {
-    const renews = formatDateLabel(summary?.renewsAt);
-    const trialEnds = formatDateLabel(summary?.trialEndsAt);
-    if (!renews && !trialEnds) return null;
-
-    return (
-      <p className="text-small text-muted-foreground">
-        {renews && <span>Renews {renews}</span>}
-        {renews && trialEnds && <span aria-hidden="true"> · </span>}
-        {trialEnds && <span>Trial ends {trialEnds}</span>}
-      </p>
-    );
-  };
-
   return (
     <>
       <Head>
@@ -163,52 +160,139 @@ export default function BillingPage() {
       </Head>
 
       <main className="min-h-screen bg-background text-foreground">
-        <Section className="bg-background" Container containerClassName="max-w-5xl space-y-8 py-10">
-          <header className="space-y-2">
-            <Heading as="h1" size="lg">
-              Billing
-            </Heading>
-            <p className="text-small text-muted-foreground">
-              Manage your plan and invoices.
-            </p>
-          </header>
-
-          {loading && (
-            <Card padding="lg" insetBorder aria-busy="true">
-              <div className="space-y-3">
-                <Skeleton className="h-6 w-1/3 rounded-ds-xl" />
-                <Skeleton className="h-10 w-full rounded-ds-xl" />
+        <Section className="bg-background" Container containerClassName="max-w-5xl space-y-6 py-24">
+          <Card className="rounded-ds-2xl border border-border/80 p-4 shadow-sm sm:p-6">
+            <div className="mb-6 flex flex-col gap-3 border-b border-border/80 pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <Heading as="h1" size="lg">
+                  Billing
+                </Heading>
+                <p className="text-small text-muted-foreground">Manage your plan, dues, and invoices.</p>
               </div>
-            </Card>
-          )}
+              <Button variant="ghost" onClick={() => router.push('/profile/subscription')}>
+                Back to subscription
+              </Button>
+            </div>
 
-          {!loading && error && (
-            <Alert variant="error" appearance="soft" title="Couldn’t load billing">
-              <p className="mt-2 text-small text-muted-foreground">{error}</p>
-            </Alert>
-          )}
-
-          {!loading && !error && summary && (
-            <Card insetBorder>
-              <CardHeader className="flex items-center justify-between">
-                <div>
-                  <Heading as="h2" size="sm" className="capitalize">
-                    {formatSubscriptionLabel(summary.plan)}
-                  </Heading>
-                  <Badge variant={getSubscriptionStatusVariant(summary.status)}>
-                    {formatSubscriptionLabel(summary.status)}
-                  </Badge>
-                  {renderPlanMeta()}
+            {loading && (
+              <Card padding="lg" insetBorder aria-busy="true">
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-1/3 rounded-ds-xl" />
+                  <Skeleton className="h-10 w-full rounded-ds-xl" />
                 </div>
+              </Card>
+            )}
 
-                {portalAvailable && (
-                  <Button onClick={openPortal} loading={portalLoading}>
-                    {portalLoading ? 'Opening…' : 'Manage billing'}
-                  </Button>
-                )}
-              </CardHeader>
-            </Card>
-          )}
+            {!loading && error && (
+              <Alert variant="error" appearance="soft" title="Couldn’t load billing">
+                <p className="mt-2 text-small text-muted-foreground">{error}</p>
+              </Alert>
+            )}
+
+            {!loading && !error && summary && (
+              <div className="space-y-6">
+                <Card insetBorder>
+                  <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-2">
+                      <SectionLabel>Subscription</SectionLabel>
+                      <Heading as="h2" size="sm" className="capitalize">
+                        {formatSubscriptionLabel(summary.plan)}
+                      </Heading>
+                      <Badge variant={getSubscriptionStatusVariant(summary.status)}>
+                        {formatSubscriptionLabel(summary.status)}
+                      </Badge>
+                      <p className="text-small text-muted-foreground">
+                        {summary.renewsAt && <span>Renews {formatDateLabel(summary.renewsAt)}</span>}
+                        {summary.renewsAt && summary.trialEndsAt && <span aria-hidden="true"> · </span>}
+                        {summary.trialEndsAt && <span>Trial ends {formatDateLabel(summary.trialEndsAt)}</span>}
+                      </p>
+                    </div>
+
+                    {portalAvailable && (
+                      <Button onClick={openPortal} loading={portalLoading}>
+                        {portalLoading ? 'Opening…' : 'Manage billing'}
+                      </Button>
+                    )}
+                  </CardHeader>
+                </Card>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <Card insetBorder>
+                    <CardHeader>
+                      <Heading as="h3" size="xs">
+                        Open dues
+                      </Heading>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {dues.length === 0 && (
+                        <p className="text-small text-muted-foreground">No open dues.</p>
+                      )}
+                      {dues.map((due) => (
+                        <div
+                          key={due.id}
+                          className="flex items-center justify-between rounded-ds-xl border border-border/80 p-3"
+                        >
+                          <div>
+                            <p className="text-small font-semibold capitalize">
+                              {due.plan_key} · {due.cycle}
+                            </p>
+                            <p className="text-caption text-muted-foreground">
+                              {formatDateLabel(due.created_at)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={getDueVariant(due.status)}>{due.status}</Badge>
+                            <span className="text-small font-semibold">
+                              {formatCurrency(due.amount_cents, due.currency)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  <Card insetBorder>
+                    <CardHeader>
+                      <Heading as="h3" size="xs">
+                        Invoice history
+                      </Heading>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {invoices.length === 0 && (
+                        <p className="text-small text-muted-foreground">No invoices yet.</p>
+                      )}
+                      {invoices.map((invoice) => (
+                        <div
+                          key={invoice.id}
+                          className="flex items-center justify-between rounded-ds-xl border border-border/80 p-3"
+                        >
+                          <div>
+                            <p className="text-small font-semibold">{formatCurrency(invoice.amount, invoice.currency)}</p>
+                            <p className="text-caption text-muted-foreground">
+                              {formatDateLabel(invoice.createdAt)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={getInvoiceVariant(invoice.status)}>{invoice.status}</Badge>
+                            {invoice.hostedInvoiceUrl && (
+                              <a
+                                href={invoice.hostedInvoiceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-caption font-semibold text-primary underline-offset-2 hover:underline"
+                              >
+                                View
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+          </Card>
         </Section>
       </main>
     </>

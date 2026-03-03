@@ -43,10 +43,17 @@ export default function SubscriptionPage() {
 
   if (loading) {
     return (
-      <section className="py-24 bg-background text-foreground">
+      <section className="bg-background py-24 text-foreground">
         <Container>
-          <Card className="mx-auto max-w-xl rounded-ds-2xl p-6">
-            {t('subscription.loading', 'Loading subscription…')}
+          <Card className="mx-auto max-w-2xl rounded-ds-2xl p-6 sm:p-8">
+            <div className="space-y-4">
+              <div className="h-7 w-44 animate-pulse rounded bg-muted" />
+              <div className="h-10 w-36 animate-pulse rounded-full bg-muted" />
+              <div className="h-16 animate-pulse rounded-ds-xl bg-muted" />
+              <p className="text-small text-muted-foreground">
+                {t('subscription.loading', 'Loading subscription…')}
+              </p>
+            </div>
           </Card>
         </Container>
       </section>
@@ -55,7 +62,7 @@ export default function SubscriptionPage() {
 
   return (
     <GlobalPlanGuard min="free" userPlan={plan}>
-      <section className="py-24 bg-background text-foreground">
+      <section className="bg-background py-24 text-foreground">
         <Container>
           <div className="mx-auto max-w-2xl space-y-6">
             {error && error !== 'Not authenticated' && (
@@ -63,13 +70,18 @@ export default function SubscriptionPage() {
                 {t('subscription.load.error', 'Unable to load subscription details.')}
               </Alert>
             )}
-            <Card className="rounded-ds-2xl p-4 sm:p-6">
-              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Card className="rounded-ds-2xl border border-border/80 p-4 shadow-sm sm:p-6">
+              <div className="mb-6 flex flex-col gap-3 border-b border-border/80 pb-5 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="font-slab text-display">{t('subscription.title', 'Subscription')}</h1>
+                <span className="inline-flex w-fit items-center rounded-full bg-secondary px-3 py-1 text-caption font-semibold text-secondary-foreground">
+                  {status === 'active'
+                    ? t('subscription.status.active', 'Active')
+                    : t('subscription.status.inactive', 'Inactive')}
+                </span>
               </div>
               <div className="space-y-6">
-                <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                  <div className="rounded-full bg-primary/10 px-4 py-2 text-primary">
+                <div className="flex flex-col items-center justify-center space-y-4 rounded-ds-xl bg-muted/40 p-5 text-center sm:p-6">
+                  <div className="rounded-full bg-primary/10 px-4 py-2 text-primary ring-1 ring-primary/20">
                     <span className="font-semibold">{displayPlan.name} Plan</span>
                   </div>
                   {isTrial && (
@@ -79,7 +91,7 @@ export default function SubscriptionPage() {
                       })}
                     </Alert>
                   )}
-                  <div className="text-2xl font-bold">
+                  <div className="text-3xl font-bold tracking-tight">
                     {displayPlan.price ?? t('subscription.price.free', 'Free')}
                   </div>
                   {expiresAtLabel && (
@@ -97,19 +109,40 @@ export default function SubscriptionPage() {
                   </p>
                 </div>
 
-                <ul className="space-y-2 text-small">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-ds-xl border border-border/80 bg-background p-3">
+                    <p className="text-caption text-muted-foreground">
+                      {t('subscription.currentPlan', 'Current plan')}
+                    </p>
+                    <p className="text-small font-semibold">{displayPlan.name}</p>
+                  </div>
+                  <div className="rounded-ds-xl border border-border/80 bg-background p-3">
+                    <p className="text-caption text-muted-foreground">
+                      {t('subscription.accountStatus', 'Account status')}
+                    </p>
+                    <p className="text-small font-semibold">
+                      {status === 'active'
+                        ? t('subscription.status.active', 'Active')
+                        : t('subscription.status.inactive', 'Inactive')}
+                    </p>
+                  </div>
+                </div>
+
+                <ul className="grid gap-2 rounded-ds-xl border border-border/80 bg-background p-4 text-small sm:grid-cols-2">
                   {displayPlan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-primary" />
+                    <li key={feature} className="flex items-start gap-2">
+                      <span className="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                        ✓
+                      </span>
                       {feature}
                     </li>
                   ))}
                 </ul>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3 border-t border-border/80 pt-2">
                   <Button
                     variant={isPremium ? 'outline' : 'primary'}
-                    className="rounded-ds-xl"
+                    className="rounded-ds-xl sm:w-fit"
                     onClick={() => router.push('/pricing/overview')}
                   >
                     {isPremium
