@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { requireRole } from '@/lib/requireRole';
 import { env } from '@/lib/env';
+import { logEvent } from '@/lib/audit';
 
 const SITE_URL =
   env.NEXT_PUBLIC_SITE_URL ||
@@ -30,7 +31,7 @@ export default async function handler(
   res: NextApiResponse<ApiOk | ApiErr>
 ) {
   try {
-    await requireRole(req, ['admin']);
+    const { user: adminUser } = await requireRole(req, ['admin']);
   } catch {
     return res.status(403).json({ error: 'Forbidden' });
   }
@@ -84,6 +85,13 @@ export default async function handler(
         options: { redirectTo },
       });
       if (error) throw error;
+      await logEvent({
+        userId: adminUser.id,
+        action: 'password_reset_link_generated',
+        resource: 'auth',
+        resourceId: userId,
+        metadata: { targetUserId: userId },
+      }, { req });
       return res.status(200).json({
         ok: true,
         message: 'Password reset link generated.',
@@ -107,6 +115,13 @@ export default async function handler(
       );
       if (updErr) throw updErr;
 
+      await logEvent({
+        userId: adminUser.id,
+        action: 'account_disabled',
+        resource: 'profiles',
+        resourceId: userId,
+        metadata: { targetUserId: userId },
+      }, { req });
       return res
         .status(200)
         .json({ ok: true, message: 'User disabled successfully.' });
@@ -129,6 +144,13 @@ export default async function handler(
       );
       if (updErr) throw updErr;
 
+      await logEvent({
+        userId: adminUser.id,
+        action: 'account_enabled',
+        resource: 'profiles',
+        resourceId: userId,
+        metadata: { targetUserId: userId },
+      }, { req });
       return res
         .status(200)
         .json({ ok: true, message: 'User enabled successfully.' });
@@ -152,6 +174,15 @@ export default async function handler(
       );
       if (updErr) throw updErr;
 
+      await logEvent({
+        userId: adminUser.id,
+        action: 'role_change',
+        resource: 'profiles',
+        resourceId: userId,
+        oldData: { role: (user.app_metadata?.role as string | undefined) ?? null },
+        newData: { role },
+        metadata: { targetUserId: userId },
+      }, { req });
       return res
         .status(200)
         .json({ ok: true, message: `Role changed to ${role}.` });

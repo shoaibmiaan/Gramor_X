@@ -2,6 +2,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { env } from './env';
 import { getActiveSubscriptionRecord, normalizePlan } from '@/lib/subscription';
+import { logEvent } from '@/lib/audit';
 import type { Database } from '@/types/supabase';
 import type {
   Feature,
@@ -248,6 +249,12 @@ export async function guardAIRequest(
 ): Promise<UsageGuardResult> {
   const limit = await checkLimit(supabase, userId, feature);
   if (!limit.allowed) {
+    await logEvent({
+      userId,
+      action: 'usage_limit_exceeded',
+      resource: 'usage_tracking',
+      metadata: { feature, used: limit.used, limit: limit.limit },
+    });
     const err = new Error('usage_limit_reached');
     (err as Error & { status?: number }).status = 429;
     throw err;

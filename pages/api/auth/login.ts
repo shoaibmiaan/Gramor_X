@@ -6,6 +6,7 @@ import { incrementFlaggedLogin } from '@/lib/metrics';
 import { enforceSameOrigin } from '@/lib/security/csrf';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { supabaseService } from '@/lib/supabaseServer';
+import { logLogin } from '@/lib/audit';
 
 const MAX_ATTEMPTS = 5;
 const ATTEMPT_WINDOW_SEC = 60 * 10; // 10 minutes
@@ -91,6 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       outcome: 'blocked',
       reason: 'temporary_lockout',
     });
+    await logLogin({ email: safeEmail, outcome: 'blocked', reason: 'temporary_lockout', req });
     return res.status(429).json({ error: 'Too many failed login attempts. Please try again later.' });
   }
 
@@ -105,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       outcome: 'blocked',
       reason: 'risk_engine_block',
     });
+    await logLogin({ email: safeEmail, outcome: 'blocked', reason: 'risk_engine_block', req });
     return res.status(403).json({ error: 'Login blocked due to suspicious activity.' });
   }
 
@@ -145,6 +148,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       outcome: shouldBlock ? 'blocked' : 'failed',
       reason: shouldBlock ? 'max_failed_attempts' : 'invalid_credentials',
     });
+    await logLogin({
+      email: safeEmail,
+      outcome: shouldBlock ? 'blocked' : 'failed',
+      reason: shouldBlock ? 'max_failed_attempts' : 'invalid_credentials',
+      req,
+    });
 
     return res.status(401).json({ error: 'Invalid email or password.' });
   }
@@ -163,6 +172,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     outcome: 'success',
     reason: 'authenticated',
     userId: data.user?.id ?? null,
+  });
+  await logLogin({
+    userId: data.user?.id ?? null,
+    email: safeEmail,
+    outcome: 'success',
+    reason: 'authenticated',
+    req,
   });
 
   return res.status(200).json({ ok: true });

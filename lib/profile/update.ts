@@ -1,6 +1,7 @@
 // lib/profile/update.ts
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { updateProfileByUserId } from '@/lib/repositories/profileRepository';
+import { logEvent } from '@/lib/audit';
 // If you have a generated Database type, import it and use SupabaseClient<Database>
 //
 // import type { Database } from '@/types/supabase';
@@ -31,6 +32,16 @@ export async function updateProfileForUser(
   patch: ProfileUpdatePayload
 ) {
   const { error } = await updateProfileByUserId(supabase, userId, patch as Record<string, unknown>);
+
+  if (!error) {
+    await logEvent({
+      userId,
+      action: 'profile_update',
+      resource: 'profiles',
+      newData: patch as Record<string, unknown>,
+      metadata: { source: 'updateProfileForUser' },
+    });
+  }
 
   return { error };
 }

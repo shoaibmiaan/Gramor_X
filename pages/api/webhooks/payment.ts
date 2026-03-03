@@ -7,6 +7,7 @@ import { trackor } from '@/lib/analytics/trackor.server';
 import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
 import { getBaseUrl } from '@/lib/url';
 import { createDomainLogger } from '@/lib/obs/domainLogger';
+import { logSubscriptionChange } from '@/lib/audit';
 
 // Important: disable body parsing so we can verify Stripe signatures
 export const config = { api: { bodyParser: false } };
@@ -297,6 +298,13 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
                 .eq('user_id', prof.user_id);
 
               log.info('subscription.changed', { userId: prof.user_id, status, eventType: event.type, customerId });
+              await logSubscriptionChange({
+                userId: prof.user_id,
+                eventType: event.type,
+                oldData: { status: prof.status, plan_id: prof.plan_id },
+                newData: { status, plan_id: updates.plan_id ?? prof.plan_id, current_period_end: periodEnd },
+                metadata: { customerId, stripeSubscriptionId: typeof sub.id === 'string' ? sub.id : null },
+              });
             }
           }
         } catch {
