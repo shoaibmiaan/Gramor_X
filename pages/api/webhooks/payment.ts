@@ -7,6 +7,7 @@ import { trackor } from '@/lib/analytics/trackor.server';
 import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
 import { getBaseUrl } from '@/lib/url';
 import { createDomainLogger } from '@/lib/obs/domainLogger';
+import { logSubscriptionChange } from '@/lib/audit';
 
 // Important: disable body parsing so we can verify Stripe signatures
 export const config = { api: { bodyParser: false } };
@@ -197,17 +198,28 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
         if (invoice.customer) {
           const { data: profile } = await supabase
             .from('subscriptions')
-            .select('user_id')
+            .select('user_id,plan_id')
             .eq('stripe_customer_id', invoice.customer as string)
             .order('updated_at', { ascending: false })
             .limit(1)
-            .maybeSingle<{ user_id: string }>();
+            .maybeSingle<{ user_id: string; plan_id?: string | null }>();
+
+          const isLifetime = String(invoice?.lines?.data?.[0]?.price?.recurring?.interval ?? '') === '' &&
+            String(invoice?.metadata?.billingCycle ?? '').toLowerCase() === 'lifetime';
+
+          if (profile?.user_id && isLifetime) {
+            await supabase
+              .from('subscriptions')
+              .update({ plan_id: 'lifetime', status: 'active', updated_at: new Date().toISOString() })
+              .eq('user_id', profile.user_id);
+          }
 
           await notifyPayment(profile?.user_id ?? null, 'payment_success', invoice.id, {
             provider: 'stripe',
             amount: invoice.amount_paid,
             currency: invoice.currency,
             invoice_id: invoice.id,
+            lifetime: isLifetime,
           });
         }
         break;
@@ -297,6 +309,13 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
                 .eq('user_id', prof.user_id);
 
               log.info('subscription.changed', { userId: prof.user_id, status, eventType: event.type, customerId });
+              await logSubscriptionChange({
+                userId: prof.user_id,
+                eventType: event.type,
+                oldData: { status: prof.status, plan_id: prof.plan_id },
+                newData: { status, plan_id: updates.plan_id ?? prof.plan_id, current_period_end: periodEnd },
+                metadata: { customerId, stripeSubscriptionId: typeof sub.id === 'string' ? sub.id : null },
+              });
             }
           }
         } catch {

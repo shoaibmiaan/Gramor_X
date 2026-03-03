@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
 import { guardAIRequest } from '@/lib/usage';
 import { getAIRecommendations, type RecommendInput } from '@/lib/ai/provider';
+import { requireFeature } from '@/lib/features';
 
 type Ok = Awaited<ReturnType<typeof getAIRecommendations>>;
 type Err = { error: string };
@@ -22,9 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
+      await requireFeature(user.id, 'ai_assist');
       await guardAIRequest(supabase, user.id, 'ai.recommend');
     } catch (error) {
       if ((error as Error & { status?: number }).status === 429) return res.status(429).json({ error: 'usage_limit_reached' });
+      if ((error as Error & { status?: number }).status === 403) return res.status(403).json({ error: 'feature_disabled' });
       throw error;
     }
 

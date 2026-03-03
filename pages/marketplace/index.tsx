@@ -6,6 +6,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/router'
+import { Pagination } from '@/components/common/Pagination'
 
 // ---------- Types ----------
 type CoachCardT = {
@@ -39,9 +40,6 @@ function useQueryState<T extends string>(key: string, fallback: T) {
   return [value, setValue] as const
 }
 
-function classNames(...xs: Array<string | false | null | undefined>) {
-  return xs.filter(Boolean).join(' ')
-}
 
 // ---------- Page ----------
 export default function MarketplacePage() {
@@ -187,27 +185,6 @@ function CoachCard({ coach }: { coach: CoachCardT }) {
         </div>
       </div>
     </Link>
-  )
-}
-
-function Pagination({ page, max, onPage }: { page: number; max: number; onPage: (p: number) => void }) {
-  if (max <= 1) return null
-  const pages = Array.from({ length: max }).map((_, i) => i + 1)
-  return (
-    <div className="mt-6 flex flex-wrap items-center gap-2">
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onPage(p)}
-          className={classNames(
-            'rounded-lg border border-border px-3 py-1',
-            p === page ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-lightBg'
-          )}
-        >
-          {p}
-        </button>
-      ))}
-    </div>
   )
 }
 

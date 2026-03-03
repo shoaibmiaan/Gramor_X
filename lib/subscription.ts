@@ -29,6 +29,7 @@ export const PLAN_DISPLAY: Record<SubscriptionPlanKey, PlanDisplay> = {
 
 export function normalizePlan(plan?: string | null): SubscriptionPlanKey {
   if (plan === 'starter' || plan === 'booster' || plan === 'master') return plan;
+  if (plan === 'lifetime') return 'master';
   return 'free';
 }
 
@@ -52,7 +53,7 @@ export function normalizeStatus(status?: string | null): SubscriptionStatus {
 }
 
 export function hasActiveSubscription(plan: SubscriptionPlanKey, status: SubscriptionStatus): boolean {
-  return plan !== 'free' && (status === 'active' || status === 'trialing');
+  return plan !== 'free' && (status === 'active' || status === 'trialing' || status === 'past_due');
 }
 
 export function isTrialActive(trialEndsAt?: string | null): boolean {
@@ -193,10 +194,24 @@ export async function getActiveSubscriptionRecord(
 
 export async function isSubscriptionActive(supabase: SupabaseClient<Database>, userId: string): Promise<boolean> {
   const subscription = await getActiveSubscriptionRecord(supabase, userId);
-  if (!subscription) return false;
+  if (subscription) {
+    const status = normalizeStatus(subscription.status);
+    const plan = String(subscription.plan_id ?? '').toLowerCase();
+    if (plan === 'lifetime') return true;
+    if (status === 'active' || status === 'trialing' || status === 'past_due') return true;
+  }
 
-  const status = normalizeStatus(subscription.status);
-  return status === 'active' || status === 'trialing' || status === 'past_due';
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: contract } = await supabase
+    .from('contracts')
+    .select('id')
+    .eq('user_id', userId)
+    .lte('start_date', today)
+    .gte('end_date', today)
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(contract);
 }
 
 export async function requireActiveSubscription(

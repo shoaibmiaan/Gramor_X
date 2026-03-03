@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { enforceSameOrigin } from '@/lib/security/csrf';
 import { clearSession } from '@/lib/auth/server';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { logAccountAudit } from '@/lib/audit';
+import { logAccountAudit, logLogout } from '@/lib/audit';
 
 /**
  * Clears Supabase auth cookies set by the Next.js helpers (if used).
@@ -24,6 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (user?.id) {
     await logAccountAudit(supabase, user.id, 'logout', {}, { ip, userAgent });
+    await logLogout(user.id, req);
   }
 
   clearSession(res);

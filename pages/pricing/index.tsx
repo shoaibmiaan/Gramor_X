@@ -143,6 +143,41 @@ const PricingPage: NextPage = () => {
   const from: string = typeof router.query.from === 'string' ? router.query.from : '/';
   const qk: string | null = typeof router.query.qk === 'string' ? router.query.qk : null;
 
+
+
+  const [dynamicPlans, setDynamicPlans] = React.useState<PlanRow[] | null>(null);
+
+  React.useEffect(() => {
+    const run = async () => {
+      try {
+        const resp = await fetch('/api/plans');
+        const json = await resp.json();
+        if (!json?.ok || !Array.isArray(json.plans)) return;
+        const mapped: PlanRow[] = json.plans
+          .filter((x: any) => x.id !== 'enterprise')
+          .map((x: any) => {
+            const key = (x.id === 'starter' || x.id === 'booster' || x.id === 'master') ? x.id : 'starter';
+            const base = PLAN_PRESENTATION[key];
+            return {
+              key,
+              title: base.title,
+              subtitle: x.description || base.subtitle,
+              priceMonthly: Math.round(Number(x.price_monthly ?? 0) * 100),
+              priceAnnual: Math.round(Number(x.price_yearly ?? 0) * 100),
+              features: Array.isArray(x.features) ? x.features : base.features,
+              badge: base.badge,
+              mostPopular: base.mostPopular,
+              icon: base.icon,
+            } as PlanRow;
+          });
+        if (mapped.length) setDynamicPlans(mapped);
+      } catch {
+        // keep static fallback
+      }
+    };
+    void run();
+  }, []);
+
   React.useEffect(() => {
     setCurrency(guessCurrency());
     try { setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || '—'); } catch { /* noop */ }
@@ -309,7 +344,7 @@ const PricingPage: NextPage = () => {
               <h2 id="plans-heading" className="sr-only">Plans and pricing options</h2>
 
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-                {PLANS.map((p) => {
+                {(dynamicPlans ?? PLANS).map((p) => {
                   const priceCentsUSD = cycle === 'monthly' ? p.priceMonthly : p.priceAnnual;
                   const priceLabel = formatMoneyFromUsdCents(priceCentsUSD, currency);
                   const periodLabel = cycle === 'monthly' ? 'per month' : 'per month (billed annually)';
@@ -378,6 +413,12 @@ const PricingPage: NextPage = () => {
                   }
                   return <CardShell key={p.key}>{Inner}</CardShell>;
                 })}
+
+                <Card className="p-7 rounded-2xl border-dashed">
+                  <h3 className="text-h3 font-semibold">Enterprise</h3>
+                  <p className="mt-2 text-small text-muted-foreground">Need custom contracts, PO invoicing, or bulk seats?</p>
+                  <Link href="#enterprise-contact" className="mt-4 inline-flex rounded bg-primary px-3 py-2 text-sm text-primary-foreground">Contact Sales</Link>
+                </Card>
               </div>
             </section>
 
@@ -450,3 +491,35 @@ const PricingPage: NextPage = () => {
 };
 
 export default PricingPage;
+
+function EnterpriseContactForm() {
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [company, setCompany] = React.useState('');
+  const [message, setMessage] = React.useState('');
+  const [status, setStatus] = React.useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('Sending…');
+    const res = await fetch('/api/enterprise/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, company, message }),
+    });
+    setStatus(res.ok ? 'Inquiry sent. Our sales team will contact you soon.' : 'Failed to send inquiry.');
+  };
+
+  return (
+    <form onSubmit={submit} className="mt-4 grid gap-3 md:grid-cols-2">
+      <input className="rounded border border-border bg-card px-3 py-2 text-sm" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
+      <input className="rounded border border-border bg-card px-3 py-2 text-sm" placeholder="Work email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <input className="rounded border border-border bg-card px-3 py-2 text-sm" placeholder="Company" value={company} onChange={(e) => setCompany(e.target.value)} />
+      <input className="rounded border border-border bg-card px-3 py-2 text-sm" placeholder="Expected seats" value={message} onChange={(e) => setMessage(e.target.value)} />
+      <div className="md:col-span-2">
+        <button className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground" type="submit">Contact Sales</button>
+        {status ? <p className="mt-2 text-xs text-muted-foreground">{status}</p> : null}
+      </div>
+    </form>
+  );
+}
