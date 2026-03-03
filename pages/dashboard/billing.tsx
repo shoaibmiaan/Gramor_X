@@ -1,15 +1,29 @@
+import Link from 'next/link';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { useSubscription } from '@/hooks/useSubscription';
 
-export default function billingPage() {
+export default function BillingPage() {
+  const subscription = useSubscription();
+
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-semibold">Billing</h1>
-      <Card>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          This module is now aligned with the enterprise dashboard architecture.
-        </p>
-      </Card>
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold">Billing</h1>
+        <Card>
+          <div className="space-y-2 p-4">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Current plan: {subscription.displayPlan.name}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Status: {subscription.statusLabel}</p>
+            {subscription.renewsAtLabel ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Renews: {subscription.renewsAtLabel}</p>
+            ) : null}
+            <Link href="/profile/account/billing">
+              <Button>Manage in billing portal</Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
     </DashboardLayout>
   );
 }

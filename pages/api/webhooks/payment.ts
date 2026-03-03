@@ -120,17 +120,16 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
         if (userId) {
           // Update profile entitlements
           await supabase
-            .from('profiles')
-            .update({
-              membership: plan,
-              subscription_status: 'active',
-              stripe_customer_id: session.customer,
-              subscription_renews_at: null,
-              trial_ends_at: null,
-              premium_until: null,
+            .from('subscriptions')
+            .upsert({
+              user_id: userId,
+              plan_id: plan,
+              status: 'active',
+              stripe_customer_id: session.customer ?? null,
+              stripe_subscription_id: session.subscription ?? null,
               updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId);
+              metadata: { source: 'checkout.session.completed' },
+            }, { onConflict: 'user_id' });
         }
 
         if (session.id) {
@@ -197,9 +196,11 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
 
         if (invoice.customer) {
           const { data: profile } = await supabase
-            .from('profiles')
+            .from('subscriptions')
             .select('user_id')
             .eq('stripe_customer_id', invoice.customer as string)
+            .order('updated_at', { ascending: false })
+            .limit(1)
             .maybeSingle<{ user_id: string }>();
 
           await notifyPayment(profile?.user_id ?? null, 'payment_success', invoice.id, {
@@ -227,9 +228,11 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
 
         if (invoice.customer) {
           const { data: profile } = await supabase
-            .from('profiles')
+            .from('subscriptions')
             .select('user_id')
             .eq('stripe_customer_id', invoice.customer as string)
+            .order('updated_at', { ascending: false })
+            .limit(1)
             .maybeSingle<{ user_id: string }>();
 
           const reason =
@@ -256,11 +259,13 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
           const customerId: string | undefined = sub.customer;
           if (customerId) {
             const { data: prof } = await supabase
-              .from('profiles')
-              .select('id, membership')
+              .from('subscriptions')
+              .select('id, user_id, status, plan_id, metadata')
               .eq('stripe_customer_id', customerId)
+              .order('updated_at', { ascending: false })
+              .limit(1)
               .maybeSingle();
-            if (prof?.id) {
+            if (prof?.user_id) {
               const status = (sub.status as string | undefined) || 'canceled';
               const periodEnd =
                 typeof sub.current_period_end === 'number'
@@ -275,23 +280,23 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
                 status === 'canceled' || status === 'past_due' || status === 'unpaid';
 
               const updates: Record<string, any> = {
-                subscription_status: status,
-                subscription_renews_at: periodEnd,
+                status,
+                current_period_end: periodEnd,
                 trial_ends_at: trialEnd,
                 updated_at: new Date().toISOString(),
+                stripe_subscription_id: typeof sub.id === 'string' ? sub.id : null,
               };
 
               if (shouldDowngrade) {
-                updates.membership = 'free';
-                updates.premium_until = null;
+                updates.plan_id = 'free';
               }
 
               await supabase
-                .from('profiles')
+                .from('subscriptions')
                 .update(updates)
-                .eq('id', prof.id);
+                .eq('user_id', prof.user_id);
 
-              log.info('subscription.changed', { userId: prof.id, status, eventType: event.type, customerId });
+              log.info('subscription.changed', { userId: prof.user_id, status, eventType: event.type, customerId });
             }
           }
         } catch {
