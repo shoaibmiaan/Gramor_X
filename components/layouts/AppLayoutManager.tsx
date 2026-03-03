@@ -34,10 +34,11 @@ import BillingLayout from '@/components/layouts/BillingLayout';
 import ResourcesLayout from '@/components/layouts/ResourcesLayout';
 import AnalyticsLayout from '@/components/layouts/AnalyticsLayout';
 import SupportLayout from '@/components/layouts/SupportLayout';
+import WritingLayout from '@/components/layouts/WritingLayout';
+import ExamResourceLayout from '@/components/layouts/ExamResourceLayout';
 
 // ⭐ NEW — Breadcrumb Bar V2
 import { BreadcrumbBar } from '@/components/navigation/BreadcrumbBar';
-
 
 // -----------------------
 // Error Boundary
@@ -59,9 +60,7 @@ const LayoutErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) =>
           <p className="text-sm text-muted-foreground mb-4">
             There was a problem loading this page layout.
           </p>
-          <Button onClick={() => window.location.reload()}>
-            Reload Page
-          </Button>
+          <Button onClick={() => window.location.reload()}>Reload Page</Button>
         </div>
       </Card>
     );
@@ -69,7 +68,6 @@ const LayoutErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return <>{children}</>;
 };
-
 
 // -----------------------
 // Props
@@ -98,7 +96,6 @@ type AppLayoutManagerProps = {
   showBreadcrumbs?: boolean;
 };
 
-
 // -----------------------
 // Teacher Onboarding Gate
 // -----------------------
@@ -110,7 +107,7 @@ function TeacherOnboardingGate() {
       event.preventDefault();
       void router.push('/teacher/register');
     },
-    [router]
+    [router],
   );
 
   return (
@@ -122,7 +119,8 @@ function TeacherOnboardingGate() {
           </p>
           <h2 className="text-h3 font-semibold text-foreground">Complete your profile</h2>
           <p className="text-small text-muted-foreground">
-            Your account is created but not approved yet. Share a quick profile so our team can unlock the teacher workspace for you.
+            Your account is created but not approved yet. Share a quick profile so our team can
+            unlock the teacher workspace for you.
           </p>
         </div>
 
@@ -151,7 +149,6 @@ function TeacherOnboardingGate() {
   );
 }
 
-
 // -----------------------
 // Teacher Access Helper
 // -----------------------
@@ -167,7 +164,7 @@ const useTeacherAccess = (role?: string | null, isTeacherApproved?: boolean | nu
       canAccessTeacher,
       isApproved,
       shouldRedirect: isTeacherRoute && role && !canAccessTeacher,
-      showOnboarding: role === 'teacher' && !isApproved
+      showOnboarding: role === 'teacher' && !isApproved,
     };
   }, [role, isTeacherApproved, isTeacherRoute]);
 
@@ -180,7 +177,6 @@ const useTeacherAccess = (role?: string | null, isTeacherApproved?: boolean | nu
   return teacherAccess;
 };
 
-
 // -----------------------
 // Layout Config Type
 // -----------------------
@@ -192,10 +188,9 @@ type LayoutConfig = {
     role?: string | null,
     isTeacherApproved?: boolean | null,
     children?: ReactNode,
-    guardFallback?: () => ReactNode
+    guardFallback?: () => ReactNode,
   ) => ReactNode;
 };
-
 
 // -----------------------
 // MAIN COMPONENT
@@ -221,13 +216,13 @@ export function AppLayoutManager({
   guardFallback,
   showBreadcrumbs,
 }: AppLayoutManagerProps) {
+  // Architecture note: Pages must not self-wrap with app shell layouts.
 
   const router = useRouter();
   const pathname = router.pathname;
   const teacherAccess = useTeacherAccess(role, isTeacherApproved);
   const isTeacherRoute = pathname.startsWith('/teacher');
   const teacherAccessRole = role ?? 'guest';
-
 
   // -----------------------
   // Teacher Content Switch
@@ -252,14 +247,18 @@ export function AppLayoutManager({
     return guardFallback();
   }, [role, teacherAccessRole, teacherAccess.isApproved, children, guardFallback]);
 
-
   // -----------------------
   // Layout Mapping
   // -----------------------
   const layoutConfigs: LayoutConfig[] = useMemo(
     () => [
       { type: 'admin', component: AdminLayout, guard: () => isAdminRoute },
-      { type: 'teacher', component: TeacherLayout, guard: () => isTeacherRoute, getContent: () => getTeacherContent() },
+      {
+        type: 'teacher',
+        component: TeacherLayout,
+        guard: () => isTeacherRoute,
+        getContent: () => getTeacherContent(),
+      },
       { type: 'institutions', component: InstitutionsLayout, guard: () => isInstitutionsRoute },
       { type: 'dashboard', component: DashboardLayout, guard: () => isDashboardRoute },
       { type: 'marketplace', component: MarketplaceLayout, guard: () => isMarketplaceRoute },
@@ -294,27 +293,21 @@ export function AppLayoutManager({
       isMarketingRoute,
       pathname,
       getTeacherContent,
-    ]
+    ],
   );
-
 
   // -----------------------
   // Which Layout Active?
   // -----------------------
   const activeLayout = useMemo(
     () => layoutConfigs.find((config) => config.guard?.(role, isTeacherApproved)) || null,
-    [layoutConfigs, role, isTeacherApproved]
+    [layoutConfigs, role, isTeacherApproved],
   );
-
 
   // -----------------------
   // Apply Wrappers
   // -----------------------
-  const getNakedContent = (
-    auth: boolean,
-    proctoring: boolean,
-    content: ReactNode
-  ) => {
+  const getNakedContent = (auth: boolean, proctoring: boolean, content: ReactNode) => {
     // For specific auth pages that should be truly naked (no AuthLayout)
     const nakedAuthRoutes = ['/forgot-password', '/update-password'];
     if (nakedAuthRoutes.includes(router.pathname)) {
@@ -322,24 +315,78 @@ export function AppLayoutManager({
     }
     if (auth) {
       const authCopy: Record<string, { title: string; subtitle: string }> = {
-        '/login': { title: 'Welcome back', subtitle: 'Sign in to continue your IELTS prep journey.' },
-        '/login/index': { title: 'Welcome back', subtitle: 'Sign in to continue your IELTS prep journey.' },
-        '/login/email': { title: 'Sign in with email', subtitle: 'Use your email and password to access your account.' },
-        '/login/phone': { title: 'Sign in with phone', subtitle: 'Get a one-time code on your phone and continue securely.' },
-        '/login/password': { title: 'Set new password', subtitle: 'Create a secure password to protect your account.' },
-        '/signup': { title: 'Create your account', subtitle: 'Choose a sign-up method and start improving your band score.' },
-        '/signup/index': { title: 'Create your account', subtitle: 'Choose a sign-up method and start improving your band score.' },
-        '/signup/email': { title: 'Sign up with email', subtitle: 'Create your account using email verification.' },
-        '/signup/phone': { title: 'Sign up with phone', subtitle: 'Create your account with a secure SMS verification code.' },
-        '/signup/password': { title: 'Create password', subtitle: 'Set a strong password to finish your account setup.' },
-        '/signup/verify': { title: 'Verify your email', subtitle: 'Check your inbox and confirm your email to continue.' },
-        '/auth/forgot': { title: 'Forgot password', subtitle: 'We will send a reset link to your email address.' },
-        '/auth/reset': { title: 'Reset password', subtitle: 'Choose a new password and sign in again.' },
-        '/auth/verify': { title: 'Email verification', subtitle: 'Finalizing your verification and secure sign-in.' },
-        '/auth/confirm': { title: 'Confirm your email', subtitle: 'We are validating your email confirmation link.' },
-        '/auth/mfa': { title: 'Two-factor authentication', subtitle: 'Enter the 6-digit code from your authenticator app.' },
-        '/forgot-password': { title: 'Forgot password', subtitle: 'We will send a reset link to your email address.' },
-        '/update-password': { title: 'Update password', subtitle: 'Set a new password and get back into your account.' },
+        '/login': {
+          title: 'Welcome back',
+          subtitle: 'Sign in to continue your IELTS prep journey.',
+        },
+        '/login/index': {
+          title: 'Welcome back',
+          subtitle: 'Sign in to continue your IELTS prep journey.',
+        },
+        '/login/email': {
+          title: 'Sign in with email',
+          subtitle: 'Use your email and password to access your account.',
+        },
+        '/login/phone': {
+          title: 'Sign in with phone',
+          subtitle: 'Get a one-time code on your phone and continue securely.',
+        },
+        '/login/password': {
+          title: 'Set new password',
+          subtitle: 'Create a secure password to protect your account.',
+        },
+        '/signup': {
+          title: 'Create your account',
+          subtitle: 'Choose a sign-up method and start improving your band score.',
+        },
+        '/signup/index': {
+          title: 'Create your account',
+          subtitle: 'Choose a sign-up method and start improving your band score.',
+        },
+        '/signup/email': {
+          title: 'Sign up with email',
+          subtitle: 'Create your account using email verification.',
+        },
+        '/signup/phone': {
+          title: 'Sign up with phone',
+          subtitle: 'Create your account with a secure SMS verification code.',
+        },
+        '/signup/password': {
+          title: 'Create password',
+          subtitle: 'Set a strong password to finish your account setup.',
+        },
+        '/signup/verify': {
+          title: 'Verify your email',
+          subtitle: 'Check your inbox and confirm your email to continue.',
+        },
+        '/auth/forgot': {
+          title: 'Forgot password',
+          subtitle: 'We will send a reset link to your email address.',
+        },
+        '/auth/reset': {
+          title: 'Reset password',
+          subtitle: 'Choose a new password and sign in again.',
+        },
+        '/auth/verify': {
+          title: 'Email verification',
+          subtitle: 'Finalizing your verification and secure sign-in.',
+        },
+        '/auth/confirm': {
+          title: 'Confirm your email',
+          subtitle: 'We are validating your email confirmation link.',
+        },
+        '/auth/mfa': {
+          title: 'Two-factor authentication',
+          subtitle: 'Enter the 6-digit code from your authenticator app.',
+        },
+        '/forgot-password': {
+          title: 'Forgot password',
+          subtitle: 'We will send a reset link to your email address.',
+        },
+        '/update-password': {
+          title: 'Update password',
+          subtitle: 'Set a new password and get back into your account.',
+        },
       };
 
       const copy = authCopy[router.pathname] ?? {
@@ -347,7 +394,11 @@ export function AppLayoutManager({
         subtitle: 'Secure sign in and sign up experience across all devices.',
       };
 
-      return <AuthLayout title={copy.title} subtitle={copy.subtitle}>{content}</AuthLayout>;
+      return (
+        <AuthLayout title={copy.title} subtitle={copy.subtitle}>
+          {content}
+        </AuthLayout>
+      );
     }
     if (proctoring) return <ProctoringLayout>{content}</ProctoringLayout>;
     return content;
@@ -378,7 +429,6 @@ export function AppLayoutManager({
     children,
     guardFallback,
   ]);
-
 
   // -----------------------
   // Final Layout Wrap
