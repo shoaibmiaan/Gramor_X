@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import ExamResourceLayout from '@/components/layouts/ExamResourceLayout';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -45,10 +44,9 @@ export default function ExamDayPage() {
         />
       </Head>
 
-      <ExamResourceLayout title="Exam day playbook">
-        <section className="bg-lightBg py-0 dark:bg-transparent">
-          <Container>
-            <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <section className="bg-lightBg py-0 dark:bg-transparent">
+        <Container>
+          <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <article className="space-y-6 rounded-ds-2xl bg-card/70 p-6 shadow-lg shadow-black/5 backdrop-blur">
               <header className="space-y-3">
                 <span className="inline-flex items-center rounded-full bg-primary/10 px-4 py-1 text-small font-medium text-primary">
@@ -56,8 +54,9 @@ export default function ExamDayPage() {
                 </span>
                 <h1 className="font-slab text-h2">Exam day playbook</h1>
                 <p className="text-body text-mutedText">
-                  Use this focused checklist to keep exam morning calm, intentional, and aligned with how you practised.
-                  You&apos;ve already put in the work—today is about execution.
+                  Use this focused checklist to keep exam morning calm, intentional, and aligned
+                  with how you practised. You&apos;ve already put in the work—today is about
+                  execution.
                 </p>
               </header>
 
@@ -70,7 +69,8 @@ export default function ExamDayPage() {
               <Card className="space-y-4 rounded-ds-2xl p-6">
                 <h2 className="font-slab text-h4">Launch a final mock</h2>
                 <p className="text-small text-mutedText">
-                  A quick mock keeps pacing sharp and reminds you of the timing rhythm before the real thing.
+                  A quick mock keeps pacing sharp and reminds you of the timing rhythm before the
+                  real thing.
                 </p>
                 <Button asChild size="lg" fullWidth>
                   <Link href="/mock">Start a mock exam</Link>
@@ -89,10 +89,9 @@ export default function ExamDayPage() {
                 </ul>
               </Card>
             </aside>
-            </div>
-          </Container>
-        </section>
-      </ExamResourceLayout>
+          </div>
+        </Container>
+      </section>
     </>
   );
 }
