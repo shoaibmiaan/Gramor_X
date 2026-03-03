@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
+import { AuthError, writeAuthError } from '@/lib/auth';
 import { getNextExercises, getPersonalizedStudyPlan, getWeaknessFocusedContent } from '@/lib/recommendations';
+import { requirePremiumUser } from '@/lib/premiumRoute';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'method_not_allowed' });
 
   const supabase = createSupabaseServerClient({ req, res });
   try {
-    const user = await requireAuth(supabase);
+    const user = await requirePremiumUser(req, res);
     const count = Number(req.query.count ?? 5);
     const days = Number(req.query.days ?? 7);
 

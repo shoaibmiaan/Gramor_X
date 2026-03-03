@@ -4,7 +4,6 @@ create table if not exists public.profiles (
   email text,
   full_name text,
   avatar_url text,
-  plan text default 'free'::text,
   settings jsonb default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
