@@ -276,8 +276,10 @@ function InnerApp({ Component, pageProps }: AppProps) {
           >
             <AnimationProvider>
               <AppLayoutManager
+                routeLayout={routeConfiguration.routeConfig.layout}
                 isAuthPage={routeConfiguration.isAuthPage}
                 isProctoringRoute={routeConfiguration.isProctoringRoute}
+                isFullscreenRoute={routeConfiguration.isNoChromeRoute}
                 showLayout={routeConfiguration.showLayout}
                 forceLayoutOnAuthPage={forceLayoutOnAuthPage}
                 isAdminRoute={routeConfiguration.isAdminRoute}

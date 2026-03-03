@@ -74,8 +74,10 @@ const LayoutErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) =>
 // -----------------------
 type AppLayoutManagerProps = {
   children: ReactNode;
+  routeLayout?: string;
   isAuthPage: boolean;
   isProctoringRoute: boolean;
+  isFullscreenRoute: boolean;
   showLayout: boolean;
   forceLayoutOnAuthPage: boolean;
   isAdminRoute: boolean;
@@ -183,13 +185,31 @@ const useTeacherAccess = (role?: string | null, isTeacherApproved?: boolean | nu
 type LayoutConfig = {
   type: string;
   component: React.ComponentType<{ children: ReactNode; userRole?: string }>;
-  guard?: (role?: string | null, isTeacherApproved?: boolean | null) => boolean;
-  getContent?: (
-    role?: string | null,
-    isTeacherApproved?: boolean | null,
-    children?: ReactNode,
-    guardFallback?: () => ReactNode,
-  ) => ReactNode;
+};
+
+const layoutComponentMap: Record<string, React.ComponentType<{ children: ReactNode; userRole?: string }>> = {
+  admin: AdminLayout,
+  teacher: TeacherLayout,
+  institutions: InstitutionsLayout,
+  dashboard: DashboardLayout,
+  marketplace: MarketplaceLayout,
+  learning: LearningLayout,
+  community: CommunityLayout,
+  reports: ReportsLayout,
+  marketing: PublicMarketingLayout,
+  profile: ProfileLayout,
+  communication: CommunicationLayout,
+  billing: BillingLayout,
+  resources: ResourcesLayout,
+  analytics: AnalyticsLayout,
+  support: SupportLayout,
+};
+
+const resolveLayoutComponent = (
+  layoutType?: string
+): React.ComponentType<{ children: ReactNode; userRole?: string }> | null => {
+  if (!layoutType) return null;
+  return layoutComponentMap[layoutType] ?? null;
 };
 
 // -----------------------
@@ -197,8 +217,10 @@ type LayoutConfig = {
 // -----------------------
 export function AppLayoutManager({
   children,
+  routeLayout,
   isAuthPage,
   isProctoringRoute,
+  isFullscreenRoute,
   showLayout,
   forceLayoutOnAuthPage,
   isAdminRoute,
@@ -219,9 +241,7 @@ export function AppLayoutManager({
   // Architecture note: Pages must not self-wrap with app shell layouts.
 
   const router = useRouter();
-  const pathname = router.pathname;
   const teacherAccess = useTeacherAccess(role, isTeacherApproved);
-  const isTeacherRoute = pathname.startsWith('/teacher');
   const teacherAccessRole = role ?? 'guest';
 
   // -----------------------
@@ -250,70 +270,57 @@ export function AppLayoutManager({
   // -----------------------
   // Layout Mapping
   // -----------------------
-  const layoutConfigs: LayoutConfig[] = useMemo(
-    () => [
-      { type: 'admin', component: AdminLayout, guard: () => isAdminRoute },
-      {
-        type: 'teacher',
-        component: TeacherLayout,
-        guard: () => isTeacherRoute,
-        getContent: () => getTeacherContent(),
-      },
-      { type: 'institutions', component: InstitutionsLayout, guard: () => isInstitutionsRoute },
-      { type: 'dashboard', component: DashboardLayout, guard: () => isDashboardRoute },
-      { type: 'marketplace', component: MarketplaceLayout, guard: () => isMarketplaceRoute },
-      { type: 'learning', component: LearningLayout, guard: () => isLearningRoute },
-      { type: 'community', component: CommunityLayout, guard: () => isCommunityRoute },
-      { type: 'reports', component: ReportsLayout, guard: () => isReportsRoute },
-      { type: 'marketing', component: PublicMarketingLayout, guard: () => isMarketingRoute },
-      {
-        type: 'profile',
-        component: ProfileLayout,
-        guard: () =>
-          pathname.startsWith('/profile') ||
-          pathname.startsWith('/user') ||
-          pathname.startsWith('/settings') ||
-          pathname.startsWith('/me/'),
-      },
-      { type: 'communication', component: CommunicationLayout, guard: () => pathname.startsWith('/messages') || pathname.startsWith('/chat') || pathname.startsWith('/inbox') },
-      { type: 'billing', component: BillingLayout, guard: () => pathname.startsWith('/billing') || pathname.startsWith('/payment') || pathname.startsWith('/subscription') },
-      { type: 'resources', component: ResourcesLayout, guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library') },
-      { type: 'analytics', component: AnalyticsLayout, guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats') },
-      { type: 'support', component: SupportLayout, guard: () => pathname.startsWith('/support') || pathname.startsWith('/help') },
-    ],
-    [
-      isAdminRoute,
-      isTeacherRoute,
-      isInstitutionsRoute,
-      isDashboardRoute,
-      isMarketplaceRoute,
-      isLearningRoute,
-      isCommunityRoute,
-      isReportsRoute,
-      isMarketingRoute,
-      pathname,
-      getTeacherContent,
-    ],
-  );
+  const fallbackLayoutType = useMemo(() => {
+    if (isAdminRoute) return 'admin';
+    if (router.pathname.startsWith('/teacher')) return 'teacher';
+    if (isInstitutionsRoute) return 'institutions';
+    if (isMarketplaceRoute) return 'marketplace';
+    if (isLearningRoute) return 'learning';
+    if (isCommunityRoute) return 'community';
+    if (isReportsRoute) return 'reports';
+    if (isMarketingRoute) return 'marketing';
+    if (isDashboardRoute) return 'dashboard';
+    return 'dashboard';
+  }, [
+    isAdminRoute,
+    isInstitutionsRoute,
+    isMarketplaceRoute,
+    isLearningRoute,
+    isCommunityRoute,
+    isReportsRoute,
+    isMarketingRoute,
+    isDashboardRoute,
+    router.pathname,
+  ]);
 
   // -----------------------
   // Which Layout Active?
   // -----------------------
-  const activeLayout = useMemo(
-    () => layoutConfigs.find((config) => config.guard?.(role, isTeacherApproved)) || null,
-    [layoutConfigs, role, isTeacherApproved],
+  const resolvedLayoutType = useMemo(
+    () => routeLayout ?? fallbackLayoutType,
+    [routeLayout, fallbackLayoutType]
   );
+
+  const activeLayout = useMemo<LayoutConfig | null>(() => {
+    const component = resolveLayoutComponent(resolvedLayoutType) ?? resolveLayoutComponent(fallbackLayoutType);
+    if (!component) return null;
+    return {
+      type: resolvedLayoutType,
+      component,
+    };
+  }, [resolvedLayoutType, fallbackLayoutType]);
+
 
   // -----------------------
   // Apply Wrappers
   // -----------------------
-  const getNakedContent = (auth: boolean, proctoring: boolean, content: ReactNode) => {
+  const getNakedContent = (content: ReactNode) => {
     // For specific auth pages that should be truly naked (no AuthLayout)
     const nakedAuthRoutes = ['/forgot-password', '/update-password'];
     if (nakedAuthRoutes.includes(router.pathname)) {
       return content;
     }
-    if (auth) {
+    if (isAuthPage) {
       const authCopy: Record<string, { title: string; subtitle: string }> = {
         '/login': {
           title: 'Welcome back',
@@ -400,34 +407,35 @@ export function AppLayoutManager({
         </AuthLayout>
       );
     }
-    if (proctoring) return <ProctoringLayout>{content}</ProctoringLayout>;
+    if (isProctoringRoute) return <ProctoringLayout>{content}</ProctoringLayout>;
+    if (isFullscreenRoute) return content;
     return content;
   };
 
   const content = useMemo(() => {
     if (!showLayout) {
-      return getNakedContent(isAuthPage, isProctoringRoute, children);
+      return getNakedContent(children);
     }
 
     if (activeLayout) {
-      if (activeLayout.getContent) {
-        return activeLayout.getContent(role, isTeacherApproved, children, guardFallback);
+      if (activeLayout.type === 'teacher') {
+        return getTeacherContent();
       }
 
       const LayoutComponent = activeLayout.component;
       return <LayoutComponent userRole={role}>{children}</LayoutComponent>;
     }
 
-    return children;
+    return <DashboardLayout userRole={role}>{children}</DashboardLayout>;
   }, [
     showLayout,
-    isAuthPage,
-    isProctoringRoute,
+    isFullscreenRoute,
     activeLayout,
     role,
-    isTeacherApproved,
     children,
-    guardFallback,
+    getTeacherContent,
+    isAuthPage,
+    isProctoringRoute,
   ]);
 
   // -----------------------
