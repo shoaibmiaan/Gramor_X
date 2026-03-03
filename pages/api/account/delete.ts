@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { logAccountAudit } from '@/lib/audit';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { isRecentAuthentication } from '@/lib/auth/recentAuth';
+import { requireAuth, writeAuthError, AuthError } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -10,12 +12,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const supabase = createSupabaseServerClient({ req, res });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user;
+  try {
+    user = await requireAuth(supabase);
+  } catch (error) {
+    if (error instanceof AuthError) return writeAuthError(res, error.code);
+    throw error;
+  }
 
-  if (!user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (!isRecentAuthentication(req, 15 * 60)) {
+    return res.status(403).json({ error: 'Re-authentication required before deleting account' });
   }
 
   const { confirm, acknowledge } = (req.body ?? {}) as { confirm?: string; acknowledge?: boolean };
@@ -26,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const ipHeader = req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? null;
   const ip = Array.isArray(ipHeader) ? ipHeader[0] : ipHeader;
   const uaHeader = req.headers['user-agent'];
-  const userAgent = Array.isArray(uaHeader) ? uaHeader[0] : uaHeader ?? null;
+  const userAgent = Array.isArray(uaHeader) ? uaHeader[0] : (uaHeader ?? null);
 
   const now = new Date();
   const purgeAfter = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);

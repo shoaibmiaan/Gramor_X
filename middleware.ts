@@ -45,6 +45,73 @@ function hasAuthCookie(req: NextRequest) {
     .some((cookie) => /^sb-[a-z0-9-]+-auth-token(?:\.\d+)?$/i.test(cookie.name));
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  const payload = parts[1];
+  if (!payload) return null;
+
+  try {
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+    const text = atob(padded);
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function getAccessTokenFromCookie(req: NextRequest): string | null {
+  const direct = req.cookies.get('sb-access-token')?.value;
+  if (direct) return direct;
+
+  const authCookie = req.cookies
+    .getAll()
+    .find((cookie) => /^sb-[a-z0-9-]+-auth-token(?:\.\d+)?$/i.test(cookie.name));
+
+  if (!authCookie?.value) return null;
+
+  try {
+    const parsed = JSON.parse(decodeURIComponent(authCookie.value)) as
+      | { access_token?: string; currentSession?: { access_token?: string } }
+      | [{ access_token?: string }?, { access_token?: string }?]
+      | null;
+
+    if (Array.isArray(parsed)) {
+      return parsed[0]?.access_token ?? parsed[1]?.access_token ?? null;
+    }
+
+    return parsed?.access_token ?? parsed?.currentSession?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getRoleFromRequest(req: NextRequest): string | null {
+  const token = getAccessTokenFromCookie(req);
+  if (!token) return null;
+
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+
+  const appMeta = payload.app_metadata as { role?: unknown } | undefined;
+  const userMeta = payload.user_metadata as { role?: unknown } | undefined;
+  const role = appMeta?.role ?? userMeta?.role;
+
+  return typeof role === 'string' ? role.toLowerCase() : null;
+}
+
+function hasExpiredSession(req: NextRequest) {
+  const token = getAccessTokenFromCookie(req);
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  if (!payload) return false;
+
+  const exp = payload.exp;
+  if (typeof exp !== 'number') return false;
+  return exp <= Math.floor(Date.now() / 1000);
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
@@ -73,6 +140,37 @@ export async function middleware(req: NextRequest) {
     url.pathname = targetPath;
     url.search = query ? `?${query}` : '';
     return NextResponse.redirect(url);
+  }
+
+  if (authed && isProtected && hasExpiredSession(req)) {
+    const url = req.nextUrl.clone();
+    const destination = createLoginDestination(pathname + (search || ''));
+    const separator = destination.includes('?') ? '&' : '?';
+    const withMessage = `${destination}${separator}reason=session_expired`;
+    const [targetPath, query = ''] = withMessage.split('?');
+    url.pathname = targetPath;
+    url.search = query ? `?${query}` : '';
+    return NextResponse.redirect(url);
+  }
+
+  if (authed && pathname.startsWith('/admin')) {
+    const role = getRoleFromRequest(req);
+    if (role !== 'admin') {
+      const url = req.nextUrl.clone();
+      url.pathname = '/403';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+  }
+
+  if (authed && pathname.startsWith('/teacher')) {
+    const role = getRoleFromRequest(req);
+    if (role !== 'teacher' && role !== 'admin') {
+      const url = req.nextUrl.clone();
+      url.pathname = '/403';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
   }
 
   if (authed && isAuthPage) {

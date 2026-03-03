@@ -5,7 +5,14 @@ import { env } from '@/lib/env';
 import { getSubscriptionSummary } from '@/lib/repositories/subscriptionRepository';
 import { getActiveSubscription, summarizeStripeSubscription } from '@/lib/subscription';
 import { mapStripeInvoice } from '@/lib/subscriptions';
-import type { BillingInvoice as Invoice, SubscriptionApiResponse, PortalSummaryResponse, SubscriptionSummary } from '@/types/subscription';
+import type {
+  BillingInvoice as Invoice,
+  SubscriptionApiResponse,
+  PortalSummaryResponse,
+  SubscriptionSummary,
+} from '@/types/subscription';
+import { isRecentAuthentication } from '@/lib/auth/recentAuth';
+import { requireAuth, writeAuthError, AuthError } from '@/lib/auth';
 
 const getOrigin = (req: NextApiRequest) => {
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
@@ -14,10 +21,15 @@ const getOrigin = (req: NextApiRequest) => {
 };
 
 const handler: NextApiHandler<SubscriptionApiResponse> = async (req, res) => {
-  const supabase = createSupabaseServerClient({ req });
-  const { data: userResp } = await supabase.auth.getUser();
-  const userId = userResp.user?.id;
-  if (!userId) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const supabase = createSupabaseServerClient({ req, res });
+  let user;
+  try {
+    user = await requireAuth(supabase);
+  } catch (error) {
+    if (error instanceof AuthError) return writeAuthError(res, error.code);
+    throw error;
+  }
+  const userId = user.id;
 
   const dbSummary = await getSubscriptionSummary(supabase, userId);
   const customerId = dbSummary.customerId;
@@ -27,6 +39,10 @@ const handler: NextApiHandler<SubscriptionApiResponse> = async (req, res) => {
   const openPortal =
     req.headers['x-open-portal'] === '1' ||
     (req.headers['content-type']?.includes('application/x-www-form-urlencoded') ?? false);
+
+  if (openPortal && !isRecentAuthentication(req, 15 * 60)) {
+    return res.status(403).json({ ok: false, error: 'Re-authentication required' });
+  }
 
   // @ts-expect-error TODO: add `stripe` dependency for full types
   const Stripe = (await import('stripe')).default ?? (await import('stripe'));
