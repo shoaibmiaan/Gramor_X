@@ -1,6 +1,7 @@
 // components/layouts/ExamResourceLayout.tsx
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Header } from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/design-system/Container';
@@ -11,7 +12,15 @@ type Props = {
   children: React.ReactNode;
 };
 
+const titleByPath: Record<string, string> = {
+  '/exam-day': 'Exam day playbook',
+  '/exam/rehearsal': 'Exam rehearsal',
+};
+
 export default function ExamResourceLayout({ title, children }: Props) {
+  const router = useRouter();
+  const resolvedTitle = title ?? titleByPath[router.pathname] ?? 'Exam resources';
+
   return (
     <>
       <Header />
@@ -22,7 +31,7 @@ export default function ExamResourceLayout({ title, children }: Props) {
               <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">
                 IELTS exam resources
               </p>
-              <h1 className="text-h3 font-semibold">{title ?? 'Exam resources'}</h1>
+              <h1 className="text-h3 font-semibold">{resolvedTitle}</h1>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild size="sm" variant="outline">

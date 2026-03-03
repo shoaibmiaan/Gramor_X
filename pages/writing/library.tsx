@@ -9,7 +9,6 @@ import { Icon } from '@/components/design-system/Icon';
 import { Input } from '@/components/design-system/Input';
 import { Select } from '@/components/design-system/Select';
 import { Separator } from '@/components/design-system/Separator';
-import { WritingLayout } from '@/layouts/WritingLayout';
 import { withPlan } from '@/lib/plan/withPlan';
 import { getServerClient } from '@/lib/supabaseServer';
 import type { PlanId } from '@/types/pricing';
@@ -68,7 +67,9 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
     sortPromptCards(prompts.map((prompt) => ({ ...prompt, source: prompt.source ?? 'library' }))),
   );
   useEffect(() => {
-    setPromptLibrary(sortPromptCards(prompts.map((prompt) => ({ ...prompt, source: prompt.source ?? 'library' }))));
+    setPromptLibrary(
+      sortPromptCards(prompts.map((prompt) => ({ ...prompt, source: prompt.source ?? 'library' }))),
+    );
   }, [prompts]);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,7 +104,8 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
         return false;
       }
       if (query) {
-        const haystack = `${prompt.topic} ${prompt.outlineSummary ?? ''} ${(prompt.outlineItems ?? []).join(' ')}`.toLowerCase();
+        const haystack =
+          `${prompt.topic} ${prompt.outlineSummary ?? ''} ${(prompt.outlineItems ?? []).join(' ')}`.toLowerCase();
         if (!haystack.includes(query)) {
           return false;
         }
@@ -112,7 +114,8 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
     });
   }, [difficultyFilter, promptLibrary, searchTerm, taskFilter]);
 
-  const hasFiltersActive = searchTerm.trim().length > 0 || taskFilter !== 'all' || difficultyFilter !== 'all';
+  const hasFiltersActive =
+    searchTerm.trim().length > 0 || taskFilter !== 'all' || difficultyFilter !== 'all';
 
   const resetFilters = useCallback(() => {
     setSearchTerm('');
@@ -140,7 +143,9 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
         source: prompt.source ?? 'library',
       }));
       setPromptLibrary(sortPromptCards(mapped));
-      setAnnouncement(`Prompt library refreshed. Showing ${mapped.length} prompt${mapped.length === 1 ? '' : 's'}.`);
+      setAnnouncement(
+        `Prompt library refreshed. Showing ${mapped.length} prompt${mapped.length === 1 ? '' : 's'}.`,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to refresh prompts';
       setLibraryError(message);
@@ -194,8 +199,12 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
         });
 
         const addedCount = generated.length;
-        setGeneratorMessage(`Added ${addedCount} new prompt${addedCount === 1 ? '' : 's'} to your library.`);
-        setAnnouncement(`Added ${addedCount} new prompt${addedCount === 1 ? '' : 's'} to your library.`);
+        setGeneratorMessage(
+          `Added ${addedCount} new prompt${addedCount === 1 ? '' : 's'} to your library.`,
+        );
+        setAnnouncement(
+          `Added ${addedCount} new prompt${addedCount === 1 ? '' : 's'} to your library.`,
+        );
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unable to generate prompts';
         setGeneratorError(message);
@@ -208,7 +217,7 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
   );
 
   return (
-    <WritingLayout plan={__plan} current="library">
+    <>
       <div aria-live="polite" role="status" className="sr-only">
         {announcement}
       </div>
@@ -266,7 +275,13 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
             </Select>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="ghost" size="sm" onClick={resetFilters} disabled={!hasFiltersActive}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              disabled={!hasFiltersActive}
+            >
               Clear
             </Button>
             <Button
@@ -310,11 +325,18 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-foreground">{prompt.topic}</h3>
-                  {prompt.outlineSummary && <p className="line-clamp-4 text-sm text-muted-foreground">{prompt.outlineSummary}</p>}
+                  {prompt.outlineSummary && (
+                    <p className="line-clamp-4 text-sm text-muted-foreground">
+                      {prompt.outlineSummary}
+                    </p>
+                  )}
                   {rocketUnlocked && prompt.outlineItems && prompt.outlineItems.length > 0 && (
                     <ul className="space-y-1 text-xs text-muted-foreground">
                       {prompt.outlineItems.slice(0, 3).map((item, index) => (
-                        <li key={`${prompt.id}-outline-${index}`} className="flex items-start gap-2">
+                        <li
+                          key={`${prompt.id}-outline-${index}`}
+                          className="flex items-start gap-2"
+                        >
                           <Icon name="check" size={12} className="mt-0.5 text-primary" />
                           <span>{item}</span>
                         </li>
@@ -323,7 +345,10 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
                   )}
                   {rocketUnlocked && prompt.createdAt && (
                     <p className="text-xs text-muted-foreground">
-                      Updated {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(prompt.createdAt))}
+                      Updated{' '}
+                      {new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
+                        new Date(prompt.createdAt),
+                      )}
                     </p>
                   )}
                 </div>
@@ -351,7 +376,8 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold text-foreground">AI prompt generator</h2>
             <p className="text-sm text-muted-foreground">
-              Craft fresh prompts tailored to your focus area. New prompts appear at the top of your library instantly.
+              Craft fresh prompts tailored to your focus area. New prompts appear at the top of your
+              library instantly.
             </p>
           </div>
           <Badge variant="soft" tone={aiUnlocked ? 'success' : 'default'} size="sm">
@@ -360,14 +386,20 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
         </div>
         {!aiUnlocked && (
           <div className="rounded-2xl border border-dashed border-border/60 bg-muted/40 p-4 text-sm text-muted-foreground">
-            Upgrade to Owl for unlimited prompt generation with Groq/OpenAI models and curated fallbacks.
+            Upgrade to Owl for unlimited prompt generation with Groq/OpenAI models and curated
+            fallbacks.
           </div>
         )}
         <form className="grid gap-4 md:grid-cols-2" onSubmit={handleGeneratePrompts}>
           <Select
             label="How many prompts?"
             value={generatorOptions.count}
-            onChange={(event) => setGeneratorOptions((prev) => ({ ...prev, count: Number(event.target.value) as 1 | 3 | 5 }))}
+            onChange={(event) =>
+              setGeneratorOptions((prev) => ({
+                ...prev,
+                count: Number(event.target.value) as 1 | 3 | 5,
+              }))
+            }
             disabled={!aiUnlocked}
           >
             {countOptions.map((option) => (
@@ -379,7 +411,12 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
           <Select
             label="Task"
             value={generatorOptions.task}
-            onChange={(event) => setGeneratorOptions((prev) => ({ ...prev, task: event.target.value as WritingTaskType }))}
+            onChange={(event) =>
+              setGeneratorOptions((prev) => ({
+                ...prev,
+                task: event.target.value as WritingTaskType,
+              }))
+            }
             disabled={!aiUnlocked}
           >
             <option value="task1">Task 1</option>
@@ -389,7 +426,10 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
             label="Difficulty"
             value={String(generatorOptions.difficulty)}
             onChange={(event) =>
-              setGeneratorOptions((prev) => ({ ...prev, difficulty: Number(event.target.value) as typeof prev.difficulty }))
+              setGeneratorOptions((prev) => ({
+                ...prev,
+                difficulty: Number(event.target.value) as typeof prev.difficulty,
+              }))
             }
             disabled={!aiUnlocked}
           >
@@ -403,19 +443,28 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
             label="Theme (optional)"
             placeholder="Sustainability, public health, …"
             value={generatorOptions.theme}
-            onChange={(event) => setGeneratorOptions((prev) => ({ ...prev, theme: event.target.value }))}
+            onChange={(event) =>
+              setGeneratorOptions((prev) => ({ ...prev, theme: event.target.value }))
+            }
             disabled={!aiUnlocked}
           />
           <Input
             label="Style hints (optional)"
             placeholder="Formal tone, emphasise comparisons, …"
             value={generatorOptions.style}
-            onChange={(event) => setGeneratorOptions((prev) => ({ ...prev, style: event.target.value }))}
+            onChange={(event) =>
+              setGeneratorOptions((prev) => ({ ...prev, style: event.target.value }))
+            }
             className="md:col-span-2"
             disabled={!aiUnlocked}
           />
           <div className="md:col-span-2 flex flex-wrap gap-3">
-            <Button type="submit" variant="primary" disabled={!aiUnlocked} loading={generatorLoading}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!aiUnlocked}
+              loading={generatorLoading}
+            >
               Generate prompts
             </Button>
             <Button
@@ -440,14 +489,17 @@ const WritingPromptLibrary = ({ prompts, total, __plan }: LibraryPageProps) => {
         {generatorMessage && <p className="text-sm text-success">{generatorMessage}</p>}
         <Separator />
         <p className="text-xs text-muted-foreground">
-          Generated prompts are stored in your personal library. Refresh above to ensure filters include the latest additions.
+          Generated prompts are stored in your personal library. Refresh above to ensure filters
+          include the latest additions.
         </p>
       </Card>
-    </WritingLayout>
+    </>
   );
 };
 
-export const getServerSideProps: GetServerSideProps<LibraryPageProps> = withPlan('starter')(async (ctx) => {
+export const getServerSideProps: GetServerSideProps<LibraryPageProps> = withPlan('starter')(async (
+  ctx,
+) => {
   const supabase = getServerClient(ctx.req as any, ctx.res as any);
   const {
     data: { user },
