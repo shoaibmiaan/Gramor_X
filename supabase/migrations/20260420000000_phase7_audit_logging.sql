@@ -14,6 +14,34 @@ create table if not exists public.audit_logs (
   created_at timestamptz not null default now()
 );
 
+
+-- Backfill columns when table already existed before this migration
+alter table public.audit_logs
+  add column if not exists user_id uuid,
+  add column if not exists action text,
+  add column if not exists resource text,
+  add column if not exists resource_id text,
+  add column if not exists old_data jsonb,
+  add column if not exists new_data jsonb,
+  add column if not exists ip_address inet,
+  add column if not exists user_agent text,
+  add column if not exists metadata jsonb not null default '{}'::jsonb,
+  add column if not exists created_at timestamptz not null default now();
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'audit_logs_user_id_fkey'
+      AND conrelid = 'public.audit_logs'::regclass
+  ) THEN
+    ALTER TABLE public.audit_logs
+      ADD CONSTRAINT audit_logs_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
 create index if not exists idx_audit_logs_user_id on public.audit_logs (user_id);
 create index if not exists idx_audit_logs_action on public.audit_logs (action);
 create index if not exists idx_audit_logs_resource on public.audit_logs (resource);
@@ -72,6 +100,31 @@ create table if not exists public.alerts (
   created_at timestamptz not null default now(),
   resolved_at timestamptz
 );
+
+
+-- Backfill columns when table already existed before this migration
+alter table public.alerts
+  add column if not exists user_id uuid,
+  add column if not exists type text,
+  add column if not exists severity text,
+  add column if not exists details jsonb not null default '{}'::jsonb,
+  add column if not exists resolved boolean not null default false,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists resolved_at timestamptz;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'alerts_user_id_fkey'
+      AND conrelid = 'public.alerts'::regclass
+  ) THEN
+    ALTER TABLE public.alerts
+      ADD CONSTRAINT alerts_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 create index if not exists idx_alerts_resolved_created on public.alerts (resolved, created_at desc);
 create index if not exists idx_alerts_type on public.alerts (type);
