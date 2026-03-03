@@ -8,7 +8,6 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import SettingsLayout from '@/components/settings/SettingsLayout';
 import { Skeleton } from '@/components/design-system/Skeleton';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { withPageAuth } from '@/lib/requirePageAuth';
 import {
   formatSubscriptionLabel,
@@ -16,106 +15,68 @@ import {
   normalizePlan,
   normalizeStatus,
 } from '@/lib/subscription';
+import { useSubscription } from '@/hooks/useSubscription';
+import { UsageMeter } from '@/components/billing/UsageMeter';
 
-type BillingState = {
-  plan?: 'free' | 'starter' | 'booster' | 'master';
-  status?: 'active' | 'canceled' | 'past_due' | 'none';
-  renewal?: string | null; // ISO
-  paymentMethod?: 'card' | 'none';
+type Invoice = {
+  id: string;
+  date: string;
+  amount: number;
+  currency: string;
+  status: string;
+  invoice_pdf?: string | null;
+  hosted_invoice_url?: string | null;
 };
 
-const formatPaymentMethod = (method: BillingState['paymentMethod']) =>
-  method === 'card' ? 'Card on file' : 'No payment method';
+const money = (amount: number, currency: string) =>
+  new Intl.NumberFormat(undefined, { style: 'currency', currency: String(currency || 'USD').toUpperCase() }).format(
+    (amount || 0) / 100,
+  );
 
 export default function BillingPage() {
-  const [billing, setBilling] = useState<BillingState | null>(null);
-  const [activated, setActivated] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    setActivated(url.searchParams.get('activated'));
-  }, []);
+  const subscription = useSubscription();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(true);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user?.id) {
-          setBilling({ plan: 'free', status: 'none', paymentMethod: 'none', renewal: null });
-          return;
-        }
-
-        let current: BillingState = {
-          plan: 'free',
-          status: 'none',
-          paymentMethod: 'none',
-          renewal: null,
-        };
-
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('membership_plan')
-            .eq('id', user.id)
-            .single();
-          if (profile?.membership_plan)
-            current.plan = profile.membership_plan as BillingState['plan'];
-        } catch {
-          /* ignore */
-        }
-
-        try {
-          const { data: sub } = await supabase
-            .from('subscriptions')
-            .select('status,current_period_end,payment_method,plan')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          if (sub) {
-            current = {
-              plan: (sub.plan ?? current.plan) as BillingState['plan'],
-              status: (sub.status ?? 'active') as BillingState['status'],
-              renewal: sub.current_period_end ?? null,
-              paymentMethod: (sub.payment_method ?? 'card') as BillingState['paymentMethod'],
-            };
-          }
-        } catch {
-          /* ignore if table absent */
-        }
-
-        setBilling(current);
-      } catch {
-        setBilling({ plan: 'free', status: 'none', paymentMethod: 'none', renewal: null });
+        setLoadingInvoices(true);
+        const res = await fetch('/api/billing/invoices', { credentials: 'include' });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || 'Failed to load invoices');
+        setInvoices((json?.invoices ?? []) as Invoice[]);
+      } catch (error) {
+        setInvoiceError((error as Error).message || 'Failed to load invoices');
+      } finally {
+        setLoadingInvoices(false);
       }
     })();
   }, []);
 
   const renewalLabel = useMemo(() => {
-    if (!billing?.renewal) return null;
+    if (!subscription.renewsAt) return null;
     try {
-      return new Date(billing.renewal).toLocaleDateString();
+      return new Date(subscription.renewsAt).toLocaleDateString();
     } catch {
       return null;
     }
-  }, [billing?.renewal]);
+  }, [subscription.renewsAt]);
 
   return (
     <SettingsLayout
       activeTab="billing"
       title="Billing"
-      description="Review your plan, payment method, and next steps."
+      description="Plan transparency, usage visibility, and invoice history in one place."
     >
-      {activated ? (
-        <Alert variant="success" appearance="soft" className="border-none">
-          Your membership is active. You can manage plan details below.
+      {subscription.error ? (
+        <Alert variant="error" appearance="soft" className="border-none">
+          {subscription.error}
         </Alert>
       ) : null}
 
-      {!billing ? (
+      {subscription.loading ? (
         <Card padding="lg" insetBorder>
           <div className="space-y-4">
             <Skeleton className="h-6 w-32 rounded-ds-xl" />
@@ -127,62 +88,75 @@ export default function BillingPage() {
         <div className="space-y-5">
           <Card padding="lg" insetBorder as="section" aria-labelledby="current-plan-heading">
             <div className="space-y-3">
-              <div>
-                <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">
-                  Current plan
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <h2 id="current-plan-heading" className="text-h3 font-semibold capitalize">
-                    {formatSubscriptionLabel(normalizePlan(billing.plan))}
-                  </h2>
-                  <Badge variant={getSubscriptionStatusVariant(normalizeStatus(billing.status))}>
-                    {formatSubscriptionLabel(billing.status)}
-                  </Badge>
-                </div>
-                {renewalLabel ? (
-                  <p className="mt-2 text-small text-muted-foreground">Renews on {renewalLabel}</p>
-                ) : (
-                  <p className="mt-2 text-small text-muted-foreground">No renewal scheduled</p>
-                )}
-              </div>
-            </div>
-          </Card>
-
-          <Card padding="lg" insetBorder as="section" aria-labelledby="payment-method-heading">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 id="payment-method-heading" className="text-h4 font-semibold">
-                    Payment method
-                  </h2>
-                  <p className="mt-1 text-small text-muted-foreground">
-                    {formatPaymentMethod(billing.paymentMethod)}
-                  </p>
-                </div>
-                <Badge variant={billing.paymentMethod === 'card' ? 'info' : 'neutral'} size="sm">
-                  {billing.paymentMethod === 'card' ? 'Securely stored' : 'Action needed'}
+              <p className="text-caption uppercase tracking-[0.12em] text-muted-foreground">Current plan</p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <h2 id="current-plan-heading" className="text-h3 font-semibold capitalize">
+                  {formatSubscriptionLabel(normalizePlan(subscription.plan))}
+                </h2>
+                <Badge variant={getSubscriptionStatusVariant(normalizeStatus(subscription.status))}>
+                  {formatSubscriptionLabel(subscription.status)}
                 </Badge>
               </div>
-
-              <div className="flex flex-wrap gap-2">
-                <Button variant="soft" tone="default" size="sm" disabled>
-                  Update card (coming soon)
-                </Button>
-                <Button variant="soft" tone="default" size="sm" disabled>
-                  Download invoices
-                </Button>
-              </div>
+              <p className="mt-2 text-small text-muted-foreground">
+                {renewalLabel ? `Renews on ${renewalLabel}` : 'No renewal scheduled'}
+              </p>
+              <Button asChild size="sm" variant="soft">
+                <Link href="/profile/account/billing">Manage in Stripe portal</Link>
+              </Button>
             </div>
           </Card>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button asChild variant="link" size="sm" className="text-small">
-              <Link href="/pricing">Change plan</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard">Go to dashboard</Link>
-            </Button>
-          </div>
+          <Card padding="lg" insetBorder as="section" aria-labelledby="usage-heading">
+            <h2 id="usage-heading" className="text-h4 font-semibold">Usage meters</h2>
+            <div className="mt-3 space-y-3">
+              <UsageMeter feature="ai.explain" label="AI Explain" />
+              <UsageMeter feature="ai.summary" label="AI Summary" />
+              <UsageMeter feature="ai.writing.score" label="AI Writing Score" />
+            </div>
+          </Card>
+
+          <Card padding="lg" insetBorder as="section" aria-labelledby="invoices-heading">
+            <h2 id="invoices-heading" className="text-h4 font-semibold">Invoice history</h2>
+            {loadingInvoices ? (
+              <p className="mt-2 text-small text-muted-foreground">Loading invoices…</p>
+            ) : invoiceError ? (
+              <p className="mt-2 text-small text-danger">{invoiceError}</p>
+            ) : invoices.length === 0 ? (
+              <p className="mt-2 text-small text-muted-foreground">No invoices yet.</p>
+            ) : (
+              <div className="mt-3 overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/60 text-left text-muted-foreground">
+                      <th className="py-2 pr-4">Date</th>
+                      <th className="py-2 pr-4">Amount</th>
+                      <th className="py-2 pr-4">Status</th>
+                      <th className="py-2">Invoice</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoices.map((inv) => (
+                      <tr key={inv.id} className="border-b border-border/40">
+                        <td className="py-2 pr-4">{new Date(inv.date).toLocaleDateString()}</td>
+                        <td className="py-2 pr-4">{money(inv.amount, inv.currency)}</td>
+                        <td className="py-2 pr-4 capitalize">{String(inv.status || 'unknown').replace('_', ' ')}</td>
+                        <td className="py-2">
+                          <a
+                            href={inv.invoice_pdf || inv.hosted_invoice_url || '#'}
+                            className="text-indigo-600 hover:underline"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Download invoice
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         </div>
       )}
     </SettingsLayout>
