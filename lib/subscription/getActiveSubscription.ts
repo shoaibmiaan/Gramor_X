@@ -81,12 +81,3 @@ export async function getActiveSubscription(
     isActive: plan !== 'free' && (status === 'active' || status === 'trialing' || status === 'past_due'),
   };
 }
-
-export async function requireActiveSubscription(
-  userId: string,
-  supabaseClient?: SupabaseClient<Database>,
-): Promise<ActiveSubscription> {
-  const subscription = await getActiveSubscription(userId, supabaseClient);
-  if (!subscription.isActive) throw new Error('subscription_inactive');
-  return subscription;
-}

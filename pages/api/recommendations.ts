@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const supabase = createSupabaseServerClient({ req, res });
   try {
-    const user = await requirePremiumUser(req, res);
+    const user = await requirePremiumUser(req);
     const count = Number(req.query.count ?? 5);
     const days = Number(req.query.days ?? 7);
 

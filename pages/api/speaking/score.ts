@@ -2,10 +2,10 @@ import { env } from '@/lib/env';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import OpenAI from 'openai';
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { z } from 'zod';
-import { getActiveSubscription, requireActiveSubscription } from '@/lib/subscription/getActiveSubscription';
+import { getUserPlan } from '@/lib/subscription';
+import { requirePremiumUser } from '@/lib/premiumRoute';
 
 const AI_RETRY_COUNT = 1;
 const AUDIO_FETCH_TIMEOUT_MS = 30_000;
@@ -147,21 +147,8 @@ export default async function handler(
   const { attemptId } = req.body as { attemptId?: string };
   if (!attemptId) return res.status(400).json({ error: 'Missing attemptId' });
 
-  const supabase = createSupabaseServerClient({ req });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
-
-  try {
-    await requireActiveSubscription(user.id, supabase);
-  } catch {
-    return res.status(402).json({ error: 'subscription_required' });
-  }
-
-  const subscription = await getActiveSubscription(user.id, supabase);
-  const plan = subscription.plan;
+  const user = await requirePremiumUser(req);
+  const plan = await getUserPlan(supabaseAdmin as any, user.id);
 
   if (!env.OPENAI_API_KEY) {
     return res.status(503).json({

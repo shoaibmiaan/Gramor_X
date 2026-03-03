@@ -2,7 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseFromRequest } from '@/lib/apiAuth';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { checkLimit, incrementUsage, limitExceeded } from '@/lib/usage';
-import { getActiveSubscription, requireActiveSubscription } from '@/lib/subscription/getActiveSubscription';
+import { getUserPlan } from '@/lib/subscription';
+import { requirePremiumUser } from '@/lib/premiumRoute';
 
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -12,18 +13,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!part) return res.status(400).json({ error: 'Missing part' });
 
   const supabase = supabaseFromRequest(req);
-  const { data: userRes } = await supabase.auth.getUser();
-  const user = userRes?.user;
-  if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
+  let user;
   try {
-    await requireActiveSubscription(user.id, supabase);
+    user = await requirePremiumUser(req);
   } catch {
     return res.status(402).json({ error: 'subscription_required' });
   }
 
-  const subscription = await getActiveSubscription(user.id, supabase);
-  const plan = subscription.plan;
+  const plan = await getUserPlan(supabase as any, user.id);
 
   const freeLimit = Number(process.env.LIMIT_FREE_SPEAKING ?? 2) || 0;
   const enforceLimit = plan === 'free' && freeLimit > 0;
