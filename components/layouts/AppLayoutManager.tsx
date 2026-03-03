@@ -318,7 +318,11 @@ export function AppLayoutManager({
       { type: 'community', component: CommunityLayout, guard: () => routeFlags.isCommunityRoute },
       { type: 'reports', component: ReportsLayout, guard: () => routeFlags.isReportsRoute },
       { type: 'dashboard', component: DashboardLayout, guard: () => routeFlags.isDashboardRoute },
-      { type: 'marketing', component: PublicMarketingLayout, guard: () => routeFlags.isMarketingRoute },
+      {
+        type: 'marketing',
+        component: PublicMarketingLayout,
+        guard: () => routeFlags.isMarketingRoute && pathname !== '/',
+      },
     ],
     [isTeacherRoute, pathname, routeFlags, getTeacherContent]
   );
