@@ -124,19 +124,6 @@ function useRouteConfiguration(pathname: string) {
       isProctoringRoute: routeConfig.layout === 'proctoring',
       showLayout,
       forceLayoutOnAuthPage: derivedIsAuth && !!user,
-      isAdminRoute: routeConfig.layout === 'admin',
-      isInstitutionsRoute: routeConfig.layout === 'institutions',
-      isDashboardRoute:
-        routeConfig.layout === 'dashboard' ||
-        routeConfig.layout === 'profile' ||
-        routeConfig.layout === 'billing' ||
-        routeConfig.layout === 'analytics',
-      isMarketplaceRoute: routeConfig.layout === 'marketplace',
-      isLearningRoute: routeConfig.layout === 'learning' || routeConfig.layout === 'resources',
-      isCommunityRoute:
-        routeConfig.layout === 'community' || routeConfig.layout === 'communication',
-      isReportsRoute: routeConfig.layout === 'reports',
-      isMarketingRoute: routeConfig.layout === 'marketing' || routeConfig.layout === 'support',
       needPremium: pathname.startsWith('/premium'),
       isPremiumRoute: isPremiumRoomRoute(pathname),
       routeConfig,
@@ -279,14 +266,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
                 isProctoringRoute={routeConfiguration.isProctoringRoute}
                 showLayout={routeConfiguration.showLayout}
                 forceLayoutOnAuthPage={forceLayoutOnAuthPage}
-                isAdminRoute={routeConfiguration.isAdminRoute}
-                isInstitutionsRoute={routeConfiguration.isInstitutionsRoute}
-                isDashboardRoute={routeConfiguration.isDashboardRoute}
-                isMarketplaceRoute={routeConfiguration.isMarketplaceRoute}
-                isLearningRoute={routeConfiguration.isLearningRoute}
-                isCommunityRoute={routeConfiguration.isCommunityRoute}
-                isReportsRoute={routeConfiguration.isReportsRoute}
-                isMarketingRoute={routeConfiguration.isMarketingRoute}
                 subscriptionTier={subscriptionTier}
                 role={role}
                 isTeacherApproved={isTeacherApproved}

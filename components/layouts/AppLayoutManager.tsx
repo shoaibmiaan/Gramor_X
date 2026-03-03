@@ -80,14 +80,6 @@ type AppLayoutManagerProps = {
   isProctoringRoute: boolean;
   showLayout: boolean;
   forceLayoutOnAuthPage: boolean;
-  isAdminRoute: boolean;
-  isInstitutionsRoute: boolean;
-  isDashboardRoute: boolean;
-  isMarketplaceRoute: boolean;
-  isLearningRoute: boolean;
-  isCommunityRoute: boolean;
-  isReportsRoute: boolean;
-  isMarketingRoute: boolean;
   subscriptionTier: SubscriptionTier;
   isRouteLoading: boolean;
   role?: string | null;
@@ -206,14 +198,6 @@ export function AppLayoutManager({
   isProctoringRoute,
   showLayout,
   forceLayoutOnAuthPage,
-  isAdminRoute,
-  isInstitutionsRoute,
-  isDashboardRoute,
-  isMarketplaceRoute,
-  isLearningRoute,
-  isCommunityRoute,
-  isReportsRoute,
-  isMarketingRoute,
   subscriptionTier,
   isRouteLoading,
   role,
@@ -227,6 +211,54 @@ export function AppLayoutManager({
   const teacherAccess = useTeacherAccess(role, isTeacherApproved);
   const isTeacherRoute = pathname.startsWith('/teacher');
   const teacherAccessRole = role ?? 'guest';
+
+  const startsWithAny = useCallback(
+    (prefixes: string[]) =>
+      prefixes.some((prefix) =>
+        prefix === '/' ? pathname === '/' : pathname === prefix || pathname.startsWith(`${prefix}/`)
+      ),
+    [pathname]
+  );
+
+  const routeFlags = useMemo(
+    () => ({
+      isAdminRoute: startsWithAny(['/admin']),
+      isInstitutionsRoute: startsWithAny(['/institutions']),
+      isDashboardRoute: startsWithAny([
+        '/dashboard',
+        '/profile',
+        '/settings',
+        '/bookings',
+        '/classes',
+        '/writing',
+        '/reading',
+        '/listening',
+        '/speaking',
+        '/vocabulary',
+        '/mock',
+        '/progress',
+        '/score',
+        '/study-plan',
+        '/leaderboard',
+        '/notifications',
+        '/placement',
+      ]),
+      isMarketplaceRoute: startsWithAny(['/marketplace']),
+      isLearningRoute: startsWithAny(['/learning', '/learn']),
+      isCommunityRoute: startsWithAny(['/community']),
+      isReportsRoute: startsWithAny(['/reports']),
+      isMarketingRoute: startsWithAny([
+        '/',
+        '/blog',
+        '/faq',
+        '/partners',
+        '/waitlist',
+        '/legal',
+        '/accessibility',
+      ]),
+    }),
+    [startsWithAny]
+  );
 
 
   // -----------------------
@@ -258,15 +290,15 @@ export function AppLayoutManager({
   // -----------------------
   const layoutConfigs: LayoutConfig[] = useMemo(
     () => [
-      { type: 'admin', component: AdminLayout, guard: () => isAdminRoute },
+      { type: 'admin', component: AdminLayout, guard: () => routeFlags.isAdminRoute },
       { type: 'teacher', component: TeacherLayout, guard: () => isTeacherRoute, getContent: () => getTeacherContent() },
-      { type: 'institutions', component: InstitutionsLayout, guard: () => isInstitutionsRoute },
-      { type: 'dashboard', component: DashboardLayout, guard: () => isDashboardRoute },
-      { type: 'marketplace', component: MarketplaceLayout, guard: () => isMarketplaceRoute },
-      { type: 'learning', component: LearningLayout, guard: () => isLearningRoute },
-      { type: 'community', component: CommunityLayout, guard: () => isCommunityRoute },
-      { type: 'reports', component: ReportsLayout, guard: () => isReportsRoute },
-      { type: 'marketing', component: PublicMarketingLayout, guard: () => isMarketingRoute },
+      { type: 'institutions', component: InstitutionsLayout, guard: () => routeFlags.isInstitutionsRoute },
+      { type: 'dashboard', component: DashboardLayout, guard: () => routeFlags.isDashboardRoute },
+      { type: 'marketplace', component: MarketplaceLayout, guard: () => routeFlags.isMarketplaceRoute },
+      { type: 'learning', component: LearningLayout, guard: () => routeFlags.isLearningRoute },
+      { type: 'community', component: CommunityLayout, guard: () => routeFlags.isCommunityRoute },
+      { type: 'reports', component: ReportsLayout, guard: () => routeFlags.isReportsRoute },
+      { type: 'marketing', component: PublicMarketingLayout, guard: () => routeFlags.isMarketingRoute },
       { type: 'profile', component: ProfileLayout, guard: () => pathname.startsWith('/profile') || pathname.startsWith('/user') },
       { type: 'communication', component: CommunicationLayout, guard: () => pathname.startsWith('/messages') || pathname.startsWith('/chat') || pathname.startsWith('/inbox') },
       { type: 'billing', component: BillingLayout, guard: () => pathname.startsWith('/billing') || pathname.startsWith('/payment') || pathname.startsWith('/subscription') },
@@ -274,19 +306,7 @@ export function AppLayoutManager({
       { type: 'analytics', component: AnalyticsLayout, guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats') },
       { type: 'support', component: SupportLayout, guard: () => pathname.startsWith('/support') || pathname.startsWith('/help') },
     ],
-    [
-      isAdminRoute,
-      isTeacherRoute,
-      isInstitutionsRoute,
-      isDashboardRoute,
-      isMarketplaceRoute,
-      isLearningRoute,
-      isCommunityRoute,
-      isReportsRoute,
-      isMarketingRoute,
-      pathname,
-      getTeacherContent,
-    ]
+    [isTeacherRoute, pathname, routeFlags, getTeacherContent]
   );
 
 
