@@ -1,9 +1,11 @@
 import type { NextApiResponse } from 'next';
+import type { NextApiRequest } from 'next';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { resolveUserRole } from '@/lib/serverRole';
 import type { AppRole } from '@/lib/roles';
 import type { AuthErrorCode, AuthErrorResponse } from '@/types/auth';
 import type { User } from '@/types/user';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 export class AuthError extends Error {
   code: AuthErrorCode;
@@ -20,13 +22,11 @@ export function writeAuthError(
   code: AuthErrorCode,
   message?: string,
 ): NextApiResponse<AuthErrorResponse> {
-  return res
-    .status(code === 'unauthorized' ? 401 : 403)
-    .json({
-      ok: false,
-      error: code,
-      message: message ?? (code === 'unauthorized' ? 'Unauthorized' : 'Forbidden'),
-    });
+  return res.status(code === 'unauthorized' ? 401 : 403).json({
+    ok: false,
+    error: code,
+    message: message ?? (code === 'unauthorized' ? 'Unauthorized' : 'Forbidden'),
+  });
 }
 
 export async function getAuthenticatedUser(supabase: SupabaseClient): Promise<User | null> {
@@ -58,4 +58,18 @@ export async function requireRole(
   }
 
   return { user, role };
+}
+
+export async function requireApiAuth(req: NextApiRequest, res: NextApiResponse): Promise<User> {
+  const supabase = createSupabaseServerClient({ req, res });
+  return requireAuth(supabase);
+}
+
+export async function requireApiRole(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  allowedRoles: AppRole | AppRole[],
+): Promise<{ user: User; role: AppRole }> {
+  const supabase = createSupabaseServerClient({ req, res });
+  return requireRole(supabase, allowedRoles);
 }

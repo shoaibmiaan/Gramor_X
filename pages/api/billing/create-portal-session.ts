@@ -4,6 +4,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { enforceSameOrigin } from '@/lib/security/csrf';
+import { isRecentAuthentication } from '@/lib/auth/recentAuth';
+import { requireAuth, writeAuthError, AuthError } from '@/lib/auth';
 
 type PortalResponse = { url: string } | { error: string };
 
@@ -18,10 +20,7 @@ const getOrigin = (req: NextApiRequest) => {
   return `${proto}://${host}`;
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<PortalResponse>,
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<PortalResponse>) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'method_not_allowed' });
@@ -32,10 +31,17 @@ export default async function handler(
   if (!stripe) return res.status(400).json({ error: 'stripe_not_configured' });
 
   const supabase = createSupabaseServerClient({ req, res });
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth?.user;
+  let user;
+  try {
+    user = await requireAuth(supabase);
+  } catch (error) {
+    if (error instanceof AuthError) return writeAuthError(res, error.code);
+    throw error;
+  }
 
-  if (!user) return res.status(401).json({ error: 'unauthorized' });
+  if (!isRecentAuthentication(req, 15 * 60)) {
+    return res.status(403).json({ error: 'reauthentication_required' });
+  }
 
   const { data: profile, error } = await supabase
     .from('profiles')

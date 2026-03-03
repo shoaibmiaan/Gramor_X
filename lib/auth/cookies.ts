@@ -22,7 +22,7 @@ function append(res: NextApiResponse, cookie: string) {
 }
 
 export function setAuthCookies(res: NextApiResponse, payload: AuthCookiePayload) {
-  const common = { httpOnly: true, secure: isProd, sameSite: 'lax' as const, path: '/' };
+  const common = { httpOnly: true, secure: isProd, sameSite: 'strict' as const, path: '/' };
 
   append(
     res,
