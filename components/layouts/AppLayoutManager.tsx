@@ -34,6 +34,7 @@ import BillingLayout from '@/components/layouts/BillingLayout';
 import ResourcesLayout from '@/components/layouts/ResourcesLayout';
 import AnalyticsLayout from '@/components/layouts/AnalyticsLayout';
 import SupportLayout from '@/components/layouts/SupportLayout';
+import { GlobalPageLayout } from '@/components/layouts/GlobalPageLayout';
 
 // ⭐ NEW — Breadcrumb Bar V2
 import { BreadcrumbBar } from '@/components/navigation/BreadcrumbBar';
@@ -345,11 +346,6 @@ export function AppLayoutManager({
     proctoring: boolean,
     content: ReactNode
   ) => {
-    // For specific auth pages that should be truly naked (no AuthLayout)
-    const nakedAuthRoutes = ['/forgot-password', '/update-password'];
-    if (nakedAuthRoutes.includes(router.pathname)) {
-      return content;
-    }
     if (auth) {
       const authCopy: Record<string, { title: string; subtitle: string }> = {
         '/login': { title: 'Welcome back', subtitle: 'Sign in to continue your IELTS prep journey.' },
@@ -380,7 +376,7 @@ export function AppLayoutManager({
       return <AuthLayout title={copy.title} subtitle={copy.subtitle}>{content}</AuthLayout>;
     }
     if (proctoring) return <ProctoringLayout>{content}</ProctoringLayout>;
-    return content;
+    return <GlobalPageLayout showBreadcrumbs={false}>{content}</GlobalPageLayout>;
   };
 
   const content = useMemo(() => {
@@ -397,7 +393,7 @@ export function AppLayoutManager({
       return <LayoutComponent userRole={role}>{children}</LayoutComponent>;
     }
 
-    return children;
+    return <GlobalPageLayout showBreadcrumbs={false}>{children}</GlobalPageLayout>;
   }, [
     showLayout,
     isAuthPage,
