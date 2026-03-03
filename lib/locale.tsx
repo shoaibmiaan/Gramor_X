@@ -6,7 +6,7 @@ import urMessages from '@/public/locales/ur/common.json';
 import arMessages from '@/public/locales/ar/common.json';
 import esMessages from '@/public/locales/es/common.json';
 
-const SUPPORTED_LOCALES = ['en', 'ur'] as const;
+const SUPPORTED_LOCALES = ['en', 'ur', 'es'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 const DEFAULT_LOCALE: Locale = 'en';
 const STORAGE_KEY = 'gx:locale';

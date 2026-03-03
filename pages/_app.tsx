@@ -42,6 +42,8 @@ import type { SubscriptionTier } from '@/lib/navigation/types';
 import { getRouteConfig, isAttemptPath } from '@/lib/routes/routeLayoutMap';
 
 import LoadingProvider from '@/components/loading/LoadingProvider';
+import CookieConsentBanner from '@/components/CookieConsentBanner';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const PricingReasonBanner = dynamic(() => import('@/components/paywall/PricingReasonBanner'), {
   ssr: false,
@@ -330,6 +332,8 @@ export default function App(props: AppProps) {
           </SWRConfig>
         </NotificationProvider>
       </ToastProvider>
+      <div className="fixed right-4 top-4 z-[90]"><LanguageSwitcher /></div>
+      <CookieConsentBanner />
       <SpeedInsights />
     </LocaleProvider>
   );

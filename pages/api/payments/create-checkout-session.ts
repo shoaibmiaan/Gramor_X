@@ -9,6 +9,7 @@ type CreateCheckoutBody = Readonly<{
   plan: PlanKey;
   referralCode?: string;
   billingCycle?: Cycle;
+  poNumber?: string;
 }>;
 
 type Success = Readonly<{ ok: true; url?: string; sessionId?: string; manual?: boolean; message?: string }>;
@@ -80,7 +81,7 @@ async function provisionManually(opts: {
         currency,
         amount_cents,
         status: 'due',
-        note: 'Manual fallback: gateway unavailable',
+        note: `Manual fallback: gateway unavailable${poNumber ? ` | PO: ${poNumber}` : ''}`,
         email: opts.userEmail ?? null,
       });
   } catch {
@@ -108,6 +109,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   const plan = isPlan(body.plan) ? body.plan : 'booster';
   const billingCycle = isCycle(body.billingCycle) ? body.billingCycle : 'monthly';
   const referralCode = typeof body.referralCode === 'string' ? body.referralCode.slice(0, 64) : undefined;
+  const poNumber = typeof body.poNumber === 'string' ? body.poNumber.slice(0, 64) : undefined;
 
   // Auth (user id for metadata / customer lookup)
   const supabase = createSupabaseServerClient({ req });
@@ -160,6 +162,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
           billingCycle,
           referralCode: referralCode || '',
           userId,
+          poNumber: poNumber || '',
         },
         subscription_data: {
           metadata: {
@@ -167,6 +170,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
             billingCycle,
             referralCode: referralCode || '',
             userId, // ← critical for webhook backfill
+            poNumber: poNumber || '',
           },
         },
       },
