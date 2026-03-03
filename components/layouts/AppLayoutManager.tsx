@@ -269,52 +269,17 @@ export function AppLayoutManager({
       {
         type: 'profile',
         component: ProfileLayout,
-        guard: () => pathname.startsWith('/profile') || pathname.startsWith('/user'),
-      },
-      {
-        type: 'communication',
-        component: CommunicationLayout,
         guard: () =>
-          pathname.startsWith('/messages') ||
-          pathname.startsWith('/chat') ||
-          pathname.startsWith('/inbox'),
+          pathname.startsWith('/profile') ||
+          pathname.startsWith('/user') ||
+          pathname.startsWith('/settings') ||
+          pathname.startsWith('/me/'),
       },
-      {
-        type: 'billing',
-        component: BillingLayout,
-        guard: () =>
-          pathname.startsWith('/billing') ||
-          pathname.startsWith('/payment') ||
-          pathname.startsWith('/subscription'),
-      },
-      {
-        type: 'resources',
-        component: ResourcesLayout,
-        guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library'),
-      },
-      {
-        type: 'analytics',
-        component: AnalyticsLayout,
-        guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats'),
-      },
-      {
-        type: 'support',
-        component: SupportLayout,
-        guard: () => pathname.startsWith('/support') || pathname.startsWith('/help'),
-      },
-      {
-        type: 'exam-resources',
-        component: ExamResourceLayout,
-        guard: () => pathname.startsWith('/exam-day') || pathname.startsWith('/exam/rehearsal'),
-      },
-      {
-        type: 'writing',
-        component: WritingLayout,
-        guard: () =>
-          pathname.startsWith('/writing/overview') ||
-          pathname.startsWith('/writing/library') ||
-          pathname.startsWith('/writing/progress'),
-      },
+      { type: 'communication', component: CommunicationLayout, guard: () => pathname.startsWith('/messages') || pathname.startsWith('/chat') || pathname.startsWith('/inbox') },
+      { type: 'billing', component: BillingLayout, guard: () => pathname.startsWith('/billing') || pathname.startsWith('/payment') || pathname.startsWith('/subscription') },
+      { type: 'resources', component: ResourcesLayout, guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library') },
+      { type: 'analytics', component: AnalyticsLayout, guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats') },
+      { type: 'support', component: SupportLayout, guard: () => pathname.startsWith('/support') || pathname.startsWith('/help') },
     ],
     [
       isAdminRoute,

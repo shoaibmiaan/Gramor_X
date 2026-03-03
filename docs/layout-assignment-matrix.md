@@ -1,0 +1,334 @@
+# Layout Assignment Matrix
+
+| Route | Assigned layout | Chrome (on/off) | Notes/exception |
+|---|---|---|---|
+| `/` | `marketing` | `on` | Marketing/public family |
+| `/403` | `marketing` | `on` | Marketing/public family |
+| `/404` | `marketing` | `on` | Marketing/public family |
+| `/500` | `marketing` | `on` | Marketing/public family |
+| `/accessibility` | `marketing` | `on` | Marketing/public family |
+| `/admin` | `admin` | `on` | Admin family |
+| `/admin/alerts` | `admin` | `on` | Admin family |
+| `/admin/analytics` | `admin` | `on` | Admin family |
+| `/admin/audit` | `admin` | `on` | Admin family |
+| `/admin/content/reading` | `admin` | `on` | Admin family |
+| `/admin/contracts` | `admin` | `on` | Admin family |
+| `/admin/features` | `admin` | `on` | Admin family |
+| `/admin/imp-as` | `admin` | `on` | Admin family |
+| `/admin/investor-metrics` | `admin` | `on` | Admin family |
+| `/admin/listening` | `admin` | `on` | Admin family |
+| `/admin/listening/articles` | `admin` | `on` | Admin family |
+| `/admin/listening/media` | `admin` | `on` | Admin family |
+| `/admin/partners` | `admin` | `on` | Admin family |
+| `/admin/plans` | `admin` | `on` | Admin family |
+| `/admin/premium/pin` | `admin` | `on` | Admin family |
+| `/admin/premium/promo-codes` | `admin` | `on` | Admin family |
+| `/admin/premium/promo-usage` | `admin` | `on` | Admin family |
+| `/admin/reading` | `admin` | `on` | Admin family |
+| `/admin/reports/writing-activity` | `admin` | `on` | Admin family |
+| `/admin/reviews` | `admin` | `on` | Admin family |
+| `/admin/reviews/[attemptId]` | `admin` | `on` | Admin family |
+| `/admin/speaking` | `admin` | `on` | Admin family |
+| `/admin/speaking/attempts` | `admin` | `on` | Admin family |
+| `/admin/stop-impersonation` | `admin` | `on` | Admin family |
+| `/admin/students` | `admin` | `on` | Admin family |
+| `/admin/teacher` | `admin` | `on` | Admin family |
+| `/admin/teachers` | `admin` | `on` | Admin family |
+| `/admin/users` | `admin` | `on` | Admin family |
+| `/admin/vocabulary/new-sense` | `admin` | `on` | Admin family |
+| `/admin/writing` | `admin` | `on` | Admin family |
+| `/admin/writing/topics` | `admin` | `on` | Admin family |
+| `/ai` | `learning` | `on` | Learning/resources family |
+| `/ai/coach` | `learning` | `on` | Learning/resources family |
+| `/ai/mistakes-book` | `learning` | `on` | Learning/resources family |
+| `/ai/study-buddy` | `learning` | `on` | Learning/resources family |
+| `/ai/study-buddy/session/[id]/practice` | `learning` | `on` | Learning/resources family |
+| `/ai/study-buddy/session/[id]/summary` | `learning` | `on` | Learning/resources family |
+| `/ai/writing/[id]` | `learning` | `on` | Learning/resources family |
+| `/analytics/listening` | `reports` | `on` | Reports/analytics family |
+| `/analytics/listening/trajectory` | `reports` | `on` | Reports/analytics family |
+| `/analytics/writing` | `reports` | `on` | Reports/analytics family |
+| `/auth/callback` | `auth` | `off` | Auth family |
+| `/auth/forgot` | `auth` | `off` | Auth family |
+| `/auth/login` | `auth` | `off` | Auth family |
+| `/auth/mfa` | `auth` | `off` | Auth family |
+| `/auth/reset` | `auth` | `off` | Auth family |
+| `/auth/signup` | `auth` | `off` | Auth family |
+| `/blog` | `marketing` | `on` | Marketing/public family |
+| `/blog/[slug]` | `marketing` | `on` | Marketing/public family |
+| `/bookings` | `learning` | `on` | Learning/resources family |
+| `/bookings/[id]` | `learning` | `on` | Learning/resources family |
+| `/cert/[id]` | `learning` | `on` | Learning/resources family |
+| `/cert/writing/[attemptId]` | `learning` | `on` | Learning/resources family |
+| `/challenge` | `dashboard` | `on` | Dashboard/app family |
+| `/challenge/[cohort]` | `dashboard` | `on` | Dashboard/app family |
+| `/checkout` | `marketplace` | `on` | Marketplace/commerce family |
+| `/checkout/cancel` | `marketplace` | `on` | Marketplace/commerce family |
+| `/checkout/confirm` | `marketplace` | `on` | Marketplace/commerce family |
+| `/checkout/crypto` | `marketplace` | `on` | Marketplace/commerce family |
+| `/checkout/save-card` | `marketplace` | `on` | Marketplace/commerce family |
+| `/checkout/success` | `marketplace` | `on` | Marketplace/commerce family |
+| `/classes` | `learning` | `on` | Learning/resources family |
+| `/classes/[id]` | `learning` | `on` | Learning/resources family |
+| `/coach` | `dashboard` | `on` | Dashboard/app family |
+| `/coach/[id]` | `dashboard` | `on` | Dashboard/app family |
+| `/community` | `community` | `on` | Community/communication family |
+| `/community/chat` | `community` | `on` | Community/communication family |
+| `/community/questions` | `community` | `on` | Community/communication family |
+| `/community/review` | `community` | `on` | Community/communication family |
+| `/content/studio` | `learning` | `on` | Learning/resources family |
+| `/content/studio/[id]` | `learning` | `on` | Learning/resources family |
+| `/dashboard` | `dashboard` | `on` | Dashboard/app family |
+| `/dashboard/activity` | `dashboard` | `on` | Dashboard/app family |
+| `/dashboard/ai-reports` | `dashboard` | `on` | Dashboard/app family |
+| `/dashboard/billing` | `dashboard` | `on` | Dashboard/app family |
+| `/dashboard/progress` | `dashboard` | `on` | Dashboard/app family |
+| `/dashboard/reading` | `dashboard` | `on` | Dashboard/app family |
+| `/dashboard/speaking` | `dashboard` | `on` | Dashboard/app family |
+| `/dashboard/writing` | `dashboard` | `on` | Dashboard/app family |
+| `/data-deletion` | `marketing` | `on` | Marketing/public family |
+| `/developers` | `marketing` | `on` | Marketing/public family |
+| `/exam-day` | `dashboard` | `on` | Dashboard/app family |
+| `/exam/rehearsal` | `dashboard` | `on` | Dashboard/app family |
+| `/faq` | `marketing` | `on` | Marketing/public family |
+| `/forgot-password` | `auth` | `off` | Auth family |
+| `/institutions` | `institutions` | `on` | Institution family |
+| `/institutions/[orgId]` | `institutions` | `on` | Institution family |
+| `/institutions/[orgId]/reports` | `institutions` | `on` | Institution family |
+| `/institutions/[orgId]/students` | `institutions` | `on` | Institution family |
+| `/internal/content/playground` | `learning` | `on` | Learning/resources family |
+| `/labs/ai-tutor` | `learning` | `on` | Learning/resources family |
+| `/leaderboard` | `dashboard` | `on` | Dashboard/app family |
+| `/learn/listening` | `learning` | `on` | Learning/resources family |
+| `/learn/listening/coach` | `learning` | `on` | Learning/resources family |
+| `/learn/listening/mistakes` | `learning` | `on` | Learning/resources family |
+| `/learn/listening/tips` | `learning` | `on` | Learning/resources family |
+| `/learning` | `learning` | `on` | Learning/resources family |
+| `/learning/[slug]` | `learning` | `on` | Learning/resources family |
+| `/learning/drills` | `learning` | `on` | Learning/resources family |
+| `/learning/skills` | `learning` | `on` | Learning/resources family |
+| `/learning/skills/[skill]` | `learning` | `on` | Learning/resources family |
+| `/learning/skills/lessons` | `learning` | `on` | Learning/resources family |
+| `/learning/skills/lessons/[slug]` | `learning` | `on` | Learning/resources family |
+| `/learning/strategies` | `learning` | `on` | Learning/resources family |
+| `/learning/strategies/[tipSlug]` | `learning` | `on` | Learning/resources family |
+| `/legal/privacy` | `marketing` | `on` | Marketing/public family |
+| `/legal/terms` | `marketing` | `on` | Marketing/public family |
+| `/listening` | `learning` | `on` | Learning/resources family |
+| `/listening/[slug]` | `learning` | `on` | Learning/resources family |
+| `/listening/[slug]/review` | `learning` | `on` | Learning/resources family |
+| `/login` | `auth` | `off` | Auth family |
+| `/login/email` | `auth` | `off` | Auth family |
+| `/login/password` | `auth` | `off` | Auth family |
+| `/login/phone` | `auth` | `off` | Auth family |
+| `/marketplace` | `marketplace` | `on` | Marketplace/commerce family |
+| `/me/listening/saved` | `profile` | `on` | Profile/settings family |
+| `/mistakes` | `profile` | `on` | Profile/settings family |
+| `/mock` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/[section]` | `dashboard` | `off` | Mock/placement runtime |
+| `/mock/analytics` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/dashboard` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/full` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/listening` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/listening/[slug]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/listening/exam/[slug]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/listening/history` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/listening/result` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/listening/result/[attemptId]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/listening/review` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/listening/review/[attemptId]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/reading` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/[slug]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/reading/[slug]/result` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/reading/analytics` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/challenges` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/challenges/accuracy` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/challenges/mastery` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/challenges/speed` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/challenges/weekly` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/daily` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/drill/passage` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/drill/question-type` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/drill/speed` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/feedback/[attemptId]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/reading/history` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/result/[attemptId]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/reading/review/[attemptId]` | `dashboard` | `off` | Mock attempt/review flow |
+| `/mock/reading/techniques` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/reading/weekly` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/resume` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/speaking` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/speaking/[id]` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/writing` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/writing/[testId]` | `dashboard` | `on` | Dashboard/app family |
+| `/mock/writing/result/[attemptId]` | `dashboard` | `off` | Mock/placement runtime |
+| `/mock/writing/run` | `dashboard` | `off` | Mock/placement runtime |
+| `/notifications` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/baseline` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/diagnostic` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/exam-date` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/goal` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/notifications` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/review` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/skills` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/study-rhythm` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/target-band` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/teacher` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/teacher/status` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/thinking` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/timeline` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/vibe` | `dashboard` | `on` | Dashboard/app family |
+| `/onboarding/welcome` | `dashboard` | `on` | Dashboard/app family |
+| `/orgs` | `institutions` | `on` | Institution family |
+| `/partners` | `marketing` | `on` | Marketing/public family |
+| `/placement` | `dashboard` | `on` | Dashboard/app family |
+| `/placement/result` | `dashboard` | `on` | Dashboard/app family |
+| `/placement/run` | `dashboard` | `off` | Mock/placement runtime |
+| `/placement/start` | `dashboard` | `on` | Dashboard/app family |
+| `/practice` | `dashboard` | `on` | Dashboard/app family |
+| `/practice/listening` | `dashboard` | `on` | Dashboard/app family |
+| `/practice/listening/daily` | `dashboard` | `on` | Dashboard/app family |
+| `/practice/reading` | `dashboard` | `on` | Dashboard/app family |
+| `/practice/speaking` | `dashboard` | `on` | Dashboard/app family |
+| `/practice/writing` | `dashboard` | `on` | Dashboard/app family |
+| `/predictor` | `dashboard` | `on` | Dashboard/app family |
+| `/predictor/result` | `dashboard` | `on` | Dashboard/app family |
+| `/premium` | `marketplace` | `off` | Intentional no-chrome premium route |
+| `/premium/PremiumExamPage` | `marketplace` | `off` | Intentional no-chrome premium route |
+| `/premium/listening/[slug]` | `marketplace` | `off` | Intentional no-chrome premium route |
+| `/premium/pin` | `marketplace` | `off` | Intentional no-chrome premium route |
+| `/premium/reading/[slug]` | `marketplace` | `off` | Intentional no-chrome premium route |
+| `/pricing` | `marketplace` | `on` | Marketplace/commerce family |
+| `/pricing/overview` | `marketplace` | `on` | Marketplace/commerce family |
+| `/proctoring/check` | `proctoring` | `off` | Exam/proctoring runtime |
+| `/proctoring/exam/[id]` | `proctoring` | `off` | Exam/proctoring runtime |
+| `/profile` | `profile` | `on` | Profile/settings family |
+| `/profile/account` | `profile` | `on` | Profile/settings family |
+| `/profile/account/activity` | `profile` | `on` | Profile/settings family |
+| `/profile/account/billing` | `profile` | `on` | Profile/settings family |
+| `/profile/account/redeem` | `profile` | `on` | Profile/settings family |
+| `/profile/account/referrals` | `profile` | `on` | Profile/settings family |
+| `/profile/billing` | `profile` | `on` | Profile/settings family |
+| `/profile/setup` | `profile` | `on` | Profile/settings family |
+| `/profile/streak` | `profile` | `on` | Profile/settings family |
+| `/profile/subscription` | `profile` | `on` | Profile/settings family |
+| `/progress` | `dashboard` | `on` | Dashboard/app family |
+| `/progress/[token]` | `dashboard` | `on` | Dashboard/app family |
+| `/promotions` | `marketplace` | `on` | Marketplace/commerce family |
+| `/pwa/app` | `marketing` | `off` | Intentional app-shell without chrome |
+| `/quick` | `dashboard` | `on` | Dashboard/app family |
+| `/quick/[skill]` | `dashboard` | `on` | Dashboard/app family |
+| `/r/[code]` | `marketing` | `on` | Marketing/public family |
+| `/reading` | `learning` | `on` | Learning/resources family |
+| `/reading/[slug]` | `learning` | `on` | Learning/resources family |
+| `/reading/[slug]/review` | `learning` | `on` | Learning/resources family |
+| `/reading/passage/[slug]` | `learning` | `on` | Learning/resources family |
+| `/reading/stats` | `learning` | `on` | Learning/resources family |
+| `/reports/band-analytics` | `reports` | `on` | Reports/analytics family |
+| `/restricted` | `dashboard` | `on` | Dashboard/app family |
+| `/review/listening/[id]` | `learning` | `on` | Learning/resources family |
+| `/review/reading/[id]` | `learning` | `on` | Learning/resources family |
+| `/review/share/[token]` | `learning` | `on` | Learning/resources family |
+| `/review/speaking/[id]` | `learning` | `on` | Learning/resources family |
+| `/review/writing/[id]` | `learning` | `on` | Learning/resources family |
+| `/roadmap` | `profile` | `on` | Profile/settings family |
+| `/saved` | `profile` | `on` | Profile/settings family |
+| `/score` | `dashboard` | `on` | Dashboard/app family |
+| `/settings` | `profile` | `on` | Profile/settings family |
+| `/settings/accessibility` | `profile` | `on` | Profile/settings family |
+| `/settings/account` | `profile` | `on` | Profile/settings family |
+| `/settings/billing` | `profile` | `on` | Profile/settings family |
+| `/settings/language` | `profile` | `on` | Profile/settings family |
+| `/settings/notifications` | `profile` | `on` | Profile/settings family |
+| `/settings/privacy` | `profile` | `on` | Profile/settings family |
+| `/settings/profile` | `profile` | `on` | Profile/settings family |
+| `/settings/security` | `profile` | `on` | Profile/settings family |
+| `/signup` | `auth` | `off` | Auth family |
+| `/signup/email` | `auth` | `off` | Auth family |
+| `/signup/password` | `auth` | `off` | Auth family |
+| `/signup/phone` | `auth` | `off` | Auth family |
+| `/signup/verify` | `auth` | `off` | Auth family |
+| `/speaking` | `learning` | `on` | Learning/resources family |
+| `/speaking/[promptId]` | `learning` | `on` | Learning/resources family |
+| `/speaking/attempts` | `learning` | `on` | Learning/resources family |
+| `/speaking/attempts/[attemptId]/result` | `learning` | `on` | Learning/resources family |
+| `/speaking/buddy` | `learning` | `on` | Learning/resources family |
+| `/speaking/coach` | `learning` | `on` | Learning/resources family |
+| `/speaking/coach/[slug]` | `learning` | `on` | Learning/resources family |
+| `/speaking/coach/free` | `learning` | `on` | Learning/resources family |
+| `/speaking/library` | `learning` | `on` | Learning/resources family |
+| `/speaking/live` | `learning` | `on` | Learning/resources family |
+| `/speaking/live/[id]` | `learning` | `on` | Learning/resources family |
+| `/speaking/packs/[slug]` | `learning` | `on` | Learning/resources family |
+| `/speaking/partner` | `learning` | `on` | Learning/resources family |
+| `/speaking/partner/history` | `learning` | `on` | Learning/resources family |
+| `/speaking/partner/review/[attemptId]` | `learning` | `on` | Learning/resources family |
+| `/speaking/practice` | `learning` | `on` | Learning/resources family |
+| `/speaking/report` | `learning` | `on` | Learning/resources family |
+| `/speaking/review/[id]` | `learning` | `on` | Learning/resources family |
+| `/speaking/roleplay` | `learning` | `on` | Learning/resources family |
+| `/speaking/roleplay/[scenario]` | `learning` | `on` | Learning/resources family |
+| `/speaking/settings` | `learning` | `on` | Learning/resources family |
+| `/speaking/simulator` | `learning` | `on` | Learning/resources family |
+| `/speaking/simulator/part1` | `learning` | `on` | Learning/resources family |
+| `/speaking/simulator/part2` | `learning` | `on` | Learning/resources family |
+| `/speaking/simulator/part3` | `learning` | `on` | Learning/resources family |
+| `/study-plan` | `dashboard` | `on` | Dashboard/app family |
+| `/study-plan/[weekId]` | `dashboard` | `on` | Dashboard/app family |
+| `/teacher` | `dashboard` | `on` | Teacher routes use TeacherLayout override in AppLayoutManager |
+| `/teacher/Welcome` | `dashboard` | `on` | Teacher routes use TeacherLayout override in AppLayoutManager |
+| `/teacher/cohorts/[id]` | `dashboard` | `on` | Teacher routes use TeacherLayout override in AppLayoutManager |
+| `/teacher/onboarding` | `dashboard` | `on` | Teacher routes use TeacherLayout override in AppLayoutManager |
+| `/teacher/pending` | `dashboard` | `on` | Teacher routes use TeacherLayout override in AppLayoutManager |
+| `/teacher/register` | `dashboard` | `on` | Teacher routes use TeacherLayout override in AppLayoutManager |
+| `/tokens-test` | `dashboard` | `on` | Dashboard/app family |
+| `/tools/listening/accent-trainer` | `learning` | `on` | Learning/resources family |
+| `/tools/listening/dictation` | `learning` | `on` | Learning/resources family |
+| `/tools/mark-sections/[slug]` | `learning` | `on` | Learning/resources family |
+| `/update-password` | `auth` | `off` | Auth family |
+| `/visa` | `marketing` | `on` | Marketing/public family |
+| `/vocab` | `learning` | `on` | Learning/resources family |
+| `/vocabulary` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/[word]` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/ai-lab` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/infiniteapplications` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/learned` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/linking-words` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/lists` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/my-words` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/quizzes` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/quizzes/today` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/review` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/saved` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/speaking` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/speaking/[topic]` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/synonyms` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/topics` | `learning` | `on` | Learning/resources family |
+| `/vocabulary/topics/[topic]` | `learning` | `on` | Learning/resources family |
+| `/waitlist` | `marketplace` | `on` | Marketplace/commerce family |
+| `/welcome` | `marketing` | `on` | Marketing/public family |
+| `/whatsapp-tasks` | `dashboard` | `on` | Dashboard/app family |
+| `/word-of-the-day` | `learning` | `on` | Learning/resources family |
+| `/writing` | `learning` | `on` | Learning/resources family |
+| `/writing/[slug]` | `learning` | `on` | Learning/resources family |
+| `/writing/drills` | `learning` | `on` | Learning/resources family |
+| `/writing/drills/[slug]` | `learning` | `on` | Learning/resources family |
+| `/writing/learn` | `learning` | `on` | Learning/resources family |
+| `/writing/learn/coherence` | `learning` | `on` | Learning/resources family |
+| `/writing/learn/grammar` | `learning` | `on` | Learning/resources family |
+| `/writing/learn/lexical` | `learning` | `on` | Learning/resources family |
+| `/writing/learn/task1-overview` | `learning` | `on` | Learning/resources family |
+| `/writing/learn/task2-structure` | `learning` | `on` | Learning/resources family |
+| `/writing/library` | `learning` | `on` | Learning/resources family |
+| `/writing/mock` | `learning` | `on` | Learning/resources family |
+| `/writing/mock/[mockId]/evaluating` | `dashboard` | `off` | Writing mock runtime |
+| `/writing/mock/[mockId]/results` | `dashboard` | `off` | Writing mock runtime |
+| `/writing/mock/[mockId]/review` | `dashboard` | `off` | Writing mock runtime |
+| `/writing/mock/[mockId]/start` | `dashboard` | `off` | Writing mock runtime |
+| `/writing/mock/[mockId]/workspace` | `dashboard` | `off` | Writing mock runtime |
+| `/writing/overview` | `learning` | `on` | Learning/resources family |
+| `/writing/progress` | `learning` | `on` | Learning/resources family |
+| `/writing/resources` | `learning` | `on` | Learning/resources family |
+| `/writing/review/[attemptId]` | `learning` | `on` | Learning/resources family |
+| `/writing/review/calibrate` | `learning` | `on` | Learning/resources family |
