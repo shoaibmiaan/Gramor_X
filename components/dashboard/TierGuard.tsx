@@ -3,7 +3,7 @@ import type { PropsWithChildren } from 'react';
 import type { EntitlementFeatureKey } from '@/lib/config/featureFlags';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import useEntitlement from '@/hooks/useEntitlement';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/design-system/Button';
 import { UpgradeModal } from '@/components/dashboard/UpgradeModal';
 
 type TierGuardProps = PropsWithChildren<{

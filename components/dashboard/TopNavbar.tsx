@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/design-system/Button';
 
 type TopNavbarProps = {
   onToggleSidebar: () => void;

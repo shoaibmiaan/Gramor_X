@@ -1,5 +1,5 @@
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 
 type UpgradeModalProps = {

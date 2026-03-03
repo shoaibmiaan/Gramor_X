@@ -1,7 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
-import { Card } from '@/components/design-system/Card';
-import { ActionButtons } from './ActionButtons';
+import { QuickActions } from './QuickActions';
 
 interface QuickActionsCardProps {
   onShareDashboard: () => void;
@@ -12,14 +10,48 @@ export const QuickActionsCard: React.FC<QuickActionsCardProps> = ({
   onShareDashboard,
   speakingVocabSlug,
 }) => {
+  void onShareDashboard;
+
   return (
-    <Card className="rounded-ds-2xl p-6">
-      <h2 className="font-slab text-h2">Quick actions</h2>
-      <p className="mt-1 text-grayish">Jump back in with one click.</p>
-      <ActionButtons
-        onShareDashboard={onShareDashboard}
-        speakingVocabSlug={speakingVocabSlug}
-      />
-    </Card>
+    <QuickActions
+      actions={[
+        {
+          id: 'resume-learning',
+          label: 'Resume learning',
+          description: 'Continue from your current study plan checkpoint.',
+          href: '/learning',
+        },
+        {
+          id: 'start-mock',
+          label: 'Start mock',
+          description: 'Run a timed exam simulation to refresh your band estimate.',
+          href: '/mock',
+        },
+        {
+          id: 'view-progress',
+          label: 'View details',
+          description: 'Open progress analytics and review your trend line.',
+          href: '/progress',
+        },
+        {
+          id: 'start-speaking',
+          label: 'Start speaking vocab',
+          description: 'Jump into your personalized speaking vocabulary module.',
+          href: `/vocabulary/speaking/${speakingVocabSlug}`,
+        },
+        {
+          id: 'join-community',
+          label: 'Join challenge',
+          description: 'Compete with other learners in weekly goal challenges.',
+          href: '/challenge',
+        },
+        {
+          id: 'share-progress',
+          label: 'Share dashboard',
+          description: 'Generate and share your current progress snapshot.',
+          href: '#share',
+        },
+      ]}
+    />
   );
 };
