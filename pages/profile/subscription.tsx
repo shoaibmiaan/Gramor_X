@@ -18,9 +18,9 @@ export default function SubscriptionPage() {
   const { error: toastError } = useToast();
   const {
     plan,
-    profile,
     status,
     displayPlan,
+    currentPeriodEnd,
     expiresAtLabel,
     isPremium,
     isTrial,
@@ -75,7 +75,7 @@ export default function SubscriptionPage() {
                   {isTrial && (
                     <Alert variant="warning" className="w-full">
                       {t('subscription.trial', 'Your premium trial ends on {{date}}.', {
-                        date: new Date(profile!.premium_until!).toLocaleDateString(),
+                        date: currentPeriodEnd ? new Date(currentPeriodEnd).toLocaleDateString() : '',
                       })}
                     </Alert>
                   )}

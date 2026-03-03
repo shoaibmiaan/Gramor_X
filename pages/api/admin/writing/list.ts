@@ -67,12 +67,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuard
 
   const { data: profiles } = await supabaseAdmin
     .from('profiles')
-    .select('id, full_name, email, plan')
+    .select('id, full_name, email')
     .in('id', userIds);
 
-  const profileMap = new Map<string, { full_name?: string | null; email?: string | null; plan?: string | null }>();
+  const profileMap = new Map<string, { full_name?: string | null; email?: string | null }>();
   (profiles ?? []).forEach((profile) => {
     profileMap.set(profile.id as string, profile as any);
+  });
+
+  const { data: subscriptions } = await supabaseAdmin
+    .from('subscriptions')
+    .select('user_id, plan_id, status, updated_at, created_at')
+    .in('user_id', userIds)
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false, nullsFirst: false });
+
+  const subscriptionPlanMap = new Map<string, PlanId>();
+  (subscriptions ?? []).forEach((subscription) => {
+    const userId = subscription.user_id as string | null;
+    if (!userId || subscriptionPlanMap.has(userId)) return;
+    subscriptionPlanMap.set(userId, normalisePlan(subscription.plan_id as string | null));
   });
 
   const attemptIds = scopedAttempts.map((row) => row.id as string);
@@ -107,7 +121,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuard
     const profile = profileMap.get(attempt.user_id as string) ?? {};
     const stats = grouped.get(attempt.id as string) ?? { sum: 0, count: 0, tasks: [] };
     const averageBand = stats.count > 0 ? stats.sum / stats.count : 0;
-    const plan = normalisePlan(profile.plan ?? null);
+    const plan = subscriptionPlanMap.get(attempt.user_id as string) ?? 'free';
     return {
       attemptId: attempt.id as string,
       userId: attempt.user_id as string,
@@ -133,4 +147,3 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuard
 }
 
 export default withPlan('master', handler, { allowRoles: ['admin', 'teacher'] });
-

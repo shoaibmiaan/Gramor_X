@@ -1,6 +1,7 @@
 // pages/api/me/plan.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { getActiveSubscription } from '@/lib/subscription/getActiveSubscription';
 import type { PlanId } from '@/types/pricing';
 
 type Resp = { ok: true; plan: PlanId } | { ok: false; plan: PlanId };
@@ -35,18 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({ ok: true, plan: 'master' });
   }
 
-  // 2) Profile plan (fallback)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('plan_id, role')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  // If profile.role says admin/teacher, also bypass
-  if (profile?.role === 'admin' || profile?.role === 'teacher') {
-    return res.status(200).json({ ok: true, plan: 'master' });
-  }
-
-  const plan = normalize(profile?.plan_id as string | undefined);
+  const subscription = await getActiveSubscription(user.id, supabase);
+  const plan = normalize(subscription.plan === 'pro' ? 'master' : subscription.plan);
   return res.status(200).json({ ok: true, plan });
 }

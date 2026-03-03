@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { z } from 'zod';
+import { getActiveSubscription, requireActiveSubscription } from '@/lib/subscription/getActiveSubscription';
 
 const AI_RETRY_COUNT = 1;
 const AUDIO_FETCH_TIMEOUT_MS = 30_000;
@@ -153,17 +154,14 @@ export default async function handler(
 
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  let plan: 'free' | 'starter' | 'booster' | 'master' = 'free';
   try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('membership_plan')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (profile?.membership_plan) plan = profile.membership_plan as typeof plan;
-  } catch (error) {
-    console.warn('[speaking.score] failed to read plan', error);
+    await requireActiveSubscription(user.id, supabase);
+  } catch {
+    return res.status(402).json({ error: 'subscription_required' });
   }
+
+  const subscription = await getActiveSubscription(user.id, supabase);
+  const plan = subscription.plan;
 
   if (!env.OPENAI_API_KEY) {
     return res.status(503).json({

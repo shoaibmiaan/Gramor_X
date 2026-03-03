@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseFromRequest } from '@/lib/apiAuth';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { checkLimit, incrementUsage, limitExceeded } from '@/lib/usage';
+import { getActiveSubscription, requireActiveSubscription } from '@/lib/subscription/getActiveSubscription';
 
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -15,17 +16,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = userRes?.user;
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  let plan: 'free' | 'starter' | 'booster' | 'master' = 'free';
   try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('membership_plan')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (profile?.membership_plan) plan = profile.membership_plan as typeof plan;
-  } catch (error) {
-    console.warn('[speaking.start] failed to read plan', error);
+    await requireActiveSubscription(user.id, supabase);
+  } catch {
+    return res.status(402).json({ error: 'subscription_required' });
   }
+
+  const subscription = await getActiveSubscription(user.id, supabase);
+  const plan = subscription.plan;
 
   const freeLimit = Number(process.env.LIMIT_FREE_SPEAKING ?? 2) || 0;
   const enforceLimit = plan === 'free' && freeLimit > 0;
