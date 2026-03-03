@@ -5,14 +5,30 @@ export type UsageKey =
   | 'mock.start'
   | 'mock.submit';
 
+export type Feature =
+  | 'ai.explain'
+  | 'ai.summary'
+  | 'ai.recommend'
+  | 'ai.profile_suggest'
+  | 'ai.next_item'
+  | 'ai.writing.score'
+  | 'ai.speaking.evaluate'
+  | 'ai.chat'
+  | string;
+
 export type UsageRecord = Readonly<{
-  key: UsageKey;
-  count: number;
-  dateISO: string;
+  id?: string;
+  user_id: string;
+  feature: Feature;
+  requests: number;
+  tokens: number;
+  date: string;
+  created_at?: string;
+  updated_at?: string;
 }>;
 
 export type UsageLimit = Readonly<{
-  key: UsageKey;
+  feature: Feature;
   limit: number;
 }>;
 
@@ -35,6 +51,14 @@ export type UsageDecision = Readonly<{
 }>;
 
 export type LimitExceededPayload = Readonly<{ error: string; limit: number }>;
+
+export type UsageGuardResult = Readonly<{
+  used: number;
+  limit: number;
+  remaining: number;
+  percentage: number;
+  feature: Feature;
+}>;
 
 export type GXErrorPayload = Readonly<{
   error?: {

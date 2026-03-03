@@ -1,6 +1,8 @@
 // pages/api/ai/summary.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerClient } from '@/lib/supabaseServer';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
+import { guardAIRequest } from '@/lib/usage';
 
 const API_KEY = process.env.OPENAI_API_KEY || '';
 const MODEL = process.env.GX_AI_MODEL || 'gpt-4o-mini';
@@ -9,9 +11,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-    const supabase = getServerClient({ req, res });
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const supabase = createSupabaseServerClient({ req, res });
+    let user;
+    try {
+      user = await requireAuth(supabase);
+    } catch (error) {
+      if (error instanceof AuthError) return writeAuthError(res, error.code);
+      throw error;
+    }
+
+    try {
+      await guardAIRequest(supabase, user.id, 'ai.summary');
+    } catch (error) {
+      if ((error as Error & { status?: number }).status === 429) return res.status(429).json({ error: 'usage_limit_reached' });
+      throw error;
+    }
 
     const { data: recent } = await supabase
       .from('reading_sessions')

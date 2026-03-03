@@ -1,4 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
+import { guardAIRequest } from '@/lib/usage';
 import { z } from 'zod';
 
 const ItemSchema = z.object({
@@ -30,6 +33,25 @@ const openaiModel = process.env.OPENAI_EXPLAIN_MODEL || 'gpt-4o-mini';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Resp>) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+
+
+  const supabase = createSupabaseServerClient({ req, res });
+  let user;
+  try {
+    user = await requireAuth(supabase);
+  } catch (error) {
+    if (error instanceof AuthError) return writeAuthError(res, error.code);
+    throw error;
+  }
+
+  try {
+    await guardAIRequest(supabase, user.id, 'ai.explain');
+  } catch (error) {
+    if ((error as Error & { status?: number }).status === 429) {
+      return res.status(429).json({ ok: false, error: 'usage_limit_reached' });
+    }
+    throw error;
+  }
 
   const parse = BodySchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ ok: false, error: parse.error.issues.map(i => i.message).join(', ') });

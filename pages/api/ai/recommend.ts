@@ -1,7 +1,9 @@
 // pages/api/ai/recommend.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { requireAuth, AuthError, writeAuthError } from '@/lib/auth';
+import { guardAIRequest } from '@/lib/usage';
 import { getAIRecommendations, type RecommendInput } from '@/lib/ai/provider';
-import { getServerClient } from '@/lib/supabaseServer';
 
 type Ok = Awaited<ReturnType<typeof getAIRecommendations>>;
 type Err = { error: string };
@@ -10,9 +12,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-    const supabase = getServerClient({ req, res });
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    const supabase = createSupabaseServerClient({ req, res });
+    let user;
+    try {
+      user = await requireAuth(supabase);
+    } catch (error) {
+      if (error instanceof AuthError) return writeAuthError(res, error.code);
+      throw error;
+    }
+
+    try {
+      await guardAIRequest(supabase, user.id, 'ai.recommend');
+    } catch (error) {
+      if ((error as Error & { status?: number }).status === 429) return res.status(429).json({ error: 'usage_limit_reached' });
+      throw error;
+    }
 
     // Pull minimal stats; keep tolerant if tables don’t exist yet.
     // Prefer your existing views if present; otherwise compute basics.

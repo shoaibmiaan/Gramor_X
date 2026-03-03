@@ -1,6 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createLoginDestination, isAuthRoute, isSafePostAuthRedirect } from '@/lib/authRedirect';
 
+
+const PREMIUM_PREFIXES = [
+  '/writing/mock',
+  '/dashboard/ai-reports',
+  '/dashboard/writing',
+  '/dashboard/speaking',
+  '/speaking',
+  '/writing',
+];
+
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
@@ -101,6 +111,28 @@ function getRoleFromRequest(req: NextRequest): string | null {
   return typeof role === 'string' ? role.toLowerCase() : null;
 }
 
+
+function getPlanFromRequest(req: NextRequest): string | null {
+  const token = getAccessTokenFromCookie(req);
+  if (!token) return null;
+
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+
+  const appMeta = payload.app_metadata as { plan?: unknown; tier?: unknown } | undefined;
+  const userMeta = payload.user_metadata as { plan?: unknown; tier?: unknown } | undefined;
+  const rawPlan = appMeta?.plan ?? userMeta?.plan ?? appMeta?.tier ?? userMeta?.tier;
+
+  if (typeof rawPlan !== 'string') return null;
+  const plan = rawPlan.toLowerCase();
+  if (plan === 'free' || plan === 'seedling' || plan === 'starter' || plan === 'booster' || plan === 'rocket' || plan === 'master' || plan === 'owl') return plan;
+  return null;
+}
+
+function hasPremiumAccess(req: NextRequest) {
+  const plan = getPlanFromRequest(req);
+  return Boolean(plan && plan !== 'free');
+}
 function hasExpiredSession(req: NextRequest) {
   const token = getAccessTokenFromCookie(req);
   if (!token) return false;
@@ -161,6 +193,14 @@ export async function middleware(req: NextRequest) {
       url.search = '';
       return NextResponse.redirect(url);
     }
+  }
+
+
+  if (authed && pathStartsWithAny(pathname, PREMIUM_PREFIXES) && !hasPremiumAccess(req)) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/pricing';
+    url.search = '';
+    return NextResponse.redirect(url);
   }
 
   if (authed && pathname.startsWith('/teacher')) {

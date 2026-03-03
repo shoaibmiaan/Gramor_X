@@ -28,6 +28,8 @@ export default function SecuritySettings() {
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/sessions')
@@ -36,8 +38,13 @@ export default function SecuritySettings() {
     fetch('/api/auth/login-events')
       .then((r) => r.json())
       .then((data) => Array.isArray(data) && setLogins(data));
+    supabase.auth.getUser().then(({ data }) => {
+      setEmailVerified(Boolean(data.user?.email_confirmed_at));
+    });
     supabase.auth.mfa.listFactors().then(({ data }) => {
-      if (data?.factors?.length) {
+      const first = data?.all?.[0];
+      if (first?.id) setFactorId(first.id);
+      if (data?.all?.length) {
         setMfaEnabled(true);
       }
     });
@@ -64,6 +71,25 @@ export default function SecuritySettings() {
     }
   }
 
+
+
+  async function disableMfa() {
+    if (!factorId) return;
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    if (!error) {
+      setMfaEnabled(false);
+      setStatusMsg('2FA disabled.');
+    }
+  }
+
+  async function resendVerification() {
+    const { data } = await supabase.auth.getUser();
+    const email = data.user?.email;
+    if (!email) return;
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    setStatusMsg(error ? error.message : 'Verification email sent.');
+  }
+
   async function revoke(id: string) {
     await fetch(`/api/auth/sessions/${id}`, { method: 'DELETE' });
     setSessions((s) => s.filter((x) => x.id !== id));
@@ -79,7 +105,10 @@ export default function SecuritySettings() {
         <div>
           <h2 className="font-slab text-h3 mb-2">Multi-Factor Auth</h2>
           {mfaEnabled ? (
-            <p className="text-body">Email OTP is enabled.</p>
+            <div className="space-y-2">
+              <p className="text-body">Email OTP is enabled.</p>
+              <Button variant="secondary" onClick={disableMfa}>Disable 2FA</Button>
+            </div>
           ) : otpSent ? (
             <div className="space-y-2 max-w-xs">
               <Input label="Enter code" value={otp} onChange={(e) => setOtp(e.target.value)} />
@@ -87,6 +116,18 @@ export default function SecuritySettings() {
             </div>
           ) : (
             <Button onClick={enableMfa}>Enable Email OTP</Button>
+          )}
+        </div>
+
+        <div>
+          <h2 className="font-slab text-h3 mb-2">Email verification</h2>
+          {emailVerified ? (
+            <p className="text-body">Your email is verified.</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-body">Your email is not verified yet.</p>
+              <Button onClick={resendVerification}>Resend verification email</Button>
+            </div>
           )}
         </div>
 
@@ -125,6 +166,7 @@ export default function SecuritySettings() {
             </ul>
           )}
         </div>
+        {statusMsg ? <p className="text-small text-muted-foreground">{statusMsg}</p> : null}
       </Card>
     </SettingsLayout>
   );
