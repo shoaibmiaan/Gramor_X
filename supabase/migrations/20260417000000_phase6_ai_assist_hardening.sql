@@ -10,15 +10,20 @@ ALTER TABLE IF EXISTS public.ai_assist_logs
   ADD COLUMN IF NOT EXISTS request_id text,
   ADD COLUMN IF NOT EXISTS metadata jsonb NOT NULL DEFAULT '{}'::jsonb;
 
-CREATE INDEX IF NOT EXISTS ai_assist_logs_feature_created_idx
-  ON public.ai_assist_logs (feature, created_at DESC);
+DO $$
+BEGIN
+  IF to_regclass('public.ai_assist_logs') IS NOT NULL THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS ai_assist_logs_feature_created_idx
+      ON public.ai_assist_logs (feature, created_at DESC)';
 
-CREATE INDEX IF NOT EXISTS ai_assist_logs_user_feature_created_idx
-  ON public.ai_assist_logs (user_id, feature, created_at DESC);
+    EXECUTE 'CREATE INDEX IF NOT EXISTS ai_assist_logs_user_feature_created_idx
+      ON public.ai_assist_logs (user_id, feature, created_at DESC)';
+  END IF;
+END$$;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (
+  IF to_regclass('public.ai_assist_logs') IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM pg_policies
     WHERE schemaname = 'public'
       AND tablename = 'ai_assist_logs'
