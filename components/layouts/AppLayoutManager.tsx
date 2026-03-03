@@ -37,6 +37,12 @@ import SupportLayout from '@/components/layouts/SupportLayout';
 import WritingLayout from '@/components/layouts/WritingLayout';
 import ExamResourceLayout from '@/components/layouts/ExamResourceLayout';
 
+// 🆕 Import newly added layouts
+import ExamLayout from '@/components/layouts/ExamLayout';
+import GlobalPageLayout from '@/components/layouts/GlobalPageLayout';
+import OnboardingLayout from '@/components/layouts/OnboardingLayout';
+import WritingExamLayout from '@/components/layouts/WritingExamLayout';
+
 // ⭐ NEW — Breadcrumb Bar V2
 import { BreadcrumbBar } from '@/components/navigation/BreadcrumbBar';
 
@@ -70,7 +76,7 @@ const LayoutErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 // -----------------------
-// Props
+// Props (updated with new boolean flags)
 // -----------------------
 type AppLayoutManagerProps = {
   children: ReactNode;
@@ -88,6 +94,11 @@ type AppLayoutManagerProps = {
   isCommunityRoute: boolean;
   isReportsRoute: boolean;
   isMarketingRoute: boolean;
+  // 🆕 New route flags
+  isExamRoute?: boolean;
+  isOnboardingRoute?: boolean;
+  isGlobalPageRoute?: boolean;
+  isWritingExamRoute?: boolean;
   subscriptionTier: SubscriptionTier;
   isRouteLoading: boolean;
   role?: string | null;
@@ -187,6 +198,7 @@ type LayoutConfig = {
   component: React.ComponentType<{ children: ReactNode; userRole?: string }>;
 };
 
+// 🆕 Extended layoutComponentMap with new entries
 const layoutComponentMap: Record<string, React.ComponentType<{ children: ReactNode; userRole?: string }>> = {
   admin: AdminLayout,
   teacher: TeacherLayout,
@@ -203,6 +215,11 @@ const layoutComponentMap: Record<string, React.ComponentType<{ children: ReactNo
   resources: ResourcesLayout,
   analytics: AnalyticsLayout,
   support: SupportLayout,
+  // 🆕 New layout mappings
+  exam: ExamLayout,
+  global: GlobalPageLayout,
+  onboarding: OnboardingLayout,
+  writingExam: WritingExamLayout,
 };
 
 const resolveLayoutComponent = (
@@ -231,6 +248,11 @@ export function AppLayoutManager({
   isCommunityRoute,
   isReportsRoute,
   isMarketingRoute,
+  // 🆕 Destructure new props with defaults
+  isExamRoute = false,
+  isOnboardingRoute = false,
+  isGlobalPageRoute = false,
+  isWritingExamRoute = false,
   subscriptionTier,
   isRouteLoading,
   role,
@@ -268,9 +290,14 @@ export function AppLayoutManager({
   }, [role, teacherAccessRole, teacherAccess.isApproved, children, guardFallback]);
 
   // -----------------------
-  // Layout Mapping
+  // Layout Mapping (updated with new routes)
   // -----------------------
   const fallbackLayoutType = useMemo(() => {
+    // Order matters: more specific first
+    if (isWritingExamRoute) return 'writingExam';
+    if (isExamRoute) return 'exam';
+    if (isOnboardingRoute) return 'onboarding';
+    if (isGlobalPageRoute) return 'global';
     if (isAdminRoute) return 'admin';
     if (router.pathname.startsWith('/teacher')) return 'teacher';
     if (isInstitutionsRoute) return 'institutions';
@@ -282,6 +309,10 @@ export function AppLayoutManager({
     if (isDashboardRoute) return 'dashboard';
     return 'dashboard';
   }, [
+    isWritingExamRoute,
+    isExamRoute,
+    isOnboardingRoute,
+    isGlobalPageRoute,
     isAdminRoute,
     isInstitutionsRoute,
     isMarketplaceRoute,
@@ -309,7 +340,6 @@ export function AppLayoutManager({
       component,
     };
   }, [resolvedLayoutType, fallbackLayoutType]);
-
 
   // -----------------------
   // Apply Wrappers

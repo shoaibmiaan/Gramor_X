@@ -91,6 +91,15 @@ const isMockTestsFlowRoute = (pathname: string) => {
   return isMockAttempt || isWritingAttempt;
 };
 
+// 🆕 New route detection helpers
+const isExamRoute = (pathname: string) => pathname.startsWith('/exam');
+const isWritingExamRoute = (pathname: string) => pathname.startsWith('/writing/exam');
+const isOnboardingRoute = (pathname: string) => pathname.startsWith('/onboarding');
+const isGlobalPageRoute = (pathname: string) => {
+  const globalPages = ['/about', '/contact', '/terms', '/privacy', '/faq', '/help'];
+  return globalPages.includes(pathname);
+};
+
 // ---------- Auth bridge ----------
 function useAuthBridge() {
   // Auth session lifecycle is now server-owned via /auth/callback and HttpOnly cookies.
@@ -118,6 +127,12 @@ function useRouteConfiguration(pathname: string) {
 
     const showLayout = !pathname.startsWith('/premium') && !isNoChromeRoute;
 
+    // 🆕 Compute new route flags
+    const isExamRouteFlag = isExamRoute(pathname);
+    const isWritingExamRouteFlag = isWritingExamRoute(pathname);
+    const isOnboardingRouteFlag = isOnboardingRoute(pathname);
+    const isGlobalPageRouteFlag = isGlobalPageRoute(pathname);
+
     return {
       isAuthPage: derivedIsAuth,
       isProctoringRoute: routeConfig.layout === 'proctoring',
@@ -136,6 +151,11 @@ function useRouteConfiguration(pathname: string) {
         routeConfig.layout === 'community' || routeConfig.layout === 'communication',
       isReportsRoute: routeConfig.layout === 'reports',
       isMarketingRoute: routeConfig.layout === 'marketing' || routeConfig.layout === 'support',
+      // 🆕 New flags
+      isExamRoute: isExamRouteFlag,
+      isWritingExamRoute: isWritingExamRouteFlag,
+      isOnboardingRoute: isOnboardingRouteFlag,
+      isGlobalPageRoute: isGlobalPageRouteFlag,
       needPremium: pathname.startsWith('/premium'),
       isPremiumRoute: isPremiumRoomRoute(pathname),
       routeConfig,
@@ -289,6 +309,11 @@ function InnerApp({ Component, pageProps }: AppProps) {
                 isCommunityRoute={routeConfiguration.isCommunityRoute}
                 isReportsRoute={routeConfiguration.isReportsRoute}
                 isMarketingRoute={routeConfiguration.isMarketingRoute}
+                // 🆕 Pass new flags
+                isExamRoute={routeConfiguration.isExamRoute}
+                isOnboardingRoute={routeConfiguration.isOnboardingRoute}
+                isGlobalPageRoute={routeConfiguration.isGlobalPageRoute}
+                isWritingExamRoute={routeConfiguration.isWritingExamRoute}
                 subscriptionTier={subscriptionTier}
                 role={role}
                 isTeacherApproved={isTeacherApproved}
