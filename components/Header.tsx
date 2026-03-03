@@ -28,7 +28,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const { loading, user: contextUser } = useUserContext();
+  const { loading, user: contextUser, role: contextRole } = useUserContext();
   const {
     user: headerUser,
     role,
@@ -57,7 +57,8 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
     [contextUser, headerUser]
   );
 
-  const isHeaderReady = ready || !!contextUser?.id;
+  const effectiveRole = (role ?? contextRole ?? 'guest') as string;
+  const isHeaderReady = ready || !!contextUser?.id || Boolean(contextRole);
 
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [premiumRooms, setPremiumRooms] = useState<string[]>([]);
@@ -412,7 +413,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               {/* Desktop nav */}
               <DesktopNav
                 user={user}
-                role={role ?? 'guest'}
+                role={effectiveRole}
                 ready={isHeaderReady}
                 streak={streakState}
                 openModules={openDesktopModules}
@@ -430,7 +431,7 @@ export const Header: React.FC<{ streak?: number }> = ({ streak }) => {
               {/* Mobile nav */}
               <MobileNav
                 user={user}
-                role={role ?? 'guest'}
+                role={effectiveRole}
                 ready={isHeaderReady}
                 streak={streakState ?? 0}
                 mobileOpen={mobileOpen}
