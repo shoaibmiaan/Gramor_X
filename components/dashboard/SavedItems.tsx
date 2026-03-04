@@ -1,184 +1,56 @@
-import React, { useEffect, useState } from 'react';
+// components/dashboard/SavedItems.tsx
+import React from 'react';
 import Link from 'next/link';
-import { Card } from '@/components/design-system/Card';
-import { Button } from '@/components/design-system/Button';
-
-type SavedItem = {
-  id?: string;
-  resource_id: string;
-  type: string | null;
-  category: string | null;
-  created_at: string;
-};
+import { useUser } from '@/hooks/useUser';
+import { useSavedItems } from '@/hooks/useSavedItems';
+import { Skeleton } from '@/components/design-system/Skeleton';
 
 export function SavedItems() {
-  const [loading, setLoading] = useState(true);
-  const [authed, setAuthed] = useState(true);
-  const [items, setItems] = useState<SavedItem[]>([]);
-  const [filter, setFilter] = useState('all');
-  const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
-  const [tags, setTags] = useState<Record<string, string[]>>({});
+  const { user, isLoading: userLoading } = useUser();
+  const userId = user?.id ?? null;
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/saved');
-        if (!active) return;
-        if (res.status === 401) {
-          setAuthed(false);
-          setItems([]);
-        } else if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setItems(data as SavedItem[]);
-          } else if (data && Array.isArray((data as { items?: SavedItem[] }).items)) {
-            setItems((data as { items: SavedItem[] }).items);
-          } else {
-            setItems([]);
-          }
-        }
-      } catch {
-        // ignore
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
-  }, []);
+  // Guard: only call the query hook when we have a logged-in user (prevents QueryClient error)
+  const { items = [], isLoading, error } = userId
+    ? useSavedItems(userId)
+    : { items: [], isLoading: false, error: null };
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem('saved-tags');
-      if (stored) setTags(JSON.parse(stored));
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem('saved-tags', JSON.stringify(tags));
-    } catch {
-      // ignore
-    }
-  }, [tags]);
-
-  if (loading) {
+  if (userLoading || isLoading) {
     return (
-      <Card className="p-6 rounded-ds-2xl">
-        <div className="animate-pulse h-5 w-40 bg-muted dark:bg-white/10 rounded" />
-        <div className="mt-4 animate-pulse h-4 w-64 bg-muted dark:bg-white/10 rounded" />
-      </Card>
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
     );
   }
 
-  if (!authed) {
-    return (
-      <Card className="p-6 rounded-ds-2xl flex items-center justify-between">
-        <div>
-          <div className="font-semibold mb-1">Saved items</div>
-          <div className="text-small text-grayish dark:text-muted-foreground">Sign in to access your bookmarks.</div>
-        </div>
-        <Button href="/login" variant="primary" className="rounded-ds-xl">Sign in</Button>
-      </Card>
-    );
+  if (!user) {
+    return <p className="text-sm text-muted-foreground py-4">Sign in to see saved items.</p>;
   }
 
-  const linkFor = (b: SavedItem) => {
-    if (b.category === 'vocabulary') return `/vocabulary/${b.resource_id}`;
-    if (b.category === 'grammar') return `/grammar/${b.resource_id}`;
-    if (b.type === 'reading') return `/reading/${b.resource_id}`;
-    if (b.type === 'listening') return `/listening/${b.resource_id}`;
-    const fallbackType = b.type || b.category || 'content';
-    return `/${fallbackType}/${b.resource_id}`;
-  };
+  if (error) {
+    return <p className="text-sm text-danger py-4">Could not load saved items.</p>;
+  }
+
+  if (items.length === 0) {
+    return <p className="text-sm text-muted-foreground py-4">No saved items yet.</p>;
+  }
 
   return (
-    <Card className="p-6 rounded-ds-2xl">
-      <h2 className="font-slab text-h2 mb-4">Saved items</h2>
-      <div className="mb-4 flex gap-3">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border rounded p-1 text-small dark:bg-black dark:border-white/10"
-        >
-          <option value="all">All</option>
-          <option value="bookmark">Bookmarks</option>
-          <option value="flagged">Flagged</option>
-          <option value="retake">Retake Queue</option>
-          <option value="vocabulary">Vocabulary</option>
-          <option value="grammar">Grammar</option>
-        </select>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as 'newest' | 'oldest')}
-          className="border rounded p-1 text-small dark:bg-black dark:border-white/10"
-        >
-          <option value="newest">Newest</option>
-          <option value="oldest">Oldest</option>
-        </select>
-      </div>
-      {items.filter((b) => filter === 'all' || b.category === filter).length === 0 ? (
-        <div className="text-small text-grayish dark:text-muted-foreground">No saved items yet.</div>
-      ) : (
-        <ul className="grid gap-2">
-          {items
-            .filter((b) => filter === 'all' || b.category === filter)
-            .sort((a, b) =>
-              sort === 'newest'
-                ? b.created_at.localeCompare(a.created_at)
-                : a.created_at.localeCompare(b.created_at),
-            )
-            .map((b) => {
-              const key = b.id ?? `${b.category}:${b.type}:${b.resource_id}`;
-              const tagList = tags[key] || [];
-              return (
-                <li key={key} className="flex items-center justify-between gap-4">
-                  <Link href={linkFor(b)} className="underline">
-                    {(b.category ?? 'bookmark')}: {b.resource_id}
-                  </Link>
-                  <div className="flex items-center gap-2">
-                    {tagList.map((t) => (
-                      <span
-                        key={t}
-                        className="text-caption px-1 rounded bg-vibrantPurple/10 text-vibrantPurple"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                    <input
-                      className="w-20 border rounded px-1 text-caption dark:bg-black dark:border-white/10"
-                      placeholder="tag"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const val = (e.target as HTMLInputElement).value.trim();
-                          if (val) {
-                            setTags((prev) => {
-                              const next = { ...prev };
-                              const arr = next[key] ? [...next[key]] : [];
-                              if (!arr.includes(val)) arr.push(val);
-                              next[key] = arr;
-                              return next;
-                            });
-                            (e.target as HTMLInputElement).value = '';
-                          }
-                        }
-                      }}
-                    />
-                    <span className="text-small text-grayish dark:text-muted-foreground">
-                      {new Date(b.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-        </ul>
-      )}
-    </Card>
+    <ul className="space-y-3">
+      {items.map((item: any) => (
+        <li key={item.id} className="flex items-center justify-between border-b border-border pb-2 last:border-0">
+          <Link
+            href={`/${item.category || 'content'}/${item.resource_id}`}
+            className="text-sm underline hover:text-primary"
+          >
+            {(item.category ?? 'bookmark')}: {item.resource_id}
+          </Link>
+          <span className="text-xs text-muted-foreground">
+            {new Date(item.created_at).toLocaleDateString()}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
-
-export default SavedItems;

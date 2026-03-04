@@ -7,12 +7,17 @@ import type { GamificationSummaryData } from '@/lib/dashboard/getDashboardData';
 import { Flame, Trophy, Star } from 'lucide-react';
 
 interface GamificationSummaryProps {
-  gamification: GamificationSummaryData;
+  gamification?: GamificationSummaryData | null; // ← made optional
 }
 
 export const GamificationSummary: React.FC<GamificationSummaryProps> = ({
   gamification,
 }) => {
+  // Safe defaults when data is not yet loaded
+  if (!gamification) {
+    return null; // or you can render a skeleton here if you prefer
+  }
+
   return (
     <DashboardCard
       title="Motivation & rewards"
@@ -25,7 +30,7 @@ export const GamificationSummary: React.FC<GamificationSummaryProps> = ({
             Streak
           </div>
           <div className="text-lg font-bold">
-            {gamification.streakDays}
+            {gamification.streakDays ?? 0}
             <span className="ml-1 text-xs font-medium">days</span>
           </div>
           <p className="text-[11px] opacity-80">
@@ -39,7 +44,7 @@ export const GamificationSummary: React.FC<GamificationSummaryProps> = ({
             XP this week
           </div>
           <div className="text-lg font-bold">
-            {gamification.xpThisWeek}
+            {gamification.xpThisWeek ?? 0}
             <span className="ml-1 text-xs font-medium">XP</span>
           </div>
           <p className="text-[11px] opacity-80">
@@ -67,7 +72,7 @@ export const GamificationSummary: React.FC<GamificationSummaryProps> = ({
       </div>
 
       <a
-        href={gamification.leaderboardHref}
+        href={gamification.leaderboardHref ?? '#'}
         className="mt-3 inline-flex items-center text-xs font-medium text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline dark:text-slate-300 dark:hover:text-white"
       >
         View full leaderboard →

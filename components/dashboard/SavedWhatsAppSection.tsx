@@ -1,11 +1,14 @@
+// components/dashboard/SavedWhatsAppSection.tsx
 import React from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import Icon from '@/components/design-system/Icon';
-import SavedItems from '@/components/dashboard/SavedItems';
-import WhatsAppOptIn from '@/components/dashboard/WhatsAppOptIn';
-import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
+
+// Named imports (these were the cause of the crash)
+import { SavedItems } from '@/components/dashboard/SavedItems';
+import { WhatsAppOptIn } from '@/components/dashboard/WhatsAppOptIn';
+import { ShareLinkCard } from '@/components/dashboard/ShareLinkCard';
 
 export const SavedWhatsAppSection: React.FC = () => {
   return (

@@ -1,4 +1,4 @@
-// File: components/navigation/MobileNav.tsx
+// components/navigation/MobileNav.tsx
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -261,9 +261,7 @@ export function MobileNav({
               <li>
                 <button
                   onClick={() => toggleSection('practice')}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 hover:bg-muted dark:hover:bg-muted-dark transition-colors ${
-                    mobileModulesOpen ? 'bg-primary/10 dark:bg-primary-dark/10' : ''
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 hover:bg-muted dark:hover:bg-muted-dark transition-colors ${mobileModulesOpen ? 'bg-primary/10 dark:bg-primary-dark/10' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon name="Layers" size={18} />
@@ -320,9 +318,7 @@ export function MobileNav({
               <li>
                 <button
                   onClick={() => toggleSection('aiTools')}
-                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 hover:bg-muted dark:hover:bg-muted-dark transition-colors ${
-                    mobileAiToolsOpen ? 'bg-primary/10 dark:bg-primary-dark/10' : ''
-                  }`}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 hover:bg-muted dark:hover:bg-muted-dark transition-colors ${mobileAiToolsOpen ? 'bg-primary/10 dark:bg-primary-dark/10' : ''}`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon name="Sparkles" size={18} />
@@ -449,39 +445,6 @@ export function MobileNav({
                   </button>
                 </li>
               </ul>
-            </div>
-          )}
-
-          {/* Auth Section */}
-          {!user?.id && ready && (
-            <div className="mt-8 space-y-3">
-              <Button
-                asChild
-                fullWidth
-                variant="primary"
-                className="rounded-xl font-semibold py-3.5"
-              >
-                <Link href="/login" onClick={closeMenu}>
-                  Sign in
-                </Link>
-              </Button>
-              <Button
-                asChild
-                fullWidth
-                variant="outline"
-                className="rounded-xl font-semibold py-3.5"
-              >
-                <Link href="/signup" onClick={closeMenu}>
-                  Create account
-                </Link>
-              </Button>
-            </div>
-          )}
-
-          {!ready && !user?.id && (
-            <div className="mt-6 space-y-2">
-              <div className="h-12 w-full animate-pulse rounded-xl bg-muted dark:bg-muted-dark" />
-              <div className="h-12 w-full animate-pulse rounded-xl bg-muted dark:bg-muted-dark" />
             </div>
           )}
 

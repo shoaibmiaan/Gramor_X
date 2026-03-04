@@ -17,7 +17,6 @@ import ModuleMenu from './ModuleMenu';
 import { navigationSchema } from '@/config/navigation';
 import { filterNavItems } from '@/lib/navigation/utils';
 import type { SubscriptionTier } from '@/lib/navigation/types';
-import { useLocale } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -64,7 +63,6 @@ export const DesktopNav: React.FC<DesktopNavProps> = ({
   onClearPremiumAccess,
   subscriptionTier,
 }) => {
-  const { locale, setLocale } = useLocale();
   const uid = user?.id ?? null;
   const isTeacher = role === 'teacher';
   const canSeePartners = role === 'partner' || role === 'admin';
@@ -333,20 +331,6 @@ export const DesktopNav: React.FC<DesktopNavProps> = ({
 
       {/* RIGHT CLUSTER: streak, notifications, theme, user */}
       <div className="flex items-center gap-3">
-        <label className="hidden xl:inline-flex items-center gap-2 rounded-full border border-border dark:border-border-dark bg-card dark:bg-card-dark px-3 py-1.5 text-xs text-muted-foreground dark:text-muted-foreground-dark">
-          <span>Lang</span>
-          <select
-            value={locale}
-            onChange={(event) => setLocale(event.target.value)}
-            className="bg-transparent text-xs font-medium text-foreground dark:text-foreground-dark outline-none"
-            aria-label="Language selector"
-          >
-            <option value="en">English</option>
-            <option value="ur">اردو</option>
-            <option value="es">Español</option>
-          </select>
-        </label>
-
         {/* Streak chip: show for authenticated users */}
         {uid && (
           <StreakChip
@@ -362,7 +346,7 @@ export const DesktopNav: React.FC<DesktopNavProps> = ({
         {/* Theme toggle */}
         {headerOptional.themeToggle && <IconOnlyThemeToggle />}
 
-        {/* User menu / Sign-in */}
+        {/* User menu */}
         <div className="ml-1">
           {uid ? (
             <UserMenu
@@ -381,16 +365,7 @@ export const DesktopNav: React.FC<DesktopNavProps> = ({
                 href: link.href,
               }))}
             />
-          ) : ready ? (
-            <Button
-              href="/login"
-              variant="outline"
-              size="sm"
-              className="w-full sm:w-auto rounded-full"
-            >
-              Sign in
-            </Button>
-          ) : (
+          ) : ready ? null : (
             <div className="h-9 w-24 animate-pulse rounded-full bg-surface-muted dark:bg-surface-muted-dark" />
           )}
         </div>

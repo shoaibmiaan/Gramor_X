@@ -1,3 +1,4 @@
+// hooks/useUser.ts
 import { useEffect } from 'react';
 import useSWR from 'swr';
 import type { User } from '@supabase/supabase-js';
@@ -23,7 +24,8 @@ export function useUser(): UseUserResult {
   );
 
   useEffect(() => {
-    const supabase = supabaseBrowser();
+    const supabase = supabaseBrowser; // ← Fixed: removed ()
+
     const { data: subscription } = supabase.auth.onAuthStateChange(() => {
       void mutate();
     });

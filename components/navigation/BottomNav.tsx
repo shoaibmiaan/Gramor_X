@@ -1,12 +1,12 @@
-// File: components/layout/BottomNav.tsx
+// components/layout/BottomNav.tsx
 'use client';
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon, type IconName } from '@/components/design-system/Icon';
 import { NavLink } from '@/components/design-system/NavLink';
-import { supabase } from '@/lib/supabaseClient';
-import { motion } from 'framer-motion'; // Added for slide-up animation on scroll
+import { motion } from 'framer-motion';
+import { useUserContext } from '@/context/UserContext';
 
 const NAV_ITEMS: ReadonlyArray<{ href: string; label: string; icon: IconName; exact?: boolean }> = [
   { href: '/', label: 'Home', icon: 'Home', exact: true },
@@ -17,39 +17,17 @@ const NAV_ITEMS: ReadonlyArray<{ href: string; label: string; icon: IconName; ex
 
 export const BottomNav: React.FC = () => {
   const router = useRouter();
-  const [hasSession, setHasSession] = React.useState(false);
-
-  React.useEffect(() => {
-    let mounted = true;
-
-    const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Failed to get session:', error);
-          return;
-        }
-        if (mounted) {
-          setHasSession(Boolean(session));
-        }
-      } catch (err) {
-        console.error('Error checking session:', err);
-      }
-    };
-
-    checkSession();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const { user, loading } = useUserContext();
+  const hasSession = Boolean(user?.id);
 
   const gate = (href: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!hasSession) {
+    if (!hasSession && !loading) {
       e.preventDefault();
       router.push('/login?next=' + encodeURIComponent(href));
     }
   };
+
+  if (loading) return null;
 
   return (
     <motion.nav

@@ -1,251 +1,143 @@
+// pages/dashboard/index.tsx
 import type { NextPage } from 'next';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useMemo, useState } from 'react';
-import useSWR from 'swr';
-import { Card } from '@/components/design-system/Card';
-import { ProgressBar } from '@/components/design-system/ProgressBar';
-import useDashboard, {
-  useEstimatedBandScore,
-  useImprovementGraph,
-  useSkillHeatmap,
-  useStrengthsWeaknesses,
-  useStudyStreak,
-} from '@/hooks/useDashboard';
+import { Suspense } from 'react';
+import { useUser } from '@/hooks/useUser';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { useAIInsights } from '@/hooks/useAIInsights';
+import { useStreak } from '@/hooks/useStreak';
+import { useMemo } from 'react';
 
-const AICommandCenter = dynamic(
-  () => import('@/components/dashboard/AICommandCenter').then((mod) => mod.AICommandCenter),
-  {
-    loading: () => <p className="text-xs text-muted-foreground">Loading AI command center…</p>,
-  },
-);
+import { HeroSection } from '@/components/dashboard/HeroSection';
+import { AIOverviewPanel } from '@/components/dashboard/AIOverviewPanel';
+import { TodayTasks } from '@/components/dashboard/TodayTasks';
+import { SkillsOverview } from '@/components/dashboard/SkillsOverview';
+import { AIInsights } from '@/components/dashboard/AIInsights';
+import { GamificationSummary } from '@/components/dashboard/GamificationSummary';
+import { ChallengeSpotlightCard } from '@/components/dashboard/ChallengeSpotlightCard';
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
-const TrendChart = dynamic(
-  () => import('@/components/charts/TrendChart').then((mod) => mod.TrendChart),
-  {
-    loading: () => <p className="text-xs text-muted-foreground">Loading chart…</p>,
-  },
-);
+// Lazy-loaded heavy sections (ssr: false for better performance)
+const InnovationTiles = dynamic(() => import('@/components/dashboard/InnovationTiles'), { ssr: false });
+const SavedWhatsAppSection = dynamic(() => import('@/components/dashboard/SavedWhatsAppSection'), { ssr: false });
+const AICommandCenter = dynamic(() => import('@/components/dashboard/AICommandCenter'), { ssr: false });
+const DailyWeeklyChallenges = dynamic(() => import('@/components/dashboard/DailyWeeklyChallenges'), { ssr: false });
 
 const DashboardPage: NextPage = () => {
-  const fetcher = async (url: string) => {
-    const res = await fetch(url, { credentials: 'include' });
-    if (!res.ok) throw new Error('fetch_failed');
-    return res.json();
-  };
+  const { user, isLoading: userLoading } = useUser();
+  const userId = user?.id ?? null;
+  const tier = user?.tier || 'free';
 
-  const { isLoading, error } = useDashboard();
-  const { score } = useEstimatedBandScore();
-  const { heatmap } = useSkillHeatmap();
-  const { strengths, weaknesses } = useStrengthsWeaknesses();
-  const { streak } = useStudyStreak();
-  const { points } = useImprovementGraph();
-  const { data: recommendations } = useSWR('/api/recommendations', fetcher);
-  const { data: prediction } = useSWR('/api/prediction', fetcher);
-  const [whatIfWriting, setWhatIfWriting] = useState(7);
-  const whatIfPayload = useMemo(() => ({ writing: whatIfWriting }), [whatIfWriting]);
-  const { data: whatIf } = useSWR(
-    ['/api/prediction/what-if', whatIfPayload],
-    async ([url, payload]) => {
-      const res = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error('what_if_failed');
-      return res.json();
-    },
-  );
+  const { data, isLoading: dataLoading, error } = useDashboardData({ userId, tier });
+  const { streak: streakData, loading: streakLoading } = useStreak();
+  const insights = useAIInsights(data, tier);
+
+  const isLoading = userLoading || dataLoading || streakLoading;
+
+  // Memoized static tiles (prevents unnecessary re-creations)
+  const innovationTiles = useMemo(() => [
+    { id: 'ai-coach', title: 'AI Coach', description: 'Personalized guidance based on your mistakes.', icon: 'Sparkles', accent: 'primary', badge: 'New', primary: { label: 'Start', href: '/ai-coach' }, secondary: { label: 'Learn more', href: '/ai-coach/about' } },
+    { id: 'study-buddy', title: 'Study Buddy', description: 'Pair with a peer for speaking practice.', icon: 'Users', accent: 'secondary', primary: { label: 'Find buddy', href: '/study-buddy' } },
+    { id: 'mistakes-book', title: 'Mistakes Book', description: 'Review and master your past errors.', icon: 'NotebookPen', accent: 'success', primary: { label: 'Review', href: '/mistakes' } },
+    { id: 'whatsapp-tasks', title: 'WhatsApp Tasks', description: 'Daily micro-tasks via WhatsApp.', icon: 'MessageCircle', accent: 'info', primary: { label: 'Configure', href: '/whatsapp' } },
+  ], []);
+
+  if (isLoading) return <DashboardSkeleton />;
+
+  if (error || !data) {
+    return <div className="p-12 text-center text-danger">Failed to load dashboard. Please refresh.</div>;
+  }
+
+  const { profile, tasks, skills, gamification } = data;
 
   return (
-    <>
-      <section className="space-y-12">
-        {error ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
-            Failed to load dashboard analytics.
+    <div className="flex min-h-screen bg-[#f9fafb] dark:bg-[#111827] text-[#111827] dark:text-[#f9fafb] antialiased">
+
+      {/* Sidebar — exact from HTML mockup */}
+      <aside className="w-64 sticky top-0 h-screen border-r border-border bg-white/90 dark:bg-[#111827]/80 px-3 py-6 hidden md:block">
+        <div className="mb-8 px-2 text-sm font-semibold tracking-wide text-indigo-600">GramorX AI</div>
+        <nav className="space-y-1">
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200">Dashboard</a>
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Reading</a>
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Writing</a>
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Speaking</a>
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">AI Reports</a>
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Study Plan</a>
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Billing</a>
+          <a href="#" className="flex rounded-xl px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Settings</a>
+        </nav>
+      </aside>
+
+      {/* Main content area */}
+      <main className="flex-1 min-w-0">
+        {/* Top navbar — exact from HTML mockup */}
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-white/75 px-4 py-3 backdrop-blur-md dark:bg-[#111827]/70">
+          <div className="flex items-center gap-3 w-full max-w-sm">
+            <input className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm focus:border-primary dark:bg-[#111827] dark:border-slate-700" placeholder="Search tasks, reports, prompts..." />
           </div>
-        ) : null}
-
-        <section className="space-y-6">
-          <header className="space-y-2">
-            <h1 className="text-2xl font-semibold">AI Learning Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Your enterprise learning profile with score trend, skill heatmap, and study momentum.
-            </p>
-          </header>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            <Card className="p-6" interactive>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Predicted Band Score
-              </p>
-              <p className="mt-2 text-3xl font-semibold">
-                {typeof prediction?.predictedBand === 'number'
-                  ? prediction.predictedBand.toFixed(1)
-                  : typeof score === 'number'
-                    ? score.toFixed(1)
-                    : '—'}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Confidence ±
-                {typeof prediction?.confidenceInterval === 'number'
-                  ? prediction.confidenceInterval
-                  : 0.5}{' '}
-                · Trend: {prediction?.trend ?? 'stable'}
-              </p>
-            </Card>
-
-            <Card className="p-6" interactive>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Study Streak</p>
-              <p className="mt-2 text-3xl font-semibold">🔥 {streak} days</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Consistency is the fastest path to target band gains.
-              </p>
-            </Card>
-
-            <Card className="p-6" interactive>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Billing & Usage
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Track plan usage meters and invoices in one place.
-              </p>
-              <Link
-                href="/settings/billing"
-                className="mt-3 inline-flex text-sm font-medium text-primary hover:underline"
-              >
-                View details
-              </Link>
-            </Card>
+          <div className="flex items-center gap-3">
+            <button className="px-3 py-1.5 text-sm font-medium rounded-xl bg-secondary/10 text-secondary hover:bg-secondary/20">Ask AI</button>
+            <button className="p-2 rounded-xl hover:bg-muted/20">🔔</button>
+            <button className="flex items-center gap-1 p-2 rounded-xl hover:bg-muted/20">
+              <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary">AL</span>
+              <span>▾</span>
+            </button>
           </div>
+        </header>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="p-6" interactive>
-              <h2 className="text-base font-semibold">Skill Heatmap</h2>
-              <div className="mt-3 space-y-2">
-                {heatmap.map((item) => (
-                  <div key={item.skill} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span>{item.skill}</span>
-                      <span>{item.score.toFixed(1)}/10</span>
-                    </div>
-                    <ProgressBar value={Math.max(0, Math.min(100, item.score * 10))} />
-                  </div>
-                ))}
-              </div>
-            </Card>
+        {/* Content container — exact from HTML mockup */}
+        <div className="p-6 space-y-8">
+          <HeroSection
+            profile={profile}
+            profileAvatarUrl={profile?.avatar_url ?? null}
+            goalBand={profile?.goal_band ?? null}
+            targetStudyTime={profile?.study_rhythm ?? ''}
+            streak={streakData?.current ?? 0}
+            shields={streakData?.shields ?? 0}
+            topBadges={[]}
+            onClaimShield={() => {}}
+            onUseShield={() => {}}
+            onOpenAICoach={() => {}}
+            onOpenStudyBuddy={() => {}}
+            onOpenMistakesBook={() => {}}
+            onOpenWhatsAppTasks={() => {}}
+            onShareDashboard={() => {}}
+          />
 
-            <Card className="p-6" interactive>
-              <h2 className="text-base font-semibold">Strengths & Weaknesses</h2>
-              <div className="mt-3 grid grid-cols-2 gap-6 text-sm">
-                <div>
-                  <p className="font-medium text-emerald-600">Strengths</p>
-                  <ul className="mt-1 space-y-1 text-muted-foreground">
-                    {strengths.map((s) => (
-                      <li key={s.skill}>
-                        {s.skill} ({s.score.toFixed(1)})
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="font-medium text-amber-600">Weaknesses</p>
-                  <ul className="mt-1 space-y-1 text-muted-foreground">
-                    {weaknesses.map((s) => (
-                      <li key={s.skill}>
-                        {s.skill} ({s.score.toFixed(1)})
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </section>
+          <AIOverviewPanel
+            currentBand={data.currentBandPrediction ?? '6.5'}
+            weeklyImprovement={data.weeklyImprovement ?? '+0.2'}
+            nextAction={data.nextRecommendedAction ?? 'Complete 2 writing tasks'}
+          />
 
-        <section className="grid gap-6 lg:grid-cols-3">
-          <Card className="p-6 lg:col-span-2" interactive>
-            <h2 className="text-base font-semibold">Recommended for You</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Today&apos;s recommendations based on your latest skill profile.
-            </p>
-            <div className="mt-3 space-y-2">
-              {(recommendations?.nextExercises ?? []).slice(0, 5).map((item: any) => (
-                <div key={item.taskId} className="rounded-lg border border-border/60 p-3 text-sm">
-                  <p className="font-medium">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.module} · {item.type} · {item.reason}
-                  </p>
-                </div>
-              ))}
-              {!(recommendations?.nextExercises ?? []).length ? (
-                <p className="text-xs text-muted-foreground">No personalized exercises yet.</p>
-              ) : null}
+          <TodayTasks tasks={tasks} />
+
+          <div className="grid gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-8 space-y-6">
+              <SkillsOverview skills={skills} />
+              <AIInsights insights={insights} />
+              <GamificationSummary gamification={gamification} />
             </div>
-          </Card>
-        </section>
+            <div className="lg:col-span-4 space-y-6">
+              <ChallengeSpotlightCard cohortId="weekly-challenge-2026" />
+              <Suspense fallback={<div className="h-64 rounded-2xl bg-card animate-pulse" />}>
+                <DailyWeeklyChallenges />
+              </Suspense>
+            </div>
+          </div>
 
-        <section>
-          <Card className="p-6" interactive>
-            <TrendChart
-              title="Improvement Graph"
-              points={(points.length ? points : [{ label: 'No data', band: 0 }]).map((p) => ({
-                label: p.label,
-                value: p.band,
-              }))}
-            />
-          </Card>
-        </section>
+          <Suspense fallback={<div className="h-80 rounded-2xl bg-card animate-pulse" />}>
+            <InnovationTiles tiles={innovationTiles} />
+          </Suspense>
 
-        <section>
-          <Card className="p-6" interactive>
-            <h2 className="text-base font-semibold">Motivation & Momentum</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {streak < 3
-                ? 'Your streak is low—complete one quick task today to rebuild consistency.'
-                : 'Great consistency—keep your streak alive to compound your score growth.'}
-            </p>
-          </Card>
-        </section>
+          <Suspense fallback={<div className="h-96 rounded-2xl bg-card animate-pulse" />}>
+            <SavedWhatsAppSection />
+          </Suspense>
 
-        <section>
-          <Card className="p-6" interactive>
-            <h2 className="text-base font-semibold">What-if simulator</h2>
-            <p className="mt-1 text-xs text-muted-foreground">If Writing improves to:</p>
-            <input
-              type="range"
-              min={4}
-              max={9}
-              step={0.5}
-              value={whatIfWriting}
-              onChange={(event) => setWhatIfWriting(Number(event.target.value))}
-              className="mt-3 w-full"
-            />
-            <p className="mt-2 text-sm">
-              Writing target: <span className="font-semibold">{whatIfWriting.toFixed(1)}</span>
-            </p>
-            <p className="mt-1 text-sm">
-              Predicted:{' '}
-              <span className="font-semibold">
-                {typeof whatIf?.predictedBand === 'number' ? whatIf.predictedBand.toFixed(1) : '—'}
-              </span>
-            </p>
-            <p className="mt-1 text-xs text-emerald-600">
-              Potential uplift:{' '}
-              {typeof whatIf?.uplift === 'number'
-                ? `${whatIf.uplift >= 0 ? '+' : ''}${whatIf.uplift.toFixed(2)}`
-                : '—'}
-            </p>
-          </Card>
-        </section>
-
-        {isLoading ? (
-          <p className="text-xs text-muted-foreground">Loading dashboard analytics…</p>
-        ) : null}
-      </section>
-      <AICommandCenter />
-    </>
+          <AICommandCenter />
+        </div>
+      </main>
+    </div>
   );
 };
 
