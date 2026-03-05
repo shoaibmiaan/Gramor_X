@@ -9,66 +9,63 @@ import { withQuery } from '@/lib/constants/routes';
 
 export default function AuthConfirmPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('Preparing verification...');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [message, setMessage] = useState('Verifying your email… Please wait.');
 
   useEffect(() => {
     if (!router.isReady) return;
 
-    const verifyEmail = async () => {
-      setStatus('loading');
-      setMessage('Verifying your email… Please wait.');
-
-      const query = router.query;
+    const verifyAndRedirect = async () => {
+      const { token_hash, code, type, next } = router.query;
 
       // ────────────────────────────────────────────────
-      // Extract parameters (handle both formats)
+      // Extract parameters
       // ────────────────────────────────────────────────
-      const tokenHash = typeof query.token_hash === 'string' ? query.token_hash : null;
-      const code = typeof query.code === 'string' ? query.code : null;
-      const typeParam = typeof query.type === 'string' ? query.type : 'signup';
-      const next = typeof query.next === 'string' && query.next.startsWith('/') ? query.next : null;
+      const tokenHash = typeof token_hash === 'string' ? token_hash : null;
+      const otpType = typeof type === 'string' ? type : 'signup';
+      const verificationCode = typeof code === 'string' ? code : null;
+      const redirectAfter = typeof next === 'string' && next.startsWith('/') ? next : null;
 
-      console.log('[confirm] Query params:', { tokenHash, code, type: typeParam, next });
+      console.log('[confirm] Received query:', router.query);
 
-      if (!tokenHash && !code) {
+      if (!tokenHash && !verificationCode) {
         setStatus('error');
-        setMessage('Invalid or missing verification link. Please request a new confirmation email.');
-        setTimeout(() => router.replace(withQuery(LOGIN, { error: 'invalid_link' })), 3500);
+        setMessage('Missing verification token. Please request a new email.');
+        setTimeout(() => {
+          router.replace(withQuery(LOGIN, { error: 'missing_token' }));
+        }, 3000);
         return;
       }
 
       try {
         let result;
 
-        // Preferred: token_hash method (used in most modern Supabase email confirmations)
+        // Preferred method: token_hash (most common in recent Supabase)
         if (tokenHash) {
-          console.log('[confirm] Using verifyOtp with token_hash');
+          console.log('[confirm] Verifying with token_hash');
           result = await supabaseBrowser().auth.verifyOtp({
             token_hash: tokenHash,
-            type: typeParam as 'signup' | 'magiclink' | 'recovery' | 'email_change',
+            type: otpType as any,
           });
         }
-        // Fallback: code exchange (older / PKCE style)
-        else if (code) {
-          console.log('[confirm] Using exchangeCodeForSession');
-          result = await supabaseBrowser().auth.exchangeCodeForSession(code);
+        // Fallback: code exchange (older / some PKCE flows)
+        else if (verificationCode) {
+          console.log('[confirm] Verifying with code exchange');
+          result = await supabaseBrowser().auth.exchangeCodeForSession(verificationCode);
         }
 
-        if (!result || result.error) {
-          throw result?.error || new Error('Verification failed');
+        if (result?.error) {
+          throw result.error;
         }
 
-        // Force session refresh
-        const { data: { session }, error: sessionError } = await supabaseBrowser().auth.getSession();
+        // Get fresh session
+        const { data: { session } } = await supabaseBrowser().auth.getSession();
 
-        if (sessionError || !session) {
-          throw new Error('No session created after verification');
+        if (!session?.user) {
+          throw new Error('No active session after verification');
         }
 
-        console.log('[confirm] Session created successfully');
-
-        // Optional: notify server-side (your bridge endpoint)
+        // Optional bridge to server (if you use it)
         try {
           await fetch('/api/auth/set-session', {
             method: 'POST',
@@ -76,76 +73,116 @@ export default function AuthConfirmPage() {
             credentials: 'same-origin',
             body: JSON.stringify({ event: 'SIGNED_IN', session }),
           });
-        } catch (e) {
-          console.warn('[confirm] Session bridge failed (non-critical)', e);
+        } catch (bridgeErr) {
+          console.warn('Bridge call failed (non-critical)', bridgeErr);
         }
 
-        setStatus('success');
-        setMessage('Email verified! Logging you in...');
+        // ────────────────────────────────────────────────
+        // Get user role from profiles table
+        // ────────────────────────────────────────────────
+        const { data: profile, error: profileErr } = await supabaseBrowser()
+          .from('profiles')
+          .select('role, onboarding_completed')
+          .eq('id', session.user.id)
+          .single();
 
-        // Decide where to go
+        if (profileErr) {
+          console.warn('Profile fetch failed:', profileErr.message);
+        }
+
+        const role = (profile?.role || 'student').toLowerCase();
+        const onboardingDone = !!profile?.onboarding_completed;
+
+        // ────────────────────────────────────────────────
+        // Role-based destination
+        // ────────────────────────────────────────────────
         let destination = ONBOARDING;
 
-        // If there's a next param, prefer it
-        if (next) {
-          destination = next;
+        if (redirectAfter) {
+          destination = redirectAfter;
+        } else {
+          switch (role) {
+            case 'student':
+              destination = onboardingDone ? '/dashboard' : ONBOARDING;
+              break;
+
+            case 'teacher':
+              destination = onboardingDone ? '/teacher/dashboard' : '/onboarding/teacher';
+              break;
+
+            case 'admin':
+              destination = '/admin/dashboard';
+              break;
+
+            default:
+              destination = ONBOARDING;
+          }
         }
 
-        // Small delay for nice UX
+        console.log('[confirm] Redirecting to:', destination);
+
+        setStatus('success');
+        setMessage('Email verified! Taking you to your dashboard...');
+
+        // Give user time to see success message
         setTimeout(() => {
           router.replace(destination);
         }, 1400);
 
       } catch (err: any) {
-        console.error('[confirm] Verification error:', err);
+        console.error('[confirm] Error during verification:', err);
 
-        let displayMsg = 'Verification failed. Please try again.';
+        let userMessage = 'Verification failed. Please try again.';
 
         if (err.message?.includes('expired')) {
-          displayMsg = 'This confirmation link has expired. Please sign up again or request a new link.';
+          userMessage = 'This link has expired. Please request a new confirmation email.';
         } else if (err.message?.includes('already confirmed')) {
-          displayMsg = 'Email already confirmed. You can sign in directly.';
+          userMessage = 'Email is already verified. You can sign in normally.';
         } else if (err.message?.includes('invalid')) {
-          displayMsg = 'Invalid verification link. Please use the latest email we sent you.';
+          userMessage = 'Invalid verification link. Please use the latest email.';
         }
 
         setStatus('error');
-        setMessage(displayMsg);
+        setMessage(userMessage);
 
         setTimeout(() => {
           router.replace(withQuery(LOGIN, { error: 'verification_failed' }));
-        }, 5000);
+        }, 4500);
       }
     };
 
-    verifyEmail();
+    verifyAndRedirect();
   }, [router.isReady, router.query, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background text-foreground p-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-lg">
-        {status === 'idle' || status === 'loading' ? (
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-10 text-center shadow-xl">
+        {status === 'loading' && (
           <>
-            <div className="mx-auto mb-6 h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="mx-auto mb-6 h-14 w-14 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             <h2 className="mb-4 text-2xl font-semibold">Verifying your email</h2>
             <p className="text-muted-foreground">{message}</p>
           </>
-        ) : status === 'success' ? (
+        )}
+
+        {status === 'success' && (
           <>
             <div className="mx-auto mb-6 text-7xl">✅</div>
             <h2 className="mb-4 text-2xl font-bold text-green-600 dark:text-green-400">
               Email Verified!
             </h2>
-            <p className="text-muted-foreground">{message}</p>
+            <p className="text-lg text-muted-foreground">{message}</p>
           </>
-        ) : (
+        )}
+
+        {status === 'error' && (
           <>
             <div className="mx-auto mb-6 text-7xl">❌</div>
             <h2 className="mb-4 text-2xl font-bold text-destructive">Verification Failed</h2>
             <p className="mb-6 text-muted-foreground">{message}</p>
             <button
               onClick={() => router.replace(LOGIN)}
-              className="rounded-xl bg-primary px-8 py-3 font-medium text-primary-foreground hover:bg-primary/90 transition"
+              className="mt-4 rounded-xl bg-primary px-8 py-3 font-medium text-white hover:bg-primary/90 transition"
             >
               Go to Sign In
             </button>
