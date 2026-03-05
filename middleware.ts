@@ -12,9 +12,11 @@ const AUTH_PAGES = [
   '/auth/register',
   '/auth/mfa',
   '/auth/verify',
+  '/auth/confirm',       // ← ADDED: allows email confirmation link to run verifyOtp
+  '/auth/callback',      // ← ADDED: common for magic links, OAuth callbacks, etc.
 ];
 
-// Prefixes that require auth (your existing list)
+// Prefixes that require auth
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
@@ -24,16 +26,13 @@ const PROTECTED_PREFIXES = [
   '/progress',
   '/leaderboard',
   '/mistakes',
-
   '/premium',
   '/premium-pin',
-
   '/mock',
   '/listening',
   '/reading',
   '/writing',
   '/speaking',
-
   '/proctoring',
   '/exam',
   '/reports',
@@ -47,18 +46,17 @@ function pathStartsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-// ensure refreshed cookies from Supabase are preserved when redirecting
+// Preserve refreshed cookies during redirects
 function redirectWithCookies(from: NextResponse, url: URL) {
   const r = NextResponse.redirect(url);
-  // copy any cookies written to `from` (e.g., refreshed tokens) into the redirect
-  for (const c of from.cookies.getAll()) r.cookies.set(c);
+  for (const c of from.cookies.getAll()) {
+    r.cookies.set(c);
+  }
   return r;
 }
 
 type AuthState =
-  | {
-      authenticated: false;
-    }
+  | { authenticated: false }
   | {
       authenticated: true;
       userId: string;
@@ -68,9 +66,7 @@ type AuthState =
 
 async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthState> {
   const cookieHeader = req.headers.get('cookie');
-  if (!cookieHeader) {
-    return { authenticated: false };
-  }
+  if (!cookieHeader) return { authenticated: false };
 
   try {
     const response = await fetch(`${req.nextUrl.origin}/api/internal/auth/state`, {
@@ -82,6 +78,7 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
       cache: 'no-store',
     });
 
+    // Forward any set-cookie headers
     const headerAccessor = response.headers as unknown as { getSetCookie?: () => string[] };
     const setCookies = headerAccessor.getSetCookie?.();
     if (Array.isArray(setCookies)) {
@@ -90,16 +87,14 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
       });
     }
 
-    if (!response.ok) {
-      return { authenticated: false };
-    }
+    if (!response.ok) return { authenticated: false };
 
     const json = (await response.json()) as AuthState | { error: string };
     if ('authenticated' in json) {
       return json;
     }
   } catch {
-    // Ignore network errors and treat as unauthenticated; downstream guards will handle fallbacks.
+    // Treat errors as unauthenticated → downstream pages can handle
   }
 
   return { authenticated: false };
@@ -108,13 +103,13 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
-  // Skip static and API routes (we only guard real pages)
+  // Bypass middleware for static, api, etc.
   if (
-    pathname.startsWith('/_next') || // includes /_next/data prefetches
+    pathname.startsWith('/_next') ||
     pathname.startsWith('/assets') ||
     pathname.startsWith('/public') ||
     pathname.startsWith('/images') ||
-    pathname === '/premium.css' || // allow premium stylesheet
+    pathname === '/premium.css' ||
     pathname === '/favicon.ico' ||
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
@@ -130,13 +125,12 @@ export async function middleware(req: NextRequest) {
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
   const isOnboardingRoute = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 
-  // ----- Premium PIN gate (takes precedence over generic auth) -----
+  // ----- Premium PIN gate -----
   const isPremiumSection = pathname.startsWith('/premium');
   const isPremiumPinPage = pathname === '/premium/pin' || pathname === '/premium-pin';
   const pinOk = req.cookies.get('pr_pin_ok')?.value === '1';
 
   if (isPremiumSection) {
-    // If on PIN page and cookie is already set -> send to intended target or /premium
     if (isPremiumPinPage && pinOk) {
       const url = req.nextUrl.clone();
       const nextParam = req.nextUrl.searchParams.get('next');
@@ -145,10 +139,8 @@ export async function middleware(req: NextRequest) {
       return redirectWithCookies(res, url);
     }
 
-    // Always allow the PIN entry page if no cookie yet
     if (isPremiumPinPage) return res;
 
-    // For any other /premium path, require the cookie
     if (!pinOk) {
       const url = req.nextUrl.clone();
       url.pathname = '/premium/pin';
@@ -156,12 +148,11 @@ export async function middleware(req: NextRequest) {
       return redirectWithCookies(res, url);
     }
 
-    // PIN valid → allow without forcing login
     return res;
   }
   // ----- end Premium PIN gate -----
 
-  // If not signed in and trying to view a protected route -> redirect to login
+  // Redirect to login if trying to access protected content without auth
   if (!authState.authenticated && isProtected && !isAuthPage) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
@@ -169,7 +160,7 @@ export async function middleware(req: NextRequest) {
     return redirectWithCookies(res, url);
   }
 
-  // If already signed in and on an auth page -> bounce to intended next or home
+  // If logged in and on auth page → redirect away
   if (authState.authenticated && isAuthPage) {
     const url = req.nextUrl.clone();
     const nextParam = req.nextUrl.searchParams.get('next');
@@ -178,33 +169,31 @@ export async function middleware(req: NextRequest) {
     return redirectWithCookies(res, url);
   }
 
+  // Onboarding guard for students
   if (authState.authenticated) {
     const role = authState.role ?? undefined;
     const skipOnboardingGuard = role === 'teacher' || role === 'admin';
 
-    if (!skipOnboardingGuard) {
-      if (!authState.onboardingComplete) {
-        if (!isOnboardingRoute && (isProtected || pathname === '/dashboard')) {
-          const url = req.nextUrl.clone();
-          url.pathname = '/onboarding';
-          url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
-          return redirectWithCookies(res, url);
-        }
-      } else if (isOnboardingRoute) {
+    if (!skipOnboardingGuard && !authState.onboardingComplete) {
+      if (!isOnboardingRoute && (isProtected || pathname === '/dashboard')) {
         const url = req.nextUrl.clone();
-        const nextParam = req.nextUrl.searchParams.get('next');
-        url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
-        url.search = '';
+        url.pathname = '/onboarding';
+        url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
         return redirectWithCookies(res, url);
       }
+    } else if (isOnboardingRoute && authState.onboardingComplete) {
+      const url = req.nextUrl.clone();
+      const nextParam = req.nextUrl.searchParams.get('next');
+      url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
+      url.search = '';
+      return redirectWithCookies(res, url);
     }
   }
 
-  // Otherwise continue (with any refreshed cookies attached)
+  // All good → proceed (with possible refreshed cookies)
   return res;
 }
 
-// Apply to all pages except excluded above
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|assets|images|public|api).*)',
