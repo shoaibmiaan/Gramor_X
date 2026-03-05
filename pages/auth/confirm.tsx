@@ -9,141 +9,145 @@ import { withQuery } from '@/lib/constants/routes';
 
 export default function AuthConfirmPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Verifying your email… Please wait.');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('Preparing verification...');
 
   useEffect(() => {
     if (!router.isReady) return;
 
-    const handleVerification = async () => {
-      const { token_hash, type, next } = router.query;
+    const verifyEmail = async () => {
+      setStatus('loading');
+      setMessage('Verifying your email… Please wait.');
 
-      // Support both ?token_hash=...&type=signup and legacy ?code=... patterns
-      const tokenHash = typeof token_hash === 'string' ? token_hash : null;
-      const otpType = typeof type === 'string' ? type : 'signup';
+      const query = router.query;
 
-      // Also try to detect code= parameter (some older Supabase links still use it)
-      const code = typeof router.query.code === 'string' ? router.query.code : null;
+      // ────────────────────────────────────────────────
+      // Extract parameters (handle both formats)
+      // ────────────────────────────────────────────────
+      const tokenHash = typeof query.token_hash === 'string' ? query.token_hash : null;
+      const code = typeof query.code === 'string' ? query.code : null;
+      const typeParam = typeof query.type === 'string' ? query.type : 'signup';
+      const next = typeof query.next === 'string' && query.next.startsWith('/') ? query.next : null;
+
+      console.log('[confirm] Query params:', { tokenHash, code, type: typeParam, next });
 
       if (!tokenHash && !code) {
         setStatus('error');
-        setMessage('Missing verification token. Please request a new confirmation email.');
-        setTimeout(() => {
-          router.replace(withQuery(LOGIN, { error: 'missing_token' }));
-        }, 3000);
+        setMessage('Invalid or missing verification link. Please request a new confirmation email.');
+        setTimeout(() => router.replace(withQuery(LOGIN, { error: 'invalid_link' })), 3500);
         return;
       }
 
       try {
         let result;
 
-        // Prefer token_hash method (newer & recommended)
-        if (tokenHash && otpType) {
+        // Preferred: token_hash method (used in most modern Supabase email confirmations)
+        if (tokenHash) {
+          console.log('[confirm] Using verifyOtp with token_hash');
           result = await supabaseBrowser().auth.verifyOtp({
             token_hash: tokenHash,
-            type: otpType as any,
+            type: typeParam as 'signup' | 'magiclink' | 'recovery' | 'email_change',
           });
         }
-        // Fallback for ?code= (older magic link / PKCE style)
+        // Fallback: code exchange (older / PKCE style)
         else if (code) {
+          console.log('[confirm] Using exchangeCodeForSession');
           result = await supabaseBrowser().auth.exchangeCodeForSession(code);
         }
-        else {
-          throw new Error('No valid verification parameter found');
+
+        if (!result || result.error) {
+          throw result?.error || new Error('Verification failed');
         }
 
-        if (result.error) {
-          throw result.error;
+        // Force session refresh
+        const { data: { session }, error: sessionError } = await supabaseBrowser().auth.getSession();
+
+        if (sessionError || !session) {
+          throw new Error('No session created after verification');
         }
 
-        // Force session refresh (helps in some edge cases)
-        const { data: sessionData } = await supabaseBrowser().auth.getSession();
+        console.log('[confirm] Session created successfully');
 
-        if (!sessionData.session) {
-          throw new Error('Session not created after verification');
-        }
-
-        // Optional: you can call your server-side session bridge if needed
+        // Optional: notify server-side (your bridge endpoint)
         try {
           await fetch('/api/auth/set-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
-            body: JSON.stringify({
-              event: 'SIGNED_IN',
-              session: sessionData.session,
-            }),
+            body: JSON.stringify({ event: 'SIGNED_IN', session }),
           });
-        } catch (bridgeErr) {
-          console.warn('Session bridge call failed (non-critical)', bridgeErr);
+        } catch (e) {
+          console.warn('[confirm] Session bridge failed (non-critical)', e);
         }
 
         setStatus('success');
-        setMessage('Email verified successfully! Redirecting...');
+        setMessage('Email verified! Logging you in...');
 
-        // Determine final destination
+        // Decide where to go
         let destination = ONBOARDING;
 
-        if (typeof next === 'string' && next.startsWith('/')) {
+        // If there's a next param, prefer it
+        if (next) {
           destination = next;
         }
 
-        // Small delay so user sees success message
+        // Small delay for nice UX
         setTimeout(() => {
           router.replace(destination);
-        }, 1200);
+        }, 1400);
 
       } catch (err: any) {
-        console.error('Email verification failed:', err);
+        console.error('[confirm] Verification error:', err);
+
+        let displayMsg = 'Verification failed. Please try again.';
+
+        if (err.message?.includes('expired')) {
+          displayMsg = 'This confirmation link has expired. Please sign up again or request a new link.';
+        } else if (err.message?.includes('already confirmed')) {
+          displayMsg = 'Email already confirmed. You can sign in directly.';
+        } else if (err.message?.includes('invalid')) {
+          displayMsg = 'Invalid verification link. Please use the latest email we sent you.';
+        }
+
         setStatus('error');
-        setMessage(
-          err.message?.includes('expired')
-            ? 'This verification link has expired. Please request a new one.'
-            : err.message || 'Verification failed. Please try again or contact support.'
-        );
+        setMessage(displayMsg);
 
         setTimeout(() => {
           router.replace(withQuery(LOGIN, { error: 'verification_failed' }));
-        }, 4000);
+        }, 5000);
       }
     };
 
-    handleVerification();
+    verifyEmail();
   }, [router.isReady, router.query, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-sm">
-        {status === 'loading' && (
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground p-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-lg">
+        {status === 'idle' || status === 'loading' ? (
           <>
-            <div className="mb-6 text-5xl">⌛</div>
-            <h2 className="mb-3 text-xl font-semibold">Verifying your email</h2>
+            <div className="mx-auto mb-6 h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <h2 className="mb-4 text-2xl font-semibold">Verifying your email</h2>
             <p className="text-muted-foreground">{message}</p>
           </>
-        )}
-
-        {status === 'success' && (
+        ) : status === 'success' ? (
           <>
-            <div className="mb-6 text-6xl">✅</div>
-            <h2 className="mb-3 text-xl font-semibold text-green-600 dark:text-green-400">
+            <div className="mx-auto mb-6 text-7xl">✅</div>
+            <h2 className="mb-4 text-2xl font-bold text-green-600 dark:text-green-400">
               Email Verified!
             </h2>
             <p className="text-muted-foreground">{message}</p>
           </>
-        )}
-
-        {status === 'error' && (
+        ) : (
           <>
-            <div className="mb-6 text-6xl">❌</div>
-            <h2 className="mb-3 text-xl font-semibold text-destructive">
-              Verification Problem
-            </h2>
+            <div className="mx-auto mb-6 text-7xl">❌</div>
+            <h2 className="mb-4 text-2xl font-bold text-destructive">Verification Failed</h2>
             <p className="mb-6 text-muted-foreground">{message}</p>
             <button
               onClick={() => router.replace(LOGIN)}
-              className="rounded-lg bg-primary px-6 py-2.5 font-medium text-primary-foreground hover:bg-primary/90"
+              className="rounded-xl bg-primary px-8 py-3 font-medium text-primary-foreground hover:bg-primary/90 transition"
             >
-              Go to Login
+              Go to Sign In
             </button>
           </>
         )}

@@ -13,6 +13,7 @@ const AUTH_PAGES = [
   '/auth/mfa',
   '/auth/verify',
   '/auth/confirm',       // ← ADDED: allows email confirmation link to run verifyOtp
+  '/auth/confirm/',         // ← optional safety (trailing slash ke liye)
   '/auth/callback',      // ← ADDED: common for magic links, OAuth callbacks, etc.
 ];
 
