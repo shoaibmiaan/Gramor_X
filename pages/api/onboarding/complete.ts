@@ -93,7 +93,7 @@ export default async function handler(
   const { error: updateError } = await supabase
     .from('profiles')
     .update(patch)
-    .eq('user_id', user.id);
+    .eq('id', user.id);
 
   if (updateError) {
     console.error('onboarding/complete update error:', updateError);

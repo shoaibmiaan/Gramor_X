@@ -1,5 +1,5 @@
 // lib/orgs/context.ts
-// React context that exposes the viewer's available organizations and helpers to
+// React context that exposes the viewer's available institutions and helpers to
 // switch between personal and organization workspaces. Persists selection by
 // updating profiles.active_org_id and falls back to local state when anonymous.
 
@@ -53,8 +53,8 @@ async function fetchMemberships(): Promise<{
       .eq('id', user.id)
       .maybeSingle(),
     supabaseBrowser
-      .from('organization_members')
-      .select('id, role, organizations(id, name, slug)')
+      .from('institution_members')
+      .select('id, role, institutions(id, name, slug)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: true }),
   ]);
@@ -64,7 +64,7 @@ async function fetchMemberships(): Promise<{
 
   const memberships = rows
     .map((row) => {
-      const org = (row as any).organizations;
+      const org = (row as any).institutions;
       if (!org?.id) return null;
       return {
         id: org.id as string,
@@ -100,7 +100,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       setMemberships(list);
       setActiveOrgId(current);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load organizations');
+      setError(err instanceof Error ? err.message : 'Failed to load institutions');
       setMemberships([]);
       setActiveOrgId(null);
     } finally {

@@ -78,7 +78,7 @@ export async function loadWritingAttemptRows(options: LoadAttemptOptions = {}): 
 
   if (options.orgId) {
     const { data: memberRows, error: memberError } = await supabaseAdmin
-      .from('organization_members')
+      .from('institution_members')
       .select('user_id')
       .eq('org_id', options.orgId)
       .limit(DEFAULT_LIMIT * 2);
@@ -129,7 +129,7 @@ export async function loadWritingAttemptRows(options: LoadAttemptOptions = {}): 
       .select('id, full_name, email, plan')
       .in('id', userIds),
     supabaseAdmin
-      .from('organization_members')
+      .from('institution_members')
       .select('user_id, org_id')
       .in('user_id', userIds),
   ]);

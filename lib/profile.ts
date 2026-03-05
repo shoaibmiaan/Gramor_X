@@ -1,3 +1,4 @@
+// lib/profile.ts
 import type { Profile } from '@/types/profile';
 import { supabaseBrowser } from './supabaseBrowser';
 
@@ -10,7 +11,9 @@ type SupabaseProfile = Profile & { id?: string; user_id?: string };
 function sanitizePatch(patch: ProfilePatch): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(patch)) {
-    if (value !== undefined) out[key] = value;
+    if (value !== undefined) {
+      out[key] = value;
+    }
   }
   return out;
 }
@@ -20,40 +23,95 @@ async function getSessionUserId(): Promise<string> {
     data: { session },
     error,
   } = await supabaseBrowser.auth.getSession();
+
   if (error) throw error;
   const userId = session?.user?.id;
   if (!userId) throw new Error('Not authenticated');
+
   return userId;
 }
 
 export async function fetchProfile(): Promise<SupabaseProfile | null> {
   const userId = await getSessionUserId();
-  const query = supabaseBrowser
+
+  const { data, error } = await supabaseBrowser
     .from('profiles')
     .select('*')
-    .or(`user_id.eq.${userId},id.eq.${userId}`)
+    .eq('id', userId)           // ← prefer id (PK) over or()
     .maybeSingle();
 
-  const { data, error } = await query;
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error && error.code !== 'PGRST116') {
+    console.error('fetchProfile error:', error);
+    throw error;
+  }
+
   return (data as SupabaseProfile | null) ?? null;
 }
 
 export async function upsertProfile(patch: ProfilePatch): Promise<SupabaseProfile> {
   const userId = await getSessionUserId();
-  const payload = { user_id: userId, ...sanitizePatch(patch) };
+  const patchCleaned = sanitizePatch(patch);
 
-  const { data, error } = await supabaseBrowser
+  // 1. Try to UPDATE existing row (most common path after signup/onboarding)
+  const { data: updated, error: updateErr } = await supabaseBrowser
     .from('profiles')
-    .upsert(payload, { onConflict: 'user_id' })
-    .select('*')
+    .update(patchCleaned)
+    .eq('id', userId)
+    .select()
     .maybeSingle();
 
-  if (error) throw error;
-  return data as SupabaseProfile;
+  if (!updateErr && updated) {
+    return updated as SupabaseProfile;
+  }
+
+  // 2. If no row existed → INSERT new profile
+  if (updateErr?.code === 'PGRST116') { // zero rows affected
+    const payload = {
+      id: userId,               // PK = auth.uid()
+      user_id: userId,          // optional secondary column
+      ...patchCleaned,
+    };
+
+    const { data: inserted, error: insertErr } = await supabaseBrowser
+      .from('profiles')
+      .insert(payload)
+      .select()
+      .single();
+
+    if (insertErr) {
+      console.error('insert profile failed:', insertErr);
+      throw insertErr;
+    }
+
+    return inserted as SupabaseProfile;
+  }
+
+  // Other real errors (RLS, constraint violation, etc.)
+  console.error('update profile failed:', updateErr);
+  throw updateErr || new Error('Unknown profile upsert error');
 }
 
 export async function markOnboardingComplete(): Promise<void> {
-  await getSessionUserId();
-  await supabaseBrowser.auth.updateUser({ data: { onboarding_complete: true } });
+  const userId = await getSessionUserId();
+
+  // Option A: Update auth metadata (session will reflect it after refresh)
+  const { error: metaErr } = await supabaseBrowser.auth.updateUser({
+    data: { onboarding_complete: true },
+  });
+
+  if (metaErr) {
+    console.warn('Failed to update auth metadata:', metaErr);
+    // non-fatal — continue
+  }
+
+  // Option B: Also update profiles table (more reliable for queries)
+  const { error: profileErr } = await supabaseBrowser
+    .from('profiles')
+    .update({ onboarding_complete: true })
+    .eq('id', userId);
+
+  if (profileErr) {
+    console.error('Failed to mark onboarding complete in profiles:', profileErr);
+    throw profileErr;
+  }
 }

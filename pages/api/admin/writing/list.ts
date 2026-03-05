@@ -53,7 +53,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse, ctx: PlanGuard
       scopedAttempts = [];
     } else {
       const { data: memberRows } = await supabaseAdmin
-        .from('organization_members')
+        .from('institution_members')
         .select('user_id')
         .eq('org_id', activeOrgId);
 

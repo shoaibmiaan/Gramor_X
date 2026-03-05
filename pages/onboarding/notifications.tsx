@@ -1,4 +1,3 @@
-// pages/onboarding/notifications.tsx
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import React, { useMemo, useState } from 'react';
@@ -146,7 +145,8 @@ const OnboardingNotificationsPage: NextPage = () => {
       // 🔁 Force session refresh to get updated metadata
       await supabase.auth.refreshSession();
 
-      await router.push(nextPath || '/dashboard');
+      // ✅ Hard navigation to ensure we leave the onboarding page
+      window.location.href = nextPath || '/dashboard';
     } catch (e: any) {
       // eslint-disable-next-line no-console
       console.error(e);

@@ -51,7 +51,7 @@ const handler: NextApiHandler = async (req, res) => {
   while (attempt < 6 && !orgId) {
     const candidate = attempt === 0 ? baseSlug : `${baseSlug}-${randomSlug()}`;
     const { data, error } = await supabaseService
-      .from('organizations')
+      .from('institutions')
       .insert({ name, owner_id: user.id, slug: candidate })
       .select('id, name, slug')
       .single();
@@ -79,7 +79,7 @@ const handler: NextApiHandler = async (req, res) => {
   }
 
   const { error: membershipError } = await supabaseService
-    .from('organization_members')
+    .from('institution_members')
     .upsert({ org_id: orgId, user_id: user.id, role: 'owner' }, { onConflict: 'org_id,user_id' });
 
   if (membershipError) {

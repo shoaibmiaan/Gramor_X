@@ -39,7 +39,7 @@ const handler: NextApiHandler = async (req, res) => {
   const normalizedEmail = email.trim().toLowerCase();
 
   const { data: membership } = await supabaseService
-    .from('organization_members')
+    .from('institution_members')
     .select('role')
     .eq('org_id', orgId)
     .eq('user_id', user.id)

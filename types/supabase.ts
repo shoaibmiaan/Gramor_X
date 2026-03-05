@@ -712,7 +712,7 @@ export interface CollocationAttempts {
   attempted_at: string;
 }
 
-export interface Organizations extends TableBase {
+export interface institutions extends TableBase {
   owner_id: string;
   name: string;
   slug: string;
@@ -834,8 +834,8 @@ export interface DBSchema {
   lifecycle_events: LifecycleEvents;
   push_tokens: PushToken;
   mobile_events: MobileEvent;
-  organizations: Organizations;
-  organization_members: OrganizationMembers;
+  institutions: institutions;
+  institution_members: OrganizationMembers;
   organization_invites: OrganizationInvites;
   writing_topics: WritingTopics;
   speaking_sessions: SpeakingSession;
