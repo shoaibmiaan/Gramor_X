@@ -12,9 +12,8 @@ const AUTH_PAGES = [
   '/auth/register',
   '/auth/mfa',
   '/auth/verify',
-  '/auth/confirm',       // ← ADDED: allows email confirmation link to run verifyOtp
-  '/auth/confirm/',         // ← optional safety (trailing slash ke liye)
-  '/auth/callback',      // ← ADDED: common for magic links, OAuth callbacks, etc.
+  '/auth/confirm',          // ← must be here
+  '/auth/callback',
 ];
 
 // Prefixes that require auth
@@ -47,12 +46,9 @@ function pathStartsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-// Preserve refreshed cookies during redirects
 function redirectWithCookies(from: NextResponse, url: URL) {
   const r = NextResponse.redirect(url);
-  for (const c of from.cookies.getAll()) {
-    r.cookies.set(c);
-  }
+  for (const c of from.cookies.getAll()) r.cookies.set(c);
   return r;
 }
 
@@ -79,7 +75,6 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
       cache: 'no-store',
     });
 
-    // Forward any set-cookie headers
     const headerAccessor = response.headers as unknown as { getSetCookie?: () => string[] };
     const setCookies = headerAccessor.getSetCookie?.();
     if (Array.isArray(setCookies)) {
@@ -91,12 +86,8 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
     if (!response.ok) return { authenticated: false };
 
     const json = (await response.json()) as AuthState | { error: string };
-    if ('authenticated' in json) {
-      return json;
-    }
-  } catch {
-    // Treat errors as unauthenticated → downstream pages can handle
-  }
+    if ('authenticated' in json) return json;
+  } catch {}
 
   return { authenticated: false };
 }
@@ -104,7 +95,7 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
-  // Bypass middleware for static, api, etc.
+  // Skip static, api, assets etc.
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/assets') ||
@@ -119,6 +110,28 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // VERY IMPORTANT: Allow /auth/confirm unconditionally (with query params)
+  // Put this as early as possible – before any auth or protected logic
+  // ────────────────────────────────────────────────────────────────
+  if (
+    pathname === '/auth/confirm' ||
+    pathname.startsWith('/auth/confirm/') ||
+    pathname.startsWith('/auth/confirm?')
+  ) {
+    console.log('[middleware] Allowing /auth/confirm (verification bypass)');
+    return NextResponse.next();
+  }
+
+  // Also allow callback (for OAuth/magic links)
+  if (
+    pathname === '/auth/callback' ||
+    pathname.startsWith('/auth/callback?')
+  ) {
+    console.log('[middleware] Allowing /auth/callback');
+    return NextResponse.next();
+  }
+
   const res = NextResponse.next();
   const authState = await loadAuthState(req, res);
 
@@ -126,7 +139,7 @@ export async function middleware(req: NextRequest) {
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
   const isOnboardingRoute = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 
-  // ----- Premium PIN gate -----
+  // Premium PIN gate (keep your existing logic)
   const isPremiumSection = pathname.startsWith('/premium');
   const isPremiumPinPage = pathname === '/premium/pin' || pathname === '/premium-pin';
   const pinOk = req.cookies.get('pr_pin_ok')?.value === '1';
@@ -151,13 +164,13 @@ export async function middleware(req: NextRequest) {
 
     return res;
   }
-  // ----- end Premium PIN gate -----
 
-  // Redirect to login if trying to access protected content without auth
+  // Redirect unauthenticated users from protected routes
   if (!authState.authenticated && isProtected && !isAuthPage) {
+    console.log('[middleware] Redirecting to login from:', pathname);
     const url = req.nextUrl.clone();
     url.pathname = '/login';
-    url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
+    url.search = `?next=${encodeURIComponent(pathname + (search || ''))}&role=student`;
     return redirectWithCookies(res, url);
   }
 
@@ -170,7 +183,7 @@ export async function middleware(req: NextRequest) {
     return redirectWithCookies(res, url);
   }
 
-  // Onboarding guard for students
+  // Onboarding guard
   if (authState.authenticated) {
     const role = authState.role ?? undefined;
     const skipOnboardingGuard = role === 'teacher' || role === 'admin';
@@ -191,7 +204,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // All good → proceed (with possible refreshed cookies)
   return res;
 }
 
