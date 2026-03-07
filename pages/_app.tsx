@@ -79,7 +79,7 @@ function GuardSkeleton() {
 // ---------- Route type helpers ----------
 const isAuthPage = (pathname: string) =>
   /^\/(login|signup|register)(\/|$)/.test(pathname) ||
-  /^\/auth\/(login|signup|register|mfa|verify)(\/|$)/.test(pathname) ||
+  /^\/auth\/(login|signup|register|mfa|verify|confirm|callback)(\/|$)/.test(pathname) ||
   pathname === '/forgot-password';
 
 const isPremiumRoomRoute = (pathname: string) =>
@@ -177,7 +177,7 @@ function useAuthBridge() {
         }
 
         if (event === 'SIGNED_OUT') {
-          if (!['/login', '/signup', '/forgot-password'].includes(router.pathname)) {
+          if (!['/login', '/signup', '/forgot-password', '/auth/confirm', '/auth/callback', '/signup/verify'].includes(router.pathname)) {
             router.replace('/login');
           }
         }

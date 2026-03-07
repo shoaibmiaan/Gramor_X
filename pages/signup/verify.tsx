@@ -1,7 +1,7 @@
 // pages/signup/verify.tsx
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
@@ -36,6 +36,7 @@ export default function VerifyEmailPage() {
   const [cooldown, setCooldown] = useState(0);
   const [code, setCode] = useState('');
   const [codeStatus, setCodeStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
+  const hasAutoSentCode = useRef(false);
 
   // Auto-redirect if already signed in (e.g., they verified in another tab)
   useEffect(() => {
@@ -59,6 +60,27 @@ export default function VerifyEmailPage() {
     typeof router.query.code_verifier === 'string' && router.query.code_verifier.length > 0
       ? router.query.code_verifier
       : readStoredPkceVerifier() || '';
+
+
+  async function sendVerificationCode() {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+      },
+    });
+    if (error) throw error;
+  }
+
+
+
+  useEffect(() => {
+    if (!email || hasAutoSentCode.current) return;
+    hasAutoSentCode.current = true;
+    void sendVerificationCode().catch(() => {
+      // no-op: user can still use resend button
+    });
+  }, [email]);
 
   async function onResend() {
     setErr(null);
@@ -97,6 +119,7 @@ export default function VerifyEmailPage() {
         return;
       }
 
+      await sendVerificationCode();
       setStatus('sent');
       setCooldown(30);
     } catch {
@@ -120,15 +143,26 @@ export default function VerifyEmailPage() {
     }
 
     setCodeStatus('verifying');
-    const { error } = await supabase.auth.verifyOtp({
+    let verificationError: Error | null = null;
+
+    const signupAttempt = await supabase.auth.verifyOtp({
       email,
       token: trimmedCode,
       type: 'signup',
     });
 
-    if (error) {
+    if (signupAttempt.error) {
+      const emailAttempt = await supabase.auth.verifyOtp({
+        email,
+        token: trimmedCode,
+        type: 'email',
+      });
+      verificationError = emailAttempt.error;
+    }
+
+    if (signupAttempt.error && verificationError) {
       setCodeStatus('error');
-      setErr(error.message || 'Invalid verification code.');
+      setErr(verificationError.message || signupAttempt.error.message || 'Invalid verification code.');
       return;
     }
 
@@ -168,7 +202,7 @@ export default function VerifyEmailPage() {
 
       {status === 'sent' && !err && (
         <Alert variant="success" title="Sent" className="mt-4" role="status" aria-live="polite">
-          Verification email sent. Please check your inbox.
+          Verification email sent. We also sent a verification code to your inbox.
         </Alert>
       )}
 
@@ -180,7 +214,7 @@ export default function VerifyEmailPage() {
 
       <p className="mt-6 text-muted-foreground">
         We sent a verification link to <strong>{email}</strong>. You can either click the link in your
-        email or enter the verification code below.
+        email or enter the verification code below. If the code is missing, tap resend to get a fresh code.
       </p>
 
       <form onSubmit={onVerifyCode} className="mt-6 rounded-xl border border-border p-4 space-y-3">

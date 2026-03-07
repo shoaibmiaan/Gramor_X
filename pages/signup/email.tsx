@@ -76,6 +76,13 @@ export default function SignUpWithEmail() {
 
       const redirectTarget = `${origin}/auth/confirm?${verificationParams.toString()}`;
 
+      const sendVerificationCode = async () => {
+        await supabase.auth.signInWithOtp({
+          email: trimmedEmail,
+          options: { shouldCreateUser: false },
+        });
+      };
+
       try {
         await submitPkceSignup({
           email: trimmedEmail,
@@ -97,6 +104,8 @@ export default function SignUpWithEmail() {
             },
           });
 
+          await sendVerificationCode();
+
           const verifyParams = new URLSearchParams({ email: trimmedEmail });
           if (role) verifyParams.set('role', role);
           if (ref) verifyParams.set('ref', ref);
@@ -112,6 +121,8 @@ export default function SignUpWithEmail() {
       }
 
       // Success: move user away from the form
+      await sendVerificationCode();
+
       const verifyParams = new URLSearchParams({ email: trimmedEmail });
       if (role) verifyParams.set('role', role);
       if (ref) verifyParams.set('ref', ref);
