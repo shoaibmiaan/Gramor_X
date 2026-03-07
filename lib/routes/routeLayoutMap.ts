@@ -20,6 +20,7 @@ export const ROUTE_LAYOUT_MAP: Record<string, RouteConfig> = {
   '/auth/reset': { layout: 'default', showChrome: false },
   '/auth/mfa': { layout: 'default', showChrome: false },
   '/auth/verify': { layout: 'default', showChrome: false },
+  '/auth/confirm': { layout: 'default', showChrome: false },
 
   '/login': { layout: 'default', showChrome: false },
   '/login/index': { layout: 'default', showChrome: false },

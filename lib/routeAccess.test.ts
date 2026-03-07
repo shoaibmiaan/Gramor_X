@@ -40,3 +40,9 @@ test('redirectByRole sends unverified users to verification', () => {
 test('verification page is considered public', () => {
   assert.strictEqual(isPublicRoute('/auth/verify'), true);
 });
+
+
+test('auth confirmation and callback pages are public', () => {
+  assert.strictEqual(isPublicRoute('/auth/confirm'), true);
+  assert.strictEqual(isPublicRoute('/auth/callback'), true);
+});

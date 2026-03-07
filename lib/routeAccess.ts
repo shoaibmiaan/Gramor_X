@@ -15,6 +15,8 @@ const PUBLIC_ROUTES: RouteMatcher[] = [
   /^\/contact$/,
   /^\/roadmap$/,
   /^\/vocabulary(\/|$)/,
+  '/auth/confirm',
+  '/auth/callback',
   '/auth/verify',
   '/403', // keep these public to avoid loops
   /^\/legal(\/|$)/,
