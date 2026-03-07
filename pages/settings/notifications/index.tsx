@@ -10,6 +10,7 @@ import { Select } from '@/components/design-system/Select';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Card } from '@/components/design-system/Card';
+import { Badge } from '@/components/design-system/Badge';   // ✅ ADDED
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { useToast } from '@/components/design-system/Toaster';
 import { useLocale } from '@/lib/locale';
