@@ -1,3 +1,4 @@
+// pages/api/auth/pkce-redirect.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -7,6 +8,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const params = new URLSearchParams();
+
+  // Preserve your custom params
   const keepKeys = ['next', 'role', 'ref', 'email', 'code_verifier'];
   for (const key of keepKeys) {
     const value = req.query[key];
@@ -15,6 +18,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
+  // Supabase auth params we must forward
   const supabaseParams = [
     'access_token',
     'refresh_token',
@@ -36,12 +40,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
+  // PKCE code
   const authCode = typeof req.query.code === 'string' ? req.query.code : null;
   if (authCode) {
-    params.set('auth_code', authCode);
+    params.set('code', authCode);
   }
 
-  const destination = `/auth/verify${params.toString() ? `?${params.toString()}` : ''}`;
+  // ✅ Redirect to the correct verification page
+  const destination = `/auth/confirm${params.toString() ? `?${params.toString()}` : ''}`;
+
   res.writeHead(307, { Location: destination });
   res.end();
 }
