@@ -19,6 +19,7 @@ import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
 import { useNextTask } from '@/hooks/useNextTask';
+import { useStudyPlan } from '@/hooks/useStudyPlan'; // New hook
 
 import { badges } from '@/data/badges';
 import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
@@ -38,6 +39,7 @@ import GoalRoadmap from '@/components/feature/GoalRoadmap';
 
 import type { Profile, AIPlan } from '@/types/profile';
 import type { SubscriptionTier } from '@/lib/navigation/types';
+import type { StudyDay } from '@/types/plan';
 
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), {
   ssr: false,
@@ -106,6 +108,9 @@ const Dashboard: NextPage = () => {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showTips, setShowTips] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+
+  // Study plan tasks for today
+  const { todayTasks, loading: planLoading } = useStudyPlan();
 
   const {
     current: streak,
@@ -253,8 +258,9 @@ const Dashboard: NextPage = () => {
 
   const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
-  // AI plan & view-model
-  const ai: AIPlan = (profile?.ai_recommendation ?? {}) as AIPlan;
+  // Wrap ai in useMemo to avoid recreating it on every render (fix for exhaustive-deps warning)
+  const ai = useMemo<AIPlan>(() => (profile?.ai_recommendation ?? {}) as AIPlan, [profile?.ai_recommendation]);
+
   const subscriptionTier: SubscriptionTier =
     (profile?.tier as SubscriptionTier | undefined) ?? 'free';
   const earnedBadges = [...badges.streaks, ...badges.milestones, ...badges.community];
@@ -283,27 +289,22 @@ const Dashboard: NextPage = () => {
     return diffDays >= 0 ? diffDays : 0;
   }, [examDate]);
 
-  // 🔹 Speaking vocab topic + slug for today
+  // Speaking vocab topic + slug for today
   const speakingVocabTopic = useMemo(() => {
     const aiAny = ai as any;
-
     const fromAI =
       aiAny?.speakingFocusTopic ||
       (ai.sessionMix ?? []).find(
         (entry: any) => entry?.skill?.toLowerCase() === 'speaking',
       )?.topic;
-
     if (typeof fromAI === 'string' && fromAI.trim().length > 0) {
       return fromAI;
     }
-
-    // Fallback if no AI signal yet
     return 'Family & relationships';
   }, [ai]);
 
   const speakingVocabSlug = useMemo(() => {
     const label = speakingVocabTopic.toLowerCase();
-
     if (label.includes('family')) return 'family';
     if (label.includes('hometown') || label.includes('city') || label.includes('place'))
       return 'hometown';
@@ -315,8 +316,6 @@ const Dashboard: NextPage = () => {
     if (label.includes('technology') || label.includes('tech')) return 'technology';
     if (label.includes('health')) return 'health';
     if (label.includes('environment')) return 'environment';
-
-    // Safe default
     return 'family';
   }, [speakingVocabTopic]);
 
@@ -329,7 +328,7 @@ const Dashboard: NextPage = () => {
         id: 'streak',
         title: streakProtected ? 'Streak protected' : 'Protect your streak today',
         caption: streakProtected
-          ? `You’ve locked in your ${streak} day streak. Keep the rhythm going tomorrow.`
+          ? `You&apos;ve locked in your ${streak} day streak. Keep the rhythm going tomorrow.`
           : `Log a focused session to keep your ${streak} day streak alive.`,
         icon: 'Flame',
         accent: 'primary',
@@ -344,7 +343,7 @@ const Dashboard: NextPage = () => {
       },
       {
         id: 'weekly-plan',
-        title: 'Shape this week’s plan',
+        title: 'Shape this week&apos;s plan',
         caption:
           'Drop study blocks into your calendar so AI drills land where you can complete them.',
         icon: 'CalendarCheck',
@@ -375,7 +374,6 @@ const Dashboard: NextPage = () => {
       });
     }
 
-    // 🔹 Speaking vocab tile
     items.push({
       id: 'speaking-vocab',
       title: 'Speaking vocab for today',
@@ -701,7 +699,32 @@ const Dashboard: NextPage = () => {
               </div>
             </div>
 
-            {/* NEXT TASK */}
+            {/* STUDY PLAN TASKS FOR TODAY */}
+            {!planLoading && todayTasks && todayTasks.length > 0 && (
+              <Card className="p-6 rounded-ds-2xl border border-primary/20 bg-primary/5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-slab text-h2">📋 Today&apos;s study plan</h2>
+                  <Link href="/study-plan">
+                    <Button variant="ghost" size="sm" className="rounded-ds-xl">
+                      View full plan
+                    </Button>
+                  </Link>
+                </div>
+                <ul className="space-y-3">
+                  {todayTasks.map((task) => (
+                    <li key={task.id} className="flex items-center justify-between p-3 border border-border rounded-ds-xl bg-background/60">
+                      <div>
+                        <Badge variant="soft" size="sm" className="mr-2 capitalize">{task.type}</Badge>
+                        <span className="text-sm">{task.description}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{task.duration} min</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            {/* NEXT TASK (AI Recommendation) */}
             <NextTaskCard
               loading={nextTaskLoading}
               task={nextTask}
@@ -822,7 +845,7 @@ const Dashboard: NextPage = () => {
                 <div>
                   <h2 className="font-slab text-h2">Vocabulary of the day</h2>
                   <p className="text-grayish">
-                    Boost your lexical score with today’s curated pick and quick quiz.
+                    Boost your lexical score with today&apos;s curated pick and quick quiz.
                   </p>
                 </div>
                 <Link href="/vocabulary" className="shrink-0">
@@ -855,11 +878,11 @@ const Dashboard: NextPage = () => {
               <DailyWeeklyChallenges />
             </div>
 
-            {/* TODAY’S PRIORITIES */}
+            {/* TODAY&apos;S PRIORITIES */}
             <section className="mt-10 space-y-4" id="goal-summary">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-slab text-h2">Today’s priorities</h2>
+                  <h2 className="font-slab text-h2">Today&apos;s priorities</h2>
                   <p className="text-grayish">
                     Move the needle with the highest leverage actions first.
                   </p>
@@ -1033,7 +1056,7 @@ const Dashboard: NextPage = () => {
                   <QuickDrillButton />
                   <Link href="/learning">
                     <Button variant="primary" className="rounded-ds-xl">
-                      Start today’s lesson
+                      Start today&apos;s lesson
                     </Button>
                   </Link>
                   <Link href="/mock">
@@ -1051,7 +1074,7 @@ const Dashboard: NextPage = () => {
                       Practice reading
                     </Button>
                   </Link>
-                  {/* 🔹 Speaking vocab quick access */}
+                  {/* Speaking vocab quick access */}
                   <Link href={`/vocabulary/speaking/${speakingVocabSlug}`}>
                     <Button variant="secondary" className="rounded-ds-xl">
                       Speaking vocab today
@@ -1161,7 +1184,7 @@ const Dashboard: NextPage = () => {
         </Container>
       </section>
 
-      {/* Innovation modals */}
+      {/* Innovation modals (unchanged) */}
       {showAICoach && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div
