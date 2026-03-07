@@ -7,9 +7,10 @@ import { useRouter } from 'next/router';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
+import { Input } from '@/components/design-system/Input';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { readStoredPkceVerifier } from '@/lib/auth/pkce';
-import { ONBOARDING, SIGNUP, LOGIN } from '@/lib/constants/routes';
+import { ONBOARDING, SIGNUP } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
 
 export default function VerifyEmailPage() {
@@ -33,6 +34,8 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [err, setErr] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [code, setCode] = useState('');
+  const [codeStatus, setCodeStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
 
   // Auto-redirect if already signed in (e.g., they verified in another tab)
   useEffect(() => {
@@ -102,6 +105,37 @@ export default function VerifyEmailPage() {
     }
   }
 
+  async function onVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+
+    const trimmedCode = code.trim();
+    if (!email) {
+      setErr('We could not detect your email address.');
+      return;
+    }
+    if (!trimmedCode) {
+      setErr('Enter the verification code from your email.');
+      return;
+    }
+
+    setCodeStatus('verifying');
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: trimmedCode,
+      type: 'signup',
+    });
+
+    if (error) {
+      setCodeStatus('error');
+      setErr(error.message || 'Invalid verification code.');
+      return;
+    }
+
+    setCodeStatus('verified');
+    await router.replace(next);
+  }
+
   // If the page was opened without an email param, nudge them back
   if (!email) {
     return (
@@ -138,9 +172,35 @@ export default function VerifyEmailPage() {
         </Alert>
       )}
 
+      {codeStatus === 'verified' && !err && (
+        <Alert variant="success" title="Verified" className="mt-4" role="status" aria-live="polite">
+          Email verified successfully. Redirecting...
+        </Alert>
+      )}
+
       <p className="mt-6 text-muted-foreground">
-        We sent a verification link to <strong>{email}</strong>. Click it to verify and continue setup.
+        We sent a verification link to <strong>{email}</strong>. You can either click the link in your
+        email or enter the verification code below.
       </p>
+
+      <form onSubmit={onVerifyCode} className="mt-6 rounded-xl border border-border p-4 space-y-3">
+        <Input
+          label="Verification Code"
+          type="text"
+          placeholder="Enter the code from your email"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          autoComplete="one-time-code"
+          required
+        />
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={codeStatus === 'verifying'}
+        >
+          {codeStatus === 'verifying' ? 'Verifying code…' : 'Verify code'}
+        </Button>
+      </form>
 
       <div className="mt-6 space-y-4">
         <Button onClick={onResend} className="w-full" disabled={status === 'sending' || cooldown > 0}>
