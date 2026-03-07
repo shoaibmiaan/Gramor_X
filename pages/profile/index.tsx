@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
@@ -25,6 +25,7 @@ type FieldErrors = {
   examDate?: string;
 };
 
+// Map language codes to display names (used when onboarding schema provides only codes)
 const LANGUAGE_LABELS: Record<string, string> = {
   en: 'English',
   ur: 'اردو',
@@ -55,6 +56,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
+  // Normalize language options from onboarding schema
   const languageOptions = useMemo(() => {
     const src = onboardingLanguages as unknown;
 
@@ -78,21 +80,24 @@ export default function ProfilePage() {
       }));
     }
 
+    // Fallback
     return ['en', 'ur'].map((value) => ({
       value,
       label: LANGUAGE_LABELS[value] ?? value.toUpperCase(),
     }));
   }, []);
 
+  // Load profile on mount
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
+    const loadProfile = async () => {
       setLoading(true);
       try {
         const nextProfile = await fetchProfile();
         if (cancelled) return;
 
+        // If profile is incomplete (draft), redirect to setup
         if (!nextProfile || nextProfile.draft) {
           await router.replace('/profile/setup');
           return;
@@ -125,15 +130,16 @@ export default function ProfilePage() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+
+    loadProfile();
 
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router, t]);
 
-  const validate = () => {
+  const validate = useCallback(() => {
     const errors: FieldErrors = {};
     const trimmedName = fullName.trim();
 
@@ -186,54 +192,54 @@ export default function ProfilePage() {
 
     setFieldErrors(errors);
     return { isValid: Object.keys(errors).length === 0, parsedTarget, trimmedName };
-  };
+  }, [fullName, preferredLanguage, languageOptions, targetBand, examDate, t]);
 
-  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!profile) return;
+  const handleSave = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!profile) return;
 
-    const { isValid, parsedTarget, trimmedName } = validate();
-    if (!isValid) {
-      toastError(t('profile.form.fix', 'Please fix the highlighted fields.'));
-      return;
-    }
+      const { isValid, parsedTarget, trimmedName } = validate();
+      if (!isValid) {
+        toastError(t('profile.form.fix', 'Please fix the highlighted fields.'));
+        return;
+      }
 
-    setSaving(true);
-    try {
-      const updated = await upsertProfile({
-        full_name: trimmedName,
-        preferred_language: preferredLanguage,
-        target_band: parsedTarget ?? undefined,
-        exam_date: examDate || null,
-      });
+      setSaving(true);
+      try {
+        const updated = await upsertProfile({
+          full_name: trimmedName,
+          preferred_language: preferredLanguage,
+          target_band: parsedTarget ?? undefined,
+          exam_date: examDate || null,
+        });
 
-      setProfile(updated);
-      setFullName(updated.full_name ?? trimmedName);
-      setPreferredLanguage(updated.preferred_language ?? preferredLanguage);
-      setTargetBand(
-        typeof updated.target_band === 'number'
-          ? updated.target_band.toFixed(
-              Number.isInteger(updated.target_band) ? 0 : 1,
-            )
-          : '',
-      );
-      setExamDate(updated.exam_date?.slice?.(0, 10) ?? '');
-      setAvatarUrl(updated.avatar_url ?? avatarUrl ?? null);
+        setProfile(updated);
+        setFullName(updated.full_name ?? trimmedName);
+        setPreferredLanguage(updated.preferred_language ?? preferredLanguage);
+        setTargetBand(
+          typeof updated.target_band === 'number'
+            ? updated.target_band.toFixed(
+                Number.isInteger(updated.target_band) ? 0 : 1,
+              )
+            : '',
+        );
+        setExamDate(updated.exam_date?.slice?.(0, 10) ?? '');
+        setAvatarUrl(updated.avatar_url ?? avatarUrl ?? null);
 
-      toastSuccess(t('profile.save.ok', 'Profile updated'));
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : t(
-              'profile.save.fail',
-              'Unable to save your profile right now.',
-            );
-      toastError(message);
-    } finally {
-      setSaving(false);
-    }
-  };
+        toastSuccess(t('profile.save.ok', 'Profile updated'));
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : t('profile.save.fail', 'Unable to save your profile right now.');
+        toastError(message);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [profile, validate, preferredLanguage, targetBand, examDate, avatarUrl, toastSuccess, toastError, t],
+  );
 
   const initials = fullName.trim() ? fullName.trim()[0]!.toUpperCase() : 'U';
   const currentStreak = streak ?? 0;
@@ -316,11 +322,9 @@ export default function ProfilePage() {
                       })}
                       {longestStreak > 0 && (
                         <span className="ml-1 text-[10px] text-muted-foreground/80">
-                          {t(
-                            'profile.streak.longest',
-                            'max {{days}}',
-                            { days: longestStreak },
-                          )}
+                          {t('profile.streak.longest', 'max {{days}}', {
+                            days: longestStreak,
+                          })}
                         </span>
                       )}
                     </span>
@@ -364,20 +368,14 @@ export default function ProfilePage() {
                     required
                   />
                   <Select
-                    label={t(
-                      'profile.form.language.label',
-                      'Preferred language',
-                    )}
+                    label={t('profile.form.language.label', 'Preferred language')}
                     value={preferredLanguage}
                     onChange={(event) => setPreferredLanguage(event.target.value)}
                     error={fieldErrors.preferredLanguage ?? null}
                     required
                   >
                     <option value="" disabled>
-                      {t(
-                        'profile.form.language.select',
-                        'Select language',
-                      )}
+                      {t('profile.form.language.select', 'Select language')}
                     </option>
                     {languageOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -390,14 +388,8 @@ export default function ProfilePage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input
                     type="number"
-                    label={t(
-                      'profile.form.band.label',
-                      'Target IELTS band',
-                    )}
-                    placeholder={t(
-                      'profile.form.band.placeholder',
-                      'e.g. 7.5',
-                    )}
+                    label={t('profile.form.band.label', 'Target IELTS band')}
+                    placeholder={t('profile.form.band.placeholder', 'e.g. 7.5')}
                     min={4}
                     max={9}
                     step={0.5}
@@ -415,10 +407,7 @@ export default function ProfilePage() {
                     value={examDate}
                     onChange={(event) => setExamDate(event.target.value)}
                     error={fieldErrors.examDate ?? null}
-                    helperText={t(
-                      'profile.form.date.optional',
-                      'Optional',
-                    )}
+                    helperText={t('profile.form.date.optional', 'Optional')}
                   />
                 </div>
 

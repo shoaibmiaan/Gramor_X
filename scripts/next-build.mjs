@@ -9,9 +9,11 @@ if (!env.NEXT_IGNORE_INCORRECT_LOCKFILE) {
   env.NEXT_IGNORE_INCORRECT_LOCKFILE = '1';
 }
 
-const child = spawn('next', ['build'], {
+// Use npx to locate next, and enable shell for Windows .cmd compatibility
+const child = spawn('npx', ['next', 'build'], {
   stdio: 'inherit',
   env,
+  shell: true, // allows npx.cmd on Windows
 });
 
 child.on('exit', (code, signal) => {

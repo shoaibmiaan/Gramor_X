@@ -9,7 +9,11 @@ import { Input } from '@/components/design-system/Input';
 import { Select } from '@/components/design-system/Select';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import Skeleton from '@/components/design-system/Skeleton';
+import { Card } from '@/components/design-system/Card';
+import { Badge } from '@/components/design-system/Badge';   // ✅ ADDED
+import { Skeleton } from '@/components/design-system/Skeleton';
+import { useToast } from '@/components/design-system/Toaster';
+import { useLocale } from '@/lib/locale';
 import { track } from '@/lib/analytics/track';
 
 interface ChannelState {
@@ -49,6 +53,7 @@ interface PreferencesResponse {
 
 type Status = 'idle' | 'saving' | 'saved' | 'error';
 
+// Helper to format time string for input[type="time"]
 function toTimeInput(value: string | null): string | null {
   if (!value) return null;
   const parts = value.split(':');
@@ -58,6 +63,7 @@ function toTimeInput(value: string | null): string | null {
   return null;
 }
 
+// Normalize server preferences to form state
 function normalizePayload(preferences: ServerPreferences): { form: FormState; contact: ContactState } {
   return {
     form: {
@@ -79,6 +85,9 @@ function normalizePayload(preferences: ServerPreferences): { form: FormState; co
 
 export default function NotificationsSettingsPage() {
   const router = useRouter();
+  const { t } = useLocale();
+  const { success: toastSuccess, error: toastError } = useToast();
+
   const [form, setForm] = React.useState<FormState>({
     channels: { email: true, whatsapp: false },
     quietHoursStart: null,
@@ -94,15 +103,13 @@ export default function NotificationsSettingsPage() {
   const [status, setStatus] = React.useState<Status>('idle');
   const [error, setError] = React.useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = React.useState(false);
-  const statusRef = React.useRef<HTMLSpanElement | null>(null);
   const autoUnsubApplied = React.useRef(false);
 
+  // Get list of supported timezones (fallback to UTC if Intl.supportedValuesOf not available)
   const timezoneOptions = React.useMemo(() => {
     try {
-      const supported = (Intl as any).supportedValuesOf
-        ? ((Intl as any).supportedValuesOf('timeZone') as string[])
-        : [];
-      return supported.length > 0 ? supported : ['UTC'];
+      const supported = (Intl as any).supportedValuesOf?.('timeZone') as string[] | undefined;
+      return supported && supported.length > 0 ? supported : ['UTC'];
     } catch {
       return ['UTC'];
     }
@@ -115,8 +122,10 @@ export default function NotificationsSettingsPage() {
     setHasLoaded(true);
   }, []);
 
+  // Load preferences on mount
   React.useEffect(() => {
     let active = true;
+
     const load = async () => {
       setLoading(true);
       setError(null);
@@ -129,13 +138,13 @@ export default function NotificationsSettingsPage() {
         if (!active) return;
 
         if (response.status === 401) {
-          setError('Sign in to manage your notification preferences.');
+          setError(t('notifications.error.auth', 'Please sign in to manage notification preferences.'));
           setLoading(false);
           return;
         }
 
         if (!response.ok) {
-          setError('Failed to load preferences.');
+          setError(t('notifications.error.load', 'Failed to load preferences.'));
           setLoading(false);
           return;
         }
@@ -144,27 +153,27 @@ export default function NotificationsSettingsPage() {
         applyPreferences(data.preferences);
       } catch (err) {
         if (!active) return;
-        setError('Failed to load preferences.');
+        setError(t('notifications.error.load', 'Failed to load preferences.'));
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     };
 
-    void load();
+    load();
 
     return () => {
       active = false;
     };
-  }, [applyPreferences]);
+  }, [applyPreferences, t]);
 
+  // Auto-clear saved status after 2 seconds
   React.useEffect(() => {
     if (status !== 'saved') return;
     const timer = setTimeout(() => setStatus('idle'), 2000);
     return () => clearTimeout(timer);
   }, [status]);
 
+  // Persist changes to server
   const persist = React.useCallback(
     async (next: FormState) => {
       setStatus('saving');
@@ -184,22 +193,23 @@ export default function NotificationsSettingsPage() {
 
         if (!response.ok) {
           const payload = (await response.json().catch(() => null)) as { error?: string } | null;
-          setError(payload?.error ?? 'Failed to save preferences.');
-          setStatus('error');
-          return false;
+          throw new Error(payload?.error ?? t('notifications.error.save', 'Failed to save preferences.'));
         }
 
         const data = (await response.json()) as PreferencesResponse;
         applyPreferences(data.preferences);
         setStatus('saved');
+        toastSuccess(t('notifications.success.save', 'Preferences saved successfully.'));
         return true;
       } catch (err) {
-        setError('Failed to save preferences.');
+        const message = err instanceof Error ? err.message : t('notifications.error.save', 'Failed to save preferences.');
+        setError(message);
         setStatus('error');
+        toastError(message);
         return false;
       }
     },
-    [applyPreferences],
+    [applyPreferences, toastSuccess, toastError, t]
   );
 
   const handleSubmit = React.useCallback(
@@ -207,7 +217,7 @@ export default function NotificationsSettingsPage() {
       event.preventDefault();
       await persist(form);
     },
-    [form, persist],
+    [form, persist]
   );
 
   const handleChannelChange = (key: keyof ChannelState, value: boolean) => {
@@ -243,46 +253,58 @@ export default function NotificationsSettingsPage() {
       setForm(next);
       await persist(next);
     },
-    [form, hasLoaded, persist],
+    [form, hasLoaded, persist]
   );
 
+  // Handle auto-unsubscribe from URL param
   React.useEffect(() => {
     if (!router.isReady || !hasLoaded || autoUnsubApplied.current) return;
     const flag = router.query.unsubscribe;
     if (flag === '1') {
       autoUnsubApplied.current = true;
-      void handleUnsubscribe('auto');
-      void router.replace('/settings/notifications', undefined, { shallow: true });
+      handleUnsubscribe('auto');
+      router.replace('/settings/notifications', undefined, { shallow: true }).catch(console.error);
     }
   }, [router, hasLoaded, handleUnsubscribe]);
 
   const statusMessage = React.useMemo(() => {
     switch (status) {
       case 'saving':
-        return 'Saving…';
+        return t('common.saving', 'Saving…');
       case 'saved':
-        return 'Saved ✓';
+        return t('common.saved', 'Saved ✓');
       case 'error':
-        return 'Could not save changes';
+        return t('common.error', 'Error');
       default:
         return null;
     }
-  }, [status]);
+  }, [status, t]);
 
   return (
     <>
       <Head>
-        <title>Notifications · Settings · GramorX</title>
-        <meta name="description" content="Manage how and when GramorX reaches out to you." />
+        <title>{t('notifications.pageTitle', 'Notifications · Settings · GramorX')}</title>
+        <meta
+          name="description"
+          content={t(
+            'notifications.pageDescription',
+            'Manage how and when GramorX reaches out to you.'
+          )}
+        />
       </Head>
 
       <div className="py-6">
         <Container>
           <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-h2 font-bold text-foreground">Notification preferences</h1>
+              <h1 className="text-h2 font-bold text-foreground">
+                {t('notifications.title', 'Notification preferences')}
+              </h1>
               <p className="text-small text-mutedText">
-                Choose your channels, set quiet hours, and stay in control of reminders.
+                {t(
+                  'notifications.subtitle',
+                  'Choose your channels, set quiet hours, and stay in control of reminders.'
+                )}
               </p>
             </div>
           </header>
@@ -293,7 +315,7 @@ export default function NotificationsSettingsPage() {
             </Alert>
           )}
 
-          <section className="rounded-ds-2xl border border-border bg-card p-5 text-card-foreground">
+          <Card className="rounded-ds-2xl border border-border bg-card p-5 text-card-foreground">
             {loading && (
               <div className="space-y-3" aria-hidden>
                 <Skeleton className="h-10 w-56 rounded-ds-xl" />
@@ -306,14 +328,20 @@ export default function NotificationsSettingsPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
                   <Toggle
-                    label="Email"
-                    hint="Get summaries and important account updates in your inbox."
+                    label={t('notifications.channel.email', 'Email')}
+                    hint={t(
+                      'notifications.channel.emailHint',
+                      'Get summaries and important account updates in your inbox.'
+                    )}
                     checked={form.channels.email}
                     onChange={(value) => handleChannelChange('email', value)}
                   />
                   <Toggle
-                    label="WhatsApp"
-                    hint="Receive quick nudges and reminders on WhatsApp."
+                    label={t('notifications.channel.whatsapp', 'WhatsApp')}
+                    hint={t(
+                      'notifications.channel.whatsappHint',
+                      'Receive quick nudges and reminders on WhatsApp.'
+                    )}
                     checked={form.channels.whatsapp}
                     onChange={(value) => handleChannelChange('whatsapp', value)}
                   />
@@ -322,19 +350,19 @@ export default function NotificationsSettingsPage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Input
                     type="time"
-                    label="Quiet hours start"
+                    label={t('notifications.quietHours.start', 'Quiet hours start')}
                     value={form.quietHoursStart ?? ''}
                     onChange={(event) => handleTimeChange('quietHoursStart', event.target.value)}
                   />
                   <Input
                     type="time"
-                    label="Quiet hours end"
+                    label={t('notifications.quietHours.end', 'Quiet hours end')}
                     value={form.quietHoursEnd ?? ''}
                     onChange={(event) => handleTimeChange('quietHoursEnd', event.target.value)}
                   />
                   <div className="md:col-span-2">
                     <Select
-                      label="Timezone"
+                      label={t('notifications.timezone', 'Timezone')}
                       value={form.timezone}
                       onChange={(event) => handleTimezoneChange(event.target.value)}
                       options={timezoneOptions.map((tz) => ({ value: tz, label: tz }))}
@@ -343,25 +371,39 @@ export default function NotificationsSettingsPage() {
                 </div>
 
                 <div className="rounded-ds-xl border border-border bg-background p-4">
-                  <h2 className="text-body font-semibold text-foreground">Delivery summary</h2>
+                  <h2 className="text-body font-semibold text-foreground">
+                    {t('notifications.deliverySummary', 'Delivery summary')}
+                  </h2>
                   <ul className="mt-2 space-y-2 text-small text-mutedText">
                     <li>
-                      <span className="font-medium text-foreground">Email:</span>{' '}
-                      {contact.email ? contact.email : 'Add an email in your profile to receive emails.'}
+                      <span className="font-medium text-foreground">
+                        {t('notifications.email', 'Email')}:
+                      </span>{' '}
+                      {contact.email ? (
+                        contact.email
+                      ) : (
+                        <span className="italic">
+                          {t('notifications.noEmail', 'Add an email in your profile to receive emails.')}
+                        </span>
+                      )}
                     </li>
                     <li>
-                      <span className="font-medium text-foreground">WhatsApp:</span>{' '}
+                      <span className="font-medium text-foreground">
+                        {t('notifications.whatsapp', 'WhatsApp')}:
+                      </span>{' '}
                       {contact.phone ? (
                         <>
                           {contact.phone}
                           {!contact.phoneVerified && (
-                            <span className="ml-2 rounded-full bg-warning/20 px-2 py-0.5 text-caption text-warning">
-                              verification pending
-                            </span>
+                            <Badge size="sm" variant="warning" className="ml-2">
+                              {t('notifications.verificationPending', 'verification pending')}
+                            </Badge>
                           )}
                         </>
                       ) : (
-                        'Add a WhatsApp number to receive reminders.'
+                        <span className="italic">
+                          {t('notifications.noPhone', 'Add a WhatsApp number to receive reminders.')}
+                        </span>
                       )}
                     </li>
                   </ul>
@@ -369,28 +411,23 @@ export default function NotificationsSettingsPage() {
 
                 <div className="flex flex-wrap items-center gap-3">
                   <Button type="submit" disabled={status === 'saving'}>
-                    Save preferences
+                    {t('notifications.save', 'Save preferences')}
                   </Button>
-                  <span
-                    ref={statusRef}
-                    className="text-small text-mutedText"
-                    role="status"
-                    aria-live="polite"
-                  >
+                  <span className="text-small text-mutedText" role="status" aria-live="polite">
                     {statusMessage}
                   </span>
                 </div>
               </form>
             )}
-          </section>
+          </Card>
 
           <footer className="mt-6 flex flex-wrap items-center gap-3 text-small text-mutedText">
             <Link className="text-primary hover:underline" href="/legal/privacy">
-              Privacy
+              {t('footer.privacy', 'Privacy')}
             </Link>
             <span aria-hidden>·</span>
             <Link className="text-primary hover:underline" href="/legal/terms">
-              Terms
+              {t('footer.terms', 'Terms')}
             </Link>
             <span aria-hidden>·</span>
             <Link
@@ -398,10 +435,10 @@ export default function NotificationsSettingsPage() {
               href="/settings/notifications?unsubscribe=1"
               onClick={(event) => {
                 event.preventDefault();
-                void handleUnsubscribe('manual');
+                handleUnsubscribe('manual');
               }}
             >
-              Unsubscribe
+              {t('notifications.unsubscribe', 'Unsubscribe')}
             </Link>
           </footer>
         </Container>

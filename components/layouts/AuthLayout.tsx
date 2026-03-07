@@ -150,7 +150,11 @@ export default function AuthLayout({
               'flex items-center justify-center bg-muted',
               'border-t md:border-t-0 md:border-l border-border',
               'p-[clamp(1.5rem,4vw,3rem)]',
-              hideRight && 'hidden md:flex'
+              'hidden md:flex', // Hidden on mobile, visible on desktop
+              {
+                // Override for mobile toggle if enabled
+                'flex': showRightOnMobile && mobileView === 'right',
+              }
             )}
           >
             <div className="h-full w-full">{rightContent}</div>

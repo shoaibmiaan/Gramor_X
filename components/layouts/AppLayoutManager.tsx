@@ -267,12 +267,47 @@ export function AppLayoutManager({
       { type: 'community', component: CommunityLayout, guard: () => isCommunityRoute },
       { type: 'reports', component: ReportsLayout, guard: () => isReportsRoute },
       { type: 'marketing', component: PublicMarketingLayout, guard: () => isMarketingRoute },
-      { type: 'profile', component: ProfileLayout, guard: () => pathname.startsWith('/profile') || pathname.startsWith('/user') },
-      { type: 'communication', component: CommunicationLayout, guard: () => pathname.startsWith('/messages') || pathname.startsWith('/chat') || pathname.startsWith('/inbox') },
-      { type: 'billing', component: BillingLayout, guard: () => pathname.startsWith('/billing') || pathname.startsWith('/payment') || pathname.startsWith('/subscription') },
-      { type: 'resources', component: ResourcesLayout, guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library') },
-      { type: 'analytics', component: AnalyticsLayout, guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats') },
-      { type: 'support', component: SupportLayout, guard: () => pathname.startsWith('/support') || pathname.startsWith('/help') },
+      // ✅ Updated profile layout guard to include /account and /settings
+      {
+        type: 'profile',
+        component: ProfileLayout,
+        guard: () =>
+          pathname.startsWith('/profile') ||
+          pathname.startsWith('/user') ||
+          pathname.startsWith('/account') ||
+          pathname.startsWith('/settings'),
+      },
+      {
+        type: 'communication',
+        component: CommunicationLayout,
+        guard: () =>
+          pathname.startsWith('/messages') ||
+          pathname.startsWith('/chat') ||
+          pathname.startsWith('/inbox'),
+      },
+      {
+        type: 'billing',
+        component: BillingLayout,
+        guard: () =>
+          pathname.startsWith('/billing') ||
+          pathname.startsWith('/payment') ||
+          pathname.startsWith('/subscription'),
+      },
+      {
+        type: 'resources',
+        component: ResourcesLayout,
+        guard: () => pathname.startsWith('/resources') || pathname.startsWith('/library'),
+      },
+      {
+        type: 'analytics',
+        component: AnalyticsLayout,
+        guard: () => pathname.startsWith('/analytics') || pathname.startsWith('/stats'),
+      },
+      {
+        type: 'support',
+        component: SupportLayout,
+        guard: () => pathname.startsWith('/support') || pathname.startsWith('/help'),
+      },
     ],
     [
       isAdminRoute,

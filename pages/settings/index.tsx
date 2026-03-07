@@ -8,6 +8,7 @@ import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
+import { useLocale } from '@/lib/locale';
 
 type SettingsSection = {
   href: string;
@@ -18,7 +19,7 @@ type SettingsSection = {
 };
 
 const sections: SettingsSection[] = [
-  // Account group – always route via /account
+  // Account group – all account‑related pages are under /account
   {
     href: '/account',
     label: 'Account overview',
@@ -43,7 +44,7 @@ const sections: SettingsSection[] = [
     group: 'account',
   },
 
-  // Experience group – classic “settings”
+  // Experience group – classic settings (app preferences)
   {
     href: '/settings/notifications',
     label: 'Notifications',
@@ -79,33 +80,44 @@ const groups: { id: SettingsSection['group']; label: string }[] = [
 ];
 
 export default function SettingsHomePage() {
+  const { t } = useLocale();
+
   return (
     <>
       <Head>
-        <title>Settings · GramorX</title>
+        <title>{t('settings.pageTitle', 'Settings · GramorX')}</title>
         <meta
           name="description"
-          content="Configure how GramorX behaves for your account: billing, notifications, language, accessibility, and security."
+          content={t(
+            'settings.pageDescription',
+            'Configure how GramorX behaves for your account: billing, notifications, language, accessibility, and security.'
+          )}
         />
       </Head>
 
       <main className="bg-background py-8 text-foreground">
-        <Container className="space-y-8 max-w-5xl">
+        <Container className="max-w-5xl space-y-8">
           {/* Header */}
           <header className="space-y-2">
-            <h1 className="text-h2 font-bold">Settings</h1>
+            <h1 className="text-h2 font-bold">
+              {t('settings.title', 'Settings')}
+            </h1>
             <p className="max-w-2xl text-small text-muted-foreground">
-              Use the account hub for the full picture, or jump straight into a
-              specific settings area from here.
+              {t(
+                'settings.subtitle',
+                'Use the account hub for the full picture, or jump straight into a specific settings area from here.'
+              )}
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="sm" variant="soft">
-                <Link href="/account">Open account hub</Link>
+                <Link href="/account">
+                  {t('settings.openAccountHub', 'Open account hub')}
+                </Link>
               </Button>
             </div>
           </header>
 
-          {/* Groups */}
+          {/* Groups of settings cards */}
           <div className="space-y-8">
             {groups.map((group) => {
               const items = sections.filter((s) => s.group === group.id);
@@ -114,7 +126,7 @@ export default function SettingsHomePage() {
               return (
                 <section key={group.id} className="space-y-3">
                   <h2 className="text-caption font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                    {group.label}
+                    {t(`settings.group.${group.id}`, group.label)}
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {items.map((section) => (
@@ -122,6 +134,8 @@ export default function SettingsHomePage() {
                         key={section.href}
                         href={section.href}
                         className="group block"
+                        // Prefetch only when visible to save bandwidth
+                        prefetch={false}
                       >
                         <Card
                           as="article"
@@ -129,23 +143,23 @@ export default function SettingsHomePage() {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <h3 className="text-body font-semibold">
-                              {section.label}
+                              {t(`settings.section.${section.label}`, section.label)}
                             </h3>
-                            {section.badge ? (
+                            {section.badge && (
                               <Badge size="sm" variant="info">
-                                {section.badge}
+                                {t(`settings.badge.${section.badge}`, section.badge)}
                               </Badge>
-                            ) : null}
+                            )}
                           </div>
                           <p className="mt-2 text-small text-muted-foreground">
-                            {section.description}
+                            {t(`settings.section.${section.label}.desc`, section.description)}
                           </p>
                           <Button
                             variant="ghost"
                             size="sm"
                             className="mt-4 px-0 text-xs text-primary group-hover:underline"
                           >
-                            Open
+                            {t('settings.open', 'Open')}
                           </Button>
                         </Card>
                       </Link>
