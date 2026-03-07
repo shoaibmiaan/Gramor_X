@@ -71,11 +71,15 @@ const OnboardingNotificationsPage: NextPage = () => {
   // Final destination after onboarding
   const nextPath = useMemo(() => {
     const { next } = router.query;
-    const raw = typeof next === 'string' ? next : '/dashboard';
+    const raw = typeof next === 'string' ? next : '/onboarding/study-plan';
 
     // never loop back into onboarding from final step
-    if (!raw || raw.startsWith('/onboarding')) {
-      return '/dashboard';
+    if (!raw) {
+      return '/onboarding/study-plan';
+    }
+
+    if (raw.startsWith('/onboarding') && raw !== '/onboarding/study-plan') {
+      return '/onboarding/study-plan';
     }
     return raw;
   }, [router.query]);
@@ -230,7 +234,7 @@ const OnboardingNotificationsPage: NextPage = () => {
               <p className="hidden text-xs text-muted-foreground sm:inline">
                 Finish and go to{' '}
                 <span className="font-medium">
-                  {nextPath === '/dashboard' ? 'dashboard' : nextPath}
+                  {nextPath === '/onboarding/study-plan' ? 'your AI study plan' : nextPath}
                 </span>
               </p>
               <Button
