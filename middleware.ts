@@ -16,11 +16,12 @@ const AUTH_PAGES = [
   '/auth/callback',
 ];
 
-// Prefixes that require auth
+// Prefixes that require auth – added '/profile'
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
   '/settings',
+  '/profile',                // <-- ADDED
   '/notifications',
   '/study-plan',
   '/progress',
@@ -87,7 +88,9 @@ async function loadAuthState(req: NextRequest, res: NextResponse): Promise<AuthS
 
     const json = (await response.json()) as AuthState | { error: string };
     if ('authenticated' in json) return json;
-  } catch {}
+  } catch {
+    // ignore
+  }
 
   return { authenticated: false };
 }
@@ -139,7 +142,7 @@ export async function middleware(req: NextRequest) {
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
   const isOnboardingRoute = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 
-  // Premium PIN gate (keep your existing logic)
+  // Premium PIN gate (unchanged – still valid for premium content protection)
   const isPremiumSection = pathname.startsWith('/premium');
   const isPremiumPinPage = pathname === '/premium/pin' || pathname === '/premium-pin';
   const pinOk = req.cookies.get('pr_pin_ok')?.value === '1';
