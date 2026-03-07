@@ -74,7 +74,7 @@ export default function SignUpWithEmail() {
       if (ref) verificationParams.set('ref', ref);
       if (pkcePair.verifier) verificationParams.set('code_verifier', pkcePair.verifier);
 
-      const redirectTarget = `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`;
+      const redirectTarget = `${origin}/auth/confirm?${verificationParams.toString()}`;
 
       try {
         await submitPkceSignup({
