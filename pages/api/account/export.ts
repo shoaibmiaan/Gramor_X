@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : userAgentHeader ?? null;
 
     const [profileRes, bookmarksRes, subscriptionsRes, studyPlansRes, attemptsRes, invoicesRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+      supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('user_bookmarks').select('*').eq('user_id', user.id),
       supabase.from('subscriptions').select('*').eq('user_id', user.id),
       supabase.from('study_plans').select('*').eq('user_id', user.id),

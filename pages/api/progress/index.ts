@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data, error } = await supabase
     .from('progress_band_trajectory')
     .select('attempt_date, skill, band')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .gte('attempt_date', sinceIso)
     .order('attempt_date', { ascending: true });
 
@@ -42,13 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { data: profileRow } = await supabase
     .from('profiles')
     .select('goal_band')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .maybeSingle();
 
   const { data: masteryRows, error: masteryError } = await supabase
     .from('user_challenge_progress')
     .select('total_mastered')
-    .eq('id', user.id);
+    .eq('user_id', user.id);
 
   if (masteryError) {
     return res.status(500).json({ error: masteryError.message });

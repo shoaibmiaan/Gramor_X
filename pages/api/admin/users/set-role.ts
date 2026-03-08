@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { error: profErr } = await supabaseAdmin
     .from('profiles')
     .update({ role, is_admin: role === 'admin', updated_at: new Date().toISOString() })
-    .eq('id', userId);
+    .eq('user_id', userId);
   if (profErr) return res.status(400).json({ error: profErr.message });
 
   return res.json({ ok: true });

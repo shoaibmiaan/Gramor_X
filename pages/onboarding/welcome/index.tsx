@@ -173,7 +173,7 @@ export default function WelcomePage() {
       const { data, error: profileError } = await supabase
         .from('profiles')
         .select('full_name')
-        .eq('id', uid)
+        .eq('user_id', uid)
         .maybeSingle();
 
       if (profileError) {
