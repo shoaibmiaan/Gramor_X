@@ -1,7 +1,6 @@
 // pages/api/internal/auth/state.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerClient } from '@/lib/supabaseServer';
-import { findProfileByAuthId } from '@/lib/auth/profileLookup';
 
 type AuthState =
   | { authenticated: false }
@@ -32,12 +31,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({ authenticated: false });
   }
 
-  const { profile } = await findProfileByAuthId<{ role?: string | null; onboarding_complete?: boolean }>(
-    supabase,
-    user.id,
-    'role,onboarding_complete',
-    { allowLegacyUserIdFallback: true },
-  );
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role,onboarding_complete')
+    .or(`user_id.eq.${user.id},id.eq.${user.id}`)
+    .maybeSingle();
 
   const role =
     (profile as { role?: string | null } | null)?.role ??
