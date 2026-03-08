@@ -11,7 +11,7 @@ import { StreakChip } from '@/components/user/StreakChip';
 import { Alert } from '@/components/design-system/Alert';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { getServerClient } from '@/lib/supabaseServer';
-import { buildCompletionHistory } from '@/utils/streak';
+import { getStreakCalendar, getUserStreak } from '@/lib/streak';
 import { useLocale } from '@/lib/locale';
 
 const Heatmap = dynamic(
@@ -25,6 +25,8 @@ const Heatmap = dynamic(
 );
 
 type HistoryEntry = { date: string; completed: number; total: number };
+type TodayTask = { key: string; label: string; href: string; completed: boolean };
+type ActivityEntry = { date: string; tasks: string[] };
 
 type Props = {
   streak: {
@@ -33,6 +35,8 @@ type Props = {
     lastActive: string | null;
   };
   history: HistoryEntry[];
+  todayTasks: TodayTask[];
+  activityHistory: ActivityEntry[];
   error?: string | null;
 };
 
@@ -49,7 +53,7 @@ const formatDisplayDate = (iso: string | null, locale: string) => {
   }
 };
 
-const StreakPage: NextPage<Props> = ({ streak, history, error }) => {
+const StreakPage: NextPage<Props> = ({ streak, history, todayTasks, activityHistory, error }) => {
   const { t, locale } = useLocale();
 
   if (error) {
@@ -144,6 +148,42 @@ const StreakPage: NextPage<Props> = ({ streak, history, error }) => {
                 </div>
               </dl>
 
+
+
+              <div className="rounded-xl border border-border/70 p-4">
+                <h3 className="font-semibold text-foreground">Today's streak tasks</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Complete any one of these tasks to keep today's streak active.</p>
+                <ul className="mt-3 space-y-2">
+                  {todayTasks.map((task) => (
+                    <li key={task.key} className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
+                      <span>{task.label}</span>
+                      {task.completed ? (
+                        <span className="font-semibold text-green-700">Done</span>
+                      ) : (
+                        <Link href={task.href} className="font-semibold text-electricBlue hover:underline">
+                          Start
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-xl border border-border/70 p-4">
+                <h3 className="font-semibold text-foreground">Streak activity history</h3>
+                <ul className="mt-3 space-y-2">
+                  {activityHistory.length === 0 ? (
+                    <li className="text-sm text-muted-foreground">No recent completed streak tasks yet.</li>
+                  ) : (
+                    activityHistory.slice().reverse().slice(0, 10).map((entry) => (
+                      <li key={entry.date} className="rounded-lg bg-muted px-3 py-2 text-sm">
+                        <span className="font-semibold">{entry.date}</span>
+                        <span className="ml-2 text-muted-foreground">{entry.tasks.join(', ')}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
               <div className="rounded-xl bg-muted/60 px-4 py-3 text-small text-muted-foreground">
                 <h3 className="font-semibold text-foreground">
                   {t('streak.howItWorks.title', 'How your streak works')}
@@ -204,38 +244,27 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const DAYS_BACK = 84;
 
   try {
-    const [streakRes, historyRes] = await Promise.all([
-      supabase
-        .from('streaks')
-        .select('current, longest, last_active_date')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-      supabase.rpc('get_streak_history', {
-        p_user_id: user.id,
-        p_days_back: DAYS_BACK,
-      }),
+    const [streakSummary, calendar] = await Promise.all([
+      getUserStreak(supabase, user.id),
+      getStreakCalendar(supabase, user.id, DAYS_BACK),
     ]);
 
-    const streakRow = streakRes.data ?? null;
-    const rawHistory = historyRes.data ?? [];
-
-    if (streakRes.error) {
-      console.error('[profile/streak] Unable to load streak row:', streakRes.error.message);
-    }
-    if (historyRes.error) {
-      console.error('[profile/streak] Unable to load history:', historyRes.error.message);
-    }
-
-    const history = buildCompletionHistory(rawHistory, DAYS_BACK);
+    const history = calendar.map((entry) => ({
+      date: entry.date,
+      completed: entry.active ? 1 : 0,
+      total: 1,
+    }));
 
     return {
       props: {
         streak: {
-          current: streakRow?.current ?? 0,
-          longest: streakRow?.longest ?? streakRow?.current ?? 0,
-          lastActive: streakRow?.last_active_date ?? null,
+          current: streakSummary.current_streak,
+          longest: streakSummary.longest_streak,
+          lastActive: streakSummary.last_activity_date,
         },
         history,
+        todayTasks: streakSummary.today_tasks,
+        activityHistory: streakSummary.activity_history,
         error: null,
       },
     };
@@ -245,6 +274,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       props: {
         streak: { current: 0, longest: 0, lastActive: null },
         history: [],
+        todayTasks: [],
+        activityHistory: [],
         error: 'Failed to load streak data. Please try again later.',
       },
     };

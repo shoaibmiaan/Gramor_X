@@ -1,6 +1,7 @@
 // pages/api/mock/full/submit-final.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerClient } from '@/lib/supabaseServer';
+import { updateStreak } from '@/lib/streak';
 // import { computeListeningBand, computeReadingBand, computeOverallBand } from '@/lib/scoring/mock'; // example
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -100,6 +101,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error(updateError);
       return res.status(500).json({ error: 'Failed to finalize attempt' });
     }
+
+    await updateStreak(supabase, user.id);
 
     return res.status(200).json({
       ok: true,
