@@ -14,7 +14,7 @@ import {
   Calendar,
   MoreVertical,
   Filter,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -25,7 +25,7 @@ interface TaskBoardProps {
 
 export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: TaskBoardProps) {
   const [selectedTask, setSelectedTask] = React.useState<string | null>(null);
-  const [commentInput, setCommentInput] = React.useState("");
+  const [commentInput, setCommentInput] = React.useState('');
 
   const handleStatusUpdate = async (taskId: string, newStatus: Task['status']) => {
     try {
@@ -40,7 +40,7 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
       if (error) throw error;
 
       // Log activity
-      const task = tasks.find(t => t.id === taskId);
+      const task = tasks.find((t) => t.id === taskId);
       if (task) {
         await supabase.rpc('log_user_activity', {
           p_user_id: task.assignee.id,
@@ -55,9 +55,18 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
         });
       }
 
+      logClientEvent('activity.task.status_updated', {
+        task_id: taskId,
+        status: newStatus,
+      });
+
       onTaskUpdate();
     } catch (error) {
-      console.error('Error updating task:', error);
+      logClientError(error, {
+        event: 'activity.task.status_update.failed',
+        task_id: taskId,
+        status: newStatus,
+      });
     }
   };
 
@@ -65,40 +74,54 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
     if (!commentInput.trim()) return;
 
     try {
-      const { error } = await supabase
-        .from('task_comments')
-        .insert({
-          task_id: taskId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          comment: commentInput,
-        });
+      const { error } = await supabase.from('task_comments').insert({
+        task_id: taskId,
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        comment: commentInput,
+      });
 
       if (error) throw error;
 
-      setCommentInput("");
+      setCommentInput('');
+      logClientEvent('activity.task.comment_added', {
+        task_id: taskId,
+      });
       onTaskUpdate();
     } catch (error) {
-      console.error('Error adding comment:', error);
+      logClientError(error, {
+        event: 'activity.task.comment_add.failed',
+        task_id: taskId,
+      });
     }
   };
 
   const getPriorityColor = (priority: Task['priority']) => {
     switch (priority) {
-      case 'urgent': return 'red';
-      case 'high': return 'orange';
-      case 'medium': return 'yellow';
-      case 'low': return 'green';
-      default: return 'gray';
+      case 'urgent':
+        return 'red';
+      case 'high':
+        return 'orange';
+      case 'medium':
+        return 'yellow';
+      case 'low':
+        return 'green';
+      default:
+        return 'gray';
     }
   };
 
   const getStatusColor = (status: Task['status']) => {
     switch (status) {
-      case 'completed': return 'green';
-      case 'in_progress': return 'blue';
-      case 'review': return 'purple';
-      case 'cancelled': return 'red';
-      default: return 'yellow';
+      case 'completed':
+        return 'green';
+      case 'in_progress':
+        return 'blue';
+      case 'review':
+        return 'purple';
+      case 'cancelled':
+        return 'red';
+      default:
+        return 'yellow';
     }
   };
 
@@ -125,10 +148,10 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
   });
 
   const tasksByStatus = {
-    pending: filteredTasks.filter(t => t.status === 'pending'),
-    in_progress: filteredTasks.filter(t => t.status === 'in_progress'),
-    review: filteredTasks.filter(t => t.status === 'review'),
-    completed: filteredTasks.filter(t => t.status === 'completed'),
+    pending: filteredTasks.filter((t) => t.status === 'pending'),
+    in_progress: filteredTasks.filter((t) => t.status === 'in_progress'),
+    review: filteredTasks.filter((t) => t.status === 'review'),
+    completed: filteredTasks.filter((t) => t.status === 'completed'),
   };
 
   if (loading) {
@@ -172,13 +195,11 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
               </Badge>
             </div>
             <div className="mt-2">
-              {tasksByStatus[key as keyof typeof tasksByStatus]
-                .slice(0, 2)
-                .map(task => (
-                  <div key={task.id} className="text-xs text-muted-foreground truncate">
-                    {task.title}
-                  </div>
-                ))}
+              {tasksByStatus[key as keyof typeof tasksByStatus].slice(0, 2).map((task) => (
+                <div key={task.id} className="text-xs text-muted-foreground truncate">
+                  {task.title}
+                </div>
+              ))}
             </div>
           </Card>
         ))}
@@ -210,7 +231,7 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
               </div>
 
               <div className="space-y-3">
-                {tasksByStatus[key as keyof typeof tasksByStatus].map(task => (
+                {tasksByStatus[key as keyof typeof tasksByStatus].map((task) => (
                   <div
                     key={task.id}
                     className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -224,11 +245,13 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
                           >
                             {task.priority}
                           </Badge>
-                          {task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed' && (
-                            <Badge variant="danger" size="sm">
-                              Overdue
-                            </Badge>
-                          )}
+                          {task.due_date &&
+                            new Date(task.due_date) < new Date() &&
+                            task.status !== 'completed' && (
+                              <Badge variant="danger" size="sm">
+                                Overdue
+                              </Badge>
+                            )}
                         </div>
                         <h5 className="font-medium text-sm mb-1">{task.title}</h5>
                         <p className="text-xs text-muted-foreground line-clamp-2">
@@ -257,9 +280,7 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
                       <div className="flex items-center gap-2">
                         <button
                           className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                          onClick={() => setSelectedTask(
-                            selectedTask === task.id ? null : task.id
-                          )}
+                          onClick={() => setSelectedTask(selectedTask === task.id ? null : task.id)}
                         >
                           <MessageSquare className="h-3 w-3" />
                           {task.comments_count || 0}
@@ -277,16 +298,24 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
                           variant="soft"
                           onClick={() => {
                             const nextStatus =
-                              task.status === 'pending' ? 'in_progress' :
-                              task.status === 'in_progress' ? 'review' :
-                              task.status === 'review' ? 'completed' : 'completed';
+                              task.status === 'pending'
+                                ? 'in_progress'
+                                : task.status === 'in_progress'
+                                  ? 'review'
+                                  : task.status === 'review'
+                                    ? 'completed'
+                                    : 'completed';
                             handleStatusUpdate(task.id, nextStatus);
                           }}
                         >
                           <CheckCircle className="h-3 w-3 mr-1" />
-                          {task.status === 'pending' ? 'Start' :
-                           task.status === 'in_progress' ? 'Review' :
-                           task.status === 'review' ? 'Complete' : 'Done'}
+                          {task.status === 'pending'
+                            ? 'Start'
+                            : task.status === 'in_progress'
+                              ? 'Review'
+                              : task.status === 'review'
+                                ? 'Complete'
+                                : 'Done'}
                         </Button>
                       )}
                     </div>
@@ -302,17 +331,10 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
                           onChange={(e) => setCommentInput(e.target.value)}
                         />
                         <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setSelectedTask(null)}
-                          >
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedTask(null)}>
                             Cancel
                           </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAddComment(task.id)}
-                          >
+                          <Button size="sm" onClick={() => handleAddComment(task.id)}>
                             Comment
                           </Button>
                         </div>

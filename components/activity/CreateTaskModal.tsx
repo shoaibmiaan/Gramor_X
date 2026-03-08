@@ -1,10 +1,11 @@
 // components/activity/CreateTaskModal.tsx
 'use client';
 
-import * as React from "react";
-import { Button } from "@/components/design-system/Button";
-import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser";
-import { X, User, Calendar, AlertCircle, Tag } from "lucide-react";
+import * as React from 'react';
+import { Button } from '@/components/design-system/Button';
+import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { logClientError, logClientEvent } from '@/lib/telemetry/client';
+import { X, User, Calendar, AlertCircle, Tag } from 'lucide-react';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -13,7 +14,12 @@ interface CreateTaskModalProps {
   userId?: string;
 }
 
-export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: CreateTaskModalProps) {
+export default function CreateTaskModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  userId,
+}: CreateTaskModalProps) {
   const [loading, setLoading] = React.useState(false);
   const [assignee, setAssignee] = React.useState<'codex' | 'self' | 'other'>('codex');
   const [otherUserEmail, setOtherUserEmail] = React.useState('');
@@ -71,6 +77,13 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
 
       if (error) throw error;
 
+      logClientEvent('activity.task.create.success', {
+        created_by: userId,
+        assigned_to: assigneeId,
+        assignee_type: assignee,
+        priority: formData.priority,
+      });
+
       // Reset form
       setFormData({
         title: '',
@@ -88,7 +101,11 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error creating task:', error);
+      logClientError(error, {
+        event: 'activity.task.create.failed',
+        user_id: userId,
+        assignee_type: assignee,
+      });
       alert('Failed to create task. Please try again.');
     } finally {
       setLoading(false);
@@ -100,10 +117,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto">
@@ -202,28 +216,24 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
           {/* Task Details */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Task Title *
-              </label>
+              <label className="block text-sm font-medium mb-2">Task Title *</label>
               <input
                 type="text"
                 className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg"
                 placeholder="e.g., Review writing submission #42"
                 value={formData.title}
-                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Description *
-              </label>
+              <label className="block text-sm font-medium mb-2">Description *</label>
               <textarea
                 className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg min-h-[100px]"
                 placeholder="Describe the task in detail..."
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 required
               />
             </div>
@@ -237,7 +247,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
                 <select
                   className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg"
                   value={formData.priority}
-                  onChange={(e) => setFormData({...formData, priority: e.target.value as any})}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -255,7 +265,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
                   type="date"
                   className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg"
                   value={formData.due_date}
-                  onChange={(e) => setFormData({...formData, due_date: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                 />
               </div>
             </div>
@@ -269,7 +279,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
                 <select
                   className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg"
                   value={formData.module}
-                  onChange={(e) => setFormData({...formData, module: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, module: e.target.value })}
                 >
                   <option value="">Select module</option>
                   <option value="writing">Writing</option>
@@ -282,13 +292,11 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Task Type
-                </label>
+                <label className="block text-sm font-medium mb-2">Task Type</label>
                 <select
                   className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg"
                   value={formData.task_type}
-                  onChange={(e) => setFormData({...formData, task_type: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, task_type: e.target.value })}
                 >
                   <option value="">Select type</option>
                   <option value="review">Review</option>
@@ -302,26 +310,22 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Reference ID (Optional)
-                </label>
+                <label className="block text-sm font-medium mb-2">Reference ID (Optional)</label>
                 <input
                   type="text"
                   className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg"
                   placeholder="UUID of related item"
                   value={formData.reference_id}
-                  onChange={(e) => setFormData({...formData, reference_id: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, reference_id: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Reference Table
-                </label>
+                <label className="block text-sm font-medium mb-2">Reference Table</label>
                 <select
                   className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg"
                   value={formData.reference_table}
-                  onChange={(e) => setFormData({...formData, reference_table: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, reference_table: e.target.value })}
                 >
                   <option value="">Select table</option>
                   <option value="attempts">Attempts</option>
@@ -337,12 +341,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, userId }: 
           {/* Footer */}
           <div className="sticky bottom-0 bg-white dark:bg-gray-900 pt-6 border-t border-gray-200 dark:border-gray-800">
             <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={loading}
-              >
+              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
                 Cancel
               </Button>
               <Button

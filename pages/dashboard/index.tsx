@@ -186,8 +186,7 @@ const Dashboard: NextPage = () => {
         const draftFlag = (p as any)?.draft === true;
         const explicitIncomplete = (p as any)?.onboarding_complete === false;
         const heuristicIncomplete =
-          (p as any)?.onboarding_complete == null &&
-          (!p?.full_name || !p?.preferred_language);
+          (p as any)?.onboarding_complete == null && (!p?.full_name || !p?.preferred_language);
 
         setNeedsSetup(!!(draftFlag || explicitIncomplete || heuristicIncomplete));
         setProfile(p ?? null);
@@ -219,7 +218,10 @@ const Dashboard: NextPage = () => {
   const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   // Wrap ai in useMemo to avoid recreating it on every render (fix for exhaustive-deps warning)
-  const ai = useMemo<AIPlan>(() => (profile?.ai_recommendation ?? {}) as AIPlan, [profile?.ai_recommendation]);
+  const ai = useMemo<AIPlan>(
+    () => (profile?.ai_recommendation ?? {}) as AIPlan,
+    [profile?.ai_recommendation],
+  );
 
   const subscriptionTier: SubscriptionTier =
     (profile?.tier as SubscriptionTier | undefined) ?? 'free';
@@ -227,7 +229,7 @@ const Dashboard: NextPage = () => {
   const topBadges = earnedBadges.slice(0, 3);
 
   const goalBand =
-    typeof profile?.goal_band === 'number' ? profile.goal_band : ai.suggestedGoal ?? null;
+    typeof profile?.goal_band === 'number' ? profile.goal_band : (ai.suggestedGoal ?? null);
   const targetStudyTime = profile?.time_commitment || '1–2h/day';
 
   const examDate = useMemo(() => {
@@ -239,11 +241,7 @@ const Dashboard: NextPage = () => {
   const daysUntilExam = useMemo(() => {
     if (!examDate) return null;
     const today = new Date();
-    const startOfToday = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-    );
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const diffMs = examDate.getTime() - startOfToday.getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     return diffDays >= 0 ? diffDays : 0;
@@ -254,9 +252,7 @@ const Dashboard: NextPage = () => {
     const aiAny = ai as any;
     const fromAI =
       aiAny?.speakingFocusTopic ||
-      (ai.sessionMix ?? []).find(
-        (entry: any) => entry?.skill?.toLowerCase() === 'speaking',
-      )?.topic;
+      (ai.sessionMix ?? []).find((entry: any) => entry?.skill?.toLowerCase() === 'speaking')?.topic;
     if (typeof fromAI === 'string' && fromAI.trim().length > 0) {
       return fromAI;
     }
@@ -268,8 +264,7 @@ const Dashboard: NextPage = () => {
     if (label.includes('family')) return 'family';
     if (label.includes('hometown') || label.includes('city') || label.includes('place'))
       return 'hometown';
-    if (label.includes('work') || label.includes('job') || label.includes('study'))
-      return 'work';
+    if (label.includes('work') || label.includes('job') || label.includes('study')) return 'work';
     if (label.includes('free time') || label.includes('hobby') || label.includes('leisure'))
       return 'free-time';
     if (label.includes('travel') || label.includes('holiday')) return 'travel';
@@ -353,11 +348,16 @@ const Dashboard: NextPage = () => {
     return items;
   }, [daysUntilExam, examDate, streak, streakProtected, speakingVocabTopic, speakingVocabSlug]);
 
-  const trackFeatureOpen = useCallback((feature: string) => {
-    // window.analytics?.track('feature_open', { feature, userId: sessionUserId });
-    // eslint-disable-next-line no-console
-    console.log('[feature] open', feature);
-  }, []);
+  const trackFeatureOpen = useCallback(
+    (feature: string) => {
+      logClientEvent('dashboard.feature_open', {
+        feature,
+        user_id: sessionUserId,
+        source: 'dashboard_home',
+      });
+    },
+    [sessionUserId],
+  );
 
   const openAICoach = useCallback(() => {
     setShowAICoach(true);
@@ -512,9 +512,14 @@ const Dashboard: NextPage = () => {
                 </div>
                 <ul className="space-y-3">
                   {todayTasks.map((task) => (
-                    <li key={task.id} className="flex items-center justify-between p-3 border border-border rounded-ds-xl bg-background/60">
+                    <li
+                      key={task.id}
+                      className="flex items-center justify-between p-3 border border-border rounded-ds-xl bg-background/60"
+                    >
                       <div>
-                        <Badge variant="soft" size="sm" className="mr-2 capitalize">{task.type}</Badge>
+                        <Badge variant="soft" size="sm" className="mr-2 capitalize">
+                          {task.type}
+                        </Badge>
                         <span className="text-sm">{task.description}</span>
                       </div>
                       <span className="text-xs text-muted-foreground">{task.duration} min</span>
@@ -621,13 +626,12 @@ const Dashboard: NextPage = () => {
                 <div className="grid gap-6 md:grid-cols-3">
                   {(ai.sessionMix && ai.sessionMix.length
                     ? ai.sessionMix
-                    : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' })))
+                    : (ai.sequence ?? []).map((skill) => ({ skill, topic: '' }))
+                  )
                     .slice(0, 3)
                     .map((entry, index) => {
                       const hrefSkill = entry.skill.toLowerCase();
-                      const title = entry.topic
-                        ? `${entry.skill}: ${entry.topic}`
-                        : entry.skill;
+                      const title = entry.topic ? `${entry.skill}: ${entry.topic}` : entry.skill;
                       return (
                         <Card
                           key={`${entry.skill}-${entry.topic || index}`}

@@ -15,7 +15,7 @@ import {
   User,
   CheckCircle,
   AlertCircle,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface ActivityTimelineProps {
   activities: RecentActivity[];
@@ -91,9 +91,7 @@ export default function ActivityTimeline({ activities, loading, filters }: Activ
   };
 
   const getActivityTypeLabel = (type: string) => {
-    return type
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase());
+    return type.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
   if (loading) {
@@ -150,22 +148,36 @@ export default function ActivityTimeline({ activities, loading, filters }: Activ
             )}
 
             {/* Timeline dot */}
-            <div className={`absolute left-0 top-1 w-7 h-7 rounded-full flex items-center justify-center ${
-              getActivityColor(activity.activity_type) === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30' :
-              getActivityColor(activity.activity_type) === 'green' ? 'bg-green-100 dark:bg-green-900/30' :
-              getActivityColor(activity.activity_type) === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30' :
-              getActivityColor(activity.activity_type) === 'pink' ? 'bg-pink-100 dark:bg-pink-900/30' :
-              getActivityColor(activity.activity_type) === 'orange' ? 'bg-orange-100 dark:bg-orange-900/30' :
-              'bg-gray-100 dark:bg-gray-800'
-            }`}>
-              <div className={`${
-                getActivityColor(activity.activity_type) === 'blue' ? 'text-blue-600 dark:text-blue-400' :
-                getActivityColor(activity.activity_type) === 'green' ? 'text-green-600 dark:text-green-400' :
-                getActivityColor(activity.activity_type) === 'purple' ? 'text-purple-600 dark:text-purple-400' :
-                getActivityColor(activity.activity_type) === 'pink' ? 'text-pink-600 dark:text-pink-400' :
-                getActivityColor(activity.activity_type) === 'orange' ? 'text-orange-600 dark:text-orange-400' :
-                'text-gray-600 dark:text-gray-400'
-              }`}>
+            <div
+              className={`absolute left-0 top-1 w-7 h-7 rounded-full flex items-center justify-center ${
+                getActivityColor(activity.activity_type) === 'blue'
+                  ? 'bg-blue-100 dark:bg-blue-900/30'
+                  : getActivityColor(activity.activity_type) === 'green'
+                    ? 'bg-green-100 dark:bg-green-900/30'
+                    : getActivityColor(activity.activity_type) === 'purple'
+                      ? 'bg-purple-100 dark:bg-purple-900/30'
+                      : getActivityColor(activity.activity_type) === 'pink'
+                        ? 'bg-pink-100 dark:bg-pink-900/30'
+                        : getActivityColor(activity.activity_type) === 'orange'
+                          ? 'bg-orange-100 dark:bg-orange-900/30'
+                          : 'bg-gray-100 dark:bg-gray-800'
+              }`}
+            >
+              <div
+                className={`${
+                  getActivityColor(activity.activity_type) === 'blue'
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : getActivityColor(activity.activity_type) === 'green'
+                      ? 'text-green-600 dark:text-green-400'
+                      : getActivityColor(activity.activity_type) === 'purple'
+                        ? 'text-purple-600 dark:text-purple-400'
+                        : getActivityColor(activity.activity_type) === 'pink'
+                          ? 'text-pink-600 dark:text-pink-400'
+                          : getActivityColor(activity.activity_type) === 'orange'
+                            ? 'text-orange-600 dark:text-orange-400'
+                            : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
                 {getActivityIcon(activity.activity_type)}
               </div>
             </div>
@@ -200,8 +212,10 @@ export default function ActivityTimeline({ activities, loading, filters }: Activ
                   size="sm"
                   variant="ghost"
                   onClick={() => {
-                    // Navigate to related item
-                    console.log('Navigate to:', activity.related_table, activity.related_id);
+                    logClientEvent('activity.timeline.navigate_related', {
+                      related_table: activity.related_table,
+                      related_id: activity.related_id,
+                    });
                   }}
                 >
                   <ExternalLink className="h-3 w-3" />
