@@ -567,32 +567,6 @@ export const getServerSideProps: GetServerSideProps = async ({
       };
     }
 
-    // 🔥 Force onboarding from here:
-    // If onboarding is not completed, send user into the /onboarding wizard.
-    try {
-      const { data: profile, error: profileError } = await supabaseServer
-        .from('profiles')
-        .select('onboarding_completed_at')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        // eslint-disable-next-line no-console
-        console.error('Welcome GSSP profile error:', profileError);
-      } else if (!profile?.onboarding_completed_at) {
-        const nextParam = encodeURIComponent(resolvedUrl ?? '/welcome');
-        return {
-          redirect: {
-            destination: `/onboarding?next=${nextParam}`,
-            permanent: false,
-          },
-        };
-      }
-    } catch (profileErr) {
-      // eslint-disable-next-line no-console
-      console.error('Welcome GSSP onboarding check error:', profileErr);
-    }
-
     return { props: {} };
   } catch (err) {
     // eslint-disable-next-line no-console

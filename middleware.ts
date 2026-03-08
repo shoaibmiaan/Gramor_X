@@ -194,7 +194,7 @@ export async function middleware(req: NextRequest) {
     if (!skipOnboardingGuard && !authState.onboardingComplete) {
       if (!isOnboardingRoute && (isProtected || pathname === '/dashboard')) {
         const url = req.nextUrl.clone();
-        url.pathname = '/onboarding';
+        url.pathname = '/welcome';
         url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
         return redirectWithCookies(res, url);
       }
