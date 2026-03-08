@@ -1,6 +1,7 @@
 // lib/profile.ts
 import type { Profile } from '@/types/profile';
 import { supabaseBrowser } from './supabaseBrowser';
+import { findProfileByAuthId } from '@/lib/auth/profileLookup';
 
 export type ProfileProgress = Pick<Profile, 'onboarding_step' | 'onboarding_complete'>;
 
@@ -34,18 +35,11 @@ async function getSessionUserId(): Promise<string> {
 export async function fetchProfile(): Promise<SupabaseProfile | null> {
   const userId = await getSessionUserId();
 
-  const { data, error } = await supabaseBrowser
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)           // ← prefer id (PK) over or()
-    .maybeSingle();
+  const { profile } = await findProfileByAuthId<SupabaseProfile>(supabaseBrowser, userId, '*', {
+    allowLegacyUserIdFallback: true,
+  });
 
-  if (error && error.code !== 'PGRST116') {
-    console.error('fetchProfile error:', error);
-    throw error;
-  }
-
-  return (data as SupabaseProfile | null) ?? null;
+  return profile;
 }
 
 export async function upsertProfile(patch: ProfilePatch): Promise<SupabaseProfile> {
@@ -62,6 +56,18 @@ export async function upsertProfile(patch: ProfilePatch): Promise<SupabaseProfil
 
   if (!updateErr && updated) {
     return updated as SupabaseProfile;
+  }
+
+  // Temporary migration fallback: update legacy row addressed by user_id.
+  const { data: legacyUpdated, error: legacyUpdateErr } = await supabaseBrowser
+    .from('profiles')
+    .update({ id: userId, ...patchCleaned })
+    .eq('user_id', userId)
+    .select()
+    .maybeSingle();
+
+  if (!legacyUpdateErr && legacyUpdated) {
+    return legacyUpdated as SupabaseProfile;
   }
 
   // 2. If no row existed → INSERT new profile

@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import type { User } from '@supabase/supabase-js';
 import { env } from '@/lib/env';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { findProfileByAuthId } from '@/lib/auth/profileLookup';
 
 export type AppRole = 'admin' | 'teacher' | 'student';
 
@@ -71,13 +72,14 @@ async function getRoleForUser(user: User): Promise<AppRole | null> {
   if (metaRole) return metaRole;
 
   // 2) DB profile (your schema uses profiles)
-  const { data: prof } = await supabaseAdmin
-    .from('profiles') // <-- ensure this table exists in your project
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  const { profile } = await findProfileByAuthId<{ role?: string | null }>(
+    supabaseAdmin,
+    user.id,
+    'role',
+    { allowLegacyUserIdFallback: true },
+  );
 
-  const dbRole = prof?.role as AppRole | undefined;
+  const dbRole = profile?.role as AppRole | undefined;
   return dbRole ?? null;
 }
 

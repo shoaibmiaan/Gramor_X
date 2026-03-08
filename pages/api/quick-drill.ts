@@ -34,7 +34,7 @@ export default async function handler(
     const { data: profile } = await supabase
       .from('profiles')
       .select('ai_recommendation')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .maybeSingle();
     const seq: string[] =
       (profile?.ai_recommendation as any)?.sequence ?? [];

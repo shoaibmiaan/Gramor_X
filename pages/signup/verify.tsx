@@ -1,7 +1,8 @@
 // pages/signup/verify.tsx
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useCountdown } from '@/hooks/useCountdown';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
@@ -9,9 +10,19 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Input } from '@/components/design-system/Input';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { readStoredPkceVerifier } from '@/lib/auth/pkce';
-import { ONBOARDING, SIGNUP } from '@/lib/constants/routes';
-import { withQuery } from '@/lib/constants/routes';
+import { SIGNUP } from '@/lib/constants/routes';
+import { resolvePostLoginRoute } from '@/lib/auth/postLoginRoute';
+
+function mapOtpError(message?: string) {
+  const normalized = (message || '').toLowerCase();
+  if (normalized.includes('rate limit') || normalized.includes('too many')) {
+    return 'Too many attempts. Please wait a moment before trying again.';
+  }
+  if (normalized.includes('expired') || normalized.includes('invalid')) {
+    return 'Invalid or expired code. Please request a new code and try again.';
+  }
+  return 'Unable to verify code. Please try again.';
+}
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -19,60 +30,38 @@ export default function VerifyEmailPage() {
   const email = typeof router.query.email === 'string' ? router.query.email : '';
   const role = typeof router.query.role === 'string' ? router.query.role : '';
   const ref = typeof router.query.ref === 'string' ? router.query.ref : '';
-  const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-  const nextParam = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
-
-  // Where the user should land after clicking the magic link → ONBOARDING
-  const next = useMemo(() => {
-    if (nextParam) return nextParam;
-    const params = new URLSearchParams();
-    if (role) params.set('role', role);
-    if (ref) params.set('ref', ref);
-    return withQuery(ONBOARDING, Object.fromEntries(params));
-  }, [nextParam, ref, role]);
-
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [err, setErr] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(0);
   const [code, setCode] = useState('');
   const [codeStatus, setCodeStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
   const hasAutoSentCode = useRef(false);
+  const resendInFlightRef = useRef(false);
+  const { seconds: resendSeconds, running: resendRunning, start: startResendCooldown } = useCountdown(60);
 
-  // Auto-redirect if already signed in (e.g., they verified in another tab)
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!mounted) return;
-      if (session?.user) router.replace(next);
+      if (session?.user) {
+        const target = await resolvePostLoginRoute();
+        router.replace(target);
+      }
     })();
-    return () => { mounted = false; };
-  }, [next, router]);
-
-  // Cooldown timer for the resend button
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
-    return () => clearInterval(id);
-  }, [cooldown]);
-
-  const codeVerifier =
-    typeof router.query.code_verifier === 'string' && router.query.code_verifier.length > 0
-      ? router.query.code_verifier
-      : readStoredPkceVerifier() || '';
-
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
 
   async function sendVerificationCode() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        shouldCreateUser: false,
-      },
+      options: { shouldCreateUser: true },
     });
     if (error) throw error;
   }
-
-
 
   useEffect(() => {
     if (!email || hasAutoSentCode.current) return;
@@ -88,43 +77,19 @@ export default function VerifyEmailPage() {
       setErr('We could not detect your email address.');
       return;
     }
-    if (status === 'sending' || cooldown > 0) return;
+    if (resendInFlightRef.current || status === 'sending' || resendRunning || resendSeconds > 0) return;
 
+    resendInFlightRef.current = true;
     setStatus('sending');
     try {
-      const origin =
-        typeof window !== 'undefined'
-          ? window.location.origin
-          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-      const verificationParams = new URLSearchParams();
-      verificationParams.set('next', next);
-      verificationParams.set('email', email);
-      if (role) verificationParams.set('role', role);
-      if (ref) verificationParams.set('ref', ref);
-      if (codeVerifier) verificationParams.set('code_verifier', codeVerifier);
-
-      const { error } = await supabase.auth.resend({
-        // @ts-expect-error supabase-js may not expose resend type yet
-        type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`,
-        },
-      });
-
-      if (error) {
-        setErr(error.message);
-        setStatus('error');
-        return;
-      }
-
       await sendVerificationCode();
       setStatus('sent');
-      setCooldown(30);
-    } catch {
-      setErr('Failed to resend the verification email. Please try again.');
+      startResendCooldown();
+    } catch (error: any) {
+      setErr(mapOtpError(error?.message));
       setStatus('error');
+    } finally {
+      resendInFlightRef.current = false;
     }
   }
 
@@ -143,34 +108,24 @@ export default function VerifyEmailPage() {
     }
 
     setCodeStatus('verifying');
-    let verificationError: Error | null = null;
 
-    const signupAttempt = await supabase.auth.verifyOtp({
+    const { error } = await supabase.auth.verifyOtp({
       email,
       token: trimmedCode,
-      type: 'signup',
+      type: 'email',
     });
 
-    if (signupAttempt.error) {
-      const emailAttempt = await supabase.auth.verifyOtp({
-        email,
-        token: trimmedCode,
-        type: 'email',
-      });
-      verificationError = emailAttempt.error;
-    }
-
-    if (signupAttempt.error && verificationError) {
+    if (error) {
       setCodeStatus('error');
-      setErr(verificationError.message || signupAttempt.error.message || 'Invalid verification code.');
+      setErr(mapOtpError(error.message));
       return;
     }
 
     setCodeStatus('verified');
-    await router.replace(next);
+    const target = await resolvePostLoginRoute();
+    await router.replace(target);
   }
 
-  // If the page was opened without an email param, nudge them back
   if (!email) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
@@ -192,7 +147,7 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <SectionLabel>Verify your email</SectionLabel>
+      <SectionLabel>Verify your email code</SectionLabel>
 
       {err && (
         <Alert variant="warning" title="Error" className="mt-4" role="status" aria-live="assertive">
@@ -202,19 +157,18 @@ export default function VerifyEmailPage() {
 
       {status === 'sent' && !err && (
         <Alert variant="success" title="Sent" className="mt-4" role="status" aria-live="polite">
-          Verification email sent. We also sent a verification code to your inbox.
+          A fresh verification code has been sent to your inbox.
         </Alert>
       )}
 
       {codeStatus === 'verified' && !err && (
         <Alert variant="success" title="Verified" className="mt-4" role="status" aria-live="polite">
-          Email verified successfully. Redirecting...
+          Code verified successfully. Redirecting...
         </Alert>
       )}
 
       <p className="mt-6 text-muted-foreground">
-        We sent a verification link to <strong>{email}</strong>. You can either click the link in your
-        email or enter the verification code below. If the code is missing, tap resend to get a fresh code.
+        Enter the verification code sent to <strong>{email}</strong>. If your code expires, resend to get a new one.
       </p>
 
       <form onSubmit={onVerifyCode} className="mt-6 rounded-xl border border-border p-4 space-y-3">
@@ -227,22 +181,18 @@ export default function VerifyEmailPage() {
           autoComplete="one-time-code"
           required
         />
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={codeStatus === 'verifying'}
-        >
+        <Button type="submit" className="w-full" disabled={codeStatus === 'verifying'}>
           {codeStatus === 'verifying' ? 'Verifying code…' : 'Verify code'}
         </Button>
       </form>
 
       <div className="mt-6 space-y-4">
-        <Button onClick={onResend} className="w-full" disabled={status === 'sending' || cooldown > 0}>
-          {status === 'sending'
-            ? 'Sending…'
-            : cooldown > 0
-              ? `Resend (${cooldown}s)`
-              : 'Resend verification email'}
+        <Button
+          onClick={onResend}
+          className="w-full"
+          disabled={status === 'sending' || resendInFlightRef.current || resendRunning || resendSeconds > 0}
+        >
+          {status === 'sending' ? 'Sending…' : resendSeconds > 0 ? `Resend OTP (${resendSeconds}s)` : 'Resend OTP'}
         </Button>
 
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
