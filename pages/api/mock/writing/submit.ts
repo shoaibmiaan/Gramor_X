@@ -4,6 +4,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { updateStreak } from '@/lib/streak';
 import { normalizeScorePayload } from '@/lib/writing/scoring';
 import { evaluateEssayWithAi } from '@/lib/writing/ai-evaluator';
 import { writingSubmitSchema } from '@/lib/validation/writing';
@@ -171,6 +172,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       durationSeconds,
     },
   });
+
+  await updateStreak(supabase, user.id);
 
   return res.status(200).json({ ok: true, attemptId, results });
 }
