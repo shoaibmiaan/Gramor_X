@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 type SavedItem = {
   id?: string;
@@ -11,13 +12,25 @@ type SavedItem = {
   created_at: string;
 };
 
+const emptyTags: Record<string, string[]> = {};
+
+const isValidTagsMap = (value: unknown): value is Record<string, string[]> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+
+  return Object.values(value).every(
+    (entry) => Array.isArray(entry) && entry.every((tag) => typeof tag === 'string'),
+  );
+};
+
 export function SavedItems() {
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(true);
   const [items, setItems] = useState<SavedItem[]>([]);
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
-  const [tags, setTags] = useState<Record<string, string[]>>({});
+  const [tags, setTags] = useLocalStorage<Record<string, string[]>>('saved-tags', emptyTags, {
+    validate: isValidTagsMap,
+  });
 
   useEffect(() => {
     let active = true;
@@ -46,25 +59,6 @@ export function SavedItems() {
     })();
     return () => { active = false; };
   }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem('saved-tags');
-      if (stored) setTags(JSON.parse(stored));
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem('saved-tags', JSON.stringify(tags));
-    } catch {
-      // ignore
-    }
-  }, [tags]);
 
   if (loading) {
     return (
