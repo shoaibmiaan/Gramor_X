@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
-import { LOGIN, ONBOARDING } from '@/lib/constants/routes';
+import { LOGIN } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
 
 export default function AuthConfirmPage() {
@@ -96,14 +96,14 @@ export default function AuthConfirmPage() {
         // ────────────────────────────────────────────────
         // Role-based destination
         // ────────────────────────────────────────────────
-        let destination = ONBOARDING;
+        let destination = '/onboarding';
 
         if (redirectAfter) {
           destination = redirectAfter;
         } else {
           switch (role) {
             case 'student':
-              destination = onboardingDone ? '/dashboard' : ONBOARDING;
+              destination = onboardingDone ? '/dashboard' : '/welcome';
               break;
 
             case 'teacher':
@@ -115,7 +115,7 @@ export default function AuthConfirmPage() {
               break;
 
             default:
-              destination = ONBOARDING;
+              destination = '/onboarding';
           }
         }
 
