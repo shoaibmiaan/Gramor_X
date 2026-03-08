@@ -7,6 +7,7 @@ import { ThemeSwitcherPremium } from '@/premium-ui/theme/ThemeSwitcher';
 import { PrCard } from '@/premium-ui/components/PrCard';
 import { PrButton } from '@/premium-ui/components/PrButton';
 import { supabase } from '@/lib/supabaseClient';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import {
   ShieldCheck,
   Lock,
@@ -92,6 +93,7 @@ function usePremiumStatus(token: string | null) {
 
 /* ----------------------------- page ----------------------------- */
 export default function PremiumHome() {
+  useRequireAuth();
   const router = useRouter();
   const token = useAccessToken();
   const { data: status, loading } = usePremiumStatus(token);

@@ -6,13 +6,15 @@ import { useRouter } from "next/router";
 import { Container } from "@/components/design-system/Container";
 import { CohortTable, type CohortRow } from "@/components/teacher/CohortTable";
 import { AssignTaskModal } from "@/components/teacher/AssignTaskModal";
-import { supabaseBrowser } from "@/lib/supabaseBrowser";
+import { supabase } from "@/lib/supabaseClient";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { resolveAvatarUrl } from '@/lib/avatar';
 
 type Cohort = { id: string; name: string; created_at: string };
 
 export default function CohortDetail() {
   const router = useRouter();
+  useRequireAuth();
   const cohortId = (router.query.id as string) || "";
 
   const [loading, setLoading] = React.useState(true);
@@ -28,7 +30,7 @@ export default function CohortDetail() {
       setError(null);
 
       // Load cohort shell (enforced by RLS: must be teacher's cohort)
-      const { data: cRow, error: e1 } = await supabaseBrowser
+      const { data: cRow, error: e1 } = await supabase
         .from("teacher_cohorts")
         .select("*")
         .eq("id", cohortId)
@@ -38,7 +40,7 @@ export default function CohortDetail() {
       setCohort(cRow as Cohort);
 
       // Load members with profile info if available
-      const { data: members, error: e2 } = await supabaseBrowser
+      const { data: members, error: e2 } = await supabase
         .from("teacher_cohort_members")
         .select("id, cohort_id, student_id, joined_at, progress, profiles(full_name, email, avatar_url)")
         .eq("cohort_id", cohortId);
@@ -94,7 +96,7 @@ export default function CohortDetail() {
 
   const onRemove = async (membershipId: string) => {
     // RLS delete policy not defined earlier; may fail until policy is added.
-    const { error } = await supabaseBrowser
+    const { error } = await supabase
       .from("teacher_cohort_members")
       .delete()
       .eq("id", membershipId);

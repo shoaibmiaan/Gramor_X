@@ -17,7 +17,7 @@ import { AnimationProvider } from '@/components/providers/AnimationProvider';
 
 import { ToastProvider } from '@/components/design-system/Toaster';
 import { NotificationProvider } from '@/components/notifications/NotificationProvider';
-import { supabaseBrowser as supabaseClientSource } from '@/lib/supabaseBrowser';
+import { supabase as supabaseClientSource } from '@/lib/supabaseClient';
 import { env } from '@/lib/env';
 import { LocaleProvider, useLocale } from '@/lib/locale';
 import { initIdleTimeout } from '@/utils/idleTimeout';
