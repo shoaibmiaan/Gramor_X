@@ -1,10 +1,9 @@
 // components/activity/ActivityTimeline.tsx
-import * as React from 'react';
-import { Card } from '@/components/design-system/Card';
-import { Badge } from '@/components/design-system/Badge';
-import { Button } from '@/components/design-system/Button';
-import { RecentActivity } from '@/pages/dashboard/activity';
-import { logClientEvent } from '@/lib/telemetry/client';
+import * as React from "react";
+import { Card } from "@/components/design-system/Card";
+import { Badge } from "@/components/design-system/Badge";
+import { Button } from "@/components/design-system/Button";
+import type { ActivityFilters, RecentActivity } from "@/types/activity";
 import {
   Activity,
   Clock,
@@ -21,10 +20,29 @@ import {
 interface ActivityTimelineProps {
   activities: RecentActivity[];
   loading: boolean;
-  filters: any;
+  filters: ActivityFilters;
 }
 
 export default function ActivityTimeline({ activities, loading, filters }: ActivityTimelineProps) {
+  const filteredActivities = activities.filter((activity) => {
+    if (filters.activityType === 'all') {
+      return true;
+    }
+
+    if (filters.activityType === 'task') {
+      return activity.activity_type.includes('task');
+    }
+
+    if (['writing', 'speaking', 'listening', 'reading'].includes(filters.activityType)) {
+      return activity.activity_type.includes(filters.activityType);
+    }
+
+    if (filters.activityType === 'system') {
+      return activity.activity_type.includes('login') || activity.activity_type.includes('logout');
+    }
+
+    return activity.activity_type === filters.activityType;
+  });
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'login':
@@ -115,15 +133,17 @@ export default function ActivityTimeline({ activities, loading, filters }: Activ
         <h3 className="text-lg font-semibold">Recent Activities</h3>
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">{activities.length} activities</span>
+          <span className="text-sm text-muted-foreground">
+            {filteredActivities.length} activities
+          </span>
         </div>
       </div>
 
       <div className="space-y-6">
-        {activities.map((activity, index) => (
+        {filteredActivities.map((activity, index) => (
           <div key={activity.id} className="relative pl-8 pb-6 last:pb-0">
             {/* Timeline line */}
-            {index < activities.length - 1 && (
+            {index < filteredActivities.length - 1 && (
               <div className="absolute left-[15px] top-[24px] bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
             )}
 
@@ -206,7 +226,7 @@ export default function ActivityTimeline({ activities, loading, filters }: Activ
         ))}
       </div>
 
-      {activities.length >= 20 && (
+      {filteredActivities.length >= 20 && (
         <div className="mt-6 pt-6 border-t border-border">
           <Button variant="soft" className="w-full">
             Load More Activities

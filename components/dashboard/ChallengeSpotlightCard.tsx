@@ -6,7 +6,7 @@ import { Button } from '@/components/design-system/Button';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
 import { BadgeStrip } from '@/components/challenge/BadgeStrip';
 import { badges } from '@/data/badges';
-import type { ChallengeLeaderboardEntry } from '@/types/challenge';
+import { useChallenges } from '@/hooks/useChallenges';
 
 const MILESTONE_THRESHOLDS: Record<string, number> = {
   'lesson-1': 1,
@@ -22,9 +22,14 @@ type ChallengeSpotlightCardProps = {
 };
 
 export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotlightCardProps) {
-  const [entries, setEntries] = React.useState<ChallengeLeaderboardEntry[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const {
+    leaderboard: entries,
+    leaderboardError: error,
+    isLeaderboardLoading,
+    isLeaderboardValidating,
+    retryLeaderboard,
+  } = useChallenges(cohortId, { leaderboardLimit: 3 });
+
   const snapshotDate = React.useMemo(() => entries[0]?.snapshotDate ?? null, [entries]);
 
   const completedTasks = React.useMemo(() => {
@@ -34,7 +39,9 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
 
   const unlockedBadges = React.useMemo(() => {
     return badges.milestones
-      .filter((badge) => completedTasks >= (MILESTONE_THRESHOLDS[badge.id] ?? Number.POSITIVE_INFINITY))
+      .filter(
+        (badge) => completedTasks >= (MILESTONE_THRESHOLDS[badge.id] ?? Number.POSITIVE_INFINITY),
+      )
       .map((badge) => badge.id);
   }, [completedTasks]);
 
@@ -47,42 +54,8 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
     return DEFAULT_TOTAL_TASKS;
   }, [entries, progress]);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/challenge/leaderboard?cohort=${encodeURIComponent(cohortId)}`);
-        if (!res.ok) throw new Error('Failed to fetch leaderboard');
-        const json = (await res.json()) as {
-          ok: boolean;
-          leaderboard?: ChallengeLeaderboardEntry[];
-          error?: string;
-        };
-        if (!json.ok || !json.leaderboard) throw new Error(json.error || 'Unknown error');
-        if (!cancelled) {
-          setEntries(json.leaderboard.slice(0, 3));
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setError(err?.message || 'Unable to load leaderboard.');
-          setEntries([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [cohortId]);
-
-  const progressPct = totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 0;
+  const progressPct =
+    totalTasks > 0 ? Math.min(100, Math.round((completedTasks / totalTasks) * 100)) : 0;
 
   return (
     <Card className="space-y-6 rounded-ds-2xl border border-border/70 bg-card/80 p-6 shadow-sm">
@@ -90,7 +63,8 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
         <div>
           <h3 className="font-slab text-h3 text-foreground">Weekly Challenge</h3>
           <p className="text-small text-muted-foreground">
-            You&apos;re enrolled in <strong>{cohortId}</strong>. {completedTasks}/{totalTasks} tasks completed.
+            You&apos;re enrolled in <strong>{cohortId}</strong>. {completedTasks}/{totalTasks} tasks
+            completed.
           </p>
         </div>
         <BadgeStrip badges={badges.milestones} unlocked={unlockedBadges} />
@@ -109,42 +83,30 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
           <span>Leaderboard snapshot</span>
           {snapshotDate ? (
             <span className="text-caption">
-              {new Date(snapshotDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              {new Date(snapshotDate).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })}
             </span>
           ) : null}
           <button
             type="button"
             onClick={() => {
-              void (async () => {
-                setLoading(true);
-                try {
-                  const res = await fetch(`/api/challenge/leaderboard?cohort=${encodeURIComponent(cohortId)}`);
-                  if (!res.ok) throw new Error('Failed');
-                  const json = (await res.json()) as {
-                    ok: boolean;
-                    leaderboard?: ChallengeLeaderboardEntry[];
-                    error?: string;
-                  };
-                  if (!json.ok || !json.leaderboard) throw new Error(json.error || 'Unknown error');
-                  setEntries(json.leaderboard.slice(0, 3));
-                  setError(null);
-                } catch (err: any) {
-                  setError(err?.message || 'Unable to refresh.');
-                } finally {
-                  setLoading(false);
-                }
-              })();
+              void retryLeaderboard();
             }}
             className="rounded-lg border border-border bg-background px-2 py-1 text-caption hover:bg-border/30 disabled:opacity-60"
-            disabled={loading}
+            disabled={isLeaderboardValidating}
           >
-            {loading ? 'Updating…' : 'Refresh'}
+            {isLeaderboardValidating ? 'Updating…' : 'Refresh'}
           </button>
         </div>
         <div className="space-y-2">
-          {loading && !entries.length ? (
+          {isLeaderboardLoading && !entries.length ? (
             Array.from({ length: 3 }).map((_, idx) => (
-              <div key={idx} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 p-3">
+              <div
+                key={idx}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 p-3"
+              >
                 <div className="h-4 w-20 animate-pulse rounded bg-border" />
                 <div className="h-3 w-12 animate-pulse rounded bg-border" />
               </div>
@@ -158,7 +120,9 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
                 <div className="flex items-center gap-3">
                   <span
                     className={`grid h-7 w-7 place-items-center rounded-full text-caption font-semibold ${
-                      entry.rank <= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
+                      entry.rank <= 3
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
                     }`}
                   >
                     {entry.rank}
@@ -166,7 +130,8 @@ export function ChallengeSpotlightCard({ cohortId, progress }: ChallengeSpotligh
                   <span className="text-small font-medium text-foreground">{entry.fullName}</span>
                 </div>
                 <span className="text-caption text-muted-foreground">
-                  {entry.completedTasks} tasks{typeof entry.xp === 'number' ? ` • ${entry.xp} XP` : ''}
+                  {entry.completedTasks} tasks
+                  {typeof entry.xp === 'number' ? ` • ${entry.xp} XP` : ''}
                 </span>
               </div>
             ))

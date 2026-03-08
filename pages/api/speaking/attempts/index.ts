@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { updateStreak } from '@/lib/streak';
 
 const SectionSchema = z.enum(['part1', 'part2', 'part3']);
 const ScoreSchema = z.object({
@@ -69,6 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
+
+    await updateStreak(supabaseAdmin, user.id);
 
     return res.status(200).json({
       ok: true,

@@ -1,21 +1,31 @@
 // pages/dashboard/activity/index.tsx
 'use client';
 
-import * as React from 'react';
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { Container } from '@/components/design-system/Container';
-import { Button } from '@/components/design-system/Button';
-import { Badge } from '@/components/design-system/Badge';
-import { Card } from '@/components/design-system/Card';
-import { Tabs } from '@/components/design-system/Tabs';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { logClientError, logClientEvent } from '@/lib/telemetry/client';
-import ActivityTimeline from '@/components/activity/ActivityTimeline';
-import TaskBoard from '@/components/activity/TaskBoard';
-import StatsDashboard from '@/components/activity/StatsDashboard';
-import CreateTaskModal from '@/components/activity/CreateTaskModal';
-import QuickActions from '@/components/activity/QuickActions';
+import * as React from "react";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { Container } from "@/components/design-system/Container";
+import { Button } from "@/components/design-system/Button";
+import { Badge } from "@/components/design-system/Badge";
+import { Card } from "@/components/design-system/Card";
+import { Tabs } from "@/components/design-system/Tabs";
+import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser";
+import ActivityTimeline from "@/components/activity/ActivityTimeline";
+import TaskBoard from "@/components/activity/TaskBoard";
+import StatsDashboard from "@/components/activity/StatsDashboard";
+import CreateTaskModal from "@/components/activity/CreateTaskModal";
+import QuickActions from "@/components/activity/QuickActions";
+import type {
+  ActivityFilters,
+  ActivityStats,
+  ActivityTypeFilter,
+  RecentActivity,
+  Task,
+  TaskStatus,
+  ActivityDateRangeFilter,
+  TaskStatusFilter,
+} from "@/types/activity";
+import type { User } from "@supabase/supabase-js";
 
 // Icons
 import {
@@ -41,59 +51,6 @@ import {
   Plus,
 } from 'lucide-react';
 
-interface ActivityStats {
-  totalActivities: number;
-  todayActivities: number;
-  pendingTasks: number;
-  completedTasks: number;
-  overdueTasks: number;
-  writingAttempts: number;
-  speakingAttempts: number;
-  listeningAttempts: number;
-  readingAttempts: number;
-  streakDays: number;
-  lastActive: string;
-}
-
-interface RecentActivity {
-  id: string;
-  activity_type: string;
-  description: string;
-  metadata: any;
-  created_at: string;
-  related_table?: string;
-  related_id?: string;
-}
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: 'pending' | 'in_progress' | 'review' | 'completed' | 'cancelled';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  due_date?: string;
-  created_at: string;
-  updated_at: string;
-  completed_at?: string;
-  module?: string;
-  task_type?: string;
-  reference_id?: string;
-  reference_table?: string;
-  creator: {
-    id: string;
-    full_name: string;
-    email: string;
-    avatar_url?: string;
-  };
-  assignee: {
-    id: string;
-    full_name: string;
-    email: string;
-    avatar_url?: string;
-  };
-  comments_count: number;
-}
-
 export default function ActivityHomePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState('timeline');
@@ -118,12 +75,12 @@ export default function ActivityHomePage() {
     tasks: true,
   });
   const [showCreateTaskModal, setShowCreateTaskModal] = React.useState(false);
-  const [filters, setFilters] = React.useState({
+  const [filters, setFilters] = React.useState<ActivityFilters>({
     dateRange: '7d',
     activityType: 'all',
     taskStatus: 'all',
   });
-  const [user, setUser] = React.useState<any>(null);
+  const [user, setUser] = React.useState<User | null>(null);
 
   // Fetch user data
   React.useEffect(() => {
@@ -211,7 +168,7 @@ export default function ActivityHomePage() {
     // Task stats
     const { data: tasksData } = await supabase
       .from('task_assignments')
-      .select('status')
+      .select('status, due_date')
       .eq('assigned_to', userId);
 
     const taskStats = {
@@ -220,7 +177,7 @@ export default function ActivityHomePage() {
       overdue: 0,
     };
 
-    tasksData?.forEach((task) => {
+    tasksData?.forEach((task: { status: TaskStatus; due_date?: string | null }) => {
       if (task.status === 'pending') {
         taskStats.pending++;
         // Check if overdue
@@ -291,7 +248,7 @@ export default function ActivityHomePage() {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    setRecentActivities(data || []);
+    setRecentActivities((data as RecentActivity[]) || []);
   };
 
   const fetchTasks = async (userId: string) => {
@@ -308,7 +265,7 @@ export default function ActivityHomePage() {
       .or(`created_by.eq.${userId},assigned_to.eq.${userId}`)
       .order('created_at', { ascending: false });
 
-    setTasks(data || []);
+    setTasks((data as Task[]) || []);
   };
 
   const handleTaskCreated = () => {
@@ -535,7 +492,7 @@ export default function ActivityHomePage() {
                     <select
                       className="w-full p-2 border border-border rounded-lg bg-background"
                       value={filters.dateRange}
-                      onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
+                      onChange={(e) => setFilters({ ...filters, dateRange: e.target.value as ActivityDateRangeFilter })}
                     >
                       <option value="today">Today</option>
                       <option value="7d">Last 7 Days</option>
@@ -552,7 +509,7 @@ export default function ActivityHomePage() {
                     <select
                       className="w-full p-2 border border-border rounded-lg bg-background"
                       value={filters.activityType}
-                      onChange={(e) => setFilters({ ...filters, activityType: e.target.value })}
+                      onChange={(e) => setFilters({ ...filters, activityType: e.target.value as ActivityTypeFilter })}
                     >
                       <option value="all">All Activities</option>
                       <option value="task">Tasks</option>
@@ -571,7 +528,7 @@ export default function ActivityHomePage() {
                     <select
                       className="w-full p-2 border border-border rounded-lg bg-background"
                       value={filters.taskStatus}
-                      onChange={(e) => setFilters({ ...filters, taskStatus: e.target.value })}
+                      onChange={(e) => setFilters({ ...filters, taskStatus: e.target.value as TaskStatusFilter })}
                     >
                       <option value="all">All Tasks</option>
                       <option value="pending">Pending</option>

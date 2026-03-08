@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 
@@ -9,9 +8,7 @@ import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
-import Icon, { type IconName } from '@/components/design-system/Icon';
 import { Alert } from '@/components/design-system/Alert';
-import { StreakIndicator } from '@/components/design-system/StreakIndicator';
 
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { useStreak } from '@/hooks/useStreak';
@@ -19,28 +16,27 @@ import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
 import { useNextTask } from '@/hooks/useNextTask';
-import { useStudyPlan } from '@/hooks/useStudyPlan'; // New hook
-import { logClientEvent } from '@/lib/telemetry/client';
+import { useStudyPlan } from '@/hooks/useStudyPlan';
 
 import { badges } from '@/data/badges';
-import { ReadingStatsCard } from '@/components/reading/ReadingStatsCard';
-import QuickDrillButton from '@/components/quick/QuickDrillButton';
 import { VocabularySpotlightFeature } from '@/components/feature/VocabularySpotlight';
 import { StreakCounter } from '@/components/streak/StreakCounter';
 import { NextTaskCard } from '@/components/reco/NextTaskCard';
 
-import SavedItems from '@/components/dashboard/SavedItems';
-import ShareLinkCard from '@/components/dashboard/ShareLinkCard';
-import WhatsAppOptIn from '@/components/dashboard/WhatsAppOptIn';
-import JoinWeeklyChallengeCard from '@/components/dashboard/JoinWeeklyChallengeCard';
-import ChallengeSpotlightCard from '@/components/dashboard/ChallengeSpotlightCard';
-import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 import GapToGoal from '@/components/visa/GapToGoal';
-import GoalRoadmap from '@/components/feature/GoalRoadmap';
+import { AIWorkspaceSection } from '@/components/dashboard/sections/AIWorkspaceSection';
+import { CalendarSection } from '@/components/dashboard/sections/CalendarSection';
+import { ChallengeSection } from '@/components/dashboard/sections/ChallengeSection';
+import { PriorityActionsSection } from '@/components/dashboard/sections/PriorityActionsSection';
+import { ProfileHeaderSection } from '@/components/dashboard/sections/ProfileHeaderSection';
+import { QuickActionsSection } from '@/components/dashboard/sections/QuickActionsSection';
+import { RoadmapSection } from '@/components/dashboard/sections/RoadmapSection';
+import { SavedItemsSection } from '@/components/dashboard/sections/SavedItemsSection';
+import { UpgradeSection } from '@/components/dashboard/sections/UpgradeSection';
+import type { ActionItem, InnovationTile } from '@/components/dashboard/sections/types';
 
 import type { Profile, AIPlan } from '@/types/profile';
 import type { SubscriptionTier } from '@/lib/navigation/types';
-import type { StudyDay } from '@/types/plan';
 
 const StudyCalendar = dynamic(() => import('@/components/feature/StudyCalendar'), {
   ssr: false,
@@ -75,39 +71,12 @@ const loadingSkeleton = (
   </section>
 );
 
-type TileAction =
-  | { label: string; href: string; action?: never }
-  | { label: string; action: () => void; href?: never };
-
-type InnovationTile = {
-  id: string;
-  title: string;
-  description: string;
-  icon: IconName;
-  accent?: 'primary' | 'secondary' | 'success' | 'info';
-  badge?: string;
-  meta?: string;
-  primary: TileAction;
-  secondary?: TileAction;
-};
-
-type ActionItem = {
-  id: string;
-  title: string;
-  caption: string;
-  icon: IconName;
-  accent: NonNullable<InnovationTile['accent']>;
-  primary: TileAction;
-  secondary?: TileAction;
-  chip?: string | null;
-  done?: boolean;
-};
-
 const Dashboard: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
-  const [showTips, setShowTips] = useState(false);
+  const [tipsDismissed, setTipsDismissed] = useLocalStorage<string>('dashboardTipsDismissed', '');
+  const showTips = !tipsDismissed;
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
 
   // Study plan tasks for today
@@ -234,18 +203,8 @@ const Dashboard: NextPage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem('dashboardTipsDismissed');
-      if (!dismissed) setShowTips(true);
-    }
-  }, []);
-
   const dismissTips = () => {
-    setShowTips(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboardTipsDismissed', '1');
-    }
+    setTipsDismissed('1');
   };
 
   useEffect(() => {
@@ -493,30 +452,6 @@ const Dashboard: NextPage = () => {
 
   if (loading) return loadingSkeleton;
 
-  const accentClass: Record<NonNullable<InnovationTile['accent']>, string> = {
-    primary: 'bg-primary/15 text-primary',
-    secondary: 'bg-secondary/15 text-secondary',
-    success: 'bg-success/15 text-success',
-    info: 'bg-electricBlue/15 text-electricBlue',
-  };
-
-  const renderTileAction = (key: string, action: TileAction, variant: 'primary' | 'ghost') =>
-    'href' in action ? (
-      <Button key={key} size="sm" variant={variant} className="rounded-ds-xl" asChild>
-        <Link href={action.href}>{action.label}</Link>
-      </Button>
-    ) : (
-      <Button
-        key={key}
-        size="sm"
-        variant={variant}
-        className="rounded-ds-xl"
-        onClick={action.action}
-      >
-        {action.label}
-      </Button>
-    );
-
   return (
     <>
       <Head>
@@ -545,137 +480,26 @@ const Dashboard: NextPage = () => {
                 </div>
               </Alert>
             )}
-
-            {/* HERO */}
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-4">
-                {profileAvatarUrl ? (
-                  <Image
-                    src={profileAvatarUrl}
-                    alt={profile?.full_name ? `${profile.full_name} avatar` : 'Profile avatar'}
-                    width={64}
-                    height={64}
-                    className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/40"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-h3 font-semibold text-primary">
-                    {(profile?.full_name || 'Learner')
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((p) => p.charAt(0).toUpperCase())
-                      .join('') || 'L'}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <div>
-                    <h1 className="font-slab text-display text-gradient-primary">
-                      Welcome back, {profile?.full_name || 'Learner'}
-                    </h1>
-                    <p className="text-grayish">
-                      Every module below is wired into your IELTS goal—choose where to dive in next.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-small text-muted-foreground">
-                    <span>
-                      Preferred language: {(profile?.preferred_language ?? 'en').toUpperCase()}
-                    </span>
-                    {typeof goalBand === 'number' ? (
-                      <span>• Target band {goalBand.toFixed(1)}</span>
-                    ) : (
-                      <span>• Set your goal to unlock tailored guidance</span>
-                    )}
-                    {targetStudyTime ? <span>• Study rhythm: {targetStudyTime}</span> : null}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-start gap-3 md:items-end">
-                <div className="flex flex-wrap items-center gap-3">
-                  <StreakIndicator value={streak} />
-                  {streak >= 7 && (
-                    <Badge variant="success" size="sm">
-                      🔥 {streak}-day streak!
-                    </Badge>
-                  )}
-                  <Badge size="sm">🛡 {shields}</Badge>
-                  <Button onClick={claimShield} variant="secondary" className="rounded-ds-xl">
-                    Claim Shield
-                  </Button>
-                  {shields > 0 && (
-                    <Button onClick={useShield} variant="secondary" className="rounded-ds-xl">
-                      Use Shield
-                    </Button>
-                  )}
-                </div>
-
-                {topBadges.length ? (
-                  <div className="flex flex-wrap items-center gap-2 text-2xl">
-                    {topBadges.map((meta) => (
-                      <span key={meta.id} aria-label={meta.name} title={meta.name}>
-                        {meta.icon}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    onClick={openAICoach}
-                    variant="soft"
-                    tone="primary"
-                    size="sm"
-                    className="rounded-ds-xl"
-                    leadingIcon={<Icon name="Sparkles" size={16} className="text-primary" />}
-                  >
-                    AI Coach
-                  </Button>
-                  <Button
-                    onClick={openStudyBuddy}
-                    variant="soft"
-                    tone="secondary"
-                    size="sm"
-                    className="rounded-ds-xl"
-                    leadingIcon={<Icon name="Users" size={16} className="text-secondary" />}
-                  >
-                    Study Buddy
-                  </Button>
-                  <Button
-                    onClick={openMistakesBook}
-                    variant="soft"
-                    tone="success"
-                    size="sm"
-                    className="rounded-ds-xl"
-                    leadingIcon={<Icon name="NotebookPen" size={16} className="text-success" />}
-                  >
-                    Mistakes Book
-                  </Button>
-                  <Button
-                    onClick={openWhatsAppTasks}
-                    variant="soft"
-                    tone="info"
-                    size="sm"
-                    className="rounded-ds-xl"
-                    leadingIcon={
-                      <Icon name="MessageCircle" size={16} className="text-electricBlue" />
-                    }
-                  >
-                    WhatsApp Tasks
-                  </Button>
-                  <Button
-                    onClick={shareDashboard}
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-ds-xl"
-                    leadingIcon={<Icon name="Share2" size={16} />}
-                  >
-                    Share progress
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <ProfileHeaderSection
+              profileAvatarUrl={profileAvatarUrl}
+              fullName={profile?.full_name}
+              preferredLanguage={profile?.preferred_language}
+              goalBand={goalBand}
+              targetStudyTime={targetStudyTime}
+              streak={streak}
+              shields={shields}
+              topBadges={topBadges}
+              onClaimShield={claimShield}
+              onUseShield={useShield}
+              onOpenAICoach={openAICoach}
+              onOpenStudyBuddy={openStudyBuddy}
+              onOpenMistakesBook={openMistakesBook}
+              onOpenWhatsAppTasks={openWhatsAppTasks}
+              onShareProgress={shareDashboard}
+            />
 
             {/* STUDY PLAN TASKS FOR TODAY */}
+
             {!planLoading && todayTasks && todayTasks.length > 0 && (
               <Card className="p-6 rounded-ds-2xl border border-primary/20 bg-primary/5">
                 <div className="flex items-center justify-between mb-4">
@@ -716,76 +540,10 @@ const Dashboard: NextPage = () => {
               error={nextTaskError}
               onRefresh={() => refreshNextTask()}
             />
-
-            {/* AI WORKSPACE */}
-            <section className="space-y-4">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-slab text-h2">AI workspace</h2>
-                  <p className="text-grayish">
-                    Keep your adaptive tools in one consistent hub—jump in wherever you need
-                    support.
-                  </p>
-                </div>
-                <Badge variant="neutral" size="sm">
-                  Always improving
-                </Badge>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {innovationTiles.map((tile) => {
-                  const iconBg = tile.accent ? accentClass[tile.accent] : accentClass.primary;
-                  const badgeVariant: 'accent' | 'success' | 'neutral' =
-                    tile.badge === 'Rocket'
-                      ? 'accent'
-                      : tile.badge === 'New'
-                        ? 'success'
-                        : 'neutral';
-
-                  return (
-                    <Card
-                      key={tile.id}
-                      className="group flex h-full flex-col justify-between gap-6 rounded-ds-2xl border border-border/60 bg-card/60 p-6 shadow-sm transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg"
-                    >
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                          <span
-                            className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${iconBg}`}
-                          >
-                            <Icon name={tile.icon} size={20} />
-                          </span>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-lg text-foreground">
-                                {tile.title}
-                              </h3>
-                              {tile.badge ? (
-                                <Badge variant={badgeVariant} size="xs">
-                                  {tile.badge}
-                                </Badge>
-                              ) : null}
-                            </div>
-                            <p className="text-sm text-muted-foreground">{tile.description}</p>
-                          </div>
-                        </div>
-                        {tile.meta ? (
-                          <p className="text-xs text-muted-foreground">{tile.meta}</p>
-                        ) : null}
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        {renderTileAction(`${tile.id}-primary`, tile.primary, 'primary')}
-                        {tile.secondary
-                          ? renderTileAction(`${tile.id}-secondary`, tile.secondary, 'ghost')
-                          : null}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            </section>
+            <AIWorkspaceSection innovationTiles={innovationTiles} />
 
             {/* STREAK PANEL */}
+
             <div id="streak-panel">
               <StreakCounter
                 current={streak}
@@ -833,86 +591,22 @@ const Dashboard: NextPage = () => {
               </div>
               <VocabularySpotlightFeature />
             </div>
-
-            {/* WEEKLY CHALLENGE */}
-            <div className="mt-10" id="weekly-challenge">
-              {challengeLoading ? (
-                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
-                  <div className="h-6 w-40 animate-pulse rounded bg-border" />
-                  <div className="mt-4 h-24 w-full animate-pulse rounded bg-border" />
-                </Card>
-              ) : challengeEnrollment ? (
-                <ChallengeSpotlightCard
-                  cohortId={challengeEnrollment.cohort}
-                  progress={challengeEnrollment.progress ?? null}
-                />
-              ) : (
-                <JoinWeeklyChallengeCard />
-              )}
-            </div>
-
-            <div className="mt-6">
-              <DailyWeeklyChallenges />
-            </div>
-
-            {/* TODAY&apos;S PRIORITIES */}
-            <section className="mt-10 space-y-4" id="goal-summary">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-slab text-h2">Today&apos;s priorities</h2>
-                  <p className="text-grayish">
-                    Move the needle with the highest leverage actions first.
-                  </p>
-                </div>
-                <Badge variant="neutral" size="sm">
-                  Action-first view
-                </Badge>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {actionItems.map((item) => (
-                  <Card
-                    key={item.id}
-                    className="flex h-full flex-col justify-between gap-5 rounded-ds-2xl border border-border/60 bg-card/60 p-6"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <span
-                          className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${accentClass[item.accent]}`}
-                        >
-                          <Icon name={item.icon} size={20} />
-                        </span>
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="font-semibold text-lg text-foreground">{item.title}</h3>
-                            {item.done ? (
-                              <Badge variant="success" size="xs">
-                                Done
-                              </Badge>
-                            ) : null}
-                            {item.chip ? (
-                              <Badge variant="neutral" size="xs">
-                                {item.chip}
-                              </Badge>
-                            ) : null}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{item.caption}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {renderTileAction(`${item.id}-primary`, item.primary, 'primary')}
-                      {item.secondary
-                        ? renderTileAction(`${item.id}-secondary`, item.secondary, 'ghost')
-                        : null}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </section>
+            <ChallengeSection
+              loading={challengeLoading}
+              challengeEnrollment={
+                challengeEnrollment
+                  ? {
+                      cohort: challengeEnrollment.cohort,
+                      progress: challengeEnrollment.progress ?? null,
+                    }
+                  : null
+              }
+            />
+            <PriorityActionsSection actionItems={actionItems} />
 
             {/* NEXT LESSONS */}
-            {(ai.sessionMix ?? ai.sequence ?? []).length > 0 && (
+
+            {((ai.sessionMix ?? ai.sequence) ?? []).length > 0 && (
               <div className="mt-10" id="next-sessions">
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -976,225 +670,61 @@ const Dashboard: NextPage = () => {
               </div>
               <GapToGoal />
             </div>
-
-            {/* STUDY CALENDAR */}
-            <div className="mt-10 space-y-4" id="study-calendar">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-slab text-h2">Weekly momentum</h2>
-                  <p className="text-grayish">
-                    Protect your streak by finishing the scheduled sessions.
-                  </p>
-                </div>
-                <Link href="/study-plan" className="shrink-0">
-                  <Button variant="ghost" size="sm" className="rounded-ds-xl">
-                    Adjust schedule
-                  </Button>
-                </Link>
-              </div>
-              <StudyCalendar />
-            </div>
-
-            {/* ROADMAP */}
-            <div className="mt-10">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="font-slab text-h2">Roadmap to exam day</h2>
-                  <p className="text-grayish">See which stage you are in and what to do next.</p>
-                </div>
-                <Link href="/exam-day" className="shrink-0">
-                  <Button variant="ghost" size="sm" className="rounded-ds-xl">
-                    Plan exam day
-                  </Button>
-                </Link>
-              </div>
-              <GoalRoadmap examDate={profile?.exam_date ?? null} />
-            </div>
-
-            {/* QUICK ACTIONS + READING */}
-            <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_.9fr]">
-              <Card className="rounded-ds-2xl p-6">
-                <h2 className="font-slab text-h2">Quick actions</h2>
-                <p className="mt-1 text-grayish">Jump back in with one click.</p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <QuickDrillButton />
-                  <Link href="/learning">
-                    <Button variant="primary" className="rounded-ds-xl">
-                      Start today&apos;s lesson
-                    </Button>
-                  </Link>
-                  <Link href="/mock">
-                    <Button variant="secondary" className="rounded-ds-xl">
-                      Take a mock test
-                    </Button>
-                  </Link>
-                  <Link href="/writing">
-                    <Button variant="accent" className="rounded-ds-xl">
-                      Practice writing
-                    </Button>
-                  </Link>
-                  <Link href="/reading">
-                    <Button variant="secondary" className="rounded-ds-xl">
-                      Practice reading
-                    </Button>
-                  </Link>
-                  {/* Speaking vocab quick access */}
-                  <Link href={`/vocabulary/speaking/${speakingVocabSlug}`}>
-                    <Button variant="secondary" className="rounded-ds-xl">
-                      Speaking vocab today
-                    </Button>
-                  </Link>
-                  <Link href="/progress">
-                    <Button variant="ghost" className="rounded-ds-xl">
-                      Review progress report
-                    </Button>
-                  </Link>
-                  <Link href="#visa-target">
-                    <Button variant="ghost" className="rounded-ds-xl">
-                      Check visa target
-                    </Button>
-                  </Link>
-                  <Button onClick={shareDashboard} variant="secondary" className="rounded-ds-xl">
-                    Share progress
-                  </Button>
-                </div>
-              </Card>
-
-              <ReadingStatsCard />
-            </div>
-
-            {/* SAVED / WHATSAPP / SHARE */}
-            <div className="mt-10 grid gap-6 md:grid-cols-2" id="saved-items">
-              <Card className="rounded-ds-2xl p-6 space-y-4">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="font-slab text-h2">Saved for later</h2>
-                    <p className="text-grayish">Jump back to lessons and drills you flagged.</p>
-                  </div>
-                  <Link href="/saved" className="shrink-0">
-                    <Button variant="ghost" size="sm" className="rounded-ds-xl">
-                      Manage saved items
-                    </Button>
-                  </Link>
-                </div>
-                <SavedItems />
-              </Card>
-
-              <div className="space-y-4">
-                <ShareLinkCard />
-                <Card className="flex flex-col gap-4 rounded-ds-2xl border border-border/60 bg-card/60 p-5">
-                  <div className="flex items-start gap-3">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-electricBlue/15 text-electricBlue">
-                      <Icon name="MessageCircle" size={18} />
-                    </span>
-                    <div className="space-y-1">
-                      <h4 className="font-semibold text-foreground">WhatsApp Tasks</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Receive daily micro-tasks and reminders via WhatsApp.
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Also available in the AI workspace section above.
-                      </p>
-                    </div>
-                  </div>
-                  <WhatsAppOptIn />
-                </Card>
-              </div>
-            </div>
-
-            {/* UPGRADE & COACH NOTES */}
-            <div className="mt-10 grid gap-6 md:grid-cols-2">
-              <Card className="rounded-ds-2xl p-6">
-                <h3 className="mb-2 font-slab text-h3">Upgrade to Rocket 🚀</h3>
-                <p className="text-body opacity-90">
-                  Unlock AI deep feedback, speaking evaluator, and full analytics.
-                </p>
-                <div className="mt-4">
-                  <Link href="/pricing">
-                    <Button variant="primary" className="rounded-ds-xl">
-                      See Plans
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-
-              <Card className="rounded-ds-2xl p-6">
-                <h3 className="font-slab text-h3">Coach Notes</h3>
-                {Array.isArray(ai?.notes) && ai.notes.length ? (
-                  <ul className="mt-3 list-disc pl-6 text-body">
-                    {ai.notes.map((n: string, i: number) => (
-                      <li key={i}>{n}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Alert variant="info" className="mt-3">
-                    Add more details in <b>Profile</b> to refine your AI plan.
-                  </Alert>
-                )}
-                <div className="mt-4">
-                  <Link href="/profile/setup">
-                    <Button variant="secondary" className="rounded-ds-xl">
-                      Edit Profile
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            </div>
+            <CalendarSection StudyCalendar={StudyCalendar} />
+            <RoadmapSection examDate={profile?.exam_date ?? null} />
+            <QuickActionsSection
+              speakingVocabSlug={speakingVocabSlug}
+              onShareDashboard={shareDashboard}
+            />
+            <SavedItemsSection />
+            <UpgradeSection aiNotes={Array.isArray(ai?.notes) ? ai.notes : []} />
           </div>
         </Container>
       </section>
 
-      {/* Innovation modals (unchanged) */}
+      {/* Innovation modals */}
       {showAICoach && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAICoach(false)} />
-          <div className="relative w-full max-w-4xl rounded-ds-2xl p-6">
-            <AICoachPanel
-              onClose={() => setShowAICoach(false)}
-              profile={profile ? { user_id: profile.user_id, full_name: profile.full_name } : null}
-              onOpenStudyBuddy={() => {
-                setShowAICoach(false);
-                setShowStudyBuddy(true);
-              }}
-            />
-          </div>
-        </div>
+        <AccessibleModal isOpen={showAICoach} onClose={() => setShowAICoach(false)} title="AI Coach" maxWidthClassName="max-w-4xl">
+          <AICoachPanel
+            onClose={() => setShowAICoach(false)}
+            profile={
+              profile
+                ? { user_id: profile.user_id, full_name: profile.full_name }
+                : null
+            }
+            onOpenStudyBuddy={() => {
+              setShowAICoach(false);
+              setShowStudyBuddy(true);
+            }}
+          />
+        </AccessibleModal>
       )}
 
       {showStudyBuddy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowStudyBuddy(false)} />
-          <div className="relative w-full max-w-3xl rounded-ds-2xl p-6">
-            <StudyBuddyPanel onClose={() => setShowStudyBuddy(false)} profile={profile ?? null} />
-          </div>
-        </div>
+        <AccessibleModal isOpen={showStudyBuddy} onClose={() => setShowStudyBuddy(false)} title="Study Buddy">
+          <StudyBuddyPanel
+            onClose={() => setShowStudyBuddy(false)}
+            profile={profile ?? null}
+          />
+        </AccessibleModal>
       )}
 
       {showMistakesBook && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowMistakesBook(false)}
+        <AccessibleModal isOpen={showMistakesBook} onClose={() => setShowMistakesBook(false)} title="Mistakes Book">
+          <MistakesBookPanel
+            onClose={() => setShowMistakesBook(false)}
+            userId={sessionUserId}
           />
-          <div className="relative w-full max-w-3xl rounded-ds-2xl p-6">
-            <MistakesBookPanel onClose={() => setShowMistakesBook(false)} userId={sessionUserId} />
-          </div>
-        </div>
+        </AccessibleModal>
       )}
 
       {showWhatsAppTasks && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowWhatsAppTasks(false)}
+        <AccessibleModal isOpen={showWhatsAppTasks} onClose={() => setShowWhatsAppTasks(false)} title="WhatsApp Tasks" maxWidthClassName="max-w-2xl">
+          <WhatsAppTasksPanel
+            onClose={() => setShowWhatsAppTasks(false)}
+            userId={sessionUserId}
           />
-          <div className="relative w-full max-w-2xl rounded-ds-2xl p-6">
-            <WhatsAppTasksPanel
-              onClose={() => setShowWhatsAppTasks(false)}
-              userId={sessionUserId}
-            />
-          </div>
-        </div>
+        </AccessibleModal>
       )}
     </>
   );
