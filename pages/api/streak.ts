@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { getUserStreak, updateStreak, getDayKeyInTZ } from '@/lib/streak';
+import { getUserStreak, updateStreak } from '@/lib/streak';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createSupabaseServerClient({ req, res });
@@ -25,10 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const streak = await updateStreak(supabase, user.id);
-      return res.status(200).json({
-        ...streak,
-        today_completed: streak.last_activity_date === getDayKeyInTZ(),
-      });
+      return res.status(200).json(streak);
     }
 
     res.setHeader('Allow', 'GET,POST');

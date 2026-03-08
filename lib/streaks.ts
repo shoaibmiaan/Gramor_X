@@ -1,9 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { computeStreakUpdate, getDayKeyInTZ, updateStreak } from '@/lib/streak';
+import { computeStreakUpdate as computeCore, getDayKeyInTZ, updateStreak } from '@/lib/streak';
 
 export const dayKey = (date: Date, tz: string) => getDayKeyInTZ(date, tz);
 
-export { computeStreakUpdate };
+export const computeStreakUpdate = ({
+  now,
+  tz,
+  row,
+}: {
+  now?: Date;
+  tz: string;
+  row: { current_streak?: number | null; last_activity_date?: string | null } | null;
+}) => computeCore({ now, timeZone: tz, row });
 
 export async function syncStreak(
   supabase: SupabaseClient,

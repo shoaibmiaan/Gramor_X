@@ -25,6 +25,8 @@ const Heatmap = dynamic(
 );
 
 type HistoryEntry = { date: string; completed: number; total: number };
+type TodayTask = { key: string; label: string; href: string; completed: boolean };
+type ActivityEntry = { date: string; tasks: string[] };
 
 type Props = {
   streak: {
@@ -33,6 +35,8 @@ type Props = {
     lastActive: string | null;
   };
   history: HistoryEntry[];
+  todayTasks: TodayTask[];
+  activityHistory: ActivityEntry[];
   error?: string | null;
 };
 
@@ -49,7 +53,7 @@ const formatDisplayDate = (iso: string | null, locale: string) => {
   }
 };
 
-const StreakPage: NextPage<Props> = ({ streak, history, error }) => {
+const StreakPage: NextPage<Props> = ({ streak, history, todayTasks, activityHistory, error }) => {
   const { t, locale } = useLocale();
 
   if (error) {
@@ -144,6 +148,42 @@ const StreakPage: NextPage<Props> = ({ streak, history, error }) => {
                 </div>
               </dl>
 
+
+
+              <div className="rounded-xl border border-border/70 p-4">
+                <h3 className="font-semibold text-foreground">Today's streak tasks</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Complete any one of these tasks to keep today's streak active.</p>
+                <ul className="mt-3 space-y-2">
+                  {todayTasks.map((task) => (
+                    <li key={task.key} className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
+                      <span>{task.label}</span>
+                      {task.completed ? (
+                        <span className="font-semibold text-green-700">Done</span>
+                      ) : (
+                        <Link href={task.href} className="font-semibold text-electricBlue hover:underline">
+                          Start
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-xl border border-border/70 p-4">
+                <h3 className="font-semibold text-foreground">Streak activity history</h3>
+                <ul className="mt-3 space-y-2">
+                  {activityHistory.length === 0 ? (
+                    <li className="text-sm text-muted-foreground">No recent completed streak tasks yet.</li>
+                  ) : (
+                    activityHistory.slice().reverse().slice(0, 10).map((entry) => (
+                      <li key={entry.date} className="rounded-lg bg-muted px-3 py-2 text-sm">
+                        <span className="font-semibold">{entry.date}</span>
+                        <span className="ml-2 text-muted-foreground">{entry.tasks.join(', ')}</span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
               <div className="rounded-xl bg-muted/60 px-4 py-3 text-small text-muted-foreground">
                 <h3 className="font-semibold text-foreground">
                   {t('streak.howItWorks.title', 'How your streak works')}
@@ -223,6 +263,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
           lastActive: streakSummary.last_activity_date,
         },
         history,
+        todayTasks: streakSummary.today_tasks,
+        activityHistory: streakSummary.activity_history,
         error: null,
       },
     };
@@ -232,6 +274,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
       props: {
         streak: { current: 0, longest: 0, lastActive: null },
         history: [],
+        todayTasks: [],
+        activityHistory: [],
         error: 'Failed to load streak data. Please try again later.',
       },
     };

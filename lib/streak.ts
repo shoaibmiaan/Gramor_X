@@ -1,9 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
-import type { StreakSummary, StreakMutationAction, StreakCalendarEntry } from '@/types/streak';
+import type {
+  StreakSummary,
+  StreakMutationAction,
+  StreakCalendarEntry,
+  StreakActivityEntry,
+  StreakTaskKey,
+  StreakTaskStatus,
+} from '@/types/streak';
 
 const STREAK_TIMEOUT_MS = 10_000;
 const DAY_MS = 86_400_000;
+
+const STREAK_TASKS: Array<{ key: StreakTaskKey; label: string; href: string }> = [
+  { key: 'writing', label: 'Writing submission', href: '/writing' },
+  { key: 'speaking', label: 'Speaking practice', href: '/speaking/practice' },
+  { key: 'mock', label: 'Mock test', href: '/mock' },
+  { key: 'grammar_ai', label: 'Grammar / AI exercise', href: '/ai' },
+  { key: 'reading', label: 'Reading activity', href: '/reading' },
+];
 
 export const getDayKeyInTZ = (date: Date = new Date(), timeZone = 'Asia/Karachi'): string => {
   try {
@@ -28,6 +43,15 @@ const prevDayKey = (date: Date, timeZone: string): string => {
     guard += 1;
   }
   return getDayKeyInTZ(probe, timeZone);
+};
+
+const rangeForDayKey = (dayKey: string): { fromIso: string; toIso: string } => {
+  const base = new Date(`${dayKey}T00:00:00.000Z`);
+  const next = new Date(base.getTime() + DAY_MS);
+  return {
+    fromIso: base.toISOString(),
+    toIso: next.toISOString(),
+  };
 };
 
 export type ComputeResult = {
@@ -59,7 +83,13 @@ export const computeStreakUpdate = ({
   }
 
   if (lastKey === todayKey) {
-    return { current: currentStreak || 1, longest: Math.max(longestStreak, currentStreak || 1), todayKey, changed: false, reason: 'same-day' };
+    return {
+      current: currentStreak || 1,
+      longest: Math.max(longestStreak, currentStreak || 1),
+      todayKey,
+      changed: false,
+      reason: 'same-day',
+    };
   }
 
   if (lastKey === yesterdayKey) {
@@ -78,21 +108,28 @@ const emptyStreak = (): StreakSummary => ({
   shields: 0,
   today_completed: false,
   heatmap: [],
+  today_tasks: STREAK_TASKS.map((task) => ({ ...task, completed: false })),
+  activity_history: [],
 });
 
 const normalizeStreak = (payload: Partial<StreakSummary> | null | undefined): StreakSummary => {
   const fallback = emptyStreak();
   const current = typeof payload?.current_streak === 'number' ? payload.current_streak : fallback.current_streak;
-  const longest = typeof payload?.longest_streak === 'number' ? payload.longest_streak : Math.max(current, fallback.longest_streak);
+  const longest =
+    typeof payload?.longest_streak === 'number' ? payload.longest_streak : Math.max(current, fallback.longest_streak);
 
   return {
     current_streak: current,
     longest_streak: Math.max(longest, current),
-    last_activity_date: typeof payload?.last_activity_date === 'string' ? payload.last_activity_date : fallback.last_activity_date,
-    next_restart_date: typeof payload?.next_restart_date === 'string' ? payload.next_restart_date : fallback.next_restart_date,
+    last_activity_date:
+      typeof payload?.last_activity_date === 'string' ? payload.last_activity_date : fallback.last_activity_date,
+    next_restart_date:
+      typeof payload?.next_restart_date === 'string' ? payload.next_restart_date : fallback.next_restart_date,
     shields: typeof payload?.shields === 'number' ? payload.shields : fallback.shields,
     today_completed: Boolean(payload?.today_completed),
     heatmap: Array.isArray(payload?.heatmap) ? payload.heatmap : fallback.heatmap,
+    today_tasks: Array.isArray(payload?.today_tasks) ? payload.today_tasks : fallback.today_tasks,
+    activity_history: Array.isArray(payload?.activity_history) ? payload.activity_history : fallback.activity_history,
   };
 };
 
@@ -101,19 +138,93 @@ async function resolveUserTimezone(client: SupabaseClient, userId: string): Prom
   return typeof data?.timezone === 'string' && data.timezone.trim() ? data.timezone : 'Asia/Karachi';
 }
 
+async function hasRows(
+  client: SupabaseClient,
+  table: string,
+  userId: string,
+  dateColumn: string,
+  fromIso: string,
+  toIso: string,
+): Promise<boolean> {
+  const { data, error } = await client
+    .from(table)
+    .select('id', { head: false, count: 'exact' })
+    .eq('user_id', userId)
+    .gte(dateColumn, fromIso)
+    .lt(dateColumn, toIso)
+    .limit(1);
+
+  if (error) {
+    console.warn(`[streak] failed to query ${table}.${dateColumn}`, error.message);
+    return false;
+  }
+
+  return Array.isArray(data) && data.length > 0;
+}
+
+async function buildTaskStatusForDay(client: SupabaseClient, userId: string, dayKey: string): Promise<StreakTaskStatus[]> {
+  const { fromIso, toIso } = rangeForDayKey(dayKey);
+
+  const [writingDone, speakingDone, mockDone, readingDone, grammarAiDone] = await Promise.all([
+    hasRows(client, 'writing_attempts', userId, 'updated_at', fromIso, toIso),
+    hasRows(client, 'speaking_attempts', userId, 'created_at', fromIso, toIso),
+    hasRows(client, 'mock_full_attempts', userId, 'submitted_at', fromIso, toIso),
+    hasRows(client, 'reading_responses', userId, 'created_at', fromIso, toIso),
+    hasRows(client, 'task_runs', userId, 'completed_at', fromIso, toIso),
+  ]);
+
+  const doneMap: Record<StreakTaskKey, boolean> = {
+    writing: writingDone,
+    speaking: speakingDone,
+    mock: mockDone,
+    reading: readingDone,
+    grammar_ai: grammarAiDone,
+  };
+
+  return STREAK_TASKS.map((task) => ({
+    ...task,
+    completed: doneMap[task.key],
+  }));
+}
+
+async function buildRecentActivityHistory(
+  client: SupabaseClient,
+  userId: string,
+  timeZone: string,
+  daysBack = 21,
+): Promise<StreakActivityEntry[]> {
+  const history: StreakActivityEntry[] = [];
+  const today = new Date();
+
+  for (let offset = 0; offset < daysBack; offset += 1) {
+    const day = new Date(today.getTime() - offset * DAY_MS);
+    const dayKey = getDayKeyInTZ(day, timeZone);
+    const tasks = await buildTaskStatusForDay(client, userId, dayKey);
+    const completed = tasks.filter((task) => task.completed).map((task) => task.key);
+    if (completed.length > 0) {
+      history.push({ date: dayKey, tasks: completed });
+    }
+  }
+
+  return history.sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export async function getUserStreak(client: SupabaseClient, userId: string): Promise<StreakSummary> {
   const timeZone = await resolveUserTimezone(client, userId);
   const today = getDayKeyInTZ(new Date(), timeZone);
 
-  const [{ data: streakData, error: streakErr }, { data: shieldData }, { data: historyData }] = await Promise.all([
-    client
-      .from('streaks')
-      .select('current, longest, last_active_date')
-      .eq('user_id', userId)
-      .maybeSingle(),
-    client.from('streak_shields').select('tokens').eq('user_id', userId).maybeSingle(),
-    client.rpc('get_streak_history', { p_user_id: userId, p_days_back: 84 }),
-  ]);
+  const [{ data: streakData, error: streakErr }, { data: shieldData }, { data: historyData }, todayTasks, activityHistory] =
+    await Promise.all([
+      client
+        .from('streaks')
+        .select('current, longest, last_active_date')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      client.from('streak_shields').select('tokens').eq('user_id', userId).maybeSingle(),
+      client.rpc('get_streak_history', { p_user_id: userId, p_days_back: 84 }),
+      buildTaskStatusForDay(client, userId, today),
+      buildRecentActivityHistory(client, userId, timeZone, 21),
+    ]);
 
   if (streakErr) throw streakErr;
 
@@ -134,6 +245,8 @@ export async function getUserStreak(client: SupabaseClient, userId: string): Pro
     shields: shieldData?.tokens ?? 0,
     today_completed: lastActivity === today,
     heatmap,
+    today_tasks: todayTasks,
+    activity_history: activityHistory,
   });
 }
 
@@ -158,15 +271,16 @@ export async function updateStreak(client: SupabaseClient, userId: string, now: 
   });
 
   if (computed.changed) {
-    const { error: upsertError } = await client
-      .from('streaks')
-      .upsert({
+    const { error: upsertError } = await client.from('streaks').upsert(
+      {
         user_id: userId,
         current: computed.current,
         longest: computed.longest,
         last_active_date: computed.todayKey,
         updated_at: now.toISOString(),
-      }, { onConflict: 'user_id' });
+      },
+      { onConflict: 'user_id' },
+    );
     if (upsertError) throw upsertError;
   }
 
@@ -181,7 +295,11 @@ export async function resetStreak(client: SupabaseClient, userId: string): Promi
   return getUserStreak(client, userId);
 }
 
-export async function getStreakCalendar(client: SupabaseClient, userId: string, daysBack = 84): Promise<StreakCalendarEntry[]> {
+export async function getStreakCalendar(
+  client: SupabaseClient,
+  userId: string,
+  daysBack = 84,
+): Promise<StreakCalendarEntry[]> {
   const { data, error } = await client.rpc('get_streak_history', {
     p_user_id: userId,
     p_days_back: Math.max(1, Math.min(365, Math.floor(daysBack))),
@@ -223,7 +341,10 @@ const withTimeout = async <T>(task: (signal: AbortSignal) => Promise<T>, timeout
 };
 
 const handleMutation = async (payload: { action?: StreakMutationAction; date?: string }): Promise<StreakSummary> => {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
   if (sessionError || !session) throw new Error('Unauthorized');
 
   const body: Record<string, unknown> = {};
@@ -247,7 +368,10 @@ const handleMutation = async (payload: { action?: StreakMutationAction; date?: s
 };
 
 export const fetchStreak = async (): Promise<StreakSummary> => {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
   if (sessionError || !session) return emptyStreak();
 
   const res = await withTimeout((signal) =>
