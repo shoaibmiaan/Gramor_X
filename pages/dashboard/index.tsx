@@ -75,7 +75,8 @@ const Dashboard: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
-  const [showTips, setShowTips] = useState(false);
+  const [tipsDismissed, setTipsDismissed] = useLocalStorage<string>('dashboardTipsDismissed', '');
+  const showTips = !tipsDismissed;
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
 
   // Study plan tasks for today
@@ -203,18 +204,8 @@ const Dashboard: NextPage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem('dashboardTipsDismissed');
-      if (!dismissed) setShowTips(true);
-    }
-  }, []);
-
   const dismissTips = () => {
-    setShowTips(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dashboardTipsDismissed', '1');
-    }
+    setTipsDismissed('1');
   };
 
   useEffect(() => {
