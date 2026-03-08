@@ -18,6 +18,7 @@ import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
 import { useNextTask } from '@/hooks/useNextTask';
 import { useStudyPlan } from '@/hooks/useStudyPlan';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 import { badges } from '@/data/badges';
 import { VocabularySpotlightFeature } from '@/components/feature/VocabularySpotlight';
@@ -71,6 +72,20 @@ const loadingSkeleton = (
     </Container>
   </section>
 );
+
+const deriveNameFromEmail = (email: string | null | undefined): string => {
+  if (!email) return '';
+
+  const localPart = email.split('@')[0]?.trim();
+  if (!localPart) return '';
+
+  return localPart
+    .replace(/[._-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+};
 
 const Dashboard: NextPage = () => {
   useRequireAuth();
@@ -167,6 +182,7 @@ const Dashboard: NextPage = () => {
           const minimal: Partial<Profile> = {
             user_id: authUser.id,
             email: authUser.email ?? undefined,
+            full_name: deriveNameFromEmail(authUser.email),
             preferred_language: 'en',
             onboarding_complete: false,
           };
