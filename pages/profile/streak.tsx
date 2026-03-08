@@ -11,7 +11,7 @@ import { StreakChip } from '@/components/user/StreakChip';
 import { Alert } from '@/components/design-system/Alert';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { getServerClient } from '@/lib/supabaseServer';
-import { buildCompletionHistory } from '@/utils/streak';
+import { getStreakCalendar, getUserStreak } from '@/lib/streak';
 import { useLocale } from '@/lib/locale';
 
 const Heatmap = dynamic(
@@ -204,36 +204,23 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const DAYS_BACK = 84;
 
   try {
-    const [streakRes, historyRes] = await Promise.all([
-      supabase
-        .from('streaks')
-        .select('current, longest, last_active_date')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-      supabase.rpc('get_streak_history', {
-        p_user_id: user.id,
-        p_days_back: DAYS_BACK,
-      }),
+    const [streakSummary, calendar] = await Promise.all([
+      getUserStreak(supabase, user.id),
+      getStreakCalendar(supabase, user.id, DAYS_BACK),
     ]);
 
-    const streakRow = streakRes.data ?? null;
-    const rawHistory = historyRes.data ?? [];
-
-    if (streakRes.error) {
-      console.error('[profile/streak] Unable to load streak row:', streakRes.error.message);
-    }
-    if (historyRes.error) {
-      console.error('[profile/streak] Unable to load history:', historyRes.error.message);
-    }
-
-    const history = buildCompletionHistory(rawHistory, DAYS_BACK);
+    const history = calendar.map((entry) => ({
+      date: entry.date,
+      completed: entry.active ? 1 : 0,
+      total: 1,
+    }));
 
     return {
       props: {
         streak: {
-          current: streakRow?.current ?? 0,
-          longest: streakRow?.longest ?? streakRow?.current ?? 0,
-          lastActive: streakRow?.last_active_date ?? null,
+          current: streakSummary.current_streak,
+          longest: streakSummary.longest_streak,
+          lastActive: streakSummary.last_activity_date,
         },
         history,
         error: null,

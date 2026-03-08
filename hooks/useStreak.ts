@@ -14,6 +14,8 @@ export type StreakState = {
   lastDayKey: string | null;
   nextRestart: string | null;
   shields: number;
+  todayCompleted: boolean;
+  heatmap: Array<{ date: string; active: boolean }>;
   error: string | null;
 };
 
@@ -25,6 +27,8 @@ export function useStreak() {
     lastDayKey: null,
     nextRestart: null,
     shields: 0,
+    todayCompleted: false,
+    heatmap: [],
     error: null,
   });
   const mountedRef = useRef(true);
@@ -82,6 +86,8 @@ export function useStreak() {
         lastDayKey: data.last_activity_date ?? null,
         nextRestart: data.next_restart_date ?? null,
         shields: data.shields ?? 0,
+        todayCompleted: Boolean(data.today_completed),
+        heatmap: Array.isArray(data.heatmap) ? data.heatmap : [],
         error: null,
       });
     } catch (e: unknown) {
@@ -115,6 +121,8 @@ export function useStreak() {
           lastDayKey: data.last_activity_date ?? s.lastDayKey,
           nextRestart: data.next_restart_date ?? s.nextRestart,
           shields: data.shields ?? s.shields,
+          todayCompleted: Boolean(data.today_completed),
+          heatmap: Array.isArray(data.heatmap) ? data.heatmap : s.heatmap,
           error: null,
         };
       });
@@ -140,6 +148,8 @@ export function useStreak() {
         return {
           ...s,
           shields: data.shields ?? s.shields,
+          todayCompleted: Boolean(data.today_completed),
+          heatmap: Array.isArray(data.heatmap) ? data.heatmap : s.heatmap,
           current: currentValue,
           longest: data.longest_streak ?? s.longest,
           lastDayKey: data.last_activity_date ?? s.lastDayKey,
@@ -172,6 +182,8 @@ export function useStreak() {
           lastDayKey: data.last_activity_date ?? s.lastDayKey,
           nextRestart: data.next_restart_date ?? s.nextRestart,
           shields: data.shields ?? s.shields,
+          todayCompleted: Boolean(data.today_completed),
+          heatmap: Array.isArray(data.heatmap) ? data.heatmap : s.heatmap,
           error: null,
         };
       });
@@ -200,6 +212,8 @@ export function useStreak() {
           lastDayKey: data.last_activity_date ?? s.lastDayKey,
           nextRestart: data.next_restart_date ?? s.nextRestart,
           shields: data.shields ?? s.shields,
+          todayCompleted: Boolean(data.today_completed),
+          heatmap: Array.isArray(data.heatmap) ? data.heatmap : s.heatmap,
           error: null,
         };
       });

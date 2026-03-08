@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { updateStreak } from '@/lib/streak';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { gradeReadingAttempt } from '@/lib/reading/grade';
@@ -276,6 +277,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.warn('[reading.submit] difficulty analytics failed', error);
   }
+
+  await updateStreak(supabase, user.id);
 
   return res.status(200).json({
     attemptId,
