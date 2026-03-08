@@ -6,55 +6,77 @@ import { useRouter } from 'next/router';
 import type { Session } from '@supabase/supabase-js';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Input } from '@/components/design-system/Input';
-import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { destinationByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
-import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
+
+async function syncServerSession(session: Session | null) {
+  try {
+    const syncRes = await fetch('/api/auth/set-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ event: 'SIGNED_IN', session }),
+    });
+
+    if (!syncRes.ok) {
+      console.error('Sync server session failed:', syncRes.status);
+      return false;
+    }
+
+    const syncBody = await syncRes.json().catch(() => ({}));
+    if (syncBody && typeof syncBody === 'object' && syncBody.ok === false) {
+      console.error('Sync server session failed: response not ok');
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Sync server session failed:', error);
+    return false;
+  }
+}
+
+async function recordLoginEvent(session: Session | null, allowResync = true) {
+  try {
+    const loginEventRes = await fetch('/api/auth/login-event', {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+
+    if (loginEventRes.status === 401 && allowResync) {
+      const resynced = await syncServerSession(session);
+      if (resynced) return recordLoginEvent(session, false);
+    }
+
+    if (!loginEventRes.ok) {
+      console.error('Login event failed:', loginEventRes.status);
+    }
+  } catch (error) {
+    console.error('Error logging login event:', error);
+  }
+}
 
 export default function LoginWithEmail() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [pw, setPw] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [emailErr, setEmailErr] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const {
-    otp,
-    setOtp,
-    otpSent,
-    createChallenge,
-    verifyOtp,
-    verifying,
-    error: mfaErr,
-    setError: setMfaErr,
-  } = useEmailLoginMFA();
+  const [verifying, setVerifying] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    setMfaErr(null);
-
     const trimmedEmail = email.trim();
 
-    // If no email or password is provided, show an error
-    if (!trimmedEmail && !pw) {
-      setErr('Email and password are required.');
-      return;
-    }
-
-    // If only email is provided, show error
     if (!trimmedEmail) {
       setErr('Email is required.');
-      return;
-    }
-
-    if (!pw) {
-      setErr('Password is required.');
       return;
     }
 
@@ -64,131 +86,92 @@ export default function LoginWithEmail() {
     }
 
     setEmailErr(null);
-
     setLoading(true);
-    async function syncServerSession(session: Session | null) {
-      try {
-        const syncRes = await fetch('/api/auth/set-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ event: 'SIGNED_IN', session }),
-        });
-
-        if (!syncRes.ok) {
-          console.error('Sync server session failed:', syncRes.status);
-          return false;
-        }
-
-        const syncBody = await syncRes.json().catch(() => ({}));
-        if (syncBody && typeof syncBody === 'object' && syncBody.ok === false) {
-          console.error('Sync server session failed: response not ok');
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        console.error('Sync server session failed:', error);
-        return false;
-      }
-    }
-
-    async function recordLoginEvent(session: Session | null, allowResync = true) {
-      try {
-        const loginEventRes = await fetch('/api/auth/login-event', {
-          method: 'POST',
-          credentials: 'same-origin',
-        });
-
-        if (loginEventRes.status === 401 && allowResync) {
-          const resynced = await syncServerSession(session);
-          if (resynced) return recordLoginEvent(session, false);
-        }
-
-        if (!loginEventRes.ok) {
-          console.error('Login event failed:', loginEventRes.status);
-        }
-      } catch (error) {
-        console.error('Error logging login event:', error);
-      }
-    }
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail, password: pw }),
+      const { error } = await supabaseBrowser.auth.signInWithOtp({
+        email: trimmedEmail,
+        options: { shouldCreateUser: true },
       });
-      const body = await res.json().catch(() => ({}));
-      setLoading(false);
 
-      if (!res.ok || !body.session) {
-        const msg =
-          typeof body.error === 'string'
-            ? body.error
-            : getAuthErrorMessage(body.error) ?? 'Unable to sign in. Please try again.';
-        setErr(msg);
+      if (error) {
+        setErr(getAuthErrorMessage(error) ?? 'Unable to send your sign-in code. Please try again.');
         return;
       }
 
-      // If login is successful, set session and proceed
-      await supabaseBrowser.auth
-        .setSession({
-          access_token: body.session.access_token,
-          refresh_token: body.session.refresh_token,
-        })
-        .catch(err => console.error('Set session failed:', err));
+      setOtpSent(true);
+    } catch (submitError) {
+      console.error('Login error:', submitError);
+      setErr('Unable to send your sign-in code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
-      const serverSynced = await syncServerSession(body.session);
+  async function onVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+
+    const trimmedEmail = email.trim();
+    const trimmedOtp = otp.trim();
+
+    if (!trimmedOtp) {
+      setErr('Verification code is required.');
+      return;
+    }
+
+    setVerifying(true);
+
+    try {
+      const { data, error } = await supabaseBrowser.auth.verifyOtp({
+        email: trimmedEmail,
+        token: trimmedOtp,
+        type: 'email',
+      });
+
+      if (error || !data.session) {
+        setErr(getAuthErrorMessage(error) ?? 'Unable to verify your code. Please try again.');
+        return;
+      }
+
+      const serverSynced = await syncServerSession(data.session);
+      if (!serverSynced) {
+        await syncServerSession(data.session);
+      }
+
+      await recordLoginEvent(data.session);
 
       const {
         data: { user },
-        error: userError,
       } = await supabaseBrowser.auth.getUser();
-      if (userError) console.error('Get user failed:', userError);
 
-      // Skip OTP if both email and password are provided
-      if (!body.mfaRequired) {
-        if (!serverSynced) {
-          await syncServerSession(body.session);
-        }
+      const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
+      const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
 
-        await recordLoginEvent(body.session);
+      const fallback = user ? destinationByRole(user) : '/dashboard';
+      const target = safeNext ?? fallback;
 
-        const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-        const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
-
-        const fallback = user ? destinationByRole(user) : '/dashboard';
-        const target = safeNext ?? fallback;
-
-        try {
-          await router.replace(target);
-        } catch (err) {
-          console.error('Redirect after login failed:', err);
-          if (typeof window !== 'undefined') window.location.assign(target);
-        }
-        return;
+      try {
+        await router.replace(target);
+      } catch (routerError) {
+        console.error('Redirect after login failed:', routerError);
+        if (typeof window !== 'undefined') window.location.assign(target);
       }
-
-      // If MFA (OTP) is required, trigger the challenge
-      const challenged = await createChallenge(user).catch(err => console.error('Create challenge failed:', err));
-      if (challenged) return;
-
-      // Rely on _app.tsx onAuthStateChange to redirect
-    } catch (err) {
-      console.error('Login error:', err);
-      setErr('Unable to sign in. Please try again.');
-      setLoading(false);
+    } catch (verifyError) {
+      console.error('OTP verification error:', verifyError);
+      setErr('Unable to verify your code. Please try again.');
+    } finally {
+      setVerifying(false);
     }
   }
 
   return (
     <>
-      <SectionLabel>Sign in with Email</SectionLabel>
+      <SectionLabel>Sign in with Email + Code</SectionLabel>
 
-      {(err || mfaErr) && (
+      {err && (
         <Alert variant="warning" title="Error" className="mb-4" role="status" aria-live="assertive">
-          {err || mfaErr}
+          {err}
         </Alert>
       )}
 
@@ -208,28 +191,18 @@ export default function LoginWithEmail() {
             required
             error={emailErr ?? undefined}
           />
-          <PasswordInput
-            label="Password"
-            placeholder="Your password"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
           <Button type="submit" variant="primary" className="rounded-ds-xl" fullWidth disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
-          </Button>
-          <Button asChild variant="link" className="mt-2" fullWidth>
-            <Link href="/forgot-password">Forgot password?</Link>
+            {loading ? 'Sending code…' : 'Send code'}
           </Button>
           <p className="mt-2 text-caption text-mutedText text-center">
-            By continuing you agree to our <Link href="/legal/terms" className="underline">Terms</Link> &amp; <Link href="/legal/privacy" className="underline">Privacy</Link>.
+            By continuing you agree to our <Link href="/legal/terms" className="underline">Terms</Link> &amp;{' '}
+            <Link href="/legal/privacy" className="underline">Privacy</Link>.
           </p>
         </form>
       ) : (
-        <form onSubmit={verifyOtp} className="space-y-6 mt-2 max-w-xs">
+        <form onSubmit={onVerifyOtp} className="space-y-6 mt-2 max-w-xs">
           <Input
-            label="Enter OTP"
+            label="Enter code"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             autoComplete="one-time-code"
@@ -237,7 +210,7 @@ export default function LoginWithEmail() {
             required
           />
           <Button type="submit" variant="primary" className="rounded-ds-xl" fullWidth disabled={verifying}>
-            {verifying ? 'Verifying…' : 'Verify & Sign in'}
+            {verifying ? 'Verifying code…' : 'Verify code & Sign in'}
           </Button>
         </form>
       )}
