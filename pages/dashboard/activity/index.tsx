@@ -1,20 +1,21 @@
 // pages/dashboard/activity/index.tsx
 'use client';
 
-import * as React from "react";
-import Head from "next/head";
-import { useRouter } from "next/router";
-import { Container } from "@/components/design-system/Container";
-import { Button } from "@/components/design-system/Button";
-import { Badge } from "@/components/design-system/Badge";
-import { Card } from "@/components/design-system/Card";
-import { Tabs } from "@/components/design-system/Tabs";
-import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser";
-import ActivityTimeline from "@/components/activity/ActivityTimeline";
-import TaskBoard from "@/components/activity/TaskBoard";
-import StatsDashboard from "@/components/activity/StatsDashboard";
-import CreateTaskModal from "@/components/activity/CreateTaskModal";
-import QuickActions from "@/components/activity/QuickActions";
+import * as React from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { Card } from '@/components/design-system/Card';
+import { Tabs } from '@/components/design-system/Tabs';
+import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { logClientError, logClientEvent } from '@/lib/telemetry/client';
+import ActivityTimeline from '@/components/activity/ActivityTimeline';
+import TaskBoard from '@/components/activity/TaskBoard';
+import StatsDashboard from '@/components/activity/StatsDashboard';
+import CreateTaskModal from '@/components/activity/CreateTaskModal';
+import QuickActions from '@/components/activity/QuickActions';
 
 // Icons
 import {
@@ -38,7 +39,7 @@ import {
   Headphones,
   BookOpen,
   Plus,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface ActivityStats {
   totalActivities: number;
@@ -95,7 +96,7 @@ interface Task {
 
 export default function ActivityHomePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = React.useState("timeline");
+  const [activeTab, setActiveTab] = React.useState('timeline');
   const [stats, setStats] = React.useState<ActivityStats>({
     totalActivities: 0,
     todayActivities: 0,
@@ -137,7 +138,9 @@ export default function ActivityHomePage() {
       }
     })();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Fetch all data
@@ -155,8 +158,15 @@ export default function ActivityHomePage() {
 
       // Fetch tasks
       await fetchTasks(user.id);
+
+      logClientEvent('dashboard.activity.fetch_all.success', {
+        user_id: user.id,
+      });
     } catch (error) {
-      console.error("Error fetching data:", error);
+      logClientError(error, {
+        event: 'dashboard.activity.fetch_all.failed',
+        user_id: user?.id,
+      });
     } finally {
       setLoading({ stats: false, activities: false, tasks: false });
     }
@@ -167,6 +177,18 @@ export default function ActivityHomePage() {
       fetchAllData();
     }
   }, [user, fetchAllData]);
+
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    logClientEvent('dashboard.activity.viewed', {
+      user_id: user.id,
+      active_tab: activeTab,
+      date_range: filters.dateRange,
+      activity_type: filters.activityType,
+      task_status: filters.taskStatus,
+    });
+  }, [activeTab, filters.activityType, filters.dateRange, filters.taskStatus, user?.id]);
 
   const fetchStats = async (userId: string) => {
     const today = new Date();
@@ -198,7 +220,7 @@ export default function ActivityHomePage() {
       overdue: 0,
     };
 
-    tasksData?.forEach(task => {
+    tasksData?.forEach((task) => {
       if (task.status === 'pending') {
         taskStats.pending++;
         // Check if overdue
@@ -275,12 +297,14 @@ export default function ActivityHomePage() {
   const fetchTasks = async (userId: string) => {
     const { data } = await supabase
       .from('task_assignments')
-      .select(`
+      .select(
+        `
         *,
         creator:profiles!task_assignments_created_by_fkey (id, email, full_name, avatar_url),
         assignee:profiles!task_assignments_assigned_to_fkey (id, email, full_name, avatar_url),
         comments:task_comments(count)
-      `)
+      `,
+      )
       .or(`created_by.eq.${userId},assigned_to.eq.${userId}`)
       .order('created_at', { ascending: false });
 
@@ -321,9 +345,17 @@ export default function ActivityHomePage() {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+
+        logClientEvent('dashboard.activity.export.success', {
+          user_id: user?.id,
+          format: 'csv',
+        });
       }
     } catch (error) {
-      console.error('Export failed:', error);
+      logClientError(error, {
+        event: 'dashboard.activity.export.failed',
+        user_id: user?.id,
+      });
     }
   };
 
@@ -350,28 +382,66 @@ export default function ActivityHomePage() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'login': return <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-        <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-        </svg>
-      </div>;
-      case 'task_created': return <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      </div>;
-      case 'writing_submitted': return <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-        <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-      </div>;
-      case 'speaking_completed': return <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
-        <Mic className="w-5 h-5 text-pink-600 dark:text-pink-400" />
-      </div>;
-      case 'listening_completed': return <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-        <Headphones className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-      </div>;
-      default: return <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-      </div>;
+      case 'login':
+        return (
+          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+            <svg
+              className="w-5 h-5 text-green-600 dark:text-green-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+              />
+            </svg>
+          </div>
+        );
+      case 'task_created':
+        return (
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+            <svg
+              className="w-5 h-5 text-blue-600 dark:text-blue-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+          </div>
+        );
+      case 'writing_submitted':
+        return (
+          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+            <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          </div>
+        );
+      case 'speaking_completed':
+        return (
+          <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
+            <Mic className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+          </div>
+        );
+      case 'listening_completed':
+        return (
+          <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+            <Headphones className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          </div>
+        );
+      default:
+        return (
+          <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <Activity className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </div>
+        );
     }
   };
 
@@ -422,18 +492,11 @@ export default function ActivityHomePage() {
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleExportActivities}
-                >
+                <Button variant="outline" onClick={handleExportActivities}>
                   <Download className="mr-2 h-4 w-4" />
                   Export
                 </Button>
-                <Button
-                  variant="solid"
-                  tone="primary"
-                  onClick={() => setShowCreateTaskModal(true)}
-                >
+                <Button variant="solid" tone="primary" onClick={() => setShowCreateTaskModal(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   New Task
                 </Button>
@@ -472,7 +535,7 @@ export default function ActivityHomePage() {
                     <select
                       className="w-full p-2 border border-border rounded-lg bg-background"
                       value={filters.dateRange}
-                      onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+                      onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
                     >
                       <option value="today">Today</option>
                       <option value="7d">Last 7 Days</option>
@@ -489,7 +552,7 @@ export default function ActivityHomePage() {
                     <select
                       className="w-full p-2 border border-border rounded-lg bg-background"
                       value={filters.activityType}
-                      onChange={(e) => setFilters({...filters, activityType: e.target.value})}
+                      onChange={(e) => setFilters({ ...filters, activityType: e.target.value })}
                     >
                       <option value="all">All Activities</option>
                       <option value="task">Tasks</option>
@@ -508,7 +571,7 @@ export default function ActivityHomePage() {
                     <select
                       className="w-full p-2 border border-border rounded-lg bg-background"
                       value={filters.taskStatus}
-                      onChange={(e) => setFilters({...filters, taskStatus: e.target.value})}
+                      onChange={(e) => setFilters({ ...filters, taskStatus: e.target.value })}
                     >
                       <option value="all">All Tasks</option>
                       <option value="pending">Pending</option>
@@ -616,7 +679,9 @@ export default function ActivityHomePage() {
                         <p className="text-2xl font-bold mt-1">Monday</p>
                       </div>
                       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                        <p className="text-sm text-green-600 dark:text-green-400">Avg. Daily Activities</p>
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          Avg. Daily Activities
+                        </p>
                         <p className="text-2xl font-bold mt-1">12</p>
                       </div>
                       <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
@@ -624,7 +689,9 @@ export default function ActivityHomePage() {
                         <p className="text-2xl font-bold mt-1">7 PM</p>
                       </div>
                       <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-                        <p className="text-sm text-orange-600 dark:text-orange-400">Task Completion Rate</p>
+                        <p className="text-sm text-orange-600 dark:text-orange-400">
+                          Task Completion Rate
+                        </p>
                         <p className="text-2xl font-bold mt-1">78%</p>
                       </div>
                     </div>
@@ -647,23 +714,36 @@ export default function ActivityHomePage() {
 
                 <div className="space-y-3">
                   {tasks
-                    .filter(task => task.status === 'pending' && task.due_date)
+                    .filter((task) => task.status === 'pending' && task.due_date)
                     .slice(0, 3)
-                    .map(task => (
-                      <div key={task.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    .map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${
-                            task.priority === 'urgent' ? 'bg-red-100 dark:bg-red-900/30' :
-                            task.priority === 'high' ? 'bg-orange-100 dark:bg-orange-900/30' :
-                            task.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-                            'bg-green-100 dark:bg-green-900/30'
-                          }`}>
-                            <AlertCircle className={`h-4 w-4 ${
-                              task.priority === 'urgent' ? 'text-red-600 dark:text-red-400' :
-                              task.priority === 'high' ? 'text-orange-600 dark:text-orange-400' :
-                              task.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                              'text-green-600 dark:text-green-400'
-                            }`} />
+                          <div
+                            className={`p-2 rounded-lg ${
+                              task.priority === 'urgent'
+                                ? 'bg-red-100 dark:bg-red-900/30'
+                                : task.priority === 'high'
+                                  ? 'bg-orange-100 dark:bg-orange-900/30'
+                                  : task.priority === 'medium'
+                                    ? 'bg-yellow-100 dark:bg-yellow-900/30'
+                                    : 'bg-green-100 dark:bg-green-900/30'
+                            }`}
+                          >
+                            <AlertCircle
+                              className={`h-4 w-4 ${
+                                task.priority === 'urgent'
+                                  ? 'text-red-600 dark:text-red-400'
+                                  : task.priority === 'high'
+                                    ? 'text-orange-600 dark:text-orange-400'
+                                    : task.priority === 'medium'
+                                      ? 'text-yellow-600 dark:text-yellow-400'
+                                      : 'text-green-600 dark:text-green-400'
+                              }`}
+                            />
                           </div>
                           <div>
                             <p className="font-medium text-sm">{task.title}</p>
@@ -682,10 +762,9 @@ export default function ActivityHomePage() {
                       </div>
                     ))}
 
-                  {tasks.filter(task => task.status === 'pending' && task.due_date).length === 0 && (
-                    <div className="text-center py-4 text-muted-foreground">
-                      No upcoming tasks
-                    </div>
+                  {tasks.filter((task) => task.status === 'pending' && task.due_date).length ===
+                    0 && (
+                    <div className="text-center py-4 text-muted-foreground">No upcoming tasks</div>
                   )}
                 </div>
               </Card>
@@ -709,7 +788,10 @@ export default function ActivityHomePage() {
                     <p className="text-xs text-muted-foreground">2 hours ago</p>
                   </div>
                 </div>
-                <p className="text-sm">"Great vocabulary improvement in your last essay. Try varying sentence structures more."</p>
+                <p className="text-sm">
+                  "Great vocabulary improvement in your last essay. Try varying sentence structures
+                  more."
+                </p>
               </div>
 
               <div className="border border-border rounded-lg p-4">
@@ -722,7 +804,9 @@ export default function ActivityHomePage() {
                     <p className="text-xs text-muted-foreground">Yesterday</p>
                   </div>
                 </div>
-                <p className="text-sm">"Your pronunciation has improved significantly. Focus on intonation patterns."</p>
+                <p className="text-sm">
+                  "Your pronunciation has improved significantly. Focus on intonation patterns."
+                </p>
               </div>
 
               <div className="border border-border rounded-lg p-4">
@@ -735,7 +819,9 @@ export default function ActivityHomePage() {
                     <p className="text-xs text-muted-foreground">3 days ago</p>
                   </div>
                 </div>
-                <p className="text-sm">"Task #42 has been completed. New writing prompts are available in your queue."</p>
+                <p className="text-sm">
+                  "Task #42 has been completed. New writing prompts are available in your queue."
+                </p>
               </div>
             </div>
           </Card>
