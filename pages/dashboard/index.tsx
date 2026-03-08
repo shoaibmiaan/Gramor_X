@@ -104,7 +104,6 @@ const Dashboard: NextPage = () => {
     longest,
     lastDayKey,
     loading: streakLoading,
-    completeToday,
     nextRestart,
     shields,
     claimShield,
@@ -224,15 +223,6 @@ const Dashboard: NextPage = () => {
   const dismissTips = () => {
     setTipsDismissed('1');
   };
-
-  useEffect(() => {
-    if (streakLoading) return;
-    const today = getDayKeyInTZ();
-    if (lastDayKey !== today) {
-      void completeToday().catch(() => {});
-    }
-  }, [streakLoading, lastDayKey, completeToday]);
-
   const { signedUrl: profileAvatarUrl } = useSignedAvatar(profile?.avatar_url ?? null);
 
   // Wrap ai in useMemo to avoid recreating it on every render (fix for exhaustive-deps warning)

@@ -12,6 +12,20 @@ import type {
 const STREAK_TIMEOUT_MS = 10_000;
 const DAY_MS = 86_400_000;
 
+export const ACTIONABLE_STREAK_ACTIVITY_TYPES = [
+  'writing',
+  'speaking',
+  'reading',
+  'vocabulary',
+  'ai_lesson',
+  'mock',
+] as const;
+
+export type ActionableStreakActivityType = (typeof ACTIONABLE_STREAK_ACTIVITY_TYPES)[number];
+
+export const isActionableStreakActivityType = (value: string): value is ActionableStreakActivityType =>
+  ACTIONABLE_STREAK_ACTIVITY_TYPES.includes(value as ActionableStreakActivityType);
+
 const STREAK_TASKS: Array<{ key: StreakTaskKey; label: string; href: string }> = [
   { key: 'writing', label: 'Writing submission', href: '/writing' },
   { key: 'speaking', label: 'Speaking practice', href: '/speaking/practice' },
@@ -360,6 +374,39 @@ export async function updateStreak(client: SupabaseClient, userId: string, now: 
   }
 
   return getUserStreak(client, userId);
+}
+
+export async function completeToday(
+  client: SupabaseClient,
+  userId: string,
+  activityType: ActionableStreakActivityType,
+  metadata: Record<string, unknown> = {},
+  now: Date = new Date(),
+): Promise<StreakSummary> {
+  const timeZone = await resolveUserTimezone(client, userId);
+  const dayKey = getDayKeyInTZ(now, timeZone);
+
+  const { error: insertError } = await client.from('streak_activity_log').insert({
+    user_id: userId,
+    day_key: dayKey,
+    activity_type: activityType,
+    metadata,
+  });
+
+  if (insertError) {
+    const code = insertError.code ?? '';
+    if (code === '23505') {
+      return getUserStreak(client, userId);
+    }
+
+    if (code !== '42P01') {
+      throw insertError;
+    }
+
+    console.warn('[streak] streak_activity_log missing; falling back to aggregate streak update only');
+  }
+
+  return updateStreak(client, userId, now);
 }
 
 export async function resetStreak(client: SupabaseClient, userId: string): Promise<StreakSummary> {

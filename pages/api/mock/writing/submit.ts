@@ -4,7 +4,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
-import { updateStreak } from '@/lib/streak';
+import { completeToday } from '@/lib/streak';
 import { normalizeScorePayload } from '@/lib/writing/scoring';
 import { evaluateEssayWithAi } from '@/lib/writing/ai-evaluator';
 import { writingSubmitSchema } from '@/lib/validation/writing';
@@ -173,7 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   });
 
-  await updateStreak(supabase, user.id);
+  await completeToday(supabase, user.id, 'mock', { attemptId, scope: 'writing_exam' });
 
   return res.status(200).json({ ok: true, attemptId, results });
 }

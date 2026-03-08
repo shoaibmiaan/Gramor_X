@@ -116,7 +116,7 @@ export default function StudyPlanPage() {
   const planProgressRef = useRef<number>(0);
 
   const { success: toastSuccess, error: toastError } = useToast();
-  const { current: streak, loading: streakLoading, completeToday, reload: reloadStreak } = useStreak();
+  const { current: streak, loading: streakLoading } = useStreak();
   const { plan: subscriptionPlan, loading: planLoading } = usePlan();
   const showUpgradeBanner = !planLoading && subscriptionPlan === 'free';
 
@@ -286,15 +286,6 @@ export default function StudyPlanPage() {
         await persistPlan(next);
         track('studyplan_update', { day: dayKey, taskId, completed: checked });
         void logStudyPlanEvent('studyplan_update', { day: dayKey, taskId, completed: checked });
-        const shouldStartStreak = checked && !wasComplete && !hadOtherCompleted && dayKey === todayKey;
-        if (shouldStartStreak) {
-          try {
-            const data = await completeToday();
-            if (!data) await reloadStreak();
-          } catch (err) {
-            console.error('Streak update failed', err);
-          }
-        }
         if (checked && !wasComplete) {
           track('studyplan_task_complete', { day: dayKey, taskId });
           void logStudyPlanEvent('studyplan_task_complete', { day: dayKey, taskId });
@@ -308,7 +299,7 @@ export default function StudyPlanPage() {
         setBusyTask(null);
       }
     },
-    [plan, t, userId, persistPlan, completeToday, reloadStreak, toastError, todayKey],
+    [plan, t, userId, persistPlan, toastError, todayKey],
   );
 
   const hasPlan = !!plan && plan.days.length > 0;
