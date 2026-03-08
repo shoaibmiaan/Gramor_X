@@ -31,6 +31,21 @@ const LANGUAGE_LABELS: Record<string, string> = {
 
 type OnboardingLanguageOption = { value: string; label?: string };
 
+
+const deriveNameFromEmail = (email: string | null | undefined): string => {
+  if (!email) return '';
+
+  const localPart = email.split('@')[0]?.trim();
+  if (!localPart) return '';
+
+  return localPart
+    .replace(/[._-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+};
+
 export default function ProfileSetupPage() {
   const router = useRouter();
   const { t } = useLocale();
@@ -73,7 +88,8 @@ export default function ProfileSetupPage() {
 
           // Pre-fill if any data exists
           if (profile) {
-            setFullName(profile.full_name ?? '');
+            const emailFallback = deriveNameFromEmail(sessionData.session.user.email);
+            setFullName(profile.full_name?.trim() ? profile.full_name : emailFallback);
             setPreferredLanguage(profile.preferred_language ?? 'en');
             setTargetBand(
               typeof profile.target_band === 'number'
@@ -81,6 +97,8 @@ export default function ProfileSetupPage() {
                 : ''
             );
             setExamDate(profile.exam_date?.slice?.(0, 10) ?? '');
+          } else {
+            setFullName(deriveNameFromEmail(sessionData.session.user.email));
           }
         }
       } catch (err) {
