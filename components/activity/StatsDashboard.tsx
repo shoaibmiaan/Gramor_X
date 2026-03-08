@@ -2,7 +2,7 @@
 import * as React from "react";
 import { Card } from "@/components/design-system/Card";
 import { Badge } from "@/components/design-system/Badge";
-import { ActivityStats } from "@/pages/dashboard/activity";
+import type { ActivityStats } from "@/types/activity";
 import {
   Activity,
   Clock,

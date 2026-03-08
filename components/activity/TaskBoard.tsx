@@ -4,7 +4,7 @@ import { Card } from "@/components/design-system/Card";
 import { Badge } from "@/components/design-system/Badge";
 import { Button } from "@/components/design-system/Button";
 import { supabaseBrowser as supabase } from "@/lib/supabaseBrowser";
-import { Task } from "@/pages/dashboard/activity";
+import type { ActivityFilters, Task, TaskStatus } from "@/types/activity";
 import {
   CheckCircle,
   Clock,
@@ -20,7 +20,7 @@ interface TaskBoardProps {
   tasks: Task[];
   loading: boolean;
   onTaskUpdate: () => void;
-  filters: any;
+  filters: ActivityFilters;
 }
 
 export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: TaskBoardProps) {
@@ -43,7 +43,7 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
       const task = tasks.find(t => t.id === taskId);
       if (task) {
         await supabase.rpc('log_user_activity', {
-          p_user_id: task.assigned_to.id,
+          p_user_id: task.assignee.id,
           p_activity_type: 'task_updated',
           p_description: `Updated task "${task.title}" status to ${newStatus}`,
           p_metadata: {
@@ -102,6 +102,21 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
     }
   };
 
+  const priorityBadgeVariant = {
+    red: 'danger',
+    orange: 'warning',
+    yellow: 'warning',
+    green: 'success',
+    gray: 'neutral',
+  } as const;
+
+  const statusColumnBadgeVariant = {
+    yellow: 'warning',
+    blue: 'info',
+    purple: 'accent',
+    green: 'success',
+  } as const;
+
   const filteredTasks = tasks.filter(task => {
     if (filters.taskStatus !== 'all' && task.status !== filters.taskStatus) {
       return false;
@@ -134,7 +149,7 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
     );
   }
 
-  const statusColumns = [
+  const statusColumns: Array<{ key: Exclude<TaskStatus, 'cancelled'>; title: string; color: keyof typeof statusColumnBadgeVariant }> = [
     { key: 'pending', title: 'To Do', color: 'yellow' },
     { key: 'in_progress', title: 'In Progress', color: 'blue' },
     { key: 'review', title: 'Review', color: 'purple' },
@@ -150,7 +165,7 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">{title}</span>
               <Badge
-                variant={color as any}
+                variant={statusColumnBadgeVariant[color]}
                 className="rounded-full"
               >
                 {tasksByStatus[key as keyof typeof tasksByStatus].length}
@@ -204,7 +219,7 @@ export default function TaskBoard({ tasks, loading, onTaskUpdate, filters }: Tas
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <Badge
-                            variant={getPriorityColor(task.priority) as any}
+                            variant={priorityBadgeVariant[getPriorityColor(task.priority)]}
                             size="sm"
                           >
                             {task.priority}
