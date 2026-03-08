@@ -1,7 +1,7 @@
 // pages/signup/verify.tsx
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useCountdown } from '@/hooks/useCountdown';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -10,8 +10,8 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Input } from '@/components/design-system/Input';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { ONBOARDING, SIGNUP } from '@/lib/constants/routes';
-import { withQuery } from '@/lib/constants/routes';
+import { SIGNUP } from '@/lib/constants/routes';
+import { resolvePostLoginRoute } from '@/lib/auth/postLoginRoute';
 
 function mapOtpError(message?: string) {
   const normalized = (message || '').toLowerCase();
@@ -30,17 +30,6 @@ export default function VerifyEmailPage() {
   const email = typeof router.query.email === 'string' ? router.query.email : '';
   const role = typeof router.query.role === 'string' ? router.query.role : '';
   const ref = typeof router.query.ref === 'string' ? router.query.ref : '';
-  const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-  const nextParam = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
-
-  const next = useMemo(() => {
-    if (nextParam) return nextParam;
-    const params = new URLSearchParams();
-    if (role) params.set('role', role);
-    if (ref) params.set('ref', ref);
-    return withQuery(ONBOARDING, Object.fromEntries(params));
-  }, [nextParam, ref, role]);
-
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [err, setErr] = useState<string | null>(null);
   const [code, setCode] = useState('');
@@ -56,12 +45,15 @@ export default function VerifyEmailPage() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!mounted) return;
-      if (session?.user) router.replace(next);
+      if (session?.user) {
+        const target = await resolvePostLoginRoute();
+        router.replace(target);
+      }
     })();
     return () => {
       mounted = false;
     };
-  }, [next, router]);
+  }, [router]);
 
   async function sendVerificationCode() {
     const { error } = await supabase.auth.signInWithOtp({
@@ -130,7 +122,8 @@ export default function VerifyEmailPage() {
     }
 
     setCodeStatus('verified');
-    await router.replace(next);
+    const target = await resolvePostLoginRoute();
+    await router.replace(target);
   }
 
   if (!email) {

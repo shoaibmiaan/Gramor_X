@@ -147,7 +147,7 @@ const Dashboard: NextPage = () => {
         const { data, error } = await supabaseBrowser
           .from('profiles')
           .select('*')
-          .eq('user_id', authUser.id)
+          .eq('id', authUser.id)
           .maybeSingle();
 
         if (cancelled) return;
@@ -163,6 +163,7 @@ const Dashboard: NextPage = () => {
 
         if (!p) {
           const minimal: Partial<Profile> = {
+            id: authUser.id,
             user_id: authUser.id,
             email: authUser.email ?? undefined,
             preferred_language: 'en',

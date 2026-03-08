@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { extractRole, type AppRole } from '@/lib/roles';
+import { findProfileByAuthId } from '@/lib/auth/profileLookup';
 
 /**
  * Resolve the application role for a Supabase user on the server.
@@ -13,18 +14,14 @@ export async function resolveUserRole(user: User | null | undefined): Promise<Ap
   if (metaRole) return metaRole;
 
   try {
-    const { data, error } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
+    const { profile } = await findProfileByAuthId<{ role?: string | null }>(
+      supabaseAdmin,
+      user.id,
+      'role',
+      { allowLegacyUserIdFallback: true },
+    );
 
-    if (error) {
-      // Silently ignore errors and treat as no role.
-      return null;
-    }
-
-    const value = data?.role ? String(data.role).toLowerCase() : null;
+    const value = profile?.role ? String(profile.role).toLowerCase() : null;
     return value === 'admin' || value === 'teacher' || value === 'student'
       ? (value as AppRole)
       : null;

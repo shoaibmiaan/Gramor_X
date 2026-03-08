@@ -9,9 +9,9 @@ import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
-import { destinationByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
+import { resolvePostLoginRoute } from '@/lib/auth/postLoginRoute';
 
 async function syncServerSession(session: Session | null) {
   try {
@@ -141,15 +141,7 @@ export default function LoginWithEmail() {
 
       await recordLoginEvent(data.session);
 
-      const {
-        data: { user },
-      } = await supabaseBrowser.auth.getUser();
-
-      const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-      const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
-
-      const fallback = user ? destinationByRole(user) : '/dashboard';
-      const target = safeNext ?? fallback;
+      const target = await resolvePostLoginRoute();
 
       try {
         await router.replace(target);
