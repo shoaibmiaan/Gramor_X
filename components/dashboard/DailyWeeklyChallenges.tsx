@@ -5,8 +5,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Skeleton } from '@/components/design-system/Skeleton';
-import { authHeaders } from '@/lib/supabaseBrowser';
-import type { ChallengeDefinition } from '@/pages/api/gamification/challenges';
+import { useChallenges } from '@/hooks/useChallenges';
 
 const SCOPE_LABEL: Record<'daily' | 'weekly', string> = {
   daily: 'Daily Challenge',
@@ -29,110 +28,44 @@ function formatReset(resetsAt: string | null): string {
   return `Resets in ${hours} hour${hours === 1 ? '' : 's'}`;
 }
 
-type ChallengeItem = ChallengeDefinition;
-
-type State = {
-  loading: boolean;
-  error: string | null;
-  challenges: ChallengeItem[];
-  busyId: string | null;
-  xpFlash?: { id: string; value: number } | null;
-};
-
 export function DailyWeeklyChallenges() {
-  const [state, setState] = React.useState<State>({
-    loading: true,
-    error: null,
-    challenges: [],
-    busyId: null,
-  });
+  const {
+    challenges,
+    challengesError,
+    progressError,
+    isChallengesLoading,
+    isChallengesValidating,
+    updatingChallengeId,
+    retryChallenges,
+    updateProgress,
+  } = useChallenges();
+  const [xpFlash, setXpFlash] = React.useState<{ id: string; value: number } | null>(null);
 
-  const load = React.useCallback(async () => {
-    setState((s) => ({ ...s, loading: true, error: null }));
-    try {
-      const res = await fetch('/api/gamification/challenges', {
-        headers: await authHeaders(),
-      });
-      if (!res.ok) {
-        throw new Error('Unable to load challenges');
-      }
-      const json = (await res.json()) as { ok: boolean; challenges?: ChallengeItem[]; error?: string };
-      if (!json.ok || !json.challenges) {
-        throw new Error(json.error || 'Unable to load challenges');
-      }
-      setState((s) => ({ ...s, loading: false, challenges: json.challenges }));
-    } catch (error: any) {
-      setState((s) => ({ ...s, loading: false, error: error?.message || 'Failed to load challenges' }));
-    }
-  }, []);
-
-  React.useEffect(() => {
-    void load();
-  }, [load]);
+  const error = challengesError || progressError;
 
   const increment = React.useCallback(
     async (challengeId: string) => {
-      setState((s) => ({ ...s, busyId: challengeId, error: null }));
       try {
-        const res = await fetch('/api/gamification/challenges/progress', {
-          method: 'POST',
-          headers: await authHeaders({ 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ challengeId }),
-        });
-        const json = (await res.json().catch(() => null)) as
-          | {
-              ok: boolean;
-              xpAwarded?: number;
-              progress?: {
-                challengeId: string;
-                progressCount: number;
-                totalMastered: number;
-                target: number;
-                lastIncrementedAt: string | null;
-                resetsAt: string | null;
-              };
-              error?: string;
-            }
-          | null;
-        if (!res.ok || !json || !json.ok || !json.progress) {
-          throw new Error(json?.error || 'Failed to update progress');
+        const result = await updateProgress(challengeId);
+        if (result.xpAwarded) {
+          setXpFlash({ id: challengeId, value: result.xpAwarded });
         }
-        setState((s) => ({
-          ...s,
-          busyId: null,
-          xpFlash: json.xpAwarded ? { id: challengeId, value: json.xpAwarded } : null,
-          challenges: s.challenges.map((challenge) =>
-            challenge.id === challengeId
-              ? {
-                  ...challenge,
-                  progress: {
-                    challengeId,
-                    progressCount: json.progress?.progressCount ?? 0,
-                    totalMastered: json.progress?.totalMastered ?? 0,
-                    target: json.progress?.target ?? challenge.goal,
-                    lastIncrementedAt: json.progress?.lastIncrementedAt ?? null,
-                    resetsAt: json.progress?.resetsAt ?? null,
-                  },
-                }
-              : challenge,
-          ),
-        }));
-      } catch (error: any) {
-        setState((s) => ({ ...s, busyId: null, error: error?.message || 'Failed to update challenge' }));
+      } catch {
+        // Error state is managed by the hook.
       }
     },
-    [],
+    [updateProgress],
   );
 
   React.useEffect(() => {
-    if (!state.xpFlash) return;
+    if (!xpFlash) return;
     const timer = setTimeout(() => {
-      setState((s) => ({ ...s, xpFlash: null }));
+      setXpFlash(null);
     }, 2000);
     return () => clearTimeout(timer);
-  }, [state.xpFlash]);
+  }, [xpFlash]);
 
-  if (state.loading) {
+  if (isChallengesLoading) {
     return (
       <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
         <div className="flex items-center justify-between">
@@ -148,38 +81,48 @@ export function DailyWeeklyChallenges() {
     );
   }
 
-  if (state.error) {
+  if (error) {
     return (
       <Card className="rounded-ds-2xl border border-danger/40 bg-danger/5 p-6 text-danger">
-        <h3 className="font-slab text-h5">{state.error}</h3>
+        <h3 className="font-slab text-h5">{error}</h3>
         <p className="mt-2 text-small">Please refresh or try again later.</p>
-        <Button variant="secondary" className="mt-4 rounded-ds-xl" onClick={() => void load()}>
+        <Button
+          variant="secondary"
+          className="mt-4 rounded-ds-xl"
+          onClick={() => void retryChallenges()}
+        >
           Retry
         </Button>
       </Card>
     );
   }
 
-  if (!state.challenges.length) {
+  if (!challenges.length) {
     return null;
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      {state.challenges.map((challenge) => {
+      {challenges.map((challenge) => {
         const progress = challenge.progress;
         const completed = progress?.progressCount ?? 0;
         const target = progress?.target ?? challenge.goal;
         const pct = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
-        const busy = state.busyId === challenge.id;
-        const xpFlash = state.xpFlash?.id === challenge.id ? state.xpFlash.value : null;
+        const busy = updatingChallengeId === challenge.id;
+        const flash = xpFlash?.id === challenge.id ? xpFlash.value : null;
+
         return (
-          <Card key={challenge.id} className="rounded-ds-2xl border border-border/60 bg-card/70 p-6">
+          <Card
+            key={challenge.id}
+            className="rounded-ds-2xl border border-border/60 bg-card/70 p-6"
+          >
             <div className="flex items-center justify-between">
               <Badge variant="secondary" size="sm">
                 {SCOPE_LABEL[challenge.type]}
               </Badge>
-              <span className="text-caption text-muted-foreground">{formatReset(progress?.resetsAt ?? null)}</span>
+              <span className="text-caption text-muted-foreground">
+                {formatReset(progress?.resetsAt ?? null)}
+              </span>
             </div>
             <h3 className="mt-3 font-slab text-h4 text-foreground">{challenge.title}</h3>
             <p className="mt-2 text-small text-muted-foreground">{challenge.description}</p>
@@ -192,9 +135,9 @@ export function DailyWeeklyChallenges() {
               <span>Total mastered: {progress?.totalMastered ?? 0}</span>
               <span className="hidden md:inline">•</span>
               <span>XP +{challenge.xpReward}</span>
-              {xpFlash ? (
+              {flash ? (
                 <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-                  +{xpFlash} XP!
+                  +{flash} XP!
                 </span>
               ) : null}
             </div>
@@ -207,7 +150,13 @@ export function DailyWeeklyChallenges() {
               aria-valuenow={completed}
             >
               <svg className="h-full w-full" aria-hidden focusable="false">
-                <rect width={`${pct}%`} height="100%" fill="currentColor" className="text-primary" rx="9999" />
+                <rect
+                  width={`${pct}%`}
+                  height="100%"
+                  fill="currentColor"
+                  className="text-primary"
+                  rx="9999"
+                />
               </svg>
             </div>
 
@@ -219,8 +168,13 @@ export function DailyWeeklyChallenges() {
               >
                 {busy ? 'Saving…' : completed >= target ? 'Completed' : 'Log collocation'}
               </Button>
-              <Button variant="secondary" className="rounded-ds-xl" onClick={() => void load()} disabled={busy}>
-                Refresh
+              <Button
+                variant="secondary"
+                className="rounded-ds-xl"
+                onClick={() => void retryChallenges()}
+                disabled={busy || isChallengesValidating}
+              >
+                {isChallengesValidating ? 'Refreshing…' : 'Refresh'}
               </Button>
             </div>
           </Card>

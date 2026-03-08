@@ -6,6 +6,7 @@ import { trackor } from '@/lib/analytics/trackor.server';
 import { createRequestLogger } from '@/lib/obs/logger';
 import { rateLimit } from '@/lib/rateLimit';
 import { getServerClient } from '@/lib/supabaseServer';
+import { updateStreak } from '@/lib/streak';
 import { SubmitBody } from '@/lib/writing/schemas';
 
 interface AcceptedResponse {
@@ -97,6 +98,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     request_id: requestId,
     ip: clientIp,
   });
+
+  await updateStreak(supabase, user.id);
 
   // TODO: enqueue scoring job via background worker
   return res.status(202).json({ accepted: true, attemptId });

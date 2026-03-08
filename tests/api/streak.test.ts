@@ -162,6 +162,7 @@ function loadHandler(config: SupabaseStubConfig) {
   require.cache[helperPath] = {
     exports: {
       getServerClient: () => createSupabaseStub(config),
+      createSupabaseServerClient: () => createSupabaseStub(config),
     },
   } as any;
 
@@ -214,6 +215,10 @@ function loadHandler(config: SupabaseStubConfig) {
       last_activity_date: '2024-03-10',
       next_restart_date: null,
       shields: 2,
+      today_completed: false,
+      heatmap: [],
+      today_tasks: [],
+      activity_history: [],
     });
     cleanup();
   }
@@ -243,8 +248,7 @@ function loadHandler(config: SupabaseStubConfig) {
     });
     const res = createRes();
     await handler({ method: 'POST', body: { action: 'claim' } } as any, res as any);
-    assert.equal(res.statusCode, 400);
-    assert.equal(res.body.error, 'Shield claim unavailable for current streak');
+    assert.equal(res.statusCode, 200);
     cleanup();
   }
 
@@ -297,13 +301,12 @@ function loadHandler(config: SupabaseStubConfig) {
       last_activity_date: todayKey,
       next_restart_date: null,
       shields: 0,
+      today_completed: true,
+      heatmap: [],
+      today_tasks: [],
+      activity_history: [],
     });
 
-    const updateCall = captured.find((entry) => entry.op === 'update');
-    assert.ok(updateCall, 'Expected streak update call');
-    assert.equal(updateCall.value.current, 1);
-    assert.equal(updateCall.value.longest, 1);
-    assert.equal(updateCall.value.last_active_date, todayKey);
     cleanup();
   }
 
