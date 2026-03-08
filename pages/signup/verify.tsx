@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useCountdown } from '@/hooks/useCountdown';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
@@ -42,10 +43,11 @@ export default function VerifyEmailPage() {
 
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [err, setErr] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(0);
   const [code, setCode] = useState('');
   const [codeStatus, setCodeStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
   const hasAutoSentCode = useRef(false);
+  const resendInFlightRef = useRef(false);
+  const { seconds: resendSeconds, running: resendRunning, start: startResendCooldown } = useCountdown(60);
 
   useEffect(() => {
     let mounted = true;
@@ -60,12 +62,6 @@ export default function VerifyEmailPage() {
       mounted = false;
     };
   }, [next, router]);
-
-  useEffect(() => {
-    if (cooldown <= 0) return;
-    const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
-    return () => clearInterval(id);
-  }, [cooldown]);
 
   async function sendVerificationCode() {
     const { error } = await supabase.auth.signInWithOtp({
@@ -89,16 +85,19 @@ export default function VerifyEmailPage() {
       setErr('We could not detect your email address.');
       return;
     }
-    if (status === 'sending' || cooldown > 0) return;
+    if (resendInFlightRef.current || status === 'sending' || resendRunning || resendSeconds > 0) return;
 
+    resendInFlightRef.current = true;
     setStatus('sending');
     try {
       await sendVerificationCode();
       setStatus('sent');
-      setCooldown(30);
+      startResendCooldown();
     } catch (error: any) {
       setErr(mapOtpError(error?.message));
       setStatus('error');
+    } finally {
+      resendInFlightRef.current = false;
     }
   }
 
@@ -195,8 +194,12 @@ export default function VerifyEmailPage() {
       </form>
 
       <div className="mt-6 space-y-4">
-        <Button onClick={onResend} className="w-full" disabled={status === 'sending' || cooldown > 0}>
-          {status === 'sending' ? 'Sending…' : cooldown > 0 ? `Resend (${cooldown}s)` : 'Resend code'}
+        <Button
+          onClick={onResend}
+          className="w-full"
+          disabled={status === 'sending' || resendInFlightRef.current || resendRunning || resendSeconds > 0}
+        >
+          {status === 'sending' ? 'Sending…' : resendSeconds > 0 ? `Resend OTP (${resendSeconds}s)` : 'Resend OTP'}
         </Button>
 
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
