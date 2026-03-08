@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useStreak } from '@/hooks/useStreak';
-import { getDayKeyInTZ } from '@/lib/streak';
 
 const cx = (...xs: Array<string | false | null | undefined>) => xs.filter(Boolean).join(' ');
 
@@ -9,7 +8,7 @@ type Props = {
   className?: string;
   value?: number; // external streak value; disables autoClaim
   compact?: boolean;
-  autoClaim?: boolean; // default: true (ignored if value is provided)
+  autoClaim?: boolean; // kept for compatibility; no passive auto-claim
   tone?: Tone;
 };
 
@@ -28,26 +27,15 @@ export const StreakIndicator: React.FC<Props> = ({
   className = '',
   value,
   compact = false,
-  autoClaim = true,
+  autoClaim = false,
   tone = 'electric',
 }) => {
-  const { current, lastDayKey, completeToday, loading, shields = 0, error } = useStreak();
-  const todayKey = React.useMemo(() => getDayKeyInTZ(), []);
-  const autoTriedRef = React.useRef(false);
+  const { current, loading, shields = 0, error } = useStreak();
+  void autoClaim;
 
   const streakValue = value ?? current;
 
-  // Auto-claim once (only when using internal hook value)
-  React.useEffect(() => {
-    if (value !== undefined) return; // external control → don't auto-claim
-    if (autoTriedRef.current || loading) return;
-    autoTriedRef.current = true;
-    if (autoClaim && lastDayKey !== todayKey) {
-      completeToday().catch((err) => {
-        console.error('Auto-claim failed:', err);
-      });
-    }
-  }, [value, autoClaim, loading, lastDayKey, todayKey, completeToday]);
+  // autoClaim intentionally disabled to avoid passive streak increments
 
   // subtle glow on change
   const [pulse, setPulse] = React.useState(false);
@@ -101,4 +89,4 @@ export const StreakIndicator: React.FC<Props> = ({
   );
 };
 
-export default StreakIndicator; 
+export default StreakIndicator;

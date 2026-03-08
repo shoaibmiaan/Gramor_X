@@ -12,6 +12,20 @@ import type {
 const STREAK_TIMEOUT_MS = 10_000;
 const DAY_MS = 86_400_000;
 
+export const ACTIONABLE_STREAK_ACTIVITY_TYPES = [
+  'writing',
+  'speaking',
+  'reading',
+  'vocabulary',
+  'ai_lesson',
+  'mock',
+] as const;
+
+export type ActionableStreakActivityType = (typeof ACTIONABLE_STREAK_ACTIVITY_TYPES)[number];
+
+export const isActionableStreakActivityType = (value: string): value is ActionableStreakActivityType =>
+  ACTIONABLE_STREAK_ACTIVITY_TYPES.includes(value as ActionableStreakActivityType);
+
 const STREAK_TASKS: Array<{ key: StreakTaskKey; label: string; href: string }> = [
   { key: 'writing', label: 'Writing submission', href: '/writing' },
   { key: 'speaking', label: 'Speaking practice', href: '/speaking/practice' },
@@ -209,11 +223,87 @@ async function buildRecentActivityHistory(
   return history.sort((a, b) => a.date.localeCompare(b.date));
 }
 
+async function buildCalendarFromAttempts(
+  client: SupabaseClient,
+  userId: string,
+  daysBack: number,
+): Promise<StreakCalendarEntry[]> {
+  const boundedDaysBack = Math.max(1, Math.min(365, Math.floor(daysBack)));
+  const today = new Date();
+  const start = new Date(today.getTime() - (boundedDaysBack - 1) * DAY_MS);
+
+  const fromIso = start.toISOString();
+  const toIso = new Date(today.getTime() + DAY_MS).toISOString();
+
+  const [writingRows, speakingRows, mockRows, readingRows, taskRunRows] = await Promise.all([
+    client
+      .from('writing_attempts')
+      .select('updated_at')
+      .eq('user_id', userId)
+      .gte('updated_at', fromIso)
+      .lt('updated_at', toIso),
+    client
+      .from('speaking_attempts')
+      .select('created_at')
+      .eq('user_id', userId)
+      .gte('created_at', fromIso)
+      .lt('created_at', toIso),
+    client
+      .from('mock_full_attempts')
+      .select('submitted_at')
+      .eq('user_id', userId)
+      .gte('submitted_at', fromIso)
+      .lt('submitted_at', toIso),
+    client
+      .from('reading_responses')
+      .select('created_at')
+      .eq('user_id', userId)
+      .gte('created_at', fromIso)
+      .lt('created_at', toIso),
+    client
+      .from('task_runs')
+      .select('completed_at')
+      .eq('user_id', userId)
+      .gte('completed_at', fromIso)
+      .lt('completed_at', toIso),
+  ]);
+
+  const responses = [writingRows, speakingRows, mockRows, readingRows, taskRunRows];
+  const responseTables = ['writing_attempts', 'speaking_attempts', 'mock_full_attempts', 'reading_responses', 'task_runs'];
+  responses.forEach((response, index) => {
+    if (response.error) {
+      const tableName = responseTables[index];
+      console.warn(`[streak] calendar fallback query failed for ${tableName}`, response.error.message);
+    }
+  });
+
+  const activeDays = new Set<string>();
+  const pushDate = (value: unknown) => {
+    if (typeof value !== 'string' || !value) return;
+    activeDays.add(getDayKeyInTZ(new Date(value), 'UTC'));
+  };
+
+  writingRows.data?.forEach((row: any) => pushDate(row?.updated_at));
+  speakingRows.data?.forEach((row: any) => pushDate(row?.created_at));
+  mockRows.data?.forEach((row: any) => pushDate(row?.submitted_at));
+  readingRows.data?.forEach((row: any) => pushDate(row?.created_at));
+  taskRunRows.data?.forEach((row: any) => pushDate(row?.completed_at));
+
+  const calendar: StreakCalendarEntry[] = [];
+  for (let offset = boundedDaysBack - 1; offset >= 0; offset -= 1) {
+    const date = new Date(today.getTime() - offset * DAY_MS);
+    const dayKey = getDayKeyInTZ(date, 'UTC');
+    calendar.push({ date: dayKey, active: activeDays.has(dayKey) });
+  }
+
+  return calendar;
+}
+
 export async function getUserStreak(client: SupabaseClient, userId: string): Promise<StreakSummary> {
   const timeZone = await resolveUserTimezone(client, userId);
   const today = getDayKeyInTZ(new Date(), timeZone);
 
-  const [{ data: streakData, error: streakErr }, { data: shieldData }, { data: historyData }, todayTasks, activityHistory] =
+  const [{ data: streakData, error: streakErr }, { data: shieldData }, todayTasks, activityHistory] =
     await Promise.all([
       client
         .from('streaks')
@@ -221,19 +311,18 @@ export async function getUserStreak(client: SupabaseClient, userId: string): Pro
         .eq('user_id', userId)
         .maybeSingle(),
       client.from('streak_shields').select('tokens').eq('user_id', userId).maybeSingle(),
-      client.rpc('get_streak_history', { p_user_id: userId, p_days_back: 84 }),
       buildTaskStatusForDay(client, userId, today),
       buildRecentActivityHistory(client, userId, timeZone, 21),
     ]);
 
   if (streakErr) throw streakErr;
 
-  const heatmap: StreakCalendarEntry[] = Array.isArray(historyData)
-    ? historyData.map((entry: any) => ({
-        date: String(entry?.date ?? ''),
-        active: Number(entry?.completed ?? 0) > 0,
-      }))
-    : [];
+  let heatmap: StreakCalendarEntry[] = [];
+  try {
+    heatmap = await getStreakCalendar(client, userId, 84);
+  } catch (error) {
+    console.warn('[streak] failed to build heatmap calendar; using empty heatmap', error);
+  }
 
   const lastActivity = streakData?.last_active_date ?? null;
 
@@ -287,6 +376,39 @@ export async function updateStreak(client: SupabaseClient, userId: string, now: 
   return getUserStreak(client, userId);
 }
 
+export async function completeToday(
+  client: SupabaseClient,
+  userId: string,
+  activityType: ActionableStreakActivityType,
+  metadata: Record<string, unknown> = {},
+  now: Date = new Date(),
+): Promise<StreakSummary> {
+  const timeZone = await resolveUserTimezone(client, userId);
+  const dayKey = getDayKeyInTZ(now, timeZone);
+
+  const { error: insertError } = await client.from('streak_activity_log').insert({
+    user_id: userId,
+    day_key: dayKey,
+    activity_type: activityType,
+    metadata,
+  });
+
+  if (insertError) {
+    const code = insertError.code ?? '';
+    if (code === '23505') {
+      return getUserStreak(client, userId);
+    }
+
+    if (code !== '42P01') {
+      throw insertError;
+    }
+
+    console.warn('[streak] streak_activity_log missing; falling back to aggregate streak update only');
+  }
+
+  return updateStreak(client, userId, now);
+}
+
 export async function resetStreak(client: SupabaseClient, userId: string): Promise<StreakSummary> {
   const { error } = await client
     .from('streaks')
@@ -300,18 +422,27 @@ export async function getStreakCalendar(
   userId: string,
   daysBack = 84,
 ): Promise<StreakCalendarEntry[]> {
+  const boundedDaysBack = Math.max(1, Math.min(365, Math.floor(daysBack)));
   const { data, error } = await client.rpc('get_streak_history', {
     p_user_id: userId,
-    p_days_back: Math.max(1, Math.min(365, Math.floor(daysBack))),
+    p_days_back: boundedDaysBack,
   });
 
-  if (error) throw error;
+  if (!error && Array.isArray(data)) {
+    return data.map((entry: any) => ({
+      date: String(entry?.date ?? ''),
+      active: Number(entry?.completed ?? 0) > 0,
+    }));
+  }
 
-  if (!Array.isArray(data)) return [];
-  return data.map((entry: any) => ({
-    date: String(entry?.date ?? ''),
-    active: Number(entry?.completed ?? 0) > 0,
-  }));
+  if (error) {
+    console.warn('[streak] get_streak_history rpc failed; using fallback calendar builder', {
+      code: error.code,
+      message: error.message,
+    });
+  }
+
+  return buildCalendarFromAttempts(client, userId, boundedDaysBack);
 }
 
 export function computeDailyStreak(entries: { date: string | Date }[]): { currentStreak: number; longestStreak: number } {

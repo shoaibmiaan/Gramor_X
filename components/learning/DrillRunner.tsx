@@ -1,14 +1,11 @@
 // components/learning/DrillRunner.tsx (example)
 import React from 'react';
-import { useStreak } from '@/hooks/useStreak';
 import { Button } from '@/components/design-system/Button';
 
 export const DrillRunner: React.FC = () => {
-  const { completeToday } = useStreak();
-
   const onDrillCompleted = async () => {
     // ... existing save/score logic
-    await completeToday(); // increments streak safely (server-validated)
+    // completion is persisted by actionable API submissions only
   };
 
   return (

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { getUserStreak, updateStreak } from '@/lib/streak';
+import { completeToday, getUserStreak, isActionableStreakActivityType } from '@/lib/streak';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createSupabaseServerClient({ req, res });
@@ -18,13 +18,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === 'POST') {
       const action = (req.body as { action?: string } | null)?.action;
+      const activityType = (req.body as { activityType?: string } | null)?.activityType;
+      const metadata = (req.body as { metadata?: Record<string, unknown> } | null)?.metadata ?? {};
       if (action === 'schedule' || action === 'claim' || action === 'use') {
         // Shield/recovery actions remain no-op for current streak engine but keep API compatibility.
         const streak = await getUserStreak(supabase, user.id);
         return res.status(200).json(streak);
       }
 
-      const streak = await updateStreak(supabase, user.id);
+      if (typeof activityType === 'string' && isActionableStreakActivityType(activityType)) {
+        const streak = await completeToday(supabase, user.id, activityType, metadata);
+        return res.status(200).json(streak);
+      }
+
+      const streak = await getUserStreak(supabase, user.id);
       return res.status(200).json(streak);
     }
 

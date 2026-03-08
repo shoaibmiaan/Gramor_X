@@ -11,7 +11,7 @@ import { StreakChip } from '@/components/user/StreakChip';
 import { Alert } from '@/components/design-system/Alert';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { getServerClient } from '@/lib/supabaseServer';
-import { getStreakCalendar, getUserStreak } from '@/lib/streak';
+import { getUserStreak } from '@/lib/streak';
 import { useLocale } from '@/lib/locale';
 
 const Heatmap = dynamic(
@@ -241,15 +241,10 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     };
   }
 
-  const DAYS_BACK = 84;
-
   try {
-    const [streakSummary, calendar] = await Promise.all([
-      getUserStreak(supabase, user.id),
-      getStreakCalendar(supabase, user.id, DAYS_BACK),
-    ]);
+    const streakSummary = await getUserStreak(supabase, user.id);
 
-    const history = calendar.map((entry) => ({
+    const history = streakSummary.heatmap.map((entry) => ({
       date: entry.date,
       completed: entry.active ? 1 : 0,
       total: 1,
