@@ -9,8 +9,10 @@ import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Card } from '@/components/design-system/Card';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient';
 import { getPlan, isPaidPlan, type PlanId } from '@/types/pricing';
+import { safePush } from '@/lib/safeRouterPush';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 import {
   Timeline,
@@ -51,6 +53,7 @@ type BillingSummaryResponse =
   | { ok: false; error: string };
 
 export default function AccountHubPage() {
+  useRequireAuth();
   const router = useRouter();
   const [email, setEmail] = React.useState<string | null>(null);
   const [sending, setSending] = React.useState(false);
@@ -278,10 +281,6 @@ export default function AccountHubPage() {
     }
     return parts;
   }, [summary, dateFormatter]);
-
-  const safePush = (href: string) => {
-    if (router.asPath !== href) void router.push(href);
-  };
 
   const handleReset = async () => {
     if (!email || sending) return;
@@ -604,7 +603,7 @@ export default function AccountHubPage() {
               <div className="mt-4">
                 <Button
                   variant="soft"
-                  onClick={() => safePush('/settings/language')}
+                  onClick={() => safePush(router, '/settings/language')}
                   className="w-full"
                 >
                   <Globe className="mr-2 h-4 w-4" />
@@ -639,7 +638,7 @@ export default function AccountHubPage() {
                 </div>
                 <Button
                   variant="soft"
-                  onClick={() => safePush('/settings/notifications')}
+                  onClick={() => safePush(router, '/settings/notifications')}
                   className="mt-3 w-full"
                 >
                   <Bell className="mr-2 h-4 w-4" />
@@ -665,7 +664,7 @@ export default function AccountHubPage() {
               </div>
               <Button
                 variant="soft"
-                onClick={() => safePush('/settings/accessibility')}
+                onClick={() => safePush(router, '/settings/accessibility')}
                 className="w-full"
               >
                 <SettingsIcon className="mr-2 h-4 w-4" />
@@ -713,7 +712,7 @@ export default function AccountHubPage() {
                 </Button>
                 <Button
                   variant="soft"
-                  onClick={() => safePush('/settings/security')}
+                  onClick={() => safePush(router, '/settings/security')}
                   className="w-full"
                 >
                   <Shield className="mr-2 h-4 w-4" />

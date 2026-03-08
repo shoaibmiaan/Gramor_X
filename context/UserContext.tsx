@@ -79,7 +79,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [],
   );
 
-  const load = useCallback(async () => {
+  const loadSession = useCallback(async () => {
     setLoading(true);
     try {
       const {
@@ -100,7 +100,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     mounted.current = true;
 
-    void load();
+    void loadSession();
 
     const {
       data: { subscription },
@@ -109,22 +109,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const nextUser = session?.user ?? null;
       setUser(nextUser);
       applyRole(nextUser?.id);
+      setLoading(false);
     });
 
     return () => {
       mounted.current = false;
       subscription?.unsubscribe?.();
     };
-  }, [load, applyRole]);
+  }, [loadSession, applyRole]);
 
   const value = useMemo<UserContextValue>(
     () => ({
       user,
       role,
       loading,
-      refresh: load,
+      refresh: loadSession,
     }),
-    [user, role, loading, load]
+    [user, role, loading, loadSession]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

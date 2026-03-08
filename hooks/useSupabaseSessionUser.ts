@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient';
 
 export function useSupabaseSessionUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -12,7 +12,7 @@ export function useSupabaseSessionUser() {
 
     const loadSession = async () => {
       try {
-        const { data } = await supabaseBrowser.auth.getSession();
+        const { data } = await supabase.auth.getSession();
         if (!cancelled) {
           setUser(data.session?.user ?? null);
         }
@@ -30,7 +30,7 @@ export function useSupabaseSessionUser() {
 
     void loadSession();
 
-    const { data: authListener } = supabaseBrowser.auth.onAuthStateChange((_, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
       if (!cancelled) {
         setUser(session?.user ?? null);
       }

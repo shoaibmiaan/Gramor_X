@@ -9,14 +9,16 @@ import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient';
 import { destinationByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
+import { useUserContext } from '@/context/UserContext';
 
 export default function LoginWithEmail() {
   const router = useRouter();
+  const { user, loading: userLoading } = useUserContext();
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [emailErr, setEmailErr] = useState<string | null>(null);
@@ -33,6 +35,35 @@ export default function LoginWithEmail() {
     error: mfaErr,
     setError: setMfaErr,
   } = useEmailLoginMFA();
+
+  React.useEffect(() => {
+    if (!userLoading && user) {
+      void router.replace('/dashboard');
+    }
+  }, [user, userLoading, router]);
+
+
+  const resolveTarget = React.useCallback((currentUser: { id?: string } | null) => {
+    const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
+    const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
+    const fallback = currentUser ? destinationByRole(currentUser as any) : '/dashboard';
+    return safeNext ?? fallback;
+  }, [router.query.next]);
+
+  const navigateAfterAuth = React.useCallback(async (currentUser: { id?: string } | null) => {
+    const target = resolveTarget(currentUser);
+    await supabase.auth.getSession();
+    setTimeout(() => {
+      void router.replace(target);
+    }, 50);
+  }, [resolveTarget, router]);
+
+  const handleVerifyOtp = React.useCallback((e: React.FormEvent) =>
+    verifyOtp(e, async () => {
+      const { data: { user: sessionUser } } = await supabase.auth.getUser();
+      await navigateAfterAuth(sessionUser);
+    }),
+  [navigateAfterAuth, verifyOtp]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -132,7 +163,7 @@ export default function LoginWithEmail() {
       }
 
       // If login is successful, set session and proceed
-      await supabaseBrowser.auth
+      await supabase.auth
         .setSession({
           access_token: body.session.access_token,
           refresh_token: body.session.refresh_token,
@@ -144,7 +175,7 @@ export default function LoginWithEmail() {
       const {
         data: { user },
         error: userError,
-      } = await supabaseBrowser.auth.getUser();
+      } = await supabase.auth.getUser();
       if (userError) console.error('Get user failed:', userError);
 
       // Skip OTP if both email and password are provided
@@ -153,25 +184,22 @@ export default function LoginWithEmail() {
           await syncServerSession(body.session);
         }
 
-        await recordLoginEvent(body.session);
-
-        const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-        const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
-
-        const fallback = user ? destinationByRole(user) : '/dashboard';
-        const target = safeNext ?? fallback;
-
         try {
-          await router.replace(target);
+          await navigateAfterAuth(user);
+          void recordLoginEvent(body.session);
         } catch (err) {
+          const target = resolveTarget(user);
           console.error('Redirect after login failed:', err);
           if (typeof window !== 'undefined') window.location.assign(target);
+          void recordLoginEvent(body.session);
         }
         return;
       }
 
       // If MFA (OTP) is required, trigger the challenge
-      const challenged = await createChallenge(user).catch(err => console.error('Create challenge failed:', err));
+      const challenged = await createChallenge(user, async () => {
+        await navigateAfterAuth(user);
+      }).catch(err => console.error('Create challenge failed:', err));
       if (challenged) return;
 
       // Rely on _app.tsx onAuthStateChange to redirect
@@ -227,7 +255,7 @@ export default function LoginWithEmail() {
           </p>
         </form>
       ) : (
-        <form onSubmit={verifyOtp} className="space-y-6 mt-2 max-w-xs">
+        <form onSubmit={handleVerifyOtp} className="space-y-6 mt-2 max-w-xs">
           <Input
             label="Enter OTP"
             value={otp}
