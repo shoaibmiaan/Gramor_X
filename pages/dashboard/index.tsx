@@ -687,73 +687,49 @@ const Dashboard: NextPage = () => {
         </Container>
       </section>
 
-      {/* Innovation modals (unchanged) */}
+      {/* Innovation modals */}
       {showAICoach && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowAICoach(false)}
+        <AccessibleModal isOpen={showAICoach} onClose={() => setShowAICoach(false)} title="AI Coach" maxWidthClassName="max-w-4xl">
+          <AICoachPanel
+            onClose={() => setShowAICoach(false)}
+            profile={
+              profile
+                ? { user_id: profile.user_id, full_name: profile.full_name }
+                : null
+            }
+            onOpenStudyBuddy={() => {
+              setShowAICoach(false);
+              setShowStudyBuddy(true);
+            }}
           />
-          <div className="relative w-full max-w-4xl rounded-ds-2xl p-6">
-            <AICoachPanel
-              onClose={() => setShowAICoach(false)}
-              profile={
-                profile
-                  ? { user_id: profile.user_id, full_name: profile.full_name }
-                  : null
-              }
-              onOpenStudyBuddy={() => {
-                setShowAICoach(false);
-                setShowStudyBuddy(true);
-              }}
-            />
-          </div>
-        </div>
+        </AccessibleModal>
       )}
 
       {showStudyBuddy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowStudyBuddy(false)}
+        <AccessibleModal isOpen={showStudyBuddy} onClose={() => setShowStudyBuddy(false)} title="Study Buddy">
+          <StudyBuddyPanel
+            onClose={() => setShowStudyBuddy(false)}
+            profile={profile ?? null}
           />
-          <div className="relative w-full max-w-3xl rounded-ds-2xl p-6">
-            <StudyBuddyPanel
-              onClose={() => setShowStudyBuddy(false)}
-              profile={profile ?? null}
-            />
-          </div>
-        </div>
+        </AccessibleModal>
       )}
 
       {showMistakesBook && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowMistakesBook(false)}
+        <AccessibleModal isOpen={showMistakesBook} onClose={() => setShowMistakesBook(false)} title="Mistakes Book">
+          <MistakesBookPanel
+            onClose={() => setShowMistakesBook(false)}
+            userId={sessionUserId}
           />
-          <div className="relative w-full max-w-3xl rounded-ds-2xl p-6">
-            <MistakesBookPanel
-              onClose={() => setShowMistakesBook(false)}
-              userId={sessionUserId}
-            />
-          </div>
-        </div>
+        </AccessibleModal>
       )}
 
       {showWhatsAppTasks && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowWhatsAppTasks(false)}
+        <AccessibleModal isOpen={showWhatsAppTasks} onClose={() => setShowWhatsAppTasks(false)} title="WhatsApp Tasks" maxWidthClassName="max-w-2xl">
+          <WhatsAppTasksPanel
+            onClose={() => setShowWhatsAppTasks(false)}
+            userId={sessionUserId}
           />
-          <div className="relative w-full max-w-2xl rounded-ds-2xl p-6">
-            <WhatsAppTasksPanel
-              onClose={() => setShowWhatsAppTasks(false)}
-              userId={sessionUserId}
-            />
-          </div>
-        </div>
+        </AccessibleModal>
       )}
     </>
   );
