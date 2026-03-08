@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient'; // Use supabaseClient as the single source of truth
-import { redirectByRole } from '@/lib/routeAccess';
+import type { User } from '@supabase/supabase-js';
+
+import { supabase } from '@/lib/supabaseClient';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 
-// Helper to initiate an MFA challenge for a given user
-export async function createMfaChallengeForUser(user: any) {
+export async function createMfaChallengeForUser(user: User | null) {
   const factors = (user as any)?.factors ?? [];
   if (!factors.length) return { factorId: null, challengeId: null };
   const f = factors[0];
@@ -15,15 +15,25 @@ export async function createMfaChallengeForUser(user: any) {
   return { factorId: f.id as string, challengeId: challenge?.id ?? null };
 }
 
-// Helper to verify an MFA challenge
-export async function verifyMfaOtp(factorId: string, challengeId: string, code: string) {
+export async function verifyMfaOtp(
+  factorId: string,
+  challengeId: string,
+  code: string,
+  onVerified?: () => void | Promise<void>,
+) {
   const { error } = await supabase.auth.mfa.verify({ factorId, challengeId, code });
   if (error) {
     return { error: getAuthErrorMessage(error) };
   }
-  try { await fetch('/api/auth/login-event', { method: 'POST' }); } catch {}
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) redirectByRole(user);
+
+  await supabase.auth.getSession();
+
+  setTimeout(() => {
+    void onVerified?.();
+  }, 50);
+
+  void fetch('/api/auth/login-event', { method: 'POST' }).catch(console.error);
+
   return { error: null };
 }
 
@@ -35,7 +45,7 @@ export default function useEmailLoginMFA() {
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function createChallenge(user: any) {
+  async function createChallenge(user: User | null, onVerified?: () => void | Promise<void>) {
     const res = await createMfaChallengeForUser(user);
     if (res.error) {
       setError(res.error);
@@ -47,14 +57,20 @@ export default function useEmailLoginMFA() {
       setOtpSent(true);
       return true;
     }
+
+    if (onVerified) {
+      await onVerified();
+      return true;
+    }
+
     return false;
   }
 
-  async function verifyOtp(e?: React.FormEvent) {
+  async function verifyOtp(e?: React.FormEvent, onVerified?: () => void | Promise<void>) {
     if (e) e.preventDefault();
     if (!factorId || !challengeId) return;
     setVerifying(true);
-    const res = await verifyMfaOtp(factorId, challengeId, otp);
+    const res = await verifyMfaOtp(factorId, challengeId, otp, onVerified);
     setVerifying(false);
     if (res.error) setError(res.error);
   }

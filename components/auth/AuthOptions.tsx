@@ -14,7 +14,7 @@ import {
   SmsIcon,
 } from '@/components/design-system/icons';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient';
 import { destinationByRole } from '@/lib/routeAccess';
 
 type AuthMode = 'login' | 'signup';
@@ -53,7 +53,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
         const {
           data: { session },
           error,
-        } = await supabaseBrowser.auth.getSession();
+        } = await supabase.auth.getSession();
 
         if (!mounted) return;
 
@@ -149,7 +149,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
 
       const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
 
-      const { error } = await supabaseBrowser.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,

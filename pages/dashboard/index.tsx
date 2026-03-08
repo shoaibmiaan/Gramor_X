@@ -10,13 +10,14 @@ import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
 
-import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { supabase } from '@/lib/supabaseClient';
 import { useStreak } from '@/hooks/useStreak';
 import { getDayKeyInTZ } from '@/lib/streak';
 import { useSignedAvatar } from '@/hooks/useSignedAvatar';
 import { useChallengeEnrollments } from '@/hooks/useChallengeEnrollments';
 import { useNextTask } from '@/hooks/useNextTask';
 import { useStudyPlan } from '@/hooks/useStudyPlan';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 import { badges } from '@/data/badges';
 import { VocabularySpotlightFeature } from '@/components/feature/VocabularySpotlight';
@@ -72,6 +73,7 @@ const loadingSkeleton = (
 );
 
 const Dashboard: NextPage = () => {
+  useRequireAuth();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -123,7 +125,7 @@ const Dashboard: NextPage = () => {
         if (typeof window !== 'undefined') {
           const url = window.location.href;
           if (url.includes('code=') || url.includes('access_token=')) {
-            const { error } = await supabaseBrowser.auth.exchangeCodeForSession(url);
+            const { error } = await supabase.auth.exchangeCodeForSession(url);
             if (!error) {
               await window.history.replaceState({}, '', '/dashboard');
             }
@@ -132,7 +134,7 @@ const Dashboard: NextPage = () => {
 
         const {
           data: { session },
-        } = await supabaseBrowser.auth.getSession();
+        } = await supabase.auth.getSession();
 
         const authUser = session?.user ?? null;
         setSessionUserId(authUser?.id ?? null);
@@ -144,7 +146,7 @@ const Dashboard: NextPage = () => {
         }
 
         // Load or create minimal profile
-        const { data, error } = await supabaseBrowser
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', authUser.id)
@@ -169,7 +171,7 @@ const Dashboard: NextPage = () => {
             onboarding_complete: false,
           };
 
-          const { data: created, error: insertErr } = await supabaseBrowser
+          const { data: created, error: insertErr } = await supabase
             .from('profiles')
             .insert(minimal)
             .select('*')
