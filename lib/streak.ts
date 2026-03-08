@@ -289,7 +289,7 @@ export async function getUserStreak(client: SupabaseClient, userId: string): Pro
   const timeZone = await resolveUserTimezone(client, userId);
   const today = getDayKeyInTZ(new Date(), timeZone);
 
-  const [{ data: streakData, error: streakErr }, { data: shieldData }, todayTasks, activityHistory, calendar] =
+  const [{ data: streakData, error: streakErr }, { data: shieldData }, todayTasks, activityHistory] =
     await Promise.all([
       client
         .from('streaks')
@@ -299,12 +299,16 @@ export async function getUserStreak(client: SupabaseClient, userId: string): Pro
       client.from('streak_shields').select('tokens').eq('user_id', userId).maybeSingle(),
       buildTaskStatusForDay(client, userId, today),
       buildRecentActivityHistory(client, userId, timeZone, 21),
-      getStreakCalendar(client, userId, 84),
     ]);
 
   if (streakErr) throw streakErr;
 
-  const heatmap: StreakCalendarEntry[] = calendar;
+  let heatmap: StreakCalendarEntry[] = [];
+  try {
+    heatmap = await getStreakCalendar(client, userId, 84);
+  } catch (error) {
+    console.warn('[streak] failed to build heatmap calendar; using empty heatmap', error);
+  }
 
   const lastActivity = streakData?.last_active_date ?? null;
 
