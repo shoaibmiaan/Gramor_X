@@ -10,12 +10,12 @@ const Body = z.object({
       z.number().int(),
       z.string().transform((v) => {
         const n = Number.parseInt(v, 10);
-        return Number.isNaN(n) ? 12 : n;
+        return Number.isNaN(n) ? 5 : n;
       }),
     ])
     .optional(),
   channels: z
-    .array(z.enum(['email', 'whatsapp', 'in_app']))
+    .array(z.enum(['email', 'whatsapp', 'in-app']))
     .min(1)
     .optional(),
 });
@@ -53,11 +53,11 @@ export default async function handler(
   const body = normalizeBody(req);
   const parse = Body.safeParse(body);
 
-  let step = 12;
-  let channels: ('email' | 'whatsapp' | 'in_app')[] | undefined;
+  let step = 5;
+  let channels: ('email' | 'whatsapp' | 'in-app')[] | undefined;
 
   if (parse.success) {
-    step = parse.data.step ?? 12;
+    step = parse.data.step ?? 5;
     channels = parse.data.channels;
   } else {
     console.warn(

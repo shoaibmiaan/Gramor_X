@@ -1,6 +1,6 @@
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/design-system/Button';
 import { Card } from '@/components/design-system/Card';
@@ -58,13 +58,6 @@ function buildPlanOptions(userId: string, state: OnboardingState): PlanGenOption
     startISO: new Date().toISOString(),
     examDateISO: state.examDate ? new Date(state.examDate).toISOString() : addDaysISO(28),
     availability,
-    weaknesses: state.weaknesses ?? undefined,
-    currentLevel: state.currentLevel ?? undefined,
-    previousIelts: state.previousIelts ?? undefined,
-    confidence: state.confidence ?? undefined,
-    diagnostic: state.diagnostic ?? undefined,
-    minutesPerDay: state.studyMinutesPerDay ?? minutes,
-    daysPerWeek: selectedDays.length,
   };
 }
 
@@ -75,9 +68,14 @@ const OnboardingStudyPlanPage: NextPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
-  const [estimatedBand, setEstimatedBand] = useState<number | null>(null);
 
-  const nextPath = '/onboarding/notifications';
+  const nextPath = useMemo(() => {
+    const raw = router.query.next;
+    if (typeof raw === 'string' && raw && raw !== '/dashboard') {
+      return raw;
+    }
+    return '/study-plan';
+  }, [router.query.next]);
 
   const generatePlan = useCallback(async () => {
     setStatus('generating');
@@ -106,7 +104,6 @@ const OnboardingStudyPlanPage: NextPage = () => {
       const onboardingState = (await onboardingRes.json()) as OnboardingState;
       const options = buildPlanOptions(user.id, onboardingState);
       const generatedPlan = generateStudyPlan(options);
-      setEstimatedBand(onboardingState.diagnostic?.estimated_band ?? null);
 
       const elapsed = Date.now() - startedAt;
       if (elapsed < 1500) {
@@ -206,11 +203,6 @@ const OnboardingStudyPlanPage: NextPage = () => {
                 <p className="text-sm text-muted-foreground sm:text-base">
                   Confirm this plan to continue, or regenerate if you want a different balance.
                 </p>
-                {typeof estimatedBand === 'number' && (
-                  <div className="rounded-xl border border-primary/40 bg-primary/10 p-3 text-sm">
-                    Estimated current band from diagnostic: <span className="font-semibold">{estimatedBand.toFixed(1)}</span>
-                  </div>
-                )}
               </div>
 
               <div className="grid gap-3 rounded-2xl border border-border bg-card/60 p-4 text-sm sm:grid-cols-3">
@@ -245,7 +237,7 @@ const OnboardingStudyPlanPage: NextPage = () => {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button onClick={handleContinue}>Continue to notifications</Button>
+                <Button onClick={handleContinue}>Continue with this plan</Button>
                 <Button variant="secondary" onClick={() => void generatePlan()}>
                   Regenerate plan
                 </Button>
