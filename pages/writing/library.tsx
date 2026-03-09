@@ -52,9 +52,9 @@ const planLibraryLimit: Record<PlanId, number> = {
 
 const planLibraryCopy: Record<PlanId, string> = {
   free: 'Preview a handful of prompts and upgrade to unlock full filters and AI tools.',
-  starter: 'Seedling members access the latest 100 prompts with full filtering.',
-  booster: 'Rocket unlocks 500 prompts with detailed outlines and metadata.',
-  master: 'Owl includes the full 500 prompt vault and on-demand AI generation.',
+  starter: 'Starter members access the latest 100 prompts with full filtering.',
+  booster: 'Booster unlocks 500 prompts with detailed outlines and metadata.',
+  master: 'Master includes the full 500 prompt vault and on-demand AI generation.',
 };
 
 interface LibraryPageProps {

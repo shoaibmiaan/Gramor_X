@@ -28,10 +28,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userAgentHeader = req.headers['user-agent'];
     const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : userAgentHeader ?? null;
 
-    const [profileRes, bookmarksRes, subscriptionsRes, studyPlansRes, attemptsRes, invoicesRes, activeSubscription, subscriptionActive] = await Promise.all([
+    const [profileRes, bookmarksRes, studyPlansRes, attemptsRes, invoicesRes, activeSubscription, subscriptionActive] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('user_bookmarks').select('*').eq('user_id', user.id),
-      supabase.from('subscriptions').select('*').eq('user_id', user.id),
       supabase.from('study_plans').select('*').eq('user_id', user.id),
       supabase.from('attempts').select('*').eq('user_id', user.id),
       supabase.from('invoices').select('*').eq('user_id', user.id),
@@ -43,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw profileRes.error;
     }
 
-    for (const response of [bookmarksRes, subscriptionsRes, studyPlansRes, attemptsRes, invoicesRes]) {
+    for (const response of [bookmarksRes, studyPlansRes, attemptsRes, invoicesRes]) {
       if (response.error) {
         throw response.error;
       }
@@ -52,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const exportData = {
       profile: profileRes.data ?? null,
       bookmarks: bookmarksRes.data ?? [],
-      subscriptions: subscriptionsRes.data ?? [],
+      subscriptions: [],
       subscriptionSummary: {
         plan: activeSubscription.plan,
         standardPlanName: getStandardPlanName(activeSubscription.plan),

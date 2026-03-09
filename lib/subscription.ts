@@ -16,6 +16,28 @@ export type ActiveSubscription = Readonly<{
   trialEndsAt?: string;
 }>;
 
+export type InactiveSubscriptionErrorPayload = {
+  error: 'subscription_inactive';
+  message: string;
+  code: 'SUBSCRIPTION_INACTIVE';
+  requiredPlan: Exclude<PlanId, 'free'>;
+  currentPlan: PlanId;
+  status: SubscriptionStatus;
+  upgradeUrl: string;
+};
+
+export class InactiveSubscriptionError extends Error {
+  statusCode: number;
+  payload: InactiveSubscriptionErrorPayload;
+
+  constructor(payload: InactiveSubscriptionErrorPayload, statusCode = 402) {
+    super(payload.message);
+    this.name = 'InactiveSubscriptionError';
+    this.statusCode = statusCode;
+    this.payload = payload;
+  }
+}
+
 type RawSubscriptionRow = {
   id?: string | null;
   user_id?: string | null;
@@ -315,9 +337,36 @@ export async function isSubscriptionActive(userId: string): Promise<boolean> {
 export async function requireActiveSubscription(userId: string): Promise<ActiveSubscription> {
   const sub = await getActiveSubscription(userId);
   if (!ACTIVE_STATUSES.has(sub.status) || sub.plan === 'free') {
-    throw new Error('Active subscription required');
+    throw new InactiveSubscriptionError({
+      error: 'subscription_inactive',
+      message: 'An active paid subscription is required',
+      code: 'SUBSCRIPTION_INACTIVE',
+      requiredPlan: 'starter',
+      currentPlan: sub.plan,
+      status: sub.status,
+      upgradeUrl: '/pricing?required=starter',
+    });
   }
   return sub;
+}
+
+export function inactiveSubscriptionResponse(
+  current: Pick<ActiveSubscription, 'plan' | 'status'>,
+  requiredPlan: Exclude<PlanId, 'free'>,
+  statusCode = 402,
+): InactiveSubscriptionError {
+  return new InactiveSubscriptionError(
+    {
+      error: 'subscription_inactive',
+      message: 'Upgrade required',
+      code: 'SUBSCRIPTION_INACTIVE',
+      requiredPlan,
+      currentPlan: current.plan,
+      status: current.status,
+      upgradeUrl: `/pricing?required=${requiredPlan}`,
+    },
+    statusCode,
+  );
 }
 
 export async function getUserPlan(userId: string): Promise<PlanId> {
