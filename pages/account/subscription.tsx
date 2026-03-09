@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/design-system/Skeleton';
 import { useToast } from '@/components/design-system/Toaster';
 import { GlobalPlanGuard } from '@/components/GlobalPlanGuard';
 import { useLocale } from '@/lib/locale';
+import { getStandardPlanName } from '@/lib/subscription';
 import type { PlanId } from '@/types/pricing';
 
 type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
@@ -42,26 +43,26 @@ type PlanDisplay = {
 
 const PLAN_DISPLAY: Record<SubscriptionPlanKey, PlanDisplay> = {
   free: {
-    name: 'Free',
+    name: getStandardPlanName('free'),
     features: ['Basic access', 'Limited mocks', 'Community support'],
     price: '$0',
   },
   starter: {
-    name: 'Starter',
+    name: getStandardPlanName('starter'),
     features: ['More mocks', 'Basic analytics', 'Email reminders'],
     price: '$5.99/month',
     priceMonthly: 599,
     currency: 'USD',
   },
   booster: {
-    name: 'Booster',
+    name: getStandardPlanName('booster'),
     features: ['Full mocks', 'Band analytics', 'AI feedback'],
     price: '$9.99/month',
     priceMonthly: 999,
     currency: 'USD',
   },
   master: {
-    name: 'Master',
+    name: getStandardPlanName('master'),
     features: ['Everything in Booster', 'Teacher tools', 'Priority support'],
     price: '$14.99/month',
     priceMonthly: 1499,

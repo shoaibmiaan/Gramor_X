@@ -5,6 +5,9 @@ import { coercePlanId, PLAN_RANK, type PlanId } from '@/types/pricing';
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
 
+export const CANONICAL_PLAN_IDS = ['free', 'starter', 'booster', 'master'] as const;
+export type CanonicalPlanId = (typeof CANONICAL_PLAN_IDS)[number];
+
 export type ActiveSubscription = Readonly<{
   userId: string;
   plan: PlanId;
@@ -50,9 +53,23 @@ type TransitionStatusInput = SubscriptionStatus | 'unpaid';
 
 const ACTIVE_STATUSES = new Set<SubscriptionStatus>(['active', 'trialing']);
 const STATUS_VALUES = new Set<SubscriptionStatus>(['active', 'trialing', 'canceled', 'incomplete', 'past_due']);
+const STANDARD_PLAN_NAMES: Record<CanonicalPlanId, string> = {
+  free: 'Free',
+  starter: 'Starter',
+  booster: 'Booster',
+  master: 'Master',
+};
 
 export function normalizePlan(plan?: string | null): PlanId {
-  return coercePlanId(plan ?? 'free');
+  const raw = (plan ?? 'free').trim().toLowerCase();
+  const aliases: Record<string, PlanId> = {
+    premium: 'master',
+    pro: 'master',
+    rocket: 'booster',
+    seedling: 'starter',
+    owl: 'master',
+  };
+  return aliases[raw] ?? coercePlanId(raw);
 }
 
 export function normalizeSubscriptionStatus(status?: string | null): SubscriptionStatus {
@@ -65,8 +82,9 @@ function normalizeTransitionStatus(status: TransitionStatusInput): SubscriptionS
   return normalizeSubscriptionStatus(status);
 }
 
-export function getStandardPlanName(planId: string): PlanId {
-  return normalizePlan(planId);
+export function getStandardPlanName(planId: string): string {
+  const canonical = normalizePlan(planId) as CanonicalPlanId;
+  return STANDARD_PLAN_NAMES[canonical] ?? STANDARD_PLAN_NAMES.free;
 }
 
 export function getPlanTiers(): Array<{ id: PlanId; rank: number; label: string }> {

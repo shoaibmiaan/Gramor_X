@@ -12,6 +12,7 @@ import { ProgressBar } from '@/components/design-system/ProgressBar';
 import { Separator } from '@/components/design-system/Separator';
 
 import { usePlan } from '@/hooks/usePlan';
+import { getStandardPlanName, normalizePlan } from '@/lib/subscription';
 
 // Optional: plan selector already in your repo
 import PlanPicker from '@/components/payments/PlanPicker';
@@ -89,7 +90,7 @@ const PricingOverviewPage: React.FC = () => {
   const [counters, setCounters] = useState<CountersResponse>({});
   const [sub, setSub] = useState<SubscriptionSummary | null>(null);
 
-  const planLabel = (hookPlan ?? sub?.plan ?? 'free').toString();
+  const planLabel = getStandardPlanName(normalizePlan((hookPlan ?? sub?.plan ?? 'free').toString()));
 
   // Counters (non-fatal if unauthenticated)
   useEffect(() => {
@@ -154,7 +155,7 @@ const PricingOverviewPage: React.FC = () => {
                 Your current plan, quotas and upgrade options.
               </p>
             </div>
-            <Badge variant="brand">{planLabel.toUpperCase()}</Badge>
+            <Badge variant="brand">{planLabel}</Badge>
           </div>
 
           {/* Your Plan */}

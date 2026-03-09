@@ -1,6 +1,7 @@
 // pages/api/premium/eligibility.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { normalizePlan } from '@/lib/subscription';
 
 // Use service role client for token verification (no refresh needed)
 const supabaseAdmin = createClient(
@@ -38,8 +39,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({ eligible: false, plan: null, reason: 'no_profile' });
   }
 
-  const plan = profile.plan as string | null;
-  const eligible = plan === 'premium' || plan === 'master';
+  const plan = normalizePlan((profile.plan as string | null) ?? 'free');
+  const eligible = plan === 'master' || plan === 'booster' || plan === 'starter';
 
   return res.status(200).json({ eligible, plan, reason: eligible ? undefined : 'plan_required' });
 }

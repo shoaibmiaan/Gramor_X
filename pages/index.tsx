@@ -9,6 +9,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import Icon, { type IconName } from '@/components/design-system/Icon';
+import { getStandardPlanName } from '@/lib/subscription';
 
 const modules = [
   {
@@ -130,7 +131,7 @@ const quickLinks = [
   },
   {
     label: 'Check pricing & plans',
-    description: 'Free vs Rocket vs higher tiers.',
+    description: 'Free vs Booster vs higher tiers.',
     href: '/pricing',
     icon: 'CreditCard' as IconName,
   },
@@ -166,7 +167,7 @@ const testimonials = [
 const plans = [
   {
     id: 'free',
-    name: 'Free',
+    name: getStandardPlanName('free'),
     price: '0',
     tag: 'Start here',
     bullets: [
@@ -176,8 +177,8 @@ const plans = [
     ],
   },
   {
-    id: 'rocket',
-    name: 'Rocket',
+    id: 'booster',
+    name: getStandardPlanName('booster'),
     price: 'Best for 6.5 → 7.5+',
     tag: 'Most popular',
     bullets: [
@@ -271,7 +272,7 @@ const LandingPage: React.FC = () => {
                     <Icon name="ShieldCheck" size={14} /> No-card free tier
                   </span>
                   <span>•</span>
-                  <span>AI usage is capped on Free and unlocked on Rocket</span>
+                  <span>AI usage is capped on Free and unlocked on Booster</span>
                 </div>
               </div>
 
@@ -554,7 +555,7 @@ const LandingPage: React.FC = () => {
                   Start free. Upgrade when you’re serious.
                 </h2>
                 <p className="mt-1 text-small text-grayish md:max-w-xl">
-                  Free covers basic practice and a taste of AI. Rocket unlocks deeper
+                  Free covers basic practice and a taste of AI. Booster unlocks deeper
                   feedback and more mocks. Institutional is for teachers and academies.
                 </p>
               </div>
@@ -607,7 +608,7 @@ const LandingPage: React.FC = () => {
                     <Button
                       asChild
                       size="sm"
-                      variant={plan.id === 'rocket' ? 'primary' : 'secondary'}
+                      variant={plan.id === 'booster' ? 'primary' : 'secondary'}
                       className="w-full rounded-ds-xl"
                     >
                       <Link href="/pricing">
@@ -639,7 +640,7 @@ const LandingPage: React.FC = () => {
                     no spam, no fake urgency.
                   </p>
                   <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <li>• First wave gets discounted Rocket pricing.</li>
+                    <li>• First wave gets discounted Booster pricing.</li>
                     <li>• Teachers / academies can request a separate call.</li>
                   </ul>
                 </div>
