@@ -72,6 +72,25 @@ export const PlanGenOptionsSchema = z
         { message: 'duplicate_day' },
       ),
     weaknesses: z.array(z.string().min(1)).max(16).optional(),
+    currentLevel: z.string().optional(),
+    previousIelts: z
+      .object({
+        taken: z.boolean(),
+        overallBand: z.number().min(0).max(9).nullable().optional(),
+        testDate: z.string().nullable().optional(),
+      })
+      .optional(),
+    confidence: z.object({ writing: z.number().min(1).max(5), speaking: z.number().min(1).max(5) }).optional(),
+    diagnostic: z
+      .object({
+        grammar: z.string(),
+        coherence: z.string(),
+        vocabulary: z.string(),
+        estimated_band: z.number().min(0).max(9),
+      })
+      .optional(),
+    minutesPerDay: z.number().int().min(10).max(360).optional(),
+    daysPerWeek: z.number().int().min(1).max(7).optional(),
   })
   .strict();
 
@@ -149,9 +168,9 @@ function defaultMinutes(type: TaskType): number {
   }
 }
 
-function computeIntensity(targetBand: number): number {
-  // Around band 6 => neutral. Above => slightly more volume, below => gentler pace.
-  const delta = targetBand - 6;
+function computeIntensity(targetBand: number, baselineBand?: number): number {
+  const anchor = typeof baselineBand === 'number' ? baselineBand : 6;
+  const delta = targetBand - anchor;
   return clamp(1 + delta * 0.15, 0.85, 1.35);
 }
 
