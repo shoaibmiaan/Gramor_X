@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 
 import { getServerClient } from '@/lib/supabaseServer';
 import { hasPlan } from '@/lib/planAccess';
+import { normalizePlan } from '@/lib/subscription';
 import type { PlanId } from '@/types/pricing';
 import { flags, resolveFlags, serverEnabled, type FlagAudience, type FeatureFlagKey } from '@/lib/flags';
 
@@ -31,13 +32,6 @@ export type PlanGuardOptions = {
   killSwitchFlag?: FeatureFlagKey;
 };
 
-function normalisePlan(raw?: string | null): PlanId {
-  if (!raw) return 'free';
-  const value = raw.toLowerCase();
-  if (value === 'starter' || value === 'booster' || value === 'master') return value;
-  return 'free';
-}
-
 function buildAudience(user: User, plan: PlanId, role: string | null): PlanGuardAudience {
   return {
     plan,
@@ -60,7 +54,7 @@ async function loadProfilePlan(
     return { plan: 'free', role: null };
   }
 
-  const plan = normalisePlan((data as { plan?: string | null }).plan ?? null);
+  const plan = normalizePlan((data as { plan?: string | null }).plan ?? null);
   const role = ((data as { role?: string | null }).role ?? null) as string | null;
   return { plan, role };
 }

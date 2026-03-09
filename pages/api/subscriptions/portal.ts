@@ -2,6 +2,7 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
+import { normalizePlan, normalizeSubscriptionStatus } from '@/lib/subscription';
 
 type Invoice = Readonly<{
   id: string;
@@ -78,8 +79,8 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   if (!stripe || !customerId) {
     const fallback: SummaryResponse = {
       subscription: {
-        plan: (profile?.membership as any) || 'free',
-        status: (profile?.subscription_status as any) || 'canceled',
+        plan: normalizePlan((profile?.membership as string | null | undefined) ?? 'free'),
+        status: normalizeSubscriptionStatus(profile?.subscription_status as string | null | undefined),
         renewsAt: profile?.subscription_renews_at || undefined,
         trialEndsAt: profile?.trial_ends_at || undefined,
       },
@@ -97,8 +98,8 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
     'free';
 
   const summary: SubscriptionSummary = {
-    plan: ['starter', 'booster', 'master'].includes(priceNickname) ? priceNickname : 'free',
-    status: ((sub?.status as SubscriptionSummary['status']) || 'canceled'),
+    plan: normalizePlan(priceNickname),
+    status: normalizeSubscriptionStatus(sub?.status),
     renewsAt: sub?.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined,
     trialEndsAt: sub?.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined,
   };

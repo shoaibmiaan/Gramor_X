@@ -2,16 +2,10 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { normalizePlan } from '@/lib/subscription';
+import { PLAN_RANK, type PlanId } from '@/types/pricing';
 
-type PlanId = 'free' | 'starter' | 'booster' | 'master';
 type Role = 'user' | 'admin' | 'teacher' | 'org' | null;
-
-const PLAN_ORDER: Record<PlanId, number> = {
-  free: 0,
-  starter: 1,
-  booster: 2,
-  master: 3,
-};
 
 type GuardOptions = {
   /** Additional roles that should bypass the plan check */
@@ -73,7 +67,7 @@ export function withPlan(
 
     // Compare plans
     const currentPlan: PlanId = normalizePlan(profile.plan);
-    if (PLAN_ORDER[currentPlan] >= PLAN_ORDER[required]) {
+    if (PLAN_RANK[currentPlan] >= PLAN_RANK[required]) {
       return handler(req, res);
     }
 
@@ -87,7 +81,3 @@ export function withPlan(
   };
 }
 
-function normalizePlan(plan: PlanId | string | null | undefined): PlanId {
-  const p = (plan ?? 'free').toLowerCase();
-  return p === 'starter' || p === 'booster' || p === 'master' ? p : 'free';
-}

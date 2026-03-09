@@ -5,14 +5,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { resolveFlags, type FlagAudience } from '@/lib/flags';
 import { getServerClient } from '@/lib/supabaseServer';
-import type { PlanId } from '@/types/pricing';
-
-const normalisePlan = (raw?: string | null): PlanId => {
-  if (!raw) return 'free';
-  const lower = raw.toLowerCase();
-  if (lower === 'starter' || lower === 'booster' || lower === 'master') return lower;
-  return 'free';
-};
+import { normalizePlan } from '@/lib/subscription';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -35,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('id', user.id)
       .maybeSingle();
 
-    const plan = normalisePlan((data as { plan?: string | null } | null)?.plan ?? null);
+    const plan = normalizePlan((data as { plan?: string | null } | null)?.plan ?? null);
     const role = ((data as { role?: string | null } | null)?.role ?? null) as string | null;
     audience = { plan, role, userId: user.id };
   }

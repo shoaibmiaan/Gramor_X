@@ -1,15 +1,10 @@
 // pages/api/me/plan.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { getUserPlan } from '@/lib/subscription';
 import type { PlanId } from '@/types/pricing';
 
 type Resp = { ok: true; plan: PlanId } | { ok: false; plan: PlanId };
-
-function normalize(s?: string | null): PlanId {
-  const v = (s ?? 'free').toLowerCase();
-  if (v === 'starter' || v === 'booster' || v === 'master' || v === 'free') return v;
-  return 'free';
-}
 
 function isEmailInAdminList(email?: string | null) {
   if (!email) return false;
@@ -47,6 +42,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(200).json({ ok: true, plan: 'master' });
   }
 
-  const plan = normalize(profile?.plan_id as string | undefined);
+  const plan = await getUserPlan(user.id);
   return res.status(200).json({ ok: true, plan });
 }

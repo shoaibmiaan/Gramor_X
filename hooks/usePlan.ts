@@ -18,7 +18,7 @@ async function fetchPlan(url: string): Promise<PlanResponse> {
 
 export function usePlan(initialPlan?: PlanId) {
   const { data, error, isLoading, mutate, isValidating } = useSWR<PlanResponse>(
-    '/api/me/plan',
+    '/api/subscription/plan',
     fetchPlan,
     {
       revalidateOnFocus: false,
