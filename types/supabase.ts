@@ -773,6 +773,24 @@ export interface PushToken extends TableBase {
   expires_at?: string | null;
 }
 
+export interface UserOnboarding extends TableBase {
+  user_id: string;
+  current_step: number;
+  completed_steps: number[];
+  onboarding_completed: boolean;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  country?: string | null;
+  native_language?: string | null;
+  target_band?: 5 | 6 | 7 | 8 | 9 | null;
+  english_level?: 'beginner' | 'intermediate' | 'advanced' | null;
+  test_date?: string | null;
+  goal_type?: 'immigration' | 'university' | 'job' | 'general improvement' | null;
+  daily_study_minutes?: string | null;
+  skill_focus?: Array<'reading' | 'writing' | 'speaking' | 'listening' | 'grammar' | 'vocabulary'> | null;
+}
+
 export interface MobileEvent extends TableBase {
   user_id: string;
   token_id?: string | null;
@@ -799,6 +817,7 @@ export interface DBSchema {
   leaderboards_daily: LeaderboardDaily;
   user_prefs: UserPrefs;
   profiles: Profiles;
+  user_onboarding: UserOnboarding;
   study_plans: StudyPlans;
   usage_counters: UsageCounters;
   attempts: Attempts;
