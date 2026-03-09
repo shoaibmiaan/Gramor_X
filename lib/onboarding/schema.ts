@@ -9,7 +9,30 @@ export const languageOptions = [
 
 const LanguageEnum = z.enum(supportedLanguageCodes);
 const StudyDayEnum = z.enum(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const);
+export const NotificationChannelEnum = z.enum(['in_app', 'whatsapp', 'email'] as const);
 const PhoneSchema = z.union([z.string().min(6).max(32), z.literal('')]);
+
+export const LanguageBody = z.object({
+  language: LanguageEnum,
+});
+
+export const TargetBandBody = z.object({
+  targetBand: z.number().min(4).max(9),
+});
+
+export const ExamDateBody = z.object({
+  timeframe: z.string().trim().min(1),
+  examDate: z.string().trim().min(1).optional().nullable(),
+});
+
+export const StudyRhythmBody = z.object({
+  rhythm: z.string().trim().min(1),
+});
+
+export const NotificationsBody = z.object({
+  channels: z.array(NotificationChannelEnum).min(1),
+  preferredTime: z.string().trim().min(1).optional().nullable(),
+});
 
 export const onboardingStateSchema = z.object({
   preferredLanguage: LanguageEnum.nullable(),
