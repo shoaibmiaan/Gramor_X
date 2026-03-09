@@ -4,6 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { logAccountAudit } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { getActiveSubscription, getStandardPlanName, isSubscriptionActive } from '@/lib/subscription';
 import { sendTransactionalEmail } from '@/lib/email';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -27,20 +28,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userAgentHeader = req.headers['user-agent'];
     const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : userAgentHeader ?? null;
 
-    const [profileRes, bookmarksRes, subscriptionsRes, studyPlansRes, attemptsRes, invoicesRes] = await Promise.all([
+    const [profileRes, bookmarksRes, studyPlansRes, attemptsRes, invoicesRes, activeSubscription, subscriptionActive] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('user_bookmarks').select('*').eq('user_id', user.id),
-      supabase.from('subscriptions').select('*').eq('user_id', user.id),
       supabase.from('study_plans').select('*').eq('user_id', user.id),
       supabase.from('attempts').select('*').eq('user_id', user.id),
       supabase.from('invoices').select('*').eq('user_id', user.id),
+      getActiveSubscription(user.id),
+      isSubscriptionActive(user.id),
     ]);
 
     if (profileRes.error && profileRes.error.code !== 'PGRST116') {
       throw profileRes.error;
     }
 
-    for (const response of [bookmarksRes, subscriptionsRes, studyPlansRes, attemptsRes, invoicesRes]) {
+    for (const response of [bookmarksRes, studyPlansRes, attemptsRes, invoicesRes]) {
       if (response.error) {
         throw response.error;
       }
@@ -49,7 +51,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const exportData = {
       profile: profileRes.data ?? null,
       bookmarks: bookmarksRes.data ?? [],
-      subscriptions: subscriptionsRes.data ?? [],
+      subscriptions: [],
+      subscriptionSummary: {
+        plan: activeSubscription.plan,
+        standardPlanName: getStandardPlanName(activeSubscription.plan),
+        status: activeSubscription.status,
+        isActive: subscriptionActive,
+        renewsAt: activeSubscription.renewsAt ?? null,
+        trialEndsAt: activeSubscription.trialEndsAt ?? null,
+      },
       studyPlans: studyPlansRes.data ?? [],
       attempts: attemptsRes.data ?? [],
       invoices: invoicesRes.data ?? [],

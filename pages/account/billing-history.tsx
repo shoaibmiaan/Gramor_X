@@ -13,8 +13,6 @@ import { Badge } from '@/components/design-system/Badge';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { useToast } from '@/components/design-system/Toaster';
 import { useLocale } from '@/lib/locale';
-import { fetchProfile } from '@/lib/profile';
-import type { Profile } from '@/types/profile';
 import { GlobalPlanGuard } from '@/components/GlobalPlanGuard';
 import type { PlanId } from '@/types/pricing';
 
@@ -39,7 +37,8 @@ export default function BillingHistoryPage() {
   const { t, locale } = useLocale();
   const { error: toastError } = useToast();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<PlanId>('free');
+  const [hasSubscription, setHasSubscription] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,27 +70,29 @@ export default function BillingHistoryPage() {
     (async () => {
       setLoading(true);
       try {
-        // First get profile to ensure authenticated and get customer info
-        const fetchedProfile = await fetchProfile();
-        if (cancelled) return;
-        if (!fetchedProfile) {
-          throw new Error('Profile not found');
-        }
-        setProfile(fetchedProfile);
+        const [planRes, summaryRes, historyRes] = await Promise.all([
+          fetch('/api/subscription/plan', { credentials: 'include' }),
+          fetch('/api/billing/summary', { credentials: 'include' }),
+          fetch('/api/billing/history', {
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          }),
+        ]);
 
-        // Fetch billing history via API route
-        const response = await fetch('/api/billing/history', {
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
+        if (!planRes.ok || !summaryRes.ok || !historyRes.ok) {
+          const failed = [planRes, summaryRes, historyRes].find((res) => !res.ok) ?? historyRes;
+          const data = await failed.json().catch(() => ({}));
           throw new Error(data.error || t('billingHistory.error.fetch', 'Failed to fetch billing history'));
         }
 
-        const data: InvoicesResponse = await response.json();
+        const planData = (await planRes.json()) as { plan: PlanId };
+        const summaryData = (await summaryRes.json()) as { summary?: { plan?: PlanId; status?: string } };
+        const data: InvoicesResponse = await historyRes.json();
         if (cancelled) return;
+
+        setCurrentPlan(planData.plan ?? summaryData.summary?.plan ?? 'free');
+        const status = summaryData.summary?.status ?? 'canceled';
+        setHasSubscription(status === 'active' || status === 'trialing');
 
         setInvoices(data.invoices || []);
         setHasMore(data.hasMore || false);
@@ -118,9 +119,6 @@ export default function BillingHistoryPage() {
       cancelled = true;
     };
   }, [router, t, toastError]);
-
-  const currentPlan: PlanId = profile?.tier ?? 'free';
-  const hasSubscription = !!profile?.stripe_customer_id && profile.subscription_status === 'active';
 
   // Status badge variant
   const getStatusVariant = (status: Invoice['status']): React.ComponentProps<typeof Badge>['variant'] => {

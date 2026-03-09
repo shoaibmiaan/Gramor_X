@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { env } from '@/lib/env';
 import { getServerClient } from '@/lib/supabaseServer';
 import { getAdminClient } from '@/lib/supabaseAdmin';
+import { applyPinOrManualProvisioning } from '@/lib/subscription';
 
 type Plan = 'starter' | 'booster' | 'master';
 
@@ -190,16 +191,13 @@ export default async function handler(
   const premiumUntil = new Date();
   premiumUntil.setUTCDate(premiumUntil.getUTCDate() + grantDays);
 
-  // Update user profile (uses admin client to avoid RLS snags)
-  await admin
-    .from('user_profiles') // NOTE: your schema predominantly references `user_profiles`
-    .update({
-      membership: plan,
-      premium_until: premiumUntil.toISOString(),
-      subscription_status: 'active',
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', user.id);
+  await applyPinOrManualProvisioning({
+    userId: user.id,
+    plan,
+    provider: 'pin',
+    eventId: `premium-pin:${(pinRow as any).id ?? user.id}:${plan}`,
+    premiumUntil: premiumUntil.toISOString(),
+  });
 
   // Invalidate the PIN so it can't be reused
   await admin.from('premium_pins').delete().eq('user_id', user.id);

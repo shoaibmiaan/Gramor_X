@@ -3,11 +3,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { getServerClient } from '@/lib/supabaseServer';
+import { getPlanPricing } from '@/lib/subscription';
+import { normalizeCycleInput, type Cycle } from '@/types/payments';
 
 const Body = z.object({
   payment_method_id: z.string(),
   plan: z.enum(['free','starter','booster','master']).default('starter'),
-  cycle: z.enum(['monthly','yearly']).default('monthly'),
+  cycle: z.enum(['monthly','annual','yearly']).default('monthly'),
   billing_details: z.object({
     name: z.string().optional(),
     phone: z.string().optional(),
@@ -23,11 +25,9 @@ const Body = z.object({
 const stripeKey = process.env.STRIPE_SECRET_KEY || '';
 const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2024-06-20' }) : null;
 
-function amountFor(plan: 'free'|'starter'|'booster'|'master', cycle: 'monthly'|'yearly') {
-  if (plan === 'starter') return cycle === 'monthly' ? 900 : 9000;
-  if (plan === 'booster') return cycle === 'monthly' ? 1900 : 19000;
-  if (plan === 'master')  return cycle === 'monthly' ? 3900 : 39000;
-  return 0;
+function amountFor(plan: 'free'|'starter'|'booster'|'master', cycle: Cycle) {
+  const pricing = getPlanPricing(plan);
+  return cycle === 'monthly' ? pricing.monthlyCents : pricing.annualCents;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -41,7 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!stripe) return res.status(503).json({ error: 'stripe_not_configured' });
 
-  const { payment_method_id, plan, cycle, billing_details } = parse.data;
+  const { payment_method_id, plan, cycle: cycleInput, billing_details } = parse.data;
+  const cycle: Cycle = normalizeCycleInput(cycleInput);
 
   try {
     // Customer (you can optimize by caching customer_id per user)

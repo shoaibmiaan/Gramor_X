@@ -1,6 +1,7 @@
 // lib/payments/gateway.ts
 import { env } from '@/lib/env';
-import { getPlanBillingAmount, type Cycle, type PlanKey } from '@/lib/pricing';
+import { getPlanPricing } from '@/lib/subscription';
+import { type Cycle, type PlanKey } from '@/lib/pricing';
 import { initiateEasypaisa } from '@/lib/payments/easypaisa';
 import { initiateJazzCash } from '@/lib/payments/jazzcash';
 import { initiateSafepay } from '@/lib/payments/safepay';
@@ -29,8 +30,8 @@ export type CreateGatewayIntentInput = Readonly<{
 }>;
 
 export function amountInCents(plan: PlanKey, cycle: Cycle): number {
-  const major = getPlanBillingAmount(plan, cycle);
-  return Math.round(major * 100);
+  const pricing = getPlanPricing(plan);
+  return cycle === 'monthly' ? pricing.monthlyCents : pricing.annualCents;
 }
 
 const stripePriceMap: Record<PlanKey, Record<Cycle, string | undefined>> = {

@@ -5,8 +5,9 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import Icon from '@/components/design-system/Icon';
 import { Badge } from '@/components/design-system/Badge';
+import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
 
-type PlanId = 'free' | 'rocket' | 'institution';
+type PlanId = 'free' | 'booster' | 'institution';
 
 type Plan = {
   id: PlanId;
@@ -21,15 +22,15 @@ type Plan = {
   features: string[];
 };
 
-const plans: Plan[] = [
+export const PRICING_SECTION_PLANS: Plan[] = [
   {
     id: 'free',
-    name: 'Free',
+    name: getStandardPlanName('free'),
     tagline: 'Start IELTS prep without friction.',
-    priceLine: '$0 — no card required',
+    priceLine: `$${getPlanPricing('free').monthly} — no card required`,
     note: 'Best for testing the platform and light weekly use.',
     href: '/signup',
-    ctaLabel: 'Start on Free',
+    ctaLabel: `Start on ${getStandardPlanName('free')}`,
     features: [
       'Access to all four modules in limited mode',
       'A few AI writing / speaking checks each month',
@@ -39,17 +40,17 @@ const plans: Plan[] = [
     ]
   },
   {
-    id: 'rocket',
-    name: 'Rocket',
+    id: 'booster',
+    name: getStandardPlanName('booster'),
     tagline: 'Serious prep for 6.0 → 7.0+ journeys.',
     highlight: true,
     badge: 'Most popular (planned)',
-    priceLine: 'Intro pricing will launch with the next cohort',
-    note: 'For learners who want consistent AI feedback and deeper analytics.',
+    priceLine: `$${getPlanPricing('booster').monthly}/month (or $${getPlanPricing('booster').monthlyDisplayFromAnnual}/mo annual)`,
+    note: `Billed $${getPlanPricing('booster').annual}/year on annual plan.`,
     href: '#waitlist',
-    ctaLabel: 'Join Rocket waitlist',
+    ctaLabel: `Join ${getStandardPlanName('booster')} waitlist`,
     features: [
-      'Everything in Free, plus higher AI usage limits',
+      `Everything in ${getStandardPlanName('free')}, plus higher AI usage limits`,
       'Deeper band-style feedback for Writing & Speaking',
       'More full mock attempts per month',
       'Access to AI Lab and “Before / After” comparisons',
@@ -95,10 +96,10 @@ const Pricing: React.FC = () => {
           Pricing & plans
         </p>
         <h2 className="mt-2 font-slab text-2xl md:text-3xl text-foreground">
-          Start free. Upgrade to Rocket when you&apos;re serious.
+          Start free. Upgrade to Booster when you&apos;re serious.
         </h2>
         <p className="mt-3 text-xs md:text-sm text-muted-foreground">
-          Free gives you enough to get a feel for the platform. Rocket is where we unlock
+          Free gives you enough to get a feel for the platform. Booster is where we unlock
           higher AI limits, more mocks, and deeper analytics. Institutional plans are for
           teachers and academies who need cohort-level visibility.
         </p>
@@ -106,7 +107,7 @@ const Pricing: React.FC = () => {
 
       {/* Plans grid */}
       <div className="grid gap-6 md:grid-cols-3 mb-10">
-        {plans.map((plan) => (
+        {PRICING_SECTION_PLANS.map((plan) => (
           <Card
             key={plan.id}
             interactive
@@ -151,7 +152,7 @@ const Pricing: React.FC = () => {
               <Button
                 as="a"
                 href={plan.href}
-                variant={plan.id === 'rocket' ? 'primary' : 'secondary'}
+                variant={plan.id === 'booster' ? 'primary' : 'secondary'}
                 size="sm"
                 className="w-full rounded-ds-xl"
               >
@@ -167,7 +168,7 @@ const Pricing: React.FC = () => {
         <div className="inline-flex items-center gap-2">
           <Icon name="Info" size={14} />
           <span>
-            We&apos;re finalizing exact Rocket pricing with early cohorts. Joining the
+            We&apos;re finalizing exact Booster pricing with early cohorts. Joining the
             waitlist means we&apos;ll email you before anything gets charged.
           </span>
         </div>

@@ -6,8 +6,16 @@ import type { User } from '@supabase/supabase-js';
 
 import { getServerClient } from '@/lib/supabaseServer';
 import { hasPlan } from '@/lib/planAccess';
+import {
+  getUserPlan,
+  getActiveSubscription,
+  requireActiveSubscription,
+  InactiveSubscriptionError,
+  inactiveSubscriptionResponse,
+  type SubscriptionStatus,
+} from '@/lib/subscription';
 import type { PlanId } from '@/types/pricing';
-import { flags, resolveFlags, serverEnabled, type FlagAudience, type FeatureFlagKey } from '@/lib/flags';
+import { resolveFlags, serverEnabled, type FlagAudience, type FeatureFlagKey } from '@/lib/flags';
 
 export type PlanGuardAudience = FlagAudience & {
   plan: PlanId;
@@ -19,6 +27,7 @@ export type PlanGuardContext = {
   user: User;
   plan: PlanId;
   role: string | null;
+  subscriptionStatus: SubscriptionStatus;
   supabase: ReturnType<typeof getServerClient>;
   audience: PlanGuardAudience;
   flags: Record<string, boolean>;
@@ -31,13 +40,6 @@ export type PlanGuardOptions = {
   killSwitchFlag?: FeatureFlagKey;
 };
 
-function normalisePlan(raw?: string | null): PlanId {
-  if (!raw) return 'free';
-  const value = raw.toLowerCase();
-  if (value === 'starter' || value === 'booster' || value === 'master') return value;
-  return 'free';
-}
-
 function buildAudience(user: User, plan: PlanId, role: string | null): PlanGuardAudience {
   return {
     plan,
@@ -49,20 +51,23 @@ function buildAudience(user: User, plan: PlanId, role: string | null): PlanGuard
 async function loadProfilePlan(
   supabase: ReturnType<typeof getServerClient>,
   userId: string,
-): Promise<{ plan: PlanId; role: string | null }> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('plan, role')
-    .eq('id', userId)
-    .maybeSingle();
+): Promise<{ plan: PlanId; role: string | null; status: SubscriptionStatus }> {
+  const [{ data, error }, sub] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle(),
+    getActiveSubscription(userId),
+  ]);
 
+  const plan = await getUserPlan(userId);
   if (error || !data) {
-    return { plan: 'free', role: null };
+    return { plan, role: null, status: sub.status };
   }
 
-  const plan = normalisePlan((data as { plan?: string | null }).plan ?? null);
   const role = ((data as { role?: string | null }).role ?? null) as string | null;
-  return { plan, role };
+  return { plan, role, status: sub.status };
 }
 
 async function checkKillSwitch(
@@ -108,11 +113,11 @@ export function withPlan(
         return null;
       }
 
-      const { plan, role } = await loadProfilePlan(supabase, user.id);
+      const { plan, role, status } = await loadProfilePlan(supabase, user.id);
       const audience = buildAudience(user, plan, role);
       const flagsSnapshot = await resolveFlags(audience);
 
-      return { supabase, user, plan, role, audience, flags: flagsSnapshot };
+      return { supabase, user, plan, role, subscriptionStatus: status, audience, flags: flagsSnapshot };
     };
 
     const allowRoles = new Set<AllowedRole>([...(options.allowRoles ?? []), 'admin']);
@@ -141,14 +146,22 @@ export function withPlan(
       return;
     }
 
+    try {
+      await requireActiveSubscription(context.user.id);
+    } catch (error) {
+      if (error instanceof InactiveSubscriptionError) {
+        res.setHeader('X-Required-Plan', required);
+        const inactive = inactiveSubscriptionResponse({ plan: context.plan, status: context.subscriptionStatus }, required);
+        deny(res, inactive.statusCode, inactive.payload);
+        return;
+      }
+      throw error;
+    }
+
     if (!hasPlan(context.plan, required)) {
       res.setHeader('X-Required-Plan', required);
-      deny(res, 402, {
-        error: 'Upgrade required',
-        requiredPlan: required,
-        currentPlan: context.plan,
-        upgradeUrl: `/pricing?required=${required}`,
-      });
+      const inactive = inactiveSubscriptionResponse({ plan: context.plan, status: context.subscriptionStatus }, required);
+      deny(res, inactive.statusCode, inactive.payload);
       return;
     }
 

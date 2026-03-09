@@ -1,8 +1,13 @@
-// lib/subscriptions.ts
 import type Stripe from 'stripe';
 
-export type SubscriptionPlan = 'starter' | 'booster' | 'master' | 'free';
-export type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
+import {
+  normalizePlan,
+  normalizeSubscriptionStatus,
+  type SubscriptionStatus,
+} from '@/lib/subscription';
+import type { PlanId } from '@/types/pricing';
+
+export type SubscriptionPlan = PlanId;
 
 export type Invoice = Readonly<{
   id: string;
@@ -25,12 +30,10 @@ export function summarizeFromStripe(
   fallbackPlan: SubscriptionPlan = 'free'
 ): SubscriptionSummary {
   const nickname = (sub?.items?.data?.[0]?.price?.nickname ?? '').toString().toLowerCase();
-  const plan: SubscriptionPlan =
-    nickname === 'starter' || nickname === 'booster' || nickname === 'master' ? (nickname as SubscriptionPlan) : fallbackPlan;
 
   return {
-    plan,
-    status: ((sub?.status as SubscriptionStatus) ?? 'canceled'),
+    plan: normalizePlan(nickname || fallbackPlan),
+    status: normalizeSubscriptionStatus(sub?.status),
     renewsAt: sub?.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined,
     trialEndsAt: sub?.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined,
   };
@@ -47,3 +50,5 @@ export function mapStripeInvoice(i: Stripe.Invoice): Invoice {
     status: (i.status as Invoice['status']) ?? 'open',
   };
 }
+
+export { normalizePlan, normalizeSubscriptionStatus } from '@/lib/subscription';

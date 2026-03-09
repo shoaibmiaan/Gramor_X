@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
 import { getServerClient } from '@/lib/supabaseServer';
+import { getUserPlan } from '@/lib/subscription';
 
 export type QuotaResult = { ok: true } | { ok: false; reason: string };
 
@@ -12,7 +13,7 @@ const TEACHER_BYPASS =
  * Check per-user quota for a usage `key`, with role bypass (admin, optional teacher).
  * Strategy (in order):
  *  1) Bypass for admin (and teacher if enabled).
- *  2) get_user_plan(user) → plan_limits(plan_id,key) → get_usage_today(user,key) → compare (fail-closed).
+ *  2) getUserPlan(user) → plan_limits(plan_id,key) → get_usage_today(user,key) → compare (fail-closed).
  *  3) Legacy fallback: usage_check(user,key) (fail-open if RPC missing/shape unexpected).
  *  4) Any transport/infra issue: fail-open (ok: true) so APIs don’t 500.
  */
@@ -41,9 +42,7 @@ export async function checkQuota(
     if (TEACHER_BYPASS && role === 'teacher') return { ok: true };
 
     // ---- modern plan/usage path ----
-    // get_user_plan(uuid) → { plan_id text }
-    const planRes = await safeRpcSingle(supabase, 'get_user_plan', { p_user_id: user.id });
-    const planId: string = (planRes?.data as any)?.plan_id ?? 'free';
+    const planId = await getUserPlan(user.id);
 
     // plan_limits(plan_id,key) → per_day, per_month (nullable)
     const limitRes = await supabase

@@ -10,14 +10,15 @@ import { createPendingPayment } from '@/lib/billing/manual';
 import type { Cycle, PlanKey } from '@/lib/pricing';
 import { queueNotificationEvent, getNotificationContact, type NotificationContact } from '@/lib/notify';
 import { getBaseUrl } from '@/lib/url';
+import { normalizeCycleInput } from '@/types/payments';
 
 const providers: PaymentProvider[] = ['stripe', 'easypaisa', 'jazzcash', 'safepay', 'crypto'];
 
 const Body = z.object({
   plan: z.enum(['starter', 'booster', 'master']).default('booster'),
-  cycle: z.enum(['monthly', 'annual']).optional(),
+  cycle: z.enum(['monthly', 'annual', 'yearly']).optional(),
   // Back-compat for old client param name
-  billingCycle: z.enum(['monthly', 'annual']).optional(),
+  billingCycle: z.enum(['monthly', 'annual', 'yearly']).optional(),
   provider: z.enum(providers as [PaymentProvider, ...PaymentProvider[]]).optional(),
   referralCode: z.string().max(64).optional(),
   promoCode: z.string().max(64).optional(),
@@ -56,7 +57,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
 
   const body = parsed.data;
   const plan: PlanKey = body.plan;
-  const cycle: Cycle = (body.cycle ?? body.billingCycle ?? 'monthly') as Cycle;
+  const cycle: Cycle = normalizeCycleInput(body.cycle ?? body.billingCycle ?? 'monthly');
   const provider: PaymentProvider = (body.provider ?? 'stripe') as PaymentProvider;
   const referralCode = body.referralCode;
   const promoCode = body.promoCode;

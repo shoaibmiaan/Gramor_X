@@ -1,10 +1,9 @@
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
-import { PLANS, getPlanBillingAmount, type PlanKey, type Cycle } from '@/lib/pricing';
+import { PLANS, type PlanKey, type Cycle } from '@/lib/pricing';
+import { applyPinOrManualProvisioning, getPlanPricing } from '@/lib/subscription';
 
 export function priceCents(plan: PlanKey, cycle: Cycle): number {
-  const major = getPlanBillingAmount(plan, cycle);
-  // Stripe will also use 2dp for USD; if you ever support JPY, handle 0dp separately.
-  return Math.round(major * 100);
+  const pricing = getPlanPricing(plan);
+  return cycle === 'monthly' ? pricing.monthlyCents : pricing.annualCents;
 }
 
 export async function createPendingPayment(opts: {
@@ -19,29 +18,16 @@ export async function createPendingPayment(opts: {
   const amount_cents = priceCents(opts.plan, opts.cycle);
   const currency = (PLANS[opts.plan].currency || 'USD').toUpperCase();
 
-  // 1) Add a pending due
-  const { error: insErr } = await supabaseAdmin
-    .from('pending_payments')
-    .insert({
-      user_id: opts.userId,
-      plan_key: opts.plan,
-      cycle: opts.cycle,
-      currency,
-      amount_cents,
-      status: 'due',
-      note: opts.note ?? null,
-      contact_name: opts.name ?? null,
-      contact_phone: opts.phone ?? null,
-      email: opts.email ?? null,
-    });
-  if (insErr) throw insErr;
-
-  // 2) Provision plan immediately
-  const { error: updErr } = await supabaseAdmin
-    .from('profiles')
-    .update({ plan_id: opts.plan })
-    .eq('id', opts.userId);
-  if (updErr) throw updErr;
+  await applyPinOrManualProvisioning({
+    userId: opts.userId,
+    plan: opts.plan,
+    provider: 'manual',
+    eventId: `pending-payment:${opts.userId}:${opts.plan}:${opts.cycle}:${amount_cents}`,
+    cycle: opts.cycle,
+    amountCents: amount_cents,
+    email: opts.email ?? null,
+    note: opts.note,
+  });
 
   return { amount_cents, currency };
 }

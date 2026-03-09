@@ -2,16 +2,10 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { getUserPlan, getActiveSubscription, requireActiveSubscription, inactiveSubscriptionResponse, InactiveSubscriptionError } from '@/lib/subscription';
+import { PLAN_RANK, type PlanId } from '@/types/pricing';
 
-type PlanId = 'free' | 'starter' | 'booster' | 'master';
 type Role = 'user' | 'admin' | 'teacher' | 'org' | null;
-
-const PLAN_ORDER: Record<PlanId, number> = {
-  free: 0,
-  starter: 1,
-  booster: 2,
-  master: 3,
-};
 
 type GuardOptions = {
   /** Additional roles that should bypass the plan check */
@@ -47,10 +41,10 @@ export function withPlan(
     }
 
     // Read profile (RLS should allow user to read own profile)
-    type ProfileRow = { id: string; plan: PlanId | null; role: Role };
+    type ProfileRow = { id: string; role: Role };
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('id, plan, role')
+      .select('id, role')
       .eq('id', user.id)
       .single<ProfileRow>();
 
@@ -72,22 +66,25 @@ export function withPlan(
     }
 
     // Compare plans
-    const currentPlan: PlanId = normalizePlan(profile.plan);
-    if (PLAN_ORDER[currentPlan] >= PLAN_ORDER[required]) {
-      return handler(req, res);
+    const currentSubscription = await getActiveSubscription(user.id);
+    try {
+      const active = await requireActiveSubscription(user.id);
+      if (PLAN_RANK[active.plan] >= PLAN_RANK[required]) {
+        return handler(req, res);
+      }
+    } catch (error) {
+      if (error instanceof InactiveSubscriptionError) {
+        res.setHeader('X-Required-Plan', required);
+        const inactive = inactiveSubscriptionResponse(currentSubscription, required);
+        return res.status(inactive.statusCode).json(inactive.payload);
+      }
+      throw error;
     }
 
     res.setHeader('X-Required-Plan', required);
-    res.status(402).json({
-      error: 'Upgrade required',
-      requiredPlan: required,
-      currentPlan,
-      upgradeUrl: `/pricing?required=${required}`,
-    });
+    const currentPlan: PlanId = await getUserPlan(user.id);
+    const inactive = inactiveSubscriptionResponse({ plan: currentPlan, status: currentSubscription.status }, required);
+    res.status(inactive.statusCode).json(inactive.payload);
   };
 }
 
-function normalizePlan(plan: PlanId | string | null | undefined): PlanId {
-  const p = (plan ?? 'free').toLowerCase();
-  return p === 'starter' || p === 'booster' || p === 'master' ? p : 'free';
-}
