@@ -13,6 +13,7 @@ import { useLocale } from '@/lib/locale';
 import { useStreak } from '@/hooks/useStreak'; // Added for streak data
 import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
 import { Icon } from '@/components/design-system/Icon';
+import ActionSupportPanel from '@/components/shared/ActionSupportPanel';
 
 type WordOfDay = { word: string; meaning?: string; example?: string };
 
@@ -499,22 +500,15 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        {/* HELP CTA */}
-        <div className="mt-10 flex items-center justify-between rounded-ds-2xl border border-border bg-card p-6">
-          <div>
-            <h4 className="font-semibold mb-1">Need help?</h4>
-            <p className="text-small text-mutedText">
-              Ask the community or talk to our AI assistant.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button asChild variant="secondary" className="rounded-ds-xl">
-              <Link href="/community">Visit Community</Link>
-            </Button>
-            <Button asChild variant="ghost" className="rounded-ds-xl">
-              <Link href="/ai">Open AI Assistant</Link>
-            </Button>
-          </div>
+        <div className="mt-10">
+          <ActionSupportPanel
+            title=""
+            actions={[]}
+            supportTitle="Need help?"
+            supportDescription="Ask the community or talk to our AI assistant."
+            supportPrimaryCta={{ label: 'Visit Community', href: '/community', variant: 'secondary' }}
+            supportSecondaryCta={{ label: 'Open AI Assistant', href: '/ai', variant: 'ghost' }}
+          />
         </div>
       </Container>
     </section>
