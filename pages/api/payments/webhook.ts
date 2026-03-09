@@ -3,7 +3,7 @@ import { verifyJazzCash } from '@/lib/payments/jazzcash';
 import { verifyEasypaisa } from '@/lib/payments/easypaisa';
 import { verifyCard } from '@/lib/payments/card';
 import { verifySafepay } from '@/lib/payments/safepay';
-import { upsertSubscriptionStateFromWebhook } from '@/lib/subscription';
+import { applySubscriptionActivation } from '@/lib/subscription';
 
 type Provider = 'jazzcash' | 'easypaisa' | 'card' | 'safepay';
 
@@ -30,13 +30,14 @@ export default async function webhook(req: NextApiRequest, res: NextApiResponse)
   }
   if (!valid) return res.status(400).json({ error: 'Invalid signature' });
 
-  const { paymentId, subscriptionId, userId } = req.body;
+  const { paymentId, subscriptionId, userId, plan } = req.body;
   if (userId) {
-    await upsertSubscriptionStateFromWebhook({
+    await applySubscriptionActivation({
       userId,
-      subscriptionId: subscriptionId ?? null,
-      paymentId: paymentId ?? null,
+      plan: typeof plan === 'string' ? plan : 'booster',
       provider,
+      eventId: String(paymentId ?? subscriptionId ?? `${provider}:${userId}`),
+      subscriptionId: subscriptionId ?? null,
     });
   }
   return res.json({ ok: true });

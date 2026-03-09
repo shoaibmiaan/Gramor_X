@@ -1,4 +1,5 @@
 import { supabaseService } from '@/lib/supabaseService';
+import { applySubscriptionActivation } from '@/lib/subscription';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
 import { getBaseUrl } from '@/lib/url';
@@ -55,7 +56,13 @@ export async function finalizeLocalPayment(
   });
 
   if (intent.user_id) {
-    await supabaseService.from('profiles').update({ plan_id: intent.plan_id }).eq('id', intent.user_id);
+    await applySubscriptionActivation({
+      userId: intent.user_id,
+      plan: intent.plan_id as any,
+      provider,
+      eventId: `local:${provider}:${sessionId}`,
+      subscriptionId: sessionId,
+    });
   }
 
   await trackor.log('payments.intent.success', {

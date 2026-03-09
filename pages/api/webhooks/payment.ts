@@ -6,6 +6,7 @@ import { env } from '@/lib/env';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { queueNotificationEvent, getNotificationContact } from '@/lib/notify';
 import { getBaseUrl } from '@/lib/url';
+import { applySubscriptionActivation, applySubscriptionRenewal, applySubscriptionTransition } from '@/lib/subscription';
 
 // Important: disable body parsing so we can verify Stripe signatures
 export const config = { api: { bodyParser: false } };
@@ -100,30 +101,16 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
 
         const userId = session.client_reference_id;
         const plan = (session.metadata?.plan as 'starter' | 'booster' | 'master' | undefined) || 'booster';
-
-        if (userId) {
-          // Update profile entitlements
-          await supabase
-            .from('profiles')
-            .update({
-              membership: plan,
-              subscription_status: 'active',
-              stripe_customer_id: session.customer,
-              subscription_renews_at: null,
-              trial_ends_at: null,
-              premium_until: null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId);
-        }
+        let intent: { id: string; user_id: string | null; plan_id: string; cycle: string } | null = null;
 
         if (session.id) {
-          const { data: intent } = await supabase
+          const intentRes = await supabase
             .from('payment_intents')
             .select('id, user_id, plan_id, cycle')
             .eq('gateway_session_id', session.id)
             .eq('provider', 'stripe')
             .maybeSingle();
+          intent = (intentRes.data as any) ?? null;
 
           if (intent) {
             const confirmedAt = new Date().toISOString();
@@ -147,6 +134,17 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
               cycle: intent.cycle,
             });
           }
+        }
+
+        if (userId) {
+          await applySubscriptionActivation({
+            userId,
+            plan: (intent?.plan_id as any) ?? plan,
+            provider: 'stripe',
+            eventId: event.id,
+            subscriptionId: session.subscription ?? session.id,
+            customerId: session.customer,
+          });
         }
 
         await supabase.from('payment_events').insert([
@@ -182,11 +180,20 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
         if (invoice.customer) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('user_id')
+            .select('id')
             .eq('stripe_customer_id', invoice.customer as string)
-            .maybeSingle<{ user_id: string }>();
+            .maybeSingle<{ id: string }>();
 
-          await notifyPayment(profile?.user_id ?? null, 'payment_success', invoice.id, {
+          if (profile?.id) {
+            await applySubscriptionRenewal({
+              userId: profile.id,
+              provider: 'stripe',
+              eventId: event.id,
+              subscriptionId: invoice.subscription as string | undefined,
+            });
+          }
+
+          await notifyPayment(profile?.id ?? null, 'payment_success', invoice.id, {
             provider: 'stripe',
             amount: invoice.amount_paid,
             currency: invoice.currency,
@@ -212,15 +219,25 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
         if (invoice.customer) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('user_id')
+            .select('id')
             .eq('stripe_customer_id', invoice.customer as string)
-            .maybeSingle<{ user_id: string }>();
+            .maybeSingle<{ id: string }>();
 
           const reason =
             (invoice.last_payment_error?.message as string | undefined) ??
             'Payment failed';
 
-          await notifyPayment(profile?.user_id ?? null, 'payment_failed', invoice.id, {
+          if (profile?.id) {
+            await applySubscriptionTransition({
+              userId: profile.id,
+              provider: 'stripe',
+              eventId: event.id,
+              subscriptionId: invoice.subscription as string | undefined,
+              status: 'past_due',
+            });
+          }
+
+          await notifyPayment(profile?.id ?? null, 'payment_failed', invoice.id, {
             provider: 'stripe',
             amount: invoice.amount_due,
             currency: invoice.currency,
@@ -235,45 +252,48 @@ const handler: NextApiHandler<Ok | Err> = async (req, res) => {
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const sub = event.data.object as any;
-        // Best-effort: if you store customer->user mapping, update profile
         try {
           const customerId: string | undefined = sub.customer;
           if (customerId) {
             const { data: prof } = await supabase
               .from('profiles')
-              .select('id, membership')
+              .select('id')
               .eq('stripe_customer_id', customerId)
               .maybeSingle();
+
             if (prof?.id) {
-              const status = (sub.status as string | undefined) || 'canceled';
-              const periodEnd =
+              const renewsAt =
                 typeof sub.current_period_end === 'number'
                   ? new Date(sub.current_period_end * 1000).toISOString()
                   : null;
-              const trialEnd =
+              const trialEndsAt =
                 typeof sub.trial_end === 'number'
                   ? new Date(sub.trial_end * 1000).toISOString()
                   : null;
+              const stripeStatus = (sub.status as string | undefined) ?? 'canceled';
 
-              const shouldDowngrade =
-                status === 'canceled' || status === 'past_due' || status === 'unpaid';
-
-              const updates: Record<string, any> = {
-                subscription_status: status,
-                subscription_renews_at: periodEnd,
-                trial_ends_at: trialEnd,
-                updated_at: new Date().toISOString(),
-              };
-
-              if (shouldDowngrade) {
-                updates.membership = 'free';
-                updates.premium_until = null;
+              if (stripeStatus === 'active' || stripeStatus === 'trialing') {
+                await applySubscriptionActivation({
+                  userId: prof.id,
+                  plan: ((sub.items?.data?.[0]?.price?.nickname as string | undefined) ?? 'booster') as any,
+                  provider: 'stripe',
+                  eventId: event.id,
+                  subscriptionId: sub.id,
+                  renewsAt,
+                  trialEndsAt,
+                  customerId,
+                });
+              } else {
+                await applySubscriptionTransition({
+                  userId: prof.id,
+                  provider: 'stripe',
+                  eventId: event.id,
+                  subscriptionId: sub.id,
+                  renewsAt,
+                  trialEndsAt,
+                  status: stripeStatus === 'unpaid' ? 'unpaid' : stripeStatus === 'past_due' ? 'past_due' : 'canceled',
+                });
               }
-
-              await supabase
-                .from('profiles')
-                .update(updates)
-                .eq('id', prof.id);
             }
           }
         } catch {

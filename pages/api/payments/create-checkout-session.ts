@@ -2,8 +2,8 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
-import { createClient as createSbClient } from '@supabase/supabase-js';
 import { getPlanBillingAmount, type Cycle, type PlanKey } from '@/lib/pricing';
+import { applyPinOrManualProvisioning } from '@/lib/subscription';
 
 type CreateCheckoutBody = Readonly<{
   plan: PlanKey;
@@ -48,56 +48,6 @@ const methodNotAllowed = (res: NextApiResponse<ResBody>) =>
 const badRequest = (res: NextApiResponse<ResBody>, msg: string) =>
   res.status(400).json({ ok: false, error: msg });
 
-/** Attempt to write a pending due and provision the plan.
- * Uses service role if available; otherwise tries with the user-scoped client.
- * Fails gracefully (returns void).
- */
-async function provisionManually(opts: {
-  userId: string;
-  plan: PlanKey;
-  cycle: Cycle;
-  userEmail?: string | null;
-}) {
-  const amountMajor = getPlanBillingAmount(opts.plan, opts.cycle);
-  const amount_cents = Math.round(amountMajor * 100);
-  const currency = 'USD';
-
-  // Prefer service role for server-side writes
-  const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const admin = adminKey ? createSbClient(url, adminKey, { auth: { persistSession: false } }) : null;
-
-  const upsertClient = admin ?? createSupabaseServerClient({} as { req: NextApiRequest });
-
-  // Insert pending due (ignore failure)
-  try {
-    await upsertClient
-      .from('pending_payments')
-      .insert({
-        user_id: opts.userId,
-        plan_key: opts.plan,
-        cycle: opts.cycle,
-        currency,
-        amount_cents,
-        status: 'due',
-        note: 'Manual fallback: gateway unavailable',
-        email: opts.userEmail ?? null,
-      });
-  } catch {
-    // ignore
-  }
-
-  // Provision plan immediately (ignore failure if RLS blocks)
-  try {
-    await upsertClient
-      .from('profiles')
-      .update({ plan_id: opts.plan })
-      .eq('id', opts.userId);
-  } catch {
-    // ignore
-  }
-}
-
 // ---- Handler ----
 const handler: NextApiHandler<ResBody> = async (req, res) => {
   if (req.method !== 'POST') return methodNotAllowed(res);
@@ -124,7 +74,16 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   // If Stripe is not configured → manual fallback (create pending due + provision plan)
   if (!env.STRIPE_SECRET_KEY || !priceId) {
     try {
-      await provisionManually({ userId, plan, cycle: billingCycle, userEmail });
+      await applyPinOrManualProvisioning({
+        userId,
+        plan,
+        provider: 'manual',
+        eventId: `checkout-manual:${userId}:${plan}:${billingCycle}`,
+        cycle: billingCycle,
+        amountCents: Math.round(getPlanBillingAmount(plan, billingCycle) * 100),
+        email: userEmail,
+        note: 'Manual fallback: gateway unavailable',
+      });
       return res.status(200).json({
         ok: true,
         manual: true,
