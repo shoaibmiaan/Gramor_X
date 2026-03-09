@@ -1,16 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { getServerClient } from '@/lib/supabaseServer';
+import { getLatestSubscriptionSnapshotsForUsers } from '@/lib/subscription';
 
 // ---------- Types ----------
-const SubscriptionRow = z.object({
-  user_id: z.string(),
-  plan_id: z.string().nullable().optional(),
-  status: z.string().nullable().optional(),
-  current_period_end: z.string().datetime().nullable().optional(),
-});
-type SubscriptionRow = z.infer<typeof SubscriptionRow>;
-
 const ProfileRow = z.object({
   id: z.string(),
   full_name: z.string().nullable().optional(),
@@ -64,38 +57,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Profiles shape invalid', details: profilesParsed.error.flatten() });
   }
 
-  // Fetch all subscriptions (map latest per user)
-  const { data: subs, error: sErr } = await supabase
-    .from('subscriptions')
-    .select('user_id, plan_id, status, current_period_end');
-  if (sErr) return res.status(500).json({ error: sErr.message });
-
-  const subsParsed = z.array(SubscriptionRow).safeParse(subs ?? []);
-  if (!subsParsed.success) {
-    return res.status(500).json({ error: 'Subscriptions shape invalid', details: subsParsed.error.flatten() });
-  }
-
-  // Pick the latest subscription per user_id (by current_period_end desc; nulls last)
-  const latestByUser: Record<string, SubscriptionRow> = {};
-  for (const row of subsParsed.data) {
-    const curr = latestByUser[row.user_id];
-    const currEnd = curr?.current_period_end ? Date.parse(curr.current_period_end) : -1;
-    const nextEnd = row.current_period_end ? Date.parse(row.current_period_end) : -1;
-    if (!curr || nextEnd >= currEnd) latestByUser[row.user_id] = row;
-  }
+  const userIds = profilesParsed.data.map((profile) => profile.id);
+  const snapshots = await getLatestSubscriptionSnapshotsForUsers(userIds);
 
   // Compose payload
   const payload: AdminUsersResponse = profilesParsed.data.map((p) => {
-    const s = latestByUser[p.id];
+    const s = snapshots[p.id];
     return {
       id: p.id,
       email: p.email ?? null,        // will be null if your profiles table doesn’t store email
       full_name: p.full_name ?? null,
       role: p.role,
       subscription: s ? {
-        plan_id: s.plan_id ?? null,
-        status: s.status ?? null,
-        current_period_end: s.current_period_end ?? null,
+        plan_id: s.plan,
+        status: s.status,
+        current_period_end: s.currentPeriodEnd,
       } : null,
     };
   });

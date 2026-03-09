@@ -13,6 +13,22 @@ export type ActiveSubscription = Readonly<{
   trialEndsAt?: string;
 }>;
 
+type RawSubscriptionRow = {
+  id?: string | null;
+  user_id?: string | null;
+  plan_id?: string | null;
+  status?: string | null;
+  current_period_end?: string | null;
+};
+
+export type SubscriptionSnapshot = Readonly<{
+  userId: string;
+  plan: PlanId;
+  status: SubscriptionStatus;
+  currentPeriodEnd: string | null;
+  subscriptionId: string | null;
+}>;
+
 const ACTIVE_STATUSES = new Set<SubscriptionStatus>(['active', 'trialing']);
 const STATUS_VALUES = new Set<SubscriptionStatus>(['active', 'trialing', 'canceled', 'incomplete', 'past_due']);
 
@@ -40,12 +56,7 @@ export function getPlanTiers(): Array<{ id: PlanId; rank: number; label: string 
 export function getPlanPricing(planId: string) {
   const id = normalizePlan(planId);
   if (id === 'free') {
-    return {
-      planId: id,
-      monthly: 0,
-      annual: 0,
-      monthlyDisplayFromAnnual: 0,
-    };
+    return { planId: id, monthly: 0, annual: 0, monthlyDisplayFromAnnual: 0 };
   }
 
   const row = USD_PLAN_PRICES[id];
@@ -61,6 +72,56 @@ function toIso(value?: string | null) {
   if (!value) return undefined;
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+function normalizeSubscriptionSnapshot(row: RawSubscriptionRow | null | undefined, userId: string): SubscriptionSnapshot {
+  return {
+    userId,
+    plan: normalizePlan(row?.plan_id ?? 'free'),
+    status: normalizeSubscriptionStatus(row?.status ?? 'canceled'),
+    currentPeriodEnd: row?.current_period_end ?? null,
+    subscriptionId: row?.id ?? null,
+  };
+}
+
+export async function getLatestSubscriptionRow(userId: string): Promise<RawSubscriptionRow | null> {
+  const supabase = supabaseService();
+  const { data } = await supabase
+    .from('subscriptions')
+    .select('id, user_id, plan_id, status, current_period_end')
+    .eq('user_id', userId)
+    .order('current_period_end', { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  return (data ?? null) as RawSubscriptionRow | null;
+}
+
+export async function getLatestSubscriptionSnapshotsForUsers(userIds: string[]): Promise<Record<string, SubscriptionSnapshot>> {
+  if (userIds.length === 0) return {};
+
+  const supabase = supabaseService();
+  const { data } = await supabase
+    .from('subscriptions')
+    .select('id, user_id, plan_id, status, current_period_end')
+    .in('user_id', userIds)
+    .order('current_period_end', { ascending: false, nullsFirst: false });
+
+  const rows = (data ?? []) as RawSubscriptionRow[];
+  const latestByUser: Record<string, RawSubscriptionRow> = {};
+
+  for (const row of rows) {
+    const rowUserId = row.user_id;
+    if (!rowUserId || latestByUser[rowUserId]) continue;
+    latestByUser[rowUserId] = row;
+  }
+
+  const snapshots: Record<string, SubscriptionSnapshot> = {};
+  for (const userId of userIds) {
+    snapshots[userId] = normalizeSubscriptionSnapshot(latestByUser[userId], userId);
+  }
+
+  return snapshots;
 }
 
 export async function getActiveSubscription(userId: string): Promise<ActiveSubscription> {
@@ -83,12 +144,12 @@ export async function getActiveSubscription(userId: string): Promise<ActiveSubsc
   const plan = normalizePlan(row?.plan_id ?? row?.membership ?? 'free');
   const normalizedStatus = normalizeSubscriptionStatus(row?.subscription_status);
   const premiumUntil = toIso(row?.premium_until);
-  const fallbackStatus: SubscriptionStatus = premiumUntil && new Date(premiumUntil) > new Date() ? 'active' : normalizedStatus;
+  const status: SubscriptionStatus = premiumUntil && new Date(premiumUntil) > new Date() ? 'active' : normalizedStatus;
 
   return {
     userId,
     plan,
-    status: fallbackStatus,
+    status,
     renewsAt: toIso(row?.subscription_renews_at) ?? premiumUntil,
     trialEndsAt: toIso(row?.trial_ends_at),
   };
@@ -116,6 +177,37 @@ export async function getFeatureAccess(userId: string, feature: string): Promise
   const requiredPlan = FEATURE_PLAN[feature] ?? 'free';
   const userPlan = await getUserPlan(userId);
   return PLAN_RANK[userPlan] >= PLAN_RANK[requiredPlan];
+}
+
+export async function upsertSubscriptionStateFromWebhook(input: {
+  userId: string;
+  subscriptionId?: string | null;
+  paymentId?: string | null;
+  provider: string;
+}) {
+  const supabase = supabaseService();
+  const now = new Date().toISOString();
+
+  if (input.paymentId) {
+    await supabase
+      .from('payments')
+      .update({ status: 'paid', provider: input.provider, provider_payment_id: input.paymentId, updated_at: now })
+      .eq('id', input.paymentId);
+  }
+
+  if (input.subscriptionId) {
+    await supabase
+      .from('subscriptions')
+      .upsert(
+        {
+          id: input.subscriptionId,
+          user_id: input.userId,
+          status: 'active',
+          updated_at: now,
+        },
+        { onConflict: 'id' },
+      );
+  }
 }
 
 export function getCyclePricing(planId: string, cycle: Cycle) {
