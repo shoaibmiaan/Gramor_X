@@ -5,7 +5,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import Icon from '@/components/design-system/Icon';
 import { Badge } from '@/components/design-system/Badge';
-import { getStandardPlanName } from '@/lib/subscription';
+import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
 
 type PlanId = 'free' | 'booster' | 'institution';
 
@@ -22,12 +22,12 @@ type Plan = {
   features: string[];
 };
 
-const plans: Plan[] = [
+export const PRICING_SECTION_PLANS: Plan[] = [
   {
     id: 'free',
     name: getStandardPlanName('free'),
     tagline: 'Start IELTS prep without friction.',
-    priceLine: '$0 — no card required',
+    priceLine: `$${getPlanPricing('free').monthly} — no card required`,
     note: 'Best for testing the platform and light weekly use.',
     href: '/signup',
     ctaLabel: `Start on ${getStandardPlanName('free')}`,
@@ -45,8 +45,8 @@ const plans: Plan[] = [
     tagline: 'Serious prep for 6.0 → 7.0+ journeys.',
     highlight: true,
     badge: 'Most popular (planned)',
-    priceLine: 'Intro pricing will launch with the next cohort',
-    note: 'For learners who want consistent AI feedback and deeper analytics.',
+    priceLine: `$${getPlanPricing('booster').monthly}/month (or $${getPlanPricing('booster').monthlyDisplayFromAnnual}/mo annual)`,
+    note: `Billed $${getPlanPricing('booster').annual}/year on annual plan.`,
     href: '#waitlist',
     ctaLabel: `Join ${getStandardPlanName('booster')} waitlist`,
     features: [
@@ -107,7 +107,7 @@ const Pricing: React.FC = () => {
 
       {/* Plans grid */}
       <div className="grid gap-6 md:grid-cols-3 mb-10">
-        {plans.map((plan) => (
+        {PRICING_SECTION_PLANS.map((plan) => (
           <Card
             key={plan.id}
             interactive

@@ -9,7 +9,7 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import Icon, { type IconName } from '@/components/design-system/Icon';
-import { getStandardPlanName } from '@/lib/subscription';
+import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
 
 const modules = [
   {
@@ -164,11 +164,11 @@ const testimonials = [
   },
 ];
 
-const plans = [
+export const LANDING_PLANS = [
   {
     id: 'free',
     name: getStandardPlanName('free'),
-    price: '0',
+    price: `$${getPlanPricing('free').monthly}`,
     tag: 'Start here',
     bullets: [
       'Access to all four modules in limited mode',
@@ -179,7 +179,7 @@ const plans = [
   {
     id: 'booster',
     name: getStandardPlanName('booster'),
-    price: 'Best for 6.5 → 7.5+',
+    price: `$${getPlanPricing('booster').monthly}/mo`,
     tag: 'Most popular',
     bullets: [
       'Deeper AI writing + speaking feedback',
@@ -570,7 +570,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid gap-5 md:grid-cols-3">
-              {plans.map((plan) => (
+              {LANDING_PLANS.map((plan) => (
                 <Card
                   key={plan.id}
                   className={`flex h-full flex-col justify-between rounded-ds-2xl border border-border/70 bg-card/80 p-6 ${

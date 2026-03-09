@@ -97,16 +97,15 @@ export function getPlanTiers(): Array<{ id: PlanId; rank: number; label: string 
 
 export function getPlanPricing(planId: string) {
   const id = normalizePlan(planId);
-  if (id === 'free') {
-    return { planId: id, monthly: 0, annual: 0, monthlyDisplayFromAnnual: 0 };
-  }
-
-  const row = USD_PLAN_PRICES[id];
+  const annual = id === 'free' ? 0 : USD_PLAN_PRICES[id].annual;
+  const monthly = id === 'free' ? 0 : USD_PLAN_PRICES[id].monthly;
   return {
     planId: id,
-    monthly: row.monthly,
-    annual: row.annual,
-    monthlyDisplayFromAnnual: row.annual / 12,
+    monthly, // major units per month
+    annual, // major units billed yearly
+    monthlyDisplayFromAnnual: annual / 12,
+    monthlyCents: Math.round(monthly * 100),
+    annualCents: Math.round(annual * 100),
   };
 }
 

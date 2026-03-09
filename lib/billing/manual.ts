@@ -1,10 +1,9 @@
-import { PLANS, getPlanBillingAmount, type PlanKey, type Cycle } from '@/lib/pricing';
-import { applyPinOrManualProvisioning } from '@/lib/subscription';
+import { PLANS, type PlanKey, type Cycle } from '@/lib/pricing';
+import { applyPinOrManualProvisioning, getPlanPricing } from '@/lib/subscription';
 
 export function priceCents(plan: PlanKey, cycle: Cycle): number {
-  const major = getPlanBillingAmount(plan, cycle);
-  // Stripe will also use 2dp for USD; if you ever support JPY, handle 0dp separately.
-  return Math.round(major * 100);
+  const pricing = getPlanPricing(plan);
+  return cycle === 'monthly' ? pricing.monthlyCents : pricing.annualCents;
 }
 
 export async function createPendingPayment(opts: {

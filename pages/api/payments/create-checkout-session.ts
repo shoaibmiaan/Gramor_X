@@ -2,8 +2,8 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
-import { getPlanBillingAmount, type Cycle, type PlanKey } from '@/lib/pricing';
-import { applyPinOrManualProvisioning } from '@/lib/subscription';
+import { type Cycle, type PlanKey } from '@/lib/pricing';
+import { applyPinOrManualProvisioning, getPlanPricing } from '@/lib/subscription';
 
 type CreateCheckoutBody = Readonly<{
   plan: PlanKey;
@@ -80,7 +80,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
         provider: 'manual',
         eventId: `checkout-manual:${userId}:${plan}:${billingCycle}`,
         cycle: billingCycle,
-        amountCents: Math.round(getPlanBillingAmount(plan, billingCycle) * 100),
+        amountCents: billingCycle === 'monthly' ? getPlanPricing(plan).monthlyCents : getPlanPricing(plan).annualCents,
         email: userEmail,
         note: 'Manual fallback: gateway unavailable',
       });
