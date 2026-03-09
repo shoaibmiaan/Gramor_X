@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
 import { type Cycle, type PlanKey } from '@/lib/pricing';
 import { applyPinOrManualProvisioning, getPlanPricing } from '@/lib/subscription';
+import { normalizeCycleInput } from '@/types/payments';
 
 type CreateCheckoutBody = Readonly<{
   plan: PlanKey;
@@ -18,8 +19,8 @@ type ResBody = Success | Failure;
 // ---- Helpers ----
 const isPlan = (v: unknown): v is PlanKey =>
   typeof v === 'string' && ['starter', 'booster', 'master'].includes(v);
-const isCycle = (v: unknown): v is Cycle =>
-  typeof v === 'string' && ['monthly', 'annual'].includes(v);
+const isCycle = (v: unknown): v is string =>
+  typeof v === 'string' && ['monthly', 'annual', 'yearly'].includes(v);
 
 const getOrigin = (req: NextApiRequest) => {
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
@@ -56,7 +57,7 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   const body = req.body as Partial<CreateCheckoutBody> | undefined;
   if (!body) return badRequest(res, 'missing_body');
   const plan = isPlan(body.plan) ? body.plan : 'booster';
-  const billingCycle = isCycle(body.billingCycle) ? body.billingCycle : 'monthly';
+  const billingCycle: Cycle = normalizeCycleInput(isCycle(body.billingCycle) ? body.billingCycle : 'monthly');
   const referralCode = typeof body.referralCode === 'string' ? body.referralCode.slice(0, 64) : undefined;
 
   // Auth (user id for metadata / customer lookup)

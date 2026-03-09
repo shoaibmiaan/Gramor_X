@@ -1,6 +1,14 @@
 // types/payments.ts
 export type PlanKey = 'starter' | 'booster' | 'master';
-export type Cycle = 'monthly' | 'annual';
+export const CANONICAL_CYCLES = ['monthly', 'annual'] as const;
+export type Cycle = (typeof CANONICAL_CYCLES)[number];
+export type CycleInput = Cycle | 'yearly';
+
+export function normalizeCycleInput(input?: string | null): Cycle {
+  const value = (input ?? 'monthly').toLowerCase();
+  if (value === 'annual' || value === 'yearly') return 'annual';
+  return 'monthly';
+}
 export type PaymentMethod = 'stripe' | 'easypaisa' | 'jazzcash' | 'safepay' | 'crypto';
 
 export type CreateCheckoutBody = Readonly<{
