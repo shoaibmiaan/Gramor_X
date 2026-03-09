@@ -12,24 +12,25 @@ import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
 import { Skeleton } from '@/components/design-system/Skeleton';
 import { useToast } from '@/components/design-system/Toaster';
-import { fetchProfile } from '@/lib/profile';
-import type { Profile } from '@/types/profile';
 import { GlobalPlanGuard } from '@/components/GlobalPlanGuard';
 import { useLocale } from '@/lib/locale';
 import type { PlanId } from '@/types/pricing';
 
-type SubscriptionStatus =
-  | 'active'
-  | 'trialing'
-  | 'canceled'
-  | 'incomplete'
-  | 'past_due'
-  | 'unpaid'
-  | 'paused'
-  | 'inactive'
-  | 'expired';
+type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
 
 type SubscriptionPlanKey = 'free' | 'starter' | 'booster' | 'master';
+
+type PortalSubscription = {
+  plan: PlanId;
+  status: SubscriptionStatus;
+  renewsAt?: string;
+  trialEndsAt?: string;
+};
+
+type PortalResponse = {
+  subscription: PortalSubscription;
+  invoices: Array<unknown>;
+};
 
 type PlanDisplay = {
   name: string;
@@ -73,7 +74,7 @@ export default function SubscriptionPage() {
   const { t, locale } = useLocale();
   const { error: toastError, success: toastSuccess } = useToast();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [subscription, setSubscription] = useState<PortalSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -98,15 +99,17 @@ export default function SubscriptionPage() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadProfile = async () => {
+    const loadSubscription = async () => {
       setLoading(true);
       try {
-        const fetchedProfile = await fetchProfile();
-        if (cancelled) return;
-        if (!fetchedProfile) {
-          throw new Error('Profile not found');
+        const response = await fetch('/api/subscriptions/portal', { credentials: 'include' });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || 'Failed to load subscription');
         }
-        setProfile(fetchedProfile);
+        const data = (await response.json()) as PortalResponse;
+        if (cancelled) return;
+        setSubscription(data.subscription);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -125,21 +128,20 @@ export default function SubscriptionPage() {
       }
     };
 
-    loadProfile();
+    loadSubscription();
 
     return () => {
       cancelled = true;
     };
   }, [router, t, toastError]);
 
-  const currentPlan: PlanId = profile?.tier ?? 'free';
+  const currentPlan: PlanId = subscription?.plan ?? 'free';
   const planKey: SubscriptionPlanKey = (currentPlan as SubscriptionPlanKey) ?? 'free';
 
-  const status: SubscriptionStatus =
-    (profile?.subscription_status as SubscriptionStatus) ?? 'inactive';
+  const status: SubscriptionStatus = subscription?.status ?? 'canceled';
 
-  const expiresAt = profile?.subscription_expires_at ?? profile?.premium_until ?? null;
-  const trialEndsAt = profile?.trial_end ?? null;
+  const expiresAt = subscription?.renewsAt ?? null;
+  const trialEndsAt = subscription?.trialEndsAt ?? null;
 
   const isPremium = currentPlan !== 'free' && (status === 'active' || status === 'trialing');
   const isTrialing = status === 'trialing' && !!trialEndsAt;
@@ -164,9 +166,11 @@ export default function SubscriptionPage() {
       }
 
       toastSuccess(t('subscription.cancel.success', 'Subscription cancelled successfully.'));
-      // Refresh profile
-      const refreshedProfile = await fetchProfile();
-      setProfile(refreshedProfile);
+      const refreshed = await fetch('/api/subscriptions/portal', { credentials: 'include' });
+      if (refreshed.ok) {
+        const data = (await refreshed.json()) as PortalResponse;
+        setSubscription(data.subscription);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : t('subscription.cancel.error', 'Failed to cancel subscription');
       toastError(message);
@@ -184,13 +188,7 @@ export default function SubscriptionPage() {
       case 'past_due':
       case 'incomplete':
         return 'warning';
-      case 'unpaid':
-        return 'danger';
-      case 'paused':
-        return 'secondary';
       case 'canceled':
-      case 'expired':
-      case 'inactive':
       default:
         return 'neutral';
     }
@@ -206,16 +204,9 @@ export default function SubscriptionPage() {
         return t('subscription.status.pastDue', 'Past due');
       case 'incomplete':
         return t('subscription.status.incomplete', 'Incomplete');
-      case 'unpaid':
-        return t('subscription.status.unpaid', 'Unpaid');
-      case 'paused':
-        return t('subscription.status.paused', 'Paused');
       case 'canceled':
-        return t('subscription.status.canceled', 'Canceled');
-      case 'expired':
-        return t('subscription.status.expired', 'Expired');
       default:
-        return t('subscription.status.inactive', 'Inactive');
+        return t('subscription.status.canceled', 'Canceled');
     }
   };
 
@@ -378,7 +369,7 @@ export default function SubscriptionPage() {
                       </Button>
                     )}
 
-                    {profile?.stripe_customer_id && (
+                    {(subscription?.plan !== 'free' || isPremium) && (
                       <Button
                         asChild
                         variant="ghost"

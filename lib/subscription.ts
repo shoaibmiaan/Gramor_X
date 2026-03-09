@@ -19,6 +19,17 @@ type RawSubscriptionRow = {
   plan_id?: string | null;
   status?: string | null;
   current_period_end?: string | null;
+  trial_end?: string | null;
+};
+
+type LegacyProfileSubscription = {
+  plan_id?: string | null;
+  membership?: string | null;
+  subscription_status?: string | null;
+  subscription_renews_at?: string | null;
+  trial_ends_at?: string | null;
+  premium_until?: string | null;
+  stripe_customer_id?: string | null;
 };
 
 export type SubscriptionSnapshot = Readonly<{
@@ -28,6 +39,12 @@ export type SubscriptionSnapshot = Readonly<{
   currentPeriodEnd: string | null;
   subscriptionId: string | null;
 }>;
+
+export type CanonicalSubscription = ActiveSubscription & {
+  subscriptionId: string | null;
+  customerId: string | null;
+  source: 'subscriptions' | 'legacy_profile' | 'none';
+};
 
 const ACTIVE_STATUSES = new Set<SubscriptionStatus>(['active', 'trialing']);
 const STATUS_VALUES = new Set<SubscriptionStatus>(['active', 'trialing', 'canceled', 'incomplete', 'past_due']);
@@ -84,11 +101,46 @@ function normalizeSubscriptionSnapshot(row: RawSubscriptionRow | null | undefine
   };
 }
 
+function mapLegacyProfileToCanonical(userId: string, profile: LegacyProfileSubscription | null | undefined): CanonicalSubscription {
+  const plan = normalizePlan(profile?.plan_id ?? profile?.membership ?? 'free');
+  const normalizedStatus = normalizeSubscriptionStatus(profile?.subscription_status);
+  const premiumUntil = toIso(profile?.premium_until);
+  const status: SubscriptionStatus = premiumUntil && new Date(premiumUntil) > new Date() ? 'active' : normalizedStatus;
+
+  return {
+    userId,
+    plan,
+    status,
+    renewsAt: toIso(profile?.subscription_renews_at) ?? premiumUntil,
+    trialEndsAt: toIso(profile?.trial_ends_at),
+    subscriptionId: null,
+    customerId: profile?.stripe_customer_id ?? null,
+    source: profile ? 'legacy_profile' : 'none',
+  };
+}
+
+function mapSubscriptionRowToCanonical(
+  userId: string,
+  row: RawSubscriptionRow,
+  customerId: string | null,
+): CanonicalSubscription {
+  return {
+    userId,
+    plan: normalizePlan(row.plan_id),
+    status: normalizeSubscriptionStatus(row.status),
+    renewsAt: toIso(row.current_period_end),
+    trialEndsAt: toIso(row.trial_end),
+    subscriptionId: row.id ?? null,
+    customerId,
+    source: 'subscriptions',
+  };
+}
+
 export async function getLatestSubscriptionRow(userId: string): Promise<RawSubscriptionRow | null> {
   const supabase = supabaseService();
   const { data } = await supabase
     .from('subscriptions')
-    .select('id, user_id, plan_id, status, current_period_end')
+    .select('id, user_id, plan_id, status, current_period_end, trial_end')
     .eq('user_id', userId)
     .order('current_period_end', { ascending: false, nullsFirst: false })
     .limit(1)
@@ -124,34 +176,35 @@ export async function getLatestSubscriptionSnapshotsForUsers(userIds: string[]):
   return snapshots;
 }
 
-export async function getActiveSubscription(userId: string): Promise<ActiveSubscription> {
+export async function getCanonicalSubscription(userId: string): Promise<CanonicalSubscription> {
   const supabase = supabaseService();
-  const { data } = await supabase
-    .from('profiles')
-    .select('plan_id, membership, subscription_status, subscription_renews_at, trial_ends_at, premium_until')
-    .eq('id', userId)
-    .maybeSingle();
 
-  const row = (data ?? null) as {
-    plan_id?: string | null;
-    membership?: string | null;
-    subscription_status?: string | null;
-    subscription_renews_at?: string | null;
-    trial_ends_at?: string | null;
-    premium_until?: string | null;
-  } | null;
+  const [latestRow, profileRes] = await Promise.all([
+    getLatestSubscriptionRow(userId),
+    supabase
+      .from('profiles')
+      .select('stripe_customer_id, plan_id, membership, subscription_status, subscription_renews_at, trial_ends_at, premium_until')
+      .eq('id', userId)
+      .maybeSingle(),
+  ]);
 
-  const plan = normalizePlan(row?.plan_id ?? row?.membership ?? 'free');
-  const normalizedStatus = normalizeSubscriptionStatus(row?.subscription_status);
-  const premiumUntil = toIso(row?.premium_until);
-  const status: SubscriptionStatus = premiumUntil && new Date(premiumUntil) > new Date() ? 'active' : normalizedStatus;
+  const profile = (profileRes.data ?? null) as LegacyProfileSubscription | null;
 
+  if (latestRow) {
+    return mapSubscriptionRowToCanonical(userId, latestRow, profile?.stripe_customer_id ?? null);
+  }
+
+  return mapLegacyProfileToCanonical(userId, profile);
+}
+
+export async function getActiveSubscription(userId: string): Promise<ActiveSubscription> {
+  const canonical = await getCanonicalSubscription(userId);
   return {
     userId,
-    plan,
-    status,
-    renewsAt: toIso(row?.subscription_renews_at) ?? premiumUntil,
-    trialEndsAt: toIso(row?.trial_ends_at),
+    plan: canonical.plan,
+    status: canonical.status,
+    renewsAt: canonical.renewsAt,
+    trialEndsAt: canonical.trialEndsAt,
   };
 }
 

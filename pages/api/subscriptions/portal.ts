@@ -2,7 +2,7 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { env } from '@/lib/env';
-import { normalizePlan, normalizeSubscriptionStatus } from '@/lib/subscription';
+import { getCanonicalSubscription } from '@/lib/subscription';
 
 type Invoice = Readonly<{
   id: string;
@@ -39,17 +39,9 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
   const userId = userResp.user?.id;
   if (!userId) return res.status(401).json({ ok: false, error: 'Unauthorized' });
 
-  // Look up Stripe customer id from your profiles table
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('stripe_customer_id, membership, subscription_status, subscription_renews_at, trial_ends_at')
-    .eq('id', userId)
-    .maybeSingle();
+  const canonical = await getCanonicalSubscription(userId);
+  const customerId = canonical.customerId ?? undefined;
 
-  const customerId = profile?.stripe_customer_id as string | undefined;
-
-  // If the request is a form POST (no JSON) we assume "Open customer portal" and redirect.
-  // You can also set a header `x-open-portal: 1` to force redirect mode.
   const openPortal =
     req.headers['x-open-portal'] === '1' ||
     (req.headers['content-type']?.includes('application/x-www-form-urlencoded') ?? false);
@@ -75,34 +67,34 @@ const handler: NextApiHandler<ResBody> = async (req, res) => {
     return res.status(303).end();
   }
 
-  // JSON summary mode (used by pages/account/billing.tsx)
   if (!stripe || !customerId) {
     const fallback: SummaryResponse = {
       subscription: {
-        plan: normalizePlan((profile?.membership as string | null | undefined) ?? 'free'),
-        status: normalizeSubscriptionStatus(profile?.subscription_status as string | null | undefined),
-        renewsAt: profile?.subscription_renews_at || undefined,
-        trialEndsAt: profile?.trial_ends_at || undefined,
+        plan: canonical.plan,
+        status: canonical.status,
+        renewsAt: canonical.renewsAt,
+        trialEndsAt: canonical.trialEndsAt,
       },
       invoices: [],
     };
     return res.status(200).json(fallback);
   }
 
-  // Pull latest subscription + last few invoices
   const subs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 1 });
   const sub = subs.data[0];
-  const priceNickname =
-    (sub?.items?.data?.[0]?.price?.nickname?.toLowerCase() as SubscriptionSummary['plan']) ||
-    (profile?.membership as any) ||
-    'free';
 
   const summary: SubscriptionSummary = {
-    plan: normalizePlan(priceNickname),
-    status: normalizeSubscriptionStatus(sub?.status),
-    renewsAt: sub?.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined,
-    trialEndsAt: sub?.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined,
+    plan: canonical.plan,
+    status: canonical.status,
+    renewsAt: canonical.renewsAt,
+    trialEndsAt: canonical.trialEndsAt,
   };
+
+  if (sub) {
+    summary.status = canonical.status;
+    summary.renewsAt = canonical.renewsAt ?? (sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined);
+    summary.trialEndsAt = canonical.trialEndsAt ?? (sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : undefined);
+  }
 
   const invs = await stripe.invoices.list({ customer: customerId, limit: 12 });
   const invoices: Invoice[] = invs.data.map((i) => ({

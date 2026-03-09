@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { stripe } from '@/lib/stripe';
 import { summarizeFromStripe, mapStripeInvoice, type SubscriptionSummary } from '@/lib/subscriptions';
+import { getCanonicalSubscription } from '@/lib/subscription';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 type DueRow = Readonly<{
@@ -57,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const { data: profileData, error: pErr } = await supabase
       .from('profiles')
-      .select('id, email, stripe_customer_id, plan_id, premium_until')
+      .select('id, email, stripe_customer_id')
       .eq('id', user.id)
       .single();
     profile = profileData;
@@ -83,11 +84,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   // Return mock response if Stripe is not configured
   if (!stripe) {
+    const canonical = await getCanonicalSubscription(user.id);
     return res.status(200).json({
       ok: true,
       summary: {
-        plan: (profile?.plan_id as SubscriptionSummary['plan']) ?? 'free',
-        status: 'canceled',
+        plan: canonical.plan,
+        status: canonical.status,
+        renewsAt: canonical.renewsAt,
+        trialEndsAt: canonical.trialEndsAt,
       },
       invoices: [],
       dues,
@@ -124,7 +128,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     subs.data.find(s => s.status === 'active' || s.status === 'trialing') ??
     subs.data.sort((a, b) => (b.created ?? 0) - (a.created ?? 0))[0];
 
-  const summary = summarizeFromStripe(sub, (profile?.plan_id as SubscriptionSummary['plan']) ?? 'free');
+  const canonical = await getCanonicalSubscription(user.id);
+  const summary = summarizeFromStripe(sub, canonical.plan);
 
   let invs;
   try {
@@ -138,5 +143,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const invoices = invs.data.map(mapStripeInvoice);
 
-  return res.status(200).json({ ok: true, summary, invoices, customerId, dues });
+  return res.status(200).json({
+    ok: true,
+    summary: {
+      ...summary,
+      plan: canonical.plan,
+      status: canonical.status,
+      renewsAt: canonical.renewsAt ?? summary.renewsAt,
+      trialEndsAt: canonical.trialEndsAt ?? summary.trialEndsAt,
+    },
+    invoices,
+    customerId,
+    dues,
+  });
 }
