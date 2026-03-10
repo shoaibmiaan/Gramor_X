@@ -266,7 +266,7 @@ export default function WelcomePage() {
                   <Link href="/dashboard">Skip for now · Go to dashboard</Link>
                 </Button>
                 <Button asChild variant="ghost" className="rounded-ds-xl">
-                  <Link href="/band-predictor">Try Band Predictor</Link>
+                  <Link href="/placement/run">Try Band Predictor</Link>
                 </Button>
               </div>
             </div>
@@ -318,7 +318,7 @@ export default function WelcomePage() {
               variant="secondary"
               className="rounded-ds-xl"
             >
-              <Link href="/band-predictor">Start test</Link>
+              <Link href="/placement/run">Start test</Link>
             </Button>
           </div>
           <div className="rounded-ds-2xl border border-border bg-card p-5">
@@ -495,7 +495,7 @@ export default function WelcomePage() {
               </p>
             </div>
             <Button asChild className="rounded-ds-xl">
-              <Link href="/band-predictor">Start now</Link>
+              <Link href="/placement/run">Start now</Link>
             </Button>
           </div>
         </div>
