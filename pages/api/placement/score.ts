@@ -247,7 +247,12 @@ async function persistResult(result: ScoreResult, req: NextApiRequest) {
   // Try dynamic import so this file works even if supabase isn’t set up yet.
   try {
     const mod = await import('@/lib/supabaseAdmin');
-    const { supaAdmin } = mod as any;
+    const { supabaseAdmin } = mod as any;
+
+    if (!supabaseAdmin) {
+      console.error('placement_results: supabaseAdmin client is undefined');
+      return;
+    }
 
     const userId =
       (req.headers['x-user-id'] as string) ||
@@ -255,7 +260,7 @@ async function persistResult(result: ScoreResult, req: NextApiRequest) {
       null;
 
     // Store as-is; table columns: user_id, accuracy, band, correct, total, by_skill, guidance
-    await supaAdmin.from('placement_results').insert({
+    await supabaseAdmin.from('placement_results').insert({
       user_id: userId,
       accuracy: result.accuracy,
       band: result.band,
