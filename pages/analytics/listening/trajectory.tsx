@@ -1,2 +1,5 @@
-// Auto-generated placeholder page — replace with real implementation.
-export default function Page(){ return <main />; }
+import NotAvailableYet from '@/components/listening/NotAvailableYet';
+
+export default function Page() {
+  return <NotAvailableYet feature="Listening module" />;
+}

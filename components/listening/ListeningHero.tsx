@@ -16,9 +16,6 @@ export function ListeningHero() {
         — Academic & General. Start where you are, and level up fast.
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <Link href="/tools/listening/dictation" className="inline-flex">
-          <Button>Try AI Dictation</Button>
-        </Link>
         <Link href="/mock/listening/start" className="inline-flex">
           <Button variant="secondary">Begin a Mock</Button>
         </Link>

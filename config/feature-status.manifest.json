@@ -1,0 +1,46 @@
+{
+  "domains": {
+    "listening": {
+      "status": "incomplete",
+      "placeholders": [
+        { "path": "components/listening/SaveButton.tsx", "status": "incomplete" },
+        { "path": "components/listening/analytics/DrillBreakdown.tsx", "status": "incomplete" },
+        { "path": "components/listening/dictation/DictationEditor.tsx", "status": "incomplete" },
+        { "path": "components/listening/players/AccentSwitcher.tsx", "status": "incomplete" },
+        { "path": "components/listening/quizzes/TimedMiniTest.tsx", "status": "incomplete" },
+        { "path": "components/listening/accent/AccentClip.tsx", "status": "incomplete" },
+        { "path": "lib/ai/listening/dictationAdapter.ts", "status": "incomplete" },
+        { "path": "lib/listening/accentMap.ts", "status": "incomplete" },
+        { "path": "lib/listening/errors.ts", "status": "incomplete" },
+        { "path": "lib/listening/insights.ts", "status": "incomplete" },
+        { "path": "pages/practice/listening/daily.tsx", "status": "incomplete" },
+        { "path": "pages/learn/listening/tips.tsx", "status": "incomplete" },
+        { "path": "pages/learn/listening/coach.tsx", "status": "incomplete" },
+        { "path": "pages/learn/listening/mistakes.tsx", "status": "incomplete" },
+        { "path": "pages/tools/listening/accent-trainer.tsx", "status": "incomplete" },
+        { "path": "pages/tools/listening/dictation.tsx", "status": "incomplete" },
+        { "path": "pages/analytics/listening.tsx", "status": "incomplete" },
+        { "path": "pages/analytics/listening/trajectory.tsx", "status": "incomplete" },
+        { "path": "pages/me/listening/saved.tsx", "status": "incomplete" },
+        { "path": "pages/mock/listening/result.tsx", "status": "incomplete" },
+        { "path": "pages/api/dev/seed/listening-one.ts", "status": "incomplete" },
+        { "path": "pages/api/ai/listening/coach.ts", "status": "incomplete" },
+        { "path": "pages/api/ai/listening/dictation.grade.ts", "status": "incomplete" },
+        { "path": "pages/api/ai/listening/accent.check.ts", "status": "incomplete" },
+        { "path": "pages/api/mock/listening/create-run.ts", "status": "incomplete" },
+        { "path": "pages/api/mock/listening/save-answers.ts", "status": "incomplete" },
+        { "path": "pages/api/mock/listening/play-ping.ts", "status": "incomplete" },
+        { "path": "pages/api/mock/listening/submit-final.ts", "status": "incomplete" },
+        { "path": "pages/api/admin/listening/tips.moderate.ts", "status": "incomplete" },
+        { "path": "pages/api/listening/attempts/export.csv.ts", "status": "incomplete" },
+        { "path": "pages/api/listening/attempts/log.ts", "status": "incomplete" },
+        { "path": "pages/api/listening/mistakes/review.ts", "status": "incomplete" },
+        { "path": "pages/api/listening/practice/toggle.ts", "status": "incomplete" },
+        { "path": "pages/api/listening/tips/submit.ts", "status": "incomplete" },
+        { "path": "pages/api/listening/save.ts", "status": "incomplete" },
+        { "path": "pages/api/listening/mini/grade.ts", "status": "incomplete" },
+        { "path": "scripts/ensure-listening-tree.sh", "status": "incomplete" }
+      ]
+    }
+  }
+}
