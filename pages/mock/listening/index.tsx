@@ -39,13 +39,6 @@ const quickListeningActions = [
     href: '/mock/listening/history',
     icon: 'BarChart3' as const,
   },
-  {
-    id: 'analytics',
-    label: 'Open Listening analytics',
-    description: 'Spot weak sections and question types.',
-    href: '/analytics/listening',
-    icon: 'PieChart' as const,
-  },
 ];
 
 // -----------------------------------------------------------------------------

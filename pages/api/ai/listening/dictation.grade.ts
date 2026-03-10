@@ -1,5 +1,11 @@
-// Auto-generated placeholder API — replace with real implementation.
 import type { NextApiRequest, NextApiResponse } from 'next';
-export default function handler(_req: NextApiRequest, res: NextApiResponse) {
-  res.status(501).json({ error: 'Not implemented' });
+import { respondWithIncompleteApi } from '@/lib/api/respondWithIncomplete';
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  return respondWithIncompleteApi({
+    req,
+    res,
+    endpoint: '/ai/listening/dictation.grade.ts',
+    code: 'LISTENING_INCOMPLETE_AI_LISTENING_DICTATION_GRADE',
+  });
 }
