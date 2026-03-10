@@ -6,11 +6,12 @@ import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/lib/supabaseClient'; // adjust import to your client
 import {
   NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER,
+  TOTAL_ONBOARDING_STEPS,
   type NotificationChannel,
 } from '@/lib/onboarding/schema';
+import { saveOnboardingStep } from '@/lib/onboarding/client';
 
 type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
 
@@ -124,34 +125,13 @@ const OnboardingNotificationsPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      const res = await fetch('/api/onboarding/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          step: 5,
-          channels: NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER.filter((channel) =>
-            selectedChannels.includes(channel),
-          ),
-        }),
+      await saveOnboardingStep(TOTAL_ONBOARDING_STEPS, {
+        channels: NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER.filter((channel) =>
+          selectedChannels.includes(channel),
+        ),
       });
 
-      if (!res.ok) {
-        let msg = 'Failed to save onboarding.';
-        try {
-          const body = await res.json();
-          if (body?.error) msg = body.error;
-        } catch {
-          // ignore
-        }
-        setError(msg);
-        return;
-      }
-
-      // 🔁 Force session refresh to get updated metadata
-      await supabase.auth.refreshSession();
-
-      // ✅ Hard navigation to ensure we leave the onboarding page
-      window.location.href = nextPath || '/dashboard';
+      await router.push(nextPath || '/dashboard');
     } catch (e: any) {
       // eslint-disable-next-line no-console
       console.error(e);

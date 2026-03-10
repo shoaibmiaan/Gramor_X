@@ -6,14 +6,10 @@ import React, { useMemo, useState } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
+import { saveOnboardingStep } from '@/lib/onboarding/client';
 import { cn } from '@/lib/utils';
 
-type OnboardingStepId =
-  | 'language'
-  | 'target-band'
-  | 'exam-date'
-  | 'study-rhythm'
-  | 'notifications';
+type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
 
 const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
   { id: 'language', label: 'Language' },
@@ -37,10 +33,7 @@ const OnboardingLanguagePage: NextPage = () => {
     return typeof next === 'string' ? next : '/dashboard';
   }, [router.query]);
 
-  const currentIndex = useMemo(
-    () => ONBOARDING_STEPS.findIndex((s) => s.id === 'language'),
-    []
-  );
+  const currentIndex = useMemo(() => ONBOARDING_STEPS.findIndex((s) => s.id === 'language'), []);
 
   async function handleContinue() {
     setError(null);
@@ -53,17 +46,9 @@ const OnboardingLanguagePage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      // TODO: wire this up to your actual API / Supabase call.
-      // Example (pseudo):
-      // await fetch('/api/onboarding/language', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ language }),
-      // });
-
-      // For now, just move to the next onboarding step route.
+      await saveOnboardingStep(2, { preferredLanguage: language });
       await router.push({
-        pathname: '/onboarding/target-band',
+        pathname: '/onboarding/current-level',
         query: { next: nextPath },
       });
     } catch (e) {
@@ -85,10 +70,7 @@ const OnboardingLanguagePage: NextPage = () => {
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
         {/* Progress rail */}
         <div className="mb-6 w-full max-w-3xl">
-          <OnboardingProgress
-            steps={ONBOARDING_STEPS}
-            currentIndex={currentIndex}
-          />
+          <OnboardingProgress steps={ONBOARDING_STEPS} currentIndex={currentIndex} />
         </div>
 
         {/* Main card */}
@@ -102,9 +84,9 @@ const OnboardingLanguagePage: NextPage = () => {
                 Pick your learning language
               </h1>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                We&apos;ll translate nudges, reminders, and key instructions so
-                the platform feels natural to you. You can change this later
-                from <span className="font-medium">Settings → Preferences</span>.
+                We&apos;ll translate nudges, reminders, and key instructions so the platform feels
+                natural to you. You can change this later from{' '}
+                <span className="font-medium">Settings → Preferences</span>.
               </p>
             </div>
 
@@ -132,16 +114,13 @@ const OnboardingLanguagePage: NextPage = () => {
             />
           </div>
 
-          {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
-          )}
+          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
 
           {/* Keyboard hint */}
           <p className="mt-4 text-xs text-muted-foreground">
-            Tip: Use <span className="rounded bg-muted px-1.5 py-0.5">←</span>{' '}
-            and <span className="rounded bg-muted px-1.5 py-0.5">→</span>{' '}
-            arrow keys to move between options, then press{' '}
-            <span className="rounded bg-muted px-1.5 py-0.5">Enter</span> to
+            Tip: Use <span className="rounded bg-muted px-1.5 py-0.5">←</span> and{' '}
+            <span className="rounded bg-muted px-1.5 py-0.5">→</span> arrow keys to move between
+            options, then press <span className="rounded bg-muted px-1.5 py-0.5">Enter</span> to
             continue.
           </p>
 
@@ -161,11 +140,7 @@ const OnboardingLanguagePage: NextPage = () => {
               <p className="hidden text-xs text-muted-foreground sm:inline">
                 Next: <span className="font-medium">Set your target band</span>
               </p>
-              <Button
-                size="lg"
-                onClick={handleContinue}
-                disabled={submitting || !language}
-              >
+              <Button size="lg" onClick={handleContinue} disabled={submitting || !language}>
                 {submitting ? 'Saving…' : 'Continue'}
                 <Icon name="arrow-right" className="ml-2 h-4 w-4" />
               </Button>
@@ -182,10 +157,7 @@ interface OnboardingProgressProps {
   currentIndex: number;
 }
 
-const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
-  steps,
-  currentIndex,
-}) => {
+const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ steps, currentIndex }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -194,26 +166,16 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
           const completed = index < currentIndex;
 
           return (
-            <div
-              key={step.id}
-              className="flex flex-1 items-center last:flex-none"
-            >
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
               <div
                 className={cn(
                   'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
-                  completed &&
-                    'border-primary bg-primary text-primary-foreground',
-                  active &&
-                    !completed &&
-                    'border-primary/80 bg-primary/10 text-primary',
-                  !active && !completed && 'border-border bg-muted text-muted-foreground'
+                  completed && 'border-primary bg-primary text-primary-foreground',
+                  active && !completed && 'border-primary/80 bg-primary/10 text-primary',
+                  !active && !completed && 'border-border bg-muted text-muted-foreground',
                 )}
               >
-                {completed ? (
-                  <Icon name="check" className="h-3.5 w-3.5" />
-                ) : (
-                  index + 1
-                )}
+                {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
               </div>
 
               {index < steps.length - 1 && (
@@ -221,7 +183,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                   className={cn(
                     'mx-1 h-px flex-1 rounded-full bg-border',
                     completed && 'bg-primary/70',
-                    active && 'bg-primary/50'
+                    active && 'bg-primary/50',
                   )}
                 />
               )}
@@ -236,10 +198,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
           return (
             <span
               key={step.id}
-              className={cn(
-                'flex-1 truncate text-center',
-                active && 'font-medium text-foreground'
-              )}
+              className={cn('flex-1 truncate text-center', active && 'font-medium text-foreground')}
             >
               {step.label}
             </span>
@@ -272,7 +231,7 @@ const LanguageChoice: React.FC<LanguageChoiceProps> = ({
         'group flex h-full flex-col rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
         selected
           ? 'border-primary bg-primary/10 shadow-md'
-          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
       )}
     >
       <div className="mb-2 flex items-center justify-between">
@@ -288,7 +247,7 @@ const LanguageChoice: React.FC<LanguageChoiceProps> = ({
             'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
             selected
               ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
           )}
         >
           {selected ? <Icon name="check" className="h-3 w-3" /> : ''}

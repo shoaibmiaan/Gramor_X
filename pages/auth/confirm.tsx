@@ -59,7 +59,9 @@ export default function AuthConfirmPage() {
         }
 
         // Get fresh session
-        const { data: { session } } = await supabaseBrowser().auth.getSession();
+        const {
+          data: { session },
+        } = await supabaseBrowser().auth.getSession();
 
         if (!session?.user) {
           throw new Error('No active session after verification');
@@ -96,7 +98,7 @@ export default function AuthConfirmPage() {
         // ────────────────────────────────────────────────
         // Role-based destination
         // ────────────────────────────────────────────────
-        let destination = '/onboarding';
+        let destination = '/onboarding/welcome';
 
         if (redirectAfter) {
           destination = redirectAfter;
@@ -115,7 +117,7 @@ export default function AuthConfirmPage() {
               break;
 
             default:
-              destination = '/onboarding';
+              destination = '/onboarding/welcome';
           }
         }
 
@@ -128,7 +130,6 @@ export default function AuthConfirmPage() {
         setTimeout(() => {
           router.replace(destination);
         }, 1400);
-
       } catch (err: any) {
         console.error('[confirm] Error during verification:', err);
 

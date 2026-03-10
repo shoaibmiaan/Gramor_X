@@ -6,14 +6,10 @@ import React, { useMemo, useState } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
+import { saveOnboardingStep } from '@/lib/onboarding/client';
 import { cn } from '@/lib/utils';
 
-type OnboardingStepId =
-  | 'language'
-  | 'target-band'
-  | 'exam-date'
-  | 'study-rhythm'
-  | 'notifications';
+type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
 
 const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
   { id: 'language', label: 'Language' },
@@ -23,12 +19,7 @@ const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
   { id: 'notifications', label: 'Notifications' },
 ];
 
-type ExamTimeframe =
-  | '0-30'
-  | '30-60'
-  | '60-90'
-  | '90-plus'
-  | 'not-booked';
+type ExamTimeframe = '0-30' | '30-60' | '60-90' | '90-plus' | 'not-booked';
 
 interface TimeframeOption {
   id: ExamTimeframe;
@@ -76,10 +67,7 @@ const OnboardingExamDatePage: NextPage = () => {
     return typeof next === 'string' ? next : '/dashboard';
   }, [router.query]);
 
-  const currentIndex = useMemo(
-    () => ONBOARDING_STEPS.findIndex((s) => s.id === 'exam-date'),
-    []
-  );
+  const currentIndex = useMemo(() => ONBOARDING_STEPS.findIndex((s) => s.id === 'exam-date'), []);
 
   function handleBack() {
     router.push({
@@ -105,16 +93,10 @@ const OnboardingExamDatePage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      // TODO: persist exam info to your backend / Supabase profile table.
-      // Example (pseudo):
-      // await fetch('/api/onboarding/exam-date', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ timeframe, specificDate: specificDate || null }),
-      // });
+      await saveOnboardingStep(6, { timeframe, examDate: specificDate || null });
 
       await router.push({
-        pathname: '/onboarding/study-rhythm',
+        pathname: '/onboarding/study-commitment',
         query: { next: nextPath },
       });
     } catch (e) {
@@ -131,10 +113,7 @@ const OnboardingExamDatePage: NextPage = () => {
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
         {/* Progress rail */}
         <div className="mb-6 w-full max-w-3xl">
-          <OnboardingProgress
-            steps={ONBOARDING_STEPS}
-            currentIndex={currentIndex}
-          />
+          <OnboardingProgress steps={ONBOARDING_STEPS} currentIndex={currentIndex} />
         </div>
 
         {/* Main card */}
@@ -148,9 +127,8 @@ const OnboardingExamDatePage: NextPage = () => {
                 When is your IELTS exam?
               </h1>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                We&apos;ll adjust the intensity of your study plan based on how
-                close your test date is. Shorter timelines get tighter, more
-                focused practice.
+                We&apos;ll adjust the intensity of your study plan based on how close your test date
+                is. Shorter timelines get tighter, more focused practice.
               </p>
             </div>
 
@@ -176,12 +154,9 @@ const OnboardingExamDatePage: NextPage = () => {
           <div className="mt-5 rounded-2xl border border-dashed border-border bg-muted/40 p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium">
-                  Do you already know the exact date?
-                </p>
+                <p className="text-sm font-medium">Do you already know the exact date?</p>
                 <p className="text-xs text-muted-foreground">
-                  Optional, but it helps us align your milestones with the
-                  calendar.
+                  Optional, but it helps us align your milestones with the calendar.
                 </p>
               </div>
 
@@ -203,15 +178,12 @@ const OnboardingExamDatePage: NextPage = () => {
             </div>
           </div>
 
-          {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
-          )}
+          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
 
           {/* Hint */}
           <p className="mt-4 text-xs text-muted-foreground">
-            Not booked yet? No problem. Pick the option that feels closest and
-            you can update the exact date anytime from{' '}
-            <span className="font-medium">Settings → Study plan</span>.
+            Not booked yet? No problem. Pick the option that feels closest and you can update the
+            exact date anytime from <span className="font-medium">Settings → Study plan</span>.
           </p>
 
           {/* Footer actions */}
@@ -228,14 +200,9 @@ const OnboardingExamDatePage: NextPage = () => {
 
             <div className="flex items-center gap-3">
               <p className="hidden text-xs text-muted-foreground sm:inline">
-                Next:{' '}
-                <span className="font-medium">Choose your study rhythm</span>
+                Next: <span className="font-medium">Choose your study rhythm</span>
               </p>
-              <Button
-                size="lg"
-                onClick={handleContinue}
-                disabled={submitting || !timeframe}
-              >
+              <Button size="lg" onClick={handleContinue} disabled={submitting || !timeframe}>
                 {submitting ? 'Saving…' : 'Continue'}
                 <Icon name="arrow-right" className="ml-2 h-4 w-4" />
               </Button>
@@ -252,10 +219,7 @@ interface OnboardingProgressProps {
   currentIndex: number;
 }
 
-const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
-  steps,
-  currentIndex,
-}) => {
+const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ steps, currentIndex }) => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -264,26 +228,16 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
           const completed = index < currentIndex;
 
           return (
-            <div
-              key={step.id}
-              className="flex flex-1 items-center last:flex-none"
-            >
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
               <div
                 className={cn(
                   'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
-                  completed &&
-                    'border-primary bg-primary text-primary-foreground',
-                  active &&
-                    !completed &&
-                    'border-primary/80 bg-primary/10 text-primary',
-                  !active && !completed && 'border-border bg-muted text-muted-foreground'
+                  completed && 'border-primary bg-primary text-primary-foreground',
+                  active && !completed && 'border-primary/80 bg-primary/10 text-primary',
+                  !active && !completed && 'border-border bg-muted text-muted-foreground',
                 )}
               >
-                {completed ? (
-                  <Icon name="check" className="h-3.5 w-3.5" />
-                ) : (
-                  index + 1
-                )}
+                {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
               </div>
 
               {index < steps.length - 1 && (
@@ -291,7 +245,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                   className={cn(
                     'mx-1 h-px flex-1 rounded-full bg-border',
                     completed && 'bg-primary/70',
-                    active && 'bg-primary/50'
+                    active && 'bg-primary/50',
                   )}
                 />
               )}
@@ -306,10 +260,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
           return (
             <span
               key={step.id}
-              className={cn(
-                'flex-1 truncate text-center',
-                active && 'font-medium text-foreground'
-              )}
+              className={cn('flex-1 truncate text-center', active && 'font-medium text-foreground')}
             >
               {step.label}
             </span>
@@ -326,11 +277,7 @@ interface TimeframeCardProps {
   onSelect: () => void;
 }
 
-const TimeframeCard: React.FC<TimeframeCardProps> = ({
-  option,
-  selected,
-  onSelect,
-}) => {
+const TimeframeCard: React.FC<TimeframeCardProps> = ({ option, selected, onSelect }) => {
   return (
     <button
       type="button"
@@ -339,27 +286,23 @@ const TimeframeCard: React.FC<TimeframeCardProps> = ({
         'group flex h-full flex-col justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
         selected
           ? 'border-primary bg-primary/10 shadow-md'
-          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
       )}
     >
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-base font-semibold sm:text-lg">
-          {option.label}
-        </span>
+        <span className="text-base font-semibold sm:text-lg">{option.label}</span>
         <div
           className={cn(
             'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
             selected
               ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
           )}
         >
           {selected ? <Icon name="check" className="h-3 w-3" /> : ''}
         </div>
       </div>
-      <p className="text-xs text-muted-foreground sm:text-sm">
-        {option.subtitle}
-      </p>
+      <p className="text-xs text-muted-foreground sm:text-sm">{option.subtitle}</p>
     </button>
   );
 };

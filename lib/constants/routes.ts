@@ -14,7 +14,7 @@ export const CALLBACK = '/auth/callback';
 export const MFA = '/auth/mfa';
 
 // Onboarding (post‑signup)
-export const ONBOARDING = '/onboarding';
+export const ONBOARDING = '/onboarding/welcome';
 
 // Dashboard / app
 export const DASHBOARD = '/dashboard';

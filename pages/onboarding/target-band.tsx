@@ -6,14 +6,10 @@ import React, { useMemo, useState } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
+import { saveOnboardingStep } from '@/lib/onboarding/client';
 import { cn } from '@/lib/utils';
 
-type OnboardingStepId =
-  | 'language'
-  | 'target-band'
-  | 'exam-date'
-  | 'study-rhythm'
-  | 'notifications';
+type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
 
 const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
   { id: 'language', label: 'Language' },
@@ -31,12 +27,7 @@ const STEP_ROUTES: Record<OnboardingStepId, string> = {
   notifications: '/onboarding/notifications',
 };
 
-type TargetBand =
-  | '5.5'
-  | '6.0'
-  | '6.5'
-  | '7.0'
-  | '7.5+';
+type TargetBand = '5.5' | '6.0' | '6.5' | '7.0' | '7.5+';
 
 interface TargetBandOption {
   id: TargetBand;
@@ -85,10 +76,7 @@ const OnboardingTargetBandPage: NextPage = () => {
     return typeof next === 'string' ? next : '/dashboard';
   }, [router.query]);
 
-  const currentIndex = useMemo(
-    () => ONBOARDING_STEPS.findIndex((s) => s.id === 'target-band'),
-    []
-  );
+  const currentIndex = useMemo(() => ONBOARDING_STEPS.findIndex((s) => s.id === 'target-band'), []);
 
   function handleBack() {
     router.push({
@@ -119,16 +107,10 @@ const OnboardingTargetBandPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      // TODO: wire this to Supabase (profiles.goal_band / target_band)
-      // await fetch('/api/onboarding/target-band', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ targetBand }),
-      // });
-
-      // ✅ go to next step
+      const goalBand = Number.parseFloat(targetBand);
+      await saveOnboardingStep(5, { goalBand });
       await router.push({
-        pathname: STEP_ROUTES['exam-date'],
+        pathname: '/onboarding/exam-timeline',
         query: { next: nextPath },
       });
     } catch (e) {
@@ -163,8 +145,8 @@ const OnboardingTargetBandPage: NextPage = () => {
                 What&apos;s your target band score?
               </h1>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Your goal band helps us set difficulty, pick question types, and
-                plan how aggressive your schedule should be.
+                Your goal band helps us set difficulty, pick question types, and plan how aggressive
+                your schedule should be.
               </p>
             </div>
 
@@ -186,14 +168,11 @@ const OnboardingTargetBandPage: NextPage = () => {
             ))}
           </div>
 
-          {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
-          )}
+          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
 
           {/* Hint */}
           <p className="mt-4 text-xs text-muted-foreground">
-            Not 100% sure? Pick the band you’d be happy with. You can always
-            adjust it later from{' '}
+            Not 100% sure? Pick the band you’d be happy with. You can always adjust it later from{' '}
             <span className="font-medium">Profile → Goals</span>.
           </p>
 
@@ -211,13 +190,9 @@ const OnboardingTargetBandPage: NextPage = () => {
 
             <div className="flex items-center gap-3">
               <p className="hidden text-xs text-muted-foreground sm:inline">
-                Next: <span className="font-medium">Exam date</span>
+                Next: <span className="font-medium">Exam timeline</span>
               </p>
-              <Button
-                size="lg"
-                onClick={handleContinue}
-                disabled={submitting || !targetBand}
-              >
+              <Button size="lg" onClick={handleContinue} disabled={submitting || !targetBand}>
                 {submitting ? 'Saving…' : 'Continue'}
                 <Icon name="arrow-right" className="ml-2 h-4 w-4" />
               </Button>
@@ -252,29 +227,17 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
             <div
               className={cn(
                 'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
-                completed &&
-                  'border-primary bg-primary text-primary-foreground',
-                active &&
-                  !completed &&
-                  'border-primary/80 bg-primary/10 text-primary',
-                !active &&
-                  !completed &&
-                  'border-border bg-muted text-muted-foreground'
+                completed && 'border-primary bg-primary text-primary-foreground',
+                active && !completed && 'border-primary/80 bg-primary/10 text-primary',
+                !active && !completed && 'border-border bg-muted text-muted-foreground',
               )}
             >
-              {completed ? (
-                <Icon name="check" className="h-3.5 w-3.5" />
-              ) : (
-                index + 1
-              )}
+              {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
             </div>
           );
 
           return (
-            <div
-              key={step.id}
-              className="flex flex-1 items-center last:flex-none"
-            >
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
               {onStepClick ? (
                 <button
                   type="button"
@@ -292,7 +255,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                   className={cn(
                     'mx-1 h-px flex-1 rounded-full bg-border',
                     completed && 'bg-primary/70',
-                    active && 'bg-primary/50'
+                    active && 'bg-primary/50',
                   )}
                 />
               )}
@@ -307,10 +270,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
           const active = index === currentIndex;
           const label = (
             <span
-              className={cn(
-                'flex-1 truncate text-center',
-                active && 'font-medium text-foreground'
-              )}
+              className={cn('flex-1 truncate text-center', active && 'font-medium text-foreground')}
             >
               {step.label}
             </span>
@@ -338,11 +298,7 @@ interface TargetBandCardProps {
   onSelect: () => void;
 }
 
-const TargetBandCard: React.FC<TargetBandCardProps> = ({
-  option,
-  selected,
-  onSelect,
-}) => {
+const TargetBandCard: React.FC<TargetBandCardProps> = ({ option, selected, onSelect }) => {
   return (
     <button
       type="button"
@@ -351,7 +307,7 @@ const TargetBandCard: React.FC<TargetBandCardProps> = ({
         'group flex h-full flex-col justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
         selected
           ? 'border-primary bg-primary/10 shadow-md'
-          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
       )}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -359,9 +315,7 @@ const TargetBandCard: React.FC<TargetBandCardProps> = ({
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Icon name="target" className="h-4 w-4" />
           </span>
-          <span className="text-base font-semibold sm:text-lg">
-            {option.label}
-          </span>
+          <span className="text-base font-semibold sm:text-lg">{option.label}</span>
         </div>
 
         <div
@@ -369,16 +323,14 @@ const TargetBandCard: React.FC<TargetBandCardProps> = ({
             'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
             selected
               ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
           )}
         >
           {selected ? <Icon name="check" className="h-3 w-3" /> : ''}
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground sm:text-sm">
-        {option.subtitle}
-      </p>
+      <p className="text-xs text-muted-foreground sm:text-sm">{option.subtitle}</p>
 
       {option.badge && (
         <span className="mt-3 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
