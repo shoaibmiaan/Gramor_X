@@ -7,13 +7,12 @@ import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient'; // adjust import to your client
+import {
+  NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER,
+  type NotificationChannel,
+} from '@/lib/onboarding/schema';
 
-type OnboardingStepId =
-  | 'language'
-  | 'target-band'
-  | 'exam-date'
-  | 'study-rhythm'
-  | 'notifications';
+type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
 
 const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
   { id: 'language', label: 'Language' },
@@ -31,7 +30,7 @@ const STEP_ROUTES: Record<OnboardingStepId, string> = {
   notifications: '/onboarding/notifications',
 };
 
-type ChannelId = 'email' | 'whatsapp' | 'in-app';
+type ChannelId = NotificationChannel;
 
 interface ChannelOption {
   id: ChannelId;
@@ -53,7 +52,7 @@ const CHANNEL_OPTIONS: ChannelOption[] = [
     description: 'Short nudges, streak alerts, and quick links to practice.',
   },
   {
-    id: 'in-app',
+    id: 'in_app',
     label: 'In-app only',
     description: 'Silent mode. See reminders only inside GramorX.',
   },
@@ -63,7 +62,7 @@ const OnboardingNotificationsPage: NextPage = () => {
   const router = useRouter();
 
   const [selectedChannels, setSelectedChannels] = useState<ChannelId[]>([
-    'email',
+    NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER[0],
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,14 +85,14 @@ const OnboardingNotificationsPage: NextPage = () => {
 
   const currentIndex = useMemo(
     () => ONBOARDING_STEPS.findIndex((s) => s.id === 'notifications'),
-    []
+    [],
   );
 
   const hasChannel = selectedChannels.length > 0;
 
   function toggleChannel(id: ChannelId) {
     setSelectedChannels((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
     );
   }
 
@@ -130,7 +129,9 @@ const OnboardingNotificationsPage: NextPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           step: 5,
-          channels: selectedChannels,
+          channels: NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER.filter((channel) =>
+            selectedChannels.includes(channel),
+          ),
         }),
       });
 
@@ -154,9 +155,7 @@ const OnboardingNotificationsPage: NextPage = () => {
     } catch (e: any) {
       // eslint-disable-next-line no-console
       console.error(e);
-      setError(
-        e?.message || 'Could not save your notification settings. Try again.'
-      );
+      setError(e?.message || 'Could not save your notification settings. Try again.');
     } finally {
       setSubmitting(false);
     }
@@ -185,9 +184,8 @@ const OnboardingNotificationsPage: NextPage = () => {
                 How should we keep you on track?
               </h1>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Choose where you want to receive study nudges, streak alerts,
-                and mock test reminders. No spam — only what helps your band
-                score.
+                Choose where you want to receive study nudges, streak alerts, and mock test
+                reminders. No spam — only what helps your band score.
               </p>
             </div>
 
@@ -209,9 +207,7 @@ const OnboardingNotificationsPage: NextPage = () => {
             ))}
           </div>
 
-          {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
-          )}
+          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
 
           <p className="mt-4 text-xs text-muted-foreground sm:text-sm">
             You can fine-tune these later from{' '}
@@ -237,11 +233,7 @@ const OnboardingNotificationsPage: NextPage = () => {
                   {nextPath === '/onboarding/study-plan' ? 'your AI study plan' : nextPath}
                 </span>
               </p>
-              <Button
-                size="lg"
-                onClick={handleFinish}
-                disabled={submitting || !hasChannel}
-              >
+              <Button size="lg" onClick={handleFinish} disabled={submitting || !hasChannel}>
                 {submitting ? 'Finishing…' : 'Finish & continue'}
                 <Icon name="arrow-right" className="ml-2 h-4 w-4" />
               </Button>
@@ -276,29 +268,17 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
             <div
               className={cn(
                 'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
-                completed &&
-                  'border-primary bg-primary text-primary-foreground',
-                active &&
-                  !completed &&
-                  'border-primary/80 bg-primary/10 text-primary',
-                !active &&
-                  !completed &&
-                  'border-border bg-muted text-muted-foreground'
+                completed && 'border-primary bg-primary text-primary-foreground',
+                active && !completed && 'border-primary/80 bg-primary/10 text-primary',
+                !active && !completed && 'border-border bg-muted text-muted-foreground',
               )}
             >
-              {completed ? (
-                <Icon name="check" className="h-3.5 w-3.5" />
-              ) : (
-                index + 1
-              )}
+              {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
             </div>
           );
 
           return (
-            <div
-              key={step.id}
-              className="flex flex-1 items-center last:flex-none"
-            >
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
               {onStepClick ? (
                 <button
                   type="button"
@@ -316,7 +296,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
                   className={cn(
                     'mx-1 h-px flex-1 rounded-full bg-border',
                     completed && 'bg-primary/70',
-                    active && 'bg-primary/50'
+                    active && 'bg-primary/50',
                   )}
                 />
               )}
@@ -340,7 +320,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
               <span
                 className={cn(
                   'flex-1 truncate text-center',
-                  active && 'font-medium text-foreground'
+                  active && 'font-medium text-foreground',
                 )}
               >
                 {step.label}
@@ -359,11 +339,7 @@ interface ChannelCardProps {
   onToggle: () => void;
 }
 
-const ChannelCard: React.FC<ChannelCardProps> = ({
-  option,
-  selected,
-  onToggle,
-}) => {
+const ChannelCard: React.FC<ChannelCardProps> = ({ option, selected, onToggle }) => {
   const { label, description, badge } = option;
 
   return (
@@ -374,7 +350,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({
         'group flex h-full flex-col justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
         selected
           ? 'border-primary bg-primary/10 shadow-md'
-          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
       )}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -385,9 +361,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({
             </span>
             <span className="text-base font-semibold sm:text-lg">{label}</span>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
-            {description}
-          </p>
+          <p className="mt-2 text-xs text-muted-foreground sm:text-sm">{description}</p>
         </div>
 
         <div
@@ -395,7 +369,7 @@ const ChannelCard: React.FC<ChannelCardProps> = ({
             'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
             selected
               ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
           )}
         >
           {selected ? <Icon name="check" className="h-3 w-3" /> : ''}
