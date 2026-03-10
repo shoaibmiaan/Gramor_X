@@ -2,6 +2,7 @@
 import * as React from 'react';
 
 import { startCheckout as startCheckoutRequest } from '@/lib/payments/index';
+import { isProviderSelectableInUi } from '@/lib/payments/providerManifest';
 import type { Cycle, PaymentMethod, PlanKey } from '@/types/payments';
 
 export type Plan = Readonly<{
@@ -77,8 +78,9 @@ export default function PlanPicker({
 
   const availableMethods = React.useMemo<PaymentMethod[]>(() => {
     if (onSelect) return [];
-    if (methods && methods.length > 0) return methods;
-    return ['stripe'];
+    const requested = methods && methods.length > 0 ? methods : ['stripe'];
+    const selectable = requested.filter((method) => isProviderSelectableInUi(method));
+    return selectable.length > 0 ? selectable : ['stripe'];
   }, [methods, onSelect]);
 
   const [selectedMethod, setSelectedMethod] = React.useState<PaymentMethod>(() => availableMethods[0] ?? 'stripe');
