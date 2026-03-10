@@ -6,7 +6,7 @@ export const routes = {
 
   // Onboarding
   onboarding: {
-    root: () => '/onboarding',
+    root: () => '/onboarding/welcome',
   },
 
   // Mocks
@@ -29,8 +29,7 @@ export const routes = {
 
   // Paywall/Billing (canonical)
   pricing: () => '/pricing',
-  checkout: (plan?: string) =>
-    plan ? `/checkout?plan=${encodeURIComponent(plan)}` : '/checkout',
+  checkout: (plan?: string) => (plan ? `/checkout?plan=${encodeURIComponent(plan)}` : '/checkout'),
   billing: () => '/settings/billing',
 
   /** @deprecated Use routes.billing() instead */

@@ -80,7 +80,9 @@ export const PlanGenOptionsSchema = z
         testDate: z.string().nullable().optional(),
       })
       .optional(),
-    confidence: z.object({ writing: z.number().min(1).max(5), speaking: z.number().min(1).max(5) }).optional(),
+    confidence: z
+      .object({ writing: z.number().min(1).max(5), speaking: z.number().min(1).max(5) })
+      .optional(),
     diagnostic: z
       .object({
         grammar: z.string(),
@@ -216,7 +218,11 @@ function buildDayTasks({
 
   let practiceBudget = Math.max(0, availableMinutes - reservedForMock);
 
-  if (includeMock && practiceBudget < MIN_PRACTICE_ON_MOCK_DAY && availableMinutes >= MIN_PRACTICE_ON_MOCK_DAY) {
+  if (
+    includeMock &&
+    practiceBudget < MIN_PRACTICE_ON_MOCK_DAY &&
+    availableMinutes >= MIN_PRACTICE_ON_MOCK_DAY
+  ) {
     const diff = MIN_PRACTICE_ON_MOCK_DAY - practiceBudget;
     if (reservedForMock > diff) {
       reservedForMock -= diff;
@@ -420,26 +426,30 @@ export function markTaskComplete(sp: StudyPlan, dateISO: string, taskId: string)
 }
 
 /** Persist via API (preferred). Falls back to direct Supabase if API unavailable. */
-export async function upsertStudyPlan(sp: StudyPlan): Promise<{ ok: true } | { ok: false; error: string }> {
-  const base =
-    typeof window === 'undefined'
-      ? env.SITE_URL || env.NEXT_PUBLIC_BASE_URL || ''
-      : '';
+export async function upsertStudyPlan(
+  sp: StudyPlan,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const base = typeof window === 'undefined' ? env.SITE_URL || env.NEXT_PUBLIC_BASE_URL || '' : '';
 
   try {
-    // Use onboarding complete endpoint if present (it persists profile + plan)
+    // Use canonical onboarding endpoint if present (persists completion + profile updates)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     try {
       const { supabaseBrowser } = await import('@/lib/supabaseBrowser');
       const { data } = await supabaseBrowser.auth.getSession();
       const token = data.session?.access_token;
       if (token) headers['Authorization'] = `Bearer ${token}`;
-    } catch { /* no-op */ }
+    } catch {
+      /* no-op */
+    }
 
-    const r = await fetch(`${base}/api/onboarding/complete`, {
+    const r = await fetch(`${base}/api/onboarding`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ plan_json: sp }),
+      body: JSON.stringify({
+        step: 12,
+        data: { channels: ['in_app'] },
+      }),
     });
 
     if (r.ok) return { ok: true };

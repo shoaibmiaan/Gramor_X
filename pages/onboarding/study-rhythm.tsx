@@ -6,14 +6,10 @@ import React, { useMemo, useState } from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
+import { saveOnboardingStep } from '@/lib/onboarding/client';
 import { cn } from '@/lib/utils';
 
-type OnboardingStepId =
-  | 'language'
-  | 'target-band'
-  | 'exam-date'
-  | 'study-rhythm'
-  | 'notifications';
+type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
 
 const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
   { id: 'language', label: 'Language' },
@@ -23,12 +19,7 @@ const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
   { id: 'notifications', label: 'Notifications' },
 ];
 
-type RhythmOption =
-  | 'daily'
-  | '5days'
-  | 'weekends'
-  | 'flexible'
-  | 'intensive';
+type RhythmOption = 'daily' | '5days' | 'weekends' | 'flexible' | 'intensive';
 
 interface RhythmChoice {
   id: RhythmOption;
@@ -66,6 +57,17 @@ const OPTIONS: RhythmChoice[] = [
   },
 ];
 
+const STUDY_COMMITMENT_BY_RHYTHM: Record<
+  RhythmOption,
+  { studyDays: Array<'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'>; minutesPerDay: number }
+> = {
+  daily: { studyDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], minutesPerDay: 60 },
+  '5days': { studyDays: ['mon', 'tue', 'wed', 'thu', 'fri'], minutesPerDay: 60 },
+  weekends: { studyDays: ['sat', 'sun'], minutesPerDay: 120 },
+  flexible: { studyDays: ['mon', 'wed', 'fri'], minutesPerDay: 45 },
+  intensive: { studyDays: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], minutesPerDay: 150 },
+};
+
 const OnboardingStudyRhythmPage: NextPage = () => {
   const router = useRouter();
   const [selected, setSelected] = useState<RhythmOption>('daily');
@@ -79,7 +81,7 @@ const OnboardingStudyRhythmPage: NextPage = () => {
 
   const currentIndex = useMemo(
     () => ONBOARDING_STEPS.findIndex((s) => s.id === 'study-rhythm'),
-    []
+    [],
   );
 
   function handleBack() {
@@ -95,11 +97,14 @@ const OnboardingStudyRhythmPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      // TODO: save to DB
-      // await fetch('/api/onboarding/study-rhythm', { ... })
+      const commitment = STUDY_COMMITMENT_BY_RHYTHM[selected];
+      await saveOnboardingStep(7, {
+        studyDays: commitment.studyDays,
+        minutesPerDay: commitment.minutesPerDay,
+      });
 
       await router.push({
-        pathname: '/onboarding/notifications',
+        pathname: '/onboarding/learning-style',
         query: { next: nextPath },
       });
     } catch (e) {
@@ -116,10 +121,7 @@ const OnboardingStudyRhythmPage: NextPage = () => {
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
         {/* Progress */}
         <div className="mb-6 w-full max-w-3xl">
-          <OnboardingProgress
-            steps={ONBOARDING_STEPS}
-            currentIndex={currentIndex}
-          />
+          <OnboardingProgress steps={ONBOARDING_STEPS} currentIndex={currentIndex} />
         </div>
 
         {/* Card */}
@@ -133,8 +135,8 @@ const OnboardingStudyRhythmPage: NextPage = () => {
                 How do you prefer to study?
               </h1>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Your rhythm helps us shape daily tasks, reminders, rest days,
-                and mock-test scheduling. You can update it anytime.
+                Your rhythm helps us shape daily tasks, reminders, rest days, and mock-test
+                scheduling. You can update it anytime.
               </p>
             </div>
 
@@ -156,13 +158,10 @@ const OnboardingStudyRhythmPage: NextPage = () => {
             ))}
           </div>
 
-          {error && (
-            <p className="mt-3 text-sm font-medium text-destructive">{error}</p>
-          )}
+          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
 
           <p className="mt-4 text-xs text-muted-foreground">
-            Don’t worry — your study plan adapts automatically as your exam date
-            gets closer.
+            Don’t worry — your study plan adapts automatically as your exam date gets closer.
           </p>
 
           {/* Footer actions */}
@@ -179,13 +178,9 @@ const OnboardingStudyRhythmPage: NextPage = () => {
 
             <div className="flex items-center gap-3">
               <p className="hidden text-xs text-muted-foreground sm:inline">
-                Next: <span className="font-medium">Notifications</span>
+                Next: <span className="font-medium">Learning style</span>
               </p>
-              <Button
-                size="lg"
-                onClick={handleContinue}
-                disabled={submitting || !selected}
-              >
+              <Button size="lg" onClick={handleContinue} disabled={submitting || !selected}>
                 {submitting ? 'Saving…' : 'Continue'}
                 <Icon name="arrow-right" className="ml-2 h-4 w-4" />
               </Button>
@@ -210,26 +205,16 @@ const OnboardingProgress: React.FC<{
           const completed = index < currentIndex;
 
           return (
-            <div
-              key={step.id}
-              className="flex flex-1 items-center last:flex-none"
-            >
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
               <div
                 className={cn(
                   'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
-                  completed &&
-                    'border-primary bg-primary text-primary-foreground',
-                  active &&
-                    !completed &&
-                    'border-primary/80 bg-primary/10 text-primary',
-                  !active && !completed && 'border-border bg-muted text-muted-foreground'
+                  completed && 'border-primary bg-primary text-primary-foreground',
+                  active && !completed && 'border-primary/80 bg-primary/10 text-primary',
+                  !active && !completed && 'border-border bg-muted text-muted-foreground',
                 )}
               >
-                {completed ? (
-                  <Icon name="check" className="h-3.5 w-3.5" />
-                ) : (
-                  index + 1
-                )}
+                {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
               </div>
 
               {index < steps.length - 1 && (
@@ -237,7 +222,7 @@ const OnboardingProgress: React.FC<{
                   className={cn(
                     'mx-1 h-px flex-1 rounded-full bg-border',
                     completed && 'bg-primary/70',
-                    active && 'bg-primary/50'
+                    active && 'bg-primary/50',
                   )}
                 />
               )}
@@ -252,7 +237,7 @@ const OnboardingProgress: React.FC<{
             key={step.id}
             className={cn(
               'flex-1 truncate text-center',
-              index === currentIndex && 'font-medium text-foreground'
+              index === currentIndex && 'font-medium text-foreground',
             )}
           >
             {step.label}
@@ -277,29 +262,25 @@ const RhythmCard: React.FC<{
         'group flex h-full flex-col justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
         selected
           ? 'border-primary bg-primary/10 shadow-md'
-          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
       )}
     >
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-base font-semibold sm:text-lg">
-          {option.label}
-        </span>
+        <span className="text-base font-semibold sm:text-lg">{option.label}</span>
 
         <div
           className={cn(
             'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
             selected
               ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
           )}
         >
           {selected ? <Icon name="check" className="h-3 w-3" /> : ''}
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground sm:text-sm">
-        {option.subtitle}
-      </p>
+      <p className="text-xs text-muted-foreground sm:text-sm">{option.subtitle}</p>
 
       {option.badge && (
         <span className="mt-3 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">

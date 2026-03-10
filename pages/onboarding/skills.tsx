@@ -5,7 +5,7 @@ export default function LegacyOnboardingSkills() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/onboarding');
+    router.replace('/onboarding/welcome');
   }, [router]);
 
   return null;

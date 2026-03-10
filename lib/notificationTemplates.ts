@@ -11,7 +11,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   WELCOME: {
     event_key: 'welcome',
     message: '🎉 Welcome to GramorX! Start your learning journey today.',
-    url: '/onboarding',
+    url: '/onboarding/welcome',
     channels: ['in_app', 'email']
   },
   PROFILE_COMPLETE: {
