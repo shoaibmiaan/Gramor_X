@@ -3,7 +3,14 @@ import { z } from 'zod';
 const supportedLanguageCodes = ['en', 'ur'] as const;
 const cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 const learningStyles = ['visual', 'auditory', 'reading_writing', 'kinesthetic', 'mixed'] as const;
-const weaknesses = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'] as const;
+const weaknesses = [
+  'listening',
+  'reading',
+  'writing',
+  'speaking',
+  'grammar',
+  'vocabulary',
+] as const;
 
 export const languageOptions = [
   { value: 'en', label: 'English' },
@@ -16,6 +23,12 @@ const CEFRLevelEnum = z.enum(cefrLevels);
 const LearningStyleEnum = z.enum(learningStyles);
 const WeaknessEnum = z.enum(weaknesses);
 export const NotificationChannelEnum = z.enum(['in_app', 'whatsapp', 'email'] as const);
+export type NotificationChannel = z.infer<typeof NotificationChannelEnum>;
+export const NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER: readonly NotificationChannel[] = [
+  'email',
+  'whatsapp',
+  'in_app',
+] as const;
 const PhoneSchema = z.union([z.string().min(6).max(32), z.literal('')]);
 
 export const LanguageBody = z.object({
@@ -95,8 +108,14 @@ export const onboardingStateSchema = z.object({
 export type OnboardingState = z.infer<typeof onboardingStateSchema>;
 
 const StepOneSchema = z.object({ step: z.literal(1), data: z.object({}) });
-const StepTwoSchema = z.object({ step: z.literal(2), data: z.object({ preferredLanguage: LanguageEnum }) });
-const StepThreeSchema = z.object({ step: z.literal(3), data: z.object({ currentLevel: CEFRLevelEnum }) });
+const StepTwoSchema = z.object({
+  step: z.literal(2),
+  data: z.object({ preferredLanguage: LanguageEnum }),
+});
+const StepThreeSchema = z.object({
+  step: z.literal(3),
+  data: z.object({ currentLevel: CEFRLevelEnum }),
+});
 const StepFourSchema = z.object({
   step: z.literal(4),
   data: z.object({
@@ -105,7 +124,10 @@ const StepFourSchema = z.object({
     testDate: z.string().optional().nullable(),
   }),
 });
-const StepFiveSchema = z.object({ step: z.literal(5), data: z.object({ goalBand: z.number().min(4).max(9) }) });
+const StepFiveSchema = z.object({
+  step: z.literal(5),
+  data: z.object({ goalBand: z.number().min(4).max(9) }),
+});
 const StepSixSchema = z.object({
   step: z.literal(6),
   data: z.object({
@@ -120,13 +142,25 @@ const StepSevenSchema = z.object({
     minutesPerDay: z.number().int().min(10).max(360),
   }),
 });
-const StepEightSchema = z.object({ step: z.literal(8), data: z.object({ learningStyle: LearningStyleEnum }) });
-const StepNineSchema = z.object({ step: z.literal(9), data: z.object({ weaknesses: z.array(WeaknessEnum).min(1).max(3) }) });
+const StepEightSchema = z.object({
+  step: z.literal(8),
+  data: z.object({ learningStyle: LearningStyleEnum }),
+});
+const StepNineSchema = z.object({
+  step: z.literal(9),
+  data: z.object({ weaknesses: z.array(WeaknessEnum).min(1).max(3) }),
+});
 const StepTenSchema = z.object({
   step: z.literal(10),
-  data: z.object({ writing: z.number().int().min(1).max(5), speaking: z.number().int().min(1).max(5) }),
+  data: z.object({
+    writing: z.number().int().min(1).max(5),
+    speaking: z.number().int().min(1).max(5),
+  }),
 });
-const StepElevenSchema = z.object({ step: z.literal(11), data: z.object({ response: z.string().min(20), result: DiagnosticResultSchema.optional() }) });
+const StepElevenSchema = z.object({
+  step: z.literal(11),
+  data: z.object({ response: z.string().min(20), result: DiagnosticResultSchema.optional() }),
+});
 const StepTwelveSchema = z.object({
   step: z.literal(12),
   data: z.object({

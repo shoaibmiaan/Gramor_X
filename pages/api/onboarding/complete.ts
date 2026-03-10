@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 
+import { NotificationChannelEnum } from '@/lib/onboarding/schema';
 import { getServerClient } from '@/lib/supabaseServer';
 
 const Body = z.object({
@@ -14,10 +15,7 @@ const Body = z.object({
       }),
     ])
     .optional(),
-  channels: z
-    .array(z.enum(['email', 'whatsapp', 'in_app']))
-    .min(1)
-    .optional(),
+  channels: z.array(NotificationChannelEnum).min(1).optional(),
 });
 
 function normalizeBody(req: NextApiRequest): unknown {
@@ -42,10 +40,7 @@ function normalizeBody(req: NextApiRequest): unknown {
   return raw;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -53,18 +48,13 @@ export default async function handler(
   const body = normalizeBody(req);
   const parse = Body.safeParse(body);
 
-  let step = 12;
-  let channels: ('email' | 'whatsapp' | 'in_app')[] | undefined;
-
-  if (parse.success) {
-    step = parse.data.step ?? 12;
-    channels = parse.data.channels;
-  } else {
-    console.warn(
-      'onboarding/complete: body validation failed',
-      parse.error.flatten()
-    );
+  if (!parse.success) {
+    console.warn('onboarding/complete: body validation failed', parse.error.flatten());
+    return res.status(400).json({ error: 'Invalid request body' });
   }
+
+  const step = parse.data.step ?? 12;
+  const channels = parse.data.channels;
 
   const supabase = getServerClient(req, res);
   const {
@@ -90,10 +80,7 @@ export default async function handler(
     patch.notification_channels = channels;
   }
 
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update(patch)
-    .eq('id', user.id);
+  const { error: updateError } = await supabase.from('profiles').update(patch).eq('id', user.id);
 
   if (updateError) {
     console.error('onboarding/complete update error:', updateError);
@@ -102,7 +89,7 @@ export default async function handler(
 
   // 🔁 Sync the onboarding_complete flag to the user's metadata
   const { error: metadataError } = await supabase.auth.updateUser({
-    data: { onboarding_complete: true }
+    data: { onboarding_complete: true },
   });
 
   if (metadataError) {
