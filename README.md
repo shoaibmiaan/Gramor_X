@@ -16,6 +16,45 @@ A Next.js (TypeScript) + Tailwind CSS portal with a separate **Premium “Exam E
 - Vercel configuration included
 - Teacher and admin flows consolidated into a single rollout (see [Teacher & Admin Workflow Overview](docs/teacher-admin-overview.md))
 
+
+## Feature lifecycle
+
+This repo tracks feature maturity in `config/feature-status.yml` using these statuses:
+
+- `incomplete`: active exploration/buildout; broad edits are expected.
+- `partial`: production feature with known gaps.
+- `done`: hardened feature; changes are gated.
+
+Each manifest entry includes `name`, `status`, `owner`, and `fileGlobs`.
+
+### How to work with feature status
+
+1. **Adding a new feature area**
+   - Add a new entry in `config/feature-status.yml` with owner and globs before or alongside your first PR.
+   - CI will fail if a new file under `pages/`, `components/`, or `lib/` is not covered by at least one manifest glob.
+
+2. **Marking work as `incomplete`**
+   - Use `incomplete` when architecture and UX are still moving.
+   - Keep globs broad enough so follow-up files stay covered.
+
+3. **Promoting from `incomplete`/`partial` to `done`**
+   - Update the status to `done` in the manifest.
+   - Add/confirm strict `CODEOWNERS` lines for the same globs.
+   - Treat future edits as controlled changes requiring review from the owning team.
+
+4. **Temporary unlocks for `done` features**
+   - CI blocks edits to `done` feature files unless PR metadata includes the override tag: `feature-status-override`.
+   - You can place the tag in the PR title, body, or labels (or set `FEATURE_STATUS_OVERRIDE=1` for local emergency runs).
+   - Use this only for urgent fixes or approved migrations, then remove the tag in follow-up PRs when possible.
+
+### Validation command
+
+Run locally before opening a PR:
+
+```bash
+npm run validate:feature-status
+```
+
 ## Getting Started
 
 For a step-by-step onboarding checklist, see [Docs/new-developer-guide.md](Docs/new-developer-guide.md).

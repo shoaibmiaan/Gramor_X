@@ -1,0 +1,94 @@
+version: 1
+overrideTag: feature-status-override
+features:
+  - name: Listening experience
+    status: done
+    owner: '@gramorx/listening-core'
+    fileGlobs:
+      - 'pages/listening/**'
+      - 'pages/practice/listening/**'
+      - 'pages/review/listening/**'
+      - 'components/listening/**'
+      - 'pages/api/listening/**'
+
+  - name: Mock exam suite
+    status: done
+    owner: '@gramorx/mock-core'
+    fileGlobs:
+      - 'pages/mock/**'
+      - 'pages/api/mock/**'
+
+  - name: Payments and checkout
+    status: done
+    owner: '@gramorx/payments-core'
+    fileGlobs:
+      - 'lib/payments/**'
+      - 'pages/api/payments/**'
+      - 'pages/api/checkout/**'
+      - 'pages/checkout/**'
+      - 'components/checkout/**'
+      - 'components/billing/**'
+
+  - name: AI assistants and copilots
+    status: partial
+    owner: '@gramorx/ai-platform'
+    fileGlobs:
+      - 'pages/ai/**'
+      - 'pages/api/ai/**'
+      - 'pages/api/study-buddy/**'
+      - 'components/ai/**'
+      - 'components/innovation/**'
+      - 'lib/ai/**'
+
+  - name: Reading experience
+    status: partial
+    owner: '@gramorx/reading-team'
+    fileGlobs:
+      - 'pages/reading/**'
+      - 'pages/review/reading/**'
+      - 'components/reading/**'
+      - 'pages/api/reading/**'
+
+  - name: Writing practice and review
+    status: partial
+    owner: '@gramorx/writing-team'
+    fileGlobs:
+      - 'pages/writing/**'
+      - 'pages/api/writing/**'
+      - 'pages/writing/mock/**'
+      - 'pages/writing/review/**'
+
+  - name: Vocabulary and word bank
+    status: partial
+    owner: '@gramorx/vocabulary-team'
+    fileGlobs:
+      - 'pages/vocab/**'
+      - 'pages/vocabulary/**'
+      - 'pages/api/vocab/**'
+      - 'pages/api/vocabulary/**'
+      - 'components/vocab/**'
+
+  - name: Admin and teacher operations
+    status: partial
+    owner: '@gramorx/ops-platform'
+    fileGlobs:
+      - 'pages/admin/**'
+      - 'pages/teacher/**'
+      - 'pages/api/admin/**'
+      - 'pages/api/teacher/**'
+
+  - name: Speaking workflows
+    status: incomplete
+    owner: '@gramorx/speaking-lab'
+    fileGlobs:
+      - 'pages/speaking/**'
+      - 'pages/api/speaking/**'
+
+  - name: Shared UI and platform primitives
+    status: partial
+    owner: '@gramorx/frontend-foundation'
+    fileGlobs:
+      - 'components/design-system/**'
+      - 'components/navigation/**'
+      - 'components/shared/**'
+      - 'lib/**'

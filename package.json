@@ -49,7 +49,8 @@
     "lh:summary": "node scripts/lh-extract.mjs",
     "prepare": "husky",
     "replace-createClient": "node replace-createClient.js",
-    "lhci": "lhci autorun --config=.lighthouserc.json"
+    "lhci": "lhci autorun --config=.lighthouserc.json",
+    "validate:feature-status": "node scripts/validate-feature-status.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.916.0",
