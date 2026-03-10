@@ -23,7 +23,7 @@ export default function PlacementStartPage() {
           </ul>
 
           <div className="flex gap-3">
-            <Button as="a" href="/placement/quiz" variant="primary" className="rounded-ds-xl">
+            <Button as="a" href="/placement/run" variant="primary" className="rounded-ds-xl">
               Begin →
             </Button>
             <Button as="a" href="/placement" variant="secondary" className="rounded-ds-xl">
