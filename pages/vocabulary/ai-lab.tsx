@@ -12,6 +12,8 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import Icon from '@/components/design-system/Icon';
 
+const AI_LAB_STATUS: 'incomplete' | 'partial' = 'incomplete';
+
 type RewriteResponse = {
   improved: string;
   explanation?: string;
@@ -47,7 +49,6 @@ const VocabularyAiLabPage: NextPage = () => {
     setResult(null);
 
     try {
-      // TODO: implement this backend route in pages/api/ai/vocab/rewrite.ts
       const res = await fetch('/api/ai/vocab/rewrite', {
         method: 'POST',
         headers: {
@@ -98,6 +99,9 @@ const VocabularyAiLabPage: NextPage = () => {
                 </Badge>
                 <Badge size="sm" variant="neutral">
                   Writing & Speaking
+                </Badge>
+                <Badge size="sm" variant="neutral">
+                  {AI_LAB_STATUS}
                 </Badge>
               </div>
               <div className="space-y-2">
@@ -253,9 +257,14 @@ const VocabularyAiLabPage: NextPage = () => {
                 <Card className="space-y-4 rounded-ds-2xl p-6">
                   <div className="flex items-center justify-between gap-2">
                     <h2 className="font-slab text-h2">AI rewrite</h2>
-                    <Badge size="sm" variant="neutral">
-                      Beta
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge size="sm" variant="neutral">
+                        Beta
+                      </Badge>
+                      <Badge size="sm" variant="neutral">
+                        {AI_LAB_STATUS}
+                      </Badge>
+                    </div>
                   </div>
 
                   {!result && !isSubmitting && (

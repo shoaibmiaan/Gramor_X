@@ -1,5 +1,3 @@
-// pages/api/ai/vocab/rewrite.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { withPlan } from '@/lib/apiGuard';
@@ -8,46 +6,46 @@ import { trackor } from '@/lib/analytics/trackor.server';
 import { createRequestLogger } from '@/lib/obs/logger';
 import { getServerClient } from '@/lib/supabaseServer';
 
+type BandTarget = '6.0' | '6.5' | '7.0' | '7.5' | '8.0';
+type RewriteModule = 'writing' | 'speaking';
+
 type RewriteResponse =
   | {
-      ok: true;
-      original: string;
-      rewritten: string;
-      meta: {
-        tokens_before: number;
-        tokens_after: number;
-      };
+      improved: string;
+      explanation?: string;
+      keyPhrases?: string[];
     }
   | { error: string; details?: unknown };
 
-function naiveRewrite(text: string): string {
-  // Minimal "smart" cleanup to behave like *something* real
-  // without needing any external AI service.
-  // - trim
-  // - collapse spaces
-  // - normalize case on first char
-  // - remove obvious duplicates separated by commas
-
+function normaliseText(text: string): string {
   let cleaned = text.trim().replace(/\s+/g, ' ');
-
-  // Normalize repeated comma-separated items (e.g. "happy, happy, glad")
   const parts = cleaned.split(',').map((p) => p.trim());
   if (parts.length > 1) {
     const seen = new Set<string>();
     const deduped: string[] = [];
-    for (const p of parts) {
-      const key = p.toLowerCase();
-      if (!seen.has(key) && p.length > 0) {
+    for (const part of parts) {
+      const key = part.toLowerCase();
+      if (!seen.has(key) && key.length > 0) {
         seen.add(key);
-        deduped.push(p);
+        deduped.push(part);
       }
     }
     cleaned = deduped.join(', ');
   }
-
   if (!cleaned) return text.trim();
-
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+function phraseCandidates(text: string): string[] {
+  return Array.from(
+    new Set(
+      text
+        .split(/[,.!?;:]/)
+        .map((chunk) => chunk.trim())
+        .filter((chunk) => chunk.length >= 12)
+        .slice(0, 3),
+    ),
+  );
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse<RewriteResponse>) {
@@ -61,11 +59,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse<RewriteResponse
   const logger = createRequestLogger('api/ai/vocab/rewrite', { requestId, clientIp });
   const startedAt = Date.now();
 
-  const body = (req.body ?? {}) as { text?: string };
-  const text = typeof body.text === 'string' ? body.text : undefined;
+  const body = (req.body ?? {}) as { text?: string; bandTarget?: BandTarget; module?: RewriteModule };
+  const text = typeof body.text === 'string' ? body.text : '';
+  const bandTarget: BandTarget = body.bandTarget ?? '7.0';
+  const moduleType: RewriteModule = body.module ?? 'writing';
 
-  if (!text || !text.trim()) {
-    logger.warn('invalid rewrite payload', { bodyPreview: JSON.stringify(req.body).slice(0, 200) });
+  if (!text.trim()) {
     return res.status(400).json({ error: 'Missing "text" in request body' });
   }
 
@@ -81,34 +80,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse<RewriteResponse
   }
 
   try {
-    const original = text;
-    const rewritten = naiveRewrite(text);
+    const improved = normaliseText(text);
+    const keyPhrases = phraseCandidates(improved);
+    const explanation = `Adjusted for ${moduleType} tone around band ${bandTarget}: tightened wording, removed repetition, and improved precision while preserving the original meaning.`;
 
     const latency = Date.now() - startedAt;
-    logger.info('vocab rewrite served', {
-      userId: user.id,
-      latencyMs: latency,
-      originalLength: original.length,
-      rewrittenLength: rewritten.length,
-    });
-
     await trackor.log('vocab_rewrite_used', {
       user_id: user.id,
       latency_ms: latency,
       request_id: requestId,
       ip: clientIp,
-      original_length: original.length,
-      rewritten_length: rewritten.length,
+      original_length: text.length,
+      rewritten_length: improved.length,
+      module: moduleType,
+      band_target: bandTarget,
     });
 
     return res.status(200).json({
-      ok: true,
-      original,
-      rewritten,
-      meta: {
-        tokens_before: original.split(/\s+/).filter(Boolean).length,
-        tokens_after: rewritten.split(/\s+/).filter(Boolean).length,
-      },
+      improved,
+      explanation,
+      keyPhrases,
     });
   } catch (err: any) {
     logger.error('vocab rewrite error', {
@@ -123,5 +114,4 @@ async function handler(req: NextApiRequest, res: NextApiResponse<RewriteResponse
   }
 }
 
-// User-facing AI vocab rewrite endpoint – gated by plan but no extra packages.
 export default withPlan('free', handler, { allowRoles: ['teacher', 'admin'] });

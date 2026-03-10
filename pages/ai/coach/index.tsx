@@ -8,6 +8,12 @@ import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import { Separator } from '@/components/design-system/Separator';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
+import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { coerceStudyPlan } from '@/utils/studyPlan';
+import type { StudyPlan } from '@/types/plan';
+
+const COACH_PAGE_STATUS: 'incomplete' | 'partial' = 'incomplete';
+const COACH_ACTIONS_READY = false;
 
 // --- Types that mirror your API shape (no API changes) ----------------------
 export type CoachSuggestion = {
@@ -45,6 +51,7 @@ export default function CoachUIPage() {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState<CoachError['attempts']>([]);
   const [data, setData] = useState<CoachResponse | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -99,12 +106,35 @@ export default function CoachUIPage() {
     } catch {}
   }, [data]);
 
+
+  const handleAddToPlan = useCallback(async (suggestion: CoachSuggestion) => {
+    setActionError(null);
+    try {
+      await addToPlan(suggestion);
+    } catch (err: any) {
+      setActionError(err?.message || 'Failed to add this item to your study plan.');
+    }
+  }, []);
+
+  const handleStartTimer = useCallback(async (suggestion: CoachSuggestion) => {
+    setActionError(null);
+    try {
+      await startTimer(suggestion);
+    } catch (err: any) {
+      setActionError(err?.message || 'Failed to start the tracked timer session.');
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       {/* Header / breadcrumbs */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">AI Coach</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">AI Coach</h1>
+            <Badge variant="outline">Beta</Badge>
+            <Badge variant="secondary">{COACH_PAGE_STATUS}</Badge>
+          </div>
           <p className="text-muted-foreground">Smart, actionable IELTS practice suggestions powered by your existing /api/ai/coach.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -116,6 +146,18 @@ export default function CoachUIPage() {
       </div>
 
       <Separator className="my-6" />
+
+      {!COACH_ACTIONS_READY && (
+        <Card className="mb-6 p-4">
+          <p className="text-sm">Add-to-plan and timer actions are in beta/incomplete mode and remain disabled for now.</p>
+        </Card>
+      )}
+
+      {actionError && (
+        <Card className="mb-6 p-4">
+          <p className="text-sm text-destructive">{actionError}</p>
+        </Card>
+      )}
 
       {/* Request card */}
       <Card className="p-4 sm:p-6">
@@ -236,10 +278,17 @@ export default function CoachUIPage() {
                 <p className="mt-2 text-sm text-muted-foreground">{s.detail}</p>
                 <Separator className="my-4" />
                 <div className="flex items-center justify-end gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => addToPlan(s)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleAddToPlan(s)}
+                    disabled={!COACH_ACTIONS_READY}
+                  >
                     Add to Plan
                   </Button>
-                  <Button size="sm" onClick={() => startTimer(s.estimatedMinutes)}>Start Timer</Button>
+                  <Button size="sm" onClick={() => handleStartTimer(s)} disabled={!COACH_ACTIONS_READY}>
+                    Start Timer
+                  </Button>
                 </div>
               </Card>
             ))}
@@ -271,11 +320,92 @@ function safeString(v: unknown) {
   }
 }
 
-// TODO: Wire these to your existing planner/timer systems later without API changes
-function addToPlan(_s: CoachSuggestion) {
-  // noop for MVP UI — intentionally left blank to avoid changing any backend code
+async function addToPlan(s: CoachSuggestion) {
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  if (!user?.id) throw new Error('Please sign in to save this task in your study plan.');
+
+  const { data: row, error } = await supabase
+    .from('study_plans')
+    .select('plan_json,start_iso,weeks,goal_band')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message || 'Failed to load your study plan.');
+  if (!row) throw new Error('No study plan found. Create one first from /study-plan.');
+
+  const plan = coerceStudyPlan(row.plan_json ?? row, user.id, {
+    startISO: row.start_iso ?? undefined,
+    weeks: row.weeks ?? undefined,
+    goalBand: row.goal_band ?? undefined,
+  });
+
+  if (!plan) throw new Error('Your study plan data is invalid. Please regenerate it.');
+
+  const todayIso = new Date();
+  todayIso.setUTCHours(0, 0, 0, 0);
+  const todayKey = todayIso.toISOString().slice(0, 10);
+
+  const days = [...plan.days];
+  const existingIndex = days.findIndex((day) => day.dateISO.slice(0, 10) === todayKey);
+  const task = {
+    id: `coach-${s.id}`,
+    type: 'review' as const,
+    title: s.title,
+    estMinutes: Math.max(5, Math.round(s.estimatedMinutes || 0)),
+    completed: false,
+  };
+
+  if (existingIndex >= 0) {
+    const exists = days[existingIndex].tasks.some((t) => t.id === task.id || t.title === s.title);
+    if (!exists) days[existingIndex] = { ...days[existingIndex], tasks: [...days[existingIndex].tasks, task] };
+  } else {
+    days.push({ dateISO: todayIso.toISOString(), tasks: [task] });
+    days.sort((a, b) => a.dateISO.localeCompare(b.dateISO));
+  }
+
+  const payload: StudyPlan = { ...plan, days };
+  const { error: persistError } = await supabase
+    .from('study_plans')
+    .upsert(
+      {
+        user_id: user.id,
+        plan_json: payload,
+        start_iso: payload.startISO,
+        weeks: payload.weeks,
+        goal_band: payload.goalBand ?? null,
+      },
+      { onConflict: 'user_id' },
+    );
+
+  if (persistError) throw new Error(persistError.message || 'Failed to save this task to your plan.');
+
+  await fetch('/api/study-plan/events', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ event: 'studyplan_update', payload: { source: 'ai_coach', suggestionId: s.id } }),
+    keepalive: true,
+  });
 }
 
-function startTimer(_mins: number) {
-  // noop for MVP UI — intentionally left blank to avoid changing any backend code
+async function startTimer(s: CoachSuggestion) {
+  const createRes = await fetch('/api/study-buddy/sessions/create', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      items: [{ skill: 'AI Coach', minutes: Math.max(5, Math.round(s.estimatedMinutes || 0)), topic: s.title }],
+    }),
+  });
+  const createJson = await createRes.json();
+  if (!createRes.ok || !createJson?.session?.id) {
+    throw new Error(createJson?.error || 'Could not create a tracked study timer session.');
+  }
+
+  const startRes = await fetch(`/api/study-buddy/sessions/${encodeURIComponent(createJson.session.id)}/start`, {
+    method: 'POST',
+  });
+  if (!startRes.ok) {
+    const startJson = await startRes.json().catch(() => null);
+    throw new Error(startJson?.error || 'Could not start the study timer session.');
+  }
 }
