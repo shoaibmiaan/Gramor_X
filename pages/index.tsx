@@ -124,13 +124,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                     <Link href="/signup">Start free practice</Link>
                   </Button>
                   <Button asChild variant="secondary" size="lg" className="rounded-ds-2xl px-6">
-                    <Link
-                      href={
-                        isAuthed
-                          ? dashboardHref
-                          : `/login?next=${encodeURIComponent(dashboardHref)}`
-                      }
-                    >
+                    <Link href="/login?next=%2Fdashboard">
                       View my dashboard
                     </Link>
                   </Button>
