@@ -1,5 +1,5 @@
-// pages/index.tsx
-import React from 'react';
+// pages/index.tsx – Mobile‑optimised home page
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -202,6 +202,16 @@ export const LANDING_PLANS = [
 ];
 
 const LandingPage: React.FC = () => {
+  const [showStickyCta, setShowStickyCta] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyCta(window.scrollY > 600);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <>
       <Head>
@@ -213,10 +223,10 @@ const LandingPage: React.FC = () => {
       </Head>
 
       <main className="bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-        {/* HERO */}
-        <section className="pb-16 pt-16 md:pt-20">
+        {/* HERO – more compact on mobile */}
+        <section className="pb-10 pt-10 md:pb-16 md:pt-20">
           <Container>
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-center">
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-center">
               {/* Left side: text + CTAs */}
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-ds-full bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border/60">
@@ -276,40 +286,42 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right side: Word of the Day + countdown vibe */}
-              <div className="space-y-4">
-                <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-5 shadow-sm">
-                  <div className="flex items-center justify-between gap-3">
+              {/* Right side: Word of the Day – smaller on mobile */}
+              <div className="mx-auto w-full max-w-sm space-y-4 md:max-w-none">
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-4 shadow-sm md:p-5">
+                  <div className="flex items-center justify-between gap-2">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
                         Vocabulary spotlight
                       </p>
-                      <h2 className="font-slab text-h3">Word of the day</h2>
+                      <h2 className="font-slab text-base md:text-h3">Word of the day</h2>
                     </div>
-                    <Badge variant="accent" size="sm">
+                    <Badge variant="accent" size="xs" className="whitespace-nowrap">
                       Lexical Resource
                     </Badge>
                   </div>
 
-                  <div className="mt-4 space-y-3">
+                  <div className="mt-3 space-y-2">
                     <div>
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="text-2xl font-semibold text-foreground">serendipity</p>
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p className="text-lg font-semibold text-foreground md:text-2xl">
+                          serendipity
+                        </p>
+                        <span className="text-[10px] text-muted-foreground md:text-xs">
                           /ˌser.ənˈdɪp.ə.ti/
                         </span>
                       </div>
-                      <p className="mt-1 text-small text-grayish">
+                      <p className="mt-1 text-xs text-grayish md:text-small">
                         the occurrence of events by chance in a happy or beneficial way
                       </p>
                     </div>
 
-                    <p className="border-l-2 border-primary/40 pl-3 text-small text-primary/90 dark:text-electricBlue">
+                    <p className="border-l-2 border-primary/40 pl-2 text-xs text-primary/90 dark:text-electricBlue md:text-small">
                       “Finding a platform that understood my exact band goal felt like pure
                       serendipity.”
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground md:text-xs">
                       <Badge variant="neutral" size="xs">
                         Band 7+ vocab
                       </Badge>
@@ -322,7 +334,7 @@ const LandingPage: React.FC = () => {
                         asChild
                         size="sm"
                         variant="secondary"
-                        className="rounded-ds-xl"
+                        className="w-full rounded-ds-xl md:w-auto"
                       >
                         <Link href="/vocabulary">Take 60-second vocab quiz</Link>
                       </Button>
@@ -330,7 +342,8 @@ const LandingPage: React.FC = () => {
                   </div>
                 </Card>
 
-                <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-5">
+                {/* Countdown card – hidden on mobile, appears only on desktop */}
+                <Card className="hidden rounded-ds-2xl border border-border/60 bg-card/80 p-5 md:block">
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -376,13 +389,13 @@ const LandingPage: React.FC = () => {
           </Container>
         </section>
 
-        {/* QUICK LINKS / PORTAL HUB */}
-        <section className="pb-16">
+        {/* QUICK LINKS / PORTAL HUB – horizontal scroll on mobile */}
+        <section className="pb-12">
           <Container>
-            <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="font-slab text-h2">Portal hub</h2>
-                <p className="text-small text-grayish">
+                <h2 className="font-slab text-xl md:text-h2">Portal hub</h2>
+                <p className="text-xs text-grayish md:text-small">
                   From this page, you can jump to any core area — dashboard, modules, AI
                   Lab, billing, or onboarding.
                 </p>
@@ -394,27 +407,29 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible lg:grid-cols-3">
               {quickLinks.map((item) => (
                 <Card
                   key={item.href}
-                  className="group flex h-full cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg"
+                  className="group flex min-w-[240px] shrink-0 cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg md:min-w-0"
                 >
                   <Link href={item.href} className="flex h-full flex-col gap-3">
                     <div className="flex items-start gap-3">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Icon name={item.icon} size={18} />
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary md:h-9 md:w-9">
+                        <Icon name={item.icon} size={16} />
                       </span>
                       <div className="space-y-1">
-                        <p className="text-sm font-semibold text-foreground">
+                        <p className="text-xs font-semibold text-foreground md:text-sm">
                           {item.label}
                         </p>
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                        <p className="text-[10px] text-muted-foreground md:text-xs">
+                          {item.description}
+                        </p>
                       </div>
                     </div>
-                    <span className="mt-1 inline-flex items-center text-xs font-medium text-primary group-hover:underline">
+                    <span className="mt-1 inline-flex items-center text-[10px] font-medium text-primary group-hover:underline md:text-xs">
                       Open
-                      <Icon name="ArrowRight" size={14} className="ml-1" />
+                      <Icon name="ArrowRight" size={12} className="ml-1" />
                     </span>
                   </Link>
                 </Card>
@@ -423,17 +438,17 @@ const LandingPage: React.FC = () => {
           </Container>
         </section>
 
-        {/* MODULES OVERVIEW */}
-        <section className="bg-muted/40 py-16">
+        {/* MODULES OVERVIEW – unchanged, but we rely on existing responsive grid */}
+        <section className="bg-muted/40 py-12 md:py-16">
           <Container>
             <div className="mb-8 text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
                 Four modules + AI, one workspace
               </p>
-              <h2 className="mt-2 font-slab text-h2">
-                Everything you need to go from “stuck” to exam-ready.
+              <h2 className="mt-2 font-slab text-xl md:text-h2">
+                Everything you need to go from “stuck” to exam‑ready.
               </h2>
-              <p className="mt-2 text-small text-grayish md:max-w-2xl md:mx-auto">
+              <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
                 Not just practice questions. A full stack: onboarding, learning, practice,
                 mocks, AI feedback, analytics, and gamification — all aware of your goal
                 band and exam date.
@@ -444,19 +459,21 @@ const LandingPage: React.FC = () => {
               {modules.map((mod) => (
                 <Card
                   key={mod.id}
-                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg"
+                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-                          <Icon name={mod.icon} size={22} />
+                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:h-11 md:w-11">
+                          <Icon name={mod.icon} size={18} />
                         </span>
                         <div>
-                          <h3 className="font-semibold text-lg text-foreground">
+                          <h3 className="text-base font-semibold text-foreground md:text-lg">
                             {mod.title}
                           </h3>
-                          <p className="text-xs text-muted-foreground">{mod.description}</p>
+                          <p className="text-xs text-muted-foreground md:text-small">
+                            {mod.description}
+                          </p>
                         </div>
                       </div>
                       <Badge
@@ -501,40 +518,44 @@ const LandingPage: React.FC = () => {
           </Container>
         </section>
 
-        {/* TESTIMONIALS */}
-        <section className="py-16">
+        {/* TESTIMONIALS – compact on mobile */}
+        <section className="py-12">
           <Container>
-            <div className="mb-8 text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+            <div className="mb-6 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
                 Real prep, real constraints
               </p>
-              <h2 className="mt-2 font-slab text-h2">Built for people with limited time.</h2>
-              <p className="mt-2 text-small text-grayish md:max-w-2xl md:mx-auto">
+              <h2 className="mt-1 font-slab text-xl md:text-h2">
+                Built for people with limited time.
+              </h2>
+              <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
                 Evening learners, working professionals, undergrads — we optimize around
-                your bandwidth, not around 6-hour study fantasies.
+                your bandwidth, not around 6‑hour study fantasies.
               </p>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
               {testimonials.map((t) => (
                 <Card
                   key={t.name}
-                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5"
+                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4"
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 font-semibold text-primary">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary md:h-11 md:w-11 md:text-sm">
                         {t.initials}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">{t.name}</p>
-                        <p className="text-xs text-primary/80">{t.meta}</p>
+                        <p className="text-xs font-medium text-foreground md:text-sm">
+                          {t.name}
+                        </p>
+                        <p className="text-[10px] text-primary/80 md:text-xs">{t.meta}</p>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">“{t.quote}”</p>
+                    <p className="text-xs text-muted-foreground md:text-sm">“{t.quote}”</p>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 text-xs font-medium text-success">
-                    <Icon name="Medal" size={14} />
+                  <div className="mt-3 flex items-center gap-1 text-[10px] font-medium text-success md:mt-4 md:gap-2 md:text-xs">
+                    <Icon name="Medal" size={12} />
                     <span>{t.band}</span>
                   </div>
                 </Card>
@@ -543,18 +564,18 @@ const LandingPage: React.FC = () => {
           </Container>
         </section>
 
-        {/* PRICING PREVIEW */}
-        <section className="bg-muted/40 py-16">
+        {/* PRICING PREVIEW – ensure buttons full width on mobile */}
+        <section className="bg-muted/40 py-12">
           <Container>
             <div className="mb-8 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
                   Pricing preview
                 </p>
-                <h2 className="mt-1 font-slab text-h2">
+                <h2 className="mt-1 font-slab text-xl md:text-h2">
                   Start free. Upgrade when you’re serious.
                 </h2>
-                <p className="mt-1 text-small text-grayish md:max-w-xl">
+                <p className="mt-1 text-xs text-grayish md:text-small md:max-w-xl">
                   Free covers basic practice and a taste of AI. Booster unlocks deeper
                   feedback and more mocks. Institutional is for teachers and academies.
                 </p>
@@ -573,14 +594,14 @@ const LandingPage: React.FC = () => {
               {LANDING_PLANS.map((plan) => (
                 <Card
                   key={plan.id}
-                  className={`flex h-full flex-col justify-between rounded-ds-2xl border border-border/70 bg-card/80 p-6 ${
+                  className={`flex h-full flex-col justify-between rounded-ds-2xl border border-border/70 bg-card/80 p-5 md:p-6 ${
                     plan.highlight ? 'ring-2 ring-accent shadow-lg' : ''
                   }`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h3 className="text-lg font-semibold text-foreground">
+                        <h3 className="text-base font-semibold text-foreground md:text-lg">
                           {plan.name}
                         </h3>
                         <p className="text-xs text-muted-foreground">{plan.price}</p>
@@ -622,19 +643,19 @@ const LandingPage: React.FC = () => {
           </Container>
         </section>
 
-        {/* WAITLIST / FINAL CTA */}
-        <section className="py-16">
+        {/* WAITLIST / FINAL CTA – unchanged */}
+        <section className="py-12">
           <Container>
             <Card className="mx-auto max-w-4xl rounded-ds-2xl border border-border/60 bg-card/80 p-6 md:p-8">
               <div className="grid gap-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-center">
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
                     Pre-launch batch
                   </p>
-                  <h2 className="font-slab text-h2">
+                  <h2 className="font-slab text-xl md:text-h2">
                     Join the early cohort and lock in better pricing.
                   </h2>
-                  <p className="text-small text-grayish">
+                  <p className="text-xs text-grayish md:text-small">
                     We’re onboarding in waves so we don’t drown support. Add your email and
                     target band, and we’ll send a proper orientation when your batch opens —
                     no spam, no fake urgency.
@@ -683,7 +704,27 @@ const LandingPage: React.FC = () => {
             </Card>
           </Container>
         </section>
+
+        {/* STICKY BOTTOM CTA (mobile only) */}
+        {showStickyCta && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-background/80 p-3 backdrop-blur-md md:hidden">
+            <Button asChild variant="primary" size="lg" className="w-full rounded-ds-2xl">
+              <Link href="/signup">Start free practice</Link>
+            </Button>
+          </div>
+        )}
       </main>
+
+      {/* Hide scrollbar for horizontal scroll on mobile */}
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </>
   );
 };
