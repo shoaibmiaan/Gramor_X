@@ -51,6 +51,7 @@ type LandingPageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
   const [showStickyCta, setShowStickyCta] = useState(false);
   const hasPayload = Boolean(homeOverview);
+  const dashboardHref = '/dashboard';
   const modules = homeOverview?.modules ?? [];
   const quickLinks = homeOverview?.quickLinks ?? [];
   const releaseHighlights = homeOverview?.releaseHighlights ?? [];
