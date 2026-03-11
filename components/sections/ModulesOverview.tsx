@@ -3,104 +3,10 @@ import React from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Badge } from '@/components/design-system/Badge';
-import Icon, { type IconName } from '@/components/design-system/Icon';
+import Icon from '@/components/design-system/Icon';
+import { getDashboardModuleCards } from '@/lib/modules/registry';
 
-type ModuleCard = {
-  id: string;
-  icon: IconName;
-  title: string;
-  label: string;
-  description: string;
-  bullets: string[];
-  tag?: string;
-};
-
-const modules: ModuleCard[] = [
-  {
-    id: 'listening',
-    icon: 'Headphones',
-    title: 'Listening',
-    label: 'Audio-first drills',
-    description:
-      'Exam-style recordings with question sets that train both speed and accuracy.',
-    bullets: [
-      'Short & full-length recordings',
-      'Question types mirrored from real tests',
-      'Future: accent diversity & playlists',
-    ],
-    tag: 'Core module',
-  },
-  {
-    id: 'reading',
-    icon: 'FileText',
-    title: 'Reading',
-    label: 'Passages & item types',
-    description:
-      'Skim, scan and solve under time pressure — with explanations that don’t waste time.',
-    bullets: [
-      'True/False/Not Given, MCQs, matching',
-      'Guided review of wrong answers',
-      'Future: difficulty ladder per band',
-    ],
-    tag: 'Core module',
-  },
-  {
-    id: 'writing',
-    icon: 'PenSquare',
-    title: 'Writing',
-    label: 'Task 1 & Task 2',
-    description:
-      'Structure, coherence, lexical resource and grammar checked with AI and clear tips.',
-    bullets: [
-      'Band-style rubric breakdown',
-      'Before / After comparisons in AI Lab',
-      'Future: teacher plug-in for manual review',
-    ],
-    tag: 'AI-heavy',
-  },
-  {
-    id: 'speaking',
-    icon: 'Mic2',
-    title: 'Speaking',
-    label: 'Record & review',
-    description:
-      'Prompt packs for Parts 1, 2 and 3 with AI insights on fluency, vocab and pronunciation.',
-    bullets: [
-      'Record directly in browser',
-      'Part-wise scoring hints',
-      'Future: conversation-style dialogues',
-    ],
-    tag: 'AI-heavy',
-  },
-  {
-    id: 'ai-lab',
-    icon: 'Sparkles',
-    title: 'AI Lab',
-    label: 'Your experiment space',
-    description:
-      'Try answers, tweak phrasing, and compare versions side by side before the real exam.',
-    bullets: [
-      'Writing + Speaking pipelines',
-      '“Compare Before / After” mode',
-      'Future: cross-attempt insights',
-    ],
-    tag: 'Always-on coach',
-  },
-  {
-    id: 'analytics',
-    icon: 'PieChart',
-    title: 'Analytics & streaks',
-    label: 'Progress, not vibes',
-    description:
-      'Band trajectory, time on task, accuracy by question type and meaningful streaks.',
-    bullets: [
-      'Band curve across modules',
-      'Time spent vs. results',
-      'Streaks focused on real study, not taps',
-    ],
-    tag: 'For serious prep',
-  },
-];
+const modules = getDashboardModuleCards();
 
 const ModulesOverview: React.FC = () => {
   return (

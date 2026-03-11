@@ -2,204 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
-import Icon, { type IconName } from '@/components/design-system/Icon';
+import Icon from '@/components/design-system/Icon';
 import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
-import { useUser } from '@/hooks/useUser';
-
-type DashboardModule = {
-  id: string;
-  title: string;
-  progress: number;
-  lastActivityAt: string | null;
-  nextAction: string;
-};
-
-type DashboardResponse = {
-  user: { name: string };
-  modules: DashboardModule[];
-  nextAction: string;
-};
-
-const modules = [
-  {
-    id: 'learning',
-    icon: 'BookOpenCheck' as IconName,
-    title: 'Learning Hub',
-    status: 'Live',
-    statusTone: 'success' as const,
-    description:
-      'Concept lessons, strategy guides, and grammar refreshers wired to your target band.',
-    bullets: [
-      'Academic & General Training coverage',
-      'Micro-lessons for all four skills',
-      'AI-personalised paths by band goal',
-    ],
-    href: '/learning',
-  },
-  {
-    id: 'skill-practice',
-    icon: 'Edit3' as IconName,
-    title: 'Skill Practice Arena',
-    status: 'Live',
-    statusTone: 'accent' as const,
-    description:
-      'Focused listening, reading, writing, and speaking practice mapped to real exam sections.',
-    bullets: [
-      'Dedicated hubs for all four skills',
-      'Drills, reviews, and full-section flows',
-      'Daily practice loops with saved progress',
-    ],
-    href: '/mock',
-  },
-  {
-    id: 'mock',
-    icon: 'Timer' as IconName,
-    title: 'Full Mock Tests',
-    status: 'Expanded',
-    statusTone: 'success' as const,
-    description:
-      'Complete mock ecosystem with reading, listening, speaking, and writing exam simulations.',
-    bullets: [
-      'Section-based mocks and full exam tracks',
-      'Attempt history, review pages, and results',
-      'Analytics for speed, accuracy, and mastery',
-    ],
-    href: '/mock',
-  },
-  {
-    id: 'ai-lab',
-    icon: 'Sparkles' as IconName,
-    title: 'AI Lab',
-    status: 'Core',
-    statusTone: 'accent' as const,
-    description: 'Where AI Coach, Study Buddy, and Mistakes Book live together.',
-    bullets: [
-      'Task 1 & 2 band feedback',
-      'Speaking insights from audio',
-      'Compare “Before vs After” edits',
-    ],
-    href: '/ai',
-  },
-  {
-    id: 'analytics',
-    icon: 'PieChart' as IconName,
-    title: 'Progress & Analytics',
-    status: 'Live',
-    statusTone: 'info' as const,
-    description: 'Unified tracking across attempts, streaks, and skill-level improvement signals.',
-    bullets: [
-      'Band trajectory and forecast signals',
-      'Question-type and section diagnostics',
-      'Streak + momentum visibility',
-    ],
-    href: '/progress',
-  },
-  {
-    id: 'gamification',
-    icon: 'Trophy' as IconName,
-    title: 'Gamification & Streaks',
-    status: 'Live',
-    statusTone: 'success' as const,
-    description: 'Daily streaks, weekly challenges, and quiet competition.',
-    bullets: ['Daily streak shields', 'Weekly IELTS challenges', 'Badges for consistency'],
-    href: '/dashboard',
-  },
-];
-
-const quickLinks = [
-  {
-    label: 'Go to dashboard',
-    description: 'Continue where you left off.',
-    href: '/dashboard',
-    icon: 'LayoutDashboard' as IconName,
-  },
-  {
-    label: 'Finish onboarding',
-    description: 'Lock in goal band, exam date, and plan.',
-    href: '/profile/setup',
-    icon: 'ClipboardCheck' as IconName,
-  },
-  {
-    label: 'Open AI Coach',
-    description: 'Get targeted help for weak areas.',
-    href: '/ai/coach',
-    icon: 'PenSquare' as IconName,
-  },
-  {
-    label: 'Resume study buddy',
-    description: 'Continue your AI-guided session.',
-    href: '/ai/study-buddy',
-    icon: 'FileText' as IconName,
-  },
-  {
-    label: 'Explore Vocabulary Lab',
-    description: 'Topic-wise vocab packs for IELTS.',
-    href: '/vocabulary',
-    icon: 'BookMarked' as IconName,
-  },
-  {
-    label: 'Check pricing & plans',
-    description: 'Free vs Booster vs higher tiers.',
-    href: '/pricing',
-    icon: 'CreditCard' as IconName,
-  },
-];
-
-const releaseHighlights = [
-  {
-    title: 'AI suite is now a full workspace',
-    description:
-      'AI Coach, Study Buddy session flows, and Mistakes Book now work as a connected loop instead of isolated tools.',
-    href: '/ai',
-    cta: 'Open AI workspace',
-  },
-  {
-    title: 'Mock infrastructure expanded deeply',
-    description:
-      'Reading and listening now include richer review/result flows, challenge modes, and history pages for consistent prep cycles.',
-    href: '/mock/reading',
-    cta: 'Explore mock reading',
-  },
-  {
-    title: 'Institutions and partner paths are live',
-    description:
-      'Dedicated institution and partner surfaces now support scale usage, team-oriented onboarding, and managed growth tracks.',
-    href: '/institutions',
-    cta: 'View institutions',
-  },
-];
-
-const testimonials = [
-  {
-    initials: 'AS',
-    name: 'Ayesha S.',
-    meta: 'From 6.0 to 7.5 in 7 weeks',
-    quote:
-      'The AI writing feedback plus streak system basically forced me to stay consistent. It felt like a serious coach, not a random app.',
-    band: 'Overall 7.5',
-  },
-  {
-    initials: 'HM',
-    name: 'Hassan M.',
-    meta: 'Busy professional, evening prep',
-    quote:
-      'The daily tasks were small enough for my schedule, but the analytics still showed real progress. Speaking AI saved me from booking endless mock interviews.',
-    band: 'Writing 7.0 → 7.5',
-  },
-  {
-    initials: 'LC',
-    name: 'Li C.',
-    meta: 'First attempt, overseas study',
-    quote:
-      'GramorX feels like “mission control” for IELTS. I always knew what to do next instead of scrolling random YouTube videos.',
-    band: 'Overall 7.0',
-  },
-];
+import { getHomeOverviewPayload } from '@/lib/home/overview';
+import type { HomeOverviewPayload } from '@/types/home';
 
 export const LANDING_PLANS = [
   {
@@ -234,55 +46,26 @@ export const LANDING_PLANS = [
   },
 ];
 
-const LandingPage: React.FC = () => {
+type LandingPageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
+
+const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
   const [showStickyCta, setShowStickyCta] = useState(false);
-  const { isAuthed, loading: userLoading } = useUser();
-  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
-  const [dashboardLoading, setDashboardLoading] = useState(false);
-  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const hasPayload = Boolean(homeOverview);
+  const modules = homeOverview?.modules ?? [];
+  const quickLinks = homeOverview?.quickLinks ?? [];
+  const releaseHighlights = homeOverview?.releaseHighlights ?? [];
+  const testimonials = homeOverview?.testimonials ?? [];
 
-  useEffect(() => {
-    if (userLoading || !isAuthed) {
-      setDashboardData(null);
-      setDashboardLoading(false);
-      setDashboardError(null);
-      return;
-    }
-
-    let isMounted = true;
-    setDashboardLoading(true);
-    setDashboardError(null);
-
-    fetch('/api/user/dashboard')
-      .then(async (response) => {
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err?.error ?? 'Unable to load dashboard data');
-        }
-        return (await response.json()) as DashboardResponse;
-      })
-      .then((payload) => {
-        if (!isMounted) return;
-        setDashboardData(payload);
-      })
-      .catch((error: unknown) => {
-        if (!isMounted) return;
-        setDashboardError(error instanceof Error ? error.message : 'Unable to load dashboard data');
-      })
-      .finally(() => {
-        if (!isMounted) return;
-        setDashboardLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthed, userLoading]);
-
-  const dashboardHref = dashboardData?.nextAction ?? '/dashboard';
-  const effectiveQuickLinks = quickLinks.map((item) =>
-    item.label === 'Go to dashboard' ? { ...item, href: dashboardHref } : item,
-  );
+  const getBadgeVariant = (tone: 'success' | 'accent' | 'info' | 'neutral' | 'warning') =>
+    tone === 'success'
+      ? 'success'
+      : tone === 'accent'
+      ? 'accent'
+      : tone === 'warning'
+      ? 'warning'
+      : tone === 'info'
+      ? 'info'
+      : 'neutral';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -483,7 +266,12 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible lg:grid-cols-3">
-              {effectiveQuickLinks.map((item) => (
+              {!hasPayload && (
+                <Card className="min-w-[240px] shrink-0 rounded-ds-2xl border border-border/60 bg-card/70 p-4 text-xs text-muted-foreground">
+                  Home overview is temporarily unavailable. Core navigation is still accessible from the main menu.
+                </Card>
+              )}
+              {quickLinks.map((item) => (
                 <Card
                   key={item.href}
                   className="group flex min-w-[240px] shrink-0 cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg md:min-w-0"
@@ -500,10 +288,11 @@ const LandingPage: React.FC = () => {
                         <p className="text-[10px] text-muted-foreground md:text-xs">
                           {item.description}
                         </p>
+                        <p className="text-[10px] text-primary/80 md:text-xs">{item.availability.label}</p>
                       </div>
                     </div>
                     <span className="mt-1 inline-flex items-center text-[10px] font-medium text-primary group-hover:underline md:text-xs">
-                      Open
+                      {item.actionLabel}
                       <Icon name="ArrowRight" size={12} className="ml-1" />
                     </span>
                   </Link>
@@ -525,19 +314,23 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
+              {!hasPayload && (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-xs text-muted-foreground md:col-span-3">
+                  Release highlights are loading. Check back shortly for the latest updates.
+                </Card>
+              )}
               {releaseHighlights.map((item) => (
                 <Card
                   key={item.title}
                   className="rounded-ds-2xl border border-border/60 bg-card/70 p-5"
                 >
-                  <h3 className="text-sm font-semibold text-foreground md:text-base">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-xs text-muted-foreground md:text-sm">
-                    {item.description}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-foreground md:text-base">{item.title}</h3>
+                    <Badge size="xs" variant="neutral">{item.statusLabel}</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground md:text-sm">{item.description}</p>
                   <Button asChild size="sm" variant="secondary" className="mt-4 rounded-ds-xl">
-                    <Link href={item.href}>{item.cta}</Link>
+                    <Link href={item.href}>{item.ctaLabel}</Link>
                   </Button>
                 </Card>
               ))}
@@ -562,39 +355,23 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {isAuthed && dashboardLoading ? (
-                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
-                  Loading your personalised modules…
+              {!hasPayload && (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-xs text-muted-foreground md:col-span-2 xl:col-span-3">
+                  Module data is unavailable right now. Please refresh to load the latest module statuses.
                 </Card>
-              ) : null}
-
-              {isAuthed && dashboardError ? (
-                <Card className="rounded-ds-2xl border border-danger/40 bg-danger/5 p-5 text-sm text-danger md:col-span-2 xl:col-span-3">
-                  Could not load personalised progress right now. Showing the default module map
-                  instead.
-                </Card>
-              ) : null}
-
-              {isAuthed &&
-              !dashboardLoading &&
-              !dashboardError &&
-              dashboardData?.modules.length === 0 ? (
-                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
-                  No module activity yet. Start your first guided action below.
-                </Card>
-              ) : null}
-
-              {isAuthed &&
-              !dashboardLoading &&
-              !dashboardError &&
-              (dashboardData?.modules?.length ?? 0) > 0
-                ? (dashboardData?.modules ?? []).map((mod) => (
-                    <Card
-                      key={mod.id}
-                      className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
-                    >
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between gap-3">
+              )}
+              {modules.map((mod) => (
+                <Card
+                  key={mod.id}
+                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:h-11 md:w-11">
+                          <Icon name={mod.icon} size={18} />
+                        </span>
+                        <div>
                           <h3 className="text-base font-semibold text-foreground md:text-lg">
                             {mod.title}
                           </h3>
@@ -615,77 +392,45 @@ const LandingPage: React.FC = () => {
                           />
                         </div>
                       </div>
-
-                      <div className="pt-4">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="secondary"
-                          className="w-full rounded-ds-xl"
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge
+                          size="xs"
+                          variant={getBadgeVariant(mod.status.tone)}
                         >
-                          <Link href={mod.nextAction}>Continue {mod.title}</Link>
-                        </Button>
+                          {mod.status.label}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">{mod.availability.label}</span>
                       </div>
-                    </Card>
-                  ))
-                : modules.map((mod) => (
-                    <Card
-                      key={mod.id}
-                      className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
+                    </div>
+
+                    <ul className="space-y-2 text-xs text-muted-foreground">
+                      {mod.bullets.map((b) => (
+                        <li key={b} className="flex items-start gap-2">
+                          <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
+                            <Icon name="Check" size={10} />
+                          </span>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {mod.reason ? (
+                    <p className="pt-3 text-xs text-muted-foreground">{mod.reason}</p>
+                  ) : null}
+
+                  <div className="pt-4">
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="secondary"
+                      className="w-full rounded-ds-xl"
                     >
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:h-11 md:w-11">
-                              <Icon name={mod.icon} size={18} />
-                            </span>
-                            <div>
-                              <h3 className="text-base font-semibold text-foreground md:text-lg">
-                                {mod.title}
-                              </h3>
-                              <p className="text-xs text-muted-foreground md:text-small">
-                                {mod.description}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge
-                            size="xs"
-                            variant={
-                              mod.statusTone === 'success'
-                                ? 'success'
-                                : mod.statusTone === 'accent'
-                                  ? 'accent'
-                                  : 'neutral'
-                            }
-                          >
-                            {mod.status}
-                          </Badge>
-                        </div>
-
-                        <ul className="space-y-2 text-xs text-muted-foreground">
-                          {mod.bullets.map((b) => (
-                            <li key={b} className="flex items-start gap-2">
-                              <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
-                                <Icon name="Check" size={10} />
-                              </span>
-                              <span>{b}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="pt-4">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="secondary"
-                          className="w-full rounded-ds-xl"
-                        >
-                          <Link href={mod.href}>Open {mod.title}</Link>
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
+                      <Link href={mod.ctaHref}>{mod.isEnabled ? `Open ${mod.title}` : `Unlock ${mod.title}`}</Link>
+                    </Button>
+                  </div>
+                </Card>
+              ))}
             </div>
           </Container>
         </section>
@@ -707,6 +452,11 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
+              {!hasPayload && (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-4 text-xs text-muted-foreground md:col-span-3">
+                  Testimonials are currently unavailable.
+                </Card>
+              )}
               {testimonials.map((t) => (
                 <Card
                   key={t.name}
@@ -726,7 +476,7 @@ const LandingPage: React.FC = () => {
                   </div>
                   <div className="mt-3 flex items-center gap-1 text-[10px] font-medium text-success md:mt-4 md:gap-2 md:text-xs">
                     <Icon name="Medal" size={12} />
-                    <span>{t.band}</span>
+                    <span>{t.resultLabel}</span>
                   </div>
                 </Card>
               ))}
@@ -883,6 +633,23 @@ const LandingPage: React.FC = () => {
       `}</style>
     </>
   );
+};
+
+export const getServerSideProps: GetServerSideProps<{ homeOverview: HomeOverviewPayload | null }> = async () => {
+  try {
+    return {
+      props: {
+        homeOverview: getHomeOverviewPayload(),
+      },
+    };
+  } catch (error) {
+    console.error('Failed to load home overview payload', error);
+    return {
+      props: {
+        homeOverview: null,
+      },
+    };
+  }
 };
 
 export default LandingPage;
