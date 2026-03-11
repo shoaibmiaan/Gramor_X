@@ -30,6 +30,7 @@ import { PremiumThemeProvider } from '@/premium-ui/theme/PremiumThemeProvider';
 import AppLayoutManager from '@/components/layouts/AppLayoutManager';
 
 import { UserProvider, useUserContext } from '@/context/UserContext';
+import { AuthProvider } from '@/context/AuthProvider';
 import { OrgProvider } from '@/lib/orgs/context';
 import { HighContrastProvider } from '@/context/HighContrastContext';
 
@@ -413,13 +414,15 @@ export default function App(props: AppProps) {
     <LocaleProvider initialLocale="en">
       <ToastProvider>
         <NotificationProvider>
-          <UserProvider>
-            <OrgProvider>
+          <AuthProvider>
+            <UserProvider>
+              <OrgProvider>
               <InstalledAppProvider>
                 <InnerApp {...props} />
               </InstalledAppProvider>
-            </OrgProvider>
-          </UserProvider>
+              </OrgProvider>
+            </UserProvider>
+          </AuthProvider>
         </NotificationProvider>
       </ToastProvider>
     </LocaleProvider>
