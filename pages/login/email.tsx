@@ -15,6 +15,7 @@ import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
 import { useUserContext } from '@/context/UserContext';
+import { api, isApiError } from '@/lib/api';
 
 export default function LoginWithEmail() {
   const router = useRouter();
@@ -99,19 +100,7 @@ export default function LoginWithEmail() {
     setLoading(true);
     async function syncServerSession(session: Session | null) {
       try {
-        const syncRes = await fetch('/api/auth/set-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ event: 'SIGNED_IN', session }),
-        });
-
-        if (!syncRes.ok) {
-          console.error('Sync server session failed:', syncRes.status);
-          return false;
-        }
-
-        const syncBody = await syncRes.json().catch(() => ({}));
+        const { data: syncBody } = await api.auth.setSession(session);
         if (syncBody && typeof syncBody === 'object' && syncBody.ok === false) {
           console.error('Sync server session failed: response not ok');
           return false;
@@ -126,34 +115,21 @@ export default function LoginWithEmail() {
 
     async function recordLoginEvent(session: Session | null, allowResync = true) {
       try {
-        const loginEventRes = await fetch('/api/auth/login-event', {
-          method: 'POST',
-          credentials: 'same-origin',
-        });
-
-        if (loginEventRes.status === 401 && allowResync) {
+        await api.auth.loginEvent();
+      } catch (error) {
+        if (isApiError(error) && error.status === 401 && allowResync) {
           const resynced = await syncServerSession(session);
           if (resynced) return recordLoginEvent(session, false);
         }
-
-        if (!loginEventRes.ok) {
-          console.error('Login event failed:', loginEventRes.status);
-        }
-      } catch (error) {
         console.error('Error logging login event:', error);
       }
     }
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail, password: pw }),
-      });
-      const body = await res.json().catch(() => ({}));
+      const { data: body } = await api.auth.login({ email: trimmedEmail, password: pw });
       setLoading(false);
 
-      if (!res.ok || !body.session) {
+      if (!body.session) {
         const msg =
           typeof body.error === 'string'
             ? body.error

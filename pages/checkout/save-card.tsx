@@ -10,6 +10,7 @@ import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
+import { api } from '@/lib/api';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -58,10 +59,8 @@ function SaveCardForm() {
       return;
     }
 
-    const r = await fetch('/api/payments/vault', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      await api.payments.vault({
         payment_method_id: pmRes.paymentMethod!.id,
         plan,
         cycle,
@@ -70,14 +69,11 @@ function SaveCardForm() {
           phone,
           address: { line1, city, postal_code: postal, country },
         },
-      }),
-    });
-
-    const j = await r.json();
-    setLoading(false);
-
-    if (!r.ok) {
-      setMsg(j?.error || j?.details || 'Vault failed');
+      });
+      setLoading(false);
+    } catch (error: any) {
+      setLoading(false);
+      setMsg(error?.message || 'Vault failed');
       return;
     }
 

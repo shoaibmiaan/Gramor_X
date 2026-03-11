@@ -9,6 +9,7 @@ import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { redirectByRole } from '@/lib/routeAccess';
 import { isValidE164Phone } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
+import { api } from '@/lib/api';
 
 export default function LoginWithPhone() {
   const [phone, setPhone] = useState('');
@@ -69,7 +70,7 @@ export default function LoginWithPhone() {
         refresh_token: data.session.refresh_token,
       });
       try { await supabase.auth.updateUser({ data: { status: 'active' } }); } catch {}
-      try { await fetch('/api/auth/login-event', { method: 'POST' }); } catch {}
+      try { await api.auth.loginEvent(); } catch {}
       redirectByRole(data.session.user);
     }
   }
@@ -89,11 +90,7 @@ export default function LoginWithPhone() {
       setResendAttempts((a) => a + 1);
       setCooldown(RESEND_COOLDOWN);
       try {
-        await fetch('/api/auth/otp-limit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: trimmedPhone }),
-        });
+        await api.auth.otpLimit({ key: trimmedPhone, action: 'phone_resend' });
       } catch {}
     } finally {
       setLoading(false);

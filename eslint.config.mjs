@@ -34,6 +34,31 @@ export default [
       'gramorx/no-chrome-on-attempts': 'error',
     },
   },
+
+  {
+    files: ['pages/**/*.{ts,tsx}', 'components/**/*.{ts,tsx}', 'hooks/**/*.{ts,tsx}'],
+    ignores: ['lib/api.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.name='fetch']",
+          message: 'Use the centralized API client in lib/api.ts instead of direct fetch in UI layers.',
+        },
+      ],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'axios',
+              message: 'Use the centralized API client in lib/api.ts instead of axios in UI layers.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: [
       'pages/premium/listening/[slug].tsx',

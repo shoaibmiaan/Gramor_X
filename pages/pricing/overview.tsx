@@ -13,6 +13,7 @@ import { Separator } from '@/components/design-system/Separator';
 
 import { usePlan } from '@/hooks/usePlan';
 import { getStandardPlanName, normalizePlan } from '@/lib/subscription';
+import { api } from '@/lib/api';
 
 // Optional: plan selector already in your repo
 import PlanPicker from '@/components/payments/PlanPicker';
@@ -97,9 +98,7 @@ const PricingOverviewPage: React.FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch('/api/counters', { credentials: 'include' });
-        // @ts-expect-error TODO: type /api/counters response
-        const json = await r.json();
+        const { data: json } = await api.subscription.counters();
         if (!cancelled && json) setCounters(json?.counters ?? json ?? {});
       } catch { /* ignore */ }
     })();
@@ -111,9 +110,7 @@ const PricingOverviewPage: React.FC = () => {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch('/api/subscriptions', { credentials: 'include' });
-        // @ts-expect-error TODO: type /api/subscriptions response
-        const data = await r.json();
+        const { data } = await api.subscription.summary();
         if (cancelled) return;
         const normalized: SubscriptionSummary = {
           plan: (data?.plan || data?.tier || data?.subscription?.plan || 'free').toString(),

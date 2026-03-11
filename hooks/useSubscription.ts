@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 
 import type { ActiveSubscription } from '@/lib/subscription';
+import { api } from '@/lib/api';
 
 type SubscriptionResponse = {
   ok: boolean;
@@ -8,14 +9,13 @@ type SubscriptionResponse = {
   subscription: ActiveSubscription | null;
 };
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url, { credentials: 'include' });
-  if (!res.ok) throw new Error(`Failed: ${res.status}`);
-  return (await res.json()) as SubscriptionResponse;
+const fetcher = async () => {
+  const { data } = await api.subscription.status();
+  return data as SubscriptionResponse;
 };
 
 export function useSubscription() {
-  const state = useSWR('/api/subscription/active', fetcher, {
+  const state = useSWR('/api/subscription/active', () => fetcher(), {
     revalidateOnFocus: false,
     shouldRetryOnError: false,
   });
