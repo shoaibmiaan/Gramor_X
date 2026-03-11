@@ -51,6 +51,7 @@ type LandingPageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
   const [showStickyCta, setShowStickyCta] = useState(false);
   const hasPayload = Boolean(homeOverview);
+  const dashboardHref = '/dashboard';
   const modules = homeOverview?.modules ?? [];
   const quickLinks = homeOverview?.quickLinks ?? [];
   const releaseHighlights = homeOverview?.releaseHighlights ?? [];
@@ -124,13 +125,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                     <Link href="/signup">Start free practice</Link>
                   </Button>
                   <Button asChild variant="secondary" size="lg" className="rounded-ds-2xl px-6">
-                    <Link
-                      href={
-                        isAuthed
-                          ? dashboardHref
-                          : `/login?next=${encodeURIComponent(dashboardHref)}`
-                      }
-                    >
+                    <Link href={dashboardHref}>
                       View my dashboard
                     </Link>
                   </Button>
