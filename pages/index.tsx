@@ -9,6 +9,21 @@ import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import Icon, { type IconName } from '@/components/design-system/Icon';
 import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
+import { useUser } from '@/hooks/useUser';
+
+type DashboardModule = {
+  id: string;
+  title: string;
+  progress: number;
+  lastActivityAt: string | null;
+  nextAction: string;
+};
+
+type DashboardResponse = {
+  user: { name: string };
+  modules: DashboardModule[];
+  nextAction: string;
+};
 
 const modules = [
   {
@@ -17,7 +32,8 @@ const modules = [
     title: 'Learning Hub',
     status: 'Live',
     statusTone: 'success' as const,
-    description: 'Concept lessons, strategy guides, and grammar refreshers wired to your target band.',
+    description:
+      'Concept lessons, strategy guides, and grammar refreshers wired to your target band.',
     bullets: [
       'Academic & General Training coverage',
       'Micro-lessons for all four skills',
@@ -31,7 +47,8 @@ const modules = [
     title: 'Skill Practice Arena',
     status: 'Live',
     statusTone: 'accent' as const,
-    description: 'Focused listening, reading, writing, and speaking practice mapped to real exam sections.',
+    description:
+      'Focused listening, reading, writing, and speaking practice mapped to real exam sections.',
     bullets: [
       'Dedicated hubs for all four skills',
       'Drills, reviews, and full-section flows',
@@ -45,7 +62,8 @@ const modules = [
     title: 'Full Mock Tests',
     status: 'Expanded',
     statusTone: 'success' as const,
-    description: 'Complete mock ecosystem with reading, listening, speaking, and writing exam simulations.',
+    description:
+      'Complete mock ecosystem with reading, listening, speaking, and writing exam simulations.',
     bullets: [
       'Section-based mocks and full exam tracks',
       'Attempt history, review pages, and results',
@@ -88,11 +106,7 @@ const modules = [
     status: 'Live',
     statusTone: 'success' as const,
     description: 'Daily streaks, weekly challenges, and quiet competition.',
-    bullets: [
-      'Daily streak shields',
-      'Weekly IELTS challenges',
-      'Badges for consistency',
-    ],
+    bullets: ['Daily streak shields', 'Weekly IELTS challenges', 'Badges for consistency'],
     href: '/dashboard',
   },
 ];
@@ -216,16 +230,59 @@ export const LANDING_PLANS = [
     name: 'Institution / Teacher',
     price: 'Talk to us',
     tag: 'For schools',
-    bullets: [
-      'Teacher dashboards',
-      'Cohort analytics',
-      'Co-branded experiences',
-    ],
+    bullets: ['Teacher dashboards', 'Cohort analytics', 'Co-branded experiences'],
   },
 ];
 
 const LandingPage: React.FC = () => {
   const [showStickyCta, setShowStickyCta] = useState(false);
+  const { isAuthed, loading: userLoading } = useUser();
+  const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userLoading || !isAuthed) {
+      setDashboardData(null);
+      setDashboardLoading(false);
+      setDashboardError(null);
+      return;
+    }
+
+    let isMounted = true;
+    setDashboardLoading(true);
+    setDashboardError(null);
+
+    fetch('/api/user/dashboard')
+      .then(async (response) => {
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err?.error ?? 'Unable to load dashboard data');
+        }
+        return (await response.json()) as DashboardResponse;
+      })
+      .then((payload) => {
+        if (!isMounted) return;
+        setDashboardData(payload);
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) return;
+        setDashboardError(error instanceof Error ? error.message : 'Unable to load dashboard data');
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setDashboardLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthed, userLoading]);
+
+  const dashboardHref = dashboardData?.nextAction ?? '/dashboard';
+  const effectiveQuickLinks = quickLinks.map((item) =>
+    item.label === 'Go to dashboard' ? { ...item, href: dashboardHref } : item,
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -280,21 +337,19 @@ const LandingPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-4 pt-2">
-                  <Button
-                    asChild
-                    variant="primary"
-                    size="lg"
-                    className="rounded-ds-2xl px-6"
-                  >
+                  <Button asChild variant="primary" size="lg" className="rounded-ds-2xl px-6">
                     <Link href="/signup">Start free practice</Link>
                   </Button>
-                  <Button
-                    asChild
-                    variant="secondary"
-                    size="lg"
-                    className="rounded-ds-2xl px-6"
-                  >
-                    <Link href="/login?next=/dashboard">View my dashboard</Link>
+                  <Button asChild variant="secondary" size="lg" className="rounded-ds-2xl px-6">
+                    <Link
+                      href={
+                        isAuthed
+                          ? dashboardHref
+                          : `/login?next=${encodeURIComponent(dashboardHref)}`
+                      }
+                    >
+                      View my dashboard
+                    </Link>
                   </Button>
                 </div>
 
@@ -371,8 +426,7 @@ const LandingPage: React.FC = () => {
                         Next launch window
                       </p>
                       <p className="text-small text-grayish">
-                        We onboard small cohorts so support never feels like a ticketing
-                        system.
+                        We onboard small cohorts so support never feels like a ticketing system.
                       </p>
                     </div>
                     <div className="text-right">
@@ -401,8 +455,8 @@ const LandingPage: React.FC = () => {
                   </div>
 
                   <p className="mt-3 text-[11px] text-muted-foreground">
-                    Join the waitlist now and we’ll reserve early-bird pricing for you when
-                    the batch opens.
+                    Join the waitlist now and we’ll reserve early-bird pricing for you when the
+                    batch opens.
                   </p>
                 </Card>
               </div>
@@ -417,8 +471,8 @@ const LandingPage: React.FC = () => {
               <div>
                 <h2 className="font-slab text-xl md:text-h2">Portal hub</h2>
                 <p className="text-xs text-grayish md:text-small">
-                  From this page, you can jump to any core area — dashboard, modules, AI
-                  Lab, billing, or onboarding.
+                  From this page, you can jump to any core area — dashboard, modules, AI Lab,
+                  billing, or onboarding.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -429,7 +483,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible lg:grid-cols-3">
-              {quickLinks.map((item) => (
+              {effectiveQuickLinks.map((item) => (
                 <Card
                   key={item.href}
                   className="group flex min-w-[240px] shrink-0 cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg md:min-w-0"
@@ -465,7 +519,9 @@ const LandingPage: React.FC = () => {
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
                 What&apos;s new in GramorX
               </p>
-              <h2 className="mt-2 font-slab text-xl md:text-h2">Recent upgrades across the platform</h2>
+              <h2 className="mt-2 font-slab text-xl md:text-h2">
+                Recent upgrades across the platform
+              </h2>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -474,8 +530,12 @@ const LandingPage: React.FC = () => {
                   key={item.title}
                   className="rounded-ds-2xl border border-border/60 bg-card/70 p-5"
                 >
-                  <h3 className="text-sm font-semibold text-foreground md:text-base">{item.title}</h3>
-                  <p className="mt-2 text-xs text-muted-foreground md:text-sm">{item.description}</p>
+                  <h3 className="text-sm font-semibold text-foreground md:text-base">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-xs text-muted-foreground md:text-sm">
+                    {item.description}
+                  </p>
                   <Button asChild size="sm" variant="secondary" className="mt-4 rounded-ds-xl">
                     <Link href={item.href}>{item.cta}</Link>
                   </Button>
@@ -496,71 +556,136 @@ const LandingPage: React.FC = () => {
                 Everything you need to go from “stuck” to exam‑ready.
               </h2>
               <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
-                Not just practice questions. A full stack: onboarding, learning, practice,
-                mocks, AI feedback, analytics, and gamification — all aware of your goal
-                band and exam date.
+                Not just practice questions. A full stack: onboarding, learning, practice, mocks, AI
+                feedback, analytics, and gamification — all aware of your goal band and exam date.
               </p>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {modules.map((mod) => (
-                <Card
-                  key={mod.id}
-                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:h-11 md:w-11">
-                          <Icon name={mod.icon} size={18} />
-                        </span>
-                        <div>
+              {isAuthed && dashboardLoading ? (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
+                  Loading your personalised modules…
+                </Card>
+              ) : null}
+
+              {isAuthed && dashboardError ? (
+                <Card className="rounded-ds-2xl border border-danger/40 bg-danger/5 p-5 text-sm text-danger md:col-span-2 xl:col-span-3">
+                  Could not load personalised progress right now. Showing the default module map
+                  instead.
+                </Card>
+              ) : null}
+
+              {isAuthed &&
+              !dashboardLoading &&
+              !dashboardError &&
+              dashboardData?.modules.length === 0 ? (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
+                  No module activity yet. Start your first guided action below.
+                </Card>
+              ) : null}
+
+              {isAuthed &&
+              !dashboardLoading &&
+              !dashboardError &&
+              (dashboardData?.modules?.length ?? 0) > 0
+                ? (dashboardData?.modules ?? []).map((mod) => (
+                    <Card
+                      key={mod.id}
+                      className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-3">
                           <h3 className="text-base font-semibold text-foreground md:text-lg">
                             {mod.title}
                           </h3>
-                          <p className="text-xs text-muted-foreground md:text-small">
-                            {mod.description}
-                          </p>
+                          <Badge size="xs" variant="accent">
+                            {mod.progress}%
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground md:text-small">
+                          Last activity:{' '}
+                          {mod.lastActivityAt
+                            ? new Date(mod.lastActivityAt).toLocaleDateString()
+                            : 'No attempts yet'}
+                        </p>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${Math.max(0, Math.min(100, mod.progress))}%` }}
+                          />
                         </div>
                       </div>
-                      <Badge
-                        size="xs"
-                        variant={
-                          mod.statusTone === 'success'
-                            ? 'success'
-                            : mod.statusTone === 'accent'
-                            ? 'accent'
-                            : 'neutral'
-                        }
-                      >
-                        {mod.status}
-                      </Badge>
-                    </div>
 
-                    <ul className="space-y-2 text-xs text-muted-foreground">
-                      {mod.bullets.map((b) => (
-                        <li key={b} className="flex items-start gap-2">
-                          <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
-                            <Icon name="Check" size={10} />
-                          </span>
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="pt-4">
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="secondary"
-                      className="w-full rounded-ds-xl"
+                      <div className="pt-4">
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="secondary"
+                          className="w-full rounded-ds-xl"
+                        >
+                          <Link href={mod.nextAction}>Continue {mod.title}</Link>
+                        </Button>
+                      </div>
+                    </Card>
+                  ))
+                : modules.map((mod) => (
+                    <Card
+                      key={mod.id}
+                      className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
                     >
-                      <Link href={mod.href}>Open {mod.title}</Link>
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:h-11 md:w-11">
+                              <Icon name={mod.icon} size={18} />
+                            </span>
+                            <div>
+                              <h3 className="text-base font-semibold text-foreground md:text-lg">
+                                {mod.title}
+                              </h3>
+                              <p className="text-xs text-muted-foreground md:text-small">
+                                {mod.description}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge
+                            size="xs"
+                            variant={
+                              mod.statusTone === 'success'
+                                ? 'success'
+                                : mod.statusTone === 'accent'
+                                  ? 'accent'
+                                  : 'neutral'
+                            }
+                          >
+                            {mod.status}
+                          </Badge>
+                        </div>
+
+                        <ul className="space-y-2 text-xs text-muted-foreground">
+                          {mod.bullets.map((b) => (
+                            <li key={b} className="flex items-start gap-2">
+                              <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
+                                <Icon name="Check" size={10} />
+                              </span>
+                              <span>{b}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="pt-4">
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="secondary"
+                          className="w-full rounded-ds-xl"
+                        >
+                          <Link href={mod.href}>Open {mod.title}</Link>
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
             </div>
           </Container>
         </section>
@@ -576,8 +701,8 @@ const LandingPage: React.FC = () => {
                 Built for people with limited time.
               </h2>
               <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
-                Evening learners, working professionals, undergrads — we optimize around
-                your bandwidth, not around 6‑hour study fantasies.
+                Evening learners, working professionals, undergrads — we optimize around your
+                bandwidth, not around 6‑hour study fantasies.
               </p>
             </div>
 
@@ -593,9 +718,7 @@ const LandingPage: React.FC = () => {
                         {t.initials}
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-foreground md:text-sm">
-                          {t.name}
-                        </p>
+                        <p className="text-xs font-medium text-foreground md:text-sm">{t.name}</p>
                         <p className="text-[10px] text-primary/80 md:text-xs">{t.meta}</p>
                       </div>
                     </div>
@@ -623,16 +746,11 @@ const LandingPage: React.FC = () => {
                   Start free. Upgrade when you’re serious.
                 </h2>
                 <p className="mt-1 text-xs text-grayish md:text-small md:max-w-xl">
-                  Free covers basic practice and a taste of AI. Booster unlocks deeper
-                  feedback and more mocks. Institutional is for teachers and academies.
+                  Free covers basic practice and a taste of AI. Booster unlocks deeper feedback and
+                  more mocks. Institutional is for teachers and academies.
                 </p>
               </div>
-              <Button
-                asChild
-                size="sm"
-                variant="ghost"
-                className="rounded-ds-xl mt-2 md:mt-0"
-              >
+              <Button asChild size="sm" variant="ghost" className="rounded-ds-xl mt-2 md:mt-0">
                 <Link href="/pricing">View full pricing page</Link>
               </Button>
             </div>
@@ -653,10 +771,7 @@ const LandingPage: React.FC = () => {
                         </h3>
                         <p className="text-xs text-muted-foreground">{plan.price}</p>
                       </div>
-                      <Badge
-                        size="xs"
-                        variant={plan.highlight ? 'accent' : 'neutral'}
-                      >
+                      <Badge size="xs" variant={plan.highlight ? 'accent' : 'neutral'}>
                         {plan.tag}
                       </Badge>
                     </div>
@@ -703,9 +818,9 @@ const LandingPage: React.FC = () => {
                     Join the early cohort and lock in better pricing.
                   </h2>
                   <p className="text-xs text-grayish md:text-small">
-                    We’re onboarding in waves so we don’t drown support. Add your email and
-                    target band, and we’ll send a proper orientation when your batch opens —
-                    no spam, no fake urgency.
+                    We’re onboarding in waves so we don’t drown support. Add your email and target
+                    band, and we’ll send a proper orientation when your batch opens — no spam, no
+                    fake urgency.
                   </p>
                   <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                     <li>• First wave gets discounted Booster pricing.</li>
@@ -716,9 +831,7 @@ const LandingPage: React.FC = () => {
                 <div className="space-y-3">
                   <div className="grid gap-3 md:grid-cols-1">
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Email
-                      </label>
+                      <label className="text-xs font-medium text-muted-foreground">Email</label>
                       <input
                         type="email"
                         className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
@@ -735,11 +848,7 @@ const LandingPage: React.FC = () => {
                         placeholder="e.g. 7.0, 7.5, 8.0"
                       />
                     </div>
-                    <Button
-                      type="button"
-                      variant="accent"
-                      className="mt-1 w-full rounded-ds-xl"
-                    >
+                    <Button type="button" variant="accent" className="mt-1 w-full rounded-ds-xl">
                       Join waitlist
                     </Button>
                     <p className="text-[11px] text-muted-foreground">
