@@ -29,5 +29,8 @@ steps:
 - script: npm run ds:guard
   displayName: 'Design system guard'
 
+- script: node scripts/ci/enforce-route-locks.mjs
+  displayName: 'Route lock guard'
+
 - script: npm run build
   displayName: 'Build'

@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { routes } from '@/lib/routes';
+import { isPrimaryNavEligible } from '@/lib/routing/governance';
 
 export type Command = {
   id: string;
@@ -54,7 +55,7 @@ function defaultCommands(): Command[] {
     { id: 'writing', title: 'Writing Tests', href: routes.writingIndex(), group: 'Modules' },
     { id: 'speaking', title: 'Speaking Simulator', href: routes.speakingSimulator(), group: 'Modules' },
     { id: 'checkout-booster', title: 'Upgrade to Booster', href: routes.checkout('booster'), group: 'Actions', kbd: 'Enter' },
-  ];
+  ].filter((item) => !item.href || isPrimaryNavEligible(item.href));
 }
 
 export function CommandCenter({
