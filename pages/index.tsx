@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import Image from 'next/image';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
@@ -27,30 +26,30 @@ const modules = [
     href: '/learning',
   },
   {
-    id: 'practice',
+    id: 'skill-practice',
     icon: 'Edit3' as IconName,
-    title: 'Practice & Drills',
+    title: 'Skill Practice Arena',
     status: 'Live',
     statusTone: 'accent' as const,
-    description: 'Short, exam-style tasks that you can finish in 10–20 minutes.',
+    description: 'Focused listening, reading, writing, and speaking practice mapped to real exam sections.',
     bullets: [
-      'Writing, Reading, Listening, Speaking',
-      'Timer-aware practice flows',
-      'Bookmarks + saved questions',
+      'Dedicated hubs for all four skills',
+      'Drills, reviews, and full-section flows',
+      'Daily practice loops with saved progress',
     ],
-    href: '/practice',
+    href: '/mock',
   },
   {
     id: 'mock',
     icon: 'Timer' as IconName,
     title: 'Full Mock Tests',
-    status: 'Rolling out',
-    statusTone: 'info' as const,
-    description: 'Serious exam rehearsals with band estimates and post-test breakdowns.',
+    status: 'Expanded',
+    statusTone: 'success' as const,
+    description: 'Complete mock ecosystem with reading, listening, speaking, and writing exam simulations.',
     bullets: [
-      'Full-length timed mocks',
-      'Section-wise band estimates',
-      'Cheating-safe Exam workspace',
+      'Section-based mocks and full exam tracks',
+      'Attempt history, review pages, and results',
+      'Analytics for speed, accuracy, and mastery',
     ],
     href: '/mock',
   },
@@ -72,13 +71,13 @@ const modules = [
     id: 'analytics',
     icon: 'PieChart' as IconName,
     title: 'Progress & Analytics',
-    status: 'Beta',
+    status: 'Live',
     statusTone: 'info' as const,
-    description: 'Band trajectory, weak areas, and time usage in one place.',
+    description: 'Unified tracking across attempts, streaks, and skill-level improvement signals.',
     bullets: [
-      'Skill-wise band curve',
-      'Accuracy by question type',
-      'Study time + streak tracking',
+      'Band trajectory and forecast signals',
+      'Question-type and section diagnostics',
+      'Streak + momentum visibility',
     ],
     href: '/progress',
   },
@@ -112,15 +111,15 @@ const quickLinks = [
     icon: 'ClipboardCheck' as IconName,
   },
   {
-    label: 'Start free writing check',
-    description: 'Run a Task 2 through AI Coach.',
-    href: '/writing',
+    label: 'Open AI Coach',
+    description: 'Get targeted help for weak areas.',
+    href: '/ai/coach',
     icon: 'PenSquare' as IconName,
   },
   {
-    label: 'Take a reading drill',
-    description: 'Practice under light time pressure.',
-    href: '/reading',
+    label: 'Resume study buddy',
+    description: 'Continue your AI-guided session.',
+    href: '/ai/study-buddy',
     icon: 'FileText' as IconName,
   },
   {
@@ -134,6 +133,30 @@ const quickLinks = [
     description: 'Free vs Booster vs higher tiers.',
     href: '/pricing',
     icon: 'CreditCard' as IconName,
+  },
+];
+
+const releaseHighlights = [
+  {
+    title: 'AI suite is now a full workspace',
+    description:
+      'AI Coach, Study Buddy session flows, and Mistakes Book now work as a connected loop instead of isolated tools.',
+    href: '/ai',
+    cta: 'Open AI workspace',
+  },
+  {
+    title: 'Mock infrastructure expanded deeply',
+    description:
+      'Reading and listening now include richer review/result flows, challenge modes, and history pages for consistent prep cycles.',
+    href: '/mock/reading',
+    cta: 'Explore mock reading',
+  },
+  {
+    title: 'Institutions and partner paths are live',
+    description:
+      'Dedicated institution and partner surfaces now support scale usage, team-oriented onboarding, and managed growth tracks.',
+    href: '/institutions',
+    cta: 'View institutions',
   },
 ];
 
@@ -233,28 +256,26 @@ const LandingPage: React.FC = () => {
                   <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Icon name="Sparkles" size={14} />
                   </span>
-                  <span>Private beta • IELTS four modules + AI Lab</span>
+                  <span>Refreshed platform • IELTS prep + AI + institutions</span>
                 </div>
 
                 <div className="space-y-4">
                   <h1 className="font-slab text-display text-gradient-primary">
-                    IELTS Mission Control, not just another question bank.
+                    Your complete IELTS operating system.
                   </h1>
                   <p className="max-w-xl text-body text-grayish">
-                    Listening, Reading, Writing, Speaking — stitched together with AI-first
-                    feedback, a streak system that actually matters, and a dashboard that
-                    tells you what to do next.
+                    From AI coaching and study buddy sessions to full mocks, analytics, and
+                    institutional tools — everything now lives in one connected platform.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 text-small text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
-                    <Icon name="Target" size={14} /> Built for band 6.0–8.0 journeys
+                    <Icon name="Target" size={14} /> Built for daily prep + full exam readiness
                   </span>
                   <span className="hidden md:inline">•</span>
                   <span className="inline-flex items-center gap-1">
-                    <Icon name="Globe2" size={14} /> Global-ready, focused on Pakistan + US
-                    learners first
+                    <Icon name="Globe2" size={14} /> Individual learners, teachers, and institutions
                   </span>
                 </div>
 
@@ -438,7 +459,33 @@ const LandingPage: React.FC = () => {
           </Container>
         </section>
 
-        {/* MODULES OVERVIEW – unchanged, but we rely on existing responsive grid */}
+        <section className="py-12 md:py-14">
+          <Container>
+            <div className="mb-6 md:mb-8">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
+                What&apos;s new in GramorX
+              </p>
+              <h2 className="mt-2 font-slab text-xl md:text-h2">Recent upgrades across the platform</h2>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {releaseHighlights.map((item) => (
+                <Card
+                  key={item.title}
+                  className="rounded-ds-2xl border border-border/60 bg-card/70 p-5"
+                >
+                  <h3 className="text-sm font-semibold text-foreground md:text-base">{item.title}</h3>
+                  <p className="mt-2 text-xs text-muted-foreground md:text-sm">{item.description}</p>
+                  <Button asChild size="sm" variant="secondary" className="mt-4 rounded-ds-xl">
+                    <Link href={item.href}>{item.cta}</Link>
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          </Container>
+        </section>
+
+        {/* MODULES OVERVIEW */}
         <section className="bg-muted/40 py-12 md:py-16">
           <Container>
             <div className="mb-8 text-center">
