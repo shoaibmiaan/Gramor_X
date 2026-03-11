@@ -409,6 +409,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                     </ul>
                   </div>
 
+                  {mod.reason ? (
+                    <p className="pt-3 text-xs text-muted-foreground">{mod.reason}</p>
+                  ) : null}
+
                   <div className="pt-4">
                     <Button
                       asChild
@@ -416,7 +420,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                       variant="secondary"
                       className="w-full rounded-ds-xl"
                     >
-                      <Link href={mod.href}>Open {mod.title}</Link>
+                      <Link href={mod.ctaHref}>{mod.isEnabled ? `Open ${mod.title}` : `Unlock ${mod.title}`}</Link>
                     </Button>
                   </div>
                 </Card>
