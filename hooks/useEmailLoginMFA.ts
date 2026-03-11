@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 
-import { supabase } from '@/lib/supabaseClient';
+import { createMfaChallenge, verifyMfaChallenge, getSession, recordLoginEvent } from '@/lib/auth';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 
 export async function createMfaChallengeForUser(user: User | null) {
   const factors = (user as any)?.factors ?? [];
   if (!factors.length) return { factorId: null, challengeId: null };
   const f = factors[0];
-  const { data: challenge, error } = await supabase.auth.mfa.challenge({ factorId: f.id });
+  const { data: challenge, error } = await createMfaChallenge(f.id as string);
   if (error) {
     return { factorId: null, challengeId: null, error: getAuthErrorMessage(error) };
   }
@@ -21,18 +21,18 @@ export async function verifyMfaOtp(
   code: string,
   onVerified?: () => void | Promise<void>,
 ) {
-  const { error } = await supabase.auth.mfa.verify({ factorId, challengeId, code });
-  if (error) {
-    return { error: getAuthErrorMessage(error) };
+  const verification = await verifyMfaChallenge(factorId, challengeId, code);
+  if (!verification.ok) {
+    return { error: getAuthErrorMessage(verification.error) };
   }
 
-  await supabase.auth.getSession();
+  await getSession();
 
   setTimeout(() => {
     void onVerified?.();
   }, 50);
 
-  void fetch('/api/auth/login-event', { method: 'POST' }).catch(console.error);
+  void recordLoginEvent();
 
   return { error: null };
 }

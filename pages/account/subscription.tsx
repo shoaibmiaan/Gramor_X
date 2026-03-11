@@ -16,6 +16,7 @@ import { GlobalPlanGuard } from '@/components/GlobalPlanGuard';
 import { useLocale } from '@/lib/locale';
 import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
 import type { PlanId } from '@/types/pricing';
+import { api } from '@/lib/api';
 
 type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
 
@@ -109,14 +110,9 @@ export default function SubscriptionPage() {
     const loadSubscription = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/subscriptions/portal', { credentials: 'include' });
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || 'Failed to load subscription');
-        }
-        const data = (await response.json()) as PortalResponse;
+        const { data } = await api.subscription.portal();
         if (cancelled) return;
-        setSubscription(data.subscription);
+        setSubscription((data as PortalResponse).subscription);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -162,22 +158,11 @@ export default function SubscriptionPage() {
 
     setCancelling(true);
     try {
-      const response = await fetch('/api/billing/cancel-subscription', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || t('subscription.cancel.error', 'Failed to cancel subscription'));
-      }
+      await api.billing.cancelSubscription();
 
       toastSuccess(t('subscription.cancel.success', 'Subscription cancelled successfully.'));
-      const refreshed = await fetch('/api/subscriptions/portal', { credentials: 'include' });
-      if (refreshed.ok) {
-        const data = (await refreshed.json()) as PortalResponse;
-        setSubscription(data.subscription);
-      }
+      const { data } = await api.subscription.portal();
+      setSubscription((data as PortalResponse).subscription);
     } catch (err) {
       const message = err instanceof Error ? err.message : t('subscription.cancel.error', 'Failed to cancel subscription');
       toastError(message);

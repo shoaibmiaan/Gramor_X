@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import type { StudySession, StudySessionItem } from '../types/innovation';
+import { api } from '@/lib/api';
 
 export function useStudyBuddy() {
   const [loading, setLoading] = useState(false);
@@ -10,9 +11,8 @@ export function useStudyBuddy() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/study-buddy/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, items }) });
-      if (!res.ok) throw new Error('Failed to create session');
-      const json = (await res.json()) as StudySession;
+      const { data } = await api.studyBuddy.createSession({ userId, items });
+      const json = data as StudySession;
       setSession(json);
       return json;
     } catch (e: any) {
@@ -25,9 +25,8 @@ export function useStudyBuddy() {
 
   const refresh = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/study-buddy/sessions/${id}`);
-      if (!res.ok) throw new Error('Failed to fetch session');
-      const json = (await res.json()) as StudySession;
+      const { data } = await api.studyBuddy.getSession(id);
+      const json = data as StudySession;
       setSession(json);
       return json;
     } catch (e) {
@@ -37,8 +36,7 @@ export function useStudyBuddy() {
 
   const start = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/study-buddy/sessions/${id}/start`, { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to start');
+      await api.studyBuddy.startSession(id);
       return true;
     } catch (e) {
       throw e;

@@ -8,7 +8,7 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
 import { MailIcon } from '@/components/design-system/icons';
-import { supabase } from '@/lib/supabaseClient';
+import { getSession, resetPasswordForEmail, resolveAuthRedirect } from '@/lib/auth';
 import { destinationByRole } from '@/lib/routeAccess';
 import { Input } from '@/components/design-system/Input';
 import { LOGIN, RESET_PASSWORD, ONBOARDING } from '@/lib/constants/routes';
@@ -35,15 +35,13 @@ export default function ForgotPasswordPage() {
   useEffect(() => {
     let mounted = true;
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await getSession();
       if (!mounted) return;
 
       if (session) {
         const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
         const safe =
-          rawNext && !rawNext.startsWith('http') && rawNext !== LOGIN
-            ? rawNext
-            : destinationByRole(session.user);
+          resolveAuthRedirect(rawNext, destinationByRole(session.user));
         if (router.asPath !== safe) {
           await router.replace(safe);
           return;
@@ -86,8 +84,8 @@ export default function ForgotPasswordPage() {
       const next = selectedRole ? withQuery(LOGIN, { role: selectedRole }) : LOGIN;
       const redirectTo = `${origin}${RESET_PASSWORD}?next=${encodeURIComponent(next)}`;
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-      if (error) throw error;
+      const result = await resetPasswordForEmail(email, redirectTo);
+      if (!result.ok) throw new Error(result.error);
 
       setOk(
         <>

@@ -8,10 +8,10 @@ import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Input } from '@/components/design-system/Input';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { readStoredPkceVerifier } from '@/lib/auth/pkce';
 import { ONBOARDING, SIGNUP } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
+import { getSession, loginEmailOtp, resendOtp, verifyOtp } from '@/lib/auth';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await getSession();
       if (!mounted) return;
       if (session?.user) router.replace(next);
     })();
@@ -63,13 +63,8 @@ export default function VerifyEmailPage() {
 
 
   async function sendVerificationCode() {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-      },
-    });
-    if (error) throw error;
+    const result = await loginEmailOtp(email);
+    if (!result.ok) throw new Error(result.error);
   }
 
 
@@ -104,8 +99,7 @@ export default function VerifyEmailPage() {
       if (ref) verificationParams.set('ref', ref);
       if (codeVerifier) verificationParams.set('code_verifier', codeVerifier);
 
-      const { error } = await supabase.auth.resend({
-        // @ts-expect-error supabase-js may not expose resend type yet
+      const resend = await resendOtp({
         type: 'signup',
         email,
         options: {
@@ -113,8 +107,8 @@ export default function VerifyEmailPage() {
         },
       });
 
-      if (error) {
-        setErr(error.message);
+      if (!resend.ok) {
+        setErr(resend.error || 'Failed to resend the verification email.');
         setStatus('error');
         return;
       }
@@ -145,24 +139,24 @@ export default function VerifyEmailPage() {
     setCodeStatus('verifying');
     let verificationError: Error | null = null;
 
-    const signupAttempt = await supabase.auth.verifyOtp({
+    const signupAttempt = await verifyOtp({
       email,
       token: trimmedCode,
       type: 'signup',
     });
 
-    if (signupAttempt.error) {
-      const emailAttempt = await supabase.auth.verifyOtp({
+    if (!signupAttempt.ok) {
+      const emailAttempt = await verifyOtp({
         email,
         token: trimmedCode,
         type: 'email',
       });
-      verificationError = emailAttempt.error;
+      verificationError = emailAttempt.ok ? null : new Error(emailAttempt.error);
     }
 
-    if (signupAttempt.error && verificationError) {
+    if (!signupAttempt.ok && verificationError) {
       setCodeStatus('error');
-      setErr(verificationError.message || signupAttempt.error.message || 'Invalid verification code.');
+      setErr(verificationError.message || signupAttempt.error || 'Invalid verification code.');
       return;
     }
 

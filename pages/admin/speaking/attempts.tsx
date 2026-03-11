@@ -11,6 +11,7 @@ import { Badge } from '@/components/design-system/Badge';
 import { Alert } from '@/components/design-system/Alert';
 import { AudioPlayer } from '@/components/audio/Player';
 import { useToast } from '@/components/design-system/Toaster';
+import { api } from '@/lib/api';
 
 interface AttemptRow {
   id: string;
@@ -286,11 +287,8 @@ const AdminSpeakingAttemptsPage: React.FC = () => {
   const fetchList = useCallback(async (search: string) => {
     setListLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (search) params.set('q', search);
-      const res = await fetch(`/api/admin/speaking/attempts?${params.toString()}`);
-      const json = await res.json();
-      if (!res.ok || !json?.ok) {
+      const { data: json } = await api.admin.speakingAttempts.list(search);
+      if (!(json as any)?.ok) {
         throw new Error(json?.error || 'Failed to load attempts');
       }
       setRows(json.items);
@@ -313,9 +311,8 @@ const AdminSpeakingAttemptsPage: React.FC = () => {
     setDetailLoading(true);
     setDetailError(null);
     try {
-      const res = await fetch(`/api/admin/speaking/attempts/${id}`);
-      const json = await res.json();
-      if (!res.ok || !json?.ok) {
+      const { data: json } = await api.admin.speakingAttempts.detail(id);
+      if (!(json as any)?.ok) {
         throw new Error(json?.error || 'Failed to load attempt');
       }
       setSelected(json.attempt as AttemptDetail);

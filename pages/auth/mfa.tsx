@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import AuthLayout from '@/components/layouts/AuthLayout';
 import { Alert } from '@/components/design-system/Alert';
-import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
+import { verifyOtp } from '@/lib/auth';
 import { redirectByRole } from '@/lib/routeAccess';
 
 export default function MfaPage() {
@@ -19,9 +19,9 @@ export default function MfaPage() {
       if (!/^\d{6}$/.test(code)) {
         throw new Error('Please enter a valid 6-digit code.');
       }
-      const { data, error } = await supabase.auth.verifyOtp({ type: 'totp', token: code });
-      if (error) throw error;
-      redirectByRole(data.user ?? null);
+      const result = await verifyOtp({ type: 'totp', token: code });
+      if (!result.ok) throw new Error(result.error);
+      redirectByRole(result.data?.user ?? null);
     } catch (err: any) {
       console.error('MFA verification error:', err);
       setError(err.message || 'Failed to verify code. Please try again.');

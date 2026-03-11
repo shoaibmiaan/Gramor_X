@@ -8,7 +8,7 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
 import { MailIcon, SmsIcon } from '@/components/design-system/icons';
-import { supabase } from '@/lib/supabaseClient';
+import { getSession, updatePassword, verifyOtp } from '@/lib/auth';
 import { destinationByRole } from '@/lib/routeAccess';
 import { Input } from '@/components/design-system/Input';
 import { LOGIN, FORGOT_PASSWORD, ONBOARDING } from '@/lib/constants/routes';
@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     let mounted = true;
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { session } = await getSession();
       if (!mounted) return;
       if (session) setStep('update');
       setReady(true);
@@ -83,8 +83,8 @@ export default function ResetPasswordPage() {
 
     setBusy(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
-      if (error) throw error;
+      const result = await verifyOtp({ email, token: code, type: 'recovery' });
+      if (!result.ok) throw new Error(result.error);
       setOk('Email verified. You can now set a new password.');
       setStep('update');
     } catch (e: any) {
@@ -110,8 +110,8 @@ export default function ResetPasswordPage() {
         if (reused) return setErr('Please choose a password you have not used before.');
       } catch {}
 
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      const result = await updatePassword(password);
+      if (!result.ok) throw new Error(result.error);
 
       setOk('Password updated. Redirecting to sign in…');
       const next = selectedRole ? withQuery(LOGIN, { role: selectedRole }) : LOGIN;

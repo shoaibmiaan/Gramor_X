@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { logout } from '@/lib/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { fetchStreak as fetchStreakApi } from '@/lib/streak';
 import type { SubscriptionTier } from '@/lib/navigation/types';
 import { defaultTier } from '@/config/navigation';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { createSignedAvatarUrl, isStoragePath } from '@/lib/avatar';
+import { useAuthState } from '@/hooks/useAuthState';
 
 interface UserInfo {
   id: string | null;
@@ -26,6 +27,7 @@ export function useHeaderState(initialStreak?: number) {
   const [streak, setStreak] = useState<number>(initialStreak ?? 0);
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>(defaultTier);
   const mountedRef = useRef(true);
+  const { user: authUser, loading: authLoading } = useAuthState();
 
   useEffect(() => () => {
     mountedRef.current = false;
@@ -76,6 +78,7 @@ export function useHeaderState(initialStreak?: number) {
 
   useEffect(() => {
     let cancelled = false;
+
     const computeIdentity = async (uid: string | null, appMeta?: any, userMeta?: any) => {
       let nextRole: any = appMeta?.role ?? userMeta?.role ?? null;
       let nextTier: SubscriptionTier | null = null;
@@ -85,9 +88,7 @@ export function useHeaderState(initialStreak?: number) {
           .select('role, tier')
           .eq('id', uid)
           .single();
-        if (error) {
-          console.error('Failed to fetch profile role/tier:', error);
-        } else {
+        if (!error) {
           nextRole = prof?.role ?? null;
           nextTier = (prof?.tier as SubscriptionTier | null) ?? null;
         }
@@ -98,87 +99,47 @@ export function useHeaderState(initialStreak?: number) {
       return { role: normalizedRole, tier: normalizedTier };
     };
 
-    const resolveAvatar = async (userMeta?: Record<string, unknown>) => {
-      const raw = typeof userMeta?.['avatar_path'] === 'string'
-        ? (userMeta?.['avatar_path'] as string)
-        : typeof userMeta?.['avatar_url'] === 'string'
-        ? (userMeta?.['avatar_url'] as string)
+    const syncFromAuthState = async () => {
+      if (authLoading) return;
+      const s = authUser ?? null;
+      const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
+
+      const raw = typeof userMeta['avatar_path'] === 'string'
+        ? (userMeta['avatar_path'] as string)
+        : typeof userMeta['avatar_url'] === 'string'
+        ? (userMeta['avatar_url'] as string)
         : null;
 
-      if (!raw) return { url: null, path: null } as const;
-
-      if (isStoragePath(raw)) {
-        try {
-          const url = await createSignedAvatarUrl(raw);
-          return { url, path: raw } as const;
-        } catch (error) {
-          console.warn('Failed to create signed avatar url for header', error);
-          return { url: null, path: raw } as const;
-        }
+      let avatarUrl: string | null = raw;
+      let avatarPath: string | null = null;
+      if (raw && isStoragePath(raw)) {
+        avatarPath = raw;
+        avatarUrl = await createSignedAvatarUrl(raw).catch(() => null);
       }
 
-      return { url: raw, path: null } as const;
+      if (cancelled) return;
+      setUser({
+        id: s?.id ?? null,
+        email: s?.email ?? null,
+        name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
+        avatarUrl,
+        avatarPath,
+      });
+
+      const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
+      if (cancelled) return;
+      setRole(identity.role);
+      setSubscriptionTier(identity.tier ?? defaultTier);
+      if (!s) setStreak(0);
+      setReady(true);
     };
 
-    const sync = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Failed to get session:', error);
-          return;
-        }
-        const s = session?.user ?? null;
-        const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
-        if (!cancelled) {
-          const avatar = await resolveAvatar(userMeta);
-          setUser({
-            id: s?.id ?? null,
-            email: s?.email ?? null,
-            name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
-            avatarUrl: avatar.url,
-            avatarPath: avatar.path,
-          });
-          const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
-          if (!cancelled) {
-            setRole(identity.role);
-            setSubscriptionTier(identity.tier ?? defaultTier);
-          }
-          setReady(true);
-        }
-      } catch (err) {
-        console.error('Unexpected auth error:', err);
-      }
-    };
-    sync();
-
-    const { data: sub } = supabase.auth.onAuthStateChange(
-      async (_e: AuthChangeEvent, session: Session | null) => {
-        try {
-          const s = session?.user ?? null;
-          const userMeta = (s?.user_metadata ?? {}) as Record<string, unknown>;
-          const avatar = await resolveAvatar(userMeta);
-          setUser({
-            id: s?.id ?? null,
-            email: s?.email ?? null,
-            name: typeof userMeta['full_name'] === 'string' ? (userMeta['full_name'] as string) : null,
-            avatarUrl: avatar.url,
-            avatarPath: avatar.path,
-          });
-          const identity = await computeIdentity(s?.id ?? null, s?.app_metadata, userMeta);
-          setRole(identity.role);
-          setSubscriptionTier(identity.tier ?? defaultTier);
-          if (!s) setStreak(0);
-        } catch (err) {
-          console.error('Auth state change error:', err);
-        }
-      }
-    );
+    void syncFromAuthState();
 
     return () => {
       cancelled = true;
-      sub?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [authLoading, authUser]);
 
   useEffect(() => {
     const onAvatarChanged = (e: Event) => {
@@ -218,7 +179,7 @@ export function useHeaderState(initialStreak?: number) {
 
   const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
+      await logout();
       setStreak(0);
       router.push('/login');
     } catch (err) {
