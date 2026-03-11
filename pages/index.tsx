@@ -2,106 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
-import Icon, { type IconName } from '@/components/design-system/Icon';
-import { getMarketingModuleCards } from '@/lib/modules/registry';
+import Icon from '@/components/design-system/Icon';
 import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
-
-const modules = getMarketingModuleCards();
-
-const quickLinks = [
-  {
-    label: 'Go to dashboard',
-    description: 'Continue where you left off.',
-    href: '/dashboard',
-    icon: 'LayoutDashboard' as IconName,
-  },
-  {
-    label: 'Finish onboarding',
-    description: 'Lock in goal band, exam date, and plan.',
-    href: '/profile/setup',
-    icon: 'ClipboardCheck' as IconName,
-  },
-  {
-    label: 'Open AI Coach',
-    description: 'Get targeted help for weak areas.',
-    href: '/ai/coach',
-    icon: 'PenSquare' as IconName,
-  },
-  {
-    label: 'Resume study buddy',
-    description: 'Continue your AI-guided session.',
-    href: '/ai/study-buddy',
-    icon: 'FileText' as IconName,
-  },
-  {
-    label: 'Explore Vocabulary Lab',
-    description: 'Topic-wise vocab packs for IELTS.',
-    href: '/vocabulary',
-    icon: 'BookMarked' as IconName,
-  },
-  {
-    label: 'Check pricing & plans',
-    description: 'Free vs Booster vs higher tiers.',
-    href: '/pricing',
-    icon: 'CreditCard' as IconName,
-  },
-];
-
-const releaseHighlights = [
-  {
-    title: 'AI suite is now a full workspace',
-    description:
-      'AI Coach, Study Buddy session flows, and Mistakes Book now work as a connected loop instead of isolated tools.',
-    href: '/ai',
-    cta: 'Open AI workspace',
-  },
-  {
-    title: 'Mock infrastructure expanded deeply',
-    description:
-      'Reading and listening now include richer review/result flows, challenge modes, and history pages for consistent prep cycles.',
-    href: '/mock/reading',
-    cta: 'Explore mock reading',
-  },
-  {
-    title: 'Institutions and partner paths are live',
-    description:
-      'Dedicated institution and partner surfaces now support scale usage, team-oriented onboarding, and managed growth tracks.',
-    href: '/institutions',
-    cta: 'View institutions',
-  },
-];
-
-const testimonials = [
-  {
-    initials: 'AS',
-    name: 'Ayesha S.',
-    meta: 'From 6.0 to 7.5 in 7 weeks',
-    quote:
-      'The AI writing feedback plus streak system basically forced me to stay consistent. It felt like a serious coach, not a random app.',
-    band: 'Overall 7.5',
-  },
-  {
-    initials: 'HM',
-    name: 'Hassan M.',
-    meta: 'Busy professional, evening prep',
-    quote:
-      'The daily tasks were small enough for my schedule, but the analytics still showed real progress. Speaking AI saved me from booking endless mock interviews.',
-    band: 'Writing 7.0 → 7.5',
-  },
-  {
-    initials: 'LC',
-    name: 'Li C.',
-    meta: 'First attempt, overseas study',
-    quote:
-      'GramorX feels like “mission control” for IELTS. I always knew what to do next instead of scrolling random YouTube videos.',
-    band: 'Overall 7.0',
-  },
-];
+import { getHomeOverviewPayload } from '@/lib/home/overview';
+import type { HomeOverviewPayload } from '@/types/home';
 
 export const LANDING_PLANS = [
   {
@@ -140,8 +50,26 @@ export const LANDING_PLANS = [
   },
 ];
 
-const LandingPage: React.FC = () => {
+type LandingPageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
+
+const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
   const [showStickyCta, setShowStickyCta] = useState(false);
+  const hasPayload = Boolean(homeOverview);
+  const modules = homeOverview?.modules ?? [];
+  const quickLinks = homeOverview?.quickLinks ?? [];
+  const releaseHighlights = homeOverview?.releaseHighlights ?? [];
+  const testimonials = homeOverview?.testimonials ?? [];
+
+  const getBadgeVariant = (tone: 'success' | 'accent' | 'info' | 'neutral' | 'warning') =>
+    tone === 'success'
+      ? 'success'
+      : tone === 'accent'
+      ? 'accent'
+      : tone === 'warning'
+      ? 'warning'
+      : tone === 'info'
+      ? 'info'
+      : 'neutral';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -345,6 +273,11 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible lg:grid-cols-3">
+              {!hasPayload && (
+                <Card className="min-w-[240px] shrink-0 rounded-ds-2xl border border-border/60 bg-card/70 p-4 text-xs text-muted-foreground">
+                  Home overview is temporarily unavailable. Core navigation is still accessible from the main menu.
+                </Card>
+              )}
               {quickLinks.map((item) => (
                 <Card
                   key={item.href}
@@ -362,10 +295,11 @@ const LandingPage: React.FC = () => {
                         <p className="text-[10px] text-muted-foreground md:text-xs">
                           {item.description}
                         </p>
+                        <p className="text-[10px] text-primary/80 md:text-xs">{item.availability.label}</p>
                       </div>
                     </div>
                     <span className="mt-1 inline-flex items-center text-[10px] font-medium text-primary group-hover:underline md:text-xs">
-                      Open
+                      {item.actionLabel}
                       <Icon name="ArrowRight" size={12} className="ml-1" />
                     </span>
                   </Link>
@@ -385,15 +319,23 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
+              {!hasPayload && (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-xs text-muted-foreground md:col-span-3">
+                  Release highlights are loading. Check back shortly for the latest updates.
+                </Card>
+              )}
               {releaseHighlights.map((item) => (
                 <Card
                   key={item.title}
                   className="rounded-ds-2xl border border-border/60 bg-card/70 p-5"
                 >
-                  <h3 className="text-sm font-semibold text-foreground md:text-base">{item.title}</h3>
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-foreground md:text-base">{item.title}</h3>
+                    <Badge size="xs" variant="neutral">{item.statusLabel}</Badge>
+                  </div>
                   <p className="mt-2 text-xs text-muted-foreground md:text-sm">{item.description}</p>
                   <Button asChild size="sm" variant="secondary" className="mt-4 rounded-ds-xl">
-                    <Link href={item.href}>{item.cta}</Link>
+                    <Link href={item.href}>{item.ctaLabel}</Link>
                   </Button>
                 </Card>
               ))}
@@ -419,6 +361,11 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {!hasPayload && (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-5 text-xs text-muted-foreground md:col-span-2 xl:col-span-3">
+                  Module data is unavailable right now. Please refresh to load the latest module statuses.
+                </Card>
+              )}
               {modules.map((mod) => (
                 <Card
                   key={mod.id}
@@ -439,18 +386,15 @@ const LandingPage: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <Badge
-                        size="xs"
-                        variant={
-                          mod.statusTone === 'success'
-                            ? 'success'
-                            : mod.statusTone === 'accent'
-                            ? 'accent'
-                            : 'neutral'
-                        }
-                      >
-                        {mod.status}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge
+                          size="xs"
+                          variant={getBadgeVariant(mod.status.tone)}
+                        >
+                          {mod.status.label}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">{mod.availability.label}</span>
+                      </div>
                     </div>
 
                     <ul className="space-y-2 text-xs text-muted-foreground">
@@ -465,6 +409,10 @@ const LandingPage: React.FC = () => {
                     </ul>
                   </div>
 
+                  {mod.reason ? (
+                    <p className="pt-3 text-xs text-muted-foreground">{mod.reason}</p>
+                  ) : null}
+
                   <div className="pt-4">
                     <Button
                       asChild
@@ -472,7 +420,7 @@ const LandingPage: React.FC = () => {
                       variant="secondary"
                       className="w-full rounded-ds-xl"
                     >
-                      <Link href={mod.href}>Open {mod.title}</Link>
+                      <Link href={mod.ctaHref}>{mod.isEnabled ? `Open ${mod.title}` : `Unlock ${mod.title}`}</Link>
                     </Button>
                   </div>
                 </Card>
@@ -498,6 +446,11 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
+              {!hasPayload && (
+                <Card className="rounded-ds-2xl border border-border/60 bg-card/70 p-4 text-xs text-muted-foreground md:col-span-3">
+                  Testimonials are currently unavailable.
+                </Card>
+              )}
               {testimonials.map((t) => (
                 <Card
                   key={t.name}
@@ -519,7 +472,7 @@ const LandingPage: React.FC = () => {
                   </div>
                   <div className="mt-3 flex items-center gap-1 text-[10px] font-medium text-success md:mt-4 md:gap-2 md:text-xs">
                     <Icon name="Medal" size={12} />
-                    <span>{t.band}</span>
+                    <span>{t.resultLabel}</span>
                   </div>
                 </Card>
               ))}
@@ -690,6 +643,23 @@ const LandingPage: React.FC = () => {
       `}</style>
     </>
   );
+};
+
+export const getServerSideProps: GetServerSideProps<{ homeOverview: HomeOverviewPayload | null }> = async () => {
+  try {
+    return {
+      props: {
+        homeOverview: getHomeOverviewPayload(),
+      },
+    };
+  } catch (error) {
+    console.error('Failed to load home overview payload', error);
+    return {
+      props: {
+        homeOverview: null,
+      },
+    };
+  }
 };
 
 export default LandingPage;
