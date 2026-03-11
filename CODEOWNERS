@@ -1,0 +1,19 @@
+# Default ownership
+* @gramorx/maintainers
+
+# Stricter ownership for done features (see config/feature-status.yml)
+/pages/listening/** @gramorx/listening-core @gramorx/maintainers
+/pages/practice/listening/** @gramorx/listening-core @gramorx/maintainers
+/pages/review/listening/** @gramorx/listening-core @gramorx/maintainers
+/components/listening/** @gramorx/listening-core @gramorx/maintainers
+/pages/api/listening/** @gramorx/listening-core @gramorx/maintainers
+
+/pages/mock/** @gramorx/mock-core @gramorx/maintainers
+/pages/api/mock/** @gramorx/mock-core @gramorx/maintainers
+
+/lib/payments/** @gramorx/payments-core @gramorx/maintainers
+/pages/api/payments/** @gramorx/payments-core @gramorx/maintainers
+/pages/api/checkout/** @gramorx/payments-core @gramorx/maintainers
+/pages/checkout/** @gramorx/payments-core @gramorx/maintainers
+/components/checkout/** @gramorx/payments-core @gramorx/maintainers
+/components/billing/** @gramorx/payments-core @gramorx/maintainers
