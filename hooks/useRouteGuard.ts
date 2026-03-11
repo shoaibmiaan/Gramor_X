@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
 import { useLocale } from '@/lib/locale';
+import { useUserContext } from '@/context/UserContext';
+import { supabase } from '@/lib/supabaseClient';
 import {
   isGuestOnlyRoute,
   isPublicRoute,
@@ -24,6 +25,7 @@ function safeNext(next?: string | string[] | null) {
 export function useRouteGuard() {
   const router = useRouter();
   const { setLocale } = useLocale();
+  const { user, loading } = useUserContext();
   const pathname = router.pathname;
   const path = router.asPath || pathname;
 
@@ -32,6 +34,7 @@ export function useRouteGuard() {
 
   useEffect(() => {
     if (!router.isReady) return;
+    if (loading) return;
 
     // ⭐ SPECIAL CASE: password reset page – allow without session (the token is in the hash)
     if (pathname === '/update-password') {
@@ -43,14 +46,7 @@ export function useRouteGuard() {
 
     (async () => {
       try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-        if (!mounted) return;
-
-        const authed = !!session && !error;
-        const user = session?.user ?? null;
+        const authed = !!user;
         const role: AppRole | null = getUserRole(user);
 
         // Public routes never redirect (but we can still hydrate locale)
@@ -196,7 +192,7 @@ export function useRouteGuard() {
     return () => {
       mounted = false;
     };
-  }, [router.isReady, router.pathname, router.asPath, path, setLocale]);
+  }, [router.isReady, router.pathname, router.asPath, path, setLocale, user, loading]);
 
   return { isChecking };
 }
