@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Card } from '@/components/design-system/Card';
+import { isProviderSelectableInUi } from '@/lib/payments/providerManifest';
 
 export type PaymentMethod = 'jazzcash' | 'easypaisa' | 'safepay' | 'card';
 
@@ -23,12 +24,19 @@ const OPTIONS: Array<{
 ];
 
 export const PaymentOptions: React.FC<Props> = ({ selected, onChange, className }) => {
+  const visibleOptions = React.useMemo(() => {
+    return OPTIONS.filter((option) => {
+      const provider = option.value === 'card' ? 'stripe' : option.value;
+      return isProviderSelectableInUi(provider);
+    });
+  }, []);
+
   return (
     <fieldset className={className}>
       <legend className="sr-only">Choose a payment method</legend>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {OPTIONS.map((opt) => {
+        {visibleOptions.map((opt) => {
           const id = `pay-${opt.value}`;
           const active = selected === opt.value;
           return (
@@ -39,7 +47,11 @@ export const PaymentOptions: React.FC<Props> = ({ selected, onChange, className 
                 name="payment"
                 value={opt.value}
                 checked={active}
-                onChange={() => onChange(opt.value)}
+                onChange={() => {
+                  const provider = opt.value === 'card' ? 'stripe' : opt.value;
+                  if (!isProviderSelectableInUi(provider)) return;
+                  onChange(opt.value);
+                }}
                 className="peer sr-only"
               />
               <Card

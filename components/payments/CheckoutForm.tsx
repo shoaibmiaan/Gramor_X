@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { startCheckout } from '@/lib/payments/index';
+import { isProviderSelectableInUi } from '@/lib/payments/providerManifest';
 import type { PlanKey, Cycle, PaymentMethod } from '@/types/payments';
 
 export type CheckoutFormProps = {
@@ -25,11 +26,20 @@ export default function CheckoutForm({
   const [loading, setLoading] = React.useState<PaymentMethod | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
+  const selectableMethods = React.useMemo<PaymentMethod[]>(() => {
+    const filtered = methods.filter((method) => isProviderSelectableInUi(method));
+    return filtered.length > 0 ? filtered : ['stripe'];
+  }, [methods]);
+
   const start = React.useCallback(async (method: PaymentMethod) => {
     setErr(null);
     setLoading(method);
 
     try {
+      if (!isProviderSelectableInUi(method)) {
+        throw new Error(`${method} is unavailable in production.`);
+      }
+
       const result = await startCheckout(method, { plan, referralCode, billingCycle, promoCode });
       if (!result.ok) {
         const message = result.error || `Failed to start ${method} checkout`;
@@ -64,7 +74,7 @@ export default function CheckoutForm({
 
   return (
     <div className={`grid gap-4 md:grid-cols-3 ${className}`}>
-      {methods.includes('stripe') && (
+      {selectableMethods.includes('stripe') && (
         <div className="rounded-xl border border-border p-4">
           <h3 className="mb-1 text-h4 font-medium">Pay by Card</h3>
           <p className="mb-4 text-small text-muted-foreground">Visa, MasterCard</p>
@@ -79,7 +89,7 @@ export default function CheckoutForm({
         </div>
       )}
 
-      {methods.includes('easypaisa') && (
+      {selectableMethods.includes('easypaisa') && (
         <div className="rounded-xl border border-border p-4">
           <h3 className="mb-1 text-h4 font-medium">Easypaisa</h3>
           <p className="mb-4 text-small text-muted-foreground">Pakistan local payments</p>
@@ -94,7 +104,7 @@ export default function CheckoutForm({
         </div>
       )}
 
-      {methods.includes('jazzcash') && (
+      {selectableMethods.includes('jazzcash') && (
         <div className="rounded-xl border border-border p-4">
           <h3 className="mb-1 text-h4 font-medium">JazzCash</h3>
           <p className="mb-4 text-small text-muted-foreground">Pakistan local payments</p>
@@ -109,7 +119,7 @@ export default function CheckoutForm({
         </div>
       )}
 
-      {methods.includes('safepay') && (
+      {selectableMethods.includes('safepay') && (
         <div className="rounded-xl border border-border p-4">
           <h3 className="mb-1 text-h4 font-medium">Safepay</h3>
           <p className="mb-4 text-small text-muted-foreground">Pakistan local payments</p>
@@ -124,7 +134,7 @@ export default function CheckoutForm({
         </div>
       )}
 
-      {methods.includes('crypto') && (
+      {selectableMethods.includes('crypto') && (
         <div className="rounded-xl border border-border p-4 md:col-span-3 lg:col-span-1">
           <h3 className="mb-1 text-h4 font-medium">Pay with Crypto</h3>
           <p className="mb-4 text-small text-muted-foreground">Bitcoin, Ethereum, USDT (manual confirmation)</p>

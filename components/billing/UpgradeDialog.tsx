@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Button } from '@/components/design-system/Button';
 import { Modal } from '@/components/design-system/Modal';
 import { PLAN_LABEL, startCheckout } from '@/lib/payments/index';
+import { isProviderSelectableInUi } from '@/lib/payments/providerManifest';
 import { track } from '@/lib/analytics/track';
 import { evaluateQuota, nextPlanForQuota, type QuotaKey } from '@/lib/plan/quotas';
 import type { PaymentMethod, PlanKey } from '@/types/payments';
@@ -33,6 +34,10 @@ export function UpgradeDialog({
 }: UpgradeDialogProps) {
   const [loading, setLoading] = React.useState<PaymentMethod | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const selectableMethods = React.useMemo<PaymentMethod[]>(() => {
+    const filtered = methods.filter((method) => isProviderSelectableInUi(method));
+    return filtered.length > 0 ? filtered : ['stripe'];
+  }, [methods]);
 
   const evaluation = React.useMemo(() => evaluateQuota(plan, quota.key, quota.used), [plan, quota.key, quota.used]);
   const suggestedPlanId = React.useMemo(() => nextPlanForQuota(plan, quota.key), [plan, quota.key]);
@@ -119,7 +124,7 @@ export function UpgradeDialog({
 
         {canUpgrade ? (
           <div className="grid gap-3 md:grid-cols-3">
-            {methods.map((method) => (
+            {selectableMethods.map((method) => (
               <Button
                 key={method}
                 variant="solid"

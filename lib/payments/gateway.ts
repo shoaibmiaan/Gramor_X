@@ -5,6 +5,7 @@ import { type Cycle, type PlanKey } from '@/lib/pricing';
 import { initiateEasypaisa } from '@/lib/payments/easypaisa';
 import { initiateJazzCash } from '@/lib/payments/jazzcash';
 import { initiateSafepay } from '@/lib/payments/safepay';
+import { assertProviderCanCreateIntent } from '@/lib/payments/providerManifest';
 
 const CRYPTO_CHECKOUT_PATH = '/checkout/crypto';
 
@@ -135,6 +136,8 @@ function createCryptoCheckout(input: CreateGatewayIntentInput): GatewayIntent {
 }
 
 export async function createGatewayIntent(input: CreateGatewayIntentInput): Promise<GatewayIntent> {
+  assertProviderCanCreateIntent(input.provider);
+
   if (input.provider === 'stripe') {
     return createStripeCheckout(input);
   }
