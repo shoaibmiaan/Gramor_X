@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
-import { supabase } from '@/lib/supabaseClient';
+import { exchangeCodeForSession, getSession, resendOtp, setSession } from '@/lib/auth';
 import { readStoredPkceVerifier } from '@/lib/auth/pkce'; // assumes this now uses storage
 import { LOGIN, ONBOARDING, VERIFY_EMAIL } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
@@ -89,24 +89,24 @@ export default function VerifyPage() {
             throw new Error('Verification payload was missing a session.');
           }
 
-          await supabase.auth.setSession(session);
+          await setSession(session);
         } else {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-          if (error) throw error;
+          const { data, error } = await exchangeCodeForSession(window.location.href);
+          if (error) throw new Error(error);
 
           if (data.session) {
-            await supabase.auth.setSession(data.session);
+            await setSession(data.session);
           }
         }
 
         let bridgeOk = false;
         try {
-          const { data: sessionData } = await supabase.auth.getSession();
+          const { session: sessionData } = await getSession();
           const response = await fetch('/api/auth/set-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
-            body: JSON.stringify({ event: 'SIGNED_IN', session: sessionData?.session ?? null }),
+            body: JSON.stringify({ event: 'SIGNED_IN', session: sessionData ?? null }),
           });
 
           if (!response.ok) {
@@ -181,15 +181,14 @@ export default function VerifyPage() {
         '';
       if (resendCodeVerifier) params.set('code_verifier', resendCodeVerifier);
 
-      // @ts-expect-error supabase-js may not expose resend type yet
-      const { error: resendErr } = await supabase.auth.resend({
+      const resend = await resendOtp({
         type: 'signup',
         email,
         options: {
           emailRedirectTo: `${origin}${VERIFY_EMAIL}?${params.toString()}`,
         },
       });
-      if (resendErr) throw resendErr;
+      if (!resend.ok) throw new Error(resend.error);
       setResent(true);
       setNotice('We’ve sent a new verification link.');
     } catch (err: any) {

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { updatePassword } from '@/lib/auth';
 
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
@@ -30,8 +30,8 @@ export default function ChangePassword() {
 
     setBusy(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: pw });
-      if (error) throw error;
+      const result = await updatePassword(pw);
+      if (!result.ok) throw new Error(result.error);
       setOk(true);
     } catch (e: any) {
       setErr(e?.message || 'Unable to update password.');

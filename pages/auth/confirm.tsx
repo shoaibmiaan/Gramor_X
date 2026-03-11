@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { exchangeCodeForSession, getSession, verifyOtp } from '@/lib/auth';
 import { LOGIN } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
 
@@ -43,7 +44,7 @@ export default function AuthConfirmPage() {
         // Preferred method: token_hash (most common in recent Supabase)
         if (tokenHash) {
           console.log('[confirm] Verifying with token_hash');
-          result = await supabaseBrowser().auth.verifyOtp({
+          result = await verifyOtp({
             token_hash: tokenHash,
             type: otpType as any,
           });
@@ -51,17 +52,15 @@ export default function AuthConfirmPage() {
         // Fallback: code exchange (older / some PKCE flows)
         else if (verificationCode) {
           console.log('[confirm] Verifying with code exchange');
-          result = await supabaseBrowser().auth.exchangeCodeForSession(verificationCode);
+          result = await exchangeCodeForSession(verificationCode);
         }
 
-        if (result?.error) {
-          throw result.error;
+        if (result?.error || result?.ok === false) {
+          throw new Error(result?.error || 'Verification failed');
         }
 
         // Get fresh session
-        const {
-          data: { session },
-        } = await supabaseBrowser().auth.getSession();
+        const { session } = await getSession();
 
         if (!session?.user) {
           throw new Error('No active session after verification');

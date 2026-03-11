@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import { exchangeCodeForSession, setSession, verifyOtp } from '@/lib/auth';
 import { LOGIN, HOME } from '@/lib/constants/routes';
 
 export default function AuthCallback() {
@@ -26,11 +26,11 @@ export default function AuthCallback() {
       try {
         // 1) Handle "code" (OAuth / newer magic link) first
         if (code) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
+          const { data, error } = await exchangeCodeForSession(code);
+          if (error) throw new Error(error);
 
           if (data.session) {
-            await supabase.auth.setSession(data.session);
+            await setSession(data.session);
           }
 
           // Best-effort: notify server cookies
@@ -49,14 +49,14 @@ export default function AuthCallback() {
 
         // 2) Handle "token_hash" (email confirm / recovery / invite / email_change)
         if (token_hash && type) {
-          const { data, error } = await supabase.auth.verifyOtp({
+          const result = await verifyOtp({
             type: type as any,
             token_hash,
           });
-          if (error) throw error;
+          if (!result.ok) throw new Error(result.error);
 
-          if (data.session) {
-            await supabase.auth.setSession(data.session);
+          if (result.data?.session) {
+            await setSession(result.data.session);
           }
 
           try {
@@ -64,7 +64,7 @@ export default function AuthCallback() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'same-origin',
-              body: JSON.stringify({ event: 'SIGNED_IN', session: data.session }),
+              body: JSON.stringify({ event: 'SIGNED_IN', session: result.data?.session ?? null }),
             });
           } catch { /* ignore */ }
 

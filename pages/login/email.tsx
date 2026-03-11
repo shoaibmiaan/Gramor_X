@@ -3,19 +3,18 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import type { Session } from '@supabase/supabase-js';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabase } from '@/lib/supabaseClient';
 import { destinationByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
 import { useUserContext } from '@/context/UserContext';
-import { api, isApiError } from '@/lib/api';
+import { isApiError } from '@/lib/api';
+import { getSession, getUser, loginEmail, recordLoginEvent, resolveAuthRedirect } from '@/lib/auth';
 
 export default function LoginWithEmail() {
   const router = useRouter();
@@ -48,12 +47,12 @@ export default function LoginWithEmail() {
     const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
     const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
     const fallback = currentUser ? destinationByRole(currentUser as any) : '/dashboard';
-    return safeNext ?? fallback;
+    return resolveAuthRedirect(safeNext, fallback);
   }, [router.query.next]);
 
   const navigateAfterAuth = React.useCallback(async (currentUser: { id?: string } | null) => {
     const target = resolveTarget(currentUser);
-    await supabase.auth.getSession();
+    await getSession();
     setTimeout(() => {
       void router.replace(target);
     }, 50);
@@ -61,7 +60,7 @@ export default function LoginWithEmail() {
 
   const handleVerifyOtp = React.useCallback((e: React.FormEvent) =>
     verifyOtp(e, async () => {
-      const { data: { user: sessionUser } } = await supabase.auth.getUser();
+      const { user: sessionUser } = await getUser();
       await navigateAfterAuth(sessionUser);
     }),
   [navigateAfterAuth, verifyOtp]);
@@ -98,35 +97,31 @@ export default function LoginWithEmail() {
     setEmailErr(null);
 
     setLoading(true);
-    async function syncServerSession(session: Session | null) {
+    async function syncServerSession() {
       try {
-        const { data: syncBody } = await api.auth.setSession(session);
-        if (syncBody && typeof syncBody === 'object' && syncBody.ok === false) {
-          console.error('Sync server session failed: response not ok');
-          return false;
-        }
-
-        return true;
+        const { session } = await getSession();
+        return !!session;
       } catch (error) {
         console.error('Sync server session failed:', error);
         return false;
       }
     }
 
-    async function recordLoginEvent(session: Session | null, allowResync = true) {
+    async function triggerLoginEvent(allowResync = true) {
       try {
-        await api.auth.loginEvent();
+        await recordLoginEvent();
       } catch (error) {
         if (isApiError(error) && error.status === 401 && allowResync) {
-          const resynced = await syncServerSession(session);
-          if (resynced) return recordLoginEvent(session, false);
+          const resynced = await syncServerSession();
+          if (resynced) return triggerLoginEvent(false);
         }
         console.error('Error logging login event:', error);
       }
     }
 
     try {
-      const { data: body } = await api.auth.login({ email: trimmedEmail, password: pw });
+      const result = await loginEmail({ email: trimmedEmail, password: pw });
+      const body = { session: result.data?.session, mfaRequired: result.data?.mfaRequired, error: result.error };
       setLoading(false);
 
       if (!body.session) {
@@ -138,36 +133,25 @@ export default function LoginWithEmail() {
         return;
       }
 
-      // If login is successful, set session and proceed
-      await supabase.auth
-        .setSession({
-          access_token: body.session.access_token,
-          refresh_token: body.session.refresh_token,
-        })
-        .catch(err => console.error('Set session failed:', err));
+      const serverSynced = await syncServerSession();
 
-      const serverSynced = await syncServerSession(body.session);
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { user, error: userError } = await getUser();
       if (userError) console.error('Get user failed:', userError);
 
       // Skip OTP if both email and password are provided
       if (!body.mfaRequired) {
         if (!serverSynced) {
-          await syncServerSession(body.session);
+          await syncServerSession();
         }
 
         try {
           await navigateAfterAuth(user);
-          void recordLoginEvent(body.session);
+          void triggerLoginEvent();
         } catch (err) {
           const target = resolveTarget(user);
           console.error('Redirect after login failed:', err);
           if (typeof window !== 'undefined') window.location.assign(target);
-          void recordLoginEvent(body.session);
+          void triggerLoginEvent();
         }
         return;
       }

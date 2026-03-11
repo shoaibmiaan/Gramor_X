@@ -5,11 +5,10 @@ import Link from 'next/link';
 import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { redirectByRole } from '@/lib/routeAccess';
 import { isValidE164Phone } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
-import { api } from '@/lib/api';
+import { loginPhoneOtp, recordLoginEvent, updateUserMetadata } from '@/lib/auth';
 
 export default function LoginWithPhone() {
   const [phone, setPhone] = useState('');
@@ -41,12 +40,9 @@ export default function LoginWithPhone() {
     }
     setPhoneErr(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: trimmedPhone,
-      options: { shouldCreateUser: false },
-    });
+    const result = await loginPhoneOtp({ phone: trimmedPhone, shouldCreateUser: false });
     setLoading(false);
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (!result.ok) return setErr(getAuthErrorMessage(result.error));
     setResendAttempts(0);
     setCooldown(RESEND_COOLDOWN);
     setStage('verify');
@@ -59,19 +55,14 @@ export default function LoginWithPhone() {
 
     const trimmedPhone = phone.trim();
     setLoading(true);
-    // @ts-expect-error token is supported for verification by supabase-js
-    const { data, error } = await supabase.auth.signInWithOtp({ phone: trimmedPhone, token: code });
+    const result = await loginPhoneOtp({ phone: trimmedPhone, token: code, shouldCreateUser: false });
     setLoading(false);
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (!result.ok) return setErr(getAuthErrorMessage(result.error));
 
-    if (data.session) {
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
-      try { await supabase.auth.updateUser({ data: { status: 'active' } }); } catch {}
-      try { await api.auth.loginEvent(); } catch {}
-      redirectByRole(data.session.user);
+    if (result.data?.session) {
+      try { await updateUserMetadata({ status: 'active' }); } catch {}
+      try { await recordLoginEvent(); } catch {}
+      redirectByRole(result.data.session.user);
     }
   }
 
@@ -82,16 +73,10 @@ export default function LoginWithPhone() {
     setLoading(true);
     try {
       const trimmedPhone = phone.trim();
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: trimmedPhone,
-        options: { shouldCreateUser: false },
-      });
-      if (error) return setErr(getAuthErrorMessage(error));
+      const result = await loginPhoneOtp({ phone: trimmedPhone, shouldCreateUser: false });
+      if (!result.ok) return setErr(getAuthErrorMessage(result.error));
       setResendAttempts((a) => a + 1);
       setCooldown(RESEND_COOLDOWN);
-      try {
-        await api.auth.otpLimit({ key: trimmedPhone, action: 'phone_resend' });
-      } catch {}
     } finally {
       setLoading(false);
       setResending(false);

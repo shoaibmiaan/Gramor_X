@@ -9,11 +9,11 @@ import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { buildPkcePair, submitPkceSignup } from '@/lib/auth/pkce';
 import { isValidEmail } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import { ONBOARDING, LOGIN, SIGNUP, TERMS, PRIVACY } from '@/lib/constants/routes';
+import { loginEmailOtp, resendOtp } from '@/lib/auth';
 import { withQuery } from '@/lib/constants/routes';
 
 export default function SignUpWithEmail() {
@@ -77,10 +77,8 @@ export default function SignUpWithEmail() {
       const redirectTarget = `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`;
 
       const sendVerificationCode = async () => {
-        await supabase.auth.signInWithOtp({
-          email: trimmedEmail,
-          options: { shouldCreateUser: false },
-        });
+        const otp = await loginEmailOtp(trimmedEmail);
+        if (!otp.ok) throw new Error(otp.error);
       };
 
       try {
@@ -95,14 +93,12 @@ export default function SignUpWithEmail() {
       } catch (error: any) {
         const message = error?.message?.toLowerCase?.() ?? '';
         if (message.includes('already')) {
-          await supabase.auth.resend({
-            // @ts-expect-error: supabase-js may not expose resend type yet
+          const resend = await resendOtp({
             type: 'signup',
             email: trimmedEmail,
-            options: {
-              emailRedirectTo: redirectTarget,
-            },
+            options: { emailRedirectTo: redirectTarget },
           });
+          if (!resend.ok) throw new Error(resend.error || 'Unable to resend verification email.');
 
           await sendVerificationCode();
 

@@ -7,9 +7,9 @@ import { useRouter } from 'next/router';
 import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { isValidE164Phone } from '@/utils/validation';
 import { getAuthErrorMessage } from '@/lib/authErrors';
+import { loginPhoneOtp, signupPhone, updateUserMetadata } from '@/lib/auth';
 import { ONBOARDING, SIGNUP } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
 
@@ -55,13 +55,10 @@ export default function SignupWithPhone() {
     const data: Record<string, string> = { status: 'pending_verification' };
     if (referral) data.referral_code = referral.trim();
 
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: trimmedPhone,
-      options: { shouldCreateUser: true, data },
-    });
+    const result = await signupPhone({ phone: trimmedPhone, data });
 
     setLoading(false);
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (!result.ok) return setErr(getAuthErrorMessage(result.error));
     setResendAttempts(0);
     setCooldown(RESEND_COOLDOWN);
     setStage('verify');
@@ -74,22 +71,14 @@ export default function SignupWithPhone() {
 
     setLoading(true);
     const trimmedPhone = phone.trim();
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: trimmedPhone,
-      token: code,
-      type: 'sms',
-    });
+    const result = await loginPhoneOtp({ phone: trimmedPhone, token: code, shouldCreateUser: true });
     setLoading(false);
 
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (!result.ok) return setErr(getAuthErrorMessage(result.error));
 
-    if (data.session) {
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
+    if (result.data?.session) {
       try {
-        await supabase.auth.updateUser({ data: { status: 'active' } });
+        await updateUserMetadata({ status: 'active' });
       } catch {}
       if (referral) {
         try {
@@ -97,7 +86,7 @@ export default function SignupWithPhone() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${data.session.access_token}`,
+              Authorization: `Bearer ${result.data.session.access_token}`,
             },
             body: JSON.stringify({ code: referral.trim() }),
           });
@@ -117,11 +106,8 @@ export default function SignupWithPhone() {
       const trimmedPhone = phone.trim();
       const data: Record<string, string> = { status: 'pending_verification' };
       if (referral) data.referral_code = referral.trim();
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: trimmedPhone,
-        options: { shouldCreateUser: true, data },
-      });
-      if (error) return setErr(getAuthErrorMessage(error));
+      const result = await signupPhone({ phone: trimmedPhone, data });
+      if (!result.ok) return setErr(getAuthErrorMessage(result.error));
       setResendAttempts((a) => a + 1);
       setCooldown(RESEND_COOLDOWN);
       try {
