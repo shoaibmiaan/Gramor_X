@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 
+import { IncompleteRoutePlaceholder } from '@/components/routing/IncompleteRoutePlaceholder';
 import { Container } from '@/components/design-system/Container';
 import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
@@ -42,35 +43,20 @@ function CoachComingSoon() {
     <>
       <Head>
         <title>Coaching coming soon</title>
-        {coachCanonical ? <link rel="canonical" href={coachCanonical} /> : null}
-        <meta name="robots" content="noindex, nofollow" />
         <meta
           name="description"
           content="Personalised coaching sessions are rolling out soon. Explore live classes while we finish the experience."
         />
       </Head>
-      <section className="py-24 bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-        <Container>
-          <Card className="max-w-2xl mx-auto space-y-5 p-6 rounded-ds-2xl text-center">
-            <h1 className="font-slab text-h2">Coaching is almost here</h1>
-            <p className="text-body text-mutedText">
-              We&apos;re putting the final polish on 1:1 coaching so that your essays get thoughtful, human feedback.
-              You&apos;ll see it first in your account once it&apos;s ready.
-            </p>
-            <p className="text-body text-mutedText">
-              In the meantime, keep building momentum with structured classes and practice plans.
-            </p>
-            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Button asChild size="lg">
-                <Link href="/classes">Explore live classes</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/study-plan">Open your study plan</Link>
-              </Button>
-            </div>
-          </Card>
-        </Container>
-      </section>
+      <IncompleteRoutePlaceholder
+        title="Coaching is almost here"
+        description="We’re putting the final polish on 1:1 coaching. Join the waitlist to get notified first, or continue with classes while we complete rollout."
+        ctaLabel="Join waitlist"
+        ctaHref="/waitlist"
+        secondaryCtaLabel="Explore live classes"
+        secondaryCtaHref="/classes"
+        canonicalUrl={coachCanonical}
+      />
     </>
   );
 }

@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { routes } from '@/lib/routes';
+import { isPrimaryNavEligible } from '@/lib/routing/governance';
 
 type Item = { label: string; href: string; desc?: string };
 
@@ -76,7 +77,7 @@ export function ModulesMenu() {
             }}
           >
             <div className="w-[320px] max-h-[70vh] overflow-auto rounded-2xl border border-border bg-card p-2 shadow-2xl">
-              {ITEMS.map((it) => (
+              {ITEMS.filter((it) => isPrimaryNavEligible(it.href)).map((it) => (
                 <a
                   key={it.href}
                   href={it.href}

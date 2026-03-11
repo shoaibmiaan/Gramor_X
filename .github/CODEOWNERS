@@ -1,0 +1,7 @@
+# Route governance: done routes are locked and require explicit owner review.
+/pages/leaderboard/index.tsx @gramorx/core-web
+/pages/account/activity.tsx @gramorx/core-web
+/pages/account/billing-history.tsx @gramorx/core-web
+/pages/settings/security.tsx @gramorx/security
+/pages/dashboard/activity/index.tsx @gramorx/core-web
+/lib/routing/routeStatusManifest.ts @gramorx/core-web

@@ -3,6 +3,7 @@ import { isFeatureEnabled } from '@/lib/constants/features';
 import { flags } from '@/lib/flags';
 import type { FeatureGate, NavItemConfig, NavigationContext, NavSectionConfig, SubscriptionTier } from './types';
 import { TIER_ORDER } from './types';
+import { isPrimaryNavEligible } from '@/lib/routing/governance';
 
 const tierRank = (tier: SubscriptionTier) => TIER_ORDER.indexOf(tier);
 
@@ -32,7 +33,11 @@ export const isGateSatisfied = (gate: FeatureGate | undefined, ctx: NavigationCo
 };
 
 export const filterNavItems = <T extends NavItemConfig>(items: readonly T[] | T[], ctx: NavigationContext): T[] => {
-  return items.filter((item) => isGateSatisfied(item.featureGate, ctx));
+  return items.filter((item) => {
+    if (!isGateSatisfied(item.featureGate, ctx)) return false;
+    if (!item.href.startsWith('/')) return true;
+    return isPrimaryNavEligible(item.href);
+  });
 };
 
 export const filterNavSections = (sections: readonly NavSectionConfig[] | NavSectionConfig[], ctx: NavigationContext): NavSectionConfig[] => {
