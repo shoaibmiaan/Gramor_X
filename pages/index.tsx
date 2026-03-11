@@ -8,94 +8,10 @@ import { Card } from '@/components/design-system/Card';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import Icon, { type IconName } from '@/components/design-system/Icon';
+import { getMarketingModuleCards } from '@/lib/modules/registry';
 import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
 
-const modules = [
-  {
-    id: 'learning',
-    icon: 'BookOpenCheck' as IconName,
-    title: 'Learning Hub',
-    status: 'Live',
-    statusTone: 'success' as const,
-    description: 'Concept lessons, strategy guides, and grammar refreshers wired to your target band.',
-    bullets: [
-      'Academic & General Training coverage',
-      'Micro-lessons for all four skills',
-      'AI-personalised paths by band goal',
-    ],
-    href: '/learning',
-  },
-  {
-    id: 'skill-practice',
-    icon: 'Edit3' as IconName,
-    title: 'Skill Practice Arena',
-    status: 'Live',
-    statusTone: 'accent' as const,
-    description: 'Focused listening, reading, writing, and speaking practice mapped to real exam sections.',
-    bullets: [
-      'Dedicated hubs for all four skills',
-      'Drills, reviews, and full-section flows',
-      'Daily practice loops with saved progress',
-    ],
-    href: '/mock',
-  },
-  {
-    id: 'mock',
-    icon: 'Timer' as IconName,
-    title: 'Full Mock Tests',
-    status: 'Expanded',
-    statusTone: 'success' as const,
-    description: 'Complete mock ecosystem with reading, listening, speaking, and writing exam simulations.',
-    bullets: [
-      'Section-based mocks and full exam tracks',
-      'Attempt history, review pages, and results',
-      'Analytics for speed, accuracy, and mastery',
-    ],
-    href: '/mock',
-  },
-  {
-    id: 'ai-lab',
-    icon: 'Sparkles' as IconName,
-    title: 'AI Lab',
-    status: 'Core',
-    statusTone: 'accent' as const,
-    description: 'Where AI Coach, Study Buddy, and Mistakes Book live together.',
-    bullets: [
-      'Task 1 & 2 band feedback',
-      'Speaking insights from audio',
-      'Compare “Before vs After” edits',
-    ],
-    href: '/ai',
-  },
-  {
-    id: 'analytics',
-    icon: 'PieChart' as IconName,
-    title: 'Progress & Analytics',
-    status: 'Live',
-    statusTone: 'info' as const,
-    description: 'Unified tracking across attempts, streaks, and skill-level improvement signals.',
-    bullets: [
-      'Band trajectory and forecast signals',
-      'Question-type and section diagnostics',
-      'Streak + momentum visibility',
-    ],
-    href: '/progress',
-  },
-  {
-    id: 'gamification',
-    icon: 'Trophy' as IconName,
-    title: 'Gamification & Streaks',
-    status: 'Live',
-    statusTone: 'success' as const,
-    description: 'Daily streaks, weekly challenges, and quiet competition.',
-    bullets: [
-      'Daily streak shields',
-      'Weekly IELTS challenges',
-      'Badges for consistency',
-    ],
-    href: '/dashboard',
-  },
-];
+const modules = getMarketingModuleCards();
 
 const quickLinks = [
   {
