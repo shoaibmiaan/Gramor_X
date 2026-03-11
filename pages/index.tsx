@@ -42,11 +42,7 @@ export const LANDING_PLANS = [
     name: 'Institution / Teacher',
     price: 'Talk to us',
     tag: 'For schools',
-    bullets: [
-      'Teacher dashboards',
-      'Cohort analytics',
-      'Co-branded experiences',
-    ],
+    bullets: ['Teacher dashboards', 'Cohort analytics', 'Co-branded experiences'],
   },
 ];
 
@@ -124,21 +120,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                 </div>
 
                 <div className="flex flex-wrap gap-4 pt-2">
-                  <Button
-                    asChild
-                    variant="primary"
-                    size="lg"
-                    className="rounded-ds-2xl px-6"
-                  >
+                  <Button asChild variant="primary" size="lg" className="rounded-ds-2xl px-6">
                     <Link href="/signup">Start free practice</Link>
                   </Button>
-                  <Button
-                    asChild
-                    variant="secondary"
-                    size="lg"
-                    className="rounded-ds-2xl px-6"
-                  >
-                    <Link href="/login?next=/dashboard">View my dashboard</Link>
+                  <Button asChild variant="secondary" size="lg" className="rounded-ds-2xl px-6">
+                    <Link
+                      href={
+                        isAuthed
+                          ? dashboardHref
+                          : `/login?next=${encodeURIComponent(dashboardHref)}`
+                      }
+                    >
+                      View my dashboard
+                    </Link>
                   </Button>
                 </div>
 
@@ -215,8 +209,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                         Next launch window
                       </p>
                       <p className="text-small text-grayish">
-                        We onboard small cohorts so support never feels like a ticketing
-                        system.
+                        We onboard small cohorts so support never feels like a ticketing system.
                       </p>
                     </div>
                     <div className="text-right">
@@ -245,8 +238,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                   </div>
 
                   <p className="mt-3 text-[11px] text-muted-foreground">
-                    Join the waitlist now and we’ll reserve early-bird pricing for you when
-                    the batch opens.
+                    Join the waitlist now and we’ll reserve early-bird pricing for you when the
+                    batch opens.
                   </p>
                 </Card>
               </div>
@@ -261,8 +254,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
               <div>
                 <h2 className="font-slab text-xl md:text-h2">Portal hub</h2>
                 <p className="text-xs text-grayish md:text-small">
-                  From this page, you can jump to any core area — dashboard, modules, AI
-                  Lab, billing, or onboarding.
+                  From this page, you can jump to any core area — dashboard, modules, AI Lab,
+                  billing, or onboarding.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -315,7 +308,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
                 What&apos;s new in GramorX
               </p>
-              <h2 className="mt-2 font-slab text-xl md:text-h2">Recent upgrades across the platform</h2>
+              <h2 className="mt-2 font-slab text-xl md:text-h2">
+                Recent upgrades across the platform
+              </h2>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -354,9 +349,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                 Everything you need to go from “stuck” to exam‑ready.
               </h2>
               <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
-                Not just practice questions. A full stack: onboarding, learning, practice,
-                mocks, AI feedback, analytics, and gamification — all aware of your goal
-                band and exam date.
+                Not just practice questions. A full stack: onboarding, learning, practice, mocks, AI
+                feedback, analytics, and gamification — all aware of your goal band and exam date.
               </p>
             </div>
 
@@ -381,9 +375,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                           <h3 className="text-base font-semibold text-foreground md:text-lg">
                             {mod.title}
                           </h3>
-                          <p className="text-xs text-muted-foreground md:text-small">
-                            {mod.description}
-                          </p>
+                          <Badge size="xs" variant="accent">
+                            {mod.progress}%
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground md:text-small">
+                          Last activity:{' '}
+                          {mod.lastActivityAt
+                            ? new Date(mod.lastActivityAt).toLocaleDateString()
+                            : 'No attempts yet'}
+                        </p>
+                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${Math.max(0, Math.min(100, mod.progress))}%` }}
+                          />
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -440,8 +446,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                 Built for people with limited time.
               </h2>
               <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
-                Evening learners, working professionals, undergrads — we optimize around
-                your bandwidth, not around 6‑hour study fantasies.
+                Evening learners, working professionals, undergrads — we optimize around your
+                bandwidth, not around 6‑hour study fantasies.
               </p>
             </div>
 
@@ -462,9 +468,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                         {t.initials}
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-foreground md:text-sm">
-                          {t.name}
-                        </p>
+                        <p className="text-xs font-medium text-foreground md:text-sm">{t.name}</p>
                         <p className="text-[10px] text-primary/80 md:text-xs">{t.meta}</p>
                       </div>
                     </div>
@@ -492,16 +496,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                   Start free. Upgrade when you’re serious.
                 </h2>
                 <p className="mt-1 text-xs text-grayish md:text-small md:max-w-xl">
-                  Free covers basic practice and a taste of AI. Booster unlocks deeper
-                  feedback and more mocks. Institutional is for teachers and academies.
+                  Free covers basic practice and a taste of AI. Booster unlocks deeper feedback and
+                  more mocks. Institutional is for teachers and academies.
                 </p>
               </div>
-              <Button
-                asChild
-                size="sm"
-                variant="ghost"
-                className="rounded-ds-xl mt-2 md:mt-0"
-              >
+              <Button asChild size="sm" variant="ghost" className="rounded-ds-xl mt-2 md:mt-0">
                 <Link href="/pricing">View full pricing page</Link>
               </Button>
             </div>
@@ -522,10 +521,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                         </h3>
                         <p className="text-xs text-muted-foreground">{plan.price}</p>
                       </div>
-                      <Badge
-                        size="xs"
-                        variant={plan.highlight ? 'accent' : 'neutral'}
-                      >
+                      <Badge size="xs" variant={plan.highlight ? 'accent' : 'neutral'}>
                         {plan.tag}
                       </Badge>
                     </div>
@@ -572,9 +568,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                     Join the early cohort and lock in better pricing.
                   </h2>
                   <p className="text-xs text-grayish md:text-small">
-                    We’re onboarding in waves so we don’t drown support. Add your email and
-                    target band, and we’ll send a proper orientation when your batch opens —
-                    no spam, no fake urgency.
+                    We’re onboarding in waves so we don’t drown support. Add your email and target
+                    band, and we’ll send a proper orientation when your batch opens — no spam, no
+                    fake urgency.
                   </p>
                   <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
                     <li>• First wave gets discounted Booster pricing.</li>
@@ -585,9 +581,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                 <div className="space-y-3">
                   <div className="grid gap-3 md:grid-cols-1">
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Email
-                      </label>
+                      <label className="text-xs font-medium text-muted-foreground">Email</label>
                       <input
                         type="email"
                         className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
@@ -604,11 +598,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                         placeholder="e.g. 7.0, 7.5, 8.0"
                       />
                     </div>
-                    <Button
-                      type="button"
-                      variant="accent"
-                      className="mt-1 w-full rounded-ds-xl"
-                    >
+                    <Button type="button" variant="accent" className="mt-1 w-full rounded-ds-xl">
                       Join waitlist
                     </Button>
                     <p className="text-[11px] text-muted-foreground">
