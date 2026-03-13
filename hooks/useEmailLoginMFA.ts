@@ -1,41 +1,9 @@
 import { useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 
-import { supabase } from '@/lib/supabaseClient';
-import { getAuthErrorMessage } from '@/lib/authErrors';
+import { createMfaChallengeForUser, verifyMfaOtp } from '@/lib/auth';
 
-export async function createMfaChallengeForUser(user: User | null) {
-  const factors = (user as any)?.factors ?? [];
-  if (!factors.length) return { factorId: null, challengeId: null };
-  const f = factors[0];
-  const { data: challenge, error } = await supabase.auth.mfa.challenge({ factorId: f.id });
-  if (error) {
-    return { factorId: null, challengeId: null, error: getAuthErrorMessage(error) };
-  }
-  return { factorId: f.id as string, challengeId: challenge?.id ?? null };
-}
-
-export async function verifyMfaOtp(
-  factorId: string,
-  challengeId: string,
-  code: string,
-  onVerified?: () => void | Promise<void>,
-) {
-  const { error } = await supabase.auth.mfa.verify({ factorId, challengeId, code });
-  if (error) {
-    return { error: getAuthErrorMessage(error) };
-  }
-
-  await supabase.auth.getSession();
-
-  setTimeout(() => {
-    void onVerified?.();
-  }, 50);
-
-  void fetch('/api/auth/login-event', { method: 'POST' }).catch(console.error);
-
-  return { error: null };
-}
+export { createMfaChallengeForUser, verifyMfaOtp };
 
 export default function useEmailLoginMFA() {
   const [otp, setOtp] = useState('');

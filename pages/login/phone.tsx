@@ -5,10 +5,16 @@ import Link from 'next/link';
 import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { redirectByRole } from '@/lib/routeAccess';
+import {
+  markUserActive,
+  notifyOtpResendLimit,
+  recordLoginEvent,
+  requestPhoneOtp,
+  setClientSession,
+  verifyPhoneLoginOtp,
+} from '@/lib/auth';
 import { isValidE164Phone } from '@/utils/validation';
-import { getAuthErrorMessage } from '@/lib/authErrors';
 
 export default function LoginWithPhone() {
   const [phone, setPhone] = useState('');
@@ -40,12 +46,12 @@ export default function LoginWithPhone() {
     }
     setPhoneErr(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await requestPhoneOtp({
       phone: trimmedPhone,
-      options: { shouldCreateUser: false },
+      shouldCreateUser: false,
     });
     setLoading(false);
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (error) return setErr(error.message || 'Unable to send code.');
     setResendAttempts(0);
     setCooldown(RESEND_COOLDOWN);
     setStage('verify');
@@ -58,18 +64,14 @@ export default function LoginWithPhone() {
 
     const trimmedPhone = phone.trim();
     setLoading(true);
-    // @ts-expect-error token is supported for verification by supabase-js
-    const { data, error } = await supabase.auth.signInWithOtp({ phone: trimmedPhone, token: code });
+    const { data, error } = await verifyPhoneLoginOtp(trimmedPhone, code);
     setLoading(false);
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (error) return setErr(error.message || 'Unable to verify code.');
 
     if (data.session) {
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
-      try { await supabase.auth.updateUser({ data: { status: 'active' } }); } catch {}
-      try { await fetch('/api/auth/login-event', { method: 'POST' }); } catch {}
+      await setClientSession(data.session);
+      await markUserActive();
+      await recordLoginEvent(data.session);
       redirectByRole(data.session.user);
     }
   }
@@ -81,19 +83,15 @@ export default function LoginWithPhone() {
     setLoading(true);
     try {
       const trimmedPhone = phone.trim();
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await requestPhoneOtp({
         phone: trimmedPhone,
-        options: { shouldCreateUser: false },
+        shouldCreateUser: false,
       });
-      if (error) return setErr(getAuthErrorMessage(error));
+      if (error) return setErr(error.message || 'Unable to resend code.');
       setResendAttempts((a) => a + 1);
       setCooldown(RESEND_COOLDOWN);
       try {
-        await fetch('/api/auth/otp-limit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: trimmedPhone }),
-        });
+        await notifyOtpResendLimit(trimmedPhone);
       } catch {}
     } finally {
       setLoading(false);

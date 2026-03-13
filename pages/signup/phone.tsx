@@ -7,11 +7,16 @@ import { useRouter } from 'next/router';
 import { Input } from '@/components/design-system/Input';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 import { isValidE164Phone } from '@/utils/validation';
-import { getAuthErrorMessage } from '@/lib/authErrors';
 import { ONBOARDING, SIGNUP } from '@/lib/constants/routes';
-import { withQuery } from '@/lib/constants/routes';
+import {
+  markUserActive,
+  notifyOtpResendLimit,
+  redeemReferral,
+  requestPhoneOtp,
+  setClientSession,
+  verifyPhoneSignupOtp,
+} from '@/lib/auth';
 
 export default function SignupWithPhone() {
   const [phone, setPhone] = useState('');
@@ -55,13 +60,14 @@ export default function SignupWithPhone() {
     const data: Record<string, string> = { status: 'pending_verification' };
     if (referral) data.referral_code = referral.trim();
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await requestPhoneOtp({
       phone: trimmedPhone,
-      options: { shouldCreateUser: true, data },
+      shouldCreateUser: true,
+      data,
     });
 
     setLoading(false);
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (error) return setErr(error.message || 'Unable to send code.');
     setResendAttempts(0);
     setCooldown(RESEND_COOLDOWN);
     setStage('verify');
@@ -74,33 +80,17 @@ export default function SignupWithPhone() {
 
     setLoading(true);
     const trimmedPhone = phone.trim();
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: trimmedPhone,
-      token: code,
-      type: 'sms',
-    });
+    const { data, error } = await verifyPhoneSignupOtp(trimmedPhone, code);
     setLoading(false);
 
-    if (error) return setErr(getAuthErrorMessage(error));
+    if (error) return setErr(error.message || 'Unable to verify code.');
 
     if (data.session) {
-      await supabase.auth.setSession({
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
-      });
-      try {
-        await supabase.auth.updateUser({ data: { status: 'active' } });
-      } catch {}
+      await setClientSession(data.session);
+      await markUserActive();
       if (referral) {
         try {
-          await fetch('/api/referrals/redeem', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${data.session.access_token}`,
-            },
-            body: JSON.stringify({ code: referral.trim() }),
-          });
+          await redeemReferral(referral.trim(), data.session.access_token);
         } catch {}
       }
       // AFTER SMS SIGNUP → ONBOARDING
@@ -117,19 +107,16 @@ export default function SignupWithPhone() {
       const trimmedPhone = phone.trim();
       const data: Record<string, string> = { status: 'pending_verification' };
       if (referral) data.referral_code = referral.trim();
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await requestPhoneOtp({
         phone: trimmedPhone,
-        options: { shouldCreateUser: true, data },
+        shouldCreateUser: true,
+        data,
       });
-      if (error) return setErr(getAuthErrorMessage(error));
+      if (error) return setErr(error.message || 'Unable to resend code.');
       setResendAttempts((a) => a + 1);
       setCooldown(RESEND_COOLDOWN);
       try {
-        await fetch('/api/auth/otp-limit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: trimmedPhone }),
-        });
+        await notifyOtpResendLimit(trimmedPhone);
       } catch {}
     } finally {
       setLoading(false);

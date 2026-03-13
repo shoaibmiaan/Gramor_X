@@ -8,10 +8,15 @@ import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Input } from '@/components/design-system/Input';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { readStoredPkceVerifier } from '@/lib/auth/pkce';
 import { ONBOARDING, SIGNUP } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
+import {
+  getCurrentSession,
+  getStoredPkceVerifier,
+  resendSignupEmail,
+  sendVerificationCode,
+  verifyEmailOtp,
+} from '@/lib/auth';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -22,7 +27,6 @@ export default function VerifyEmailPage() {
   const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
   const nextParam = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
 
-  // Where the user should land after clicking the magic link → ONBOARDING
   const next = useMemo(() => {
     if (nextParam) return nextParam;
     const params = new URLSearchParams();
@@ -38,18 +42,18 @@ export default function VerifyEmailPage() {
   const [codeStatus, setCodeStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
   const hasAutoSentCode = useRef(false);
 
-  // Auto-redirect if already signed in (e.g., they verified in another tab)
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!mounted) return;
-      if (session?.user) router.replace(next);
+      if (session?.user) void router.replace(next);
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [next, router]);
 
-  // Cooldown timer for the resend button
   useEffect(() => {
     if (cooldown <= 0) return;
     const id = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
@@ -59,25 +63,12 @@ export default function VerifyEmailPage() {
   const codeVerifier =
     typeof router.query.code_verifier === 'string' && router.query.code_verifier.length > 0
       ? router.query.code_verifier
-      : readStoredPkceVerifier() || '';
-
-
-  async function sendVerificationCode() {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-      },
-    });
-    if (error) throw error;
-  }
-
-
+      : getStoredPkceVerifier();
 
   useEffect(() => {
     if (!email || hasAutoSentCode.current) return;
     hasAutoSentCode.current = true;
-    void sendVerificationCode().catch(() => {
+    void sendVerificationCode(email).catch(() => {
       // no-op: user can still use resend button
     });
   }, [email]);
@@ -104,14 +95,10 @@ export default function VerifyEmailPage() {
       if (ref) verificationParams.set('ref', ref);
       if (codeVerifier) verificationParams.set('code_verifier', codeVerifier);
 
-      const { error } = await supabase.auth.resend({
-        // @ts-expect-error supabase-js may not expose resend type yet
-        type: 'signup',
+      const { error } = await resendSignupEmail(
         email,
-        options: {
-          emailRedirectTo: `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`,
-        },
-      });
+        `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`,
+      );
 
       if (error) {
         setErr(error.message);
@@ -119,7 +106,7 @@ export default function VerifyEmailPage() {
         return;
       }
 
-      await sendVerificationCode();
+      await sendVerificationCode(email);
       setStatus('sent');
       setCooldown(30);
     } catch {
@@ -143,26 +130,11 @@ export default function VerifyEmailPage() {
     }
 
     setCodeStatus('verifying');
-    let verificationError: Error | null = null;
+    const verifyResult = await verifyEmailOtp({ email, token: trimmedCode });
 
-    const signupAttempt = await supabase.auth.verifyOtp({
-      email,
-      token: trimmedCode,
-      type: 'signup',
-    });
-
-    if (signupAttempt.error) {
-      const emailAttempt = await supabase.auth.verifyOtp({
-        email,
-        token: trimmedCode,
-        type: 'email',
-      });
-      verificationError = emailAttempt.error;
-    }
-
-    if (signupAttempt.error && verificationError) {
+    if (verifyResult.error) {
       setCodeStatus('error');
-      setErr(verificationError.message || signupAttempt.error.message || 'Invalid verification code.');
+      setErr(verifyResult.error.message || 'Invalid verification code.');
       return;
     }
 
@@ -170,7 +142,6 @@ export default function VerifyEmailPage() {
     await router.replace(next);
   }
 
-  // If the page was opened without an email param, nudge them back
   if (!email) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-12">
@@ -227,11 +198,7 @@ export default function VerifyEmailPage() {
           autoComplete="one-time-code"
           required
         />
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={codeStatus === 'verifying'}
-        >
+        <Button type="submit" className="w-full" disabled={codeStatus === 'verifying'}>
           {codeStatus === 'verifying' ? 'Verifying code…' : 'Verify code'}
         </Button>
       </form>

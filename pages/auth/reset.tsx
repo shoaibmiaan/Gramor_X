@@ -8,10 +8,9 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
 import { MailIcon, SmsIcon } from '@/components/design-system/icons';
-import { supabase } from '@/lib/supabaseClient';
-import { destinationByRole } from '@/lib/routeAccess';
+import { getCurrentSession, isPasswordReused, updatePassword, verifyRecoveryOtp } from '@/lib/auth';
 import { Input } from '@/components/design-system/Input';
-import { LOGIN, FORGOT_PASSWORD, ONBOARDING } from '@/lib/constants/routes';
+import { LOGIN, FORGOT_PASSWORD } from '@/lib/constants/routes';
 import { getSelectedRole, setSelectedRole } from '@/lib/storage';
 import { withQuery } from '@/lib/constants/routes';
 
@@ -44,7 +43,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     let mounted = true;
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCurrentSession();
       if (!mounted) return;
       if (session) setStep('update');
       setReady(true);
@@ -83,7 +82,7 @@ export default function ResetPasswordPage() {
 
     setBusy(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
+      const { error } = await verifyRecoveryOtp(email, code);
       if (error) throw error;
       setOk('Email verified. You can now set a new password.');
       setStep('update');
@@ -106,11 +105,11 @@ export default function ResetPasswordPage() {
     setBusy(true);
     try {
       try {
-        const { data: reused } = await supabase.rpc('password_is_reused', { new_password: password });
+        const { data: reused } = await isPasswordReused(password);
         if (reused) return setErr('Please choose a password you have not used before.');
       } catch {}
 
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await updatePassword(password);
       if (error) throw error;
 
       setOk('Password updated. Redirecting to sign in…');
