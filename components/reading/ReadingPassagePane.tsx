@@ -4,6 +4,7 @@ import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { cn } from '@/lib/utils';
 import { usePassageHighlights } from '@/hooks/usePassageHighlights';
+import { sanitizeHtml } from '@/lib/security/sanitizeHtml';
 
 type Props = {
   passage: any;
@@ -35,7 +36,7 @@ export const ReadingPassagePane: React.FC<Props> = ({
       return (
         <div
           className="prose prose-sm dark:prose-invert max-w-none leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: rawContent }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(rawContent) }}
         />
       );
     }

@@ -8,6 +8,7 @@ import { ResultPanel, type Criteria } from '@/premium-ui/results/ResultPanel';
 import { ExamGate } from '@/premium-ui/access/ExamGate';
 import { PinGate } from '@/premium-ui/access/PinGate';
 import { useReadingExamState } from '@/premium-ui/exam/useReadingExamState';
+import { sanitizeHtml } from '@/lib/security/sanitizeHtml';
 
 type Question = {
   id: string;
@@ -420,7 +421,7 @@ export default function ReadingExam() {
                   <div className={clsx('pr-grid pr-gap-4 pr-px-4 pr-pb-6', expanded ? 'pr-block' : 'pr-hidden lg:pr-block')}>
                     <article
                       className="pr-prose pr-prose-invert pr-max-w-none pr-bg-[color-mix(in_srgb,var(--pr-card,#0b162d) 50%,transparent)] pr-rounded-xl pr-border pr-border-[var(--pr-border,#16213b)] pr-px-4 pr-py-4"
-                      dangerouslySetInnerHTML={{ __html: passage.content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(passage.content) }}
                     />
                     <div className="pr-space-y-4">
                       {passage.questions.map((question) => {

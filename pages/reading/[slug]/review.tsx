@@ -11,6 +11,7 @@ import { Button } from '@/components/design-system/Button';
 import { ProgressBar } from '@/components/design-system/ProgressBar';
 import type { ProgressTone } from '@/components/design-system/ProgressBar';
 import { getAttempt } from '@/pages/api/reading/submit';
+import { sanitizeHtml } from '@/lib/security/sanitizeHtml';
 
 type BreakdownEntry = { correct: number; total: number; pct: number };
 type DifficultyBreakdown = Record<'easy' | 'med' | 'hard', BreakdownEntry>;
@@ -879,7 +880,7 @@ function renderPassage(passage?: string) {
     return (
       <div
         className="prose dark:prose-invert max-w-none"
-        dangerouslySetInnerHTML={{ __html: passage }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(passage) }}
       />
     );
   }

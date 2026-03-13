@@ -4,6 +4,7 @@ import { FlatCompat } from '@eslint/eslintrc';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import noInlineStylePlugin from './tools/eslint-rules/no-inline-style.js';
 import noChromeOnAttempts from './tools/eslint-rules/no-chrome-on-attempts.js';
+import requireSanitizedDangerousHtml from './tools/eslint-rules/require-sanitized-dangerous-html.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,7 @@ export default [
     plugins: {
       '@typescript-eslint': tseslint,
       'ds-guard': noInlineStylePlugin,
+      security: requireSanitizedDangerousHtml,
     },
     rules: {
       'ds-guard/no-inline-style': [
@@ -23,6 +25,7 @@ export default [
           allowElements: ['svg', 'path'],
         },
       ],
+      'security/require-sanitized-dangerous-html': 'error',
     },
   },
   {
@@ -58,6 +61,7 @@ export default [
           patterns: ['@/components/layouts/*'],
         },
       ],
+      'security/require-sanitized-dangerous-html': 'error',
     },
   },
 ];
