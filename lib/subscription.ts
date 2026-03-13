@@ -1,6 +1,5 @@
 import { FEATURE_PLAN } from '@/lib/plan/featureMap';
 import { PLAN_LABEL, USD_PLAN_PRICES, type Cycle, type PlanKey } from '@/lib/pricing';
-import { supabaseService } from '@/lib/supabaseServer';
 import { coercePlanId, PLAN_RANK, type PlanId } from '@/types/pricing';
 
 export type SubscriptionStatus = 'active' | 'trialing' | 'canceled' | 'incomplete' | 'past_due';
@@ -75,6 +74,11 @@ type TransitionStatusInput = SubscriptionStatus | 'unpaid';
 
 const ACTIVE_STATUSES = new Set<SubscriptionStatus>(['active', 'trialing']);
 const STATUS_VALUES = new Set<SubscriptionStatus>(['active', 'trialing', 'canceled', 'incomplete', 'past_due']);
+
+async function getSupabaseServiceClient() {
+  const { supabaseService } = await import('@/lib/supabaseServer');
+  return supabaseService();
+}
 const STANDARD_PLAN_NAMES: Record<CanonicalPlanId, string> = {
   free: 'Free',
   starter: 'Starter',
@@ -183,7 +187,7 @@ function mapSubscriptionRowToCanonical(
 }
 
 async function wasTransitionApplied(provider: string, eventId: string, action: string): Promise<boolean> {
-  const supabase = supabaseService();
+  const supabase = await getSupabaseServiceClient();
   const { data } = await supabase
     .from('payment_events')
     .select('id')
@@ -196,7 +200,7 @@ async function wasTransitionApplied(provider: string, eventId: string, action: s
 }
 
 async function markTransitionApplied(provider: string, eventId: string, action: string, userId?: string | null, metadata: Record<string, unknown> = {}) {
-  const supabase = supabaseService();
+  const supabase = await getSupabaseServiceClient();
   await supabase.from('payment_events').insert([
     {
       provider,
@@ -217,7 +221,7 @@ async function mirrorProfileSubscriptionState(input: {
   premiumUntil?: string | null;
   customerId?: string | null;
 }) {
-  const supabase = supabaseService();
+  const supabase = await getSupabaseServiceClient();
   await supabase
     .from('profiles')
     .update({
@@ -241,7 +245,7 @@ async function upsertCanonicalSubscriptionRow(input: {
   renewsAt?: string | null;
   trialEndsAt?: string | null;
 }) {
-  const supabase = supabaseService();
+  const supabase = await getSupabaseServiceClient();
   const row = {
     id: input.subscriptionId ?? undefined,
     user_id: input.userId,
@@ -258,7 +262,7 @@ async function upsertCanonicalSubscriptionRow(input: {
 }
 
 export async function getLatestSubscriptionRow(userId: string): Promise<RawSubscriptionRow | null> {
-  const supabase = supabaseService();
+  const supabase = await getSupabaseServiceClient();
   const { data } = await supabase
     .from('subscriptions')
     .select('id, user_id, plan_id, status, current_period_end, trial_end')
@@ -273,7 +277,7 @@ export async function getLatestSubscriptionRow(userId: string): Promise<RawSubsc
 export async function getLatestSubscriptionSnapshotsForUsers(userIds: string[]): Promise<Record<string, SubscriptionSnapshot>> {
   if (userIds.length === 0) return {};
 
-  const supabase = supabaseService();
+  const supabase = await getSupabaseServiceClient();
   const { data } = await supabase
     .from('subscriptions')
     .select('id, user_id, plan_id, status, current_period_end')
@@ -298,7 +302,7 @@ export async function getLatestSubscriptionSnapshotsForUsers(userIds: string[]):
 }
 
 export async function getCanonicalSubscription(userId: string): Promise<CanonicalSubscription> {
-  const supabase = supabaseService();
+  const supabase = await getSupabaseServiceClient();
 
   const [latestRow, profileRes] = await Promise.all([
     getLatestSubscriptionRow(userId),
@@ -532,7 +536,7 @@ export async function applyPinOrManualProvisioning(input: {
   });
 
   if (typeof input.amountCents === 'number' && input.cycle) {
-    const supabase = supabaseService();
+    const supabase = await getSupabaseServiceClient();
     await supabase.from('pending_payments').insert({
       user_id: input.userId,
       plan_key: input.plan,
@@ -575,7 +579,7 @@ export async function upsertSubscriptionStateFromWebhook(input: {
   });
 
   if (input.paymentId) {
-    const supabase = supabaseService();
+    const supabase = await getSupabaseServiceClient();
     await supabase
       .from('payments')
       .update({ status: 'paid', provider: input.provider, provider_payment_id: input.paymentId, updated_at: new Date().toISOString() })
