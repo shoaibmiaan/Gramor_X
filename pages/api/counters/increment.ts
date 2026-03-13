@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { getServerSupabaseServiceRoleKey, getServerSupabaseUrl } from '@/lib/env';
 
 const BodySchema = z.object({
   counter: z.enum([
@@ -46,9 +47,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const parse = BodySchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ ok: false, error: parse.error.issues.map(i => i.message).join(', ') });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) return res.status(503).json({ ok: false, error: 'Supabase env missing' });
+  let supabaseUrl: string;
+  let supabaseKey: string;
+  try {
+    supabaseUrl = getServerSupabaseUrl();
+    supabaseKey = getServerSupabaseServiceRoleKey();
+  } catch (err: any) {
+    return res.status(503).json({ ok: false, error: err?.message || 'Supabase env missing' });
+  }
 
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token) return res.status(401).json({ ok: false, error: 'Missing Authorization bearer token' });

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 // Optional: service-side Supabase (used only if you pass attemptId to persist)
 import { createClient } from '@supabase/supabase-js';
+import { getServerSupabaseServiceRoleKey, getServerSupabaseUrl } from '@/lib/env';
 
 const BodySchema = z.object({
   task1: z.string().min(1, 'task1 required'),
@@ -49,12 +50,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   // Optional: persist to attempts_writing.ai_feedback if attemptId provided
-  if (attemptId && process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
+  if (attemptId) {
     try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
-      );
+      const supabase = createClient(getServerSupabaseUrl(), getServerSupabaseServiceRoleKey());
       await supabase.from('attempts_writing').update({ ai_feedback: feedback }).eq('id', attemptId);
     } catch {
       // ignore persistence errors

@@ -36,9 +36,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const userId: string | null = (userRes?.user?.id as string) ?? null;
 
     const isTestBypass =
-      process.env.NODE_ENV === 'test' ||
-      process.env.TWILIO_BYPASS === '1' ||
-      req.headers['x-test-bypass'] === '1';
+      process.env.NODE_ENV !== 'production' &&
+      (process.env.NODE_ENV === 'test' ||
+        process.env.TWILIO_BYPASS === '1' ||
+        req.headers['x-test-bypass'] === '1');
 
     if (!userId && !isTestBypass) {
       return res.status(401).json({ error: 'Unauthorized' });

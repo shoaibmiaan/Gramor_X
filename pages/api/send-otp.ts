@@ -2,18 +2,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import Twilio from 'twilio';
-import { env } from '@/lib/env';
+import { assertNoBypassInProduction, env, isBypassAllowed } from '@/lib/env';
 import { rateLimit } from '@/lib/rateLimit';
 
 /** ---- Helpers ---- */
 const isDummy = (v?: string) => !v || /dummy|placeholder/i.test(v);
 const bool = (v?: string) => v === '1' || v?.toLowerCase() === 'true';
 
+const configuredBypass = bool(env.TWILIO_BYPASS);
 const BYPASS_TWILIO =
-  bool(env.TWILIO_BYPASS) ||
-  isDummy(env.TWILIO_ACCOUNT_SID) ||
-  isDummy(env.TWILIO_AUTH_TOKEN) ||
-  isDummy(env.TWILIO_VERIFY_SERVICE_SID);
+  isBypassAllowed(env.TWILIO_BYPASS) ||
+  (process.env.NODE_ENV !== 'production' &&
+    (isDummy(env.TWILIO_ACCOUNT_SID) || isDummy(env.TWILIO_AUTH_TOKEN) || isDummy(env.TWILIO_VERIFY_SERVICE_SID)));
 
 const SERVICE_SID = env.TWILIO_VERIFY_SERVICE_SID; // VAxxxxxxxx
 const client = BYPASS_TWILIO ? null : Twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
@@ -34,6 +34,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<SendOtpResponse>
 ) {
+  assertNoBypassInProduction('TWILIO_BYPASS', configuredBypass);
   // Allow CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Allow', 'POST, OPTIONS');

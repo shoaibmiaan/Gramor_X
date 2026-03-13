@@ -16,7 +16,9 @@ export interface WhatsAppResult {
 }
 
 function resolveCredentials() {
-  const bypass = process.env.TWILIO_BYPASS === '1' || process.env.TWILIO_BYPASS === 'true';
+  const bypass =
+    process.env.NODE_ENV !== 'production' &&
+    (process.env.TWILIO_BYPASS === '1' || process.env.TWILIO_BYPASS === 'true');
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_WHATSAPP_FROM;
