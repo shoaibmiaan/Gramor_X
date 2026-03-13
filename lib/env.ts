@@ -292,3 +292,44 @@ export function bool(val?: string, fallback = false) {
   if (val == null) return fallback;
   return ['1', 'true', 'yes', 'on'].includes(String(val).toLowerCase());
 }
+
+export const isProduction = env.NODE_ENV === 'production';
+export const isNonProduction = !isProduction;
+
+export function requireServerSecret(name: string, value: string | undefined | null): string {
+  if (typeof window !== 'undefined') {
+    throw new Error(`Server secret ${name} cannot be accessed in the browser`);
+  }
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) {
+    throw new Error(`Missing required server secret: ${name}`);
+  }
+  return trimmed;
+}
+
+export function getServerSupabaseUrl(): string {
+  return requireServerSecret('SUPABASE_URL', env.SUPABASE_URL);
+}
+
+export function getServerSupabaseServiceRoleKey(): string {
+  return requireServerSecret('SUPABASE_SERVICE_ROLE_KEY', env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+export function isBypassAllowed(flag: string | undefined): boolean {
+  return isNonProduction && bool(flag);
+}
+
+export function assertNoBypassInProduction(flagName: string, enabled: boolean): void {
+  if (isProduction && enabled) {
+    throw new Error(`${flagName} is not allowed in production`);
+  }
+}
+
+if (typeof window === 'undefined' && isProduction) {
+  // Fail fast for critical production secrets.
+  requireServerSecret('SUPABASE_URL', process.env.SUPABASE_URL ?? env.SUPABASE_URL);
+  requireServerSecret(
+    'SUPABASE_SERVICE_ROLE_KEY',
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SERVICE_ROLE_KEY,
+  );
+}

@@ -7,6 +7,7 @@ import { getUserPlan } from '@/lib/subscription';
 export type QuotaResult = { ok: true } | { ok: false; reason: string };
 
 const TEACHER_BYPASS =
+  process.env.NODE_ENV !== 'production' &&
   (process.env.GX_TEACHER_QUOTA_BYPASS ?? process.env.NEXT_PUBLIC_TEACHER_QUOTA_BYPASS) === 'true';
 
 /**

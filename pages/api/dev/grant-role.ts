@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).end();
 
   const authz = req.headers.authorization?.replace('Bearer ', '');
-  if (!authz || authz !== env.LOCAL_ADMIN_TOKEN) {
+  if (!env.LOCAL_ADMIN_TOKEN || !authz || authz !== env.LOCAL_ADMIN_TOKEN) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

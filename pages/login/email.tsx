@@ -3,18 +3,23 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import type { Session } from '@supabase/supabase-js';
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabase } from '@/lib/supabaseClient';
 import { destinationByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
-import { getAuthErrorMessage } from '@/lib/authErrors';
 import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
 import { useUserContext } from '@/context/UserContext';
+import {
+  getCurrentUser,
+  getCurrentSession,
+  loginWithPassword,
+  recordLoginEvent,
+  setClientSession,
+  syncServerSession,
+} from '@/lib/auth';
 
 export default function LoginWithEmail() {
   const router = useRouter();
@@ -52,7 +57,7 @@ export default function LoginWithEmail() {
 
   const navigateAfterAuth = React.useCallback(async (currentUser: { id?: string } | null) => {
     const target = resolveTarget(currentUser);
-    await supabase.auth.getSession();
+    await getCurrentSession();
     setTimeout(() => {
       void router.replace(target);
     }, 50);
@@ -60,7 +65,7 @@ export default function LoginWithEmail() {
 
   const handleVerifyOtp = React.useCallback((e: React.FormEvent) =>
     verifyOtp(e, async () => {
-      const { data: { user: sessionUser } } = await supabase.auth.getUser();
+      const sessionUser = await getCurrentUser();
       await navigateAfterAuth(sessionUser);
     }),
   [navigateAfterAuth, verifyOtp]);
@@ -97,86 +102,22 @@ export default function LoginWithEmail() {
     setEmailErr(null);
 
     setLoading(true);
-    async function syncServerSession(session: Session | null) {
-      try {
-        const syncRes = await fetch('/api/auth/set-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ event: 'SIGNED_IN', session }),
-        });
-
-        if (!syncRes.ok) {
-          console.error('Sync server session failed:', syncRes.status);
-          return false;
-        }
-
-        const syncBody = await syncRes.json().catch(() => ({}));
-        if (syncBody && typeof syncBody === 'object' && syncBody.ok === false) {
-          console.error('Sync server session failed: response not ok');
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        console.error('Sync server session failed:', error);
-        return false;
-      }
-    }
-
-    async function recordLoginEvent(session: Session | null, allowResync = true) {
-      try {
-        const loginEventRes = await fetch('/api/auth/login-event', {
-          method: 'POST',
-          credentials: 'same-origin',
-        });
-
-        if (loginEventRes.status === 401 && allowResync) {
-          const resynced = await syncServerSession(session);
-          if (resynced) return recordLoginEvent(session, false);
-        }
-
-        if (!loginEventRes.ok) {
-          console.error('Login event failed:', loginEventRes.status);
-        }
-      } catch (error) {
-        console.error('Error logging login event:', error);
-      }
-    }
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail, password: pw }),
-      });
-      const body = await res.json().catch(() => ({}));
+      const body = await loginWithPassword(trimmedEmail, pw);
       setLoading(false);
 
-      if (!res.ok || !body.session) {
-        const msg =
-          typeof body.error === 'string'
-            ? body.error
-            : getAuthErrorMessage(body.error) ?? 'Unable to sign in. Please try again.';
-        setErr(msg);
+      if (!body.session) {
+        setErr('Unable to sign in. Please try again.');
         return;
       }
 
-      // If login is successful, set session and proceed
-      await supabase.auth
-        .setSession({
-          access_token: body.session.access_token,
-          refresh_token: body.session.refresh_token,
-        })
-        .catch(err => console.error('Set session failed:', err));
+      await setClientSession(body.session).catch((authErr) =>
+        console.error('Set session failed:', authErr),
+      );
 
       const serverSynced = await syncServerSession(body.session);
-
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError) console.error('Get user failed:', userError);
+      const user = await getCurrentUser();
 
       // Skip OTP if both email and password are provided
       if (!body.mfaRequired) {

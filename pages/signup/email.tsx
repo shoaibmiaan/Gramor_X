@@ -9,12 +9,10 @@ import { Input } from '@/components/design-system/Input';
 import { PasswordInput } from '@/components/design-system/PasswordInput';
 import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { buildPkcePair, submitPkceSignup } from '@/lib/auth/pkce';
 import { isValidEmail } from '@/utils/validation';
-import { getAuthErrorMessage } from '@/lib/authErrors';
 import { ONBOARDING, LOGIN, SIGNUP, TERMS, PRIVACY } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
+import { buildPkcePair, resendSignupEmail, sendVerificationCode, submitPkceSignup } from '@/lib/auth';
 
 export default function SignUpWithEmail() {
   const router = useRouter();
@@ -76,11 +74,8 @@ export default function SignUpWithEmail() {
 
       const redirectTarget = `${origin}/api/auth/pkce-redirect?${verificationParams.toString()}`;
 
-      const sendVerificationCode = async () => {
-        await supabase.auth.signInWithOtp({
-          email: trimmedEmail,
-          options: { shouldCreateUser: false },
-        });
+      const triggerVerificationCode = async () => {
+        await sendVerificationCode(trimmedEmail);
       };
 
       try {
@@ -95,16 +90,9 @@ export default function SignUpWithEmail() {
       } catch (error: any) {
         const message = error?.message?.toLowerCase?.() ?? '';
         if (message.includes('already')) {
-          await supabase.auth.resend({
-            // @ts-expect-error: supabase-js may not expose resend type yet
-            type: 'signup',
-            email: trimmedEmail,
-            options: {
-              emailRedirectTo: redirectTarget,
-            },
-          });
+          await resendSignupEmail(trimmedEmail, redirectTarget);
 
-          await sendVerificationCode();
+          await triggerVerificationCode();
 
           const verifyParams = new URLSearchParams({ email: trimmedEmail });
           if (role) verifyParams.set('role', role);
@@ -115,13 +103,13 @@ export default function SignUpWithEmail() {
           return;
         }
 
-        setErr(getAuthErrorMessage(error) || error?.message || 'Unable to sign up.');
+        setErr(error?.message || 'Unable to sign up.');
         setLoading(false);
         return;
       }
 
       // Success: move user away from the form
-      await sendVerificationCode();
+      await triggerVerificationCode();
 
       const verifyParams = new URLSearchParams({ email: trimmedEmail });
       if (role) verifyParams.set('role', role);

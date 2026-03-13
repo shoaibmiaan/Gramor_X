@@ -28,7 +28,7 @@ function isEmailConfigured(): boolean {
 
 function isWhatsAppConfigured(): boolean {
   const bypass = process.env.TWILIO_BYPASS;
-  if (bypass === '1' || bypass === 'true') {
+  if (process.env.NODE_ENV !== 'production' && (bypass === '1' || bypass === 'true')) {
     return false;
   }
   return Boolean(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_WHATSAPP_FROM);

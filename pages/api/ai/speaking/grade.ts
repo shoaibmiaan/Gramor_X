@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { getServerSupabaseServiceRoleKey, getServerSupabaseUrl } from '@/lib/env';
 
 const BodySchema = z.object({
   attemptId: z.string().optional(),   // if provided, we’ll look for a transcript or audio (future)
@@ -33,12 +34,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   let text = (transcript || '').trim();
 
   // 2) Fallback: if attemptId provided and `attempts_speaking.transcript` exists, use that
-  if (!text && attemptId && process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
+  if (!text && attemptId) {
     try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)!,
-      );
+      const supabase = createClient(getServerSupabaseUrl(), getServerSupabaseServiceRoleKey());
       const { data } = await supabase.from('attempts_speaking').select('transcript').eq('id', attemptId).single();
       if (data?.transcript) text = String(data.transcript);
     } catch {

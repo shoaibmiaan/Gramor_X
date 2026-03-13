@@ -15,6 +15,7 @@ const ReactStub = {
   useState(initial: any) {
     return [stateValues[stateIdx++], () => {}];
   },
+  useEffect() {},
 };
 require.cache[require.resolve('react')] = { exports: ReactStub };
 

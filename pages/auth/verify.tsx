@@ -7,8 +7,14 @@ import { useRouter } from 'next/router';
 import { Card } from '@/components/design-system/Card';
 import { Alert } from '@/components/design-system/Alert';
 import { Button } from '@/components/design-system/Button';
-import { supabase } from '@/lib/supabaseClient';
-import { readStoredPkceVerifier } from '@/lib/auth/pkce'; // assumes this now uses storage
+import {
+  bridgeCurrentSession,
+  exchangeCodeForSession,
+  exchangeCodeWithVerifier,
+  getStoredPkceVerifier,
+  resendSignupEmail,
+  setClientSession,
+} from '@/lib/auth';
 import { LOGIN, ONBOARDING, VERIFY_EMAIL } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
 
@@ -19,7 +25,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function VerifyPage() {
-  const { query, replace, isReady, asPath } = useRouter();
+  const { query, replace, isReady } = useRouter();
   const email = typeof query.email === 'string' ? query.email : null;
   const ref = typeof query.ref === 'string' ? query.ref : '';
   const role = typeof query.role === 'string' ? query.role : '';
@@ -49,7 +55,7 @@ export default function VerifyPage() {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
     return params.has('auth_code') || params.has('code') || params.has('access_token');
-  }, [asPath]);
+  }, []);
 
   React.useEffect(() => {
     if (!isReady || !hasCode) return;
@@ -63,7 +69,7 @@ export default function VerifyPage() {
         const currentUrl = new URL(window.location.href);
         const authCode = currentUrl.searchParams.get('auth_code') || currentUrl.searchParams.get('code');
         const codeVerifier =
-          currentUrl.searchParams.get('code_verifier') || readStoredPkceVerifier() || '';
+          currentUrl.searchParams.get('code_verifier') || getStoredPkceVerifier();
 
         if (authCode) {
           if (!codeVerifier) {
@@ -72,55 +78,21 @@ export default function VerifyPage() {
             );
           }
 
-          const response = await fetch('/api/auth/exchange-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ auth_code: authCode, code_verifier: codeVerifier }),
-          });
-
-          const payload: { data?: any; error?: string } | null = await response.json().catch(() => null);
-          if (!response.ok || !payload || payload.error) {
-            throw new Error(payload?.error || 'Unable to verify your email.');
-          }
-
+          const payload = await exchangeCodeWithVerifier(authCode, codeVerifier);
           const session = payload.data?.session ?? payload.data;
-
-          if (!session?.access_token) {
+          if (!session || !('access_token' in session)) {
             throw new Error('Verification payload was missing a session.');
           }
-
-          await supabase.auth.setSession(session);
+          await setClientSession(session as any);
         } else {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+          const { data, error } = await exchangeCodeForSession(window.location.href);
           if (error) throw error;
-
-          if (data.session) {
-            await supabase.auth.setSession(data.session);
-          }
+          if (data.session) await setClientSession(data.session);
         }
 
         let bridgeOk = false;
         try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const response = await fetch('/api/auth/set-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify({ event: 'SIGNED_IN', session: sessionData?.session ?? null }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Unable to finalize sign-in on the server.');
-          }
-
-          const payload: { ok?: boolean; error?: string } | null = await response
-            .json()
-            .catch(() => null);
-
-          bridgeOk = payload?.ok !== false;
-          if (!bridgeOk && payload?.error) {
-            throw new Error('Unable to finalize sign-in. Please try again.');
-          }
+          bridgeOk = await bridgeCurrentSession();
         } catch (postErr) {
           console.error('Failed to bridge session after verification:', postErr);
           if (!cancelled) {
@@ -177,18 +149,13 @@ export default function VerifyPage() {
       if (ref) params.set('ref', ref);
       const resendCodeVerifier =
         (typeof query.code_verifier === 'string' && query.code_verifier) ||
-        readStoredPkceVerifier() ||
-        '';
+        getStoredPkceVerifier();
       if (resendCodeVerifier) params.set('code_verifier', resendCodeVerifier);
 
-      // @ts-expect-error supabase-js may not expose resend type yet
-      const { error: resendErr } = await supabase.auth.resend({
-        type: 'signup',
+      const { error: resendErr } = await resendSignupEmail(
         email,
-        options: {
-          emailRedirectTo: `${origin}${VERIFY_EMAIL}?${params.toString()}`,
-        },
-      });
+        `${origin}${VERIFY_EMAIL}?${params.toString()}`
+      );
       if (resendErr) throw resendErr;
       setResent(true);
       setNotice('We’ve sent a new verification link.');
