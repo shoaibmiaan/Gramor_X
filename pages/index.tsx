@@ -1,17 +1,18 @@
 // pages/index.tsx – Mobile‑optimised home page
-import React, { useEffect, useState } from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import React, { useEffect, useState } from 'react'
+import Head from 'next/head'
+import Link from 'next/link'
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 
-import { Container } from '@/components/design-system/Container';
-import { Card } from '@/components/design-system/Card';
-import { Button } from '@/components/design-system/Button';
-import { Badge } from '@/components/design-system/Badge';
-import Icon from '@/components/design-system/Icon';
-import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
-import { getHomeOverviewPayload } from '@/lib/home/overview';
-import type { HomeOverviewPayload } from '@/types/home';
+import { Container } from '@/components/design-system/Container'
+import { Card } from '@/components/design-system/Card'
+import { Button } from '@/components/design-system/Button'
+import { Badge } from '@/components/design-system/Badge'
+import Icon from '@/components/design-system/Icon'
+
+import { getPlanPricing, getStandardPlanName } from '@/lib/subscription'
+import { getHomeOverviewPayload } from '@/lib/home/overview'
+import type { HomeOverviewPayload } from '@/types/home'
 
 export const LANDING_PLANS = [
   {
@@ -42,22 +43,29 @@ export const LANDING_PLANS = [
     name: 'Institution / Teacher',
     price: 'Talk to us',
     tag: 'For schools',
-    bullets: ['Teacher dashboards', 'Cohort analytics', 'Co-branded experiences'],
+    bullets: [
+      'Teacher dashboards',
+      'Cohort analytics',
+      'Co-branded experiences',
+    ],
   },
-];
+]
 
-type LandingPageProps = InferGetServerSidePropsType<typeof getServerSideProps>;
+type LandingPageProps = InferGetServerSidePropsType<typeof getServerSideProps>
 
 const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
-  const [showStickyCta, setShowStickyCta] = useState(false);
-  const hasPayload = Boolean(homeOverview);
-  const dashboardHref = '/dashboard';
-  const modules = homeOverview?.modules ?? [];
-  const quickLinks = homeOverview?.quickLinks ?? [];
-  const releaseHighlights = homeOverview?.releaseHighlights ?? [];
-  const testimonials = homeOverview?.testimonials ?? [];
+  const [showStickyCta, setShowStickyCta] = useState(false)
 
-  const getBadgeVariant = (tone: 'success' | 'accent' | 'info' | 'neutral' | 'warning') =>
+  const hasPayload = Boolean(homeOverview)
+
+  const modules = homeOverview?.modules ?? []
+  const quickLinks = homeOverview?.quickLinks ?? []
+  const releaseHighlights = homeOverview?.releaseHighlights ?? []
+  const testimonials = homeOverview?.testimonials ?? []
+
+  const getBadgeVariant = (
+    tone: 'success' | 'accent' | 'info' | 'neutral' | 'warning'
+  ) =>
     tone === 'success'
       ? 'success'
       : tone === 'accent'
@@ -66,15 +74,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
       ? 'warning'
       : tone === 'info'
       ? 'info'
-      : 'neutral';
+      : 'neutral'
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowStickyCta(window.scrollY > 600);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+      setShowStickyCta(window.scrollY > 600)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
     <>
@@ -87,11 +97,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
       </Head>
 
       <main className="bg-lightBg dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-        {/* HERO – more compact on mobile */}
+        {/* HERO */}
         <section className="pb-10 pt-10 md:pb-16 md:pt-20">
           <Container>
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-center">
-              {/* Left side: text + CTAs */}
+              {/* Left side */}
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-ds-full bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border/60">
                   <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -125,9 +135,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                     <Link href="/signup">Start free practice</Link>
                   </Button>
                   <Button asChild variant="secondary" size="lg" className="rounded-ds-2xl px-6">
-                    <Link href="/login?next=%2Fdashboard">
-                      View my dashboard
-                    </Link>
+                    <Link href="/login?next=%2Fdashboard">View my dashboard</Link>
                   </Button>
                 </div>
 
@@ -140,8 +148,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                 </div>
               </div>
 
-              {/* Right side: Word of the Day – smaller on mobile */}
-              <div className="mx-auto w-full max-w-sm space-y-4 md:max-w-none">
+              {/* Right side: Word of the Day */}
+              <div className="mx-auto w-full max-w-sm md:max-w-none">
                 <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-4 shadow-sm md:p-5">
                   <div className="flex items-center justify-between gap-2">
                     <div>
@@ -195,78 +203,29 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                     </div>
                   </div>
                 </Card>
-
-                {/* Countdown card – hidden on mobile, appears only on desktop */}
-                <Card className="hidden rounded-ds-2xl border border-border/60 bg-card/80 p-5 md:block">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Next launch window
-                      </p>
-                      <p className="text-small text-grayish">
-                        We onboard small cohorts so support never feels like a ticketing system.
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-slab text-h3 leading-none">7 days</p>
-                      <p className="text-xs text-muted-foreground">until next public batch</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs text-muted-foreground">
-                    <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">07</div>
-                      <div>Days</div>
-                    </div>
-                    <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">16</div>
-                      <div>Hours</div>
-                    </div>
-                    <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">45</div>
-                      <div>Min</div>
-                    </div>
-                    <div className="rounded-ds-xl bg-muted px-2 py-2">
-                      <div className="font-semibold text-foreground">30</div>
-                      <div>Sec</div>
-                    </div>
-                  </div>
-
-                  <p className="mt-3 text-[11px] text-muted-foreground">
-                    Join the waitlist now and we’ll reserve early-bird pricing for you when the
-                    batch opens.
-                  </p>
-                </Card>
               </div>
             </div>
           </Container>
         </section>
 
-        {/* QUICK LINKS / PORTAL HUB – horizontal scroll on mobile */}
-        <section className="pb-12">
+        {/* PORTAL HUB – extended with more padding */}
+        <section className="pb-16 md:pb-20">
           <Container>
-            <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="font-slab text-xl md:text-h2">Portal hub</h2>
-                <p className="text-xs text-grayish md:text-small">
-                  From this page, you can jump to any core area — dashboard, modules, AI Lab,
-                  billing, or onboarding.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="neutral" size="sm">
-                  All navigation lives here
-                </Badge>
-              </div>
+            <div className="mb-8 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
+                Quick access
+              </p>
+              <h2 className="mt-2 font-slab text-2xl md:text-4xl">Portal hub</h2>
             </div>
 
             <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible lg:grid-cols-3">
               {!hasPayload && (
                 <Card className="min-w-[240px] shrink-0 rounded-ds-2xl border border-border/60 bg-card/70 p-4 text-xs text-muted-foreground">
-                  Home overview is temporarily unavailable. Core navigation is still accessible from the main menu.
+                  Home overview temporarily unavailable.
                 </Card>
               )}
-              {quickLinks.map((item) => (
+
+              {quickLinks.filter(item => item?.href).map(item => (
                 <Card
                   key={item.href}
                   className="group flex min-w-[240px] shrink-0 cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg md:min-w-0"
@@ -274,7 +233,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                   <Link href={item.href} className="flex h-full flex-col gap-3">
                     <div className="flex items-start gap-3">
                       <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary md:h-9 md:w-9">
-                        <Icon name={item.icon} size={16} />
+                        <Icon name={item.icon as any} size={16} />
                       </span>
                       <div className="space-y-1">
                         <p className="text-xs font-semibold text-foreground md:text-sm">
@@ -283,7 +242,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                         <p className="text-[10px] text-muted-foreground md:text-xs">
                           {item.description}
                         </p>
-                        <p className="text-[10px] text-primary/80 md:text-xs">{item.availability.label}</p>
+                        <p className="text-[10px] text-primary/80 md:text-xs">
+                          {item.availability?.label}
+                        </p>
                       </div>
                     </div>
                     <span className="mt-1 inline-flex items-center text-[10px] font-medium text-primary group-hover:underline md:text-xs">
@@ -297,11 +258,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
           </Container>
         </section>
 
+        {/* RELEASE HIGHLIGHTS – now fully clickable cards */}
         <section className="py-12 md:py-14">
           <Container>
-            <div className="mb-6 md:mb-8">
+            <div className="mb-6 text-center md:mb-8">
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
-                What&apos;s new in GramorX
+                What's new in GramorX
               </p>
               <h2 className="mt-2 font-slab text-xl md:text-h2">
                 Recent upgrades across the platform
@@ -314,20 +276,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                   Release highlights are loading. Check back shortly for the latest updates.
                 </Card>
               )}
-              {releaseHighlights.map((item) => (
-                <Card
-                  key={item.title}
-                  className="rounded-ds-2xl border border-border/60 bg-card/70 p-5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-foreground md:text-base">{item.title}</h3>
-                    <Badge size="xs" variant="neutral">{item.statusLabel}</Badge>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground md:text-sm">{item.description}</p>
-                  <Button asChild size="sm" variant="secondary" className="mt-4 rounded-ds-xl">
-                    <Link href={item.href}>{item.ctaLabel}</Link>
-                  </Button>
-                </Card>
+              {releaseHighlights.map(item => (
+                <Link key={item.title} href={item.href || '#'} className="block h-full">
+                  <Card className="group flex h-full cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 transition hover:-translate-y-1 hover:bg-card/90 hover:shadow-lg">
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-semibold text-foreground md:text-base">{item.title}</h3>
+                        <Badge size="xs" variant="neutral">{item.statusLabel}</Badge>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground md:text-sm">{item.description}</p>
+                    </div>
+                    <span className="mt-4 inline-flex items-center text-[10px] font-medium text-primary group-hover:underline md:text-xs">
+                      {item.ctaLabel}
+                      <Icon name="ArrowRight" size={12} className="ml-1" />
+                    </span>
+                  </Card>
+                </Link>
               ))}
             </div>
           </Container>
@@ -343,10 +307,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
               <h2 className="mt-2 font-slab text-xl md:text-h2">
                 Everything you need to go from “stuck” to exam‑ready.
               </h2>
-              <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
-                Not just practice questions. A full stack: onboarding, learning, practice, mocks, AI
-                feedback, analytics, and gamification — all aware of your goal band and exam date.
-              </p>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -355,51 +315,55 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                   Module data is unavailable right now. Please refresh to load the latest module statuses.
                 </Card>
               )}
-              {modules.map((mod) => (
+              {modules.map(mod => (
                 <Card
                   key={mod.id}
-                  className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
+                  className="group flex h-full cursor-pointer flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/60 hover:bg-card/90 hover:shadow-lg md:p-6"
                 >
-                  <div className="space-y-4">
+                  <Link
+                    href={mod.ctaHref ?? '#'}
+                    className="flex h-full flex-col gap-4"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:h-11 md:w-11">
-                          <Icon name={mod.icon} size={18} />
+                          <Icon name={mod.icon as any} size={18} />
                         </span>
                         <div>
                           <h3 className="text-base font-semibold text-foreground md:text-lg">
                             {mod.title}
                           </h3>
                           <Badge size="xs" variant="accent">
-                            {mod.progress}%
+                            {mod.progress ?? 0}%
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground md:text-small">
-                          Last activity:{' '}
-                          {mod.lastActivityAt
-                            ? new Date(mod.lastActivityAt).toLocaleDateString()
-                            : 'No attempts yet'}
-                        </p>
-                        <div className="h-2 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className="h-full rounded-full bg-primary"
-                            style={{ width: `${Math.max(0, Math.min(100, mod.progress))}%` }}
-                          />
-                        </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <Badge
-                          size="xs"
-                          variant={getBadgeVariant(mod.status.tone)}
-                        >
-                          {mod.status.label}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground">{mod.availability.label}</span>
-                      </div>
+                      <Badge
+                        size="xs"
+                        variant={getBadgeVariant(mod.status?.tone)}
+                      >
+                        {mod.status?.label}
+                      </Badge>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground md:text-small">
+                      Last activity:{' '}
+                      {mod.lastActivityAt
+                        ? new Date(mod.lastActivityAt).toLocaleDateString()
+                        : 'No attempts yet'}
+                    </p>
+
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{
+                          width: `${Math.min(100, Math.max(0, mod.progress ?? 0))}%`,
+                        }}
+                      />
                     </div>
 
                     <ul className="space-y-2 text-xs text-muted-foreground">
-                      {mod.bullets.map((b) => (
+                      {mod.bullets?.map(b => (
                         <li key={b} className="flex items-start gap-2">
                           <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
                             <Icon name="Check" size={10} />
@@ -408,29 +372,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                         </li>
                       ))}
                     </ul>
-                  </div>
 
-                  {mod.reason ? (
-                    <p className="pt-3 text-xs text-muted-foreground">{mod.reason}</p>
-                  ) : null}
+                    {mod.reason && (
+                      <p className="pt-3 text-xs text-muted-foreground">{mod.reason}</p>
+                    )}
 
-                  <div className="pt-4">
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="secondary"
-                      className="w-full rounded-ds-xl"
-                    >
-                      <Link href={mod.ctaHref}>{mod.isEnabled ? `Open ${mod.title}` : `Unlock ${mod.title}`}</Link>
-                    </Button>
-                  </div>
+                    <span className="mt-auto inline-flex items-center text-[10px] font-medium text-primary group-hover:underline md:text-xs">
+                      {mod.isEnabled ? `Open ${mod.title}` : `Unlock ${mod.title}`}
+                      <Icon name="ArrowRight" size={12} className="ml-1" />
+                    </span>
+                  </Link>
                 </Card>
               ))}
             </div>
           </Container>
         </section>
 
-        {/* TESTIMONIALS – compact on mobile */}
+        {/* TESTIMONIALS */}
         <section className="py-12">
           <Container>
             <div className="mb-6 text-center">
@@ -440,10 +398,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
               <h2 className="mt-1 font-slab text-xl md:text-h2">
                 Built for people with limited time.
               </h2>
-              <p className="mt-2 text-xs text-grayish md:text-small md:max-w-2xl md:mx-auto">
-                Evening learners, working professionals, undergrads — we optimize around your
-                bandwidth, not around 6‑hour study fantasies.
-              </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -452,7 +406,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                   Testimonials are currently unavailable.
                 </Card>
               )}
-              {testimonials.map((t) => (
+              {testimonials.map(t => (
                 <Card
                   key={t.name}
                   className="flex h-full flex-col justify-between rounded-ds-2xl border border-border/60 bg-card/70 p-4"
@@ -479,29 +433,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
           </Container>
         </section>
 
-        {/* PRICING PREVIEW – ensure buttons full width on mobile */}
+        {/* PRICING PREVIEW – centered heading, button below */}
         <section className="bg-muted/40 py-12">
           <Container>
-            <div className="mb-8 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
-                  Pricing preview
-                </p>
-                <h2 className="mt-1 font-slab text-xl md:text-h2">
-                  Start free. Upgrade when you’re serious.
-                </h2>
-                <p className="mt-1 text-xs text-grayish md:text-small md:max-w-xl">
-                  Free covers basic practice and a taste of AI. Booster unlocks deeper feedback and
-                  more mocks. Institutional is for teachers and academies.
-                </p>
-              </div>
-              <Button asChild size="sm" variant="ghost" className="rounded-ds-xl mt-2 md:mt-0">
+            <div className="mb-8 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
+                Pricing preview
+              </p>
+              <h2 className="mt-1 font-slab text-xl md:text-h2">
+                Start free. Upgrade when you’re serious.
+              </h2>
+              <Button asChild size="sm" variant="ghost" className="mt-4 rounded-ds-xl">
                 <Link href="/pricing">View full pricing page</Link>
               </Button>
             </div>
 
             <div className="grid gap-5 md:grid-cols-3">
-              {LANDING_PLANS.map((plan) => (
+              {LANDING_PLANS.map(plan => (
                 <Card
                   key={plan.id}
                   className={`flex h-full flex-col justify-between rounded-ds-2xl border border-border/70 bg-card/80 p-5 md:p-6 ${
@@ -521,7 +469,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
                       </Badge>
                     </div>
                     <ul className="mt-2 space-y-2 text-xs text-muted-foreground">
-                      {plan.bullets.map((b) => (
+                      {plan.bullets.map(b => (
                         <li key={b} className="flex items-start gap-2">
                           <span className="mt-[3px] inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">
                             <Icon name="Check" size={10} />
@@ -550,56 +498,63 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
           </Container>
         </section>
 
-        {/* WAITLIST / FINAL CTA – unchanged */}
+        {/* WAITLIST / FINAL CTA – redesigned single column */}
         <section className="py-12">
           <Container>
-            <Card className="mx-auto max-w-4xl rounded-ds-2xl border border-border/60 bg-card/80 p-6 md:p-8">
-              <div className="grid gap-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-center">
+            <div className="mb-6 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
+                Pre-launch batch
+              </p>
+              <h2 className="mt-1 font-slab text-xl md:text-h2">
+                Join the early cohort and lock in better pricing.
+              </h2>
+            </div>
+
+            <Card className="mx-auto max-w-2xl rounded-ds-2xl border border-border/60 bg-card/80 p-6 md:p-8">
+              <div className="space-y-6">
                 <div className="space-y-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary md:text-xs">
-                    Pre-launch batch
-                  </p>
-                  <h2 className="font-slab text-xl md:text-h2">
-                    Join the early cohort and lock in better pricing.
-                  </h2>
                   <p className="text-xs text-grayish md:text-small">
                     We’re onboarding in waves so we don’t drown support. Add your email and target
                     band, and we’ll send a proper orientation when your batch opens — no spam, no
                     fake urgency.
                   </p>
-                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <li>• First wave gets discounted Booster pricing.</li>
-                    <li>• Teachers / academies can request a separate call.</li>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="mt-[3px] text-primary">•</span>
+                      <span>First wave gets discounted Booster pricing.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="mt-[3px] text-primary">•</span>
+                      <span>Teachers / academies can request a separate call.</span>
+                    </li>
                   </ul>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="grid gap-3 md:grid-cols-1">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-xs font-medium text-muted-foreground">Email</label>
-                      <input
-                        type="email"
-                        className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="you@example.com"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Target IELTS band
-                      </label>
-                      <input
-                        type="text"
-                        className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-                        placeholder="e.g. 7.0, 7.5, 8.0"
-                      />
-                    </div>
-                    <Button type="button" variant="accent" className="mt-1 w-full rounded-ds-xl">
-                      Join waitlist
-                    </Button>
-                    <p className="text-[11px] text-muted-foreground">
-                      No spam. We’ll only email when your batch is actually opening.
-                    </p>
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-medium text-muted-foreground">Email</label>
+                    <input
+                      type="email"
+                      className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="you@example.com"
+                    />
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Target IELTS band
+                    </label>
+                    <input
+                      type="text"
+                      className="h-10 w-full rounded-ds-xl border border-border bg-input px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="e.g. 7.0, 7.5, 8.0"
+                    />
+                  </div>
+                  <Button type="button" variant="accent" className="w-full rounded-ds-xl">
+                    Join waitlist
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    No spam. We’ll only email when your batch is actually opening.
+                  </p>
                 </div>
               </div>
             </Card>
@@ -627,24 +582,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ homeOverview }) => {
         }
       `}</style>
     </>
-  );
-};
+  )
+}
 
-export const getServerSideProps: GetServerSideProps<{ homeOverview: HomeOverviewPayload | null }> = async () => {
+export const getServerSideProps: GetServerSideProps<{
+  homeOverview: HomeOverviewPayload | null
+}> = async () => {
   try {
+    const payload = getHomeOverviewPayload()
     return {
       props: {
-        homeOverview: getHomeOverviewPayload(),
+        homeOverview: payload ?? null,
       },
-    };
+    }
   } catch (error) {
-    console.error('Failed to load home overview payload', error);
+    console.error('Failed to load home overview payload', error)
     return {
       props: {
         homeOverview: null,
       },
-    };
+    }
   }
-};
+}
 
-export default LandingPage;
+export default LandingPage
