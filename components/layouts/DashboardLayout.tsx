@@ -11,7 +11,7 @@ const QUICK_LINKS = [
   { href: '/reading', label: 'Reading' },
   { href: '/writing', label: 'Writing' },
   { href: '/speaking/simulator', label: 'Speaking' },
-  { href: '/pricing', label: 'Upgrade' },
+  { href: '/pricing/overview', label: 'Upgrade' }, // changed from '/pricing'
 ] as const;
 
 const DashboardLayout: React.FC<React.PropsWithChildren> = ({ children }) => {

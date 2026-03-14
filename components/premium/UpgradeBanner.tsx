@@ -1,3 +1,4 @@
+// components/premium/UpgradeBanner.tsx
 import Link from 'next/link';
 
 import { Button } from '@/components/design-system/Button';
@@ -7,18 +8,18 @@ import { emitUpgradePrompt } from '@/components/premium/UpgradeModal';
 type UpgradeBannerProps = {
   title: string;
   description: string;
-  /** Primary CTA destination. Defaults to pricing with a tracking ref. */
+  /** Primary CTA destination. Defaults to pricing overview with a tracking ref. */
   href?: string;
   /** Label for the primary CTA button. */
   ctaLabel?: string;
-  /** Optional label shown inside the pill. Defaults to “Free plan limit”. */
+  /** Optional label shown inside the pill. Defaults to â€œFree plan limitâ€. */
   pillLabel?: string;
   /** When provided, triggers the upgrade modal with this feature label. */
   feature?: string;
   className?: string;
 };
 
-const DEFAULT_PRICING_HREF = '/pricing?ref=upgrade-banner';
+const DEFAULT_PRICING_HREF = '/pricing/overview?ref=upgrade-banner'; // changed from '/pricing?ref=upgrade-banner'
 
 export function UpgradeBanner({
   title,

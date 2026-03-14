@@ -37,7 +37,7 @@ const featureCopy: Record<Feature, { title: string; description: string }> = {
   },
   'ai.explain': {
     title: 'AI explanations',
-    description: 'Upgrade for unlimited “why is this answer correct?” explanations and strategy nudges.',
+    description: 'Upgrade for unlimited â€œwhy is this answer correct?â€ explanations and strategy nudges.',
   },
 };
 
@@ -74,6 +74,7 @@ export function PaywallGate({
   onBlocked,
   className,
 }: PaywallGateProps) {
+  // All hooks MUST be called unconditionally at the top level
   const [allowed, setAllowed] = React.useState<boolean>(true);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [count, setCount] = React.useState<number>(0);
@@ -116,17 +117,6 @@ export function PaywallGate({
     };
   }, [feature, planId, limitOverride, onBlocked]);
 
-  if (loading) {
-    return (
-      <div className={className}>
-        <div className="rounded-2xl border border-border bg-card text-foreground p-4 animate-pulse-soft">
-          <div className="h-4 w-28 bg-foreground/10 rounded mb-2" />
-          <div className="h-3 w-40 bg-foreground/10 rounded" />
-        </div>
-      </div>
-    );
-  }
-
   React.useEffect(() => {
     if (loading) return;
     if (!allowed) {
@@ -139,6 +129,17 @@ export function PaywallGate({
       promptSentRef.current = false;
     }
   }, [allowed, feature, loading]);
+
+  if (loading) {
+    return (
+      <div className={className}>
+        <div className="rounded-2xl border border-border bg-card text-foreground p-4 animate-pulse-soft">
+          <div className="h-4 w-28 bg-foreground/10 rounded mb-2" />
+          <div className="h-3 w-40 bg-foreground/10 rounded" />
+        </div>
+      </div>
+    );
+  }
 
   if (allowed) return <>{children}</>;
 
@@ -172,7 +173,7 @@ export function PaywallGate({
                 View upgrade options
               </Button>
               <Button asChild variant="outline" size="sm">
-                <Link href={`${routes.pricing()}?from=paywall`}>Go to pricing</Link>
+                <Link href="/pricing/overview?from=paywall">Go to pricing</Link>
               </Button>
             </div>
           </div>

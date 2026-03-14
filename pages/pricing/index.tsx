@@ -1,4 +1,3 @@
-// pages/pricing/overview.tsx
 import * as React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -12,26 +11,23 @@ import { Ribbon } from '@/components/design-system/Ribbon';
 import { Button } from '@/components/design-system/Button';
 import { Badge } from '@/components/design-system/Badge';
 import SocialProofStrip from '@/components/marketing/SocialProofStrip';
-import QuotaSummary from '@/components/paywall/QuotaSummary';
 import {
   getPlanDisplayPrice,
   type Cycle,
   type PlanKey,
 } from '@/lib/pricing';
-import type { Reason } from '@/lib/paywall/redirect';
 
 // ------------------ Types ------------------
 type PlanRow = {
   key: PlanKey;
   title: 'Seedling' | 'Rocket' | 'Owl';
   subtitle: string;
-  // NOTE: Both monthly and annual are expressed as *per-month* USD cents.
   priceMonthly: number; // cents (USD)
   priceAnnual: number;  // cents (USD, per month when billed annually)
   features: string[];
   badge?: string;
   mostPopular?: boolean;
-  icon: string; // fontawesome key
+  icon: string;
 };
 
 type Currency =
@@ -72,7 +68,6 @@ const PLANS: readonly PlanRow[] = PLAN_KEYS.map((key) => ({
   priceAnnual: toUsdCents(getPlanDisplayPrice(key, 'annual')),
 })) as const;
 
-// Simple demo FX rates relative to USD. Replace with live rates from your backend/payments provider.
 const FX: Record<Currency, number> = {
   USD: 1,
   EUR: 0.92,
@@ -108,7 +103,7 @@ const guessCurrency = (): Currency => {
 
 const formatMoneyFromUsdCents = (usdCents: number, currency: Currency) => {
   const fx = FX[currency] || 1;
-  const raw = (usdCents / 100) * fx; // base is USD per-month
+  const raw = (usdCents / 100) * fx;
   const maximumFractionDigits = ZERO_DECIMAL.includes(currency) ? 0 : 2;
   try {
     return new Intl.NumberFormat(undefined, {
@@ -125,23 +120,59 @@ const formatMoneyFromUsdCents = (usdCents: number, currency: Currency) => {
   }
 };
 
+// ------------------ Parameter Normalization (kept for future use) ------------------
+type NormalizedParams = {
+  reason?: string;
+  plan?: PlanKey | null;
+  returnTo?: string;
+  ref?: string | null;
+  code?: string | null;
+  qk?: string | null;
+};
+
+function normalizePricingParams(query: ReturnType<typeof useRouter>['query']): NormalizedParams {
+  let reason: string | undefined;
+  if (typeof query.reason === 'string') {
+    reason = query.reason;
+  } else if (typeof query.need === 'string' || typeof query.required === 'string') {
+    reason = 'plan_required';
+  } else if (typeof query.qk === 'string') {
+    reason = 'quota_limit';
+  }
+
+  let plan: PlanKey | null = null;
+  if (typeof query.plan === 'string' && (query.plan === 'starter' || query.plan === 'booster' || query.plan === 'master')) {
+    plan = query.plan as PlanKey;
+  } else if (typeof query.need === 'string' && (query.need === 'starter' || query.need === 'booster' || query.need === 'master')) {
+    plan = query.need as PlanKey;
+  } else if (typeof query.required === 'string' && (query.required === 'starter' || query.required === 'booster' || query.required === 'master')) {
+    plan = query.required as PlanKey;
+  }
+
+  let returnTo = '/';
+  if (typeof query.returnTo === 'string') {
+    returnTo = query.returnTo;
+  } else if (typeof query.from === 'string') {
+    returnTo = query.from;
+  }
+
+  const ref = typeof query.ref === 'string' ? query.ref : null;
+  const code = typeof query.code === 'string' ? query.code : null;
+  const qk = typeof query.qk === 'string' ? query.qk : null;
+
+  return { reason, plan, returnTo, ref, code, qk };
+}
+
 // ------------------ Page ------------------
 const PricingPage: NextPage = () => {
   const router = useRouter();
-  const referralCode = React.useMemo(
-    () => (router.query.code ? String(router.query.code) : undefined),
-    [router.query]
-  );
+  const params = normalizePricingParams(router.query);
+
+  const referralCode = params.code;
 
   const [cycle, setCycle] = React.useState<Cycle>('monthly');
   const [currency, setCurrency] = React.useState<Currency>('USD');
   const [timezone, setTimezone] = React.useState<string>('—');
-
-  // --- Reason banner (e.g., quota reached) ---
-  const reason: Reason = typeof router.query.reason === 'string' ? (router.query.reason as Reason) : 'unknown';
-  const need: PlanKey | null = typeof router.query.need === 'string' ? (router.query.need as PlanKey) : null;
-  const from: string = typeof router.query.from === 'string' ? router.query.from : '/';
-  const qk: string | null = typeof router.query.qk === 'string' ? router.query.qk : null;
 
   React.useEffect(() => {
     setCurrency(guessCurrency());
@@ -160,56 +191,6 @@ const PricingPage: NextPage = () => {
     [cycle, referralCode, router, currency]
   );
 
-  const getBanner = () => {
-    if (reason === 'unknown') return null;
-
-    let message = '';
-    let backPath = from;
-    let module = qk ? qk.replace(/_/g, ' ') : 'this feature';
-
-    switch (reason) {
-      case 'plan_required':
-        message = `This feature requires the ${need || 'higher'} plan or higher.`;
-        break;
-      case 'quota_limit':
-        message = `You've reached your quota for ${module}. Try again tomorrow or upgrade to increase your limits.`;
-        break;
-      case 'trial_ended':
-        message = 'Your trial has ended. Upgrade to continue.';
-        break;
-      default:
-        return null;
-    }
-
-    return (
-      <div
-        className="mx-auto mb-4 max-w-4xl rounded-2xl border border-amber-400/50 bg-amber-100/70 px-4 py-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200"
-        role="status"
-        aria-live="polite"
-      >
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div>
-            <strong>{message}</strong>
-          </div>
-          <div className="flex gap-2 shrink-0">
-            <Link
-              href={backPath}
-              className="inline-flex items-center justify-center rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-sm underline-offset-4 hover:underline"
-            >
-              Back
-            </Link>
-            <Link
-              href="#plans"
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-95"
-            >
-              See plans
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <>
       <Head>
@@ -220,16 +201,9 @@ const PricingPage: NextPage = () => {
         />
       </Head>
 
-      {/* MAIN landmark */}
       <main role="main" className="min-h-screen bg-marketing-aurora text-foreground antialiased">
         <Section id="pricing">
           <Container className="pt-6 md:pt-8 pb-12 md:pb-16" aria-labelledby="pricing-title">
-
-            {/* Context banner (from redirects with query params) */}
-            {getBanner()}
-
-            {/* Quota Summary if applicable */}
-            {reason === 'quota_limit' && <QuotaSummary qk={qk} />}
 
             {/* Top utility bar */}
             <div className="mx-auto max-w-7xl mb-4 flex items-center justify-between gap-3 text-small">

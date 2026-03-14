@@ -1,7 +1,7 @@
-// pages/pricing/overview.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 import { Container } from '@/components/design-system/Container';
 import { Section } from '@/components/design-system/Section';
@@ -13,6 +13,7 @@ import { Separator } from '@/components/design-system/Separator';
 
 import { usePlan } from '@/hooks/usePlan';
 import { getStandardPlanName, normalizePlan } from '@/lib/subscription';
+import type { PlanId } from '@/types/pricing';
 
 // Optional: plan selector already in your repo
 import PlanPicker from '@/components/payments/PlanPicker';
@@ -85,7 +86,56 @@ const QuotaRow: React.FC<{ label: string; day?: Counter; month?: Counter }> = ({
   );
 };
 
+// Parameter normalization (similar to index.tsx but only needed fields)
+type NormalizedParams = {
+  reason?: string;
+  plan?: PlanId | null;
+  returnTo?: string;
+  ref?: string | null;
+  code?: string | null;
+  qk?: string | null;
+};
+
+function normalizeOverviewParams(query: ReturnType<typeof useRouter>['query']): NormalizedParams {
+  // Reason
+  let reason: string | undefined;
+  if (typeof query.reason === 'string') {
+    reason = query.reason;
+  } else if (typeof query.need === 'string' || typeof query.required === 'string') {
+    reason = 'plan_required';
+  } else if (typeof query.qk === 'string') {
+    reason = 'quota_limit';
+  }
+
+  // Plan
+  let plan: PlanId | null = null;
+  if (typeof query.plan === 'string' && ['free', 'starter', 'booster', 'master'].includes(query.plan)) {
+    plan = query.plan as PlanId;
+  } else if (typeof query.need === 'string' && ['free', 'starter', 'booster', 'master'].includes(query.need)) {
+    plan = query.need as PlanId;
+  } else if (typeof query.required === 'string' && ['free', 'starter', 'booster', 'master'].includes(query.required)) {
+    plan = query.required as PlanId;
+  }
+
+  // ReturnTo
+  let returnTo: string | undefined;
+  if (typeof query.returnTo === 'string') {
+    returnTo = query.returnTo;
+  } else if (typeof query.from === 'string') {
+    returnTo = query.from;
+  }
+
+  const ref = typeof query.ref === 'string' ? query.ref : null;
+  const code = typeof query.code === 'string' ? query.code : null;
+  const qk = typeof query.qk === 'string' ? query.qk : null;
+
+  return { reason, plan, returnTo, ref, code, qk };
+}
+
 const PricingOverviewPage: React.FC = () => {
+  const router = useRouter();
+  const params = normalizeOverviewParams(router.query);
+
   const { plan: hookPlan } = usePlan(); // normalized: 'free' | 'starter' | 'booster' | 'master'
   const [counters, setCounters] = useState<CountersResponse>({});
   const [sub, setSub] = useState<SubscriptionSummary | null>(null);
@@ -137,6 +187,9 @@ const PricingOverviewPage: React.FC = () => {
       };
     });
   }, [counters]);
+
+  // Optional: Use params to highlight something (e.g., scroll to plan, show banner)
+  // For now, we just consume them; they could be used for analytics or UI hints.
 
   return (
     <>

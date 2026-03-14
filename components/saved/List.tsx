@@ -231,10 +231,10 @@ export function SavedList() {
   const showUpgrade = !planLoading && plan === 'free' && !isUnauthorized;
   const upgradeBanner = showUpgrade ? (
     <UpgradeBanner
-      pillLabel="Explorer · Free plan"
+      pillLabel="Explorer Â· Free plan"
       title="Keep every bookmark in sync"
       description="Premium unlocks unlimited saved lessons, cross-device sync, and AI-powered recap suggestions."
-      href="/pricing?from=saved-upgrade"
+      href="/pricing/overview?from=saved-upgrade"   // ← changed from '/pricing?from=saved-upgrade'
       feature="Saved library"
     />
   ) : null;
@@ -302,7 +302,7 @@ export function SavedList() {
         <Alert variant="error" className="rounded-ds-2xl" role="alert">
           {error.info && typeof error.info === 'object' && 'error' in (error.info as Record<string, unknown>)
             ? String((error.info as Record<string, unknown>).error)
-            : t('saved.errors.loadFailed', 'We couldn’t load your saved items right now. Please refresh and try again.')}
+            : t('saved.errors.loadFailed', 'We couldnâ€™t load your saved items right now. Please refresh and try again.')}
         </Alert>
       </div>
     );
@@ -343,7 +343,7 @@ export function SavedList() {
       <div className="space-y-6">
         {upgradeBanner}
         <Card className="rounded-ds-2xl border border-border/60 bg-card/80 p-6">
-          <h2 className="text-h4 font-slab">{t('saved.empty.title', 'You haven’t saved anything yet')}</h2>
+          <h2 className="text-h4 font-slab">{t('saved.empty.title', 'You havenâ€™t saved anything yet')}</h2>
           <p className="mt-2 text-small text-mutedText">
             {t(
               'saved.empty.description',
@@ -396,7 +396,7 @@ export function SavedList() {
                         >
                           {categoryLabel}
                         </Badge>
-                        <span aria-hidden="true">•</span>
+                        <span aria-hidden="true">â€¢</span>
                         <span>
                           {t('saved.item.savedOn', 'Saved {{date}}', { date: dateFormatter.format(item.createdDate) })}
                         </span>

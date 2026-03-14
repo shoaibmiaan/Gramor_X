@@ -245,7 +245,7 @@ export default function StudyPlanPage() {
         setPlan(nextPlan);
         toastSuccess(
           t('studyPlan.toast.planReady.title', 'Plan ready'),
-          t('studyPlan.toast.planReady.description', 'Your new study plan is live. Start with today’s tasks!'),
+          t('studyPlan.toast.planReady.description', 'Your new study plan is live. Start with todayâ€™s tasks!'),
         );
         track('studyplan_create', { preset: preset.id, weeks: preset.weeks });
         void logStudyPlanEvent('studyplan_create', { preset: preset.id, weeks: preset.weeks });
@@ -323,13 +323,13 @@ export default function StudyPlanPage() {
         {showUpgradeBanner && (
           <UpgradeBanner
             className="mt-6"
-            pillLabel="Explorer · Free plan"
+            pillLabel="Explorer Â· Free plan"
             title={t('studyPlan.upgrade.title', 'Refresh your study plan without limits')}
             description={t(
               'studyPlan.upgrade.description',
               'Premium auto-adjusts your calendar, adds weekly mock recommendations, and sends WhatsApp nudges when you fall behind.',
             )}
-            href="/pricing?from=study-plan-upgrade"
+            href="/pricing/overview?from=study-plan-upgrade"   // ← changed from '/pricing?from=study-plan-upgrade'
             feature="Adaptive study plan"
           />
         )}
@@ -371,7 +371,7 @@ export default function StudyPlanPage() {
                   <h3 className="font-slab text-h4">{t('studyPlan.sidebar.progress.title', 'Plan progress')}</h3>
                   <p className="text-small text-muted-foreground">
                     {planProgress >= 100
-                      ? t('studyPlan.sidebar.progress.done', 'You’ve completed every task in this plan. Consider regenerating a new schedule to keep training.')
+                      ? t('studyPlan.sidebar.progress.done', 'Youâ€™ve completed every task in this plan. Consider regenerating a new schedule to keep training.')
                       : t('studyPlan.sidebar.progress.keepPace', 'Stay on pace toward your IELTS goal by checking off the next task in your queue.')}
                   </p>
                   <div className="space-y-2">
@@ -385,7 +385,7 @@ export default function StudyPlanPage() {
                   </div>
                   <Button variant="soft" tone="info" size="sm" onClick={handleFocusNextTask} disabled={!nextTaskToday}>
                     {nextTaskToday
-                      ? t('studyPlan.sidebar.progress.jump', 'Jump to today’s next task')
+                      ? t('studyPlan.sidebar.progress.jump', 'Jump to todayâ€™s next task')
                       : t('studyPlan.sidebar.progress.caughtUp', 'All caught up for today')}
                   </Button>
                 </Card>

@@ -1,3 +1,4 @@
+// components/premium/UpgradeModal.tsx
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -91,7 +92,7 @@ export default function UpgradeModal() {
 
   const handleRefresh = useCallback(async () => {
     setChecking(true);
-    setFeedback({ tone: 'info', message: 'Checking your account…' });
+    setFeedback({ tone: 'info', message: 'Checking your accountâ€¦' });
 
     try {
       const result = await waitForSubscriptionUpgrade({ attempts: 4, intervalMs: 2000 });
@@ -103,7 +104,7 @@ export default function UpgradeModal() {
 
       setFeedback({
         tone: 'info',
-        message: 'Still upgrading your account—try again in a few seconds.',
+        message: 'Still upgrading your accountâ€”try again in a few seconds.',
       });
     } catch (error) {
       console.error('Failed to refresh subscription tier:', error);
@@ -155,7 +156,7 @@ export default function UpgradeModal() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Button asChild size="lg" fullWidth elevateOnHover>
-            <Link href={`${routes.pricing()}?ref=upgrade-modal`} onClick={closeModal}>
+            <Link href="/pricing/overview?ref=upgrade-modal" onClick={closeModal}> {/* changed from '/pricing' */}
               View premium plans
             </Link>
           </Button>
@@ -175,11 +176,10 @@ export default function UpgradeModal() {
         </div>
 
         <p className="text-center text-caption text-mutedText">
-          Need help? <a href="mailto:support@gramorx.com" className="underline">Email support</a> and we&apos;ll get you
+          Need help? <a href="mailto:info@gramorx.com" className="underline">Email support</a> and we&apos;ll get you
           unstuck.
         </p>
       </div>
     </Modal>
   );
 }
-
