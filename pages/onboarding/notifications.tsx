@@ -3,9 +3,10 @@ import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import React, { useMemo, useState } from 'react';
 
-import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { ONBOARDING_STEPS, getPrevStep, getStepIndex } from '@/lib/onboarding/steps';
 import { cn } from '@/lib/utils';
 import {
   NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER,
@@ -13,24 +14,6 @@ import {
   type NotificationChannel,
 } from '@/lib/onboarding/schema';
 import { saveOnboardingStep } from '@/lib/onboarding/client';
-
-type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
-
-const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
-  { id: 'language', label: 'Language' },
-  { id: 'target-band', label: 'Target band' },
-  { id: 'exam-date', label: 'Exam date' },
-  { id: 'study-rhythm', label: 'Study rhythm' },
-  { id: 'notifications', label: 'Notifications' },
-];
-
-const STEP_ROUTES: Record<OnboardingStepId, string> = {
-  language: '/onboarding',
-  'target-band': '/onboarding/target-band',
-  'exam-date': '/onboarding/exam-date',
-  'study-rhythm': '/onboarding/study-rhythm',
-  notifications: '/onboarding/notifications',
-};
 
 type ChannelId = NotificationChannel;
 
@@ -85,10 +68,7 @@ const OnboardingNotificationsPage: NextPage = () => {
     return raw;
   }, [router.query]);
 
-  const currentIndex = useMemo(
-    () => ONBOARDING_STEPS.findIndex((s) => s.id === 'notifications'),
-    [],
-  );
+  const currentIndex = getStepIndex('notifications');
 
   const hasChannel = selectedChannels.length > 0;
 
@@ -99,13 +79,16 @@ const OnboardingNotificationsPage: NextPage = () => {
   }
 
   function handleBack() {
-    router.push({
-      pathname: STEP_ROUTES['study-rhythm'],
-      query: { next: nextPath },
-    });
+    const prev = getPrevStep('notifications');
+    if (prev) {
+      router.push({
+        pathname: prev.path,
+        query: { next: nextPath },
+      });
+    }
   }
 
-  async function handleFinish() {
+  async function handleComplete() {
     setError(null);
 
     if (!hasChannel) {
@@ -133,175 +116,49 @@ const OnboardingNotificationsPage: NextPage = () => {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-        {/* Progress (non‑clickable) */}
-        <div className="mb-6 w-full max-w-3xl">
-          <OnboardingProgress
-            steps={ONBOARDING_STEPS}
-            currentIndex={currentIndex}
-            // onStepClick omitted – static display only
+    <StepLayout
+      title="Notifications"
+      subtitle="Choose how you want to receive updates"
+      step={currentIndex + 1}
+      total={ONBOARDING_STEPS.length}
+      onBack={handleBack}
+      footer={
+        <Button size="lg" onClick={handleComplete} disabled={submitting || !hasChannel}>
+          {submitting ? 'Finishing…' : 'Complete onboarding'}
+          <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+        </Button>
+      }
+    >
+      <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+        <Icon name="bell" className="h-3.5 w-3.5" />
+        Smart reminders, not noise.
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {CHANNEL_OPTIONS.map((option) => (
+          <ChannelCard
+            key={option.id}
+            option={option}
+            selected={selectedChannels.includes(option.id)}
+            onToggle={() => toggleChannel(option.id)}
           />
-        </div>
-
-        {/* Card */}
-        <section className="w-full max-w-3xl rounded-3xl border border-border bg-card/80 p-6 shadow-xl backdrop-blur-md sm:p-8">
-          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Step {currentIndex + 1} of {ONBOARDING_STEPS.length}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                How should we keep you on track?
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Choose where you want to receive study nudges, streak alerts, and mock test
-                reminders. No spam — only what helps your band score.
-              </p>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Icon name="bell" className="h-3.5 w-3.5" />
-              Smart reminders, not noise.
-            </div>
-          </header>
-
-          {/* Channels */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {CHANNEL_OPTIONS.map((option) => (
-              <ChannelCard
-                key={option.id}
-                option={option}
-                selected={selectedChannels.includes(option.id)}
-                onToggle={() => toggleChannel(option.id)}
-              />
-            ))}
-          </div>
-
-          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
-
-          <p className="mt-4 text-xs text-muted-foreground sm:text-sm">
-            You can fine-tune these later from{' '}
-            <span className="font-medium">Settings → Notifications</span>.
-          </p>
-
-          {/* Footer */}
-          <footer className="mt-6 flex flex-col-reverse items-center justify-between gap-3 border-t border-border pt-4 sm:flex-row">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="text-muted-foreground"
-            >
-              <Icon name="arrow-left" className="mr-1.5 h-4 w-4" />
-              Back
-            </Button>
-
-            <div className="flex items-center gap-3">
-              <p className="hidden text-xs text-muted-foreground sm:inline">
-                Finish and go to{' '}
-                <span className="font-medium">
-                  {nextPath === '/onboarding/study-plan' ? 'your AI study plan' : nextPath}
-                </span>
-              </p>
-              <Button size="lg" onClick={handleFinish} disabled={submitting || !hasChannel}>
-                {submitting ? 'Finishing…' : 'Finish & continue'}
-                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </footer>
-        </section>
-      </Container>
-    </main>
-  );
-};
-
-interface OnboardingProgressProps {
-  steps: { id: OnboardingStepId; label: string }[];
-  currentIndex: number;
-  onStepClick?: (id: OnboardingStepId) => void;
-}
-
-const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
-  steps,
-  currentIndex,
-  onStepClick,
-}) => {
-  return (
-    <div className="flex flex-col gap-2">
-      {/* Rail */}
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
-          const active = index === currentIndex;
-          const completed = index < currentIndex;
-
-          const circle = (
-            <div
-              className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
-                completed && 'border-primary bg-primary text-primary-foreground',
-                active && !completed && 'border-primary/80 bg-primary/10 text-primary',
-                !active && !completed && 'border-border bg-muted text-muted-foreground',
-              )}
-            >
-              {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
-            </div>
-          );
-
-          return (
-            <div key={step.id} className="flex flex-1 items-center last:flex-none">
-              {onStepClick ? (
-                <button
-                  type="button"
-                  onClick={() => onStepClick(step.id)}
-                  className="flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  {circle}
-                </button>
-              ) : (
-                circle
-              )}
-
-              {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    'mx-1 h-px flex-1 rounded-full bg-border',
-                    completed && 'bg-primary/70',
-                    active && 'bg-primary/50',
-                  )}
-                />
-              )}
-            </div>
-          );
-        })}
+        ))}
       </div>
 
-      {/* Labels */}
-      <div className="flex justify-between text-xs text-muted-foreground">
-        {steps.map((step, index) => {
-          const active = index === currentIndex;
+      {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
 
-          return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={onStepClick ? () => onStepClick(step.id) : undefined}
-              className="flex-1 focus-visible:outline-none"
-              disabled={!onStepClick}
-            >
-              <span
-                className={cn(
-                  'flex-1 truncate text-center',
-                  active && 'font-medium text-foreground',
-                )}
-              >
-                {step.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+      <p className="mt-4 text-xs text-muted-foreground sm:text-sm">
+        You can fine-tune these later from{' '}
+        <span className="font-medium">Settings → Notifications</span>.
+      </p>
+
+      <p className="mt-4 hidden text-xs text-muted-foreground sm:block">
+        Finish and go to{' '}
+        <span className="font-medium">
+          {nextPath === '/onboarding/study-plan' ? 'your AI study plan' : nextPath}
+        </span>
+      </p>
+    </StepLayout>
   );
 };
 
