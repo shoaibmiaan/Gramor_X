@@ -1,422 +1,225 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// pages/pricing/index.tsx
+import * as React from 'react';
+import type { NextPage } from 'next';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
-import clsx from 'clsx';
 
 import { Container } from '@/components/design-system/Container';
+import { Section } from '@/components/design-system/Section';
 import { Card } from '@/components/design-system/Card';
+import { Badge } from '@/components/design-system/Badge';
 import { Button } from '@/components/design-system/Button';
-import { Skeleton } from '@/components/design-system/Skeleton';
-import { ProgressBar } from '@/components/design-system/ProgressBar';
-import { useToast } from '@/components/design-system/Toaster';
-import { UpgradeBanner } from '@/components/premium/UpgradeBanner';
+import { CheckIcon } from '@/components/design-system/icons';
 
-import { useStreak } from '@/hooks/useStreak';
-import { getDayKeyInTZ } from '@/lib/streak';
-import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
-import { generateStudyPlan } from '@/lib/studyPlan';
-import { useLocale } from '@/lib/locale';
-import { track } from '@/lib/analytics/track';
-
-import type { StudyDay, StudyPlan as PlanType } from '@/types/plan';
-import { StudyPlanEmptyState, type StudyPlanPreset } from '@/components/study/EmptyState';
-import { PlanCard } from '@/components/study/PlanCard';
-import { PlanTimeline } from '@/components/study/PlanTimeline';
-import { StreakChip } from '@/components/user/StreakChip';
-import { coerceStudyPlan, planDayKey } from '@/utils/studyPlan';
 import { usePlan } from '@/hooks/usePlan';
+import { getPlanPricing, getStandardPlanName } from '@/lib/subscription';
+import {
+  USD_PLAN_PRICES,
+  PLAN_LABEL,
+  type PlanKey,
+} from '@/lib/pricing';
+import type { Reason } from '@/lib/paywall/redirect';
 
-const PRESETS: ReadonlyArray<StudyPlanPreset> = [
-  {
-    id: 'balanced-4w',
-    titleKey: 'studyPlan.presets.balanced.title',
-    descriptionKey: 'studyPlan.presets.balanced.description',
-    weeks: 4,
-    highlightKey: 'studyPlan.presets.balanced.highlight',
-  },
-  {
-    id: 'speaking-boost',
-    titleKey: 'studyPlan.presets.speaking.title',
-    descriptionKey: 'studyPlan.presets.speaking.description',
-    weeks: 2,
-    highlightKey: 'studyPlan.presets.speaking.highlight',
-  },
-  {
-    id: 'listening-sprint',
-    titleKey: 'studyPlan.presets.listening.title',
-    descriptionKey: 'studyPlan.presets.listening.description',
-    weeks: 1,
-    highlightKey: 'studyPlan.presets.listening.highlight',
-  },
-];
+// Helper to normalize query parameters
+function normalizePricingParams(query: ReturnType<typeof useRouter>['query']) {
+  const params: {
+    reason?: string;
+    plan?: PlanKey;
+    returnTo?: string;
+    ref?: string;
+    code?: string;
+  } = {};
 
-const PRESET_TARGETS: Record<string, number> = {
-  'balanced-4w': 7,
-  'speaking-boost': 7,
-  'listening-sprint': 7,
-};
+  // Reason
+  if (typeof query.reason === 'string') params.reason = query.reason;
+  else if (typeof query.need === 'string') params.reason = 'plan_required';
+  else if (typeof query.required === 'string') params.reason = 'plan_required';
 
-const PRESET_AVAILABILITY: Record<string, ReadonlyArray<string>> = {
-  'balanced-4w': ['Mon', 'Wed', 'Fri', 'Sun'],
-  'speaking-boost': ['Tue', 'Thu', 'Sat'],
-  'listening-sprint': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-};
+  // Plan
+  if (typeof query.plan === 'string') params.plan = query.plan as PlanKey;
+  else if (typeof query.need === 'string') params.plan = query.need as PlanKey;
+  else if (typeof query.required === 'string') params.plan = query.required as PlanKey;
 
-function countCompletedTasks(plan: PlanType): number {
-  return plan.days.reduce((acc, d) => acc + d.tasks.filter((t) => t.completed).length, 0);
+  // ReturnTo
+  if (typeof query.returnTo === 'string') params.returnTo = query.returnTo;
+  else if (typeof query.from === 'string') params.returnTo = query.from;
+
+  // Ref
+  if (typeof query.ref === 'string') params.ref = query.ref;
+
+  // Code
+  if (typeof query.code === 'string') params.code = query.code;
+
+  return params;
 }
 
-async function logStudyPlanEvent(event: 'studyplan_create' | 'studyplan_update' | 'studyplan_task_complete', payload: Record<string, unknown> = {}) {
-  try {
-    await fetch('/api/study-plan/events', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ event, payload }),
-      keepalive: true,
-    });
-  } catch (err) {
-    console.error('[study-plan] failed to log trackor event', err);
-  }
-}
+// ------------------ Page ------------------
+const PricingPage: NextPage = () => {
+  const router = useRouter();
+  const { plan: currentPlan } = usePlan();
 
-function createPlanFromPreset(preset: StudyPlanPreset, userId: string): PlanType {
-  const start = new Date();
-  start.setUTCHours(0, 0, 0, 0);
+  // Normalize incoming parameters
+  const normalizedParams = React.useMemo(() => normalizePricingParams(router.query), [router.query]);
+  const { reason, plan: suggestedPlan, returnTo, ref, code } = normalizedParams;
 
-  const exam = new Date(start);
-  exam.setUTCDate(exam.getUTCDate() + preset.weeks * 7 - 1);
+  // You can now use these normalized values to highlight a plan, show a message, etc.
+  // For example, pre‑select a plan tab or show a banner based on reason.
 
-  const weaknesses =
-    preset.id === 'speaking-boost'
-      ? ['speaking:fluency', 'writing:task2 coherence']
-      : preset.id === 'listening-sprint'
-      ? ['listening:maps', 'listening:matching']
-      : undefined;
+  // Example: highlight a plan if suggestedPlan is present
+  const highlightedPlan = suggestedPlan && ['free', 'starter', 'booster', 'master'].includes(suggestedPlan)
+    ? suggestedPlan
+    : null;
 
-  const availability = PRESET_AVAILABILITY[preset.id] ?? PRESET_AVAILABILITY['balanced-4w'];
-  const targetBand = PRESET_TARGETS[preset.id] ?? 7;
-
-  return generateStudyPlan({
-    userId,
-    startISO: start.toISOString(),
-    examDateISO: exam.toISOString(),
-    targetBand,
-    availability,
-    weaknesses,
-  });
-}
-
-export default function StudyPlanPage() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [plan, setPlan] = useState<PlanType | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [creatingId, setCreatingId] = useState<string | null>(null);
-  const [busyTask, setBusyTask] = useState<string | null>(null);
-
-  const { t, isRTL } = useLocale();
-  const planProgressRef = useRef<number>(0);
-
-  const { success: toastSuccess, error: toastError } = useToast();
-  const { current: streak, loading: streakLoading } = useStreak();
-  const { plan: subscriptionPlan, loading: planLoading } = usePlan();
-  const showUpgradeBanner = !planLoading && subscriptionPlan === 'free';
-
-  const loadPlan = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) {
-        setUserId(null);
-        setPlan(null);
-        planProgressRef.current = 0;
-        return;
-      }
-      setUserId(user.id);
-
-      const { data, error } = await supabase
-        .from('study_plans')
-        .select('plan_json,start_iso,weeks,goal_band')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') throw error;
-
-      if (!data) {
-        setPlan(null);
-        planProgressRef.current = 0;
-      } else {
-        const normalised = coerceStudyPlan(data.plan_json ?? data, user.id, {
-          startISO: data.start_iso ?? undefined,
-          weeks: data.weeks ?? undefined,
-          goalBand: data.goal_band ?? undefined,
-        });
-        setPlan(normalised);
-        planProgressRef.current = countCompletedTasks(normalised);
-      }
-    } catch (err) {
-      console.error('Failed to load study plan', err);
-      setPlan(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadPlan();
-  }, [loadPlan]);
-
-  const todayKey = getDayKeyInTZ();
-
-  const today = useMemo<StudyDay | null>(() => {
-    if (!plan) return null;
-    return plan.days.find((d) => planDayKey(d) === todayKey) ?? null;
-  }, [plan, todayKey]);
-
-  const upcomingDays = useMemo<StudyDay[]>(() => {
-    if (!plan) return [];
-    return plan.days.filter((d) => planDayKey(d) >= todayKey).slice(0, 7);
-  }, [plan, todayKey]);
-
-  const planTotals = useMemo(() => {
-    if (!plan) return { total: 0, completed: 0 };
-    return plan.days.reduce(
-      (acc, day) => {
-        acc.total += day.tasks.length;
-        acc.completed += day.tasks.filter((task) => task.completed).length;
-        return acc;
-      },
-      { total: 0, completed: 0 },
-    );
-  }, [plan]);
-
-  const planProgress = planTotals.total > 0 ? Math.round((planTotals.completed / planTotals.total) * 100) : 0;
-
-  const nextTaskToday = useMemo(() => {
-    if (!today) return null;
-    return today.tasks.find((task) => !task.completed) ?? null;
-  }, [today]);
-
-  const taskRefs = useRef<Record<string, HTMLInputElement | null>>({});
-
-  const handleTaskRef = useCallback((taskId: string, element: HTMLInputElement | null) => {
-    if (element) taskRefs.current[taskId] = element;
-    else delete taskRefs.current[taskId];
-  }, []);
-
-  const handleFocusNextTask = useCallback(() => {
-    if (!nextTaskToday) return;
-    const target = taskRefs.current[nextTaskToday.id];
-    if (target) {
-      target.focus();
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [nextTaskToday]);
-
-  const persistPlan = useCallback(
-    async (next: PlanType) => {
-      if (!userId) throw new Error('Not authenticated');
-      const { error } = await supabase
-        .from('study_plans')
-        .upsert(
-          {
-            user_id: userId,
-            plan_json: next as unknown as Record<string, unknown>,
-            start_iso: next.startISO,
-            weeks: next.weeks,
-            goal_band: next.goalBand ?? null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' },
-        );
-      if (error) throw error;
-    },
-    [userId],
-  );
-
-  const handleCreatePlan = useCallback(
-    async (preset: StudyPlanPreset) => {
-      if (!userId) {
-        toastError(t('studyPlan.toast.signInRequired', 'Please sign in to create a plan.'));
-        return;
-      }
-      setCreatingId(preset.id);
-      try {
-        const nextPlan = createPlanFromPreset(preset, userId);
-        await persistPlan(nextPlan);
-        setPlan(nextPlan);
-        toastSuccess(
-          t('studyPlan.toast.planReady.title', 'Plan ready'),
-          t('studyPlan.toast.planReady.description', 'Your new study plan is live. Start with todayâ€™s tasks!'),
-        );
-        track('studyplan_create', { preset: preset.id, weeks: preset.weeks });
-        void logStudyPlanEvent('studyplan_create', { preset: preset.id, weeks: preset.weeks });
-      } catch (err) {
-        console.error('Failed to create plan', err);
-        toastError(t('studyPlan.toast.createError', 'Could not create study plan. Please try again.'));
-      } finally {
-        setCreatingId(null);
-      }
-    },
-    [persistPlan, toastError, toastSuccess, userId, t],
-  );
-
-  const handleTaskToggle = useCallback(
-    async (day: StudyDay, taskId: string, checked: boolean) => {
-      if (!plan || !userId) return;
-
-      const dayKey = planDayKey(day);
-      const target = day.tasks.find((t) => t.id === taskId);
-      const wasComplete = target?.completed ?? false;
-      const hadOtherCompleted = day.tasks.some((t) => t.completed && t.id !== taskId);
-
-      const next: PlanType = {
-        ...plan,
-        days: plan.days.map((d) =>
-          d.dateISO === day.dateISO
-            ? { ...d, tasks: d.tasks.map((t) => (t.id === taskId ? { ...t, completed: checked } : t)) }
-            : d,
-        ),
-      };
-
-      setBusyTask(taskId);
-      setPlan(next);
-
-      const prevCompleted = planProgressRef.current;
-
-      try {
-        await persistPlan(next);
-        track('studyplan_update', { day: dayKey, taskId, completed: checked });
-        void logStudyPlanEvent('studyplan_update', { day: dayKey, taskId, completed: checked });
-        if (checked && !wasComplete) {
-          track('studyplan_task_complete', { day: dayKey, taskId });
-          void logStudyPlanEvent('studyplan_task_complete', { day: dayKey, taskId });
-        }
-      } catch (err) {
-        console.error('Failed to update task', err);
-        toastError(t('studyPlan.toast.updateError', 'Could not update task. Please try again.'));
-        setPlan(plan); // rollback
-        planProgressRef.current = prevCompleted;
-      } finally {
-        setBusyTask(null);
-      }
-    },
-    [plan, t, userId, persistPlan, toastError, todayKey],
-  );
-
-  const hasPlan = !!plan && plan.days.length > 0;
+  // Show a banner if there's a reason
+  const showReasonBanner = reason === 'plan_required' || reason === 'quota_exceeded';
 
   return (
-    <section className="bg-lightBg py-16 dark:bg-gradient-to-br dark:from-dark/80 dark:to-darker/90">
-      <Container>
-        <div className={clsx('flex flex-wrap items-center justify-between gap-4', isRTL && 'text-right')}>
-          <div>
-            <h1 className="font-slab text-display">{t('studyPlan.page.title', 'Your study plan')}</h1>
-            <p className="text-body text-muted-foreground">{t('studyPlan.page.subtitle', 'Stay on pace toward your IELTS goal with a daily schedule.')}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <StreakChip value={streakLoading ? 0 : streak} loading={streakLoading} href="/profile/streak" />
-            <Button variant="soft" tone="info" asChild>
-              <Link href="/progress">{t('studyPlan.page.viewProgress', 'View progress')}</Link>
-            </Button>
-          </div>
-        </div>
+    <>
+      <Head>
+        <title>Pricing — GramorX</title>
+        <meta
+          name="description"
+          content="Premium global pricing for GramorX IELTS — multi-currency, timezone-aware, and conversion-optimized."
+        />
+      </Head>
 
-        {showUpgradeBanner && (
-          <UpgradeBanner
-            className="mt-6"
-            pillLabel="Explorer Â· Free plan"
-            title={t('studyPlan.upgrade.title', 'Refresh your study plan without limits')}
-            description={t(
-              'studyPlan.upgrade.description',
-              'Premium auto-adjusts your calendar, adds weekly mock recommendations, and sends WhatsApp nudges when you fall behind.',
+      <main role="main" className="min-h-screen bg-marketing-aurora text-foreground antialiased">
+        {showReasonBanner && (
+          <div className="bg-primary/10 border-b border-primary/20 py-3 text-center text-sm">
+            {reason === 'plan_required' && (
+              <p>
+                You need a higher plan to access that feature.{' '}
+                {suggestedPlan && `We recommend the ${getStandardPlanName(suggestedPlan)} plan.`}
+              </p>
             )}
-            href="/pricing/overview?from=study-plan-upgrade"   // ← changed from '/pricing?from=study-plan-upgrade'
-            feature="Adaptive study plan"
-          />
+            {reason === 'quota_exceeded' && (
+              <p>You’ve reached your daily limit. Upgrade for unlimited access.</p>
+            )}
+          </div>
         )}
 
-        <div className="mt-10 space-y-8">
-          {loading ? (
-            <Card className="rounded-ds-2xl p-6">
-              <div className="space-y-4">
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-32 w-full" />
+        <Section id="pricing">
+          <Container className="pt-6 md:pt-8 pb-12 md:pb-16" aria-labelledby="pricing-title">
+            {/* Breadcrumb / back link if returnTo is present */}
+            {returnTo && (
+              <div className="mb-4">
+                <Link href={returnTo} className="text-sm text-muted-foreground hover:text-foreground">
+                  ← Back
+                </Link>
               </div>
-            </Card>
-          ) : !hasPlan ? (
-            <StudyPlanEmptyState
-              presets={PRESETS}
-              onSelect={handleCreatePlan}
-              busyId={creatingId}
-              disabled={!!creatingId}
-              showOnboardingCta
-            />
-          ) : (
-            <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-              <div className="space-y-6">
-                <PlanCard
-                  day={today ?? plan!.days[0]}
-                  onToggleTask={(taskId, checked) => handleTaskToggle(today ?? plan!.days[0], taskId, checked)}
-                  busyTaskId={busyTask}
-                  isToday={planDayKey(today ?? plan!.days[0]) === todayKey}
-                  nextTaskId={nextTaskToday?.id ?? null}
-                  onStartNextTask={handleFocusNextTask}
-                  onTaskRef={handleTaskRef}
-                />
-                <PlanTimeline days={upcomingDays} todayKey={todayKey} />
-              </div>
+            )}
 
-              <div className="space-y-6">
-                <Card className="rounded-ds-2xl p-6 space-y-4">
-                  <h3 className="font-slab text-h4">{t('studyPlan.sidebar.progress.title', 'Plan progress')}</h3>
-                  <p className="text-small text-muted-foreground">
-                    {planProgress >= 100
-                      ? t('studyPlan.sidebar.progress.done', 'Youâ€™ve completed every task in this plan. Consider regenerating a new schedule to keep training.')
-                      : t('studyPlan.sidebar.progress.keepPace', 'Stay on pace toward your IELTS goal by checking off the next task in your queue.')}
-                  </p>
-                  <div className="space-y-2">
-                    <ProgressBar value={planProgress} aria-label={t('studyPlan.sidebar.progress.aria', 'Overall study plan progress')} />
-                    <div className="flex items-center justify-between text-small font-medium text-foreground">
-                      <span>
-                        {planTotals.completed}/{planTotals.total} {t('studyPlan.sidebar.progress.tasksComplete', 'tasks complete')}
-                      </span>
-                      <span>{planProgress}%</span>
-                    </div>
-                  </div>
-                  <Button variant="soft" tone="info" size="sm" onClick={handleFocusNextTask} disabled={!nextTaskToday}>
-                    {nextTaskToday
-                      ? t('studyPlan.sidebar.progress.jump', 'Jump to todayâ€™s next task')
-                      : t('studyPlan.sidebar.progress.caughtUp', 'All caught up for today')}
+            <div className="text-center">
+              <Badge variant="info" size="sm" className="mb-4 inline-flex items-center gap-2">
+                Simple, fair pricing
+              </Badge>
+              <h1 id="pricing-title" className="mt-3 md:mt-3 text-balance text-display md:text-displayLg font-semibold leading-tight">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-cyan-500">
+                  Choose your plan
+                </span>
+              </h1>
+              <p className="mt-3 text-body text-muted-foreground max-w-2xl mx-auto">
+                Start free, upgrade when you need more. All plans include core IELTS practice.
+              </p>
+            </div>
+
+            <section id="plans" aria-labelledby="plans-heading" className="mt-6 md:mt-8">
+              <h2 id="plans-heading" className="sr-only">Plans and pricing options</h2>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {/* Free Plan */}
+                <Card className="relative p-6" elevated={highlightedPlan === 'free'}>
+                  {highlightedPlan === 'free' && (
+                    <Badge variant="success" className="absolute -top-2 left-4">Recommended</Badge>
+                  )}
+                  <h3 className="text-xl font-semibold">{getStandardPlanName('free')}</h3>
+                  <p className="mt-2 text-3xl font-bold">${getPlanPricing('free').monthly}</p>
+                  <p className="text-sm text-muted-foreground">forever free</p>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> 5 mock attempts / month</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Basic AI feedback</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Community access</li>
+                  </ul>
+                  <Button asChild className="mt-6 w-full" variant={currentPlan === 'free' ? 'secondary' : 'primary'}>
+                    <Link href={currentPlan === 'free' ? '/dashboard' : '/signup'}>
+                      {currentPlan === 'free' ? 'Your current plan' : 'Get started'}
+                    </Link>
                   </Button>
                 </Card>
 
-                <Card className="rounded-ds-2xl p-6 space-y-4">
-                  <h3 className="font-slab text-h4">{t('studyPlan.sidebar.title', 'Need a change?')}</h3>
-                  <p className="text-small text-muted-foreground">
-                    {t('studyPlan.sidebar.description', 'Plans adapt as you complete tasks. You can always regenerate a fresh schedule from the presets below.')}
-                  </p>
-                  <div className="space-y-3">
-                    {PRESETS.map((preset) => (
-                      <Button
-                        key={preset.id}
-                        variant="ghost"
-                        className="w-full justify-between"
-                        onClick={() => handleCreatePlan(preset)}
-                        loading={creatingId === preset.id}
-                      >
-                        {t(preset.titleKey)}
-                        <span className="text-small text-muted-foreground">
-                          {t('studyPlan.sidebar.weekShort', '{{count}} wk', { count: preset.weeks })}
-                        </span>
-                      </Button>
-                    ))}
-                  </div>
+                {/* Starter Plan */}
+                <Card className="relative p-6" elevated={highlightedPlan === 'starter'}>
+                  {highlightedPlan === 'starter' && (
+                    <Badge variant="success" className="absolute -top-2 left-4">Recommended</Badge>
+                  )}
+                  <h3 className="text-xl font-semibold">{getStandardPlanName('starter')}</h3>
+                  <p className="mt-2 text-3xl font-bold">${getPlanPricing('starter').monthly}</p>
+                  <p className="text-sm text-muted-foreground">per month, billed monthly</p>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Unlimited mock attempts</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Advanced AI feedback</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Priority support</li>
+                  </ul>
+                  <Button asChild className="mt-6 w-full" variant={currentPlan === 'starter' ? 'secondary' : 'primary'}>
+                    <Link href={currentPlan === 'starter' ? '/dashboard' : '/checkout?plan=starter'}>
+                      {currentPlan === 'starter' ? 'Current plan' : 'Upgrade'}
+                    </Link>
+                  </Button>
+                </Card>
+
+                {/* Booster Plan */}
+                <Card className="relative p-6" elevated={highlightedPlan === 'booster'}>
+                  {highlightedPlan === 'booster' && (
+                    <Badge variant="success" className="absolute -top-2 left-4">Recommended</Badge>
+                  )}
+                  <h3 className="text-xl font-semibold">{getStandardPlanName('booster')}</h3>
+                  <p className="mt-2 text-3xl font-bold">${getPlanPricing('booster').monthly}</p>
+                  <p className="text-sm text-muted-foreground">per month, billed monthly</p>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Everything in Starter</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> AI‑powered study plan</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> 1‑on‑1 coaching session</li>
+                  </ul>
+                  <Button asChild className="mt-6 w-full" variant={currentPlan === 'booster' ? 'secondary' : 'primary'}>
+                    <Link href={currentPlan === 'booster' ? '/dashboard' : '/checkout?plan=booster'}>
+                      {currentPlan === 'booster' ? 'Current plan' : 'Upgrade'}
+                    </Link>
+                  </Button>
+                </Card>
+
+                {/* Master Plan */}
+                <Card className="relative p-6" elevated={highlightedPlan === 'master'}>
+                  {highlightedPlan === 'master' && (
+                    <Badge variant="success" className="absolute -top-2 left-4">Recommended</Badge>
+                  )}
+                  <h3 className="text-xl font-semibold">{getStandardPlanName('master')}</h3>
+                  <p className="mt-2 text-3xl font-bold">${getPlanPricing('master').monthly}</p>
+                  <p className="text-sm text-muted-foreground">per month, billed monthly</p>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Everything in Booster</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Unlimited coaching</li>
+                    <li className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-green-600" /> Priority feature access</li>
+                  </ul>
+                  <Button asChild className="mt-6 w-full" variant={currentPlan === 'master' ? 'secondary' : 'primary'}>
+                    <Link href={currentPlan === 'master' ? '/dashboard' : '/checkout?plan=master'}>
+                      {currentPlan === 'master' ? 'Current plan' : 'Upgrade'}
+                    </Link>
+                  </Button>
                 </Card>
               </div>
-            </div>
-          )}
-        </div>
-      </Container>
-    </section>
+            </section>
+
+            {/* Referral code handling */}
+            {code && (
+              <div className="mt-8 text-center text-sm text-muted-foreground">
+                Referral code applied: <span className="font-mono">{code}</span>
+              </div>
+            )}
+          </Container>
+        </Section>
+      </main>
+    </>
   );
-}
+};
+
+export default PricingPage;

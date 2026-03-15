@@ -296,7 +296,7 @@ export default function BillingHistoryPage() {
                 {t(
                   'billingHistory.support',
                   'Questions about your invoices? Contact {{supportEmail}}',
-                  { supportEmail: 'support@gramorx.com' }
+                  { supportEmail: 'info@gramorx.com' }
                 )}
               </p>
             </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import type { GetServerSideProps } from 'next';
 
 import { getServerClient } from '@/lib/supabaseServer';
+import { getStandardPlanName } from '@/lib/subscription'; // 👈 added import
 
 import { Alert } from '@/components/design-system/Alert';
 import { Badge } from '@/components/design-system/Badge';
@@ -282,7 +283,7 @@ export default function BillingPage() {
             {t('billing.renews', 'Renews {{date}}', { date: renews })}
           </span>
         )}
-        {renews && trialEnds && <span aria-hidden="true"> · </span>}
+        {renews && trialEnds && <span aria-hidden="true"> Â· </span>}
         {trialEnds && (
           <span>
             {t('billing.trialEnds', 'Trial ends {{date}}', { date: trialEnds })}
@@ -295,7 +296,7 @@ export default function BillingPage() {
   return (
     <>
       <Head>
-        <title>{t('billing.pageTitle', 'Billing · Account · GramorX')}</title>
+        <title>{t('billing.pageTitle', 'Billing Â· Account Â· GramorX')}</title>
         <meta
           name="description"
           content={t(
@@ -454,9 +455,9 @@ export default function BillingPage() {
                         as="h2"
                         size="sm"
                         id="current-plan-heading"
-                        className="capitalize text-foreground"
+                        className="text-foreground"
                       >
-                        {toTitleCase(summary.plan)}
+                        {getStandardPlanName(summary.plan)} {/* 👈 replaced toTitleCase with canonical name */}
                       </Heading>
                       <Badge variant={getStatusVariant(summary.status)}>
                         {toTitleCase(summary.status)}
@@ -472,7 +473,7 @@ export default function BillingPage() {
                       size="lg"
                     >
                       {portalLoading
-                        ? t('common.opening', 'Opening…')
+                        ? t('common.opening', 'Openingâ€¦')
                         : t('billing.manage', 'Manage billing')}
                     </Button>
                   ) : (
@@ -503,12 +504,12 @@ export default function BillingPage() {
                       <Alert
                         variant="warning"
                         appearance="soft"
-                        title={t('billing.cardSaved', 'Card saved — payment due later')}
+                        title={t('billing.cardSaved', 'Card saved â€” payment due later')}
                       >
                         <p className="mt-1 text-small text-muted-foreground">
                           {t(
                             'billing.cardSavedDesc',
-                            'Payments are temporarily unavailable. If you recently subscribed, your card was not charged and the amount is marked as due. We’ll notify you before retrying payment.'
+                            'Payments are temporarily unavailable. If you recently subscribed, your card was not charged and the amount is marked as due. Weâ€™ll notify you before retrying payment.'
                           )}
                         </p>
                       </Alert>
@@ -564,7 +565,7 @@ export default function BillingPage() {
                                 {toTitleCase(d.status)}
                               </Badge>
                               <div className="text-small text-muted-foreground">
-                                {toTitleCase(d.plan_key)} · {toTitleCase(d.cycle)}
+                                {getStandardPlanName(d.plan_key)} Â· {toTitleCase(d.cycle)} {/* 👈 replaced */}
                               </div>
                               <div className="text-caption text-muted-foreground">
                                 {formatDateTime(d.created_at)}
@@ -668,7 +669,7 @@ export default function BillingPage() {
               <p className="mt-2 text-small text-muted-foreground">
                 {t(
                   'billing.noSubscriptionDesc',
-                  'We couldn’t find an active subscription yet. Start a plan from the pricing page when you’re ready.'
+                  'We couldnâ€™t find an active subscription yet. Start a plan from the pricing page when youâ€™re ready.'
                 )}
               </p>
               <div className="mt-3">

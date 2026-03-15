@@ -85,17 +85,6 @@ const OnboardingTargetBandPage: NextPage = () => {
     });
   }
 
-  function handleStepClick(stepId: OnboardingStepId) {
-    const pathname = STEP_ROUTES[stepId];
-    if (!pathname) return;
-
-    // keep ?next= consistent
-    router.push({
-      pathname,
-      query: { next: nextPath },
-    });
-  }
-
   async function handleContinue() {
     setError(null);
 
@@ -125,12 +114,12 @@ const OnboardingTargetBandPage: NextPage = () => {
   return (
     <main className="min-h-screen bg-background">
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-        {/* Progress rail (clickable) */}
+        {/* Progress rail – now non‑clickable */}
         <div className="mb-6 w-full max-w-3xl">
           <OnboardingProgress
             steps={ONBOARDING_STEPS}
             currentIndex={currentIndex}
-            onStepClick={handleStepClick}
+            // onStepClick removed – circles are static
           />
         </div>
 
@@ -207,13 +196,13 @@ const OnboardingTargetBandPage: NextPage = () => {
 interface OnboardingProgressProps {
   steps: { id: OnboardingStepId; label: string }[];
   currentIndex: number;
-  onStepClick?: (id: OnboardingStepId) => void;
+  onStepClick?: (id: OnboardingStepId) => void; // kept for compatibility, but we're not passing it
 }
 
 const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
   steps,
   currentIndex,
-  onStepClick,
+  onStepClick, // unused – but component still works without it
 }) => {
   return (
     <div className="flex flex-col gap-2">
@@ -282,6 +271,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
               type="button"
               onClick={onStepClick ? () => onStepClick(step.id) : undefined}
               className="flex-1 focus-visible:outline-none"
+              disabled={!onStepClick}
             >
               {label}
             </button>

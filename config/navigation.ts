@@ -183,7 +183,7 @@ export const navigationSchema: AppNavigationSchema = {
         {
           id: 'support-email',
           label: 'Email Support',
-          href: 'mailto:support@gramorx.com',
+          href: 'mailto:info@gramorx.com',
           external: true,
           target: '_blank',
         },

@@ -1,0 +1,2699 @@
+﻿
+================================================================================
+FILE 1: pages\onboarding\confidence.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+export default function ConfidencePage() {
+  const router = useRouter();
+  const nav = resolveNavigation('confidence');
+  const [writing, setWriting] = useState(3);
+  const [speaking, setSpeaking] = useState(3);
+
+  useEffect(() => {
+    const d = loadDraft('confidence', { writing: 3, speaking: 3 });
+    setWriting(d.writing); setSpeaking(d.speaking);
+  }, []);
+  useEffect(() => saveDraft('confidence', { writing, speaking }), [writing, speaking]);
+
+  return <StepLayout title="How confident are you today?" subtitle="Rate from 1 (low) to 5 (high)." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button onClick={async()=>{await saveOnboardingStep(10,{ writing, speaking }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+    <div className="space-y-5">
+      <label className="block"><span className="mb-1 block font-medium">Writing confidence: {writing}/5</span><input className="w-full" type="range" min={1} max={5} value={writing} onChange={(e)=>setWriting(Number(e.target.value))} /></label>
+      <label className="block"><span className="mb-1 block font-medium">Speaking confidence: {speaking}/5</span><input className="w-full" type="range" min={1} max={5} value={speaking} onChange={(e)=>setSpeaking(Number(e.target.value))} /></label>
+    </div>
+  </StepLayout>;
+}
+
+
+
+================================================================================
+FILE 2: pages\onboarding\current-level.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
+
+export default function CurrentLevelPage() {
+  const router = useRouter();
+  const nav = resolveNavigation('current-level');
+  const [currentLevel, setLevel] = useState<(typeof levels)[number]>('B1');
+
+  useEffect(() => {
+    const d = loadDraft('current-level', { currentLevel: 'B1' as const });
+    setLevel(d.currentLevel);
+  }, []);
+  useEffect(() => saveDraft('current-level', { currentLevel }), [currentLevel]);
+
+  return (
+    <StepLayout title="What's your current English level?" subtitle="Choose your best estimate. We'll calibrate plan difficulty from here." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button onClick={async()=>{await saveOnboardingStep(3,{ currentLevel }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {levels.map((l) => (
+          <button key={l} onClick={() => setLevel(l)} className={`rounded-xl border p-4 text-left transition ${currentLevel===l?'border-primary bg-primary/10':'border-border hover:bg-muted/40'}`}>
+            <p className="text-lg font-semibold">{l}</p>
+            <p className="text-xs text-muted-foreground">CEFR level</p>
+          </button>
+        ))}
+      </div>
+    </StepLayout>
+  );
+}
+
+
+
+================================================================================
+FILE 3: pages\onboarding\diagnostic.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+type DiagnosticResult = { grammar: string; coherence: string; vocabulary: string; estimated_band: number };
+
+export default function DiagnosticPage() {
+  const router = useRouter();
+  const nav = resolveNavigation('diagnostic');
+  const [response, setResponse] = useState('');
+  const [result, setResult] = useState<DiagnosticResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const d = loadDraft('diagnostic', { response: '' });
+    setResponse(d.response);
+  }, []);
+  useEffect(() => saveDraft('diagnostic', { response, result }), [response, result]);
+
+  const runDiagnostic = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch('/api/ai/diagnostic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ response }) });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error || 'Diagnostic failed');
+      setResult(body as DiagnosticResult);
+      await saveOnboardingStep(11, { response, result: body });
+    } catch (e: any) { setError(e?.message || 'Could not run diagnostic'); }
+    finally { setLoading(false); }
+  };
+
+  return <StepLayout title="Quick writing diagnostic" subtitle="Write 80+ words about your IELTS goal. Weâ€™ll estimate your current band." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<div className="flex gap-2"><Button variant="secondary" disabled={loading || response.length < 20} onClick={()=>void runDiagnostic()}>{loading ? 'Analyzingâ€¦' : 'Run diagnostic'}</Button>{result && <Button onClick={()=>nav.next && router.push(nav.next.path)}>Continue</Button>}</div>}>
+    <textarea className="min-h-40 w-full rounded-xl border p-3" value={response} onChange={(e)=>setResponse(e.target.value)} placeholder="Tell us about your IELTS goal, challenges, and target score..." />
+    {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+    {result && <div className="mt-4 grid gap-2 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm sm:grid-cols-2"><p><strong>Estimated band:</strong> {result.estimated_band.toFixed(1)}</p><p><strong>Grammar:</strong> {result.grammar}</p><p><strong>Coherence:</strong> {result.coherence}</p><p><strong>Vocabulary:</strong> {result.vocabulary}</p></div>}
+    <p className="mt-3 text-xs text-muted-foreground">Draft saves automatically while typing.</p>
+  </StepLayout>;
+}
+
+
+
+================================================================================
+FILE 4: pages\onboarding\exam-timeline.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+const options = [
+  ['within_1_month', 'Within 1 month'],
+  ['within_3_months', 'Within 3 months'],
+  ['within_6_months', 'Within 6 months'],
+  ['not_scheduled', 'Not scheduled yet'],
+] as const;
+
+export default function ExamTimelinePage() {
+  const router = useRouter();
+  const nav = resolveNavigation('exam-timeline');
+  const [timeframe, setTimeframe] = useState('within_3_months');
+  const [examDate, setExamDate] = useState('');
+
+  useEffect(() => {
+    const d = loadDraft('exam-timeline', { timeframe: 'within_3_months', examDate: '' });
+    setTimeframe(d.timeframe); setExamDate(d.examDate);
+  }, []);
+  useEffect(() => saveDraft('exam-timeline', { timeframe, examDate }), [timeframe, examDate]);
+
+  return <StepLayout title="When is your exam?" subtitle="We use this to build a realistic timeline." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button onClick={async()=>{await saveOnboardingStep(6,{ timeframe, examDate: examDate || null }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+    <div className="grid gap-3 sm:grid-cols-2">{options.map(([v,l]) => <button key={v} onClick={()=>setTimeframe(v)} className={`rounded-xl border p-4 text-left ${timeframe===v?'border-primary bg-primary/10':'border-border'}`}>{l}</button>)}</div>
+    <input type="date" className="mt-4 w-full rounded-xl border p-3 sm:w-auto" value={examDate} onChange={(e)=>setExamDate(e.target.value)} />
+  </StepLayout>;
+}
+
+
+
+================================================================================
+FILE 5: pages\onboarding\index.tsx
+================================================================================
+
+// pages/onboarding/index.tsx
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+import { Icon } from '@/components/design-system/Icon';
+import { cn } from '@/lib/utils';
+
+type LanguageCode = 'en' | 'ur';
+
+export default function OnboardingLanguagePage() {
+  const router = useRouter();
+  const nav = resolveNavigation('language');
+  const [language, setLanguage] = useState<LanguageCode | null>(null);
+
+  // Load draft on mount
+  useEffect(() => {
+    const draft = loadDraft('language', { preferredLanguage: 'en' });
+    setLanguage(draft.preferredLanguage);
+  }, []);
+
+  // Autoâ€‘save draft on change
+  useEffect(() => {
+    if (language) saveDraft('language', { preferredLanguage: language });
+  }, [language]);
+
+  const handleContinue = async () => {
+    if (!language) return;
+    // Step 2 matches the original index.tsx (first onboarding step)
+    await saveOnboardingStep(2, { preferredLanguage: language });
+    if (nav.next) await router.push(nav.next.path);
+  };
+
+  return (
+    <StepLayout
+      title="Pick your learning language"
+      subtitle="We'll translate nudges, reminders, and key instructions so the platform feels natural to you. You can change this later from Settings â†’ Preferences."
+      step={nav.index + 1}
+      total={nav.total}
+      onBack={nav.prev ? () => router.push(nav.prev.path) : undefined}
+      footer={
+        <Button onClick={handleContinue} disabled={!language}>
+          Continue
+          <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+        </Button>
+      }
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <LanguageChoice
+          code="en"
+          label="English"
+          description="Interface, reminders, and lessons in English."
+          selected={language === 'en'}
+          onSelect={() => setLanguage('en')}
+        />
+        <LanguageChoice
+          code="ur"
+          label="Ø§Ø±Ø¯Ùˆ + English mix"
+          description="Interface in Urdu with IELTS practice mostly kept bilingual."
+          selected={language === 'ur'}
+          onSelect={() => setLanguage('ur')}
+        />
+      </div>
+
+      <p className="mt-4 text-xs text-muted-foreground">
+        Tip: Use <span className="rounded bg-muted px-1.5 py-0.5">â†</span> and{' '}
+        <span className="rounded bg-muted px-1.5 py-0.5">â†’</span> arrow keys to move between
+        options, then press <span className="rounded bg-muted px-1.5 py-0.5">Enter</span> to
+        continue.
+      </p>
+    </StepLayout>
+  );
+}
+
+interface LanguageChoiceProps {
+  code: LanguageCode;
+  label: string;
+  description: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+const LanguageChoice: React.FC<LanguageChoiceProps> = ({
+  label,
+  description,
+  selected,
+  onSelect,
+}) => {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'group flex h-full flex-col rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
+        selected
+          ? 'border-primary bg-primary/10 shadow-md'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            {label.charAt(0)}
+          </span>
+          <span className="text-base font-semibold sm:text-lg">{label}</span>
+        </div>
+
+        <div
+          className={cn(
+            'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
+            selected
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
+          )}
+        >
+          {selected ? <Icon name="check" className="h-3 w-3" /> : ''}
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground sm:text-sm">{description}</p>
+    </button>
+  );
+};
+
+
+
+================================================================================
+FILE 6: pages\onboarding\learning-style.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+const styles = [
+  ['visual', 'Visual (charts, diagrams)'],
+  ['auditory', 'Auditory (listening & speaking)'],
+  ['reading_writing', 'Reading/Writing'],
+  ['kinesthetic', 'Hands-on practice'],
+  ['mixed', 'Mixed'],
+] as const;
+
+export default function LearningStylePage() {
+  const router = useRouter();
+  const nav = resolveNavigation('learning-style');
+  const [learningStyle, setLearningStyle] = useState<(typeof styles)[number][0]>('mixed');
+
+  useEffect(() => {
+    const d = loadDraft('learning-style', { learningStyle: 'mixed' as const });
+    setLearningStyle(d.learningStyle);
+  }, []);
+  useEffect(() => saveDraft('learning-style', { learningStyle }), [learningStyle]);
+
+  return <StepLayout title="What learning style suits you?" subtitle="We'll tune exercises and explanations to your preference." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button onClick={async()=>{await saveOnboardingStep(8,{ learningStyle }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+    <div className="grid gap-3 sm:grid-cols-2">{styles.map(([value,label])=><button key={value} onClick={()=>setLearningStyle(value)} className={`rounded-xl border p-4 text-left ${learningStyle===value?'border-primary bg-primary/10':'border-border'}`}>{label}</button>)}</div>
+  </StepLayout>;
+}
+
+
+
+================================================================================
+FILE 7: pages\onboarding\notifications.tsx
+================================================================================
+
+// pages/onboarding/notifications.tsx
+import type { NextPage } from 'next';
+import { useRouter } from 'next/router';
+import React, { useMemo, useState } from 'react';
+
+import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
+import { Icon } from '@/components/design-system/Icon';
+import { cn } from '@/lib/utils';
+import {
+  NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER,
+  TOTAL_ONBOARDING_STEPS,
+  type NotificationChannel,
+} from '@/lib/onboarding/schema';
+import { saveOnboardingStep } from '@/lib/onboarding/client';
+
+type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
+
+const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
+  { id: 'language', label: 'Language' },
+  { id: 'target-band', label: 'Target band' },
+  { id: 'exam-date', label: 'Exam date' },
+  { id: 'study-rhythm', label: 'Study rhythm' },
+  { id: 'notifications', label: 'Notifications' },
+];
+
+const STEP_ROUTES: Record<OnboardingStepId, string> = {
+  language: '/onboarding',
+  'target-band': '/onboarding/target-band',
+  'exam-date': '/onboarding/exam-date',
+  'study-rhythm': '/onboarding/study-rhythm',
+  notifications: '/onboarding/notifications',
+};
+
+type ChannelId = NotificationChannel;
+
+interface ChannelOption {
+  id: ChannelId;
+  label: string;
+  description: string;
+  badge?: string;
+}
+
+const CHANNEL_OPTIONS: ChannelOption[] = [
+  {
+    id: 'email',
+    label: 'Email',
+    description: 'Daily/weekly summaries, test reminders, and progress reports.',
+    badge: 'Recommended',
+  },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    description: 'Short nudges, streak alerts, and quick links to practice.',
+  },
+  {
+    id: 'in_app',
+    label: 'In-app only',
+    description: 'Silent mode. See reminders only inside GramorX.',
+  },
+];
+
+const OnboardingNotificationsPage: NextPage = () => {
+  const router = useRouter();
+
+  const [selectedChannels, setSelectedChannels] = useState<ChannelId[]>([
+    NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER[0],
+  ]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Final destination after onboarding
+  const nextPath = useMemo(() => {
+    const { next } = router.query;
+    const raw = typeof next === 'string' ? next : '/onboarding/study-plan';
+
+    // never loop back into onboarding from final step
+    if (!raw) {
+      return '/onboarding/study-plan';
+    }
+
+    if (raw.startsWith('/onboarding') && raw !== '/onboarding/study-plan') {
+      return '/onboarding/study-plan';
+    }
+    return raw;
+  }, [router.query]);
+
+  const currentIndex = useMemo(
+    () => ONBOARDING_STEPS.findIndex((s) => s.id === 'notifications'),
+    [],
+  );
+
+  const hasChannel = selectedChannels.length > 0;
+
+  function toggleChannel(id: ChannelId) {
+    setSelectedChannels((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
+    );
+  }
+
+  function handleBack() {
+    router.push({
+      pathname: STEP_ROUTES['study-rhythm'],
+      query: { next: nextPath },
+    });
+  }
+
+  async function handleFinish() {
+    setError(null);
+
+    if (!hasChannel) {
+      setError('Pick at least one way for us to remind you.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      await saveOnboardingStep(TOTAL_ONBOARDING_STEPS, {
+        channels: NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER.filter((channel) =>
+          selectedChannels.includes(channel),
+        ),
+      });
+
+      await router.push(nextPath || '/dashboard');
+    } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+      setError(e?.message || 'Could not save your notification settings. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-background">
+      <Container className="flex min-h-screen flex-col items-center justify-center py-10">
+        {/* Progress (nonâ€‘clickable) */}
+        <div className="mb-6 w-full max-w-3xl">
+          <OnboardingProgress
+            steps={ONBOARDING_STEPS}
+            currentIndex={currentIndex}
+            // onStepClick omitted â€“ static display only
+          />
+        </div>
+
+        {/* Card */}
+        <section className="w-full max-w-3xl rounded-3xl border border-border bg-card/80 p-6 shadow-xl backdrop-blur-md sm:p-8">
+          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Step {currentIndex + 1} of {ONBOARDING_STEPS.length}
+              </p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                How should we keep you on track?
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+                Choose where you want to receive study nudges, streak alerts, and mock test
+                reminders. No spam â€” only what helps your band score.
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+              <Icon name="bell" className="h-3.5 w-3.5" />
+              Smart reminders, not noise.
+            </div>
+          </header>
+
+          {/* Channels */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            {CHANNEL_OPTIONS.map((option) => (
+              <ChannelCard
+                key={option.id}
+                option={option}
+                selected={selectedChannels.includes(option.id)}
+                onToggle={() => toggleChannel(option.id)}
+              />
+            ))}
+          </div>
+
+          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+
+          <p className="mt-4 text-xs text-muted-foreground sm:text-sm">
+            You can fine-tune these later from{' '}
+            <span className="font-medium">Settings â†’ Notifications</span>.
+          </p>
+
+          {/* Footer */}
+          <footer className="mt-6 flex flex-col-reverse items-center justify-between gap-3 border-t border-border pt-4 sm:flex-row">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="text-muted-foreground"
+            >
+              <Icon name="arrow-left" className="mr-1.5 h-4 w-4" />
+              Back
+            </Button>
+
+            <div className="flex items-center gap-3">
+              <p className="hidden text-xs text-muted-foreground sm:inline">
+                Finish and go to{' '}
+                <span className="font-medium">
+                  {nextPath === '/onboarding/study-plan' ? 'your AI study plan' : nextPath}
+                </span>
+              </p>
+              <Button size="lg" onClick={handleFinish} disabled={submitting || !hasChannel}>
+                {submitting ? 'Finishingâ€¦' : 'Finish & continue'}
+                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </footer>
+        </section>
+      </Container>
+    </main>
+  );
+};
+
+interface OnboardingProgressProps {
+  steps: { id: OnboardingStepId; label: string }[];
+  currentIndex: number;
+  onStepClick?: (id: OnboardingStepId) => void;
+}
+
+const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
+  steps,
+  currentIndex,
+  onStepClick,
+}) => {
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Rail */}
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => {
+          const active = index === currentIndex;
+          const completed = index < currentIndex;
+
+          const circle = (
+            <div
+              className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
+                completed && 'border-primary bg-primary text-primary-foreground',
+                active && !completed && 'border-primary/80 bg-primary/10 text-primary',
+                !active && !completed && 'border-border bg-muted text-muted-foreground',
+              )}
+            >
+              {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
+            </div>
+          );
+
+          return (
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
+              {onStepClick ? (
+                <button
+                  type="button"
+                  onClick={() => onStepClick(step.id)}
+                  className="flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  {circle}
+                </button>
+              ) : (
+                circle
+              )}
+
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    'mx-1 h-px flex-1 rounded-full bg-border',
+                    completed && 'bg-primary/70',
+                    active && 'bg-primary/50',
+                  )}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Labels */}
+      <div className="flex justify-between text-xs text-muted-foreground">
+        {steps.map((step, index) => {
+          const active = index === currentIndex;
+
+          return (
+            <button
+              key={step.id}
+              type="button"
+              onClick={onStepClick ? () => onStepClick(step.id) : undefined}
+              className="flex-1 focus-visible:outline-none"
+              disabled={!onStepClick}
+            >
+              <span
+                className={cn(
+                  'flex-1 truncate text-center',
+                  active && 'font-medium text-foreground',
+                )}
+              >
+                {step.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+interface ChannelCardProps {
+  option: ChannelOption;
+  selected: boolean;
+  onToggle: () => void;
+}
+
+const ChannelCard: React.FC<ChannelCardProps> = ({ option, selected, onToggle }) => {
+  const { label, description, badge } = option;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={cn(
+        'group flex h-full flex-col justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
+        selected
+          ? 'border-primary bg-primary/10 shadow-md'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
+      )}
+    >
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Icon name="bell" className="h-4 w-4" />
+            </span>
+            <span className="text-base font-semibold sm:text-lg">{label}</span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground sm:text-sm">{description}</p>
+        </div>
+
+        <div
+          className={cn(
+            'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
+            selected
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
+          )}
+        >
+          {selected ? <Icon name="check" className="h-3 w-3" /> : ''}
+        </div>
+      </div>
+
+      {badge && (
+        <span className="mt-3 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+};
+
+export default OnboardingNotificationsPage;
+
+
+
+================================================================================
+FILE 8: pages\onboarding\previous-ielts.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+export default function PreviousIeltsPage() {
+  const router = useRouter();
+  const nav = resolveNavigation('previous-ielts');
+  const [taken, setTaken] = useState(false);
+  const [overallBand, setBand] = useState('6.0');
+  const [testDate, setDate] = useState('');
+
+  useEffect(() => {
+    const d = loadDraft('previous-ielts', { taken: false, overallBand: '6.0', testDate: '' });
+    setTaken(d.taken); setBand(d.overallBand); setDate(d.testDate);
+  }, []);
+  useEffect(() => saveDraft('previous-ielts', { taken, overallBand, testDate }), [taken, overallBand, testDate]);
+
+  return (
+    <StepLayout title="Have you taken IELTS before?" subtitle="Past attempts help us estimate your starting point." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button onClick={async()=>{await saveOnboardingStep(4,{ taken, overallBand: taken ? Number(overallBand) : null, testDate: taken ? testDate || null : null }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+      <label className="flex items-center gap-2 rounded-xl border border-border p-4"><input type="checkbox" checked={taken} onChange={(e)=>setTaken(e.target.checked)} /> Yes, I've taken IELTS</label>
+      {taken && <div className="mt-4 grid gap-3 sm:grid-cols-2"><input className="rounded-xl border p-3" value={overallBand} onChange={(e)=>setBand(e.target.value)} placeholder="Overall band (e.g. 6.0)" /><input type="date" className="rounded-xl border p-3" value={testDate} onChange={(e)=>setDate(e.target.value)} /></div>}
+      <p className="mt-3 text-xs text-muted-foreground">Draft saved automatically on this device.</p>
+    </StepLayout>
+  );
+}
+
+
+
+================================================================================
+FILE 9: pages\onboarding\study-commitment.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+
+export default function StudyCommitmentPage() {
+  const router = useRouter();
+  const nav = resolveNavigation('study-commitment');
+  const [studyDays, setStudyDays] = useState<string[]>(['mon', 'wed', 'fri']);
+  const [minutesPerDay, setMinutes] = useState(45);
+
+  useEffect(() => {
+    const d = loadDraft('study-commitment', { studyDays: ['mon', 'wed', 'fri'], minutesPerDay: 45 });
+    setStudyDays(d.studyDays); setMinutes(d.minutesPerDay);
+  }, []);
+  useEffect(() => saveDraft('study-commitment', { studyDays, minutesPerDay }), [studyDays, minutesPerDay]);
+
+  const toggle = (d: string) => setStudyDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
+
+  return <StepLayout title="How much can you study?" subtitle="Pick your weekly days and average minutes per day." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button disabled={!studyDays.length} onClick={async()=>{await saveOnboardingStep(7,{ studyDays, minutesPerDay }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+    <div className="mb-4 grid grid-cols-4 gap-2 sm:grid-cols-7">{days.map((d)=><button key={d} onClick={()=>toggle(d)} className={`rounded-lg border px-2 py-2 text-sm uppercase ${studyDays.includes(d)?'border-primary bg-primary/10':'border-border'}`}>{d}</button>)}</div>
+    <label className="text-sm font-medium">Minutes per day</label>
+    <input type="range" min={10} max={180} step={5} value={minutesPerDay} onChange={(e)=>setMinutes(Number(e.target.value))} className="mt-2 w-full"/>
+    <p className="mt-1 text-sm text-muted-foreground">{minutesPerDay} minutes/day</p>
+  </StepLayout>;
+}
+
+
+
+================================================================================
+FILE 10: pages\onboarding\study-plan.tsx
+================================================================================
+
+import type { NextPage } from 'next';
+import { useRouter } from 'next/router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { Button } from '@/components/design-system/Button';
+import { Card } from '@/components/design-system/Card';
+import { Container } from '@/components/design-system/Container';
+import { generateStudyPlan } from '@/lib/studyPlan';
+import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
+import type { OnboardingState } from '@/lib/onboarding/schema';
+import type { PlanGenOptions, AvailabilitySlot } from '@/lib/studyPlan';
+import type { StudyPlan } from '@/types/plan';
+
+type GenerationStatus = 'generating' | 'ready' | 'saving' | 'error';
+
+const DAY_MAP: Record<string, AvailabilitySlot['day']> = {
+  mon: 'monday',
+  tue: 'tuesday',
+  wed: 'wednesday',
+  thu: 'thursday',
+  fri: 'friday',
+  sat: 'saturday',
+  sun: 'sunday',
+};
+
+const DAY_LABELS: Record<AvailabilitySlot['day'], string> = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun',
+};
+
+const DEFAULT_DAYS: AvailabilitySlot['day'][] = ['monday', 'wednesday', 'friday', 'sunday'];
+
+function addDaysISO(days: number): string {
+  const base = new Date();
+  base.setUTCDate(base.getUTCDate() + days);
+  return base.toISOString();
+}
+
+function buildPlanOptions(userId: string, state: OnboardingState): PlanGenOptions {
+  const targetBand = state.goalBand ?? 7;
+  const minutes = state.studyMinutesPerDay ?? 45;
+  const selectedDays =
+    state.studyDays?.map((d) => DAY_MAP[d]).filter(Boolean) ?? DEFAULT_DAYS;
+
+  const availability = selectedDays.map((day) => ({
+    day,
+    minutes,
+  }));
+
+  return {
+    userId,
+    targetBand,
+    startISO: new Date().toISOString(),
+    examDateISO: state.examDate ? new Date(state.examDate).toISOString() : addDaysISO(28),
+    availability,
+  };
+}
+
+const OnboardingStudyPlanPage: NextPage = () => {
+  const router = useRouter();
+
+  const [status, setStatus] = useState<GenerationStatus>('generating');
+  const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<StudyPlan | null>(null);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+
+  const nextPath = useMemo(() => {
+    const raw = router.query.next;
+    if (typeof raw === 'string' && raw && raw !== '/dashboard') {
+      return raw;
+    }
+    return '/study-plan';
+  }, [router.query.next]);
+
+  const generatePlan = useCallback(async () => {
+    setStatus('generating');
+    setError(null);
+
+    const startedAt = Date.now();
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        setStatus('error');
+        setError('Please sign in again to generate your plan.');
+        return;
+      }
+
+      const onboardingRes = await fetch('/api/onboarding');
+      if (!onboardingRes.ok) {
+        setStatus('error');
+        setError('Could not read your onboarding preferences.');
+        return;
+      }
+
+      const onboardingState = (await onboardingRes.json()) as OnboardingState;
+      const options = buildPlanOptions(user.id, onboardingState);
+      const generatedPlan = generateStudyPlan(options);
+
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < 1500) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 - elapsed));
+      }
+
+      setAvailability(options.availability);
+      setPlan(generatedPlan);
+      setStatus('ready');
+    } catch (err) {
+      console.error('Failed to generate onboarding study plan', err);
+      setStatus('error');
+      setError('Something went wrong while generating your study plan.');
+    }
+  }, []);
+
+  useEffect(() => {
+    void generatePlan();
+  }, [generatePlan]);
+
+  const handleContinue = useCallback(async () => {
+    if (!plan) return;
+
+    try {
+      setStatus('saving');
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user?.id) {
+        setStatus('error');
+        setError('Please sign in again to save your plan.');
+        return;
+      }
+
+      const { error: saveError } = await supabase.from('study_plans').upsert(
+        {
+          user_id: user.id,
+          plan_json: plan as unknown as Record<string, unknown>,
+          start_iso: plan.startISO,
+          weeks: plan.weeks,
+          goal_band: plan.goalBand ?? null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+
+      if (saveError) {
+        setStatus('error');
+        setError('Could not save your study plan. Please try again.');
+        return;
+      }
+
+      await router.replace(nextPath);
+    } catch (err) {
+      console.error('Failed to save onboarding study plan', err);
+      setStatus('error');
+      setError('Could not save your study plan. Please try again.');
+    }
+  }, [nextPath, plan, router]);
+
+  const firstThreeDays = plan?.days.slice(0, 3) ?? [];
+
+  return (
+    <main className="min-h-screen bg-background">
+      <Container className="flex min-h-screen items-center justify-center py-10">
+        <Card className="w-full max-w-3xl space-y-6 p-6 sm:p-8" insetBorder>
+          {(status === 'generating' || status === 'saving') && (
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Buddy AI is working
+              </p>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                {status === 'generating'
+                  ? 'Generating your personalized study planâ€¦'
+                  : 'Saving your study planâ€¦'}
+              </h1>
+              <p className="text-sm text-muted-foreground sm:text-base">
+                We are combining your exam timeline, target band, and preferred study rhythm.
+              </p>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full w-1/3 animate-pulse rounded-full bg-primary" />
+              </div>
+            </div>
+          )}
+
+          {status === 'ready' && plan && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                  Your Buddy AI draft is ready
+                </p>
+                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Review your generated study plan
+                </h1>
+                <p className="text-sm text-muted-foreground sm:text-base">
+                  Confirm this plan to continue, or regenerate if you want a different balance.
+                </p>
+              </div>
+
+              <div className="grid gap-3 rounded-2xl border border-border bg-card/60 p-4 text-sm sm:grid-cols-3">
+                <div>
+                  <p className="text-muted-foreground">Target band</p>
+                  <p className="font-semibold">{plan.goalBand?.toFixed(1) ?? '7.0'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Study days</p>
+                  <p className="font-semibold">{availability.map((slot) => DAY_LABELS[slot.day]).join(', ')}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Plan duration</p>
+                  <p className="font-semibold">{plan.weeks} weeks</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm font-semibold">First sessions</p>
+                {firstThreeDays.map((day) => (
+                  <div key={day.iso} className="rounded-xl border border-border p-3">
+                    <p className="text-sm font-medium">{new Date(day.iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+                    <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
+                      {day.tasks.slice(0, 2).map((task) => (
+                        <li key={task.id}>
+                          {task.title} Â· {task.estMinutes} mins
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={handleContinue}>Continue with this plan</Button>
+                <Button variant="secondary" onClick={() => void generatePlan()}>
+                  Regenerate plan
+                </Button>
+                <Button variant="ghost" onClick={() => void router.push('/profile/setup')}>
+                  Change onboarding details
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="space-y-4">
+              <h1 className="text-2xl font-semibold tracking-tight">We couldnâ€™t finish your study plan</h1>
+              <p className="text-sm text-destructive">{error ?? 'Please try again.'}</p>
+              <div className="flex gap-3">
+                <Button onClick={() => void generatePlan()}>Try again</Button>
+                <Button variant="ghost" onClick={() => void router.push('/dashboard')}>
+                  Go to dashboard
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      </Container>
+    </main>
+  );
+};
+
+export default OnboardingStudyPlanPage;
+
+
+
+================================================================================
+FILE 11: pages\onboarding\target-band.tsx
+================================================================================
+
+// pages/onboarding/target-band.tsx
+import type { NextPage } from 'next';
+import { useRouter } from 'next/router';
+import React, { useMemo, useState } from 'react';
+
+import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
+import { Icon } from '@/components/design-system/Icon';
+import { saveOnboardingStep } from '@/lib/onboarding/client';
+import { cn } from '@/lib/utils';
+
+type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
+
+const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
+  { id: 'language', label: 'Language' },
+  { id: 'target-band', label: 'Target band' },
+  { id: 'exam-date', label: 'Exam date' },
+  { id: 'study-rhythm', label: 'Study rhythm' },
+  { id: 'notifications', label: 'Notifications' },
+];
+
+const STEP_ROUTES: Record<OnboardingStepId, string> = {
+  language: '/onboarding',
+  'target-band': '/onboarding/target-band',
+  'exam-date': '/onboarding/exam-date',
+  'study-rhythm': '/onboarding/study-rhythm',
+  notifications: '/onboarding/notifications',
+};
+
+type TargetBand = '5.5' | '6.0' | '6.5' | '7.0' | '7.5+';
+
+interface TargetBandOption {
+  id: TargetBand;
+  label: string;
+  subtitle: string;
+  badge?: string;
+}
+
+const TARGET_OPTIONS: TargetBandOption[] = [
+  {
+    id: '5.5',
+    label: 'Band 5.5',
+    subtitle: 'Solid starter goal if youâ€™re still building basics.',
+  },
+  {
+    id: '6.0',
+    label: 'Band 6.0',
+    subtitle: 'Good for foundation programs and many colleges.',
+  },
+  {
+    id: '6.5',
+    label: 'Band 6.5',
+    subtitle: 'Common requirement for universities and visas.',
+    badge: 'Most popular',
+  },
+  {
+    id: '7.0',
+    label: 'Band 7.0',
+    subtitle: 'Competitive score for top universities and jobs.',
+  },
+  {
+    id: '7.5+',
+    label: 'Band 7.5 or above',
+    subtitle: 'Ambitious target â€” weâ€™ll push you harder.',
+  },
+];
+
+const OnboardingTargetBandPage: NextPage = () => {
+  const router = useRouter();
+  const [targetBand, setTargetBand] = useState<TargetBand | null>('6.5');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const nextPath = useMemo(() => {
+    const { next } = router.query;
+    return typeof next === 'string' ? next : '/dashboard';
+  }, [router.query]);
+
+  const currentIndex = useMemo(() => ONBOARDING_STEPS.findIndex((s) => s.id === 'target-band'), []);
+
+  function handleBack() {
+    router.push({
+      pathname: STEP_ROUTES.language,
+      query: { next: nextPath },
+    });
+  }
+
+  async function handleContinue() {
+    setError(null);
+
+    if (!targetBand) {
+      setError('Please choose a target band to continue.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const goalBand = Number.parseFloat(targetBand);
+      await saveOnboardingStep(5, { goalBand });
+      await router.push({
+        pathname: '/onboarding/exam-timeline',
+        query: { next: nextPath },
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-background">
+      <Container className="flex min-h-screen flex-col items-center justify-center py-10">
+        {/* Progress rail â€“ now nonâ€‘clickable */}
+        <div className="mb-6 w-full max-w-3xl">
+          <OnboardingProgress
+            steps={ONBOARDING_STEPS}
+            currentIndex={currentIndex}
+            // onStepClick removed â€“ circles are static
+          />
+        </div>
+
+        {/* Main card */}
+        <section className="w-full max-w-3xl rounded-3xl border border-border bg-card/80 p-6 shadow-xl backdrop-blur-md sm:p-8">
+          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Step {currentIndex + 1} of {ONBOARDING_STEPS.length}
+              </p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+                What&apos;s your target band score?
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+                Your goal band helps us set difficulty, pick question types, and plan how aggressive
+                your schedule should be.
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+              <Icon name="target" className="h-3.5 w-3.5" />
+              Clear goal, clearer path.
+            </div>
+          </header>
+
+          {/* Options */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {TARGET_OPTIONS.map((option) => (
+              <TargetBandCard
+                key={option.id}
+                option={option}
+                selected={targetBand === option.id}
+                onSelect={() => setTargetBand(option.id)}
+              />
+            ))}
+          </div>
+
+          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+
+          {/* Hint */}
+          <p className="mt-4 text-xs text-muted-foreground">
+            Not 100% sure? Pick the band youâ€™d be happy with. You can always adjust it later from{' '}
+            <span className="font-medium">Profile â†’ Goals</span>.
+          </p>
+
+          {/* Footer */}
+          <footer className="mt-6 flex flex-col-reverse items-center justify-between gap-3 border-t border-border pt-4 sm:flex-row">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBack}
+              className="text-muted-foreground"
+            >
+              <Icon name="arrow-left" className="mr-1.5 h-4 w-4" />
+              Back
+            </Button>
+
+            <div className="flex items-center gap-3">
+              <p className="hidden text-xs text-muted-foreground sm:inline">
+                Next: <span className="font-medium">Exam timeline</span>
+              </p>
+              <Button size="lg" onClick={handleContinue} disabled={submitting || !targetBand}>
+                {submitting ? 'Savingâ€¦' : 'Continue'}
+                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </footer>
+        </section>
+      </Container>
+    </main>
+  );
+};
+
+interface OnboardingProgressProps {
+  steps: { id: OnboardingStepId; label: string }[];
+  currentIndex: number;
+  onStepClick?: (id: OnboardingStepId) => void; // kept for compatibility, but we're not passing it
+}
+
+const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
+  steps,
+  currentIndex,
+  onStepClick, // unused â€“ but component still works without it
+}) => {
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Dots / rail */}
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => {
+          const active = index === currentIndex;
+          const completed = index < currentIndex;
+
+          const circle = (
+            <div
+              className={cn(
+                'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
+                completed && 'border-primary bg-primary text-primary-foreground',
+                active && !completed && 'border-primary/80 bg-primary/10 text-primary',
+                !active && !completed && 'border-border bg-muted text-muted-foreground',
+              )}
+            >
+              {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
+            </div>
+          );
+
+          return (
+            <div key={step.id} className="flex flex-1 items-center last:flex-none">
+              {onStepClick ? (
+                <button
+                  type="button"
+                  onClick={() => onStepClick(step.id)}
+                  className="flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  {circle}
+                </button>
+              ) : (
+                circle
+              )}
+
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    'mx-1 h-px flex-1 rounded-full bg-border',
+                    completed && 'bg-primary/70',
+                    active && 'bg-primary/50',
+                  )}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Labels */}
+      <div className="flex justify-between text-xs text-muted-foreground">
+        {steps.map((step, index) => {
+          const active = index === currentIndex;
+          const label = (
+            <span
+              className={cn('flex-1 truncate text-center', active && 'font-medium text-foreground')}
+            >
+              {step.label}
+            </span>
+          );
+
+          return (
+            <button
+              key={step.id}
+              type="button"
+              onClick={onStepClick ? () => onStepClick(step.id) : undefined}
+              className="flex-1 focus-visible:outline-none"
+              disabled={!onStepClick}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+interface TargetBandCardProps {
+  option: TargetBandOption;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+const TargetBandCard: React.FC<TargetBandCardProps> = ({ option, selected, onSelect }) => {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'group flex h-full flex-col justify-between rounded-2xl border p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:p-5',
+        selected
+          ? 'border-primary bg-primary/10 shadow-md'
+          : 'border-border bg-muted/40 hover:border-primary/60 hover:bg-muted',
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Icon name="target" className="h-4 w-4" />
+          </span>
+          <span className="text-base font-semibold sm:text-lg">{option.label}</span>
+        </div>
+
+        <div
+          className={cn(
+            'flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors',
+            selected
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border bg-background text-muted-foreground group-hover:border-primary/70',
+          )}
+        >
+          {selected ? <Icon name="check" className="h-3 w-3" /> : ''}
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground sm:text-sm">{option.subtitle}</p>
+
+      {option.badge && (
+        <span className="mt-3 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+          {option.badge}
+        </span>
+      )}
+    </button>
+  );
+};
+
+export default OnboardingTargetBandPage;
+
+
+
+================================================================================
+FILE 12: pages\onboarding\weakness.tsx
+================================================================================
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { Button } from '@/components/design-system/Button';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
+
+const options = ['listening', 'reading', 'writing', 'speaking', 'grammar', 'vocabulary'];
+
+export default function WeaknessPage() {
+  const router = useRouter();
+  const nav = resolveNavigation('weakness');
+  const [weaknesses, setWeaknesses] = useState<string[]>(['writing']);
+
+  useEffect(() => {
+    const d = loadDraft('weakness', { weaknesses: ['writing'] });
+    setWeaknesses(d.weaknesses);
+  }, []);
+  useEffect(() => saveDraft('weakness', { weaknesses }), [weaknesses]);
+
+  const toggle = (v: string) => setWeaknesses((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : prev.length < 3 ? [...prev, v] : prev);
+
+  return <StepLayout title="Where do you struggle most?" subtitle="Pick up to 3 areas. We'll prioritize them in your daily plan." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button disabled={!weaknesses.length} onClick={async()=>{await saveOnboardingStep(9,{ weaknesses }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{options.map((o)=><button key={o} className={`rounded-xl border p-3 text-left capitalize ${weaknesses.includes(o)?'border-primary bg-primary/10':'border-border'}`} onClick={()=>toggle(o)}>{o}</button>)}</div>
+    <p className="mt-3 text-xs text-muted-foreground">Selected: {weaknesses.length}/3</p>
+  </StepLayout>;
+}
+
+
+
+================================================================================
+FILE 13: pages\onboarding\teacher\index.tsx
+================================================================================
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { z } from 'zod';
+import { supabaseServer } from '@/lib/supabaseServer';
+import { withPlan } from '@/lib/apiGuard';
+
+const BodySchema = z.object({
+  bio: z.string().trim().min(20).max(1000),
+  qualifications: z.string().trim().max(2000).optional(),
+  specialties: z.array(z.string().max(100)).min(1).max(20),
+});
+
+type OnboardResponse =
+  | { ok: true; applicationId: string }
+  | { ok: false; error: string; code?: 'UNAUTHORIZED' | 'CONFLICT' | 'DB_ERROR' | 'BAD_REQUEST' };
+
+async function handler(req: NextApiRequest, res: NextApiResponse<OnboardResponse>) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+
+  // â—ï¸ Fixed: only pass req so cookies are actually read
+  const supabase = supabaseServer(req);
+
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  if (!user) return res.status(401).json({ ok: false, error: 'Unauthorized', code: 'UNAUTHORIZED' });
+
+  const parsed = BodySchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ ok: false, error: parsed.error.message, code: 'BAD_REQUEST' });
+  const { bio, qualifications, specialties } = parsed.data;
+
+  // Check if user already has a coach profile or application
+  const { data: existing } = await supabase
+    .from('coaches')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (existing) return res.status(409).json({ ok: false, error: 'Already registered as teacher', code: 'CONFLICT' });
+
+  const { data: appExisting } = await supabase
+    .from('marketplace_applications')
+    .select('id')
+    .eq('user_id', user.id)
+    .in('status', ['pending', 'approved'])
+    .maybeSingle();
+  if (appExisting) return res.status(409).json({ ok: false, error: 'Application already exists', code: 'CONFLICT' });
+
+  // Create application
+  const { data: app, error } = await supabase
+    .from('marketplace_applications')
+    .insert({
+      user_id: user.id,
+      bio,
+      qualifications: qualifications ?? null,
+      specialties_json: specialties,
+      status: 'pending',
+    })
+    .select('id')
+    .single();
+
+  if (error) return res.status(500).json({ ok: false, error: error.message, code: 'DB_ERROR' });
+
+  return res.status(200).json({ ok: true, applicationId: app!.id as string });
+}
+
+export default withPlan('starter', handler);
+
+
+
+================================================================================
+FILE 14: pages\onboarding\teacher\status.tsx
+================================================================================
+
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/design-system/Button';
+import { Alert } from '@/components/design-system/Alert';
+
+export default function TeacherStatus() {
+  // Minimal static status; later fetch /api/teacher/status
+  return (
+    <div className="mx-auto max-w-xl p-6">
+      <h1 className="text-h2 font-semibold">Application Submitted</h1>
+      <p className="mt-2 text-mutedText">
+        Thanks! Our team will review your details. Youâ€™ll receive an email/SMS when approved.
+      </p>
+
+      <Alert variant="info" className="mt-4">
+        While you wait, you can explore your student dashboard and start a mock.
+      </Alert>
+
+      <div className="mt-6 flex gap-3">
+        <Button asChild variant="secondary"><Link href="/dashboard">Go to Dashboard</Link></Button>
+        <Button asChild variant="link"><Link href="/onboarding/teacher">Edit application</Link></Button>
+      </div>
+    </div>
+  );
+}
+
+
+
+================================================================================
+FILE 15: pages\onboarding\welcome\index.tsx
+================================================================================
+
+import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import type { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
+import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
+import { Badge } from '@/components/design-system/Badge';
+import { StreakIndicator } from '@/components/design-system/StreakIndicator';
+import { supabase } from '@/lib/supabaseClient'; // Replaced supabaseBrowser
+import { getUserRole } from '@/lib/routeAccess';
+import { getServerClient } from '@/lib/supabaseServer';
+import { useLocale } from '@/lib/locale';
+import { useStreak } from '@/hooks/useStreak'; // Added for streak data
+import DailyWeeklyChallenges from '@/components/dashboard/DailyWeeklyChallenges';
+import { Icon } from '@/components/design-system/Icon';
+import ActionSupportPanel from '@/components/shared/ActionSupportPanel';
+
+type WordOfDay = { word: string; meaning?: string; example?: string };
+
+const ModuleCard: React.FC<{ title: string; href: string; caption: string; chip?: string }> = ({
+  title,
+  href,
+  caption,
+  chip,
+}) => (
+  <Link href={href} className="block focus-visible:outline-none group">
+    <div
+      className="card-surface rounded-ds-2xl border border-border bg-card text-card-foreground p-5 transition
+                    hover:shadow-glow hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-h4 font-semibold">{title}</h3>
+        {chip ? <Badge variant="info">{chip}</Badge> : null}
+      </div>
+      <p className="text-small text-mutedText">{caption}</p>
+      <div className="mt-4">
+        <Button variant="secondary" className="rounded-ds-xl">
+          Open
+        </Button>
+      </div>
+    </div>
+  </Link>
+);
+
+// --- helpers ---------------------------------------------------------------
+
+function normalizeWod(raw: any): WordOfDay {
+  // Handle shapes like:
+  // { word: "serendipity", meaning, example }
+  // { word: { id, word, meaning, example } }
+  // { data: { word: "serendipity", meaning, example } }
+  // { data: { word: { id, word, meaning, example } } }
+  // [ { word, meaning, example }, ... ]
+  let obj: any = raw;
+
+  if (Array.isArray(raw)) obj = raw[0];
+  if (raw?.data) obj = raw.data;
+  if (Array.isArray(obj)) obj = obj[0];
+
+  let w: string | undefined;
+  let m: string | undefined;
+  let e: string | undefined;
+
+  if (typeof obj === 'string') {
+    w = obj;
+  } else if (obj && typeof obj === 'object') {
+    if (typeof obj.word === 'string') {
+      w = obj.word;
+      m = typeof obj.meaning === 'string' ? obj.meaning : undefined;
+      e = typeof obj.example === 'string' ? obj.example : undefined;
+    } else if (obj.word && typeof obj.word === 'object') {
+      w = typeof obj.word.word === 'string' ? obj.word.word : undefined;
+      m = typeof obj.word.meaning === 'string' ? obj.word.meaning : undefined;
+      e = typeof obj.word.example === 'string' ? obj.word.example : undefined;
+    }
+  }
+
+  return {
+    word: w ?? 'Serendipity',
+    meaning: m ?? 'A fortunate discovery by chance.',
+    example: e ?? 'I met my mentor by pure serendipity.',
+  };
+}
+
+// --------------------------------------------------------------------------
+
+export default function WelcomePage() {
+  const router = useRouter();
+  const { t } = useLocale();
+  const {
+    current: streakCurrent,
+    loading: streakLoading,
+    error: streakError,
+  } = useStreak();
+
+  const [name, setName] = useState<string | null>(null);
+  const [wod, setWod] = useState<WordOfDay | null>(null);
+  const [loadingWord, setLoadingWord] = useState(true);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  const redirectToLogin = React.useCallback(() => {
+    const redirectTarget = encodeURIComponent('/welcome');
+    router.replace(`/login?redirect=${redirectTarget}`);
+  }, [router]);
+
+  // Redirect non-students away from /welcome
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    let mounted = true;
+    let redirected = false;
+
+    const sendToLogin = () => {
+      redirected = true;
+      redirectToLogin();
+    };
+
+    (async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.error('Session fetch error:', error);
+          if (mounted) sendToLogin();
+          return;
+        }
+
+        const role = getUserRole(session?.user);
+        if (role === 'teacher' && mounted) {
+          redirected = true;
+          router.replace('/teacher');
+          return;
+        }
+        if (role === 'admin' && mounted) {
+          redirected = true;
+          router.replace('/admin');
+          return;
+        }
+        if (!session && mounted) {
+          sendToLogin();
+          return;
+        }
+      } finally {
+        if (mounted && !redirected) {
+          setCheckingSession(false);
+        }
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [redirectToLogin, router, router.isReady]);
+
+  // Pull minimal profile info
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error('Session fetch error:', error);
+        return;
+      }
+      const uid = session?.user?.id;
+      if (!uid) return;
+
+      const { data, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', uid)
+        .maybeSingle();
+
+      if (profileError) {
+        // eslint-disable-next-line no-console
+        console.error('Profile fetch error:', profileError);
+        return;
+      }
+
+      if (mounted) {
+        setName(data?.full_name ?? null);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Word of the day (robust normalization â†’ always strings)
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setLoadingWord(true);
+      try {
+        const r = await fetch('/api/words/today');
+        if (!r.ok) throw new Error('Failed to fetch word of the day');
+        const j = await r.json();
+        if (!active) return;
+        setWod(normalizeWod(j));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Word of the day fetch error:', err);
+        if (!active) return;
+        setWod(normalizeWod(null));
+      } finally {
+        if (active) setLoadingWord(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const greeting = useMemo(
+    () =>
+      name ? `Welcome, ${name.split(' ')[0]} ðŸ‘‹` : 'Welcome to GramorX',
+    [name]
+  );
+
+  if (checkingSession) {
+    return (
+      <section className="py-16">
+        <Container>
+          <div className="rounded-ds-2xl border border-border bg-card p-8 text-center">
+            <p className="text-small text-mutedText">
+              Preparing your welcome experience...
+            </p>
+          </div>
+        </Container>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-16">
+      <Container>
+        {/* HERO */}
+        <div className="rounded-ds-2xl border border-border bg-card text-card-foreground p-8 mb-10 header-glass">
+          <div className="flex flex-wrap items-center gap-6 justify-between">
+            <div>
+              <h1 className="font-slab text-h1 md:text-display mb-2">
+                {greeting}
+              </h1>
+              <p className="text-mutedText max-w-2xl">
+                Kickstart your IELTS prep with AI-powered practice, instant
+                feedback, and a clear plan across all four modules.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                {/* Primary CTA now starts onboarding */}
+                <Button asChild className="rounded-ds-xl">
+                  <Link href="/onboarding?next=/dashboard">
+                    Begin smart onboarding
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="rounded-ds-xl"
+                >
+                  <Link href="/dashboard">Skip for now Â· Go to dashboard</Link>
+                </Button>
+                <Button asChild variant="ghost" className="rounded-ds-xl">
+                  <Link href="/placement/run">Try Band Predictor</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="min-w-[220px]">
+              <div className="rounded-ds-2xl border border-border bg-background/60 p-4">
+                <div className="mb-2 text-small text-mutedText">
+                  Your streak
+                </div>
+                {/* Conditional rendering of StreakIndicator */}
+                {streakLoading ? (
+                  <div>Loading streak...</div>
+                ) : streakError ? (
+                  <div>Error: {streakError}</div>
+                ) : (
+                  <StreakIndicator value={streakCurrent ?? 0} />
+                )}
+                <div className="mt-2 text-small text-mutedText">
+                  Keep a daily streak to unlock bonus mock tests.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* QUICK START */}
+        <div className="grid md:grid-cols-3 gap-4 mb-10">
+          <div className="rounded-ds-2xl border border-border bg-card p-5">
+            <div className="text-small mb-2 text-mutedText">Step 1</div>
+            <h3 className="font-semibold mb-2">Set your target band</h3>
+            <p className="text-small text-mutedText mb-4">
+              Pick a goal and weâ€™ll tailor your plan.
+            </p>
+            <Button asChild size="sm" className="rounded-ds-xl">
+              <Link href="/onboarding/target-band?next=/dashboard">
+                Choose target
+              </Link>
+            </Button>
+          </div>
+          <div className="rounded-ds-2xl border border-border bg-card p-5">
+            <div className="text-small mb-2 text-mutedText">Step 2</div>
+            <h3 className="font-semibold mb-2">Take a placement test</h3>
+            <p className="text-small text-mutedText mb-4">
+              Get an instant estimate of your current band.
+            </p>
+            <Button
+              asChild
+              size="sm"
+              variant="secondary"
+              className="rounded-ds-xl"
+            >
+              <Link href="/placement/run">Start test</Link>
+            </Button>
+          </div>
+          <div className="rounded-ds-2xl border border-border bg-card p-5">
+            <div className="text-small mb-2 text-mutedText">Step 3</div>
+            <h3 className="font-semibold mb-2">Begin daily practice</h3>
+            <p className="text-small text-mutedText mb-4">
+              Short, focused tasks to build momentum.
+            </p>
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="rounded-ds-xl"
+            >
+              <Link href="/challenge">Go to daily tasks</Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* MODULES */}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="font-semibold text-h3">IELTS Modules</h2>
+          <Link href="/modules" className="text-primary hover:underline">
+            View all
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          <ModuleCard
+            title="Listening"
+            href="/listening"
+            caption="Section-wise practice with transcripts and timings."
+            chip="Practice"
+          />
+          <ModuleCard
+            title="Reading"
+            href="/reading"
+            caption="True/False/NG, MCQs and passage strategy."
+            chip="Practice"
+          />
+          <ModuleCard
+            title="Writing"
+            href="/writing"
+            caption="Task 1 & Task 2 with AI scoring and tips."
+            chip="AI Feedback"
+          />
+          <ModuleCard
+            title="Speaking"
+            href="/speaking"
+            caption="Part 1â€“3 prompts with recording & evaluation."
+            chip="Record"
+          />
+        </div>
+
+        {/* CHALLENGES SPOTLIGHT */}
+        <div className="relative mb-16 overflow-hidden rounded-ds-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-background to-background p-8 md:p-12">
+          <div className="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -right-12 h-64 w-64 rounded-full bg-secondary/20 blur-3xl" />
+
+          <div className="relative z-10 grid items-start gap-10 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+            <div className="space-y-5">
+              <Badge
+                variant="secondary"
+                className="rounded-full bg-background/70 backdrop-blur"
+              >
+                Feature spotlight
+              </Badge>
+              <div className="space-y-3">
+                <h2 className="font-slab text-h2 leading-tight text-foreground">
+                  Stay motivated with our Daily & Weekly Challenge lane
+                </h2>
+                <p className="text-mutedText text-base md:text-lg max-w-xl">
+                  Master high-value collocations, protect your streak with
+                  forgiveness tokens, and collect XP bursts designed to keep
+                  your IELTS momentum unstoppable.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="flex flex-col gap-2 rounded-ds-2xl border border-border/50 bg-background/70 p-4 backdrop-blur">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Icon name="Sparkles" size={18} className="text-primary" />
+                    <span className="text-caption uppercase tracking-wide text-mutedText">
+                      Collocations
+                    </span>
+                  </div>
+                  <p className="text-h4 font-semibold">5 mastered</p>
+                  <p className="text-small text-mutedText">
+                    Earn a bonus every time you complete todayâ€™s set.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 rounded-ds-2xl border border-border/50 bg-background/70 p-4 backdrop-blur">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Icon name="Flame" size={18} className="text-accent" />
+                    <span className="text-caption uppercase tracking-wide text-mutedText">
+                      Streak boost
+                    </span>
+                  </div>
+                  <p className="text-h4 font-semibold">Every 7 days</p>
+                  <p className="text-small text-mutedText">
+                    Unlock forgiveness tokens to keep your run alive.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 rounded-ds-2xl border border-border/50 bg-background/70 p-4 backdrop-blur">
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Icon name="Trophy" size={18} className="text-success" />
+                    <span className="text-caption uppercase tracking-wide text-mutedText">
+                      XP rewards
+                    </span>
+                  </div>
+                  <p className="text-h4 font-semibold">+10 â€” +12 XP</p>
+                  <p className="text-small text-mutedText">
+                    Stack daily wins and climb the leaderboard faster.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button asChild className="rounded-ds-xl">
+                  <Link href="/challenge">Log todayâ€™s progress</Link>
+                </Button>
+                <Button asChild variant="ghost" className="rounded-ds-xl">
+                  <Link href="/leaderboard">View XP leaderboard</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -top-8 -left-10 hidden xl:block">
+                <div className="rounded-ds-2xl border border-white/30 bg-white/20 px-4 py-2 text-caption font-medium uppercase tracking-wide text-white shadow-lg shadow-primary/20 backdrop-blur">
+                  Real-time progress
+                </div>
+              </div>
+              <div className="relative rounded-ds-2xl border border-white/20 bg-background/85 p-4 shadow-[0_30px_60px_rgba(15,23,42,0.25)] backdrop-blur-xl">
+                <DailyWeeklyChallenges />
+                <div className="pointer-events-none absolute inset-x-6 -bottom-6 h-12 rounded-full bg-primary/20 blur-2xl" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* WORD OF THE DAY + BAND PREDICTOR */}
+        <div className="grid lg:grid-cols-2 gap-4">
+          <div className="rounded-ds-2xl border border-border bg-card p-6">
+            <div className="mb-2 flex items-center gap-2">
+              <Badge variant="success">Word of the day</Badge>
+            </div>
+            {loadingWord ? (
+              <div className="animate-pulse space-y-2">
+                <div className="h-6 bg-primary/10 rounded" />
+                <div className="h-4 bg-primary/10 rounded w-3/4" />
+                <div className="h-4 bg-primary/10 rounded w-2/3" />
+              </div>
+            ) : (
+              <>
+                <div className="text-h2 font-slab">{wod?.word ?? ''}</div>
+                {wod?.meaning ? (
+                  <p className="text-mutedText mt-2">{wod.meaning}</p>
+                ) : null}
+                {wod?.example ? (
+                  <p className="text-small mt-2 italic">â€œ{wod.example}â€</p>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          <div className="rounded-ds-2xl border border-border bg-card p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div className="mb-1 text-small text-mutedText">
+                Unsure where to start?
+              </div>
+              <h3 className="text-h3 font-semibold">Band Predictor</h3>
+              <p className="text-small text-mutedText mt-1">
+                A quick adaptive test to gauge your current level.
+              </p>
+            </div>
+            <Button asChild className="rounded-ds-xl">
+              <Link href="/placement/run">Start now</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-10">
+          <ActionSupportPanel
+            title=""
+            actions={[]}
+            supportTitle="Need help?"
+            supportDescription="Ask the community or talk to our AI assistant."
+            supportPrimaryCta={{ label: 'Visit Community', href: '/community', variant: 'secondary' }}
+            supportSecondaryCta={{ label: 'Open AI Assistant', href: '/ai', variant: 'ghost' }}
+          />
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+export const getServerSideProps: GetServerSideProps = async ({
+  req,
+  res,
+  resolvedUrl,
+}) => {
+  try {
+    const supabaseServer = getServerClient(req as any, res as any);
+    const {
+      data: { session },
+      error,
+    } = await supabaseServer.auth.getSession();
+
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Welcome GSSP session error:', error);
+    }
+
+    if (!session?.user) {
+      const redirectTarget = encodeURIComponent(resolvedUrl ?? '/welcome');
+      return {
+        redirect: {
+          destination: `/login?redirect=${redirectTarget}`,
+          permanent: false,
+        },
+      };
+    }
+
+    const role = getUserRole(session.user);
+    if (role === 'teacher') {
+      return {
+        redirect: {
+          destination: '/teacher',
+          permanent: false,
+        },
+      };
+    }
+
+    if (role === 'admin') {
+      return {
+        redirect: {
+          destination: '/admin',
+          permanent: false,
+        },
+      };
+    }
+
+    return { props: {} };
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('Welcome GSSP unexpected error:', err);
+    return { props: {} };
+  }
+};
+
+
+
+================================================================================
+FILE 16: pages\api\onboarding\index.ts
+================================================================================
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+import { trackor } from '@/lib/analytics/trackor.server';
+import { getServerClient } from '@/lib/supabaseServer';
+import {
+  TOTAL_ONBOARDING_STEPS,
+  onboardingStateSchema,
+  onboardingStepPayloadSchema,
+  type OnboardingState,
+  type OnboardingStepPayload,
+} from '@/lib/onboarding/schema';
+
+const SELECT_COLUMNS =
+  // Alias DB "id" -> JSON "user_id" so your existing types continue to work
+  'user_id:id,preferred_language,locale,goal_band,exam_date,study_days,study_minutes_per_day,whatsapp_opt_in,phone,notification_channels,onboarding_step,onboarding_complete,settings';
+
+type ErrorResponse = { error: string };
+
+type ProfileRow = {
+  user_id: string;
+  preferred_language: string | null;
+  locale: string | null;
+  goal_band: number | null;
+  exam_date: string | null;
+  study_days: string[] | null;
+  study_minutes_per_day: number | null;
+  whatsapp_opt_in: boolean | null;
+  phone: string | null;
+  notification_channels: string[] | null;
+  onboarding_step: number | null;
+  onboarding_complete: boolean | null;
+  settings: Record<string, unknown> | null;
+} | null;
+
+const defaultState: OnboardingState = {
+  preferredLanguage: null,
+  goalBand: null,
+  examDate: null,
+  studyDays: null,
+  studyMinutesPerDay: null,
+  whatsappOptIn: null,
+  phone: null,
+  currentLevel: null,
+  previousIelts: null,
+  examTimeline: null,
+  studyCommitment: null,
+  learningStyle: null,
+  weaknesses: null,
+  confidence: null,
+  diagnostic: null,
+  onboardingStep: 0,
+  onboardingComplete: false,
+};
+
+function normalizeState(row: ProfileRow): OnboardingState {
+  if (!row) return defaultState;
+
+  const studyDays = Array.isArray(row.study_days) ? row.study_days.filter(Boolean) : [];
+
+  const settings = (row.settings ?? {}) as Record<string, unknown>;
+  const onboarding = (settings.onboarding ?? {}) as Record<string, unknown>;
+
+  return onboardingStateSchema.parse({
+    preferredLanguage: row.preferred_language ?? row.locale ?? null,
+    goalBand: typeof row.goal_band === 'number' ? row.goal_band : null,
+    examDate: row.exam_date ?? null,
+    studyDays: studyDays.length > 0 ? (studyDays as OnboardingState['studyDays']) : null,
+    studyMinutesPerDay:
+      typeof row.study_minutes_per_day === 'number' && row.study_minutes_per_day > 0
+        ? row.study_minutes_per_day
+        : null,
+    whatsappOptIn: typeof row.whatsapp_opt_in === 'boolean' ? row.whatsapp_opt_in : null,
+    phone: row.phone ?? null,
+    currentLevel: typeof onboarding.currentLevel === 'string' ? onboarding.currentLevel : null,
+    previousIelts: onboarding.previousIelts ?? null,
+    examTimeline: onboarding.examTimeline ?? null,
+    studyCommitment: onboarding.studyCommitment ?? null,
+    learningStyle: typeof onboarding.learningStyle === 'string' ? onboarding.learningStyle : null,
+    weaknesses: Array.isArray(onboarding.weaknesses) ? onboarding.weaknesses : null,
+    confidence: onboarding.confidence ?? null,
+    diagnostic: onboarding.diagnostic ?? null,
+    onboardingStep: typeof row.onboarding_step === 'number' ? row.onboarding_step : 0,
+    onboardingComplete: row.onboarding_complete === true,
+  });
+}
+
+async function fetchProfileRow(
+  supabase: ReturnType<typeof getServerClient>,
+  userId: string,
+): Promise<ProfileRow> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(SELECT_COLUMNS)
+    .eq('id', userId) // canonical column
+    .maybeSingle();
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(error.message || 'Unable to load profile');
+  }
+
+  return (data as ProfileRow) ?? null;
+}
+
+async function upsertProfile(
+  supabase: ReturnType<typeof getServerClient>,
+  userId: string,
+  payload: Record<string, unknown>,
+): Promise<ProfileRow> {
+  const { data, error } = await supabase
+    .from('profiles')
+    // IMPORTANT: never set user_id (generated); write id instead
+    .upsert({ id: userId, ...payload }, { onConflict: 'id' })
+    .select(SELECT_COLUMNS)
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message || 'Unable to save onboarding progress');
+  }
+
+  return (data as ProfileRow) ?? null;
+}
+
+async function handleGet(
+  req: NextApiRequest,
+  res: NextApiResponse<OnboardingState | ErrorResponse>,
+) {
+  const supabase = getServerClient(req, res);
+  const { data: auth, error } = await supabase.auth.getUser();
+  if (error || !auth.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const row = await fetchProfileRow(supabase, auth.user.id);
+    return res.status(200).json(normalizeState(row));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to load onboarding state';
+    return res.status(500).json({ error: message });
+  }
+}
+
+async function handlePost(
+  req: NextApiRequest,
+  res: NextApiResponse<OnboardingState | ErrorResponse>,
+) {
+  const supabase = getServerClient(req, res);
+  const { data: auth, error } = await supabase.auth.getUser();
+  if (error || !auth.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const parseResult = onboardingStepPayloadSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    const detail = parseResult.error.issues.map((issue) => issue.message).join(', ');
+    return res.status(400).json({ error: detail || 'Invalid payload' });
+  }
+
+  const payload = parseResult.data;
+
+  try {
+    const currentRow = await fetchProfileRow(supabase, auth.user.id);
+    const currentState = normalizeState(currentRow);
+    const profileRow = await applyStep(
+      supabase,
+      auth.user.id,
+      payload,
+      currentState,
+      currentRow,
+    );
+    return res.status(200).json(normalizeState(profileRow));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to save onboarding step';
+    return res.status(500).json({ error: message });
+  }
+}
+
+async function applyStep(
+  supabase: ReturnType<typeof getServerClient>,
+  userId: string,
+  payload: OnboardingStepPayload,
+  current: OnboardingState,
+  row: ProfileRow,
+): Promise<ProfileRow> {
+  const updates: Record<string, unknown> = {};
+  const settings = (row?.settings ?? {}) as Record<string, unknown>;
+  const onboardingSettings = ((settings.onboarding as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
+
+  let nextStep = Math.max(current.onboardingStep ?? 0, payload.step);
+  let nextComplete = current.onboardingComplete;
+
+  if (payload.step === 1) {
+    onboardingSettings.welcomeSeenAt = new Date().toISOString();
+  }
+
+  onboardingSettings.draft = payload.step < TOTAL_ONBOARDING_STEPS;
+
+  if (payload.step === 2) {
+    updates.preferred_language = payload.data.preferredLanguage;
+    updates.locale = payload.data.preferredLanguage;
+  }
+
+  if (payload.step === 3) onboardingSettings.currentLevel = payload.data.currentLevel;
+
+  if (payload.step === 4) {
+    onboardingSettings.previousIelts = {
+      taken: payload.data.taken,
+      overallBand: payload.data.overallBand ?? null,
+      testDate: payload.data.testDate ?? null,
+    };
+  }
+
+  if (payload.step === 5) updates.goal_band = payload.data.goalBand;
+
+  if (payload.step === 6) {
+    const examDate = payload.data.examDate?.trim() ? payload.data.examDate : null;
+    updates.exam_date = examDate;
+    onboardingSettings.examTimeline = { timeframe: payload.data.timeframe, examDate };
+  }
+
+  if (payload.step === 7) {
+    updates.study_days = payload.data.studyDays;
+    updates.study_minutes_per_day = payload.data.minutesPerDay;
+    onboardingSettings.studyCommitment = {
+      daysPerWeek: payload.data.studyDays.length,
+      minutesPerDay: payload.data.minutesPerDay,
+    };
+  }
+
+  if (payload.step === 8) onboardingSettings.learningStyle = payload.data.learningStyle;
+  if (payload.step === 9) onboardingSettings.weaknesses = payload.data.weaknesses;
+  if (payload.step === 10) onboardingSettings.confidence = payload.data;
+
+  if (payload.step === 11) {
+    onboardingSettings.diagnosticInput = payload.data.response;
+    if (payload.data.result) onboardingSettings.diagnostic = payload.data.result;
+  }
+
+  if (payload.step === 12) {
+    const phone = payload.data.phone?.trim() ? payload.data.phone.trim() : null;
+    const whatsappOptIn =
+      typeof payload.data.whatsappOptIn === 'boolean'
+        ? payload.data.whatsappOptIn
+        : payload.data.channels.includes('whatsapp');
+
+    updates.whatsapp_opt_in = whatsappOptIn;
+    updates.phone = phone;
+    updates.notification_channels = Array.from(new Set(payload.data.channels));
+    onboardingSettings.notificationTime = payload.data.preferredTime ?? null;
+
+    nextStep = TOTAL_ONBOARDING_STEPS;
+    nextComplete = true;
+    onboardingSettings.draft = false;
+  }
+
+  if (payload.step < TOTAL_ONBOARDING_STEPS && !current.onboardingComplete) {
+    nextComplete = false;
+  }
+
+  updates.settings = { ...settings, onboarding: onboardingSettings };
+  updates.onboarding_step = nextStep;
+  updates.onboarding_complete = nextComplete;
+
+  const becameComplete = !current.onboardingComplete && nextComplete;
+  const hasStarted = current.onboardingStep <= 0 && payload.step >= 1 && !current.onboardingComplete;
+
+  const profileRow = await upsertProfile(supabase, userId, updates);
+
+  if (hasStarted) {
+    await trackor.log('onboarding_start', { user_id: userId, step: payload.step });
+  }
+
+  await trackor.log('onboarding_step_complete', { user_id: userId, step: payload.step });
+
+  if (becameComplete) {
+    await trackor.log('onboarding_done', { user_id: userId });
+    await supabase.auth.updateUser({ data: { onboarding_complete: true } });
+  }
+
+  return profileRow;
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<OnboardingState | ErrorResponse>,
+) {
+  if (req.method === 'GET') return handleGet(req, res);
+  if (req.method === 'POST') return handlePost(req, res);
+
+  res.setHeader('Allow', 'GET,POST');
+  return res.status(405).json({ error: 'Method not allowed' });
+}
+
+
+
+================================================================================
+FILE 17: components\onboarding\StepLayout.tsx
+================================================================================
+
+import React from 'react';
+import { Container } from '@/components/design-system/Container';
+import { Button } from '@/components/design-system/Button';
+import { cn } from '@/lib/utils';
+
+export function StepLayout({
+  title,
+  subtitle,
+  step,
+  total,
+  onBack,
+  children,
+  footer,
+}: {
+  title: string;
+  subtitle?: string;
+  step: number;
+  total: number;
+  onBack?: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  const pct = Math.round((step / total) * 100);
+  return (
+    <main className="min-h-screen bg-background">
+      <Container className="mx-auto flex min-h-screen w-full max-w-4xl flex-col justify-center py-6 sm:py-10">
+        <div className="mb-4 sm:mb-6">
+          <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Step {step} of {total}</span>
+            <span>{pct}% complete</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+
+        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-8">
+          <header className="mb-5 sm:mb-6">
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+            {subtitle && <p className="mt-2 text-sm text-muted-foreground sm:text-base">{subtitle}</p>}
+          </header>
+
+          <div>{children}</div>
+
+          <footer className={cn('mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4')}>
+            <div>{onBack ? <Button variant="ghost" onClick={onBack}>Back</Button> : <span />}</div>
+            <div>{footer}</div>
+          </footer>
+        </section>
+      </Container>
+    </main>
+  );
+}
+
+
+
+================================================================================
+FILE 18: components\onboarding\StepShell.tsx
+================================================================================
+
+// components/onboarding/StepShell.tsx
+import * as React from 'react';
+import Link from 'next/link';
+import { Container } from '@/components/design-system/Container';
+import { Card } from '@/components/design-system/Card';
+import { Button } from '@/components/design-system/Button';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export type StepMeta = { label: string; href?: string; done?: boolean };
+
+export type StepShellProps = {
+  step: number;        // 1-based
+  total: number;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+
+  // Navigation
+  onNext?: () => void;
+  onBack?: () => void;
+  onSkip?: () => void;
+
+  // Labels
+  nextLabel?: string;
+  backLabel?: string;
+  skipLabel?: string;
+
+  // UI states
+  nextDisabled?: boolean;
+  className?: string;
+
+  // Optional fancy bits
+  steps?: StepMeta[];  // step pills at top (labels + optional links)
+  hint?: string;       // small tip ribbon below header
+};
+
+const StepShell: React.FC<StepShellProps> = ({
+  step,
+  total,
+  title,
+  subtitle,
+  children,
+  onNext,
+  onBack,
+  onSkip,
+  nextLabel = 'Continue',
+  backLabel = 'Back',
+  skipLabel = 'Skip',
+  nextDisabled,
+  className,
+  steps,
+  hint,
+}) => {
+  const pct = Math.max(0, Math.min(100, Math.round((step / Math.max(1, total)) * 100)));
+  const isLast = step >= total;
+
+  // Keyboard shortcuts: â† / â†’ / Enter / Esc
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === 'ArrowRight') onNext?.();
+      if (e.key === 'ArrowLeft') onBack?.();
+      if (e.key === 'Escape') onSkip?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onNext, onBack, onSkip]);
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Container className={['max-w-3xl py-8', className || ''].join(' ')}>
+
+        {/* Header â€” glass with gradient underline + animated progress */}
+        <div className="header-glass rounded-ds-2xl border border-border p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-h2 font-semibold tracking-tight">{title}</h1>
+              {subtitle && <p className="mt-1 text-small text-foreground/70">{subtitle}</p>}
+            </div>
+            <div className="shrink-0 rounded-full px-3 py-1 text-caption bg-primary/10 text-primary tabular-nums">
+              {step}/{total}
+            </div>
+          </div>
+
+          {/* Optional step pills (clickable via Link when href provided) */}
+          {Array.isArray(steps) && steps.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2" data-steps>
+              {steps.map((s, i) => {
+                const idx = i + 1;
+                const active = idx === step;
+                const done = (s.done ?? idx < step);
+                const pillClasses = [
+                  'nav-pill select-none',
+                  'rounded-ds-xl border px-3 py-1 text-caption',
+                  active ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border',
+                  done && !active ? 'ring-1 ring-success/40' : '',
+                ].join(' ');
+
+                return s.href ? (
+                  <Link key={s.label + i} href={s.href} className={pillClasses}>
+                    <span className="opacity-80">Step {idx} Â· </span>
+                    <span className="font-medium">{s.label}</span>
+                  </Link>
+                ) : (
+                  <div key={s.label + i} className={pillClasses}>
+                    <span className="opacity-80">Step {idx} Â· </span>
+                    <span className="font-medium">{s.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Hint ribbon */}
+          {hint && (
+            <div className="mt-3 rounded-ds-xl border border-border bg-card/60 p-2 text-caption text-mutedText">
+              {hint}
+            </div>
+          )}
+
+          {/* Animated gradient progress */}
+          <div
+            className="relative mt-4 h-2 w-full overflow-hidden rounded-full bg-border"
+            role="progressbar"
+            aria-label="Onboarding progress"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+              className="h-full bg-gradient-to-r from-primary via-electricBlue to-vibrantPurple"
+            />
+            <div className="pointer-events-none absolute inset-0 animate-[shimmer_2.2s_linear_infinite] ds-shimmer" />
+          </div>
+        </div>
+
+        {/* Body card with subtle enter animation */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`step-body-${step}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="mt-4"
+          >
+            <Card className="card-surface p-5 rounded-ds-2xl border border-border">
+              {children}
+            </Card>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Footer â€” sticky, glow, keyboard tips */}
+        <div className="sticky bottom-0 mt-4 rounded-ds-2xl border border-border bg-gradient-to-r from-primary/10 via-electricBlue/10 to-vibrantPurple/10 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-3 py-3">
+            <div className="flex items-center gap-2 text-caption text-mutedText">
+              <kbd className="rounded border border-border bg-card px-1.5 py-0.5">â†</kbd>
+              <span>Back</span>
+              <span className="opacity-50">Â·</span>
+              <kbd className="rounded border border-border bg-card px-1.5 py-0.5">â†’</kbd>
+              <span>Next</span>
+              <span className="opacity-50">Â·</span>
+              <kbd className="rounded border border-border bg-card px-1.5 py-0.5">Enter</kbd>
+              <span>Continue</span>
+              {onSkip && (
+                <>
+                  <span className="opacity-50">Â·</span>
+                  <kbd className="rounded border border-border bg-card px-1.5 py-0.5">Esc</kbd>
+                  <span>Skip</span>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onBack}
+                disabled={step <= 1 || !onBack}
+                className="rounded-ds-xl"
+              >
+                {backLabel}
+              </Button>
+
+              {onSkip && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={onSkip}
+                  className="rounded-ds-xl"
+                >
+                  {skipLabel}
+                </Button>
+              )}
+
+              <motion.div
+                animate={isLast ? { scale: [1, 1.04, 1] } : {}}
+                transition={isLast ? { repeat: Infinity, duration: 2 } : {}}
+              >
+                <Button
+                  type="button"
+                  onClick={onNext}
+                  disabled={!!nextDisabled}
+                  className="rounded-ds-xl shadow-glow hover:shadow-glowLg"
+                >
+                  {isLast ? 'Finish' : nextLabel}
+                </Button>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </Container>
+
+      {/* subtle completion pulse */}
+      <AnimatePresence>
+        {isLast && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.35 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="pointer-events-none fixed inset-0 bg-onboarding-radial"
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default StepShell;
+
+

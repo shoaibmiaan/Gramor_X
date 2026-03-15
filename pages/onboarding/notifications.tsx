@@ -1,3 +1,4 @@
+// pages/onboarding/notifications.tsx
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import React, { useMemo, useState } from 'react';
@@ -97,16 +98,6 @@ const OnboardingNotificationsPage: NextPage = () => {
     );
   }
 
-  function handleStepClick(stepId: OnboardingStepId) {
-    const pathname = STEP_ROUTES[stepId];
-    if (!pathname) return;
-
-    router.push({
-      pathname,
-      query: { next: nextPath },
-    });
-  }
-
   function handleBack() {
     router.push({
       pathname: STEP_ROUTES['study-rhythm'],
@@ -144,12 +135,12 @@ const OnboardingNotificationsPage: NextPage = () => {
   return (
     <main className="min-h-screen bg-background">
       <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-        {/* Progress (clickable) */}
+        {/* Progress (non‑clickable) */}
         <div className="mb-6 w-full max-w-3xl">
           <OnboardingProgress
             steps={ONBOARDING_STEPS}
             currentIndex={currentIndex}
-            onStepClick={handleStepClick}
+            // onStepClick omitted – static display only
           />
         </div>
 
@@ -296,6 +287,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
               type="button"
               onClick={onStepClick ? () => onStepClick(step.id) : undefined}
               className="flex-1 focus-visible:outline-none"
+              disabled={!onStepClick}
             >
               <span
                 className={cn(

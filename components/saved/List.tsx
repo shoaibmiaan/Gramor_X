@@ -11,6 +11,7 @@ import { UpgradeBanner } from '@/components/premium/UpgradeBanner';
 import { usePlan } from '@/hooks/usePlan';
 import { useLocale } from '@/lib/locale';
 import { track } from '@/lib/analytics/track';
+import { getStandardPlanName } from '@/lib/subscription'; // ← added import
 
 import {
   SAVED_PAGE_SIZE,
@@ -231,10 +232,10 @@ export function SavedList() {
   const showUpgrade = !planLoading && plan === 'free' && !isUnauthorized;
   const upgradeBanner = showUpgrade ? (
     <UpgradeBanner
-      pillLabel="Explorer Â· Free plan"
+      pillLabel={`Explorer · ${getStandardPlanName('free')} plan`}  // ← dynamic plan name
       title="Keep every bookmark in sync"
       description="Premium unlocks unlimited saved lessons, cross-device sync, and AI-powered recap suggestions."
-      href="/pricing/overview?from=saved-upgrade"   // ← changed from '/pricing?from=saved-upgrade'
+      href="/pricing/overview?from=saved-upgrade"
       feature="Saved library"
     />
   ) : null;

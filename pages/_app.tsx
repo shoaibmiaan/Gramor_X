@@ -42,11 +42,6 @@ import { getRouteConfig, isAttemptPath } from '@/lib/routes/routeLayoutMap';
 // ⭐ NEW BreadcrumbBar V2
 import { BreadcrumbBar } from '@/components/navigation/BreadcrumbBar';
 
-const PricingReasonBanner = dynamic(
-  () => import('@/components/paywall/PricingReasonBanner'),
-  { ssr: false }
-);
-
 // ---- Safe Supabase getter (works for both factory or instance exports)
 function getSupa() {
   const v: any = supabaseClientSource as any;
@@ -394,11 +389,6 @@ function InnerApp({ Component, pageProps }: AppProps) {
               // ⭐ SEND TO LAYOUT MANAGER
               showBreadcrumbs={showBreadcrumbs}
             >
-              {(router.pathname === '/pricing' ||
-                router.pathname === '/pricing/overview') && (
-                <PricingReasonBanner />
-              )}
-
               {basePage}
             </AppLayoutManager>
           </AnimationProvider>
