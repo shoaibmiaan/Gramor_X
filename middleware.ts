@@ -12,7 +12,7 @@ const AUTH_PAGES = [
   '/auth/register',
   '/auth/mfa',
   '/auth/verify',
-  '/auth/confirm',          // ← must be here
+  '/auth/confirm', // ← must be here
   '/auth/callback',
 ];
 
@@ -21,7 +21,7 @@ const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
   '/settings',
-  '/profile',                // <-- ADDED
+  '/profile', // <-- ADDED
   '/notifications',
   '/study-plan',
   '/progress',
@@ -127,10 +127,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Also allow callback (for OAuth/magic links)
-  if (
-    pathname === '/auth/callback' ||
-    pathname.startsWith('/auth/callback?')
-  ) {
+  if (pathname === '/auth/callback' || pathname.startsWith('/auth/callback?')) {
     console.log('[middleware] Allowing /auth/callback');
     return NextResponse.next();
   }
@@ -184,6 +181,22 @@ export async function middleware(req: NextRequest) {
     url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/';
     url.search = '';
     return redirectWithCookies(res, url);
+  }
+
+  // Prevent teacher/admin users from entering student onboarding routes.
+  if (authState.authenticated) {
+    const role = authState.role;
+    const isPrivilegedRole = role === 'teacher' || role === 'admin';
+    const isStudentOnboardingRoute =
+      pathname === '/onboarding' ||
+      (pathname.startsWith('/onboarding/') && !pathname.startsWith('/onboarding/teacher'));
+
+    if (isPrivilegedRole && isStudentOnboardingRoute) {
+      const url = req.nextUrl.clone();
+      url.pathname = role === 'teacher' ? '/teacher' : '/admin';
+      url.search = '';
+      return redirectWithCookies(res, url);
+    }
   }
 
   // Onboarding guard
