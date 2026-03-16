@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
+import { ConflictDialog } from '@/components/onboarding/ConflictDialog';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useStepValidation } from '@/hooks/useStepValidation';
-import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { resolveNavigation, saveOnboardingStep, skipOnboardingStep } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
 type DiagnosticResult = {
@@ -23,6 +24,7 @@ export default function DiagnosticPage() {
   const [result, setResult] = useState<DiagnosticResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [skipping, setSkipping] = useState(false);
 
   useEffect(() => {
     const d = loadDraft('diagnostic', { response: '' });
@@ -34,13 +36,17 @@ export default function DiagnosticPage() {
   }, [response, result]);
 
   const payload = { response, result: result ?? undefined };
-  const { isValid, errors } = useStepValidation(11, payload);
+  const { isValid, errors, canSkip } = useStepValidation(11, payload);
 
   const {
     isSaving,
     isSaved,
     error: autoSaveError,
     flush,
+    expectedVersion,
+    isConflict,
+    conflictMessage,
+    reloadFromConflict,
   } = useAutoSave({
     step: 11,
     data: payload,
@@ -61,7 +67,7 @@ export default function DiagnosticPage() {
       if (!res.ok) throw new Error(body?.error || 'Diagnostic failed');
 
       setResult(body as DiagnosticResult);
-      await saveOnboardingStep(11, { response, result: body });
+      await saveOnboardingStep(11, { response, result: body }, { expectedVersion });
     } catch (e: any) {
       setError(e?.message || 'Could not run diagnostic');
     } finally {
@@ -71,8 +77,20 @@ export default function DiagnosticPage() {
 
   const handleContinue = async () => {
     if (!isValid) return;
-    await flush();
+    const didSave = await flush();
+    if (!didSave) return;
     if (nav.next) await router.push(nav.next.path);
+  };
+
+  const handleSkip = async () => {
+    if (!canSkip || !nav.next) return;
+    try {
+      setSkipping(true);
+      await skipOnboardingStep(11, { expectedVersion });
+      await router.push(nav.next.path);
+    } finally {
+      setSkipping(false);
+    }
   };
 
   return (
@@ -82,9 +100,16 @@ export default function DiagnosticPage() {
       step={nav.index + 1}
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
+      showSkip={canSkip}
+      onSkip={handleSkip}
+      conflictBanner={
+        isConflict && conflictMessage ? (
+          <ConflictDialog message={conflictMessage} onReload={reloadFromConflict} />
+        ) : undefined
+      }
       statusIndicator={
         <SavingIndicator
-          isSaving={isSaving || loading}
+          isSaving={isSaving || loading || skipping}
           isSaved={isSaved}
           error={autoSaveError || error}
         />
@@ -93,13 +118,13 @@ export default function DiagnosticPage() {
         <div className="flex gap-2">
           <Button
             variant="secondary"
-            disabled={loading || response.length < 20}
+            disabled={loading || response.length < 20 || skipping}
             onClick={() => void runDiagnostic()}
           >
             {loading ? 'Analyzing…' : 'Run diagnostic'}
           </Button>
           {result && (
-            <Button onClick={() => void handleContinue()} disabled={!isValid}>
+            <Button onClick={() => void handleContinue()} disabled={!isValid || skipping}>
               Continue
             </Button>
           )}

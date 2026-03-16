@@ -1,3 +1,4 @@
+import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { cn } from '@/lib/utils';
 
@@ -9,8 +10,28 @@ type SavingIndicatorProps = {
 };
 
 export function SavingIndicator({ isSaving, isSaved, error, className }: SavingIndicatorProps) {
+  const isConflict = Boolean(error?.toLowerCase().includes('another session'));
+
   if (error) {
-    return <span className={cn('text-xs text-destructive', className)}>Auto-save failed</span>;
+    return (
+      <span className={cn('inline-flex items-center gap-2 text-xs text-destructive', className)}>
+        {isConflict
+          ? 'Your data has been updated in another session. Please reload to see the latest version.'
+          : 'Auto-save failed'}
+        {isConflict && (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              if (typeof window !== 'undefined') window.location.reload();
+            }}
+          >
+            Reload
+          </Button>
+        )}
+      </span>
+    );
   }
 
   if (isSaving) {

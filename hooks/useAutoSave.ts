@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { saveOnboardingStep } from '@/lib/onboarding/client';
+import {
+  fetchOnboardingState,
+  OnboardingConflictError,
+  saveOnboardingStep,
+  type OnboardingSaveOptions,
+} from '@/lib/onboarding/client';
 
-type UseAutoSaveParams<T extends Record<string, unknown>> = {
+type UseAutoSaveParams<T extends Record<string, unknown> | null> = {
   step: number;
   data: T;
   enabled?: boolean;
@@ -14,11 +19,15 @@ type UseAutoSaveResult = {
   isSaving: boolean;
   isSaved: boolean;
   error: string | null;
+  isConflict: boolean;
+  conflictMessage: string | null;
   flush: () => Promise<boolean>;
   clearError: () => void;
+  reloadFromConflict: () => void;
+  expectedVersion: string | null;
 };
 
-export function useAutoSave<T extends Record<string, unknown>>({
+export function useAutoSave<T extends Record<string, unknown> | null>({
   step,
   data,
   enabled = true,
@@ -29,6 +38,9 @@ export function useAutoSave<T extends Record<string, unknown>>({
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConflict, setIsConflict] = useState(false);
+  const [conflictMessage, setConflictMessage] = useState<string | null>(null);
+  const [expectedVersion, setExpectedVersion] = useState<string | null>(null);
 
   const dataRef = useRef(data);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,6 +48,23 @@ export function useAutoSave<T extends Record<string, unknown>>({
   const hasMountedRef = useRef(false);
 
   dataRef.current = data;
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const state = await fetchOnboardingState();
+        if (active) setExpectedVersion(state.updatedAt ?? null);
+      } catch {
+        // noop: version prefetch is best-effort
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const saveNow = useCallback(async () => {
     if (!enabled) return false;
@@ -46,9 +75,13 @@ export function useAutoSave<T extends Record<string, unknown>>({
     setError(null);
 
     try {
-      await saveOnboardingStep(step, dataRef.current);
+      const options: OnboardingSaveOptions = { expectedVersion };
+      const response = await saveOnboardingStep(step, dataRef.current, options);
 
       if (latestRequestIdRef.current === requestId) {
+        setExpectedVersion(response.updatedAt ?? null);
+        setIsConflict(false);
+        setConflictMessage(null);
         setIsSaved(true);
         onSave?.();
       }
@@ -56,9 +89,19 @@ export function useAutoSave<T extends Record<string, unknown>>({
       return true;
     } catch (rawError) {
       if (latestRequestIdRef.current === requestId) {
-        const err = rawError instanceof Error ? rawError : new Error('Auto-save failed');
-        setError(err.message);
-        onError?.(err);
+        if (rawError instanceof OnboardingConflictError) {
+          setIsConflict(true);
+          setConflictMessage(
+            rawError.message ||
+              'Your data has been updated in another session. Please reload to see the latest version.',
+          );
+          setExpectedVersion(rawError.latestState?.updatedAt ?? null);
+          setError(rawError.message);
+        } else {
+          const err = rawError instanceof Error ? rawError : new Error('Auto-save failed');
+          setError(err.message);
+          onError?.(err);
+        }
       }
 
       return false;
@@ -67,7 +110,7 @@ export function useAutoSave<T extends Record<string, unknown>>({
         setIsSaving(false);
       }
     }
-  }, [enabled, onError, onSave, step]);
+  }, [enabled, expectedVersion, onError, onSave, step]);
 
   const dataSignature = useMemo(() => JSON.stringify(data), [data]);
 
@@ -105,13 +148,27 @@ export function useAutoSave<T extends Record<string, unknown>>({
     return saveNow();
   }, [saveNow]);
 
-  const clearError = useCallback(() => setError(null), []);
+  const clearError = useCallback(() => {
+    setError(null);
+    setConflictMessage(null);
+    setIsConflict(false);
+  }, []);
+
+  const reloadFromConflict = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }, []);
 
   return {
     isSaving,
     isSaved,
     error,
+    isConflict,
+    conflictMessage,
     flush,
     clearError,
+    reloadFromConflict,
+    expectedVersion,
   };
 }

@@ -93,7 +93,8 @@ const OnboardingTargetBandPage: NextPage = () => {
 
     try {
       setSubmitting(true);
-      await flush();
+      const didSave = await flush();
+      if (!didSave) return;
 
       const next = getNextStep('target-band');
       if (next) {

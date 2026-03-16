@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { z } from 'zod';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { getServerClient } from '@/lib/supabaseServer';
 import {
@@ -11,10 +12,18 @@ import {
 } from '@/lib/onboarding/schema';
 
 const SELECT_COLUMNS =
-  // Alias DB "id" -> JSON "user_id" so your existing types continue to work
-  'user_id:id,preferred_language,locale,goal_band,exam_date,study_days,study_minutes_per_day,whatsapp_opt_in,phone,notification_channels,onboarding_step,onboarding_complete,settings';
+  'user_id:id,preferred_language,locale,goal_band,exam_date,study_days,study_minutes_per_day,whatsapp_opt_in,phone,notification_channels,onboarding_step,onboarding_complete,settings,updated_at';
 
-type ErrorResponse = { error: string };
+type ErrorResponse = {
+  error: string;
+  latestState?: OnboardingState;
+};
+
+const postBodySchema = z.object({
+  step: z.number().int().min(1).max(TOTAL_ONBOARDING_STEPS),
+  data: z.unknown(),
+  expectedVersion: z.string().datetime().optional().nullable(),
+});
 
 type ProfileRow = {
   user_id: string;
@@ -30,6 +39,7 @@ type ProfileRow = {
   onboarding_step: number | null;
   onboarding_complete: boolean | null;
   settings: Record<string, unknown> | null;
+  updated_at: string | null;
 } | null;
 
 const defaultState: OnboardingState = {
@@ -50,6 +60,7 @@ const defaultState: OnboardingState = {
   diagnostic: null,
   onboardingStep: 0,
   onboardingComplete: false,
+  updatedAt: null,
 };
 
 function normalizeState(row: ProfileRow): OnboardingState {
@@ -81,6 +92,7 @@ function normalizeState(row: ProfileRow): OnboardingState {
     diagnostic: onboarding.diagnostic ?? null,
     onboardingStep: typeof row.onboarding_step === 'number' ? row.onboarding_step : 0,
     onboardingComplete: row.onboarding_complete === true,
+    updatedAt: row.updated_at ?? null,
   });
 }
 
@@ -91,7 +103,7 @@ async function fetchProfileRow(
   const { data, error } = await supabase
     .from('profiles')
     .select(SELECT_COLUMNS)
-    .eq('id', userId) // canonical column
+    .eq('id', userId)
     .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
@@ -108,7 +120,6 @@ async function upsertProfile(
 ): Promise<ProfileRow> {
   const { data, error } = await supabase
     .from('profiles')
-    // IMPORTANT: never set user_id (generated); write id instead
     .upsert({ id: userId, ...payload }, { onConflict: 'id' })
     .select(SELECT_COLUMNS)
     .eq('id', userId)
@@ -150,7 +161,14 @@ async function handlePost(
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const parseResult = onboardingStepPayloadSchema.safeParse(req.body);
+  const bodyResult = postBodySchema.safeParse(req.body);
+  if (!bodyResult.success) {
+    const detail = bodyResult.error.issues.map((issue) => issue.message).join(', ');
+    return res.status(400).json({ error: detail || 'Invalid payload' });
+  }
+
+  const { step, data, expectedVersion } = bodyResult.data;
+  const parseResult = onboardingStepPayloadSchema.safeParse({ step, data });
   if (!parseResult.success) {
     const detail = parseResult.error.issues.map((issue) => issue.message).join(', ');
     return res.status(400).json({ error: detail || 'Invalid payload' });
@@ -161,13 +179,16 @@ async function handlePost(
   try {
     const currentRow = await fetchProfileRow(supabase, auth.user.id);
     const currentState = normalizeState(currentRow);
-    const profileRow = await applyStep(
-      supabase,
-      auth.user.id,
-      payload,
-      currentState,
-      currentRow,
-    );
+
+    if (expectedVersion && currentState.updatedAt && expectedVersion !== currentState.updatedAt) {
+      return res.status(409).json({
+        error:
+          'Your data has been updated in another session. Please reload to see the latest version.',
+        latestState: currentState,
+      });
+    }
+
+    const profileRow = await applyStep(supabase, auth.user.id, payload, currentState, currentRow);
     return res.status(200).json(normalizeState(profileRow));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to save onboarding step';
@@ -184,14 +205,13 @@ async function applyStep(
 ): Promise<ProfileRow> {
   const updates: Record<string, unknown> = {};
   const settings = (row?.settings ?? {}) as Record<string, unknown>;
-  const onboardingSettings = ((settings.onboarding as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
+  const onboardingSettings = ((settings.onboarding as Record<string, unknown> | undefined) ??
+    {}) as Record<string, unknown>;
 
   let nextStep = Math.max(current.onboardingStep ?? 0, payload.step);
   let nextComplete = current.onboardingComplete;
 
-  if (payload.step === 1) {
-    onboardingSettings.welcomeSeenAt = new Date().toISOString();
-  }
+  if (payload.step === 1) onboardingSettings.welcomeSeenAt = new Date().toISOString();
 
   onboardingSettings.draft = payload.step < TOTAL_ONBOARDING_STEPS;
 
@@ -229,11 +249,14 @@ async function applyStep(
 
   if (payload.step === 8) onboardingSettings.learningStyle = payload.data.learningStyle;
   if (payload.step === 9) onboardingSettings.weaknesses = payload.data.weaknesses;
-  if (payload.step === 10) onboardingSettings.confidence = payload.data;
+
+  if (payload.step === 10) {
+    onboardingSettings.confidence = payload.data;
+  }
 
   if (payload.step === 11) {
-    onboardingSettings.diagnosticInput = payload.data.response;
-    if (payload.data.result) onboardingSettings.diagnostic = payload.data.result;
+    onboardingSettings.diagnosticInput = payload.data?.response ?? null;
+    onboardingSettings.diagnostic = payload.data?.result ?? null;
   }
 
   if (payload.step === 12) {
@@ -262,7 +285,8 @@ async function applyStep(
   updates.onboarding_complete = nextComplete;
 
   const becameComplete = !current.onboardingComplete && nextComplete;
-  const hasStarted = current.onboardingStep <= 0 && payload.step >= 1 && !current.onboardingComplete;
+  const hasStarted =
+    current.onboardingStep <= 0 && payload.step >= 1 && !current.onboardingComplete;
 
   const profileRow = await upsertProfile(supabase, userId, updates);
 

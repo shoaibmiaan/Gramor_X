@@ -44,7 +44,8 @@ export default function OnboardingLanguagePage() {
 
   const handleContinue = async () => {
     if (!language || !isValid) return;
-    await flush();
+    const didSave = await flush();
+    if (!didSave) return;
     if (nav.next) await router.push(nav.next.path);
   };
 

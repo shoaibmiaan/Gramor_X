@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
+import { ConflictDialog } from '@/components/onboarding/ConflictDialog';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useStepValidation } from '@/hooks/useStepValidation';
-import { resolveNavigation } from '@/lib/onboarding/client';
+import { resolveNavigation, skipOnboardingStep } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
 export default function ConfidencePage() {
@@ -14,6 +15,7 @@ export default function ConfidencePage() {
   const nav = resolveNavigation('confidence');
   const [writing, setWriting] = useState(3);
   const [speaking, setSpeaking] = useState(3);
+  const [skipping, setSkipping] = useState(false);
 
   useEffect(() => {
     const d = loadDraft('confidence', { writing: 3, speaking: 3 });
@@ -26,9 +28,18 @@ export default function ConfidencePage() {
   }, [writing, speaking]);
 
   const payload = { writing, speaking };
-  const { isValid, errors } = useStepValidation(10, payload);
+  const { isValid, errors, canSkip } = useStepValidation(10, payload);
 
-  const { isSaving, isSaved, error, flush } = useAutoSave({
+  const {
+    isSaving,
+    isSaved,
+    error,
+    flush,
+    expectedVersion,
+    isConflict,
+    conflictMessage,
+    reloadFromConflict,
+  } = useAutoSave({
     step: 10,
     data: payload,
     enabled: isValid,
@@ -36,8 +47,20 @@ export default function ConfidencePage() {
 
   const handleContinue = async () => {
     if (!isValid) return;
-    await flush();
+    const didSave = await flush();
+    if (!didSave) return;
     if (nav.next) await router.push(nav.next.path);
+  };
+
+  const handleSkip = async () => {
+    if (!canSkip || !nav.next) return;
+    try {
+      setSkipping(true);
+      await skipOnboardingStep(10, { expectedVersion });
+      await router.push(nav.next.path);
+    } finally {
+      setSkipping(false);
+    }
   };
 
   return (
@@ -47,9 +70,18 @@ export default function ConfidencePage() {
       step={nav.index + 1}
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
-      statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
+      showSkip={canSkip}
+      onSkip={handleSkip}
+      conflictBanner={
+        isConflict && conflictMessage ? (
+          <ConflictDialog message={conflictMessage} onReload={reloadFromConflict} />
+        ) : undefined
+      }
+      statusIndicator={
+        <SavingIndicator isSaving={isSaving || skipping} isSaved={isSaved} error={error} />
+      }
       footer={
-        <Button onClick={handleContinue} disabled={!isValid}>
+        <Button onClick={handleContinue} disabled={!isValid || skipping}>
           Continue
         </Button>
       }

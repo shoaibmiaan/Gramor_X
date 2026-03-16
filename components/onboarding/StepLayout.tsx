@@ -12,6 +12,10 @@ export function StepLayout({
   children,
   footer,
   statusIndicator,
+  showSkip,
+  onSkip,
+  skipLabel = 'Skip',
+  conflictBanner,
 }: {
   title: string;
   subtitle?: string;
@@ -21,6 +25,10 @@ export function StepLayout({
   children: React.ReactNode;
   footer?: React.ReactNode;
   statusIndicator?: React.ReactNode;
+  showSkip?: boolean;
+  onSkip?: () => void;
+  skipLabel?: string;
+  conflictBanner?: React.ReactNode;
 }) {
   const pct = Math.round((step / total) * 100);
 
@@ -50,6 +58,7 @@ export function StepLayout({
             )}
           </header>
 
+          {conflictBanner}
           <div>{children}</div>
 
           <footer
@@ -67,6 +76,11 @@ export function StepLayout({
               )}
             </div>
             <div className="flex items-center gap-3">
+              {showSkip && onSkip && (
+                <Button type="button" variant="secondary" onClick={onSkip}>
+                  {skipLabel}
+                </Button>
+              )}
               {statusIndicator}
               {footer}
             </div>

@@ -35,7 +35,8 @@ export default function CurrentLevelPage() {
   });
 
   const handleContinue = async () => {
-    await flush();
+    const didSave = await flush();
+    if (!didSave) return;
     if (nav.next) await router.push(nav.next.path);
   };
 
