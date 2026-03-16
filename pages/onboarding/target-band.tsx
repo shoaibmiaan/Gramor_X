@@ -7,7 +7,9 @@ import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { ONBOARDING_STEPS, getNextStep, getPrevStep, getStepIndex } from '@/lib/onboarding/steps';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +55,6 @@ const OnboardingTargetBandPage: NextPage = () => {
   const router = useRouter();
   const [targetBand, setTargetBand] = useState<TargetBand | null>('6.5');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const nextPath = useMemo(() => {
     const { next } = router.query;
@@ -73,6 +74,8 @@ const OnboardingTargetBandPage: NextPage = () => {
   }
 
   const goalBand = targetBand ? Number.parseFloat(targetBand) : null;
+  const payload = { goalBand };
+  const { isValid, errors } = useStepValidation(5, payload);
 
   const {
     isSaving,
@@ -81,17 +84,12 @@ const OnboardingTargetBandPage: NextPage = () => {
     flush,
   } = useAutoSave({
     step: 5,
-    data: { goalBand },
-    enabled: goalBand !== null,
+    data: payload,
+    enabled: goalBand !== null && isValid,
   });
 
   async function handleContinue() {
-    setError(null);
-
-    if (!targetBand) {
-      setError('Please choose a target band to continue.');
-      return;
-    }
+    if (!targetBand || !isValid) return;
 
     try {
       setSubmitting(true);
@@ -104,10 +102,6 @@ const OnboardingTargetBandPage: NextPage = () => {
           query: { next: nextPath },
         });
       }
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      setError('Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -124,11 +118,11 @@ const OnboardingTargetBandPage: NextPage = () => {
         <SavingIndicator
           isSaving={isSaving || submitting}
           isSaved={isSaved}
-          error={autoSaveError || error}
+          error={autoSaveError}
         />
       }
       footer={
-        <Button size="lg" onClick={handleContinue} disabled={submitting || !targetBand}>
+        <Button size="lg" onClick={handleContinue} disabled={submitting || !isValid || !targetBand}>
           {submitting ? 'Saving…' : 'Continue'}
           <Icon name="arrow-right" className="ml-2 h-4 w-4" />
         </Button>
@@ -139,7 +133,6 @@ const OnboardingTargetBandPage: NextPage = () => {
         Clear goal, clearer path.
       </div>
 
-      {/* Options */}
       <div className="grid gap-4 sm:grid-cols-2">
         {TARGET_OPTIONS.map((option) => (
           <TargetBandCard
@@ -150,10 +143,8 @@ const OnboardingTargetBandPage: NextPage = () => {
           />
         ))}
       </div>
+      <ValidationError message={errors.goalBand || errors._form} />
 
-      {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
-
-      {/* Hint */}
       <p className="mt-4 text-xs text-muted-foreground">
         Not 100% sure? Pick the band you’d be happy with. You can always adjust it later from{' '}
         <span className="font-medium">Profile → Goals</span>.

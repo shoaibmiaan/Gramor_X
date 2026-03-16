@@ -5,7 +5,9 @@ import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 import { cn } from '@/lib/utils';
@@ -26,6 +28,9 @@ export default function OnboardingLanguagePage() {
     if (language) saveDraft('language', { preferredLanguage: language });
   }, [language]);
 
+  const payload = { preferredLanguage: language ?? 'en' };
+  const { isValid, errors } = useStepValidation(2, payload);
+
   const {
     isSaving,
     isSaved,
@@ -33,12 +38,12 @@ export default function OnboardingLanguagePage() {
     flush,
   } = useAutoSave({
     step: 2,
-    data: { preferredLanguage: language ?? 'en' },
-    enabled: Boolean(language),
+    data: payload,
+    enabled: Boolean(language) && isValid,
   });
 
   const handleContinue = async () => {
-    if (!language) return;
+    if (!language || !isValid) return;
     await flush();
     if (nav.next) await router.push(nav.next.path);
   };
@@ -54,7 +59,7 @@ export default function OnboardingLanguagePage() {
         <SavingIndicator isSaving={isSaving} isSaved={isSaved} error={autoSaveError} />
       }
       footer={
-        <Button onClick={handleContinue} disabled={!language}>
+        <Button onClick={handleContinue} disabled={!language || !isValid}>
           Continue
           <Icon name="arrow-right" className="ml-2 h-4 w-4" />
         </Button>
@@ -74,6 +79,7 @@ export default function OnboardingLanguagePage() {
           onSelect={() => setLanguage('ur')}
         />
       </div>
+      <ValidationError message={errors.preferredLanguage || errors._form} />
 
       <p className="mt-4 text-xs text-muted-foreground">
         Tip: Use <span className="rounded bg-muted px-1.5 py-0.5">←</span> and{' '}

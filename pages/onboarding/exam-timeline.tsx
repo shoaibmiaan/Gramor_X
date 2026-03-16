@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
@@ -30,12 +32,17 @@ export default function ExamTimelinePage() {
     saveDraft('exam-timeline', { timeframe, examDate });
   }, [timeframe, examDate]);
 
+  const payload = { timeframe, examDate: examDate || null };
+  const { isValid, errors } = useStepValidation(6, payload);
+
   const { isSaving, isSaved, error, flush } = useAutoSave({
     step: 6,
-    data: { timeframe, examDate: examDate || null },
+    data: payload,
+    enabled: isValid,
   });
 
   const handleContinue = async () => {
+    if (!isValid) return;
     await flush();
     if (nav.next) await router.push(nav.next.path);
   };
@@ -48,7 +55,11 @@ export default function ExamTimelinePage() {
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
       statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
-      footer={<Button onClick={handleContinue}>Continue</Button>}
+      footer={
+        <Button onClick={handleContinue} disabled={!isValid}>
+          Continue
+        </Button>
+      }
     >
       <div className="grid gap-3 sm:grid-cols-2">
         {options.map(([value, label]) => (
@@ -63,12 +74,15 @@ export default function ExamTimelinePage() {
           </button>
         ))}
       </div>
+      <ValidationError message={errors.timeframe} />
+
       <input
         type="date"
         className="mt-4 w-full rounded-xl border p-3 sm:w-auto"
         value={examDate}
         onChange={(e) => setExamDate(e.target.value)}
       />
+      <ValidationError message={errors.examDate || errors._form} />
     </StepLayout>
   );
 }

@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
@@ -33,14 +35,17 @@ export default function WeaknessPage() {
     );
   };
 
+  const payload = { weaknesses };
+  const { isValid, errors } = useStepValidation(9, payload);
+
   const { isSaving, isSaved, error, flush } = useAutoSave({
     step: 9,
-    data: { weaknesses },
-    enabled: weaknesses.length > 0,
+    data: payload,
+    enabled: isValid,
   });
 
   const handleContinue = async () => {
-    if (!weaknesses.length) return;
+    if (!isValid) return;
     await flush();
     if (nav.next) await router.push(nav.next.path);
   };
@@ -54,7 +59,7 @@ export default function WeaknessPage() {
       onBack={() => nav.prev && router.push(nav.prev.path)}
       statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
       footer={
-        <Button disabled={!weaknesses.length} onClick={handleContinue}>
+        <Button disabled={!isValid} onClick={handleContinue}>
           Continue
         </Button>
       }
@@ -73,6 +78,7 @@ export default function WeaknessPage() {
         ))}
       </div>
       <p className="mt-3 text-xs text-muted-foreground">Selected: {weaknesses.length}/3</p>
+      <ValidationError message={errors.weaknesses || errors._form} />
     </StepLayout>
   );
 }

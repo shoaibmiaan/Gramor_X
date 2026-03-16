@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
@@ -29,12 +31,17 @@ export default function LearningStylePage() {
     saveDraft('learning-style', { learningStyle });
   }, [learningStyle]);
 
+  const payload = { learningStyle };
+  const { isValid, errors } = useStepValidation(8, payload);
+
   const { isSaving, isSaved, error, flush } = useAutoSave({
     step: 8,
-    data: { learningStyle },
+    data: payload,
+    enabled: isValid,
   });
 
   const handleContinue = async () => {
+    if (!isValid) return;
     await flush();
     if (nav.next) await router.push(nav.next.path);
   };
@@ -47,7 +54,11 @@ export default function LearningStylePage() {
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
       statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
-      footer={<Button onClick={handleContinue}>Continue</Button>}
+      footer={
+        <Button onClick={handleContinue} disabled={!isValid}>
+          Continue
+        </Button>
+      }
     >
       <div className="grid gap-3 sm:grid-cols-2">
         {styles.map(([value, label]) => (
@@ -62,6 +73,7 @@ export default function LearningStylePage() {
           </button>
         ))}
       </div>
+      <ValidationError message={errors.learningStyle || errors._form} />
     </StepLayout>
   );
 }

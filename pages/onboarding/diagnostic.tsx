@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
@@ -31,6 +33,9 @@ export default function DiagnosticPage() {
     saveDraft('diagnostic', { response, result });
   }, [response, result]);
 
+  const payload = { response, result: result ?? undefined };
+  const { isValid, errors } = useStepValidation(11, payload);
+
   const {
     isSaving,
     isSaved,
@@ -38,8 +43,8 @@ export default function DiagnosticPage() {
     flush,
   } = useAutoSave({
     step: 11,
-    data: { response, result },
-    enabled: response.trim().length > 0,
+    data: payload,
+    enabled: isValid,
   });
 
   const runDiagnostic = async () => {
@@ -65,6 +70,7 @@ export default function DiagnosticPage() {
   };
 
   const handleContinue = async () => {
+    if (!isValid) return;
     await flush();
     if (nav.next) await router.push(nav.next.path);
   };
@@ -77,7 +83,11 @@ export default function DiagnosticPage() {
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
       statusIndicator={
-        <SavingIndicator isSaving={isSaving || loading} isSaved={isSaved} error={autoSaveError} />
+        <SavingIndicator
+          isSaving={isSaving || loading}
+          isSaved={isSaved}
+          error={autoSaveError || error}
+        />
       }
       footer={
         <div className="flex gap-2">
@@ -88,7 +98,11 @@ export default function DiagnosticPage() {
           >
             {loading ? 'Analyzing…' : 'Run diagnostic'}
           </Button>
-          {result && <Button onClick={() => void handleContinue()}>Continue</Button>}
+          {result && (
+            <Button onClick={() => void handleContinue()} disabled={!isValid}>
+              Continue
+            </Button>
+          )}
         </div>
       }
     >
@@ -98,6 +112,7 @@ export default function DiagnosticPage() {
         onChange={(e) => setResponse(e.target.value)}
         placeholder="Tell us about your IELTS goal, challenges, and target score..."
       />
+      <ValidationError message={errors.response} />
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       {result && (
         <div className="mt-4 grid gap-2 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm sm:grid-cols-2">

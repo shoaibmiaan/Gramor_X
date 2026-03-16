@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
@@ -23,12 +25,17 @@ export default function ConfidencePage() {
     saveDraft('confidence', { writing, speaking });
   }, [writing, speaking]);
 
+  const payload = { writing, speaking };
+  const { isValid, errors } = useStepValidation(10, payload);
+
   const { isSaving, isSaved, error, flush } = useAutoSave({
     step: 10,
-    data: { writing, speaking },
+    data: payload,
+    enabled: isValid,
   });
 
   const handleContinue = async () => {
+    if (!isValid) return;
     await flush();
     if (nav.next) await router.push(nav.next.path);
   };
@@ -41,7 +48,11 @@ export default function ConfidencePage() {
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
       statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
-      footer={<Button onClick={handleContinue}>Continue</Button>}
+      footer={
+        <Button onClick={handleContinue} disabled={!isValid}>
+          Continue
+        </Button>
+      }
     >
       <div className="space-y-5">
         <label className="block">
@@ -54,6 +65,7 @@ export default function ConfidencePage() {
             value={writing}
             onChange={(e) => setWriting(Number(e.target.value))}
           />
+          <ValidationError message={errors.writing} />
         </label>
         <label className="block">
           <span className="mb-1 block font-medium">Speaking confidence: {speaking}/5</span>
@@ -65,6 +77,7 @@ export default function ConfidencePage() {
             value={speaking}
             onChange={(e) => setSpeaking(Number(e.target.value))}
           />
+          <ValidationError message={errors.speaking} />
         </label>
       </div>
     </StepLayout>

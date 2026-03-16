@@ -7,6 +7,7 @@ import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { ONBOARDING_STEPS, getPrevStep, getStepIndex } from '@/lib/onboarding/steps';
 import { cn } from '@/lib/utils';
 import {
@@ -15,6 +16,7 @@ import {
   type NotificationChannel,
 } from '@/lib/onboarding/schema';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 
 type ChannelId = NotificationChannel;
 
@@ -51,14 +53,11 @@ const OnboardingNotificationsPage: NextPage = () => {
     NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER[0],
   ]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Final destination after onboarding
   const nextPath = useMemo(() => {
     const { next } = router.query;
     const raw = typeof next === 'string' ? next : '/onboarding/study-plan';
 
-    // never loop back into onboarding from final step
     if (!raw) {
       return '/onboarding/study-plan';
     }
@@ -70,7 +69,6 @@ const OnboardingNotificationsPage: NextPage = () => {
   }, [router.query]);
 
   const currentIndex = getStepIndex('notifications');
-
   const hasChannel = selectedChannels.length > 0;
 
   function toggleChannel(id: ChannelId) {
@@ -94,6 +92,7 @@ const OnboardingNotificationsPage: NextPage = () => {
       selectedChannels.includes(channel),
     ),
   };
+  const { isValid, errors } = useStepValidation(TOTAL_ONBOARDING_STEPS, payload);
 
   const {
     isSaving,
@@ -103,27 +102,16 @@ const OnboardingNotificationsPage: NextPage = () => {
   } = useAutoSave({
     step: TOTAL_ONBOARDING_STEPS,
     data: payload,
-    enabled: hasChannel,
+    enabled: hasChannel && isValid,
   });
 
   async function handleComplete() {
-    setError(null);
-
-    if (!hasChannel) {
-      setError('Pick at least one way for us to remind you.');
-      return;
-    }
+    if (!hasChannel || !isValid) return;
 
     try {
       setSubmitting(true);
-
       await flush();
-
       await router.push(nextPath || '/dashboard');
-    } catch (e: any) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      setError(e?.message || 'Could not save your notification settings. Try again.');
     } finally {
       setSubmitting(false);
     }
@@ -140,11 +128,11 @@ const OnboardingNotificationsPage: NextPage = () => {
         <SavingIndicator
           isSaving={isSaving || submitting}
           isSaved={isSaved}
-          error={autoSaveError || error}
+          error={autoSaveError}
         />
       }
       footer={
-        <Button size="lg" onClick={handleComplete} disabled={submitting || !hasChannel}>
+        <Button size="lg" onClick={handleComplete} disabled={submitting || !hasChannel || !isValid}>
           {submitting ? 'Finishing…' : 'Complete onboarding'}
           <Icon name="arrow-right" className="ml-2 h-4 w-4" />
         </Button>
@@ -165,8 +153,7 @@ const OnboardingNotificationsPage: NextPage = () => {
           />
         ))}
       </div>
-
-      {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
+      <ValidationError message={errors.channels || errors._form} />
 
       <p className="mt-4 text-xs text-muted-foreground sm:text-sm">
         You can fine-tune these later from{' '}

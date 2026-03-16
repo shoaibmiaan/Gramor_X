@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
@@ -32,14 +34,17 @@ export default function StudyCommitmentPage() {
     setStudyDays((prev) => (prev.includes(day) ? prev.filter((x) => x !== day) : [...prev, day]));
   };
 
+  const payload = { studyDays, minutesPerDay };
+  const { isValid, errors } = useStepValidation(7, payload);
+
   const { isSaving, isSaved, error, flush } = useAutoSave({
     step: 7,
-    data: { studyDays, minutesPerDay },
-    enabled: studyDays.length > 0,
+    data: payload,
+    enabled: isValid,
   });
 
   const handleContinue = async () => {
-    if (!studyDays.length) return;
+    if (!isValid) return;
     await flush();
     if (nav.next) await router.push(nav.next.path);
   };
@@ -53,7 +58,7 @@ export default function StudyCommitmentPage() {
       onBack={() => nav.prev && router.push(nav.prev.path)}
       statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
       footer={
-        <Button disabled={!studyDays.length} onClick={handleContinue}>
+        <Button disabled={!isValid} onClick={handleContinue}>
           Continue
         </Button>
       }
@@ -71,6 +76,8 @@ export default function StudyCommitmentPage() {
           </button>
         ))}
       </div>
+      <ValidationError message={errors.studyDays} />
+
       <label className="text-sm font-medium">Minutes per day</label>
       <input
         type="range"
@@ -82,6 +89,7 @@ export default function StudyCommitmentPage() {
         className="mt-2 w-full"
       />
       <p className="mt-1 text-sm text-muted-foreground">{minutesPerDay} minutes/day</p>
+      <ValidationError message={errors.minutesPerDay || errors._form} />
     </StepLayout>
   );
 }

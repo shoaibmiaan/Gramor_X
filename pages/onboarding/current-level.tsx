@@ -3,7 +3,9 @@ import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
@@ -23,9 +25,13 @@ export default function CurrentLevelPage() {
     saveDraft('current-level', { currentLevel });
   }, [currentLevel]);
 
+  const payload = { currentLevel };
+  const { isValid, errors } = useStepValidation(3, payload);
+
   const { isSaving, isSaved, error, flush } = useAutoSave({
     step: 3,
-    data: { currentLevel },
+    data: payload,
+    enabled: isValid,
   });
 
   const handleContinue = async () => {
@@ -41,7 +47,11 @@ export default function CurrentLevelPage() {
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
       statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
-      footer={<Button onClick={handleContinue}>Continue</Button>}
+      footer={
+        <Button onClick={handleContinue} disabled={!isValid}>
+          Continue
+        </Button>
+      }
     >
       <div className="grid gap-3 sm:grid-cols-3">
         {levels.map((level) => (
@@ -59,6 +69,7 @@ export default function CurrentLevelPage() {
           </button>
         ))}
       </div>
+      <ValidationError message={errors.currentLevel} />
     </StepLayout>
   );
 }
