@@ -6,7 +6,8 @@ import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { StepLayout } from '@/components/onboarding/StepLayout';
-import { saveOnboardingStep } from '@/lib/onboarding/client';
+import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { useAutoSave } from '@/hooks/useAutoSave';
 import { ONBOARDING_STEPS, getNextStep, getPrevStep, getStepIndex } from '@/lib/onboarding/steps';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +72,19 @@ const OnboardingTargetBandPage: NextPage = () => {
     }
   }
 
+  const goalBand = targetBand ? Number.parseFloat(targetBand) : null;
+
+  const {
+    isSaving,
+    isSaved,
+    error: autoSaveError,
+    flush,
+  } = useAutoSave({
+    step: 5,
+    data: { goalBand },
+    enabled: goalBand !== null,
+  });
+
   async function handleContinue() {
     setError(null);
 
@@ -81,9 +95,8 @@ const OnboardingTargetBandPage: NextPage = () => {
 
     try {
       setSubmitting(true);
+      await flush();
 
-      const goalBand = Number.parseFloat(targetBand);
-      await saveOnboardingStep(5, { goalBand });
       const next = getNextStep('target-band');
       if (next) {
         await router.push({
@@ -107,6 +120,13 @@ const OnboardingTargetBandPage: NextPage = () => {
       step={currentIndex + 1}
       total={ONBOARDING_STEPS.length}
       onBack={handleBack}
+      statusIndicator={
+        <SavingIndicator
+          isSaving={isSaving || submitting}
+          isSaved={isSaved}
+          error={autoSaveError || error}
+        />
+      }
       footer={
         <Button size="lg" onClick={handleContinue} disabled={submitting || !targetBand}>
           {submitting ? 'Saving…' : 'Continue'}

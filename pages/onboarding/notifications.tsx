@@ -6,6 +6,7 @@ import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
 import { StepLayout } from '@/components/onboarding/StepLayout';
+import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ONBOARDING_STEPS, getPrevStep, getStepIndex } from '@/lib/onboarding/steps';
 import { cn } from '@/lib/utils';
 import {
@@ -13,7 +14,7 @@ import {
   TOTAL_ONBOARDING_STEPS,
   type NotificationChannel,
 } from '@/lib/onboarding/schema';
-import { saveOnboardingStep } from '@/lib/onboarding/client';
+import { useAutoSave } from '@/hooks/useAutoSave';
 
 type ChannelId = NotificationChannel;
 
@@ -88,6 +89,23 @@ const OnboardingNotificationsPage: NextPage = () => {
     }
   }
 
+  const payload = {
+    channels: NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER.filter((channel) =>
+      selectedChannels.includes(channel),
+    ),
+  };
+
+  const {
+    isSaving,
+    isSaved,
+    error: autoSaveError,
+    flush,
+  } = useAutoSave({
+    step: TOTAL_ONBOARDING_STEPS,
+    data: payload,
+    enabled: hasChannel,
+  });
+
   async function handleComplete() {
     setError(null);
 
@@ -99,11 +117,7 @@ const OnboardingNotificationsPage: NextPage = () => {
     try {
       setSubmitting(true);
 
-      await saveOnboardingStep(TOTAL_ONBOARDING_STEPS, {
-        channels: NOTIFICATION_CHANNELS_IN_DISPLAY_ORDER.filter((channel) =>
-          selectedChannels.includes(channel),
-        ),
-      });
+      await flush();
 
       await router.push(nextPath || '/dashboard');
     } catch (e: any) {
@@ -122,6 +136,13 @@ const OnboardingNotificationsPage: NextPage = () => {
       step={currentIndex + 1}
       total={ONBOARDING_STEPS.length}
       onBack={handleBack}
+      statusIndicator={
+        <SavingIndicator
+          isSaving={isSaving || submitting}
+          isSaved={isSaved}
+          error={autoSaveError || error}
+        />
+      }
       footer={
         <Button size="lg" onClick={handleComplete} disabled={submitting || !hasChannel}>
           {submitting ? 'Finishing…' : 'Complete onboarding'}

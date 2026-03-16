@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
-import { StepLayout } from '@/components/onboarding/StepLayout';
-import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
-import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 import { Icon } from '@/components/design-system/Icon';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { resolveNavigation } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 import { cn } from '@/lib/utils';
 
 type LanguageCode = 'en' | 'ur';
@@ -15,21 +17,29 @@ export default function OnboardingLanguagePage() {
   const nav = resolveNavigation('language');
   const [language, setLanguage] = useState<LanguageCode | null>(null);
 
-  // Load draft on mount
   useEffect(() => {
-    const draft = loadDraft('language', { preferredLanguage: 'en' });
+    const draft = loadDraft('language', { preferredLanguage: 'en' as LanguageCode });
     setLanguage(draft.preferredLanguage);
   }, []);
 
-  // Auto‑save draft on change
   useEffect(() => {
     if (language) saveDraft('language', { preferredLanguage: language });
   }, [language]);
 
+  const {
+    isSaving,
+    isSaved,
+    error: autoSaveError,
+    flush,
+  } = useAutoSave({
+    step: 2,
+    data: { preferredLanguage: language ?? 'en' },
+    enabled: Boolean(language),
+  });
+
   const handleContinue = async () => {
     if (!language) return;
-    // Step 2 matches the original index.tsx (first onboarding step)
-    await saveOnboardingStep(2, { preferredLanguage: language });
+    await flush();
     if (nav.next) await router.push(nav.next.path);
   };
 
@@ -40,6 +50,9 @@ export default function OnboardingLanguagePage() {
       step={nav.index + 1}
       total={nav.total}
       onBack={nav.prev ? () => router.push(nav.prev.path) : undefined}
+      statusIndicator={
+        <SavingIndicator isSaving={isSaving} isSaved={isSaved} error={autoSaveError} />
+      }
       footer={
         <Button onClick={handleContinue} disabled={!language}>
           Continue
@@ -49,14 +62,12 @@ export default function OnboardingLanguagePage() {
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <LanguageChoice
-          code="en"
           label="English"
           description="Interface, reminders, and lessons in English."
           selected={language === 'en'}
           onSelect={() => setLanguage('en')}
         />
         <LanguageChoice
-          code="ur"
           label="اردو + English mix"
           description="Interface in Urdu with IELTS practice mostly kept bilingual."
           selected={language === 'ur'}
@@ -75,7 +86,6 @@ export default function OnboardingLanguagePage() {
 }
 
 interface LanguageChoiceProps {
-  code: LanguageCode;
   label: string;
   description: string;
   selected: boolean;
