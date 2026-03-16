@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  clearDraftByStepNumber,
+  clearPendingSyncState,
+  loadPendingSyncState,
+  savePendingSyncState,
+} from '@/lib/onboarding/draft';
+import {
   fetchOnboardingState,
   OnboardingConflictError,
+  OnboardingNetworkError,
   saveOnboardingStep,
   type OnboardingSaveOptions,
 } from '@/lib/onboarding/client';
+import { useBeforeUnload } from './useBeforeUnload';
 
 type UseAutoSaveParams<T extends Record<string, unknown> | null> = {
   step: number;
@@ -15,6 +23,8 @@ type UseAutoSaveParams<T extends Record<string, unknown> | null> = {
   onError?: (error: Error) => void;
 };
 
+type SyncState = 'synced' | 'saving' | 'pending' | 'offline';
+
 type UseAutoSaveResult = {
   isSaving: boolean;
   isSaved: boolean;
@@ -22,10 +32,15 @@ type UseAutoSaveResult = {
   isConflict: boolean;
   conflictMessage: string | null;
   flush: () => Promise<boolean>;
+  retry: () => Promise<boolean>;
   clearError: () => void;
   reloadFromConflict: () => void;
   expectedVersion: string | null;
+  hasPendingChanges: boolean;
+  syncState: SyncState;
 };
+
+const MAX_RETRIES = 3;
 
 export function useAutoSave<T extends Record<string, unknown> | null>({
   step,
@@ -41,13 +56,31 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
   const [isConflict, setIsConflict] = useState(false);
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
   const [expectedVersion, setExpectedVersion] = useState<string | null>(null);
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === 'undefined' ? true : navigator.onLine,
+  );
 
   const dataRef = useRef(data);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestRequestIdRef = useRef(0);
   const hasMountedRef = useRef(false);
+  const pendingRetryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   dataRef.current = data;
+
+  useBeforeUnload(
+    hasPendingChanges,
+    'You have unsaved onboarding changes. Are you sure you want to leave?',
+  );
+
+  useEffect(() => {
+    const existingPending = loadPendingSyncState(step);
+    if (existingPending?.pending) {
+      setHasPendingChanges(true);
+      setError(existingPending.lastError || 'Changes not saved yet.');
+    }
+  }, [step]);
 
   useEffect(() => {
     let active = true;
@@ -57,7 +90,7 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
         const state = await fetchOnboardingState();
         if (active) setExpectedVersion(state.updatedAt ?? null);
       } catch {
-        // noop: version prefetch is best-effort
+        // best effort
       }
     })();
 
@@ -66,51 +99,94 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
     };
   }, []);
 
-  const saveNow = useCallback(async () => {
-    if (!enabled) return false;
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
 
-    const requestId = ++latestRequestIdRef.current;
-    setIsSaving(true);
-    setIsSaved(false);
-    setError(null);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
 
-    try {
-      const options: OnboardingSaveOptions = { expectedVersion };
-      const response = await saveOnboardingStep(step, dataRef.current, options);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
 
-      if (latestRequestIdRef.current === requestId) {
-        setExpectedVersion(response.updatedAt ?? null);
-        setIsConflict(false);
-        setConflictMessage(null);
-        setIsSaved(true);
-        onSave?.();
-      }
+  const saveNow = useCallback(
+    async (retryAttempt = 0) => {
+      if (!enabled) return false;
 
-      return true;
-    } catch (rawError) {
-      if (latestRequestIdRef.current === requestId) {
-        if (rawError instanceof OnboardingConflictError) {
-          setIsConflict(true);
-          setConflictMessage(
-            rawError.message ||
-              'Your data has been updated in another session. Please reload to see the latest version.',
-          );
-          setExpectedVersion(rawError.latestState?.updatedAt ?? null);
-          setError(rawError.message);
-        } else {
-          const err = rawError instanceof Error ? rawError : new Error('Auto-save failed');
-          setError(err.message);
-          onError?.(err);
+      const requestId = ++latestRequestIdRef.current;
+      setIsSaving(true);
+      setIsSaved(false);
+      setError(null);
+      setHasPendingChanges(true);
+      savePendingSyncState(step, dataRef.current, null);
+
+      try {
+        const options: OnboardingSaveOptions = { expectedVersion };
+        const response = await saveOnboardingStep(step, dataRef.current, options);
+
+        if (latestRequestIdRef.current === requestId) {
+          setExpectedVersion(response.updatedAt ?? null);
+          setIsConflict(false);
+          setConflictMessage(null);
+          setIsSaved(true);
+          setHasPendingChanges(false);
+          clearPendingSyncState(step);
+          clearDraftByStepNumber(step);
+          onSave?.();
+        }
+
+        return true;
+      } catch (rawError) {
+        if (latestRequestIdRef.current === requestId) {
+          if (rawError instanceof OnboardingConflictError) {
+            setIsConflict(true);
+            setConflictMessage(
+              rawError.message ||
+                'Your data has been updated in another session. Please reload to see the latest version.',
+            );
+            setExpectedVersion(rawError.latestState?.updatedAt ?? null);
+            setError(rawError.message);
+            savePendingSyncState(step, dataRef.current, rawError.message);
+          } else {
+            const err = rawError instanceof Error ? rawError : new Error('Auto-save failed');
+            setError(err.message);
+            savePendingSyncState(step, dataRef.current, err.message);
+            console.error('[onboarding:auto-save:error]', {
+              step,
+              message: err.message,
+              retryAttempt,
+            });
+            onError?.(err);
+
+            const canRetry =
+              retryAttempt < MAX_RETRIES && (err instanceof OnboardingNetworkError || !isConflict);
+            if (canRetry) {
+              const backoff = Math.pow(2, retryAttempt) * 1000;
+              pendingRetryTimeoutRef.current = setTimeout(() => {
+                void saveNow(retryAttempt + 1);
+              }, backoff);
+            }
+          }
+        }
+
+        return false;
+      } finally {
+        if (latestRequestIdRef.current === requestId) {
+          setIsSaving(false);
         }
       }
+    },
+    [enabled, expectedVersion, isConflict, onError, onSave, step],
+  );
 
-      return false;
-    } finally {
-      if (latestRequestIdRef.current === requestId) {
-        setIsSaving(false);
-      }
+  useEffect(() => {
+    if (isOnline && hasPendingChanges && !isSaving && enabled) {
+      void saveNow();
     }
-  }, [enabled, expectedVersion, onError, onSave, step]);
+  }, [enabled, hasPendingChanges, isOnline, isSaving, saveNow]);
 
   const dataSignature = useMemo(() => JSON.stringify(data), [data]);
 
@@ -123,6 +199,7 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
     }
 
     setIsSaved(false);
+    setHasPendingChanges(true);
 
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -139,6 +216,12 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
     };
   }, [dataSignature, delay, enabled, saveNow]);
 
+  useEffect(() => {
+    return () => {
+      if (pendingRetryTimeoutRef.current) clearTimeout(pendingRetryTimeoutRef.current);
+    };
+  }, []);
+
   const flush = useCallback(async () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -147,6 +230,8 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
 
     return saveNow();
   }, [saveNow]);
+
+  const retry = useCallback(async () => saveNow(), [saveNow]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -160,6 +245,14 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
     }
   }, []);
 
+  const syncState: SyncState = isSaving
+    ? 'saving'
+    : hasPendingChanges
+      ? isOnline
+        ? 'pending'
+        : 'offline'
+      : 'synced';
+
   return {
     isSaving,
     isSaved,
@@ -167,8 +260,11 @@ export function useAutoSave<T extends Record<string, unknown> | null>({
     isConflict,
     conflictMessage,
     flush,
+    retry,
     clearError,
     reloadFromConflict,
     expectedVersion,
+    hasPendingChanges,
+    syncState,
   };
 }

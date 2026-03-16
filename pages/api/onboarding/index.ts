@@ -15,6 +15,7 @@ const SELECT_COLUMNS = 'id,settings,onboarding_step,onboarding_complete,updated_
 
 type ErrorResponse = {
   error: string;
+  code?: string;
   latestState?: OnboardingState;
 };
 
@@ -126,7 +127,7 @@ async function handleGet(
   const supabase = getServerClient(req, res);
   const { data: auth, error } = await supabase.auth.getUser();
   if (error || !auth.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
   }
 
   try {
@@ -134,7 +135,7 @@ async function handleGet(
     return res.status(200).json(normalizeState(row));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load onboarding state';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: message, code: 'SERVER_ERROR' });
   }
 }
 
@@ -145,20 +146,20 @@ async function handlePost(
   const supabase = getServerClient(req, res);
   const { data: auth, error } = await supabase.auth.getUser();
   if (error || !auth.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
   }
 
   const bodyResult = postBodySchema.safeParse(req.body);
   if (!bodyResult.success) {
     const detail = bodyResult.error.issues.map((issue) => issue.message).join(', ');
-    return res.status(400).json({ error: detail || 'Invalid payload' });
+    return res.status(422).json({ error: detail || 'Invalid payload', code: 'VALIDATION_ERROR' });
   }
 
   const { step, data, expectedVersion } = bodyResult.data;
   const parseResult = onboardingStepPayloadSchema.safeParse({ step, data });
   if (!parseResult.success) {
     const detail = parseResult.error.issues.map((issue) => issue.message).join(', ');
-    return res.status(400).json({ error: detail || 'Invalid payload' });
+    return res.status(422).json({ error: detail || 'Invalid payload', code: 'VALIDATION_ERROR' });
   }
 
   const payload = parseResult.data;
@@ -171,6 +172,7 @@ async function handlePost(
       return res.status(409).json({
         error:
           'Your data has been updated in another session. Please reload to see the latest version.',
+        code: 'CONFLICT',
         latestState: currentState,
       });
     }
@@ -179,7 +181,7 @@ async function handlePost(
     return res.status(200).json(normalizeState(profileRow));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to save onboarding step';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: message, code: 'SERVER_ERROR' });
   }
 }
 
@@ -294,5 +296,5 @@ export default async function handler(
   if (req.method === 'POST') return handlePost(req, res);
 
   res.setHeader('Allow', 'GET,POST');
-  return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' });
 }

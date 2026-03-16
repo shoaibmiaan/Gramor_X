@@ -4,6 +4,7 @@ import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
@@ -37,7 +38,15 @@ export default function StudyCommitmentPage() {
   const payload = { studyDays, minutesPerDay };
   const { isValid, errors } = useStepValidation(7, payload);
 
-  const { isSaving, isSaved, error, flush } = useAutoSave({
+  const {
+    isSaving,
+    isSaved,
+    error: autoSaveError,
+    flush,
+    retry,
+    hasPendingChanges,
+    syncState,
+  } = useAutoSave({
     step: 7,
     data: payload,
     enabled: isValid,
@@ -57,7 +66,20 @@ export default function StudyCommitmentPage() {
       step={nav.index + 1}
       total={nav.total}
       onBack={() => nav.prev && router.push(nav.prev.path)}
-      statusIndicator={<SavingIndicator isSaving={isSaving} isSaved={isSaved} error={error} />}
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
+      statusIndicator={
+        <SavingIndicator
+          isSaving={isSaving}
+          isSaved={isSaved}
+          error={autoSaveError}
+          syncState={syncState}
+          onRetry={() => void retry()}
+        />
+      }
       footer={
         <Button disabled={!isValid} onClick={handleContinue}>
           Continue

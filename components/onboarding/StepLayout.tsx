@@ -17,6 +17,7 @@ export function StepLayout({
   onSkip,
   skipLabel = 'Skip',
   conflictBanner,
+  errorAlert,
   guardCompleted = true,
 }: {
   title: string;
@@ -31,6 +32,7 @@ export function StepLayout({
   onSkip?: () => void;
   skipLabel?: string;
   conflictBanner?: React.ReactNode;
+  errorAlert?: React.ReactNode;
   guardCompleted?: boolean;
 }) {
   const pct = Math.round((step / total) * 100);
@@ -73,6 +75,7 @@ export function StepLayout({
           </header>
 
           {conflictBanner}
+          {errorAlert}
           <div>{children}</div>
 
           <footer

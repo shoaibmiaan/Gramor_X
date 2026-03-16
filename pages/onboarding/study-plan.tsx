@@ -44,8 +44,7 @@ function addDaysISO(days: number): string {
 function buildPlanOptions(userId: string, state: OnboardingState): PlanGenOptions {
   const targetBand = state.goalBand ?? 7;
   const minutes = state.studyMinutesPerDay ?? 45;
-  const selectedDays =
-    state.studyDays?.map((d) => DAY_MAP[d]).filter(Boolean) ?? DEFAULT_DAYS;
+  const selectedDays = state.studyDays?.map((d) => DAY_MAP[d]).filter(Boolean) ?? DEFAULT_DAYS;
 
   const availability = selectedDays.map((day) => ({
     day,
@@ -212,7 +211,9 @@ const OnboardingStudyPlanPage: NextPage = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Study days</p>
-                  <p className="font-semibold">{availability.map((slot) => DAY_LABELS[slot.day]).join(', ')}</p>
+                  <p className="font-semibold">
+                    {availability.map((slot) => DAY_LABELS[slot.day]).join(', ')}
+                  </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Plan duration</p>
@@ -224,7 +225,13 @@ const OnboardingStudyPlanPage: NextPage = () => {
                 <p className="text-sm font-semibold">First sessions</p>
                 {firstThreeDays.map((day) => (
                   <div key={day.iso} className="rounded-xl border border-border p-3">
-                    <p className="text-sm font-medium">{new Date(day.iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+                    <p className="text-sm font-medium">
+                      {new Date(day.iso).toLocaleDateString(undefined, {
+                        weekday: 'long',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </p>
                     <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
                       {day.tasks.slice(0, 2).map((task) => (
                         <li key={task.id}>
@@ -250,7 +257,9 @@ const OnboardingStudyPlanPage: NextPage = () => {
 
           {status === 'error' && (
             <div className="space-y-4">
-              <h1 className="text-2xl font-semibold tracking-tight">We couldn’t finish your study plan</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                We couldn’t finish your study plan
+              </h1>
               <p className="text-sm text-destructive">{error ?? 'Please try again.'}</p>
               <div className="flex gap-3">
                 <Button onClick={() => void generatePlan()}>Try again</Button>

@@ -6,6 +6,7 @@ import { Icon } from '@/components/design-system/Icon';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation } from '@/lib/onboarding/client';
@@ -36,6 +37,9 @@ export default function OnboardingLanguagePage() {
     isSaved,
     error: autoSaveError,
     flush,
+    retry,
+    hasPendingChanges,
+    syncState,
   } = useAutoSave({
     step: 2,
     data: payload,
@@ -56,8 +60,19 @@ export default function OnboardingLanguagePage() {
       step={nav.index + 1}
       total={nav.total}
       onBack={nav.prev ? () => router.push(nav.prev.path) : undefined}
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
       statusIndicator={
-        <SavingIndicator isSaving={isSaving} isSaved={isSaved} error={autoSaveError} />
+        <SavingIndicator
+          isSaving={isSaving}
+          isSaved={isSaved}
+          error={autoSaveError}
+          syncState={syncState}
+          onRetry={() => void retry()}
+        />
       }
       footer={
         <Button onClick={handleContinue} disabled={!language || !isValid}>

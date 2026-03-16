@@ -8,6 +8,7 @@ import { Icon } from '@/components/design-system/Icon';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { ONBOARDING_STEPS, getPrevStep, getStepIndex } from '@/lib/onboarding/steps';
 import { cn } from '@/lib/utils';
 import {
@@ -99,6 +100,9 @@ const OnboardingNotificationsPage: NextPage = () => {
     isSaved,
     error: autoSaveError,
     flush,
+    retry,
+    hasPendingChanges,
+    syncState,
   } = useAutoSave({
     step: TOTAL_ONBOARDING_STEPS,
     data: payload,
@@ -124,11 +128,18 @@ const OnboardingNotificationsPage: NextPage = () => {
       step={currentIndex + 1}
       total={ONBOARDING_STEPS.length}
       onBack={handleBack}
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
       statusIndicator={
         <SavingIndicator
           isSaving={isSaving || submitting}
           isSaved={isSaved}
           error={autoSaveError}
+          syncState={syncState}
+          onRetry={() => void retry()}
         />
       }
       footer={

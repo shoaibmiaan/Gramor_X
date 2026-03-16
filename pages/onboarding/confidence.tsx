@@ -5,6 +5,7 @@ import { ConflictDialog } from '@/components/onboarding/ConflictDialog';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation, skipOnboardingStep } from '@/lib/onboarding/client';
@@ -33,8 +34,11 @@ export default function ConfidencePage() {
   const {
     isSaving,
     isSaved,
-    error,
+    error: autoSaveError,
     flush,
+    retry,
+    hasPendingChanges,
+    syncState,
     expectedVersion,
     isConflict,
     conflictMessage,
@@ -77,8 +81,19 @@ export default function ConfidencePage() {
           <ConflictDialog message={conflictMessage} onReload={reloadFromConflict} />
         ) : undefined
       }
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
       statusIndicator={
-        <SavingIndicator isSaving={isSaving || skipping} isSaved={isSaved} error={error} />
+        <SavingIndicator
+          isSaving={isSaving || skipping}
+          isSaved={isSaved}
+          error={autoSaveError}
+          syncState={syncState}
+          onRetry={() => void retry()}
+        />
       }
       footer={
         <Button onClick={handleContinue} disabled={!isValid || skipping}>

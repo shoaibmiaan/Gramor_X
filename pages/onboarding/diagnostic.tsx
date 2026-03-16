@@ -5,6 +5,7 @@ import { ConflictDialog } from '@/components/onboarding/ConflictDialog';
 import { StepLayout } from '@/components/onboarding/StepLayout';
 import { SavingIndicator } from '@/components/ui/SavingIndicator';
 import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useStepValidation } from '@/hooks/useStepValidation';
 import { resolveNavigation, saveOnboardingStep, skipOnboardingStep } from '@/lib/onboarding/client';
@@ -43,6 +44,9 @@ export default function DiagnosticPage() {
     isSaved,
     error: autoSaveError,
     flush,
+    retry,
+    hasPendingChanges,
+    syncState,
     expectedVersion,
     isConflict,
     conflictMessage,
@@ -107,11 +111,18 @@ export default function DiagnosticPage() {
           <ConflictDialog message={conflictMessage} onReload={reloadFromConflict} />
         ) : undefined
       }
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
       statusIndicator={
         <SavingIndicator
           isSaving={isSaving || loading || skipping}
           isSaved={isSaved}
           error={autoSaveError || error}
+          syncState={syncState}
+          onRetry={() => void retry()}
         />
       }
       footer={
