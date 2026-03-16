@@ -10,7 +10,7 @@ const csp = [
   "img-src 'self' data: blob: https:;",
   "font-src 'self' data: https:;",
   "connect-src 'self' https: wss:;",
-  "frame-src https://js.stripe.com https://*.stripe.com;",
+  'frame-src https://js.stripe.com https://*.stripe.com;',
   "object-src 'none';",
   "base-uri 'self';",
   "form-action 'self';",
@@ -21,7 +21,9 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 let supabaseHost = '';
 try {
   if (SUPABASE_URL) supabaseHost = new URL(SUPABASE_URL).host;
-} catch { /* ignore */ }
+} catch {
+  /* ignore */
+}
 
 const writingBundlePath = new URL('./lib/offline/packages/writing.bundle.json', import.meta.url);
 let writingBundleAssets = [];
@@ -83,6 +85,26 @@ const baseConfig = {
         destination: '/mock',
         permanent: false,
       },
+      {
+        source: '/onboarding/exam-date',
+        destination: '/onboarding/exam-timeline',
+        permanent: false,
+      },
+      {
+        source: '/onboarding/date',
+        destination: '/onboarding/exam-timeline',
+        permanent: false,
+      },
+      {
+        source: '/onboarding/study-rhythm',
+        destination: '/onboarding/study-commitment',
+        permanent: false,
+      },
+      {
+        source: '/onboarding/schedule',
+        destination: '/onboarding/study-commitment',
+        permanent: false,
+      },
     ];
   },
 
@@ -107,7 +129,7 @@ const baseConfig = {
           'lh3.googleusercontent.com',
           'res.cloudinary.com',
           'images.unsplash.com',
-        ].filter(Boolean)
+        ].filter(Boolean),
       ),
     ].map((hostname) => ({ protocol: 'https', hostname })),
   },

@@ -12,7 +12,7 @@ const AUTH_PAGES = [
   '/auth/register',
   '/auth/mfa',
   '/auth/verify',
-  '/auth/confirm',          // ← must be here
+  '/auth/confirm', // ← must be here
   '/auth/callback',
 ];
 
@@ -21,7 +21,7 @@ const PROTECTED_PREFIXES = [
   '/dashboard',
   '/account',
   '/settings',
-  '/profile',                // <-- ADDED
+  '/profile', // <-- ADDED
   '/notifications',
   '/study-plan',
   '/progress',
@@ -127,10 +127,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Also allow callback (for OAuth/magic links)
-  if (
-    pathname === '/auth/callback' ||
-    pathname.startsWith('/auth/callback?')
-  ) {
+  if (pathname === '/auth/callback' || pathname.startsWith('/auth/callback?')) {
     console.log('[middleware] Allowing /auth/callback');
     return NextResponse.next();
   }
@@ -141,6 +138,11 @@ export async function middleware(req: NextRequest) {
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
   const isOnboardingRoute = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
+  const isTeacherOnboardingRoute =
+    pathname === '/onboarding/teacher' || pathname.startsWith('/onboarding/teacher/');
+  const isPostOnboardingRoute = pathname === '/onboarding/study-plan';
+  const isStudentOnboardingRoute =
+    isOnboardingRoute && !isTeacherOnboardingRoute && !isPostOnboardingRoute;
 
   // Premium PIN gate (unchanged – still valid for premium content protection)
   const isPremiumSection = pathname.startsWith('/premium');
@@ -186,6 +188,19 @@ export async function middleware(req: NextRequest) {
     return redirectWithCookies(res, url);
   }
 
+  // Prevent teacher/admin users from entering student onboarding routes.
+  if (authState.authenticated) {
+    const role = authState.role;
+    const isPrivilegedRole = role === 'teacher' || role === 'admin';
+
+    if (isPrivilegedRole && isStudentOnboardingRoute) {
+      const url = req.nextUrl.clone();
+      url.pathname = role === 'teacher' ? '/teacher' : '/admin';
+      url.search = '';
+      return redirectWithCookies(res, url);
+    }
+  }
+
   // Onboarding guard
   if (authState.authenticated) {
     const role = authState.role ?? undefined;
@@ -198,7 +213,7 @@ export async function middleware(req: NextRequest) {
         url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
         return redirectWithCookies(res, url);
       }
-    } else if (isOnboardingRoute && authState.onboardingComplete) {
+    } else if (isStudentOnboardingRoute && authState.onboardingComplete) {
       const url = req.nextUrl.clone();
       const nextParam = req.nextUrl.searchParams.get('next');
       url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';

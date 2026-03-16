@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
 import { StepLayout } from '@/components/onboarding/StepLayout';
-import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
+import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
+import { resolveNavigation } from '@/lib/onboarding/client';
 import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 
 const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
@@ -16,18 +21,78 @@ export default function CurrentLevelPage() {
     const d = loadDraft('current-level', { currentLevel: 'B1' as const });
     setLevel(d.currentLevel);
   }, []);
-  useEffect(() => saveDraft('current-level', { currentLevel }), [currentLevel]);
+
+  useEffect(() => {
+    saveDraft('current-level', { currentLevel });
+  }, [currentLevel]);
+
+  const payload = { currentLevel };
+  const { isValid, errors } = useStepValidation(3, payload);
+
+  const {
+    isSaving,
+    isSaved,
+    error: autoSaveError,
+    flush,
+    retry,
+    hasPendingChanges,
+    syncState,
+  } = useAutoSave({
+    step: 3,
+    data: payload,
+    enabled: isValid,
+  });
+
+  const handleContinue = async () => {
+    const didSave = await flush();
+    if (!didSave) return;
+    if (nav.next) await router.push(nav.next.path);
+  };
 
   return (
-    <StepLayout title="What's your current English level?" subtitle="Choose your best estimate. We'll calibrate plan difficulty from here." step={nav.index + 1} total={nav.total} onBack={() => nav.prev && router.push(nav.prev.path)} footer={<Button onClick={async()=>{await saveOnboardingStep(3,{ currentLevel }); if (nav.next) await router.push(nav.next.path);}}>Continue</Button>}>
+    <StepLayout
+      title="What's your current English level?"
+      subtitle="Choose your best estimate. We'll calibrate plan difficulty from here."
+      step={nav.index + 1}
+      total={nav.total}
+      onBack={() => nav.prev && router.push(nav.prev.path)}
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
+      statusIndicator={
+        <SavingIndicator
+          isSaving={isSaving}
+          isSaved={isSaved}
+          error={autoSaveError}
+          syncState={syncState}
+          onRetry={() => void retry()}
+        />
+      }
+      footer={
+        <Button onClick={handleContinue} disabled={!isValid}>
+          Continue
+        </Button>
+      }
+    >
       <div className="grid gap-3 sm:grid-cols-3">
-        {levels.map((l) => (
-          <button key={l} onClick={() => setLevel(l)} className={`rounded-xl border p-4 text-left transition ${currentLevel===l?'border-primary bg-primary/10':'border-border hover:bg-muted/40'}`}>
-            <p className="text-lg font-semibold">{l}</p>
+        {levels.map((level) => (
+          <button
+            key={level}
+            onClick={() => setLevel(level)}
+            className={`rounded-xl border p-4 text-left transition ${
+              currentLevel === level
+                ? 'border-primary bg-primary/10'
+                : 'border-border hover:bg-muted/40'
+            }`}
+          >
+            <p className="text-lg font-semibold">{level}</p>
             <p className="text-xs text-muted-foreground">CEFR level</p>
           </button>
         ))}
       </div>
+      <ValidationError message={errors.currentLevel} />
     </StepLayout>
   );
 }

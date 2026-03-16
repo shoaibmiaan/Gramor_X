@@ -103,6 +103,7 @@ export const onboardingStateSchema = z.object({
   diagnostic: DiagnosticResultSchema.nullable().optional(),
   onboardingStep: z.number().int().min(0),
   onboardingComplete: z.boolean(),
+  updatedAt: z.string().nullable().optional(),
 });
 
 export type OnboardingState = z.infer<typeof onboardingStateSchema>;
@@ -152,14 +153,18 @@ const StepNineSchema = z.object({
 });
 const StepTenSchema = z.object({
   step: z.literal(10),
-  data: z.object({
-    writing: z.number().int().min(1).max(5),
-    speaking: z.number().int().min(1).max(5),
-  }),
+  data: z
+    .object({
+      writing: z.number().int().min(1).max(5),
+      speaking: z.number().int().min(1).max(5),
+    })
+    .nullable(),
 });
 const StepElevenSchema = z.object({
   step: z.literal(11),
-  data: z.object({ response: z.string().min(20), result: DiagnosticResultSchema.optional() }),
+  data: z
+    .object({ response: z.string().min(20), result: DiagnosticResultSchema.optional() })
+    .nullable(),
 });
 const StepTwelveSchema = z.object({
   step: z.literal(12),

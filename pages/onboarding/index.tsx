@@ -2,10 +2,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '@/components/design-system/Button';
-import { StepLayout } from '@/components/onboarding/StepLayout';
-import { resolveNavigation, saveOnboardingStep } from '@/lib/onboarding/client';
-import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 import { Icon } from '@/components/design-system/Icon';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
+import { resolveNavigation } from '@/lib/onboarding/client';
+import { loadDraft, saveDraft } from '@/lib/onboarding/draft';
 import { cn } from '@/lib/utils';
 
 type LanguageCode = 'en' | 'ur';
@@ -15,21 +20,36 @@ export default function OnboardingLanguagePage() {
   const nav = resolveNavigation('language');
   const [language, setLanguage] = useState<LanguageCode | null>(null);
 
-  // Load draft on mount
   useEffect(() => {
-    const draft = loadDraft('language', { preferredLanguage: 'en' });
+    const draft = loadDraft('language', { preferredLanguage: 'en' as LanguageCode });
     setLanguage(draft.preferredLanguage);
   }, []);
 
-  // Auto‑save draft on change
   useEffect(() => {
     if (language) saveDraft('language', { preferredLanguage: language });
   }, [language]);
 
+  const payload = { preferredLanguage: language ?? 'en' };
+  const { isValid, errors } = useStepValidation(2, payload);
+
+  const {
+    isSaving,
+    isSaved,
+    error: autoSaveError,
+    flush,
+    retry,
+    hasPendingChanges,
+    syncState,
+  } = useAutoSave({
+    step: 2,
+    data: payload,
+    enabled: Boolean(language) && isValid,
+  });
+
   const handleContinue = async () => {
-    if (!language) return;
-    // Step 2 matches the original index.tsx (first onboarding step)
-    await saveOnboardingStep(2, { preferredLanguage: language });
+    if (!language || !isValid) return;
+    const didSave = await flush();
+    if (!didSave) return;
     if (nav.next) await router.push(nav.next.path);
   };
 
@@ -40,8 +60,22 @@ export default function OnboardingLanguagePage() {
       step={nav.index + 1}
       total={nav.total}
       onBack={nav.prev ? () => router.push(nav.prev.path) : undefined}
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
+      statusIndicator={
+        <SavingIndicator
+          isSaving={isSaving}
+          isSaved={isSaved}
+          error={autoSaveError}
+          syncState={syncState}
+          onRetry={() => void retry()}
+        />
+      }
       footer={
-        <Button onClick={handleContinue} disabled={!language}>
+        <Button onClick={handleContinue} disabled={!language || !isValid}>
           Continue
           <Icon name="arrow-right" className="ml-2 h-4 w-4" />
         </Button>
@@ -49,20 +83,19 @@ export default function OnboardingLanguagePage() {
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <LanguageChoice
-          code="en"
           label="English"
           description="Interface, reminders, and lessons in English."
           selected={language === 'en'}
           onSelect={() => setLanguage('en')}
         />
         <LanguageChoice
-          code="ur"
           label="اردو + English mix"
           description="Interface in Urdu with IELTS practice mostly kept bilingual."
           selected={language === 'ur'}
           onSelect={() => setLanguage('ur')}
         />
       </div>
+      <ValidationError message={errors.preferredLanguage || errors._form} />
 
       <p className="mt-4 text-xs text-muted-foreground">
         Tip: Use <span className="rounded bg-muted px-1.5 py-0.5">←</span> and{' '}
@@ -75,7 +108,6 @@ export default function OnboardingLanguagePage() {
 }
 
 interface LanguageChoiceProps {
-  code: LanguageCode;
   label: string;
   description: string;
   selected: boolean;

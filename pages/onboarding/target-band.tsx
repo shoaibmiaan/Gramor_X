@@ -3,29 +3,16 @@ import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import React, { useMemo, useState } from 'react';
 
-import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
 import { Icon } from '@/components/design-system/Icon';
-import { saveOnboardingStep } from '@/lib/onboarding/client';
+import { StepLayout } from '@/components/onboarding/StepLayout';
+import { SavingIndicator } from '@/components/ui/SavingIndicator';
+import { ValidationError } from '@/components/ui/ValidationError';
+import { ErrorAlert } from '@/components/ui/ErrorAlert';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { useStepValidation } from '@/hooks/useStepValidation';
+import { ONBOARDING_STEPS, getNextStep, getPrevStep, getStepIndex } from '@/lib/onboarding/steps';
 import { cn } from '@/lib/utils';
-
-type OnboardingStepId = 'language' | 'target-band' | 'exam-date' | 'study-rhythm' | 'notifications';
-
-const ONBOARDING_STEPS: { id: OnboardingStepId; label: string }[] = [
-  { id: 'language', label: 'Language' },
-  { id: 'target-band', label: 'Target band' },
-  { id: 'exam-date', label: 'Exam date' },
-  { id: 'study-rhythm', label: 'Study rhythm' },
-  { id: 'notifications', label: 'Notifications' },
-];
-
-const STEP_ROUTES: Record<OnboardingStepId, string> = {
-  language: '/onboarding',
-  'target-band': '/onboarding/target-band',
-  'exam-date': '/onboarding/exam-date',
-  'study-rhythm': '/onboarding/study-rhythm',
-  notifications: '/onboarding/notifications',
-};
 
 type TargetBand = '5.5' | '6.0' | '6.5' | '7.0' | '7.5+';
 
@@ -69,216 +56,116 @@ const OnboardingTargetBandPage: NextPage = () => {
   const router = useRouter();
   const [targetBand, setTargetBand] = useState<TargetBand | null>('6.5');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const nextPath = useMemo(() => {
     const { next } = router.query;
     return typeof next === 'string' ? next : '/dashboard';
   }, [router.query]);
 
-  const currentIndex = useMemo(() => ONBOARDING_STEPS.findIndex((s) => s.id === 'target-band'), []);
+  const currentIndex = getStepIndex('target-band');
 
   function handleBack() {
-    router.push({
-      pathname: STEP_ROUTES.language,
-      query: { next: nextPath },
-    });
+    const prev = getPrevStep('target-band');
+    if (prev) {
+      router.push({
+        pathname: prev.path,
+        query: { next: nextPath },
+      });
+    }
   }
 
-  async function handleContinue() {
-    setError(null);
+  const goalBand = targetBand ? Number.parseFloat(targetBand) : null;
+  const payload = { goalBand };
+  const { isValid, errors } = useStepValidation(5, payload);
 
-    if (!targetBand) {
-      setError('Please choose a target band to continue.');
-      return;
-    }
+  const {
+    isSaving,
+    isSaved,
+    error: autoSaveError,
+    flush,
+    retry,
+    hasPendingChanges,
+    syncState,
+  } = useAutoSave({
+    step: 5,
+    data: payload,
+    enabled: goalBand !== null && isValid,
+  });
+
+  async function handleContinue() {
+    if (!targetBand || !isValid) return;
 
     try {
       setSubmitting(true);
+      const didSave = await flush();
+      if (!didSave) return;
 
-      const goalBand = Number.parseFloat(targetBand);
-      await saveOnboardingStep(5, { goalBand });
-      await router.push({
-        pathname: '/onboarding/exam-timeline',
-        query: { next: nextPath },
-      });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      setError('Something went wrong. Please try again.');
+      const next = getNextStep('target-band');
+      if (next) {
+        await router.push({
+          pathname: next.path,
+          query: { next: nextPath },
+        });
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <Container className="flex min-h-screen flex-col items-center justify-center py-10">
-        {/* Progress rail – now non‑clickable */}
-        <div className="mb-6 w-full max-w-3xl">
-          <OnboardingProgress
-            steps={ONBOARDING_STEPS}
-            currentIndex={currentIndex}
-            // onStepClick removed – circles are static
+    <StepLayout
+      title="Target IELTS Band"
+      subtitle="Your goal band helps us set difficulty, pick question types, and plan how aggressive your schedule should be."
+      step={currentIndex + 1}
+      total={ONBOARDING_STEPS.length}
+      onBack={handleBack}
+      errorAlert={
+        hasPendingChanges && autoSaveError ? (
+          <ErrorAlert message={autoSaveError} onRetry={() => void retry()} />
+        ) : undefined
+      }
+      statusIndicator={
+        <SavingIndicator
+          isSaving={isSaving || submitting}
+          isSaved={isSaved}
+          error={autoSaveError}
+          syncState={syncState}
+          onRetry={() => void retry()}
+        />
+      }
+      footer={
+        <Button size="lg" onClick={handleContinue} disabled={submitting || !isValid || !targetBand}>
+          {submitting ? 'Saving…' : 'Continue'}
+          <Icon name="arrow-right" className="ml-2 h-4 w-4" />
+        </Button>
+      }
+    >
+      <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+        <Icon name="target" className="h-3.5 w-3.5" />
+        Clear goal, clearer path.
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {TARGET_OPTIONS.map((option) => (
+          <TargetBandCard
+            key={option.id}
+            option={option}
+            selected={targetBand === option.id}
+            onSelect={() => setTargetBand(option.id)}
           />
-        </div>
-
-        {/* Main card */}
-        <section className="w-full max-w-3xl rounded-3xl border border-border bg-card/80 p-6 shadow-xl backdrop-blur-md sm:p-8">
-          <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Step {currentIndex + 1} of {ONBOARDING_STEPS.length}
-              </p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-                What&apos;s your target band score?
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Your goal band helps us set difficulty, pick question types, and plan how aggressive
-                your schedule should be.
-              </p>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2 self-start rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              <Icon name="target" className="h-3.5 w-3.5" />
-              Clear goal, clearer path.
-            </div>
-          </header>
-
-          {/* Options */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {TARGET_OPTIONS.map((option) => (
-              <TargetBandCard
-                key={option.id}
-                option={option}
-                selected={targetBand === option.id}
-                onSelect={() => setTargetBand(option.id)}
-              />
-            ))}
-          </div>
-
-          {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
-
-          {/* Hint */}
-          <p className="mt-4 text-xs text-muted-foreground">
-            Not 100% sure? Pick the band you’d be happy with. You can always adjust it later from{' '}
-            <span className="font-medium">Profile → Goals</span>.
-          </p>
-
-          {/* Footer */}
-          <footer className="mt-6 flex flex-col-reverse items-center justify-between gap-3 border-t border-border pt-4 sm:flex-row">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="text-muted-foreground"
-            >
-              <Icon name="arrow-left" className="mr-1.5 h-4 w-4" />
-              Back
-            </Button>
-
-            <div className="flex items-center gap-3">
-              <p className="hidden text-xs text-muted-foreground sm:inline">
-                Next: <span className="font-medium">Exam timeline</span>
-              </p>
-              <Button size="lg" onClick={handleContinue} disabled={submitting || !targetBand}>
-                {submitting ? 'Saving…' : 'Continue'}
-                <Icon name="arrow-right" className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </footer>
-        </section>
-      </Container>
-    </main>
-  );
-};
-
-interface OnboardingProgressProps {
-  steps: { id: OnboardingStepId; label: string }[];
-  currentIndex: number;
-  onStepClick?: (id: OnboardingStepId) => void; // kept for compatibility, but we're not passing it
-}
-
-const OnboardingProgress: React.FC<OnboardingProgressProps> = ({
-  steps,
-  currentIndex,
-  onStepClick, // unused – but component still works without it
-}) => {
-  return (
-    <div className="flex flex-col gap-2">
-      {/* Dots / rail */}
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
-          const active = index === currentIndex;
-          const completed = index < currentIndex;
-
-          const circle = (
-            <div
-              className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold',
-                completed && 'border-primary bg-primary text-primary-foreground',
-                active && !completed && 'border-primary/80 bg-primary/10 text-primary',
-                !active && !completed && 'border-border bg-muted text-muted-foreground',
-              )}
-            >
-              {completed ? <Icon name="check" className="h-3.5 w-3.5" /> : index + 1}
-            </div>
-          );
-
-          return (
-            <div key={step.id} className="flex flex-1 items-center last:flex-none">
-              {onStepClick ? (
-                <button
-                  type="button"
-                  onClick={() => onStepClick(step.id)}
-                  className="flex items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  {circle}
-                </button>
-              ) : (
-                circle
-              )}
-
-              {index < steps.length - 1 && (
-                <div
-                  className={cn(
-                    'mx-1 h-px flex-1 rounded-full bg-border',
-                    completed && 'bg-primary/70',
-                    active && 'bg-primary/50',
-                  )}
-                />
-              )}
-            </div>
-          );
-        })}
+        ))}
       </div>
+      <ValidationError message={errors.goalBand || errors._form} />
 
-      {/* Labels */}
-      <div className="flex justify-between text-xs text-muted-foreground">
-        {steps.map((step, index) => {
-          const active = index === currentIndex;
-          const label = (
-            <span
-              className={cn('flex-1 truncate text-center', active && 'font-medium text-foreground')}
-            >
-              {step.label}
-            </span>
-          );
+      <p className="mt-4 text-xs text-muted-foreground">
+        Not 100% sure? Pick the band you’d be happy with. You can always adjust it later from{' '}
+        <span className="font-medium">Profile → Goals</span>.
+      </p>
 
-          return (
-            <button
-              key={step.id}
-              type="button"
-              onClick={onStepClick ? () => onStepClick(step.id) : undefined}
-              className="flex-1 focus-visible:outline-none"
-              disabled={!onStepClick}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+      <p className="mt-4 hidden text-xs text-muted-foreground sm:block">
+        Next: <span className="font-medium">Exam timeline</span>
+      </p>
+    </StepLayout>
   );
 };
 

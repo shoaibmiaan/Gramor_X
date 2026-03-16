@@ -17,6 +17,7 @@ export type OnboardingStepDef = {
   step: number;
   label: string;
   path: string;
+  optional?: boolean;
 };
 
 export const ONBOARDING_STEPS: OnboardingStepDef[] = [
@@ -26,11 +27,28 @@ export const ONBOARDING_STEPS: OnboardingStepDef[] = [
   { id: 'previous-ielts', step: 4, label: 'Previous IELTS', path: '/onboarding/previous-ielts' },
   { id: 'target-band', step: 5, label: 'Target band', path: '/onboarding/target-band' },
   { id: 'exam-timeline', step: 6, label: 'Exam timeline', path: '/onboarding/exam-timeline' },
-  { id: 'study-commitment', step: 7, label: 'Study commitment', path: '/onboarding/study-commitment' },
+  {
+    id: 'study-commitment',
+    step: 7,
+    label: 'Study commitment',
+    path: '/onboarding/study-commitment',
+  },
   { id: 'learning-style', step: 8, label: 'Learning style', path: '/onboarding/learning-style' },
   { id: 'weakness', step: 9, label: 'Weakness', path: '/onboarding/weakness' },
-  { id: 'confidence', step: 10, label: 'Confidence', path: '/onboarding/confidence' },
-  { id: 'diagnostic', step: 11, label: 'Diagnostic', path: '/onboarding/diagnostic' },
+  {
+    id: 'confidence',
+    step: 10,
+    label: 'Confidence',
+    path: '/onboarding/confidence',
+    optional: true,
+  },
+  {
+    id: 'diagnostic',
+    step: 11,
+    label: 'Diagnostic',
+    path: '/onboarding/diagnostic',
+    optional: true,
+  },
   { id: 'notifications', step: 12, label: 'Notifications', path: '/onboarding/notifications' },
 ];
 

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { z } from 'zod';
 import { trackor } from '@/lib/analytics/trackor.server';
 import { getServerClient } from '@/lib/supabaseServer';
 import {
@@ -10,26 +11,26 @@ import {
   type OnboardingStepPayload,
 } from '@/lib/onboarding/schema';
 
-const SELECT_COLUMNS =
-  // Alias DB "id" -> JSON "user_id" so your existing types continue to work
-  'user_id:id,preferred_language,locale,goal_band,exam_date,study_days,study_minutes_per_day,whatsapp_opt_in,phone,notification_channels,onboarding_step,onboarding_complete,settings';
+const SELECT_COLUMNS = 'id,settings,onboarding_step,onboarding_complete,updated_at';
 
-type ErrorResponse = { error: string };
+type ErrorResponse = {
+  error: string;
+  code?: string;
+  latestState?: OnboardingState;
+};
+
+const postBodySchema = z.object({
+  step: z.number().int().min(1).max(TOTAL_ONBOARDING_STEPS),
+  data: z.unknown(),
+  expectedVersion: z.string().datetime().optional().nullable(),
+});
 
 type ProfileRow = {
-  user_id: string;
-  preferred_language: string | null;
-  locale: string | null;
-  goal_band: number | null;
-  exam_date: string | null;
-  study_days: string[] | null;
-  study_minutes_per_day: number | null;
-  whatsapp_opt_in: boolean | null;
-  phone: string | null;
-  notification_channels: string[] | null;
+  id: string;
+  settings: Record<string, unknown> | null;
   onboarding_step: number | null;
   onboarding_complete: boolean | null;
-  settings: Record<string, unknown> | null;
+  updated_at: string | null;
 } | null;
 
 const defaultState: OnboardingState = {
@@ -50,27 +51,25 @@ const defaultState: OnboardingState = {
   diagnostic: null,
   onboardingStep: 0,
   onboardingComplete: false,
+  updatedAt: null,
 };
 
 function normalizeState(row: ProfileRow): OnboardingState {
   if (!row) return defaultState;
 
-  const studyDays = Array.isArray(row.study_days) ? row.study_days.filter(Boolean) : [];
-
   const settings = (row.settings ?? {}) as Record<string, unknown>;
-  const onboarding = (settings.onboarding ?? {}) as Record<string, unknown>;
+  const onboarding = ((settings.onboarding ?? {}) as Record<string, unknown>) || {};
 
   return onboardingStateSchema.parse({
-    preferredLanguage: row.preferred_language ?? row.locale ?? null,
-    goalBand: typeof row.goal_band === 'number' ? row.goal_band : null,
-    examDate: row.exam_date ?? null,
-    studyDays: studyDays.length > 0 ? (studyDays as OnboardingState['studyDays']) : null,
+    preferredLanguage:
+      typeof onboarding.preferredLanguage === 'string' ? onboarding.preferredLanguage : null,
+    goalBand: typeof onboarding.goalBand === 'number' ? onboarding.goalBand : null,
+    examDate: typeof onboarding.examDate === 'string' ? onboarding.examDate : null,
+    studyDays: Array.isArray(onboarding.studyDays) ? onboarding.studyDays : null,
     studyMinutesPerDay:
-      typeof row.study_minutes_per_day === 'number' && row.study_minutes_per_day > 0
-        ? row.study_minutes_per_day
-        : null,
-    whatsappOptIn: typeof row.whatsapp_opt_in === 'boolean' ? row.whatsapp_opt_in : null,
-    phone: row.phone ?? null,
+      typeof onboarding.studyMinutesPerDay === 'number' ? onboarding.studyMinutesPerDay : null,
+    whatsappOptIn: typeof onboarding.whatsappOptIn === 'boolean' ? onboarding.whatsappOptIn : null,
+    phone: typeof onboarding.phone === 'string' ? onboarding.phone : null,
     currentLevel: typeof onboarding.currentLevel === 'string' ? onboarding.currentLevel : null,
     previousIelts: onboarding.previousIelts ?? null,
     examTimeline: onboarding.examTimeline ?? null,
@@ -81,6 +80,7 @@ function normalizeState(row: ProfileRow): OnboardingState {
     diagnostic: onboarding.diagnostic ?? null,
     onboardingStep: typeof row.onboarding_step === 'number' ? row.onboarding_step : 0,
     onboardingComplete: row.onboarding_complete === true,
+    updatedAt: row.updated_at ?? null,
   });
 }
 
@@ -91,7 +91,7 @@ async function fetchProfileRow(
   const { data, error } = await supabase
     .from('profiles')
     .select(SELECT_COLUMNS)
-    .eq('id', userId) // canonical column
+    .eq('id', userId)
     .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
@@ -108,7 +108,6 @@ async function upsertProfile(
 ): Promise<ProfileRow> {
   const { data, error } = await supabase
     .from('profiles')
-    // IMPORTANT: never set user_id (generated); write id instead
     .upsert({ id: userId, ...payload }, { onConflict: 'id' })
     .select(SELECT_COLUMNS)
     .eq('id', userId)
@@ -128,7 +127,7 @@ async function handleGet(
   const supabase = getServerClient(req, res);
   const { data: auth, error } = await supabase.auth.getUser();
   if (error || !auth.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
   }
 
   try {
@@ -136,7 +135,7 @@ async function handleGet(
     return res.status(200).json(normalizeState(row));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to load onboarding state';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: message, code: 'SERVER_ERROR' });
   }
 }
 
@@ -147,13 +146,20 @@ async function handlePost(
   const supabase = getServerClient(req, res);
   const { data: auth, error } = await supabase.auth.getUser();
   if (error || !auth.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
   }
 
-  const parseResult = onboardingStepPayloadSchema.safeParse(req.body);
+  const bodyResult = postBodySchema.safeParse(req.body);
+  if (!bodyResult.success) {
+    const detail = bodyResult.error.issues.map((issue) => issue.message).join(', ');
+    return res.status(422).json({ error: detail || 'Invalid payload', code: 'VALIDATION_ERROR' });
+  }
+
+  const { step, data, expectedVersion } = bodyResult.data;
+  const parseResult = onboardingStepPayloadSchema.safeParse({ step, data });
   if (!parseResult.success) {
     const detail = parseResult.error.issues.map((issue) => issue.message).join(', ');
-    return res.status(400).json({ error: detail || 'Invalid payload' });
+    return res.status(422).json({ error: detail || 'Invalid payload', code: 'VALIDATION_ERROR' });
   }
 
   const payload = parseResult.data;
@@ -161,17 +167,21 @@ async function handlePost(
   try {
     const currentRow = await fetchProfileRow(supabase, auth.user.id);
     const currentState = normalizeState(currentRow);
-    const profileRow = await applyStep(
-      supabase,
-      auth.user.id,
-      payload,
-      currentState,
-      currentRow,
-    );
+
+    if (expectedVersion && currentState.updatedAt && expectedVersion !== currentState.updatedAt) {
+      return res.status(409).json({
+        error:
+          'Your data has been updated in another session. Please reload to see the latest version.',
+        code: 'CONFLICT',
+        latestState: currentState,
+      });
+    }
+
+    const profileRow = await applyStep(supabase, auth.user.id, payload, currentState, currentRow);
     return res.status(200).json(normalizeState(profileRow));
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to save onboarding step';
-    return res.status(500).json({ error: message });
+    return res.status(500).json({ error: message, code: 'SERVER_ERROR' });
   }
 }
 
@@ -184,7 +194,8 @@ async function applyStep(
 ): Promise<ProfileRow> {
   const updates: Record<string, unknown> = {};
   const settings = (row?.settings ?? {}) as Record<string, unknown>;
-  const onboardingSettings = ((settings.onboarding as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
+  const onboardingSettings = ((settings.onboarding as Record<string, unknown> | undefined) ??
+    {}) as Record<string, unknown>;
 
   let nextStep = Math.max(current.onboardingStep ?? 0, payload.step);
   let nextComplete = current.onboardingComplete;
@@ -195,11 +206,7 @@ async function applyStep(
 
   onboardingSettings.draft = payload.step < TOTAL_ONBOARDING_STEPS;
 
-  if (payload.step === 2) {
-    updates.preferred_language = payload.data.preferredLanguage;
-    updates.locale = payload.data.preferredLanguage;
-  }
-
+  if (payload.step === 2) onboardingSettings.preferredLanguage = payload.data.preferredLanguage;
   if (payload.step === 3) onboardingSettings.currentLevel = payload.data.currentLevel;
 
   if (payload.step === 4) {
@@ -210,17 +217,17 @@ async function applyStep(
     };
   }
 
-  if (payload.step === 5) updates.goal_band = payload.data.goalBand;
+  if (payload.step === 5) onboardingSettings.goalBand = payload.data.goalBand;
 
   if (payload.step === 6) {
     const examDate = payload.data.examDate?.trim() ? payload.data.examDate : null;
-    updates.exam_date = examDate;
+    onboardingSettings.examDate = examDate;
     onboardingSettings.examTimeline = { timeframe: payload.data.timeframe, examDate };
   }
 
   if (payload.step === 7) {
-    updates.study_days = payload.data.studyDays;
-    updates.study_minutes_per_day = payload.data.minutesPerDay;
+    onboardingSettings.studyDays = payload.data.studyDays;
+    onboardingSettings.studyMinutesPerDay = payload.data.minutesPerDay;
     onboardingSettings.studyCommitment = {
       daysPerWeek: payload.data.studyDays.length,
       minutesPerDay: payload.data.minutesPerDay,
@@ -229,11 +236,11 @@ async function applyStep(
 
   if (payload.step === 8) onboardingSettings.learningStyle = payload.data.learningStyle;
   if (payload.step === 9) onboardingSettings.weaknesses = payload.data.weaknesses;
-  if (payload.step === 10) onboardingSettings.confidence = payload.data;
+  if (payload.step === 10) onboardingSettings.confidence = payload.data ?? null;
 
   if (payload.step === 11) {
-    onboardingSettings.diagnosticInput = payload.data.response;
-    if (payload.data.result) onboardingSettings.diagnostic = payload.data.result;
+    onboardingSettings.diagnosticInput = payload.data?.response ?? null;
+    onboardingSettings.diagnostic = payload.data?.result ?? null;
   }
 
   if (payload.step === 12) {
@@ -243,9 +250,9 @@ async function applyStep(
         ? payload.data.whatsappOptIn
         : payload.data.channels.includes('whatsapp');
 
-    updates.whatsapp_opt_in = whatsappOptIn;
-    updates.phone = phone;
-    updates.notification_channels = Array.from(new Set(payload.data.channels));
+    onboardingSettings.whatsappOptIn = whatsappOptIn;
+    onboardingSettings.phone = phone;
+    onboardingSettings.notificationChannels = Array.from(new Set(payload.data.channels));
     onboardingSettings.notificationTime = payload.data.preferredTime ?? null;
 
     nextStep = TOTAL_ONBOARDING_STEPS;
@@ -262,7 +269,8 @@ async function applyStep(
   updates.onboarding_complete = nextComplete;
 
   const becameComplete = !current.onboardingComplete && nextComplete;
-  const hasStarted = current.onboardingStep <= 0 && payload.step >= 1 && !current.onboardingComplete;
+  const hasStarted =
+    current.onboardingStep <= 0 && payload.step >= 1 && !current.onboardingComplete;
 
   const profileRow = await upsertProfile(supabase, userId, updates);
 
@@ -288,5 +296,5 @@ export default async function handler(
   if (req.method === 'POST') return handlePost(req, res);
 
   res.setHeader('Allow', 'GET,POST');
-  return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' });
 }
