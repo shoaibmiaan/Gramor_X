@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container } from '@/components/design-system/Container';
 import { Button } from '@/components/design-system/Button';
+import { useOnboardingGuard } from '@/hooks/useOnboardingGuard';
 import { cn } from '@/lib/utils';
 
 export function StepLayout({
@@ -16,6 +17,7 @@ export function StepLayout({
   onSkip,
   skipLabel = 'Skip',
   conflictBanner,
+  guardCompleted = true,
 }: {
   title: string;
   subtitle?: string;
@@ -29,8 +31,20 @@ export function StepLayout({
   onSkip?: () => void;
   skipLabel?: string;
   conflictBanner?: React.ReactNode;
+  guardCompleted?: boolean;
 }) {
   const pct = Math.round((step / total) * 100);
+  const { checking } = useOnboardingGuard({ enabled: guardCompleted });
+
+  if (checking) {
+    return (
+      <main className="min-h-screen bg-background">
+        <Container className="mx-auto flex min-h-screen w-full max-w-4xl items-center justify-center py-6 sm:py-10">
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        </Container>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background">

@@ -11,8 +11,7 @@ import {
   type OnboardingStepPayload,
 } from '@/lib/onboarding/schema';
 
-const SELECT_COLUMNS =
-  'user_id:id,preferred_language,locale,goal_band,exam_date,study_days,study_minutes_per_day,whatsapp_opt_in,phone,notification_channels,onboarding_step,onboarding_complete,settings,updated_at';
+const SELECT_COLUMNS = 'id,settings,onboarding_step,onboarding_complete,updated_at';
 
 type ErrorResponse = {
   error: string;
@@ -26,19 +25,10 @@ const postBodySchema = z.object({
 });
 
 type ProfileRow = {
-  user_id: string;
-  preferred_language: string | null;
-  locale: string | null;
-  goal_band: number | null;
-  exam_date: string | null;
-  study_days: string[] | null;
-  study_minutes_per_day: number | null;
-  whatsapp_opt_in: boolean | null;
-  phone: string | null;
-  notification_channels: string[] | null;
+  id: string;
+  settings: Record<string, unknown> | null;
   onboarding_step: number | null;
   onboarding_complete: boolean | null;
-  settings: Record<string, unknown> | null;
   updated_at: string | null;
 } | null;
 
@@ -66,22 +56,19 @@ const defaultState: OnboardingState = {
 function normalizeState(row: ProfileRow): OnboardingState {
   if (!row) return defaultState;
 
-  const studyDays = Array.isArray(row.study_days) ? row.study_days.filter(Boolean) : [];
-
   const settings = (row.settings ?? {}) as Record<string, unknown>;
-  const onboarding = (settings.onboarding ?? {}) as Record<string, unknown>;
+  const onboarding = ((settings.onboarding ?? {}) as Record<string, unknown>) || {};
 
   return onboardingStateSchema.parse({
-    preferredLanguage: row.preferred_language ?? row.locale ?? null,
-    goalBand: typeof row.goal_band === 'number' ? row.goal_band : null,
-    examDate: row.exam_date ?? null,
-    studyDays: studyDays.length > 0 ? (studyDays as OnboardingState['studyDays']) : null,
+    preferredLanguage:
+      typeof onboarding.preferredLanguage === 'string' ? onboarding.preferredLanguage : null,
+    goalBand: typeof onboarding.goalBand === 'number' ? onboarding.goalBand : null,
+    examDate: typeof onboarding.examDate === 'string' ? onboarding.examDate : null,
+    studyDays: Array.isArray(onboarding.studyDays) ? onboarding.studyDays : null,
     studyMinutesPerDay:
-      typeof row.study_minutes_per_day === 'number' && row.study_minutes_per_day > 0
-        ? row.study_minutes_per_day
-        : null,
-    whatsappOptIn: typeof row.whatsapp_opt_in === 'boolean' ? row.whatsapp_opt_in : null,
-    phone: row.phone ?? null,
+      typeof onboarding.studyMinutesPerDay === 'number' ? onboarding.studyMinutesPerDay : null,
+    whatsappOptIn: typeof onboarding.whatsappOptIn === 'boolean' ? onboarding.whatsappOptIn : null,
+    phone: typeof onboarding.phone === 'string' ? onboarding.phone : null,
     currentLevel: typeof onboarding.currentLevel === 'string' ? onboarding.currentLevel : null,
     previousIelts: onboarding.previousIelts ?? null,
     examTimeline: onboarding.examTimeline ?? null,
@@ -211,15 +198,13 @@ async function applyStep(
   let nextStep = Math.max(current.onboardingStep ?? 0, payload.step);
   let nextComplete = current.onboardingComplete;
 
-  if (payload.step === 1) onboardingSettings.welcomeSeenAt = new Date().toISOString();
+  if (payload.step === 1) {
+    onboardingSettings.welcomeSeenAt = new Date().toISOString();
+  }
 
   onboardingSettings.draft = payload.step < TOTAL_ONBOARDING_STEPS;
 
-  if (payload.step === 2) {
-    updates.preferred_language = payload.data.preferredLanguage;
-    updates.locale = payload.data.preferredLanguage;
-  }
-
+  if (payload.step === 2) onboardingSettings.preferredLanguage = payload.data.preferredLanguage;
   if (payload.step === 3) onboardingSettings.currentLevel = payload.data.currentLevel;
 
   if (payload.step === 4) {
@@ -230,17 +215,17 @@ async function applyStep(
     };
   }
 
-  if (payload.step === 5) updates.goal_band = payload.data.goalBand;
+  if (payload.step === 5) onboardingSettings.goalBand = payload.data.goalBand;
 
   if (payload.step === 6) {
     const examDate = payload.data.examDate?.trim() ? payload.data.examDate : null;
-    updates.exam_date = examDate;
+    onboardingSettings.examDate = examDate;
     onboardingSettings.examTimeline = { timeframe: payload.data.timeframe, examDate };
   }
 
   if (payload.step === 7) {
-    updates.study_days = payload.data.studyDays;
-    updates.study_minutes_per_day = payload.data.minutesPerDay;
+    onboardingSettings.studyDays = payload.data.studyDays;
+    onboardingSettings.studyMinutesPerDay = payload.data.minutesPerDay;
     onboardingSettings.studyCommitment = {
       daysPerWeek: payload.data.studyDays.length,
       minutesPerDay: payload.data.minutesPerDay,
@@ -249,10 +234,7 @@ async function applyStep(
 
   if (payload.step === 8) onboardingSettings.learningStyle = payload.data.learningStyle;
   if (payload.step === 9) onboardingSettings.weaknesses = payload.data.weaknesses;
-
-  if (payload.step === 10) {
-    onboardingSettings.confidence = payload.data;
-  }
+  if (payload.step === 10) onboardingSettings.confidence = payload.data ?? null;
 
   if (payload.step === 11) {
     onboardingSettings.diagnosticInput = payload.data?.response ?? null;
@@ -266,9 +248,9 @@ async function applyStep(
         ? payload.data.whatsappOptIn
         : payload.data.channels.includes('whatsapp');
 
-    updates.whatsapp_opt_in = whatsappOptIn;
-    updates.phone = phone;
-    updates.notification_channels = Array.from(new Set(payload.data.channels));
+    onboardingSettings.whatsappOptIn = whatsappOptIn;
+    onboardingSettings.phone = phone;
+    onboardingSettings.notificationChannels = Array.from(new Set(payload.data.channels));
     onboardingSettings.notificationTime = payload.data.preferredTime ?? null;
 
     nextStep = TOTAL_ONBOARDING_STEPS;

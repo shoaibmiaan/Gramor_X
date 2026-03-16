@@ -138,6 +138,11 @@ export async function middleware(req: NextRequest) {
   const isAuthPage = pathStartsWithAny(pathname, AUTH_PAGES);
   const isProtected = pathStartsWithAny(pathname, PROTECTED_PREFIXES);
   const isOnboardingRoute = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
+  const isTeacherOnboardingRoute =
+    pathname === '/onboarding/teacher' || pathname.startsWith('/onboarding/teacher/');
+  const isPostOnboardingRoute = pathname === '/onboarding/study-plan';
+  const isStudentOnboardingRoute =
+    isOnboardingRoute && !isTeacherOnboardingRoute && !isPostOnboardingRoute;
 
   // Premium PIN gate (unchanged – still valid for premium content protection)
   const isPremiumSection = pathname.startsWith('/premium');
@@ -187,9 +192,6 @@ export async function middleware(req: NextRequest) {
   if (authState.authenticated) {
     const role = authState.role;
     const isPrivilegedRole = role === 'teacher' || role === 'admin';
-    const isStudentOnboardingRoute =
-      pathname === '/onboarding' ||
-      (pathname.startsWith('/onboarding/') && !pathname.startsWith('/onboarding/teacher'));
 
     if (isPrivilegedRole && isStudentOnboardingRoute) {
       const url = req.nextUrl.clone();
@@ -211,7 +213,7 @@ export async function middleware(req: NextRequest) {
         url.search = `?next=${encodeURIComponent(pathname + (search || ''))}`;
         return redirectWithCookies(res, url);
       }
-    } else if (isOnboardingRoute && authState.onboardingComplete) {
+    } else if (isStudentOnboardingRoute && authState.onboardingComplete) {
       const url = req.nextUrl.clone();
       const nextParam = req.nextUrl.searchParams.get('next');
       url.pathname = nextParam && nextParam.startsWith('/') ? nextParam : '/dashboard';
