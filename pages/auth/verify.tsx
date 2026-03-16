@@ -16,6 +16,7 @@ import {
   setClientSession,
 } from '@/lib/auth';
 import { LOGIN, ONBOARDING, VERIFY_EMAIL } from '@/lib/constants/routes';
+import { sanitizeInternalNextPath } from '@/lib/authNextPath';
 import { withQuery } from '@/lib/constants/routes';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -29,7 +30,7 @@ export default function VerifyPage() {
   const email = typeof query.email === 'string' ? query.email : null;
   const ref = typeof query.ref === 'string' ? query.ref : '';
   const role = typeof query.role === 'string' ? query.role : '';
-  const nextParam = typeof query.next === 'string' ? query.next : '';
+  const nextParam = sanitizeInternalNextPath(query.next) ?? '';
 
   // DEFAULT POST-VERIFY LANDING → ONBOARDING
   const welcomeHref = React.useMemo(() => {
@@ -40,7 +41,7 @@ export default function VerifyPage() {
   }, [ref, role]);
 
   const redirectHref = React.useMemo(() => {
-    if (nextParam && nextParam.startsWith('/')) {
+    if (nextParam) {
       return nextParam;
     }
     return welcomeHref;

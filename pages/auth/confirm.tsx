@@ -13,6 +13,7 @@ import {
   verifyOtpWithTokenHash,
 } from '@/lib/auth';
 import { LOGIN, withQuery } from '@/lib/constants/routes';
+import { sanitizeInternalNextPath } from '@/lib/authNextPath';
 
 function resolveDestination(role: string, onboardingDone: boolean, redirectAfter: string | null) {
   if (redirectAfter) return redirectAfter;
@@ -43,7 +44,7 @@ export default function AuthConfirmPage() {
       const tokenHash = typeof token_hash === 'string' ? token_hash : null;
       const otpType = typeof type === 'string' ? type : 'signup';
       const verificationCode = typeof code === 'string' ? code : null;
-      const redirectAfter = typeof next === 'string' && next.startsWith('/') ? next : null;
+      const redirectAfter = sanitizeInternalNextPath(next);
 
       if (!tokenHash && !verificationCode) {
         setStatus('error');
