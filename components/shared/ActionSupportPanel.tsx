@@ -23,6 +23,13 @@ type SupportCta = {
   ariaLabel?: string;
 };
 
+type SupportLink = {
+  id: string;
+  label: string;
+  href: string;
+  ariaLabel?: string;
+};
+
 interface ActionSupportPanelProps {
   title?: string;
   subtitle?: string;
@@ -31,6 +38,7 @@ interface ActionSupportPanelProps {
   supportDescription?: string;
   supportPrimaryCta?: SupportCta;
   supportSecondaryCta?: SupportCta;
+  supportLinks?: SupportLink[];
   className?: string;
   actionsColumns?: 1 | 2 | 3;
 }
@@ -85,6 +93,7 @@ export default function ActionSupportPanel({
   supportDescription,
   supportPrimaryCta,
   supportSecondaryCta,
+  supportLinks = [],
   className,
   actionsColumns = 2,
 }: ActionSupportPanelProps) {
@@ -105,10 +114,28 @@ export default function ActionSupportPanel({
         </div>
       ) : null}
 
-      {(supportPrimaryCta || supportSecondaryCta || supportDescription) && (
+      {(supportPrimaryCta || supportSecondaryCta || supportDescription || supportLinks.length > 0) && (
         <div className={`mt-5 rounded-xl border border-border/70 bg-muted/30 p-4 ${actions.length > 0 ? 'border-t' : ''}`}>
           <h4 className="text-sm font-semibold">{supportTitle}</h4>
           {supportDescription ? <p className="mt-1 text-xs text-muted-foreground">{supportDescription}</p> : null}
+
+          {supportLinks.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {supportLinks.map((link) => (
+                <Button
+                  key={link.id}
+                  variant="outline"
+                  size="sm"
+                  href={link.href}
+                  aria-label={link.ariaLabel}
+                  className="w-full sm:w-auto"
+                >
+                  {link.label}
+                </Button>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
             {supportPrimaryCta ? (
               <Button

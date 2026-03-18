@@ -8,7 +8,6 @@ import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FooterMini from '@/components/navigation/FooterMini';
-import QuickAccessWidget from '@/components/navigation/QuickAccessWidget';
 import HeaderMini from '@/components/navigation/HeaderMini';
 
 const BottomNav = dynamic(
@@ -66,7 +65,6 @@ export default function Layout({ children }: LayoutProps) {
 
       {showBottomNav && <BottomNav />}
 
-      <QuickAccessWidget />
     </>
   );
 }
