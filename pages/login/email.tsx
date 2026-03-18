@@ -11,6 +11,7 @@ import { Alert } from '@/components/design-system/Alert';
 import { destinationByRole } from '@/lib/routeAccess';
 import { isValidEmail } from '@/utils/validation';
 import useEmailLoginMFA from '@/hooks/useEmailLoginMFA';
+import { sanitizeInternalNextPath } from '@/lib/authNextPath';
 import { useUserContext } from '@/context/UserContext';
 import {
   getCurrentUser,
@@ -49,10 +50,9 @@ export default function LoginWithEmail() {
 
 
   const resolveTarget = React.useCallback((currentUser: { id?: string } | null) => {
-    const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-    const safeNext = rawNext && rawNext.startsWith('/') && rawNext !== '/login' ? rawNext : null;
+    const safeNext = sanitizeInternalNextPath(router.query.next);
     const fallback = currentUser ? destinationByRole(currentUser as any) : '/dashboard';
-    return safeNext ?? fallback;
+    return safeNext && safeNext !== '/login' ? safeNext : fallback;
   }, [router.query.next]);
 
   const navigateAfterAuth = React.useCallback(async (currentUser: { id?: string } | null) => {

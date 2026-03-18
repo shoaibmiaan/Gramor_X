@@ -17,6 +17,7 @@ import {
   sendVerificationCode,
   verifyEmailOtp,
 } from '@/lib/auth';
+import { sanitizeInternalNextPath } from '@/lib/authNextPath';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -24,8 +25,7 @@ export default function VerifyEmailPage() {
   const email = typeof router.query.email === 'string' ? router.query.email : '';
   const role = typeof router.query.role === 'string' ? router.query.role : '';
   const ref = typeof router.query.ref === 'string' ? router.query.ref : '';
-  const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-  const nextParam = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const nextParam = sanitizeInternalNextPath(router.query.next) ?? '';
 
   const next = useMemo(() => {
     if (nextParam) return nextParam;

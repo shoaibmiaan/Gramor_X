@@ -16,6 +16,7 @@ import {
 import { SectionLabel } from '@/components/design-system/SectionLabel';
 import { supabase } from '@/lib/supabaseClient';
 import { destinationByRole } from '@/lib/routeAccess';
+import { sanitizeInternalNextPath } from '@/lib/authNextPath';
 
 type AuthMode = 'login' | 'signup';
 type OAuthProvider = 'apple' | 'google' | 'facebook';
@@ -32,8 +33,7 @@ export default function AuthOptions({ mode }: AuthOptionsProps) {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const ref = mode === 'signup' && typeof router.query.ref === 'string' ? router.query.ref : '';
-  const rawNext = typeof router.query.next === 'string' ? router.query.next : '';
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const next = sanitizeInternalNextPath(router.query.next) ?? '';
   const actionVerb = mode === 'login' ? 'Sign in' : 'Sign up';
   const sharedQS = useMemo(() => {
     const qp = new URLSearchParams();

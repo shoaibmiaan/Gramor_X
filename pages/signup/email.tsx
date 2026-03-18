@@ -13,13 +13,13 @@ import { isValidEmail } from '@/utils/validation';
 import { ONBOARDING, LOGIN, SIGNUP, TERMS, PRIVACY } from '@/lib/constants/routes';
 import { withQuery } from '@/lib/constants/routes';
 import { buildPkcePair, resendSignupEmail, sendVerificationCode, submitPkceSignup } from '@/lib/auth';
+import { sanitizeInternalNextPath } from '@/lib/authNextPath';
 
 export default function SignUpWithEmail() {
   const router = useRouter();
   const role = typeof router.query?.role === 'string' ? (router.query.role as string) : '';
   const ref = typeof router.query?.ref === 'string' ? (router.query.ref as string) : '';
-  const rawNext = typeof router.query?.next === 'string' ? (router.query.next as string) : '';
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const next = sanitizeInternalNextPath(router.query?.next) ?? '';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
