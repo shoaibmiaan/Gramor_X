@@ -10,6 +10,9 @@ import { Button } from '@/components/design-system/Button';
 import { Alert } from '@/components/design-system/Alert';
 import { supabaseBrowser as supabase } from '@/lib/supabaseBrowser';
 
+const EMAIL_LOGIN_ROUTE = '/login/email';
+const FORGOT_PASSWORD_ROUTE = '/forgot-password';
+
 export default function UpdatePassword() {
   const router = useRouter();
   const [password, setPassword] = useState('');
@@ -106,7 +109,7 @@ export default function UpdatePassword() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push(EMAIL_LOGIN_ROUTE), 2000);
     } catch (err: any) {
       setError('Network error: Failed to update password. Please try again.');
       setLoading(false);
@@ -140,10 +143,10 @@ export default function UpdatePassword() {
         </Alert>
         <div className="mt-6 space-y-2">
           <Button asChild variant="primary" className="w-full">
-            <Link href="/forgot-password">Request new link</Link>
+            <Link href={FORGOT_PASSWORD_ROUTE}>Request new link</Link>
           </Button>
           <Button asChild variant="secondary" className="w-full">
-            <Link href="/login">Back to login</Link>
+            <Link href={EMAIL_LOGIN_ROUTE}>Back to email login</Link>
           </Button>
         </div>
       </AuthLayout>
@@ -162,7 +165,7 @@ export default function UpdatePassword() {
             Try again
           </Button>
           <Button asChild variant="secondary" className="w-full">
-            <Link href="/forgot-password">Request new link</Link>
+            <Link href={FORGOT_PASSWORD_ROUTE}>Request new link</Link>
           </Button>
         </div>
       </AuthLayout>
@@ -177,7 +180,7 @@ export default function UpdatePassword() {
     >
       {success ? (
         <Alert variant="success">
-          Password updated! Redirecting to login...
+          Password updated! Redirecting to email login...
         </Alert>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -209,7 +212,7 @@ export default function UpdatePassword() {
           </Button>
 
           <div className="text-xs text-muted text-center">
-            <Link href="/login" className="underline">Back to login</Link>
+            <Link href={EMAIL_LOGIN_ROUTE} className="underline">Back to email login</Link>
           </div>
         </form>
       )}
