@@ -1,7 +1,9 @@
 import type { Session, User } from '@supabase/supabase-js';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { getAuthErrorMessage } from '@/lib/authErrors';
 import { buildPkcePair, readStoredPkceVerifier, submitPkceSignup } from '@/lib/auth/pkce';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 type JsonRecord = Record<string, unknown>;
@@ -296,3 +298,27 @@ export async function signOutAndRedirect(router?: { replace: (path: string) => u
 }
 
 export { buildPkcePair, submitPkceSignup };
+
+export class ApiAuthError extends Error {
+  statusCode: number;
+
+  constructor(message = 'Unauthorized', statusCode = 401) {
+    super(message);
+    this.name = 'ApiAuthError';
+    this.statusCode = statusCode;
+  }
+}
+
+export async function requireAuth(req: NextApiRequest, res?: NextApiResponse): Promise<User> {
+  const supabase = createSupabaseServerClient({ req, res });
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new ApiAuthError('Unauthorized', 401);
+  }
+
+  return user;
+}
