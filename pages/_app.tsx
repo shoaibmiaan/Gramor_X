@@ -173,9 +173,7 @@ function useAuthBridge() {
         }
 
         if (event === 'SIGNED_OUT') {
-          if (!['/login', '/signup', '/forgot-password', '/auth/confirm', '/auth/callback', '/signup/verify'].includes(router.pathname)) {
-            router.replace('/login');
-          }
+          // Middleware is the source of truth for auth enforcement.
         }
       })();
     });
@@ -246,10 +244,6 @@ function useRouteAccessCheck(pathname: string, role?: string | null) {
   useEffect(() => {
     const config = getRouteConfig(pathname);
     if (!config.requiresAuth) return;
-    if (!role) {
-      router.replace('/login');
-      return;
-    }
     if (config.allowedRoles && !config.allowedRoles.includes(role)) {
       router.replace('/restricted');
     }
