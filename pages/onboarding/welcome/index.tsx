@@ -506,6 +506,11 @@ export default function WelcomePage() {
             actions={[]}
             supportTitle="Need help?"
             supportDescription="Ask the community or talk to our AI assistant."
+            supportLinks={[
+              { id: 'daily-task', label: 'Daily task', href: '/dashboard#tasks', ariaLabel: 'Open daily task' },
+              { id: 'retry-mistakes', label: 'Retry mistakes', href: '/mistakes', ariaLabel: 'Retry mistakes' },
+              { id: 'weekly-challenge', label: 'Weekly challenge', href: '/challenge', ariaLabel: 'Join weekly challenge' },
+            ]}
             supportPrimaryCta={{ label: 'Visit Community', href: '/community', variant: 'secondary' }}
             supportSecondaryCta={{ label: 'Open AI Assistant', href: '/ai', variant: 'ghost' }}
           />

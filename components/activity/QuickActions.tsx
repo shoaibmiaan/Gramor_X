@@ -100,6 +100,11 @@ export default function QuickActions({ stats, onTaskCreate, onViewAllTasks }: Qu
       ]}
       supportTitle="Need help?"
       supportDescription="Get support from the team if something blocks your progress."
+      supportLinks={[
+        { id: 'daily-task', label: 'Daily task', href: '/dashboard#tasks', ariaLabel: 'Open daily task' },
+        { id: 'retry-mistakes', label: 'Retry mistakes', href: '/mistakes', ariaLabel: 'Retry mistakes' },
+        { id: 'weekly-challenge', label: 'Weekly challenge', href: '/challenge', ariaLabel: 'Join weekly challenge' },
+      ]}
       supportPrimaryCta={{ label: 'Contact support', href: '/help', variant: 'secondary' }}
       supportSecondaryCta={{ label: 'Open AI assistant', href: '/ai', variant: 'ghost' }}
     />
