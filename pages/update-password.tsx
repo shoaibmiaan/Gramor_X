@@ -106,7 +106,7 @@ export default function UpdatePassword() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.push('/login'), 2000);
+      setTimeout(() => router.push('/login/email'), 2000);
     } catch (err: any) {
       setError('Network error: Failed to update password. Please try again.');
       setLoading(false);
@@ -143,7 +143,7 @@ export default function UpdatePassword() {
             <Link href="/forgot-password">Request new link</Link>
           </Button>
           <Button asChild variant="secondary" className="w-full">
-            <Link href="/login">Back to login</Link>
+            <Link href="/login/email">Back to email login</Link>
           </Button>
         </div>
       </AuthLayout>
@@ -209,7 +209,7 @@ export default function UpdatePassword() {
           </Button>
 
           <div className="text-xs text-muted text-center">
-            <Link href="/login" className="underline">Back to login</Link>
+            <Link href="/login/email" className="underline">Back to email login</Link>
           </div>
         </form>
       )}

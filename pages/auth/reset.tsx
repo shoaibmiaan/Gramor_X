@@ -10,9 +10,8 @@ import { Badge } from '@/components/design-system/Badge';
 import { MailIcon, SmsIcon } from '@/components/design-system/icons';
 import { getCurrentSession, isPasswordReused, updatePassword, verifyRecoveryOtp } from '@/lib/auth';
 import { Input } from '@/components/design-system/Input';
-import { LOGIN, FORGOT_PASSWORD } from '@/lib/constants/routes';
+import { FORGOT_PASSWORD, withQuery } from '@/lib/constants/routes';
 import { getSelectedRole, setSelectedRole } from '@/lib/storage';
-import { withQuery } from '@/lib/constants/routes';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +22,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 function cls(...xs: Array<string | false | null | undefined>) {
   return xs.filter(Boolean).join(' ');
+}
+
+function buildEmailLoginPath(role: string | null) {
+  const base = '/login/email';
+  return role ? withQuery(base, { role }) : base;
 }
 
 export default function ResetPasswordPage() {
@@ -112,8 +116,8 @@ export default function ResetPasswordPage() {
       const { error } = await updatePassword(password);
       if (error) throw error;
 
-      setOk('Password updated. Redirecting to sign in…');
-      const next = selectedRole ? withQuery(LOGIN, { role: selectedRole }) : LOGIN;
+      setOk('Password updated. Redirecting to email sign in…');
+      const next = buildEmailLoginPath(selectedRole);
       setTimeout(() => router.replace(next), 900);
     } catch (e: any) {
       console.error('Password update error:', e);
@@ -217,10 +221,10 @@ export default function ResetPasswordPage() {
           <div className="text-small text-mutedText">
             Back to{' '}
             <Link
-              href={selectedRole ? withQuery(LOGIN, { role: selectedRole }) : LOGIN}
+              href={buildEmailLoginPath(selectedRole)}
               className="underline"
             >
-              Sign in
+              Email sign in
             </Link>
           </div>
         </form>
