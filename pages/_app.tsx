@@ -37,6 +37,8 @@ import { HighContrastProvider } from '@/context/HighContrastContext';
 import { loadTranslations } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n/config';
 import type { SubscriptionTier } from '@/lib/navigation/types';
+import { normalizeSubscriptionTier } from '@/lib/navigation/utils';
+import usePlan from '@/hooks/usePlan';
 import { getRouteConfig, isAttemptPath } from '@/lib/routes/routeLayoutMap';
 
 // ⭐ NEW BreadcrumbBar V2
@@ -284,18 +286,37 @@ function InnerApp({ Component, pageProps }: AppProps) {
   };
 
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('free');
+  const { plan: activePlan } = usePlan();
 
   // tier detect
   useEffect(() => {
-    const metadata = (user?.user_metadata ?? {}) as { tier?: SubscriptionTier | null };
-    const appMeta = (user?.app_metadata ?? {}) as { tier?: SubscriptionTier | null };
-    setSubscriptionTier(metadata.tier ?? appMeta.tier ?? 'free');
-  }, [user]);
+    const metadata = (user?.user_metadata ?? {}) as {
+      tier?: string | null;
+      plan_id?: string | null;
+      plan?: string | null;
+    };
+    const appMeta = (user?.app_metadata ?? {}) as {
+      tier?: string | null;
+      plan_id?: string | null;
+      plan?: string | null;
+    };
+    setSubscriptionTier(
+      normalizeSubscriptionTier(
+        metadata.tier ??
+          metadata.plan_id ??
+          metadata.plan ??
+          appMeta.tier ??
+          appMeta.plan_id ??
+          appMeta.plan ??
+          activePlan,
+      ),
+    );
+  }, [user, activePlan]);
 
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ tier?: SubscriptionTier }>).detail;
-      if (detail?.tier) setSubscriptionTier(detail.tier);
+      if (detail?.tier) setSubscriptionTier(normalizeSubscriptionTier(detail.tier));
     };
     window.addEventListener('subscription:tier-updated', handler);
     return () => window.removeEventListener('subscription:tier-updated', handler);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { fetchStreak as fetchStreakApi } from '@/lib/streak';
 import type { SubscriptionTier } from '@/lib/navigation/types';
+import { normalizeSubscriptionTier } from '@/lib/navigation/utils';
 import { defaultTier } from '@/config/navigation';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { createSignedAvatarUrl, isStoragePath } from '@/lib/avatar';
@@ -89,12 +90,14 @@ export function useHeaderState(initialStreak?: number) {
           console.error('Failed to fetch profile role/tier:', error);
         } else {
           nextRole = prof?.role ?? null;
-          nextTier = (prof?.tier as SubscriptionTier | null) ?? null;
+          nextTier = normalizeSubscriptionTier(prof?.tier ?? null);
         }
       }
 
       const normalizedRole = nextRole ? String(nextRole).toLowerCase() : null;
-      const normalizedTier = (userMeta?.tier as SubscriptionTier | undefined) ?? nextTier ?? defaultTier;
+      const normalizedTier = normalizeSubscriptionTier(
+        userMeta?.tier ?? userMeta?.plan_id ?? appMeta?.tier ?? appMeta?.plan_id ?? nextTier ?? defaultTier,
+      );
       return { role: normalizedRole, tier: normalizedTier };
     };
 
@@ -206,7 +209,7 @@ export function useHeaderState(initialStreak?: number) {
   useEffect(() => {
     const onTierUpdated = (event: Event) => {
       const detail = (event as CustomEvent<{ tier?: SubscriptionTier; role?: string | null }>).detail;
-      if (detail?.tier) setSubscriptionTier(detail.tier);
+      if (detail?.tier) setSubscriptionTier(normalizeSubscriptionTier(detail.tier));
       if (Object.prototype.hasOwnProperty.call(detail ?? {}, 'role')) {
         setRole(detail?.role ?? null);
       }
