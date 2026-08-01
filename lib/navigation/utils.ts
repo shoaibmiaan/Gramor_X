@@ -1,11 +1,38 @@
 // lib/navigation/utils.ts
 import { isFeatureEnabled } from '@/lib/constants/features';
 import { flags } from '@/lib/flags';
-import type { FeatureGate, NavItemConfig, NavigationContext, NavSectionConfig, SubscriptionTier } from './types';
+import type {
+  FeatureGate,
+  NavItemConfig,
+  NavigationContext,
+  NavSectionConfig,
+  SubscriptionTier,
+  SubscriptionTierInput,
+} from './types';
 import { TIER_ORDER } from './types';
 import { isPrimaryNavEligible } from '@/lib/routing/governance';
 
-const tierRank = (tier: SubscriptionTier) => TIER_ORDER.indexOf(tier);
+const TIER_ALIASES: Record<string, SubscriptionTier> = {
+  free: 'free',
+  explorer: 'free',
+  seedling: 'seedling',
+  starter: 'seedling',
+  rocket: 'rocket',
+  booster: 'rocket',
+  owl: 'owl',
+  master: 'owl',
+  premium: 'owl',
+  pro: 'owl',
+};
+
+export const normalizeSubscriptionTier = (tier: SubscriptionTierInput): SubscriptionTier => {
+  if (!tier) return 'free';
+  const key = String(tier).trim().toLowerCase();
+  return TIER_ALIASES[key] ?? 'free';
+};
+
+const tierRank = (tier: SubscriptionTierInput) =>
+  TIER_ORDER.indexOf(normalizeSubscriptionTier(tier));
 
 export const isGateSatisfied = (gate: FeatureGate | undefined, ctx: NavigationContext): boolean => {
   if (!gate) return true;
@@ -32,7 +59,10 @@ export const isGateSatisfied = (gate: FeatureGate | undefined, ctx: NavigationCo
   return true;
 };
 
-export const filterNavItems = <T extends NavItemConfig>(items: readonly T[] | T[], ctx: NavigationContext): T[] => {
+export const filterNavItems = <T extends NavItemConfig>(
+  items: readonly T[] | T[],
+  ctx: NavigationContext,
+): T[] => {
   return items.filter((item) => {
     if (!isGateSatisfied(item.featureGate, ctx)) return false;
     if (!item.href.startsWith('/')) return true;
@@ -40,7 +70,10 @@ export const filterNavItems = <T extends NavItemConfig>(items: readonly T[] | T[
   });
 };
 
-export const filterNavSections = (sections: readonly NavSectionConfig[] | NavSectionConfig[], ctx: NavigationContext): NavSectionConfig[] => {
+export const filterNavSections = (
+  sections: readonly NavSectionConfig[] | NavSectionConfig[],
+  ctx: NavigationContext,
+): NavSectionConfig[] => {
   return sections
     .filter((section) => isGateSatisfied(section.featureGate, ctx))
     .map((section) => ({

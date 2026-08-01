@@ -5,6 +5,8 @@ import type { FeatureFlagKey } from '@/lib/flags';
 
 export type SubscriptionTier = 'free' | 'seedling' | 'rocket' | 'owl';
 
+export type SubscriptionTierInput = SubscriptionTier | 'starter' | 'booster' | 'master' | 'explorer' | 'premium' | 'pro' | string | null | undefined;
+
 export const TIER_ORDER: readonly SubscriptionTier[] = ['free', 'seedling', 'rocket', 'owl'] as const;
 
 export type FeatureGate = {
@@ -74,5 +76,5 @@ export type AppNavigationSchema = {
 
 export type NavigationContext = {
   isAuthenticated: boolean;
-  tier: SubscriptionTier;
+  tier: SubscriptionTierInput;
 };
